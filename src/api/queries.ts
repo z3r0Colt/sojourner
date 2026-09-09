@@ -366,4 +366,74 @@ export function useFootnotesForChapter(translationId: number | null, bookId: num
   });
 }
 
+export function useSermonNotes() {
+  return useQuery({ queryKey: ["sermonNotes"], queryFn: api.listSermonNotes });
+}
+
+export function useSermonNote(id: number | null) {
+  return useQuery({
+    queryKey: ["sermonNote", id],
+    queryFn: () => api.getSermonNote(id as number),
+    enabled: id != null,
+  });
+}
+
+export function useCreateSermonNote() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: api.createSermonNote,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["sermonNotes"] }),
+  });
+}
+
+export function useUpdateSermonNote() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: {
+      id: number;
+      date: string;
+      preacher?: string;
+      title?: string;
+      passageText?: string;
+      outline?: string;
+      application?: string;
+    }) => api.updateSermonNote(input.id, input),
+    onSuccess: (_r, input) => {
+      qc.invalidateQueries({ queryKey: ["sermonNotes"] });
+      qc.invalidateQueries({ queryKey: ["sermonNote", input.id] });
+    },
+  });
+}
+
+export function useDeleteSermonNote() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: api.deleteSermonNote,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["sermonNotes"] }),
+  });
+}
+
+export function useAddSermonNotePassage() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { sermonNoteId: number; bookId: number; chapter: number; verseStart?: number; verseEnd?: number }) =>
+      api.addSermonNotePassage(input.sermonNoteId, input.bookId, input.chapter, input.verseStart, input.verseEnd),
+    onSuccess: (_r, input) => {
+      qc.invalidateQueries({ queryKey: ["sermonNotes"] });
+      qc.invalidateQueries({ queryKey: ["sermonNote", input.sermonNoteId] });
+    },
+  });
+}
+
+export function useDeleteSermonNotePassage() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: api.deleteSermonNotePassage,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["sermonNotes"] });
+      qc.invalidateQueries({ queryKey: ["sermonNote"] });
+    },
+  });
+}
+
 export type { Verse };

@@ -9,6 +9,7 @@ pub mod psalter;
 pub mod reference;
 pub mod resources;
 pub mod search;
+pub mod sermon_notes;
 pub mod verses;
 pub mod versification;
 pub mod westminster;

@@ -141,6 +141,29 @@ export interface ImportReportItem {
   detail: string | null;
 }
 
+export interface SermonNotePassageLink {
+  id: number;
+  sermon_note_id: number;
+  book_id: number;
+  chapter: number;
+  verse_start: number | null;
+  verse_end: number | null;
+  created_at: string;
+}
+
+export interface SermonNote {
+  id: number;
+  date: string;
+  preacher: string | null;
+  title: string | null;
+  passage_text: string | null;
+  outline: string | null;
+  application: string | null;
+  created_at: string;
+  updated_at: string;
+  passages: SermonNotePassageLink[];
+}
+
 export interface ConcordanceEntry {
   book_id: number;
   chapter: number;
