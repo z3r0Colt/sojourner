@@ -12,6 +12,7 @@ import { ResourceReaderView } from "./features/resources/ResourceReaderView";
 import { SermonNotesView } from "./features/sermons/SermonNotesView";
 import { PrayerJournalView } from "./features/prayer/PrayerJournalView";
 import { MemoryView } from "./features/memory/MemoryView";
+import { ReadingPlansView } from "./features/plans/ReadingPlansView";
 
 export const router = createHashRouter([
   {
@@ -26,6 +27,7 @@ export const router = createHashRouter([
       { path: "sermons", element: <SermonNotesView /> },
       { path: "prayer", element: <PrayerJournalView /> },
       { path: "memory", element: <MemoryView /> },
+      { path: "plans", element: <ReadingPlansView /> },
       { path: "library", element: <LibrarySettingsView /> },
       { path: "lexicon", element: <LexiconView /> },
       { path: "lexicon/:id", element: <LexiconView /> },

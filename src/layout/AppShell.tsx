@@ -19,6 +19,7 @@ const NAV_LINKS: { to: string; label: string; end?: boolean }[] = [
   { to: "/sermons", label: "Sermons" },
   { to: "/prayer", label: "Prayer" },
   { to: "/memory", label: "Memory" },
+  { to: "/plans", label: "Plans" },
   { to: "/library", label: "Library" },
 ];
 

@@ -195,6 +195,37 @@ export interface MemoryVerse {
   created_at: string;
 }
 
+export interface ReadingPlan {
+  id: number;
+  code: string;
+  title: string;
+  description: string | null;
+  length_days: number;
+}
+
+export interface ReadingPlanReading {
+  book_id: number;
+  chapter_start: number;
+  verse_start: number | null;
+  chapter_end: number;
+  verse_end: number | null;
+  label: string;
+}
+
+export interface ReadingPlanDay {
+  day_number: number;
+  readings: ReadingPlanReading[];
+}
+
+export interface ReadingPlanProgress {
+  plan_code: string;
+  start_date: string;
+  current_day: number;
+  streak: number;
+  completed_days: number[];
+  created_at: string;
+}
+
 export interface ConcordanceEntry {
   book_id: number;
   chapter: number;

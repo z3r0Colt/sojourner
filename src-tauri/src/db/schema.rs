@@ -395,7 +395,39 @@ INSERT INTO books (id, osis_code, name, short_name, testament, chapter_count) VA
 (66,'Rev','Revelation','Rev','NT',22);
 "#;
 
-pub const CONTENT_MIGRATIONS: &[&str] = &[CONTENT_MIGRATION_0001];
+// Reading plans: a plan (M'Cheyne, straight-through canonical, 90-Day Bible,
+// ...) is a fixed sequence of days, each with one or more readings. A
+// reading's `chapter_start`/`verse_start` .. `chapter_end`/`verse_end` can
+// span more than one chapter (M'Cheyne's "Exodus 11:1-12:20"); a null verse
+// bound means "from/to the start/end of that chapter" (the common case: a
+// reading of one or more whole chapters). Plans ship as bundled content and
+// are the same for every install; a user's progress through one lives in
+// user.db (see reading_plan_progress/reading_plan_completions).
+pub const CONTENT_MIGRATION_0002: &str = r#"
+CREATE TABLE reading_plans (
+  id            INTEGER PRIMARY KEY,
+  code          TEXT NOT NULL UNIQUE,
+  title         TEXT NOT NULL,
+  description   TEXT,
+  length_days   INTEGER NOT NULL
+);
+
+CREATE TABLE reading_plan_readings (
+  id             INTEGER PRIMARY KEY,
+  plan_id        INTEGER NOT NULL REFERENCES reading_plans(id) ON DELETE CASCADE,
+  day_number     INTEGER NOT NULL,
+  sort_order     INTEGER NOT NULL,
+  book_id        INTEGER NOT NULL REFERENCES books(id),
+  chapter_start  INTEGER NOT NULL,
+  verse_start    INTEGER,
+  chapter_end    INTEGER NOT NULL,
+  verse_end      INTEGER,
+  label          TEXT NOT NULL
+);
+CREATE INDEX idx_reading_plan_readings_day ON reading_plan_readings(plan_id, day_number, sort_order);
+"#;
+
+pub const CONTENT_MIGRATIONS: &[&str] = &[CONTENT_MIGRATION_0001, CONTENT_MIGRATION_0002];
 
 pub const USER_MIGRATION_0001: &str = r#"
 CREATE TABLE highlights (
@@ -633,4 +665,25 @@ CREATE TABLE memory_verses (
 CREATE INDEX idx_memory_verses_due ON memory_verses(due_at);
 "#;
 
-pub const USER_MIGRATIONS: &[&str] = &[USER_MIGRATION_0001, USER_MIGRATION_0002];
+pub const USER_MIGRATION_0003: &str = r#"
+-- A user's progress through a reading_plans row in content.db, addressed by
+-- the plan's `code` rather than its content-db integer id -- the two files
+-- can't share a FOREIGN KEY, and the code is stable across a content.db
+-- rebuild while an autoincrement id isn't guaranteed to be.
+CREATE TABLE reading_plan_progress (
+  plan_code   TEXT PRIMARY KEY,
+  start_date  TEXT NOT NULL,
+  created_at  TEXT NOT NULL
+);
+
+CREATE TABLE reading_plan_completions (
+  id            INTEGER PRIMARY KEY,
+  plan_code     TEXT NOT NULL,
+  day_number    INTEGER NOT NULL,
+  completed_at  TEXT NOT NULL,
+  UNIQUE(plan_code, day_number)
+);
+CREATE INDEX idx_reading_plan_completions_plan ON reading_plan_completions(plan_code);
+"#;
+
+pub const USER_MIGRATIONS: &[&str] = &[USER_MIGRATION_0001, USER_MIGRATION_0002, USER_MIGRATION_0003];

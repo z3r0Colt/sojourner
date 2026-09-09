@@ -531,4 +531,53 @@ export function useReviewMemoryVerse() {
   });
 }
 
+export function useReadingPlans() {
+  return useQuery({ queryKey: ["readingPlans"], queryFn: api.listReadingPlans, staleTime: Infinity });
+}
+
+export function useReadingPlanDays(planCode: string | null) {
+  return useQuery({
+    queryKey: ["readingPlanDays", planCode],
+    queryFn: () => api.getReadingPlanDays(planCode!),
+    enabled: planCode != null,
+    staleTime: Infinity,
+  });
+}
+
+export function useReadingPlanProgressList() {
+  return useQuery({ queryKey: ["readingPlanProgress"], queryFn: api.listReadingPlanProgress });
+}
+
+export function useStartReadingPlan() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { planCode: string; startDate: string }) => api.startReadingPlan(input.planCode, input.startDate),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["readingPlanProgress"] }),
+  });
+}
+
+export function useAbandonReadingPlan() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: api.abandonReadingPlan,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["readingPlanProgress"] }),
+  });
+}
+
+export function useMarkReadingPlanDay() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { planCode: string; dayNumber: number }) => api.markReadingPlanDay(input.planCode, input.dayNumber),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["readingPlanProgress"] }),
+  });
+}
+
+export function useUnmarkReadingPlanDay() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { planCode: string; dayNumber: number }) => api.unmarkReadingPlanDay(input.planCode, input.dayNumber),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["readingPlanProgress"] }),
+  });
+}
+
 export type { Verse };

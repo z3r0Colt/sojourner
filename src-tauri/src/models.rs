@@ -383,6 +383,41 @@ pub struct MemoryVerse {
     pub created_at: String,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReadingPlan {
+    pub id: i64,
+    pub code: String,
+    pub title: String,
+    pub description: Option<String>,
+    pub length_days: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReadingPlanReading {
+    pub book_id: i64,
+    pub chapter_start: i64,
+    pub verse_start: Option<i64>,
+    pub chapter_end: i64,
+    pub verse_end: Option<i64>,
+    pub label: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReadingPlanDay {
+    pub day_number: i64,
+    pub readings: Vec<ReadingPlanReading>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReadingPlanProgress {
+    pub plan_code: String,
+    pub start_date: String,
+    pub current_day: i64,
+    pub streak: i64,
+    pub completed_days: Vec<i64>,
+    pub created_at: String,
+}
+
 #[derive(Debug, Clone, Serialize)]
 pub struct MorphologyWord {
     pub id: i64,

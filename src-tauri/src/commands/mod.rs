@@ -2,6 +2,7 @@ pub mod annotations;
 pub mod library;
 pub mod prayer_journal;
 pub mod reading;
+pub mod reading_plans;
 pub mod reference;
 pub mod resources;
 pub mod scripture_memory;

@@ -1,0 +1,5089 @@
+{
+ "code": "canonical",
+ "title": "Canonical (Straight Through)",
+ "description": "The whole Bible in canonical (Genesis-to-Revelation) order over a year, one continuous reading with no chapters skipped or reordered.",
+ "length_days": 365,
+ "days": [
+  {
+   "day": 1,
+   "readings": [
+    {
+     "book": "Genesis",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 4,
+     "verse_end": null,
+     "label": "Genesis 1-4"
+    }
+   ]
+  },
+  {
+   "day": 2,
+   "readings": [
+    {
+     "book": "Genesis",
+     "chapter_start": 5,
+     "verse_start": null,
+     "chapter_end": 8,
+     "verse_end": null,
+     "label": "Genesis 5-8"
+    }
+   ]
+  },
+  {
+   "day": 3,
+   "readings": [
+    {
+     "book": "Genesis",
+     "chapter_start": 9,
+     "verse_start": null,
+     "chapter_end": 12,
+     "verse_end": null,
+     "label": "Genesis 9-12"
+    }
+   ]
+  },
+  {
+   "day": 4,
+   "readings": [
+    {
+     "book": "Genesis",
+     "chapter_start": 13,
+     "verse_start": null,
+     "chapter_end": 16,
+     "verse_end": null,
+     "label": "Genesis 13-16"
+    }
+   ]
+  },
+  {
+   "day": 5,
+   "readings": [
+    {
+     "book": "Genesis",
+     "chapter_start": 17,
+     "verse_start": null,
+     "chapter_end": 20,
+     "verse_end": null,
+     "label": "Genesis 17-20"
+    }
+   ]
+  },
+  {
+   "day": 6,
+   "readings": [
+    {
+     "book": "Genesis",
+     "chapter_start": 21,
+     "verse_start": null,
+     "chapter_end": 24,
+     "verse_end": null,
+     "label": "Genesis 21-24"
+    }
+   ]
+  },
+  {
+   "day": 7,
+   "readings": [
+    {
+     "book": "Genesis",
+     "chapter_start": 25,
+     "verse_start": null,
+     "chapter_end": 28,
+     "verse_end": null,
+     "label": "Genesis 25-28"
+    }
+   ]
+  },
+  {
+   "day": 8,
+   "readings": [
+    {
+     "book": "Genesis",
+     "chapter_start": 29,
+     "verse_start": null,
+     "chapter_end": 32,
+     "verse_end": null,
+     "label": "Genesis 29-32"
+    }
+   ]
+  },
+  {
+   "day": 9,
+   "readings": [
+    {
+     "book": "Genesis",
+     "chapter_start": 33,
+     "verse_start": null,
+     "chapter_end": 36,
+     "verse_end": null,
+     "label": "Genesis 33-36"
+    }
+   ]
+  },
+  {
+   "day": 10,
+   "readings": [
+    {
+     "book": "Genesis",
+     "chapter_start": 37,
+     "verse_start": null,
+     "chapter_end": 40,
+     "verse_end": null,
+     "label": "Genesis 37-40"
+    }
+   ]
+  },
+  {
+   "day": 11,
+   "readings": [
+    {
+     "book": "Genesis",
+     "chapter_start": 41,
+     "verse_start": null,
+     "chapter_end": 44,
+     "verse_end": null,
+     "label": "Genesis 41-44"
+    }
+   ]
+  },
+  {
+   "day": 12,
+   "readings": [
+    {
+     "book": "Genesis",
+     "chapter_start": 45,
+     "verse_start": null,
+     "chapter_end": 48,
+     "verse_end": null,
+     "label": "Genesis 45-48"
+    }
+   ]
+  },
+  {
+   "day": 13,
+   "readings": [
+    {
+     "book": "Genesis",
+     "chapter_start": 49,
+     "verse_start": null,
+     "chapter_end": 50,
+     "verse_end": null,
+     "label": "Genesis 49-50"
+    },
+    {
+     "book": "Exodus",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 2,
+     "verse_end": null,
+     "label": "Exodus 1-2"
+    }
+   ]
+  },
+  {
+   "day": 14,
+   "readings": [
+    {
+     "book": "Exodus",
+     "chapter_start": 3,
+     "verse_start": null,
+     "chapter_end": 6,
+     "verse_end": null,
+     "label": "Exodus 3-6"
+    }
+   ]
+  },
+  {
+   "day": 15,
+   "readings": [
+    {
+     "book": "Exodus",
+     "chapter_start": 7,
+     "verse_start": null,
+     "chapter_end": 10,
+     "verse_end": null,
+     "label": "Exodus 7-10"
+    }
+   ]
+  },
+  {
+   "day": 16,
+   "readings": [
+    {
+     "book": "Exodus",
+     "chapter_start": 11,
+     "verse_start": null,
+     "chapter_end": 14,
+     "verse_end": null,
+     "label": "Exodus 11-14"
+    }
+   ]
+  },
+  {
+   "day": 17,
+   "readings": [
+    {
+     "book": "Exodus",
+     "chapter_start": 15,
+     "verse_start": null,
+     "chapter_end": 18,
+     "verse_end": null,
+     "label": "Exodus 15-18"
+    }
+   ]
+  },
+  {
+   "day": 18,
+   "readings": [
+    {
+     "book": "Exodus",
+     "chapter_start": 19,
+     "verse_start": null,
+     "chapter_end": 22,
+     "verse_end": null,
+     "label": "Exodus 19-22"
+    }
+   ]
+  },
+  {
+   "day": 19,
+   "readings": [
+    {
+     "book": "Exodus",
+     "chapter_start": 23,
+     "verse_start": null,
+     "chapter_end": 26,
+     "verse_end": null,
+     "label": "Exodus 23-26"
+    }
+   ]
+  },
+  {
+   "day": 20,
+   "readings": [
+    {
+     "book": "Exodus",
+     "chapter_start": 27,
+     "verse_start": null,
+     "chapter_end": 30,
+     "verse_end": null,
+     "label": "Exodus 27-30"
+    }
+   ]
+  },
+  {
+   "day": 21,
+   "readings": [
+    {
+     "book": "Exodus",
+     "chapter_start": 31,
+     "verse_start": null,
+     "chapter_end": 34,
+     "verse_end": null,
+     "label": "Exodus 31-34"
+    }
+   ]
+  },
+  {
+   "day": 22,
+   "readings": [
+    {
+     "book": "Exodus",
+     "chapter_start": 35,
+     "verse_start": null,
+     "chapter_end": 38,
+     "verse_end": null,
+     "label": "Exodus 35-38"
+    }
+   ]
+  },
+  {
+   "day": 23,
+   "readings": [
+    {
+     "book": "Exodus",
+     "chapter_start": 39,
+     "verse_start": null,
+     "chapter_end": 40,
+     "verse_end": null,
+     "label": "Exodus 39-40"
+    },
+    {
+     "book": "Leviticus",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 2,
+     "verse_end": null,
+     "label": "Leviticus 1-2"
+    }
+   ]
+  },
+  {
+   "day": 24,
+   "readings": [
+    {
+     "book": "Leviticus",
+     "chapter_start": 3,
+     "verse_start": null,
+     "chapter_end": 6,
+     "verse_end": null,
+     "label": "Leviticus 3-6"
+    }
+   ]
+  },
+  {
+   "day": 25,
+   "readings": [
+    {
+     "book": "Leviticus",
+     "chapter_start": 7,
+     "verse_start": null,
+     "chapter_end": 10,
+     "verse_end": null,
+     "label": "Leviticus 7-10"
+    }
+   ]
+  },
+  {
+   "day": 26,
+   "readings": [
+    {
+     "book": "Leviticus",
+     "chapter_start": 11,
+     "verse_start": null,
+     "chapter_end": 14,
+     "verse_end": null,
+     "label": "Leviticus 11-14"
+    }
+   ]
+  },
+  {
+   "day": 27,
+   "readings": [
+    {
+     "book": "Leviticus",
+     "chapter_start": 15,
+     "verse_start": null,
+     "chapter_end": 18,
+     "verse_end": null,
+     "label": "Leviticus 15-18"
+    }
+   ]
+  },
+  {
+   "day": 28,
+   "readings": [
+    {
+     "book": "Leviticus",
+     "chapter_start": 19,
+     "verse_start": null,
+     "chapter_end": 22,
+     "verse_end": null,
+     "label": "Leviticus 19-22"
+    }
+   ]
+  },
+  {
+   "day": 29,
+   "readings": [
+    {
+     "book": "Leviticus",
+     "chapter_start": 23,
+     "verse_start": null,
+     "chapter_end": 26,
+     "verse_end": null,
+     "label": "Leviticus 23-26"
+    }
+   ]
+  },
+  {
+   "day": 30,
+   "readings": [
+    {
+     "book": "Leviticus",
+     "chapter_start": 27,
+     "verse_start": null,
+     "chapter_end": 27,
+     "verse_end": null,
+     "label": "Leviticus 27"
+    },
+    {
+     "book": "Numbers",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 3,
+     "verse_end": null,
+     "label": "Numbers 1-3"
+    }
+   ]
+  },
+  {
+   "day": 31,
+   "readings": [
+    {
+     "book": "Numbers",
+     "chapter_start": 4,
+     "verse_start": null,
+     "chapter_end": 7,
+     "verse_end": null,
+     "label": "Numbers 4-7"
+    }
+   ]
+  },
+  {
+   "day": 32,
+   "readings": [
+    {
+     "book": "Numbers",
+     "chapter_start": 8,
+     "verse_start": null,
+     "chapter_end": 11,
+     "verse_end": null,
+     "label": "Numbers 8-11"
+    }
+   ]
+  },
+  {
+   "day": 33,
+   "readings": [
+    {
+     "book": "Numbers",
+     "chapter_start": 12,
+     "verse_start": null,
+     "chapter_end": 15,
+     "verse_end": null,
+     "label": "Numbers 12-15"
+    }
+   ]
+  },
+  {
+   "day": 34,
+   "readings": [
+    {
+     "book": "Numbers",
+     "chapter_start": 16,
+     "verse_start": null,
+     "chapter_end": 19,
+     "verse_end": null,
+     "label": "Numbers 16-19"
+    }
+   ]
+  },
+  {
+   "day": 35,
+   "readings": [
+    {
+     "book": "Numbers",
+     "chapter_start": 20,
+     "verse_start": null,
+     "chapter_end": 23,
+     "verse_end": null,
+     "label": "Numbers 20-23"
+    }
+   ]
+  },
+  {
+   "day": 36,
+   "readings": [
+    {
+     "book": "Numbers",
+     "chapter_start": 24,
+     "verse_start": null,
+     "chapter_end": 27,
+     "verse_end": null,
+     "label": "Numbers 24-27"
+    }
+   ]
+  },
+  {
+   "day": 37,
+   "readings": [
+    {
+     "book": "Numbers",
+     "chapter_start": 28,
+     "verse_start": null,
+     "chapter_end": 31,
+     "verse_end": null,
+     "label": "Numbers 28-31"
+    }
+   ]
+  },
+  {
+   "day": 38,
+   "readings": [
+    {
+     "book": "Numbers",
+     "chapter_start": 32,
+     "verse_start": null,
+     "chapter_end": 35,
+     "verse_end": null,
+     "label": "Numbers 32-35"
+    }
+   ]
+  },
+  {
+   "day": 39,
+   "readings": [
+    {
+     "book": "Numbers",
+     "chapter_start": 36,
+     "verse_start": null,
+     "chapter_end": 36,
+     "verse_end": null,
+     "label": "Numbers 36"
+    },
+    {
+     "book": "Deuteronomy",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 3,
+     "verse_end": null,
+     "label": "Deuteronomy 1-3"
+    }
+   ]
+  },
+  {
+   "day": 40,
+   "readings": [
+    {
+     "book": "Deuteronomy",
+     "chapter_start": 4,
+     "verse_start": null,
+     "chapter_end": 7,
+     "verse_end": null,
+     "label": "Deuteronomy 4-7"
+    }
+   ]
+  },
+  {
+   "day": 41,
+   "readings": [
+    {
+     "book": "Deuteronomy",
+     "chapter_start": 8,
+     "verse_start": null,
+     "chapter_end": 11,
+     "verse_end": null,
+     "label": "Deuteronomy 8-11"
+    }
+   ]
+  },
+  {
+   "day": 42,
+   "readings": [
+    {
+     "book": "Deuteronomy",
+     "chapter_start": 12,
+     "verse_start": null,
+     "chapter_end": 15,
+     "verse_end": null,
+     "label": "Deuteronomy 12-15"
+    }
+   ]
+  },
+  {
+   "day": 43,
+   "readings": [
+    {
+     "book": "Deuteronomy",
+     "chapter_start": 16,
+     "verse_start": null,
+     "chapter_end": 19,
+     "verse_end": null,
+     "label": "Deuteronomy 16-19"
+    }
+   ]
+  },
+  {
+   "day": 44,
+   "readings": [
+    {
+     "book": "Deuteronomy",
+     "chapter_start": 20,
+     "verse_start": null,
+     "chapter_end": 23,
+     "verse_end": null,
+     "label": "Deuteronomy 20-23"
+    }
+   ]
+  },
+  {
+   "day": 45,
+   "readings": [
+    {
+     "book": "Deuteronomy",
+     "chapter_start": 24,
+     "verse_start": null,
+     "chapter_end": 27,
+     "verse_end": null,
+     "label": "Deuteronomy 24-27"
+    }
+   ]
+  },
+  {
+   "day": 46,
+   "readings": [
+    {
+     "book": "Deuteronomy",
+     "chapter_start": 28,
+     "verse_start": null,
+     "chapter_end": 31,
+     "verse_end": null,
+     "label": "Deuteronomy 28-31"
+    }
+   ]
+  },
+  {
+   "day": 47,
+   "readings": [
+    {
+     "book": "Deuteronomy",
+     "chapter_start": 32,
+     "verse_start": null,
+     "chapter_end": 34,
+     "verse_end": null,
+     "label": "Deuteronomy 32-34"
+    },
+    {
+     "book": "Joshua",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 1,
+     "verse_end": null,
+     "label": "Joshua 1"
+    }
+   ]
+  },
+  {
+   "day": 48,
+   "readings": [
+    {
+     "book": "Joshua",
+     "chapter_start": 2,
+     "verse_start": null,
+     "chapter_end": 5,
+     "verse_end": null,
+     "label": "Joshua 2-5"
+    }
+   ]
+  },
+  {
+   "day": 49,
+   "readings": [
+    {
+     "book": "Joshua",
+     "chapter_start": 6,
+     "verse_start": null,
+     "chapter_end": 9,
+     "verse_end": null,
+     "label": "Joshua 6-9"
+    }
+   ]
+  },
+  {
+   "day": 50,
+   "readings": [
+    {
+     "book": "Joshua",
+     "chapter_start": 10,
+     "verse_start": null,
+     "chapter_end": 13,
+     "verse_end": null,
+     "label": "Joshua 10-13"
+    }
+   ]
+  },
+  {
+   "day": 51,
+   "readings": [
+    {
+     "book": "Joshua",
+     "chapter_start": 14,
+     "verse_start": null,
+     "chapter_end": 17,
+     "verse_end": null,
+     "label": "Joshua 14-17"
+    }
+   ]
+  },
+  {
+   "day": 52,
+   "readings": [
+    {
+     "book": "Joshua",
+     "chapter_start": 18,
+     "verse_start": null,
+     "chapter_end": 21,
+     "verse_end": null,
+     "label": "Joshua 18-21"
+    }
+   ]
+  },
+  {
+   "day": 53,
+   "readings": [
+    {
+     "book": "Joshua",
+     "chapter_start": 22,
+     "verse_start": null,
+     "chapter_end": 24,
+     "verse_end": null,
+     "label": "Joshua 22-24"
+    },
+    {
+     "book": "Judges",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 1,
+     "verse_end": null,
+     "label": "Judges 1"
+    }
+   ]
+  },
+  {
+   "day": 54,
+   "readings": [
+    {
+     "book": "Judges",
+     "chapter_start": 2,
+     "verse_start": null,
+     "chapter_end": 5,
+     "verse_end": null,
+     "label": "Judges 2-5"
+    }
+   ]
+  },
+  {
+   "day": 55,
+   "readings": [
+    {
+     "book": "Judges",
+     "chapter_start": 6,
+     "verse_start": null,
+     "chapter_end": 9,
+     "verse_end": null,
+     "label": "Judges 6-9"
+    }
+   ]
+  },
+  {
+   "day": 56,
+   "readings": [
+    {
+     "book": "Judges",
+     "chapter_start": 10,
+     "verse_start": null,
+     "chapter_end": 13,
+     "verse_end": null,
+     "label": "Judges 10-13"
+    }
+   ]
+  },
+  {
+   "day": 57,
+   "readings": [
+    {
+     "book": "Judges",
+     "chapter_start": 14,
+     "verse_start": null,
+     "chapter_end": 17,
+     "verse_end": null,
+     "label": "Judges 14-17"
+    }
+   ]
+  },
+  {
+   "day": 58,
+   "readings": [
+    {
+     "book": "Judges",
+     "chapter_start": 18,
+     "verse_start": null,
+     "chapter_end": 21,
+     "verse_end": null,
+     "label": "Judges 18-21"
+    }
+   ]
+  },
+  {
+   "day": 59,
+   "readings": [
+    {
+     "book": "Ruth",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 4,
+     "verse_end": null,
+     "label": "Ruth 1-4"
+    }
+   ]
+  },
+  {
+   "day": 60,
+   "readings": [
+    {
+     "book": "1 Samuel",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 4,
+     "verse_end": null,
+     "label": "1 Samuel 1-4"
+    }
+   ]
+  },
+  {
+   "day": 61,
+   "readings": [
+    {
+     "book": "1 Samuel",
+     "chapter_start": 5,
+     "verse_start": null,
+     "chapter_end": 8,
+     "verse_end": null,
+     "label": "1 Samuel 5-8"
+    }
+   ]
+  },
+  {
+   "day": 62,
+   "readings": [
+    {
+     "book": "1 Samuel",
+     "chapter_start": 9,
+     "verse_start": null,
+     "chapter_end": 12,
+     "verse_end": null,
+     "label": "1 Samuel 9-12"
+    }
+   ]
+  },
+  {
+   "day": 63,
+   "readings": [
+    {
+     "book": "1 Samuel",
+     "chapter_start": 13,
+     "verse_start": null,
+     "chapter_end": 16,
+     "verse_end": null,
+     "label": "1 Samuel 13-16"
+    }
+   ]
+  },
+  {
+   "day": 64,
+   "readings": [
+    {
+     "book": "1 Samuel",
+     "chapter_start": 17,
+     "verse_start": null,
+     "chapter_end": 20,
+     "verse_end": null,
+     "label": "1 Samuel 17-20"
+    }
+   ]
+  },
+  {
+   "day": 65,
+   "readings": [
+    {
+     "book": "1 Samuel",
+     "chapter_start": 21,
+     "verse_start": null,
+     "chapter_end": 24,
+     "verse_end": null,
+     "label": "1 Samuel 21-24"
+    }
+   ]
+  },
+  {
+   "day": 66,
+   "readings": [
+    {
+     "book": "1 Samuel",
+     "chapter_start": 25,
+     "verse_start": null,
+     "chapter_end": 28,
+     "verse_end": null,
+     "label": "1 Samuel 25-28"
+    }
+   ]
+  },
+  {
+   "day": 67,
+   "readings": [
+    {
+     "book": "1 Samuel",
+     "chapter_start": 29,
+     "verse_start": null,
+     "chapter_end": 31,
+     "verse_end": null,
+     "label": "1 Samuel 29-31"
+    },
+    {
+     "book": "2 Samuel",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 1,
+     "verse_end": null,
+     "label": "2 Samuel 1"
+    }
+   ]
+  },
+  {
+   "day": 68,
+   "readings": [
+    {
+     "book": "2 Samuel",
+     "chapter_start": 2,
+     "verse_start": null,
+     "chapter_end": 5,
+     "verse_end": null,
+     "label": "2 Samuel 2-5"
+    }
+   ]
+  },
+  {
+   "day": 69,
+   "readings": [
+    {
+     "book": "2 Samuel",
+     "chapter_start": 6,
+     "verse_start": null,
+     "chapter_end": 9,
+     "verse_end": null,
+     "label": "2 Samuel 6-9"
+    }
+   ]
+  },
+  {
+   "day": 70,
+   "readings": [
+    {
+     "book": "2 Samuel",
+     "chapter_start": 10,
+     "verse_start": null,
+     "chapter_end": 13,
+     "verse_end": null,
+     "label": "2 Samuel 10-13"
+    }
+   ]
+  },
+  {
+   "day": 71,
+   "readings": [
+    {
+     "book": "2 Samuel",
+     "chapter_start": 14,
+     "verse_start": null,
+     "chapter_end": 17,
+     "verse_end": null,
+     "label": "2 Samuel 14-17"
+    }
+   ]
+  },
+  {
+   "day": 72,
+   "readings": [
+    {
+     "book": "2 Samuel",
+     "chapter_start": 18,
+     "verse_start": null,
+     "chapter_end": 21,
+     "verse_end": null,
+     "label": "2 Samuel 18-21"
+    }
+   ]
+  },
+  {
+   "day": 73,
+   "readings": [
+    {
+     "book": "2 Samuel",
+     "chapter_start": 22,
+     "verse_start": null,
+     "chapter_end": 24,
+     "verse_end": null,
+     "label": "2 Samuel 22-24"
+    },
+    {
+     "book": "1 Kings",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 1,
+     "verse_end": null,
+     "label": "1 Kings 1"
+    }
+   ]
+  },
+  {
+   "day": 74,
+   "readings": [
+    {
+     "book": "1 Kings",
+     "chapter_start": 2,
+     "verse_start": null,
+     "chapter_end": 5,
+     "verse_end": null,
+     "label": "1 Kings 2-5"
+    }
+   ]
+  },
+  {
+   "day": 75,
+   "readings": [
+    {
+     "book": "1 Kings",
+     "chapter_start": 6,
+     "verse_start": null,
+     "chapter_end": 9,
+     "verse_end": null,
+     "label": "1 Kings 6-9"
+    }
+   ]
+  },
+  {
+   "day": 76,
+   "readings": [
+    {
+     "book": "1 Kings",
+     "chapter_start": 10,
+     "verse_start": null,
+     "chapter_end": 13,
+     "verse_end": null,
+     "label": "1 Kings 10-13"
+    }
+   ]
+  },
+  {
+   "day": 77,
+   "readings": [
+    {
+     "book": "1 Kings",
+     "chapter_start": 14,
+     "verse_start": null,
+     "chapter_end": 17,
+     "verse_end": null,
+     "label": "1 Kings 14-17"
+    }
+   ]
+  },
+  {
+   "day": 78,
+   "readings": [
+    {
+     "book": "1 Kings",
+     "chapter_start": 18,
+     "verse_start": null,
+     "chapter_end": 21,
+     "verse_end": null,
+     "label": "1 Kings 18-21"
+    }
+   ]
+  },
+  {
+   "day": 79,
+   "readings": [
+    {
+     "book": "1 Kings",
+     "chapter_start": 22,
+     "verse_start": null,
+     "chapter_end": 22,
+     "verse_end": null,
+     "label": "1 Kings 22"
+    },
+    {
+     "book": "2 Kings",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 3,
+     "verse_end": null,
+     "label": "2 Kings 1-3"
+    }
+   ]
+  },
+  {
+   "day": 80,
+   "readings": [
+    {
+     "book": "2 Kings",
+     "chapter_start": 4,
+     "verse_start": null,
+     "chapter_end": 7,
+     "verse_end": null,
+     "label": "2 Kings 4-7"
+    }
+   ]
+  },
+  {
+   "day": 81,
+   "readings": [
+    {
+     "book": "2 Kings",
+     "chapter_start": 8,
+     "verse_start": null,
+     "chapter_end": 11,
+     "verse_end": null,
+     "label": "2 Kings 8-11"
+    }
+   ]
+  },
+  {
+   "day": 82,
+   "readings": [
+    {
+     "book": "2 Kings",
+     "chapter_start": 12,
+     "verse_start": null,
+     "chapter_end": 15,
+     "verse_end": null,
+     "label": "2 Kings 12-15"
+    }
+   ]
+  },
+  {
+   "day": 83,
+   "readings": [
+    {
+     "book": "2 Kings",
+     "chapter_start": 16,
+     "verse_start": null,
+     "chapter_end": 19,
+     "verse_end": null,
+     "label": "2 Kings 16-19"
+    }
+   ]
+  },
+  {
+   "day": 84,
+   "readings": [
+    {
+     "book": "2 Kings",
+     "chapter_start": 20,
+     "verse_start": null,
+     "chapter_end": 23,
+     "verse_end": null,
+     "label": "2 Kings 20-23"
+    }
+   ]
+  },
+  {
+   "day": 85,
+   "readings": [
+    {
+     "book": "2 Kings",
+     "chapter_start": 24,
+     "verse_start": null,
+     "chapter_end": 25,
+     "verse_end": null,
+     "label": "2 Kings 24-25"
+    },
+    {
+     "book": "1 Chronicles",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 2,
+     "verse_end": null,
+     "label": "1 Chronicles 1-2"
+    }
+   ]
+  },
+  {
+   "day": 86,
+   "readings": [
+    {
+     "book": "1 Chronicles",
+     "chapter_start": 3,
+     "verse_start": null,
+     "chapter_end": 6,
+     "verse_end": null,
+     "label": "1 Chronicles 3-6"
+    }
+   ]
+  },
+  {
+   "day": 87,
+   "readings": [
+    {
+     "book": "1 Chronicles",
+     "chapter_start": 7,
+     "verse_start": null,
+     "chapter_end": 10,
+     "verse_end": null,
+     "label": "1 Chronicles 7-10"
+    }
+   ]
+  },
+  {
+   "day": 88,
+   "readings": [
+    {
+     "book": "1 Chronicles",
+     "chapter_start": 11,
+     "verse_start": null,
+     "chapter_end": 14,
+     "verse_end": null,
+     "label": "1 Chronicles 11-14"
+    }
+   ]
+  },
+  {
+   "day": 89,
+   "readings": [
+    {
+     "book": "1 Chronicles",
+     "chapter_start": 15,
+     "verse_start": null,
+     "chapter_end": 18,
+     "verse_end": null,
+     "label": "1 Chronicles 15-18"
+    }
+   ]
+  },
+  {
+   "day": 90,
+   "readings": [
+    {
+     "book": "1 Chronicles",
+     "chapter_start": 19,
+     "verse_start": null,
+     "chapter_end": 22,
+     "verse_end": null,
+     "label": "1 Chronicles 19-22"
+    }
+   ]
+  },
+  {
+   "day": 91,
+   "readings": [
+    {
+     "book": "1 Chronicles",
+     "chapter_start": 23,
+     "verse_start": null,
+     "chapter_end": 26,
+     "verse_end": null,
+     "label": "1 Chronicles 23-26"
+    }
+   ]
+  },
+  {
+   "day": 92,
+   "readings": [
+    {
+     "book": "1 Chronicles",
+     "chapter_start": 27,
+     "verse_start": null,
+     "chapter_end": 29,
+     "verse_end": null,
+     "label": "1 Chronicles 27-29"
+    },
+    {
+     "book": "2 Chronicles",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 1,
+     "verse_end": null,
+     "label": "2 Chronicles 1"
+    }
+   ]
+  },
+  {
+   "day": 93,
+   "readings": [
+    {
+     "book": "2 Chronicles",
+     "chapter_start": 2,
+     "verse_start": null,
+     "chapter_end": 5,
+     "verse_end": null,
+     "label": "2 Chronicles 2-5"
+    }
+   ]
+  },
+  {
+   "day": 94,
+   "readings": [
+    {
+     "book": "2 Chronicles",
+     "chapter_start": 6,
+     "verse_start": null,
+     "chapter_end": 9,
+     "verse_end": null,
+     "label": "2 Chronicles 6-9"
+    }
+   ]
+  },
+  {
+   "day": 95,
+   "readings": [
+    {
+     "book": "2 Chronicles",
+     "chapter_start": 10,
+     "verse_start": null,
+     "chapter_end": 12,
+     "verse_end": null,
+     "label": "2 Chronicles 10-12"
+    }
+   ]
+  },
+  {
+   "day": 96,
+   "readings": [
+    {
+     "book": "2 Chronicles",
+     "chapter_start": 13,
+     "verse_start": null,
+     "chapter_end": 15,
+     "verse_end": null,
+     "label": "2 Chronicles 13-15"
+    }
+   ]
+  },
+  {
+   "day": 97,
+   "readings": [
+    {
+     "book": "2 Chronicles",
+     "chapter_start": 16,
+     "verse_start": null,
+     "chapter_end": 18,
+     "verse_end": null,
+     "label": "2 Chronicles 16-18"
+    }
+   ]
+  },
+  {
+   "day": 98,
+   "readings": [
+    {
+     "book": "2 Chronicles",
+     "chapter_start": 19,
+     "verse_start": null,
+     "chapter_end": 21,
+     "verse_end": null,
+     "label": "2 Chronicles 19-21"
+    }
+   ]
+  },
+  {
+   "day": 99,
+   "readings": [
+    {
+     "book": "2 Chronicles",
+     "chapter_start": 22,
+     "verse_start": null,
+     "chapter_end": 24,
+     "verse_end": null,
+     "label": "2 Chronicles 22-24"
+    }
+   ]
+  },
+  {
+   "day": 100,
+   "readings": [
+    {
+     "book": "2 Chronicles",
+     "chapter_start": 25,
+     "verse_start": null,
+     "chapter_end": 27,
+     "verse_end": null,
+     "label": "2 Chronicles 25-27"
+    }
+   ]
+  },
+  {
+   "day": 101,
+   "readings": [
+    {
+     "book": "2 Chronicles",
+     "chapter_start": 28,
+     "verse_start": null,
+     "chapter_end": 30,
+     "verse_end": null,
+     "label": "2 Chronicles 28-30"
+    }
+   ]
+  },
+  {
+   "day": 102,
+   "readings": [
+    {
+     "book": "2 Chronicles",
+     "chapter_start": 31,
+     "verse_start": null,
+     "chapter_end": 33,
+     "verse_end": null,
+     "label": "2 Chronicles 31-33"
+    }
+   ]
+  },
+  {
+   "day": 103,
+   "readings": [
+    {
+     "book": "2 Chronicles",
+     "chapter_start": 34,
+     "verse_start": null,
+     "chapter_end": 36,
+     "verse_end": null,
+     "label": "2 Chronicles 34-36"
+    }
+   ]
+  },
+  {
+   "day": 104,
+   "readings": [
+    {
+     "book": "Ezra",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 3,
+     "verse_end": null,
+     "label": "Ezra 1-3"
+    }
+   ]
+  },
+  {
+   "day": 105,
+   "readings": [
+    {
+     "book": "Ezra",
+     "chapter_start": 4,
+     "verse_start": null,
+     "chapter_end": 6,
+     "verse_end": null,
+     "label": "Ezra 4-6"
+    }
+   ]
+  },
+  {
+   "day": 106,
+   "readings": [
+    {
+     "book": "Ezra",
+     "chapter_start": 7,
+     "verse_start": null,
+     "chapter_end": 9,
+     "verse_end": null,
+     "label": "Ezra 7-9"
+    }
+   ]
+  },
+  {
+   "day": 107,
+   "readings": [
+    {
+     "book": "Ezra",
+     "chapter_start": 10,
+     "verse_start": null,
+     "chapter_end": 10,
+     "verse_end": null,
+     "label": "Ezra 10"
+    },
+    {
+     "book": "Nehemiah",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 2,
+     "verse_end": null,
+     "label": "Nehemiah 1-2"
+    }
+   ]
+  },
+  {
+   "day": 108,
+   "readings": [
+    {
+     "book": "Nehemiah",
+     "chapter_start": 3,
+     "verse_start": null,
+     "chapter_end": 5,
+     "verse_end": null,
+     "label": "Nehemiah 3-5"
+    }
+   ]
+  },
+  {
+   "day": 109,
+   "readings": [
+    {
+     "book": "Nehemiah",
+     "chapter_start": 6,
+     "verse_start": null,
+     "chapter_end": 8,
+     "verse_end": null,
+     "label": "Nehemiah 6-8"
+    }
+   ]
+  },
+  {
+   "day": 110,
+   "readings": [
+    {
+     "book": "Nehemiah",
+     "chapter_start": 9,
+     "verse_start": null,
+     "chapter_end": 11,
+     "verse_end": null,
+     "label": "Nehemiah 9-11"
+    }
+   ]
+  },
+  {
+   "day": 111,
+   "readings": [
+    {
+     "book": "Nehemiah",
+     "chapter_start": 12,
+     "verse_start": null,
+     "chapter_end": 13,
+     "verse_end": null,
+     "label": "Nehemiah 12-13"
+    },
+    {
+     "book": "Esther",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 1,
+     "verse_end": null,
+     "label": "Esther 1"
+    }
+   ]
+  },
+  {
+   "day": 112,
+   "readings": [
+    {
+     "book": "Esther",
+     "chapter_start": 2,
+     "verse_start": null,
+     "chapter_end": 4,
+     "verse_end": null,
+     "label": "Esther 2-4"
+    }
+   ]
+  },
+  {
+   "day": 113,
+   "readings": [
+    {
+     "book": "Esther",
+     "chapter_start": 5,
+     "verse_start": null,
+     "chapter_end": 7,
+     "verse_end": null,
+     "label": "Esther 5-7"
+    }
+   ]
+  },
+  {
+   "day": 114,
+   "readings": [
+    {
+     "book": "Esther",
+     "chapter_start": 8,
+     "verse_start": null,
+     "chapter_end": 10,
+     "verse_end": null,
+     "label": "Esther 8-10"
+    }
+   ]
+  },
+  {
+   "day": 115,
+   "readings": [
+    {
+     "book": "Job",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 3,
+     "verse_end": null,
+     "label": "Job 1-3"
+    }
+   ]
+  },
+  {
+   "day": 116,
+   "readings": [
+    {
+     "book": "Job",
+     "chapter_start": 4,
+     "verse_start": null,
+     "chapter_end": 6,
+     "verse_end": null,
+     "label": "Job 4-6"
+    }
+   ]
+  },
+  {
+   "day": 117,
+   "readings": [
+    {
+     "book": "Job",
+     "chapter_start": 7,
+     "verse_start": null,
+     "chapter_end": 9,
+     "verse_end": null,
+     "label": "Job 7-9"
+    }
+   ]
+  },
+  {
+   "day": 118,
+   "readings": [
+    {
+     "book": "Job",
+     "chapter_start": 10,
+     "verse_start": null,
+     "chapter_end": 12,
+     "verse_end": null,
+     "label": "Job 10-12"
+    }
+   ]
+  },
+  {
+   "day": 119,
+   "readings": [
+    {
+     "book": "Job",
+     "chapter_start": 13,
+     "verse_start": null,
+     "chapter_end": 15,
+     "verse_end": null,
+     "label": "Job 13-15"
+    }
+   ]
+  },
+  {
+   "day": 120,
+   "readings": [
+    {
+     "book": "Job",
+     "chapter_start": 16,
+     "verse_start": null,
+     "chapter_end": 18,
+     "verse_end": null,
+     "label": "Job 16-18"
+    }
+   ]
+  },
+  {
+   "day": 121,
+   "readings": [
+    {
+     "book": "Job",
+     "chapter_start": 19,
+     "verse_start": null,
+     "chapter_end": 21,
+     "verse_end": null,
+     "label": "Job 19-21"
+    }
+   ]
+  },
+  {
+   "day": 122,
+   "readings": [
+    {
+     "book": "Job",
+     "chapter_start": 22,
+     "verse_start": null,
+     "chapter_end": 24,
+     "verse_end": null,
+     "label": "Job 22-24"
+    }
+   ]
+  },
+  {
+   "day": 123,
+   "readings": [
+    {
+     "book": "Job",
+     "chapter_start": 25,
+     "verse_start": null,
+     "chapter_end": 27,
+     "verse_end": null,
+     "label": "Job 25-27"
+    }
+   ]
+  },
+  {
+   "day": 124,
+   "readings": [
+    {
+     "book": "Job",
+     "chapter_start": 28,
+     "verse_start": null,
+     "chapter_end": 30,
+     "verse_end": null,
+     "label": "Job 28-30"
+    }
+   ]
+  },
+  {
+   "day": 125,
+   "readings": [
+    {
+     "book": "Job",
+     "chapter_start": 31,
+     "verse_start": null,
+     "chapter_end": 33,
+     "verse_end": null,
+     "label": "Job 31-33"
+    }
+   ]
+  },
+  {
+   "day": 126,
+   "readings": [
+    {
+     "book": "Job",
+     "chapter_start": 34,
+     "verse_start": null,
+     "chapter_end": 36,
+     "verse_end": null,
+     "label": "Job 34-36"
+    }
+   ]
+  },
+  {
+   "day": 127,
+   "readings": [
+    {
+     "book": "Job",
+     "chapter_start": 37,
+     "verse_start": null,
+     "chapter_end": 39,
+     "verse_end": null,
+     "label": "Job 37-39"
+    }
+   ]
+  },
+  {
+   "day": 128,
+   "readings": [
+    {
+     "book": "Job",
+     "chapter_start": 40,
+     "verse_start": null,
+     "chapter_end": 42,
+     "verse_end": null,
+     "label": "Job 40-42"
+    }
+   ]
+  },
+  {
+   "day": 129,
+   "readings": [
+    {
+     "book": "Psalms",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 3,
+     "verse_end": null,
+     "label": "Psalms 1-3"
+    }
+   ]
+  },
+  {
+   "day": 130,
+   "readings": [
+    {
+     "book": "Psalms",
+     "chapter_start": 4,
+     "verse_start": null,
+     "chapter_end": 6,
+     "verse_end": null,
+     "label": "Psalms 4-6"
+    }
+   ]
+  },
+  {
+   "day": 131,
+   "readings": [
+    {
+     "book": "Psalms",
+     "chapter_start": 7,
+     "verse_start": null,
+     "chapter_end": 9,
+     "verse_end": null,
+     "label": "Psalms 7-9"
+    }
+   ]
+  },
+  {
+   "day": 132,
+   "readings": [
+    {
+     "book": "Psalms",
+     "chapter_start": 10,
+     "verse_start": null,
+     "chapter_end": 12,
+     "verse_end": null,
+     "label": "Psalms 10-12"
+    }
+   ]
+  },
+  {
+   "day": 133,
+   "readings": [
+    {
+     "book": "Psalms",
+     "chapter_start": 13,
+     "verse_start": null,
+     "chapter_end": 15,
+     "verse_end": null,
+     "label": "Psalms 13-15"
+    }
+   ]
+  },
+  {
+   "day": 134,
+   "readings": [
+    {
+     "book": "Psalms",
+     "chapter_start": 16,
+     "verse_start": null,
+     "chapter_end": 18,
+     "verse_end": null,
+     "label": "Psalms 16-18"
+    }
+   ]
+  },
+  {
+   "day": 135,
+   "readings": [
+    {
+     "book": "Psalms",
+     "chapter_start": 19,
+     "verse_start": null,
+     "chapter_end": 21,
+     "verse_end": null,
+     "label": "Psalms 19-21"
+    }
+   ]
+  },
+  {
+   "day": 136,
+   "readings": [
+    {
+     "book": "Psalms",
+     "chapter_start": 22,
+     "verse_start": null,
+     "chapter_end": 24,
+     "verse_end": null,
+     "label": "Psalms 22-24"
+    }
+   ]
+  },
+  {
+   "day": 137,
+   "readings": [
+    {
+     "book": "Psalms",
+     "chapter_start": 25,
+     "verse_start": null,
+     "chapter_end": 27,
+     "verse_end": null,
+     "label": "Psalms 25-27"
+    }
+   ]
+  },
+  {
+   "day": 138,
+   "readings": [
+    {
+     "book": "Psalms",
+     "chapter_start": 28,
+     "verse_start": null,
+     "chapter_end": 30,
+     "verse_end": null,
+     "label": "Psalms 28-30"
+    }
+   ]
+  },
+  {
+   "day": 139,
+   "readings": [
+    {
+     "book": "Psalms",
+     "chapter_start": 31,
+     "verse_start": null,
+     "chapter_end": 33,
+     "verse_end": null,
+     "label": "Psalms 31-33"
+    }
+   ]
+  },
+  {
+   "day": 140,
+   "readings": [
+    {
+     "book": "Psalms",
+     "chapter_start": 34,
+     "verse_start": null,
+     "chapter_end": 36,
+     "verse_end": null,
+     "label": "Psalms 34-36"
+    }
+   ]
+  },
+  {
+   "day": 141,
+   "readings": [
+    {
+     "book": "Psalms",
+     "chapter_start": 37,
+     "verse_start": null,
+     "chapter_end": 39,
+     "verse_end": null,
+     "label": "Psalms 37-39"
+    }
+   ]
+  },
+  {
+   "day": 142,
+   "readings": [
+    {
+     "book": "Psalms",
+     "chapter_start": 40,
+     "verse_start": null,
+     "chapter_end": 42,
+     "verse_end": null,
+     "label": "Psalms 40-42"
+    }
+   ]
+  },
+  {
+   "day": 143,
+   "readings": [
+    {
+     "book": "Psalms",
+     "chapter_start": 43,
+     "verse_start": null,
+     "chapter_end": 45,
+     "verse_end": null,
+     "label": "Psalms 43-45"
+    }
+   ]
+  },
+  {
+   "day": 144,
+   "readings": [
+    {
+     "book": "Psalms",
+     "chapter_start": 46,
+     "verse_start": null,
+     "chapter_end": 48,
+     "verse_end": null,
+     "label": "Psalms 46-48"
+    }
+   ]
+  },
+  {
+   "day": 145,
+   "readings": [
+    {
+     "book": "Psalms",
+     "chapter_start": 49,
+     "verse_start": null,
+     "chapter_end": 51,
+     "verse_end": null,
+     "label": "Psalms 49-51"
+    }
+   ]
+  },
+  {
+   "day": 146,
+   "readings": [
+    {
+     "book": "Psalms",
+     "chapter_start": 52,
+     "verse_start": null,
+     "chapter_end": 54,
+     "verse_end": null,
+     "label": "Psalms 52-54"
+    }
+   ]
+  },
+  {
+   "day": 147,
+   "readings": [
+    {
+     "book": "Psalms",
+     "chapter_start": 55,
+     "verse_start": null,
+     "chapter_end": 57,
+     "verse_end": null,
+     "label": "Psalms 55-57"
+    }
+   ]
+  },
+  {
+   "day": 148,
+   "readings": [
+    {
+     "book": "Psalms",
+     "chapter_start": 58,
+     "verse_start": null,
+     "chapter_end": 60,
+     "verse_end": null,
+     "label": "Psalms 58-60"
+    }
+   ]
+  },
+  {
+   "day": 149,
+   "readings": [
+    {
+     "book": "Psalms",
+     "chapter_start": 61,
+     "verse_start": null,
+     "chapter_end": 63,
+     "verse_end": null,
+     "label": "Psalms 61-63"
+    }
+   ]
+  },
+  {
+   "day": 150,
+   "readings": [
+    {
+     "book": "Psalms",
+     "chapter_start": 64,
+     "verse_start": null,
+     "chapter_end": 66,
+     "verse_end": null,
+     "label": "Psalms 64-66"
+    }
+   ]
+  },
+  {
+   "day": 151,
+   "readings": [
+    {
+     "book": "Psalms",
+     "chapter_start": 67,
+     "verse_start": null,
+     "chapter_end": 69,
+     "verse_end": null,
+     "label": "Psalms 67-69"
+    }
+   ]
+  },
+  {
+   "day": 152,
+   "readings": [
+    {
+     "book": "Psalms",
+     "chapter_start": 70,
+     "verse_start": null,
+     "chapter_end": 72,
+     "verse_end": null,
+     "label": "Psalms 70-72"
+    }
+   ]
+  },
+  {
+   "day": 153,
+   "readings": [
+    {
+     "book": "Psalms",
+     "chapter_start": 73,
+     "verse_start": null,
+     "chapter_end": 75,
+     "verse_end": null,
+     "label": "Psalms 73-75"
+    }
+   ]
+  },
+  {
+   "day": 154,
+   "readings": [
+    {
+     "book": "Psalms",
+     "chapter_start": 76,
+     "verse_start": null,
+     "chapter_end": 78,
+     "verse_end": null,
+     "label": "Psalms 76-78"
+    }
+   ]
+  },
+  {
+   "day": 155,
+   "readings": [
+    {
+     "book": "Psalms",
+     "chapter_start": 79,
+     "verse_start": null,
+     "chapter_end": 81,
+     "verse_end": null,
+     "label": "Psalms 79-81"
+    }
+   ]
+  },
+  {
+   "day": 156,
+   "readings": [
+    {
+     "book": "Psalms",
+     "chapter_start": 82,
+     "verse_start": null,
+     "chapter_end": 84,
+     "verse_end": null,
+     "label": "Psalms 82-84"
+    }
+   ]
+  },
+  {
+   "day": 157,
+   "readings": [
+    {
+     "book": "Psalms",
+     "chapter_start": 85,
+     "verse_start": null,
+     "chapter_end": 87,
+     "verse_end": null,
+     "label": "Psalms 85-87"
+    }
+   ]
+  },
+  {
+   "day": 158,
+   "readings": [
+    {
+     "book": "Psalms",
+     "chapter_start": 88,
+     "verse_start": null,
+     "chapter_end": 90,
+     "verse_end": null,
+     "label": "Psalms 88-90"
+    }
+   ]
+  },
+  {
+   "day": 159,
+   "readings": [
+    {
+     "book": "Psalms",
+     "chapter_start": 91,
+     "verse_start": null,
+     "chapter_end": 93,
+     "verse_end": null,
+     "label": "Psalms 91-93"
+    }
+   ]
+  },
+  {
+   "day": 160,
+   "readings": [
+    {
+     "book": "Psalms",
+     "chapter_start": 94,
+     "verse_start": null,
+     "chapter_end": 96,
+     "verse_end": null,
+     "label": "Psalms 94-96"
+    }
+   ]
+  },
+  {
+   "day": 161,
+   "readings": [
+    {
+     "book": "Psalms",
+     "chapter_start": 97,
+     "verse_start": null,
+     "chapter_end": 99,
+     "verse_end": null,
+     "label": "Psalms 97-99"
+    }
+   ]
+  },
+  {
+   "day": 162,
+   "readings": [
+    {
+     "book": "Psalms",
+     "chapter_start": 100,
+     "verse_start": null,
+     "chapter_end": 102,
+     "verse_end": null,
+     "label": "Psalms 100-102"
+    }
+   ]
+  },
+  {
+   "day": 163,
+   "readings": [
+    {
+     "book": "Psalms",
+     "chapter_start": 103,
+     "verse_start": null,
+     "chapter_end": 105,
+     "verse_end": null,
+     "label": "Psalms 103-105"
+    }
+   ]
+  },
+  {
+   "day": 164,
+   "readings": [
+    {
+     "book": "Psalms",
+     "chapter_start": 106,
+     "verse_start": null,
+     "chapter_end": 108,
+     "verse_end": null,
+     "label": "Psalms 106-108"
+    }
+   ]
+  },
+  {
+   "day": 165,
+   "readings": [
+    {
+     "book": "Psalms",
+     "chapter_start": 109,
+     "verse_start": null,
+     "chapter_end": 111,
+     "verse_end": null,
+     "label": "Psalms 109-111"
+    }
+   ]
+  },
+  {
+   "day": 166,
+   "readings": [
+    {
+     "book": "Psalms",
+     "chapter_start": 112,
+     "verse_start": null,
+     "chapter_end": 114,
+     "verse_end": null,
+     "label": "Psalms 112-114"
+    }
+   ]
+  },
+  {
+   "day": 167,
+   "readings": [
+    {
+     "book": "Psalms",
+     "chapter_start": 115,
+     "verse_start": null,
+     "chapter_end": 117,
+     "verse_end": null,
+     "label": "Psalms 115-117"
+    }
+   ]
+  },
+  {
+   "day": 168,
+   "readings": [
+    {
+     "book": "Psalms",
+     "chapter_start": 118,
+     "verse_start": null,
+     "chapter_end": 120,
+     "verse_end": null,
+     "label": "Psalms 118-120"
+    }
+   ]
+  },
+  {
+   "day": 169,
+   "readings": [
+    {
+     "book": "Psalms",
+     "chapter_start": 121,
+     "verse_start": null,
+     "chapter_end": 123,
+     "verse_end": null,
+     "label": "Psalms 121-123"
+    }
+   ]
+  },
+  {
+   "day": 170,
+   "readings": [
+    {
+     "book": "Psalms",
+     "chapter_start": 124,
+     "verse_start": null,
+     "chapter_end": 126,
+     "verse_end": null,
+     "label": "Psalms 124-126"
+    }
+   ]
+  },
+  {
+   "day": 171,
+   "readings": [
+    {
+     "book": "Psalms",
+     "chapter_start": 127,
+     "verse_start": null,
+     "chapter_end": 129,
+     "verse_end": null,
+     "label": "Psalms 127-129"
+    }
+   ]
+  },
+  {
+   "day": 172,
+   "readings": [
+    {
+     "book": "Psalms",
+     "chapter_start": 130,
+     "verse_start": null,
+     "chapter_end": 132,
+     "verse_end": null,
+     "label": "Psalms 130-132"
+    }
+   ]
+  },
+  {
+   "day": 173,
+   "readings": [
+    {
+     "book": "Psalms",
+     "chapter_start": 133,
+     "verse_start": null,
+     "chapter_end": 135,
+     "verse_end": null,
+     "label": "Psalms 133-135"
+    }
+   ]
+  },
+  {
+   "day": 174,
+   "readings": [
+    {
+     "book": "Psalms",
+     "chapter_start": 136,
+     "verse_start": null,
+     "chapter_end": 138,
+     "verse_end": null,
+     "label": "Psalms 136-138"
+    }
+   ]
+  },
+  {
+   "day": 175,
+   "readings": [
+    {
+     "book": "Psalms",
+     "chapter_start": 139,
+     "verse_start": null,
+     "chapter_end": 141,
+     "verse_end": null,
+     "label": "Psalms 139-141"
+    }
+   ]
+  },
+  {
+   "day": 176,
+   "readings": [
+    {
+     "book": "Psalms",
+     "chapter_start": 142,
+     "verse_start": null,
+     "chapter_end": 144,
+     "verse_end": null,
+     "label": "Psalms 142-144"
+    }
+   ]
+  },
+  {
+   "day": 177,
+   "readings": [
+    {
+     "book": "Psalms",
+     "chapter_start": 145,
+     "verse_start": null,
+     "chapter_end": 147,
+     "verse_end": null,
+     "label": "Psalms 145-147"
+    }
+   ]
+  },
+  {
+   "day": 178,
+   "readings": [
+    {
+     "book": "Psalms",
+     "chapter_start": 148,
+     "verse_start": null,
+     "chapter_end": 150,
+     "verse_end": null,
+     "label": "Psalms 148-150"
+    }
+   ]
+  },
+  {
+   "day": 179,
+   "readings": [
+    {
+     "book": "Proverbs",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 3,
+     "verse_end": null,
+     "label": "Proverbs 1-3"
+    }
+   ]
+  },
+  {
+   "day": 180,
+   "readings": [
+    {
+     "book": "Proverbs",
+     "chapter_start": 4,
+     "verse_start": null,
+     "chapter_end": 6,
+     "verse_end": null,
+     "label": "Proverbs 4-6"
+    }
+   ]
+  },
+  {
+   "day": 181,
+   "readings": [
+    {
+     "book": "Proverbs",
+     "chapter_start": 7,
+     "verse_start": null,
+     "chapter_end": 9,
+     "verse_end": null,
+     "label": "Proverbs 7-9"
+    }
+   ]
+  },
+  {
+   "day": 182,
+   "readings": [
+    {
+     "book": "Proverbs",
+     "chapter_start": 10,
+     "verse_start": null,
+     "chapter_end": 12,
+     "verse_end": null,
+     "label": "Proverbs 10-12"
+    }
+   ]
+  },
+  {
+   "day": 183,
+   "readings": [
+    {
+     "book": "Proverbs",
+     "chapter_start": 13,
+     "verse_start": null,
+     "chapter_end": 15,
+     "verse_end": null,
+     "label": "Proverbs 13-15"
+    }
+   ]
+  },
+  {
+   "day": 184,
+   "readings": [
+    {
+     "book": "Proverbs",
+     "chapter_start": 16,
+     "verse_start": null,
+     "chapter_end": 18,
+     "verse_end": null,
+     "label": "Proverbs 16-18"
+    }
+   ]
+  },
+  {
+   "day": 185,
+   "readings": [
+    {
+     "book": "Proverbs",
+     "chapter_start": 19,
+     "verse_start": null,
+     "chapter_end": 21,
+     "verse_end": null,
+     "label": "Proverbs 19-21"
+    }
+   ]
+  },
+  {
+   "day": 186,
+   "readings": [
+    {
+     "book": "Proverbs",
+     "chapter_start": 22,
+     "verse_start": null,
+     "chapter_end": 24,
+     "verse_end": null,
+     "label": "Proverbs 22-24"
+    }
+   ]
+  },
+  {
+   "day": 187,
+   "readings": [
+    {
+     "book": "Proverbs",
+     "chapter_start": 25,
+     "verse_start": null,
+     "chapter_end": 27,
+     "verse_end": null,
+     "label": "Proverbs 25-27"
+    }
+   ]
+  },
+  {
+   "day": 188,
+   "readings": [
+    {
+     "book": "Proverbs",
+     "chapter_start": 28,
+     "verse_start": null,
+     "chapter_end": 30,
+     "verse_end": null,
+     "label": "Proverbs 28-30"
+    }
+   ]
+  },
+  {
+   "day": 189,
+   "readings": [
+    {
+     "book": "Proverbs",
+     "chapter_start": 31,
+     "verse_start": null,
+     "chapter_end": 31,
+     "verse_end": null,
+     "label": "Proverbs 31"
+    },
+    {
+     "book": "Ecclesiastes",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 2,
+     "verse_end": null,
+     "label": "Ecclesiastes 1-2"
+    }
+   ]
+  },
+  {
+   "day": 190,
+   "readings": [
+    {
+     "book": "Ecclesiastes",
+     "chapter_start": 3,
+     "verse_start": null,
+     "chapter_end": 5,
+     "verse_end": null,
+     "label": "Ecclesiastes 3-5"
+    }
+   ]
+  },
+  {
+   "day": 191,
+   "readings": [
+    {
+     "book": "Ecclesiastes",
+     "chapter_start": 6,
+     "verse_start": null,
+     "chapter_end": 8,
+     "verse_end": null,
+     "label": "Ecclesiastes 6-8"
+    }
+   ]
+  },
+  {
+   "day": 192,
+   "readings": [
+    {
+     "book": "Ecclesiastes",
+     "chapter_start": 9,
+     "verse_start": null,
+     "chapter_end": 11,
+     "verse_end": null,
+     "label": "Ecclesiastes 9-11"
+    }
+   ]
+  },
+  {
+   "day": 193,
+   "readings": [
+    {
+     "book": "Ecclesiastes",
+     "chapter_start": 12,
+     "verse_start": null,
+     "chapter_end": 12,
+     "verse_end": null,
+     "label": "Ecclesiastes 12"
+    },
+    {
+     "book": "Song of Solomon",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 2,
+     "verse_end": null,
+     "label": "Song of Solomon 1-2"
+    }
+   ]
+  },
+  {
+   "day": 194,
+   "readings": [
+    {
+     "book": "Song of Solomon",
+     "chapter_start": 3,
+     "verse_start": null,
+     "chapter_end": 5,
+     "verse_end": null,
+     "label": "Song of Solomon 3-5"
+    }
+   ]
+  },
+  {
+   "day": 195,
+   "readings": [
+    {
+     "book": "Song of Solomon",
+     "chapter_start": 6,
+     "verse_start": null,
+     "chapter_end": 8,
+     "verse_end": null,
+     "label": "Song of Solomon 6-8"
+    }
+   ]
+  },
+  {
+   "day": 196,
+   "readings": [
+    {
+     "book": "Isaiah",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 3,
+     "verse_end": null,
+     "label": "Isaiah 1-3"
+    }
+   ]
+  },
+  {
+   "day": 197,
+   "readings": [
+    {
+     "book": "Isaiah",
+     "chapter_start": 4,
+     "verse_start": null,
+     "chapter_end": 6,
+     "verse_end": null,
+     "label": "Isaiah 4-6"
+    }
+   ]
+  },
+  {
+   "day": 198,
+   "readings": [
+    {
+     "book": "Isaiah",
+     "chapter_start": 7,
+     "verse_start": null,
+     "chapter_end": 9,
+     "verse_end": null,
+     "label": "Isaiah 7-9"
+    }
+   ]
+  },
+  {
+   "day": 199,
+   "readings": [
+    {
+     "book": "Isaiah",
+     "chapter_start": 10,
+     "verse_start": null,
+     "chapter_end": 12,
+     "verse_end": null,
+     "label": "Isaiah 10-12"
+    }
+   ]
+  },
+  {
+   "day": 200,
+   "readings": [
+    {
+     "book": "Isaiah",
+     "chapter_start": 13,
+     "verse_start": null,
+     "chapter_end": 15,
+     "verse_end": null,
+     "label": "Isaiah 13-15"
+    }
+   ]
+  },
+  {
+   "day": 201,
+   "readings": [
+    {
+     "book": "Isaiah",
+     "chapter_start": 16,
+     "verse_start": null,
+     "chapter_end": 18,
+     "verse_end": null,
+     "label": "Isaiah 16-18"
+    }
+   ]
+  },
+  {
+   "day": 202,
+   "readings": [
+    {
+     "book": "Isaiah",
+     "chapter_start": 19,
+     "verse_start": null,
+     "chapter_end": 21,
+     "verse_end": null,
+     "label": "Isaiah 19-21"
+    }
+   ]
+  },
+  {
+   "day": 203,
+   "readings": [
+    {
+     "book": "Isaiah",
+     "chapter_start": 22,
+     "verse_start": null,
+     "chapter_end": 24,
+     "verse_end": null,
+     "label": "Isaiah 22-24"
+    }
+   ]
+  },
+  {
+   "day": 204,
+   "readings": [
+    {
+     "book": "Isaiah",
+     "chapter_start": 25,
+     "verse_start": null,
+     "chapter_end": 27,
+     "verse_end": null,
+     "label": "Isaiah 25-27"
+    }
+   ]
+  },
+  {
+   "day": 205,
+   "readings": [
+    {
+     "book": "Isaiah",
+     "chapter_start": 28,
+     "verse_start": null,
+     "chapter_end": 30,
+     "verse_end": null,
+     "label": "Isaiah 28-30"
+    }
+   ]
+  },
+  {
+   "day": 206,
+   "readings": [
+    {
+     "book": "Isaiah",
+     "chapter_start": 31,
+     "verse_start": null,
+     "chapter_end": 33,
+     "verse_end": null,
+     "label": "Isaiah 31-33"
+    }
+   ]
+  },
+  {
+   "day": 207,
+   "readings": [
+    {
+     "book": "Isaiah",
+     "chapter_start": 34,
+     "verse_start": null,
+     "chapter_end": 36,
+     "verse_end": null,
+     "label": "Isaiah 34-36"
+    }
+   ]
+  },
+  {
+   "day": 208,
+   "readings": [
+    {
+     "book": "Isaiah",
+     "chapter_start": 37,
+     "verse_start": null,
+     "chapter_end": 39,
+     "verse_end": null,
+     "label": "Isaiah 37-39"
+    }
+   ]
+  },
+  {
+   "day": 209,
+   "readings": [
+    {
+     "book": "Isaiah",
+     "chapter_start": 40,
+     "verse_start": null,
+     "chapter_end": 42,
+     "verse_end": null,
+     "label": "Isaiah 40-42"
+    }
+   ]
+  },
+  {
+   "day": 210,
+   "readings": [
+    {
+     "book": "Isaiah",
+     "chapter_start": 43,
+     "verse_start": null,
+     "chapter_end": 45,
+     "verse_end": null,
+     "label": "Isaiah 43-45"
+    }
+   ]
+  },
+  {
+   "day": 211,
+   "readings": [
+    {
+     "book": "Isaiah",
+     "chapter_start": 46,
+     "verse_start": null,
+     "chapter_end": 48,
+     "verse_end": null,
+     "label": "Isaiah 46-48"
+    }
+   ]
+  },
+  {
+   "day": 212,
+   "readings": [
+    {
+     "book": "Isaiah",
+     "chapter_start": 49,
+     "verse_start": null,
+     "chapter_end": 51,
+     "verse_end": null,
+     "label": "Isaiah 49-51"
+    }
+   ]
+  },
+  {
+   "day": 213,
+   "readings": [
+    {
+     "book": "Isaiah",
+     "chapter_start": 52,
+     "verse_start": null,
+     "chapter_end": 54,
+     "verse_end": null,
+     "label": "Isaiah 52-54"
+    }
+   ]
+  },
+  {
+   "day": 214,
+   "readings": [
+    {
+     "book": "Isaiah",
+     "chapter_start": 55,
+     "verse_start": null,
+     "chapter_end": 57,
+     "verse_end": null,
+     "label": "Isaiah 55-57"
+    }
+   ]
+  },
+  {
+   "day": 215,
+   "readings": [
+    {
+     "book": "Isaiah",
+     "chapter_start": 58,
+     "verse_start": null,
+     "chapter_end": 60,
+     "verse_end": null,
+     "label": "Isaiah 58-60"
+    }
+   ]
+  },
+  {
+   "day": 216,
+   "readings": [
+    {
+     "book": "Isaiah",
+     "chapter_start": 61,
+     "verse_start": null,
+     "chapter_end": 63,
+     "verse_end": null,
+     "label": "Isaiah 61-63"
+    }
+   ]
+  },
+  {
+   "day": 217,
+   "readings": [
+    {
+     "book": "Isaiah",
+     "chapter_start": 64,
+     "verse_start": null,
+     "chapter_end": 66,
+     "verse_end": null,
+     "label": "Isaiah 64-66"
+    }
+   ]
+  },
+  {
+   "day": 218,
+   "readings": [
+    {
+     "book": "Jeremiah",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 3,
+     "verse_end": null,
+     "label": "Jeremiah 1-3"
+    }
+   ]
+  },
+  {
+   "day": 219,
+   "readings": [
+    {
+     "book": "Jeremiah",
+     "chapter_start": 4,
+     "verse_start": null,
+     "chapter_end": 6,
+     "verse_end": null,
+     "label": "Jeremiah 4-6"
+    }
+   ]
+  },
+  {
+   "day": 220,
+   "readings": [
+    {
+     "book": "Jeremiah",
+     "chapter_start": 7,
+     "verse_start": null,
+     "chapter_end": 9,
+     "verse_end": null,
+     "label": "Jeremiah 7-9"
+    }
+   ]
+  },
+  {
+   "day": 221,
+   "readings": [
+    {
+     "book": "Jeremiah",
+     "chapter_start": 10,
+     "verse_start": null,
+     "chapter_end": 12,
+     "verse_end": null,
+     "label": "Jeremiah 10-12"
+    }
+   ]
+  },
+  {
+   "day": 222,
+   "readings": [
+    {
+     "book": "Jeremiah",
+     "chapter_start": 13,
+     "verse_start": null,
+     "chapter_end": 15,
+     "verse_end": null,
+     "label": "Jeremiah 13-15"
+    }
+   ]
+  },
+  {
+   "day": 223,
+   "readings": [
+    {
+     "book": "Jeremiah",
+     "chapter_start": 16,
+     "verse_start": null,
+     "chapter_end": 18,
+     "verse_end": null,
+     "label": "Jeremiah 16-18"
+    }
+   ]
+  },
+  {
+   "day": 224,
+   "readings": [
+    {
+     "book": "Jeremiah",
+     "chapter_start": 19,
+     "verse_start": null,
+     "chapter_end": 21,
+     "verse_end": null,
+     "label": "Jeremiah 19-21"
+    }
+   ]
+  },
+  {
+   "day": 225,
+   "readings": [
+    {
+     "book": "Jeremiah",
+     "chapter_start": 22,
+     "verse_start": null,
+     "chapter_end": 24,
+     "verse_end": null,
+     "label": "Jeremiah 22-24"
+    }
+   ]
+  },
+  {
+   "day": 226,
+   "readings": [
+    {
+     "book": "Jeremiah",
+     "chapter_start": 25,
+     "verse_start": null,
+     "chapter_end": 27,
+     "verse_end": null,
+     "label": "Jeremiah 25-27"
+    }
+   ]
+  },
+  {
+   "day": 227,
+   "readings": [
+    {
+     "book": "Jeremiah",
+     "chapter_start": 28,
+     "verse_start": null,
+     "chapter_end": 30,
+     "verse_end": null,
+     "label": "Jeremiah 28-30"
+    }
+   ]
+  },
+  {
+   "day": 228,
+   "readings": [
+    {
+     "book": "Jeremiah",
+     "chapter_start": 31,
+     "verse_start": null,
+     "chapter_end": 33,
+     "verse_end": null,
+     "label": "Jeremiah 31-33"
+    }
+   ]
+  },
+  {
+   "day": 229,
+   "readings": [
+    {
+     "book": "Jeremiah",
+     "chapter_start": 34,
+     "verse_start": null,
+     "chapter_end": 36,
+     "verse_end": null,
+     "label": "Jeremiah 34-36"
+    }
+   ]
+  },
+  {
+   "day": 230,
+   "readings": [
+    {
+     "book": "Jeremiah",
+     "chapter_start": 37,
+     "verse_start": null,
+     "chapter_end": 39,
+     "verse_end": null,
+     "label": "Jeremiah 37-39"
+    }
+   ]
+  },
+  {
+   "day": 231,
+   "readings": [
+    {
+     "book": "Jeremiah",
+     "chapter_start": 40,
+     "verse_start": null,
+     "chapter_end": 42,
+     "verse_end": null,
+     "label": "Jeremiah 40-42"
+    }
+   ]
+  },
+  {
+   "day": 232,
+   "readings": [
+    {
+     "book": "Jeremiah",
+     "chapter_start": 43,
+     "verse_start": null,
+     "chapter_end": 45,
+     "verse_end": null,
+     "label": "Jeremiah 43-45"
+    }
+   ]
+  },
+  {
+   "day": 233,
+   "readings": [
+    {
+     "book": "Jeremiah",
+     "chapter_start": 46,
+     "verse_start": null,
+     "chapter_end": 48,
+     "verse_end": null,
+     "label": "Jeremiah 46-48"
+    }
+   ]
+  },
+  {
+   "day": 234,
+   "readings": [
+    {
+     "book": "Jeremiah",
+     "chapter_start": 49,
+     "verse_start": null,
+     "chapter_end": 51,
+     "verse_end": null,
+     "label": "Jeremiah 49-51"
+    }
+   ]
+  },
+  {
+   "day": 235,
+   "readings": [
+    {
+     "book": "Jeremiah",
+     "chapter_start": 52,
+     "verse_start": null,
+     "chapter_end": 52,
+     "verse_end": null,
+     "label": "Jeremiah 52"
+    },
+    {
+     "book": "Lamentations",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 2,
+     "verse_end": null,
+     "label": "Lamentations 1-2"
+    }
+   ]
+  },
+  {
+   "day": 236,
+   "readings": [
+    {
+     "book": "Lamentations",
+     "chapter_start": 3,
+     "verse_start": null,
+     "chapter_end": 5,
+     "verse_end": null,
+     "label": "Lamentations 3-5"
+    }
+   ]
+  },
+  {
+   "day": 237,
+   "readings": [
+    {
+     "book": "Ezekiel",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 3,
+     "verse_end": null,
+     "label": "Ezekiel 1-3"
+    }
+   ]
+  },
+  {
+   "day": 238,
+   "readings": [
+    {
+     "book": "Ezekiel",
+     "chapter_start": 4,
+     "verse_start": null,
+     "chapter_end": 6,
+     "verse_end": null,
+     "label": "Ezekiel 4-6"
+    }
+   ]
+  },
+  {
+   "day": 239,
+   "readings": [
+    {
+     "book": "Ezekiel",
+     "chapter_start": 7,
+     "verse_start": null,
+     "chapter_end": 9,
+     "verse_end": null,
+     "label": "Ezekiel 7-9"
+    }
+   ]
+  },
+  {
+   "day": 240,
+   "readings": [
+    {
+     "book": "Ezekiel",
+     "chapter_start": 10,
+     "verse_start": null,
+     "chapter_end": 12,
+     "verse_end": null,
+     "label": "Ezekiel 10-12"
+    }
+   ]
+  },
+  {
+   "day": 241,
+   "readings": [
+    {
+     "book": "Ezekiel",
+     "chapter_start": 13,
+     "verse_start": null,
+     "chapter_end": 15,
+     "verse_end": null,
+     "label": "Ezekiel 13-15"
+    }
+   ]
+  },
+  {
+   "day": 242,
+   "readings": [
+    {
+     "book": "Ezekiel",
+     "chapter_start": 16,
+     "verse_start": null,
+     "chapter_end": 18,
+     "verse_end": null,
+     "label": "Ezekiel 16-18"
+    }
+   ]
+  },
+  {
+   "day": 243,
+   "readings": [
+    {
+     "book": "Ezekiel",
+     "chapter_start": 19,
+     "verse_start": null,
+     "chapter_end": 21,
+     "verse_end": null,
+     "label": "Ezekiel 19-21"
+    }
+   ]
+  },
+  {
+   "day": 244,
+   "readings": [
+    {
+     "book": "Ezekiel",
+     "chapter_start": 22,
+     "verse_start": null,
+     "chapter_end": 24,
+     "verse_end": null,
+     "label": "Ezekiel 22-24"
+    }
+   ]
+  },
+  {
+   "day": 245,
+   "readings": [
+    {
+     "book": "Ezekiel",
+     "chapter_start": 25,
+     "verse_start": null,
+     "chapter_end": 27,
+     "verse_end": null,
+     "label": "Ezekiel 25-27"
+    }
+   ]
+  },
+  {
+   "day": 246,
+   "readings": [
+    {
+     "book": "Ezekiel",
+     "chapter_start": 28,
+     "verse_start": null,
+     "chapter_end": 30,
+     "verse_end": null,
+     "label": "Ezekiel 28-30"
+    }
+   ]
+  },
+  {
+   "day": 247,
+   "readings": [
+    {
+     "book": "Ezekiel",
+     "chapter_start": 31,
+     "verse_start": null,
+     "chapter_end": 33,
+     "verse_end": null,
+     "label": "Ezekiel 31-33"
+    }
+   ]
+  },
+  {
+   "day": 248,
+   "readings": [
+    {
+     "book": "Ezekiel",
+     "chapter_start": 34,
+     "verse_start": null,
+     "chapter_end": 36,
+     "verse_end": null,
+     "label": "Ezekiel 34-36"
+    }
+   ]
+  },
+  {
+   "day": 249,
+   "readings": [
+    {
+     "book": "Ezekiel",
+     "chapter_start": 37,
+     "verse_start": null,
+     "chapter_end": 39,
+     "verse_end": null,
+     "label": "Ezekiel 37-39"
+    }
+   ]
+  },
+  {
+   "day": 250,
+   "readings": [
+    {
+     "book": "Ezekiel",
+     "chapter_start": 40,
+     "verse_start": null,
+     "chapter_end": 42,
+     "verse_end": null,
+     "label": "Ezekiel 40-42"
+    }
+   ]
+  },
+  {
+   "day": 251,
+   "readings": [
+    {
+     "book": "Ezekiel",
+     "chapter_start": 43,
+     "verse_start": null,
+     "chapter_end": 45,
+     "verse_end": null,
+     "label": "Ezekiel 43-45"
+    }
+   ]
+  },
+  {
+   "day": 252,
+   "readings": [
+    {
+     "book": "Ezekiel",
+     "chapter_start": 46,
+     "verse_start": null,
+     "chapter_end": 48,
+     "verse_end": null,
+     "label": "Ezekiel 46-48"
+    }
+   ]
+  },
+  {
+   "day": 253,
+   "readings": [
+    {
+     "book": "Daniel",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 3,
+     "verse_end": null,
+     "label": "Daniel 1-3"
+    }
+   ]
+  },
+  {
+   "day": 254,
+   "readings": [
+    {
+     "book": "Daniel",
+     "chapter_start": 4,
+     "verse_start": null,
+     "chapter_end": 6,
+     "verse_end": null,
+     "label": "Daniel 4-6"
+    }
+   ]
+  },
+  {
+   "day": 255,
+   "readings": [
+    {
+     "book": "Daniel",
+     "chapter_start": 7,
+     "verse_start": null,
+     "chapter_end": 9,
+     "verse_end": null,
+     "label": "Daniel 7-9"
+    }
+   ]
+  },
+  {
+   "day": 256,
+   "readings": [
+    {
+     "book": "Daniel",
+     "chapter_start": 10,
+     "verse_start": null,
+     "chapter_end": 12,
+     "verse_end": null,
+     "label": "Daniel 10-12"
+    }
+   ]
+  },
+  {
+   "day": 257,
+   "readings": [
+    {
+     "book": "Hosea",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 3,
+     "verse_end": null,
+     "label": "Hosea 1-3"
+    }
+   ]
+  },
+  {
+   "day": 258,
+   "readings": [
+    {
+     "book": "Hosea",
+     "chapter_start": 4,
+     "verse_start": null,
+     "chapter_end": 6,
+     "verse_end": null,
+     "label": "Hosea 4-6"
+    }
+   ]
+  },
+  {
+   "day": 259,
+   "readings": [
+    {
+     "book": "Hosea",
+     "chapter_start": 7,
+     "verse_start": null,
+     "chapter_end": 9,
+     "verse_end": null,
+     "label": "Hosea 7-9"
+    }
+   ]
+  },
+  {
+   "day": 260,
+   "readings": [
+    {
+     "book": "Hosea",
+     "chapter_start": 10,
+     "verse_start": null,
+     "chapter_end": 12,
+     "verse_end": null,
+     "label": "Hosea 10-12"
+    }
+   ]
+  },
+  {
+   "day": 261,
+   "readings": [
+    {
+     "book": "Hosea",
+     "chapter_start": 13,
+     "verse_start": null,
+     "chapter_end": 14,
+     "verse_end": null,
+     "label": "Hosea 13-14"
+    },
+    {
+     "book": "Joel",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 1,
+     "verse_end": null,
+     "label": "Joel 1"
+    }
+   ]
+  },
+  {
+   "day": 262,
+   "readings": [
+    {
+     "book": "Joel",
+     "chapter_start": 2,
+     "verse_start": null,
+     "chapter_end": 3,
+     "verse_end": null,
+     "label": "Joel 2-3"
+    },
+    {
+     "book": "Amos",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 1,
+     "verse_end": null,
+     "label": "Amos 1"
+    }
+   ]
+  },
+  {
+   "day": 263,
+   "readings": [
+    {
+     "book": "Amos",
+     "chapter_start": 2,
+     "verse_start": null,
+     "chapter_end": 4,
+     "verse_end": null,
+     "label": "Amos 2-4"
+    }
+   ]
+  },
+  {
+   "day": 264,
+   "readings": [
+    {
+     "book": "Amos",
+     "chapter_start": 5,
+     "verse_start": null,
+     "chapter_end": 7,
+     "verse_end": null,
+     "label": "Amos 5-7"
+    }
+   ]
+  },
+  {
+   "day": 265,
+   "readings": [
+    {
+     "book": "Amos",
+     "chapter_start": 8,
+     "verse_start": null,
+     "chapter_end": 9,
+     "verse_end": null,
+     "label": "Amos 8-9"
+    },
+    {
+     "book": "Obadiah",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 1,
+     "verse_end": null,
+     "label": "Obadiah 1"
+    }
+   ]
+  },
+  {
+   "day": 266,
+   "readings": [
+    {
+     "book": "Jonah",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 3,
+     "verse_end": null,
+     "label": "Jonah 1-3"
+    }
+   ]
+  },
+  {
+   "day": 267,
+   "readings": [
+    {
+     "book": "Jonah",
+     "chapter_start": 4,
+     "verse_start": null,
+     "chapter_end": 4,
+     "verse_end": null,
+     "label": "Jonah 4"
+    },
+    {
+     "book": "Micah",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 2,
+     "verse_end": null,
+     "label": "Micah 1-2"
+    }
+   ]
+  },
+  {
+   "day": 268,
+   "readings": [
+    {
+     "book": "Micah",
+     "chapter_start": 3,
+     "verse_start": null,
+     "chapter_end": 5,
+     "verse_end": null,
+     "label": "Micah 3-5"
+    }
+   ]
+  },
+  {
+   "day": 269,
+   "readings": [
+    {
+     "book": "Micah",
+     "chapter_start": 6,
+     "verse_start": null,
+     "chapter_end": 7,
+     "verse_end": null,
+     "label": "Micah 6-7"
+    },
+    {
+     "book": "Nahum",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 1,
+     "verse_end": null,
+     "label": "Nahum 1"
+    }
+   ]
+  },
+  {
+   "day": 270,
+   "readings": [
+    {
+     "book": "Nahum",
+     "chapter_start": 2,
+     "verse_start": null,
+     "chapter_end": 3,
+     "verse_end": null,
+     "label": "Nahum 2-3"
+    },
+    {
+     "book": "Habakkuk",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 1,
+     "verse_end": null,
+     "label": "Habakkuk 1"
+    }
+   ]
+  },
+  {
+   "day": 271,
+   "readings": [
+    {
+     "book": "Habakkuk",
+     "chapter_start": 2,
+     "verse_start": null,
+     "chapter_end": 3,
+     "verse_end": null,
+     "label": "Habakkuk 2-3"
+    },
+    {
+     "book": "Zephaniah",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 1,
+     "verse_end": null,
+     "label": "Zephaniah 1"
+    }
+   ]
+  },
+  {
+   "day": 272,
+   "readings": [
+    {
+     "book": "Zephaniah",
+     "chapter_start": 2,
+     "verse_start": null,
+     "chapter_end": 3,
+     "verse_end": null,
+     "label": "Zephaniah 2-3"
+    },
+    {
+     "book": "Haggai",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 1,
+     "verse_end": null,
+     "label": "Haggai 1"
+    }
+   ]
+  },
+  {
+   "day": 273,
+   "readings": [
+    {
+     "book": "Haggai",
+     "chapter_start": 2,
+     "verse_start": null,
+     "chapter_end": 2,
+     "verse_end": null,
+     "label": "Haggai 2"
+    },
+    {
+     "book": "Zechariah",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 2,
+     "verse_end": null,
+     "label": "Zechariah 1-2"
+    }
+   ]
+  },
+  {
+   "day": 274,
+   "readings": [
+    {
+     "book": "Zechariah",
+     "chapter_start": 3,
+     "verse_start": null,
+     "chapter_end": 5,
+     "verse_end": null,
+     "label": "Zechariah 3-5"
+    }
+   ]
+  },
+  {
+   "day": 275,
+   "readings": [
+    {
+     "book": "Zechariah",
+     "chapter_start": 6,
+     "verse_start": null,
+     "chapter_end": 8,
+     "verse_end": null,
+     "label": "Zechariah 6-8"
+    }
+   ]
+  },
+  {
+   "day": 276,
+   "readings": [
+    {
+     "book": "Zechariah",
+     "chapter_start": 9,
+     "verse_start": null,
+     "chapter_end": 11,
+     "verse_end": null,
+     "label": "Zechariah 9-11"
+    }
+   ]
+  },
+  {
+   "day": 277,
+   "readings": [
+    {
+     "book": "Zechariah",
+     "chapter_start": 12,
+     "verse_start": null,
+     "chapter_end": 14,
+     "verse_end": null,
+     "label": "Zechariah 12-14"
+    }
+   ]
+  },
+  {
+   "day": 278,
+   "readings": [
+    {
+     "book": "Malachi",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 3,
+     "verse_end": null,
+     "label": "Malachi 1-3"
+    }
+   ]
+  },
+  {
+   "day": 279,
+   "readings": [
+    {
+     "book": "Malachi",
+     "chapter_start": 4,
+     "verse_start": null,
+     "chapter_end": 4,
+     "verse_end": null,
+     "label": "Malachi 4"
+    },
+    {
+     "book": "Matthew",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 2,
+     "verse_end": null,
+     "label": "Matthew 1-2"
+    }
+   ]
+  },
+  {
+   "day": 280,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 3,
+     "verse_start": null,
+     "chapter_end": 5,
+     "verse_end": null,
+     "label": "Matthew 3-5"
+    }
+   ]
+  },
+  {
+   "day": 281,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 6,
+     "verse_start": null,
+     "chapter_end": 8,
+     "verse_end": null,
+     "label": "Matthew 6-8"
+    }
+   ]
+  },
+  {
+   "day": 282,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 9,
+     "verse_start": null,
+     "chapter_end": 11,
+     "verse_end": null,
+     "label": "Matthew 9-11"
+    }
+   ]
+  },
+  {
+   "day": 283,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 12,
+     "verse_start": null,
+     "chapter_end": 14,
+     "verse_end": null,
+     "label": "Matthew 12-14"
+    }
+   ]
+  },
+  {
+   "day": 284,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 15,
+     "verse_start": null,
+     "chapter_end": 17,
+     "verse_end": null,
+     "label": "Matthew 15-17"
+    }
+   ]
+  },
+  {
+   "day": 285,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 18,
+     "verse_start": null,
+     "chapter_end": 20,
+     "verse_end": null,
+     "label": "Matthew 18-20"
+    }
+   ]
+  },
+  {
+   "day": 286,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 21,
+     "verse_start": null,
+     "chapter_end": 23,
+     "verse_end": null,
+     "label": "Matthew 21-23"
+    }
+   ]
+  },
+  {
+   "day": 287,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 24,
+     "verse_start": null,
+     "chapter_end": 26,
+     "verse_end": null,
+     "label": "Matthew 24-26"
+    }
+   ]
+  },
+  {
+   "day": 288,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 27,
+     "verse_start": null,
+     "chapter_end": 28,
+     "verse_end": null,
+     "label": "Matthew 27-28"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 1,
+     "verse_end": null,
+     "label": "Mark 1"
+    }
+   ]
+  },
+  {
+   "day": 289,
+   "readings": [
+    {
+     "book": "Mark",
+     "chapter_start": 2,
+     "verse_start": null,
+     "chapter_end": 4,
+     "verse_end": null,
+     "label": "Mark 2-4"
+    }
+   ]
+  },
+  {
+   "day": 290,
+   "readings": [
+    {
+     "book": "Mark",
+     "chapter_start": 5,
+     "verse_start": null,
+     "chapter_end": 7,
+     "verse_end": null,
+     "label": "Mark 5-7"
+    }
+   ]
+  },
+  {
+   "day": 291,
+   "readings": [
+    {
+     "book": "Mark",
+     "chapter_start": 8,
+     "verse_start": null,
+     "chapter_end": 10,
+     "verse_end": null,
+     "label": "Mark 8-10"
+    }
+   ]
+  },
+  {
+   "day": 292,
+   "readings": [
+    {
+     "book": "Mark",
+     "chapter_start": 11,
+     "verse_start": null,
+     "chapter_end": 13,
+     "verse_end": null,
+     "label": "Mark 11-13"
+    }
+   ]
+  },
+  {
+   "day": 293,
+   "readings": [
+    {
+     "book": "Mark",
+     "chapter_start": 14,
+     "verse_start": null,
+     "chapter_end": 16,
+     "verse_end": null,
+     "label": "Mark 14-16"
+    }
+   ]
+  },
+  {
+   "day": 294,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 3,
+     "verse_end": null,
+     "label": "Luke 1-3"
+    }
+   ]
+  },
+  {
+   "day": 295,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 4,
+     "verse_start": null,
+     "chapter_end": 6,
+     "verse_end": null,
+     "label": "Luke 4-6"
+    }
+   ]
+  },
+  {
+   "day": 296,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 7,
+     "verse_start": null,
+     "chapter_end": 9,
+     "verse_end": null,
+     "label": "Luke 7-9"
+    }
+   ]
+  },
+  {
+   "day": 297,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 10,
+     "verse_start": null,
+     "chapter_end": 12,
+     "verse_end": null,
+     "label": "Luke 10-12"
+    }
+   ]
+  },
+  {
+   "day": 298,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 13,
+     "verse_start": null,
+     "chapter_end": 15,
+     "verse_end": null,
+     "label": "Luke 13-15"
+    }
+   ]
+  },
+  {
+   "day": 299,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 16,
+     "verse_start": null,
+     "chapter_end": 18,
+     "verse_end": null,
+     "label": "Luke 16-18"
+    }
+   ]
+  },
+  {
+   "day": 300,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 19,
+     "verse_start": null,
+     "chapter_end": 21,
+     "verse_end": null,
+     "label": "Luke 19-21"
+    }
+   ]
+  },
+  {
+   "day": 301,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 22,
+     "verse_start": null,
+     "chapter_end": 24,
+     "verse_end": null,
+     "label": "Luke 22-24"
+    }
+   ]
+  },
+  {
+   "day": 302,
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 3,
+     "verse_end": null,
+     "label": "John 1-3"
+    }
+   ]
+  },
+  {
+   "day": 303,
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 4,
+     "verse_start": null,
+     "chapter_end": 6,
+     "verse_end": null,
+     "label": "John 4-6"
+    }
+   ]
+  },
+  {
+   "day": 304,
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 7,
+     "verse_start": null,
+     "chapter_end": 9,
+     "verse_end": null,
+     "label": "John 7-9"
+    }
+   ]
+  },
+  {
+   "day": 305,
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 10,
+     "verse_start": null,
+     "chapter_end": 12,
+     "verse_end": null,
+     "label": "John 10-12"
+    }
+   ]
+  },
+  {
+   "day": 306,
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 13,
+     "verse_start": null,
+     "chapter_end": 15,
+     "verse_end": null,
+     "label": "John 13-15"
+    }
+   ]
+  },
+  {
+   "day": 307,
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 16,
+     "verse_start": null,
+     "chapter_end": 18,
+     "verse_end": null,
+     "label": "John 16-18"
+    }
+   ]
+  },
+  {
+   "day": 308,
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 19,
+     "verse_start": null,
+     "chapter_end": 21,
+     "verse_end": null,
+     "label": "John 19-21"
+    }
+   ]
+  },
+  {
+   "day": 309,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 3,
+     "verse_end": null,
+     "label": "Acts 1-3"
+    }
+   ]
+  },
+  {
+   "day": 310,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 4,
+     "verse_start": null,
+     "chapter_end": 6,
+     "verse_end": null,
+     "label": "Acts 4-6"
+    }
+   ]
+  },
+  {
+   "day": 311,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 7,
+     "verse_start": null,
+     "chapter_end": 9,
+     "verse_end": null,
+     "label": "Acts 7-9"
+    }
+   ]
+  },
+  {
+   "day": 312,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 10,
+     "verse_start": null,
+     "chapter_end": 12,
+     "verse_end": null,
+     "label": "Acts 10-12"
+    }
+   ]
+  },
+  {
+   "day": 313,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 13,
+     "verse_start": null,
+     "chapter_end": 15,
+     "verse_end": null,
+     "label": "Acts 13-15"
+    }
+   ]
+  },
+  {
+   "day": 314,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 16,
+     "verse_start": null,
+     "chapter_end": 18,
+     "verse_end": null,
+     "label": "Acts 16-18"
+    }
+   ]
+  },
+  {
+   "day": 315,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 19,
+     "verse_start": null,
+     "chapter_end": 21,
+     "verse_end": null,
+     "label": "Acts 19-21"
+    }
+   ]
+  },
+  {
+   "day": 316,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 22,
+     "verse_start": null,
+     "chapter_end": 24,
+     "verse_end": null,
+     "label": "Acts 22-24"
+    }
+   ]
+  },
+  {
+   "day": 317,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 25,
+     "verse_start": null,
+     "chapter_end": 27,
+     "verse_end": null,
+     "label": "Acts 25-27"
+    }
+   ]
+  },
+  {
+   "day": 318,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 28,
+     "verse_start": null,
+     "chapter_end": 28,
+     "verse_end": null,
+     "label": "Acts 28"
+    },
+    {
+     "book": "Romans",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 2,
+     "verse_end": null,
+     "label": "Romans 1-2"
+    }
+   ]
+  },
+  {
+   "day": 319,
+   "readings": [
+    {
+     "book": "Romans",
+     "chapter_start": 3,
+     "verse_start": null,
+     "chapter_end": 5,
+     "verse_end": null,
+     "label": "Romans 3-5"
+    }
+   ]
+  },
+  {
+   "day": 320,
+   "readings": [
+    {
+     "book": "Romans",
+     "chapter_start": 6,
+     "verse_start": null,
+     "chapter_end": 8,
+     "verse_end": null,
+     "label": "Romans 6-8"
+    }
+   ]
+  },
+  {
+   "day": 321,
+   "readings": [
+    {
+     "book": "Romans",
+     "chapter_start": 9,
+     "verse_start": null,
+     "chapter_end": 11,
+     "verse_end": null,
+     "label": "Romans 9-11"
+    }
+   ]
+  },
+  {
+   "day": 322,
+   "readings": [
+    {
+     "book": "Romans",
+     "chapter_start": 12,
+     "verse_start": null,
+     "chapter_end": 14,
+     "verse_end": null,
+     "label": "Romans 12-14"
+    }
+   ]
+  },
+  {
+   "day": 323,
+   "readings": [
+    {
+     "book": "Romans",
+     "chapter_start": 15,
+     "verse_start": null,
+     "chapter_end": 16,
+     "verse_end": null,
+     "label": "Romans 15-16"
+    },
+    {
+     "book": "1 Corinthians",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 1,
+     "verse_end": null,
+     "label": "1 Corinthians 1"
+    }
+   ]
+  },
+  {
+   "day": 324,
+   "readings": [
+    {
+     "book": "1 Corinthians",
+     "chapter_start": 2,
+     "verse_start": null,
+     "chapter_end": 4,
+     "verse_end": null,
+     "label": "1 Corinthians 2-4"
+    }
+   ]
+  },
+  {
+   "day": 325,
+   "readings": [
+    {
+     "book": "1 Corinthians",
+     "chapter_start": 5,
+     "verse_start": null,
+     "chapter_end": 7,
+     "verse_end": null,
+     "label": "1 Corinthians 5-7"
+    }
+   ]
+  },
+  {
+   "day": 326,
+   "readings": [
+    {
+     "book": "1 Corinthians",
+     "chapter_start": 8,
+     "verse_start": null,
+     "chapter_end": 10,
+     "verse_end": null,
+     "label": "1 Corinthians 8-10"
+    }
+   ]
+  },
+  {
+   "day": 327,
+   "readings": [
+    {
+     "book": "1 Corinthians",
+     "chapter_start": 11,
+     "verse_start": null,
+     "chapter_end": 13,
+     "verse_end": null,
+     "label": "1 Corinthians 11-13"
+    }
+   ]
+  },
+  {
+   "day": 328,
+   "readings": [
+    {
+     "book": "1 Corinthians",
+     "chapter_start": 14,
+     "verse_start": null,
+     "chapter_end": 16,
+     "verse_end": null,
+     "label": "1 Corinthians 14-16"
+    }
+   ]
+  },
+  {
+   "day": 329,
+   "readings": [
+    {
+     "book": "2 Corinthians",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 3,
+     "verse_end": null,
+     "label": "2 Corinthians 1-3"
+    }
+   ]
+  },
+  {
+   "day": 330,
+   "readings": [
+    {
+     "book": "2 Corinthians",
+     "chapter_start": 4,
+     "verse_start": null,
+     "chapter_end": 6,
+     "verse_end": null,
+     "label": "2 Corinthians 4-6"
+    }
+   ]
+  },
+  {
+   "day": 331,
+   "readings": [
+    {
+     "book": "2 Corinthians",
+     "chapter_start": 7,
+     "verse_start": null,
+     "chapter_end": 9,
+     "verse_end": null,
+     "label": "2 Corinthians 7-9"
+    }
+   ]
+  },
+  {
+   "day": 332,
+   "readings": [
+    {
+     "book": "2 Corinthians",
+     "chapter_start": 10,
+     "verse_start": null,
+     "chapter_end": 12,
+     "verse_end": null,
+     "label": "2 Corinthians 10-12"
+    }
+   ]
+  },
+  {
+   "day": 333,
+   "readings": [
+    {
+     "book": "2 Corinthians",
+     "chapter_start": 13,
+     "verse_start": null,
+     "chapter_end": 13,
+     "verse_end": null,
+     "label": "2 Corinthians 13"
+    },
+    {
+     "book": "Galatians",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 2,
+     "verse_end": null,
+     "label": "Galatians 1-2"
+    }
+   ]
+  },
+  {
+   "day": 334,
+   "readings": [
+    {
+     "book": "Galatians",
+     "chapter_start": 3,
+     "verse_start": null,
+     "chapter_end": 5,
+     "verse_end": null,
+     "label": "Galatians 3-5"
+    }
+   ]
+  },
+  {
+   "day": 335,
+   "readings": [
+    {
+     "book": "Galatians",
+     "chapter_start": 6,
+     "verse_start": null,
+     "chapter_end": 6,
+     "verse_end": null,
+     "label": "Galatians 6"
+    },
+    {
+     "book": "Ephesians",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 2,
+     "verse_end": null,
+     "label": "Ephesians 1-2"
+    }
+   ]
+  },
+  {
+   "day": 336,
+   "readings": [
+    {
+     "book": "Ephesians",
+     "chapter_start": 3,
+     "verse_start": null,
+     "chapter_end": 5,
+     "verse_end": null,
+     "label": "Ephesians 3-5"
+    }
+   ]
+  },
+  {
+   "day": 337,
+   "readings": [
+    {
+     "book": "Ephesians",
+     "chapter_start": 6,
+     "verse_start": null,
+     "chapter_end": 6,
+     "verse_end": null,
+     "label": "Ephesians 6"
+    },
+    {
+     "book": "Philippians",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 2,
+     "verse_end": null,
+     "label": "Philippians 1-2"
+    }
+   ]
+  },
+  {
+   "day": 338,
+   "readings": [
+    {
+     "book": "Philippians",
+     "chapter_start": 3,
+     "verse_start": null,
+     "chapter_end": 4,
+     "verse_end": null,
+     "label": "Philippians 3-4"
+    },
+    {
+     "book": "Colossians",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 1,
+     "verse_end": null,
+     "label": "Colossians 1"
+    }
+   ]
+  },
+  {
+   "day": 339,
+   "readings": [
+    {
+     "book": "Colossians",
+     "chapter_start": 2,
+     "verse_start": null,
+     "chapter_end": 4,
+     "verse_end": null,
+     "label": "Colossians 2-4"
+    }
+   ]
+  },
+  {
+   "day": 340,
+   "readings": [
+    {
+     "book": "1 Thessalonians",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 3,
+     "verse_end": null,
+     "label": "1 Thessalonians 1-3"
+    }
+   ]
+  },
+  {
+   "day": 341,
+   "readings": [
+    {
+     "book": "1 Thessalonians",
+     "chapter_start": 4,
+     "verse_start": null,
+     "chapter_end": 5,
+     "verse_end": null,
+     "label": "1 Thessalonians 4-5"
+    },
+    {
+     "book": "2 Thessalonians",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 1,
+     "verse_end": null,
+     "label": "2 Thessalonians 1"
+    }
+   ]
+  },
+  {
+   "day": 342,
+   "readings": [
+    {
+     "book": "2 Thessalonians",
+     "chapter_start": 2,
+     "verse_start": null,
+     "chapter_end": 3,
+     "verse_end": null,
+     "label": "2 Thessalonians 2-3"
+    },
+    {
+     "book": "1 Timothy",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 1,
+     "verse_end": null,
+     "label": "1 Timothy 1"
+    }
+   ]
+  },
+  {
+   "day": 343,
+   "readings": [
+    {
+     "book": "1 Timothy",
+     "chapter_start": 2,
+     "verse_start": null,
+     "chapter_end": 4,
+     "verse_end": null,
+     "label": "1 Timothy 2-4"
+    }
+   ]
+  },
+  {
+   "day": 344,
+   "readings": [
+    {
+     "book": "1 Timothy",
+     "chapter_start": 5,
+     "verse_start": null,
+     "chapter_end": 6,
+     "verse_end": null,
+     "label": "1 Timothy 5-6"
+    },
+    {
+     "book": "2 Timothy",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 1,
+     "verse_end": null,
+     "label": "2 Timothy 1"
+    }
+   ]
+  },
+  {
+   "day": 345,
+   "readings": [
+    {
+     "book": "2 Timothy",
+     "chapter_start": 2,
+     "verse_start": null,
+     "chapter_end": 4,
+     "verse_end": null,
+     "label": "2 Timothy 2-4"
+    }
+   ]
+  },
+  {
+   "day": 346,
+   "readings": [
+    {
+     "book": "Titus",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 3,
+     "verse_end": null,
+     "label": "Titus 1-3"
+    }
+   ]
+  },
+  {
+   "day": 347,
+   "readings": [
+    {
+     "book": "Philemon",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 1,
+     "verse_end": null,
+     "label": "Philemon 1"
+    },
+    {
+     "book": "Hebrews",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 2,
+     "verse_end": null,
+     "label": "Hebrews 1-2"
+    }
+   ]
+  },
+  {
+   "day": 348,
+   "readings": [
+    {
+     "book": "Hebrews",
+     "chapter_start": 3,
+     "verse_start": null,
+     "chapter_end": 5,
+     "verse_end": null,
+     "label": "Hebrews 3-5"
+    }
+   ]
+  },
+  {
+   "day": 349,
+   "readings": [
+    {
+     "book": "Hebrews",
+     "chapter_start": 6,
+     "verse_start": null,
+     "chapter_end": 8,
+     "verse_end": null,
+     "label": "Hebrews 6-8"
+    }
+   ]
+  },
+  {
+   "day": 350,
+   "readings": [
+    {
+     "book": "Hebrews",
+     "chapter_start": 9,
+     "verse_start": null,
+     "chapter_end": 11,
+     "verse_end": null,
+     "label": "Hebrews 9-11"
+    }
+   ]
+  },
+  {
+   "day": 351,
+   "readings": [
+    {
+     "book": "Hebrews",
+     "chapter_start": 12,
+     "verse_start": null,
+     "chapter_end": 13,
+     "verse_end": null,
+     "label": "Hebrews 12-13"
+    },
+    {
+     "book": "James",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 1,
+     "verse_end": null,
+     "label": "James 1"
+    }
+   ]
+  },
+  {
+   "day": 352,
+   "readings": [
+    {
+     "book": "James",
+     "chapter_start": 2,
+     "verse_start": null,
+     "chapter_end": 4,
+     "verse_end": null,
+     "label": "James 2-4"
+    }
+   ]
+  },
+  {
+   "day": 353,
+   "readings": [
+    {
+     "book": "James",
+     "chapter_start": 5,
+     "verse_start": null,
+     "chapter_end": 5,
+     "verse_end": null,
+     "label": "James 5"
+    },
+    {
+     "book": "1 Peter",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 2,
+     "verse_end": null,
+     "label": "1 Peter 1-2"
+    }
+   ]
+  },
+  {
+   "day": 354,
+   "readings": [
+    {
+     "book": "1 Peter",
+     "chapter_start": 3,
+     "verse_start": null,
+     "chapter_end": 5,
+     "verse_end": null,
+     "label": "1 Peter 3-5"
+    }
+   ]
+  },
+  {
+   "day": 355,
+   "readings": [
+    {
+     "book": "2 Peter",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 3,
+     "verse_end": null,
+     "label": "2 Peter 1-3"
+    }
+   ]
+  },
+  {
+   "day": 356,
+   "readings": [
+    {
+     "book": "1 John",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 3,
+     "verse_end": null,
+     "label": "1 John 1-3"
+    }
+   ]
+  },
+  {
+   "day": 357,
+   "readings": [
+    {
+     "book": "1 John",
+     "chapter_start": 4,
+     "verse_start": null,
+     "chapter_end": 5,
+     "verse_end": null,
+     "label": "1 John 4-5"
+    },
+    {
+     "book": "2 John",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 1,
+     "verse_end": null,
+     "label": "2 John 1"
+    }
+   ]
+  },
+  {
+   "day": 358,
+   "readings": [
+    {
+     "book": "3 John",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 1,
+     "verse_end": null,
+     "label": "3 John 1"
+    },
+    {
+     "book": "Jude",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 1,
+     "verse_end": null,
+     "label": "Jude 1"
+    },
+    {
+     "book": "Revelation",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 1,
+     "verse_end": null,
+     "label": "Revelation 1"
+    }
+   ]
+  },
+  {
+   "day": 359,
+   "readings": [
+    {
+     "book": "Revelation",
+     "chapter_start": 2,
+     "verse_start": null,
+     "chapter_end": 4,
+     "verse_end": null,
+     "label": "Revelation 2-4"
+    }
+   ]
+  },
+  {
+   "day": 360,
+   "readings": [
+    {
+     "book": "Revelation",
+     "chapter_start": 5,
+     "verse_start": null,
+     "chapter_end": 7,
+     "verse_end": null,
+     "label": "Revelation 5-7"
+    }
+   ]
+  },
+  {
+   "day": 361,
+   "readings": [
+    {
+     "book": "Revelation",
+     "chapter_start": 8,
+     "verse_start": null,
+     "chapter_end": 10,
+     "verse_end": null,
+     "label": "Revelation 8-10"
+    }
+   ]
+  },
+  {
+   "day": 362,
+   "readings": [
+    {
+     "book": "Revelation",
+     "chapter_start": 11,
+     "verse_start": null,
+     "chapter_end": 13,
+     "verse_end": null,
+     "label": "Revelation 11-13"
+    }
+   ]
+  },
+  {
+   "day": 363,
+   "readings": [
+    {
+     "book": "Revelation",
+     "chapter_start": 14,
+     "verse_start": null,
+     "chapter_end": 16,
+     "verse_end": null,
+     "label": "Revelation 14-16"
+    }
+   ]
+  },
+  {
+   "day": 364,
+   "readings": [
+    {
+     "book": "Revelation",
+     "chapter_start": 17,
+     "verse_start": null,
+     "chapter_end": 19,
+     "verse_end": null,
+     "label": "Revelation 17-19"
+    }
+   ]
+  },
+  {
+   "day": 365,
+   "readings": [
+    {
+     "book": "Revelation",
+     "chapter_start": 20,
+     "verse_start": null,
+     "chapter_end": 22,
+     "verse_end": null,
+     "label": "Revelation 20-22"
+    }
+   ]
+  }
+ ]
+}
