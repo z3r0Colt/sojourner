@@ -1,0 +1,111 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: light dark;
+}
+
+html[data-theme="light"] {
+  color-scheme: light;
+}
+html[data-theme="dark"] {
+  color-scheme: dark;
+}
+html[data-theme="sepia"] {
+  color-scheme: light;
+}
+
+html[data-theme="sepia"] body {
+  background-color: #f4ecd8;
+  color: #433422;
+}
+
+body {
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.reading-font {
+  font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+}
+
+mark.highlight {
+  background-color: var(--hl-color, #fef08a);
+  color: #1f2937;
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
+mark.underline-only {
+  background-color: transparent;
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--hl-color, #f59e0b);
+  text-decoration-thickness: 2px;
+}
+
+.scripref {
+  color: rgb(37 99 235);
+  cursor: pointer;
+  text-decoration: none;
+}
+.scripref:hover {
+  text-decoration: underline;
+}
+
+::selection {
+  background: rgba(59, 130, 246, 0.35);
+}
+
+.note-richtext,
+.note-html {
+  line-height: 1.5;
+}
+.note-richtext ul,
+.note-html ul {
+  list-style: disc;
+  padding-left: 1.25rem;
+  margin: 0.25rem 0;
+}
+.note-richtext ol,
+.note-html ol {
+  list-style: decimal;
+  padding-left: 1.25rem;
+  margin: 0.25rem 0;
+}
+.note-richtext p,
+.note-html p {
+  margin: 0.25rem 0;
+}
+.note-richtext a,
+.note-html a,
+.note-html a.auto-verse-link {
+  color: rgb(37 99 235);
+  text-decoration: none;
+  cursor: pointer;
+}
+.note-richtext a:hover,
+.note-html a:hover {
+  text-decoration: underline;
+}
+:root:not([data-theme="light"]) .note-richtext a,
+:root:not([data-theme="light"]) .note-html a {
+  color: rgb(96 165 250);
+}
+:root[data-theme="dark"] .note-richtext a,
+:root[data-theme="dark"] .note-html a {
+  color: rgb(96 165 250);
+}
+.note-richtext:focus-within {
+  outline: none;
+}
+.note-richtext .ProseMirror {
+  outline: none;
+  min-height: 4.5em;
+}
+.note-richtext .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+  color: rgb(156 163 175);
+}

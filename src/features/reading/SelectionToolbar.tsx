@@ -1,0 +1,55 @@
+const COLORS = ["#fef08a", "#bbf7d0", "#bfdbfe", "#fbcfe8", "#fed7aa"];
+
+export function SelectionToolbar({
+  x,
+  y,
+  onPickColor,
+  onUnderline,
+  onAddNote,
+  onClose,
+}: {
+  x: number;
+  y: number;
+  onPickColor: (color: string) => void;
+  onUnderline: (color: string) => void;
+  onAddNote: () => void;
+  onClose: () => void;
+}) {
+  return (
+    <div
+      className="fixed z-40 flex items-center gap-1 rounded-lg border border-gray-200 bg-white p-1.5 shadow-lg dark:border-gray-700 dark:bg-gray-900"
+      style={{ left: x, top: y, transform: "translate(-50%, -110%)" }}
+      onMouseDown={(e) => e.preventDefault()}
+    >
+      {COLORS.map((c) => (
+        <button
+          key={c}
+          className="h-6 w-6 rounded-full border border-black/10"
+          style={{ backgroundColor: c }}
+          title="Highlight"
+          onClick={() => onPickColor(c)}
+        />
+      ))}
+      <button
+        className="ml-1 rounded px-2 py-1 text-xs text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+        onClick={() => onUnderline("#f59e0b")}
+        title="Underline"
+      >
+        U
+      </button>
+      <button
+        className="rounded px-2 py-1 text-xs text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+        onClick={onAddNote}
+        title="Add note"
+      >
+        Note
+      </button>
+      <button
+        className="rounded px-2 py-1 text-xs text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+        onClick={onClose}
+      >
+        ✕
+      </button>
+    </div>
+  );
+}
