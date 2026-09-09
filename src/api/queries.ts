@@ -200,6 +200,15 @@ export function useCrossReferences(bookId: number | null, chapter: number | null
   });
 }
 
+export function useMetricalPsalm(psalm: number | null) {
+  return useQuery({
+    queryKey: ["metricalPsalm", psalm],
+    queryFn: () => api.getMetricalPsalm(psalm as number),
+    enabled: psalm != null,
+    staleTime: Infinity,
+  });
+}
+
 export function useWestminsterDocuments() {
   return useQuery({ queryKey: ["westminsterDocuments"], queryFn: api.listWestminsterDocuments, staleTime: Infinity });
 }

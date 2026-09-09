@@ -191,6 +191,16 @@ export interface Footnote {
   char_offset: number | null;
 }
 
+export interface MetricalPsalmVerse {
+  verse: number;
+  text: string;
+}
+
+export interface MetricalPsalmVersion {
+  label: string | null;
+  verses: MetricalPsalmVerse[];
+}
+
 export interface CrossReference {
   to_book_id: number;
   to_chapter: number;

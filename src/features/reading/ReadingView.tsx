@@ -28,6 +28,7 @@ import { SelectionToolbar } from "./SelectionToolbar";
 import { HighlightPopup } from "./HighlightPopup";
 import { CommentaryPanel } from "../commentary/CommentaryPanel";
 import { CrossReferencesPanel } from "./CrossReferencesPanel";
+import { MetricalPsalmPanel } from "./MetricalPsalmPanel";
 import { FootnotePopup } from "./FootnotePopup";
 import { NoteEditorModal } from "../notes/NoteEditorModal";
 import { NoteBody } from "../notes/NoteBody";
@@ -288,9 +289,17 @@ export function ReadingView() {
             >
               Cross References
             </button>
+            {book.id === 19 && (
+              <button
+                onClick={() => setRightPanelTab("metrical")}
+                className={`flex-1 py-1.5 ${rightPanelTab === "metrical" ? "border-b-2 border-blue-500 font-medium text-blue-600 dark:text-blue-400" : "text-gray-500"}`}
+              >
+                Metrical
+              </button>
+            )}
           </div>
           <div className="min-h-0 flex-1">
-            {rightPanelTab === "commentary" ? (
+            {rightPanelTab === "commentary" && (
               <CommentaryPanel
                 book={book}
                 chapter={chapter}
@@ -299,8 +308,12 @@ export function ReadingView() {
                 onJumpToRef={jumpToRef}
                 onClose={toggleCommentaryPanel}
               />
-            ) : (
+            )}
+            {rightPanelTab === "crossrefs" && (
               <CrossReferencesPanel book={book} chapter={chapter} activeVerse={activeVerse} onClose={toggleCommentaryPanel} />
+            )}
+            {rightPanelTab === "metrical" && book.id === 19 && (
+              <MetricalPsalmPanel psalm={chapter} onClose={toggleCommentaryPanel} />
             )}
           </div>
         </div>

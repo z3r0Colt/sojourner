@@ -4,6 +4,7 @@ pub mod dictionary;
 pub mod footnotes;
 pub mod interlinear;
 pub mod morphology;
+pub mod psalter;
 pub mod strongs;
 pub mod westminster;
 pub mod westminster_commentary;
@@ -21,6 +22,7 @@ pub struct ReferenceImportReport {
     pub footnotes: usize,
     pub westminster_commentary_entries: usize,
     pub confession_sections: usize,
+    pub metrical_psalm_verses: usize,
 }
 
 fn table_count(conn: &Connection, table: &str) -> i64 {
@@ -114,6 +116,13 @@ pub fn import_all(conn: &mut Connection, reference_dir: &Path) -> anyhow::Result
         0
     };
 
+    let metrical_psalm_verses = if table_count(conn, "metrical_psalms") == 0 {
+        psalter::import(conn, &reference_dir.join("psalter"))
+            .map_err(|e| anyhow::anyhow!("metrical psalter import failed: {e:#}"))?
+    } else {
+        0
+    };
+
     Ok(ReferenceImportReport {
         strongs_entries,
         dictionary_entries,
@@ -124,5 +133,6 @@ pub fn import_all(conn: &mut Connection, reference_dir: &Path) -> anyhow::Result
         footnotes,
         westminster_commentary_entries,
         confession_sections,
+        metrical_psalm_verses,
     })
 }
