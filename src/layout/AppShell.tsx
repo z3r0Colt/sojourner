@@ -9,7 +9,8 @@ import { SearchOverlay } from "../features/search/SearchOverlay";
 import { TtsPlayerBar } from "../features/tts/TtsPlayerBar";
 import { useTtsStore } from "../state/ttsStore";
 
-const NAV_LINKS = [
+const NAV_LINKS: { to: string; label: string; end?: boolean }[] = [
+  { to: "/", label: "Bible", end: true },
   { to: "/lexicon", label: "Lexicon" },
   { to: "/dictionary", label: "Dictionary" },
   { to: "/westminster", label: "Westminster" },
@@ -87,7 +88,7 @@ export function AppShell() {
         {/* Row 1: brand, history, chapter nav, translation controls -- always present, never wraps. */}
         <div className="flex items-center gap-3 px-3 py-2">
           <Link to="/" className="text-sm font-semibold tracking-tight shrink-0">
-            Bible Study
+            Sojourner's Study Companion
           </Link>
 
           <button
@@ -160,19 +161,24 @@ export function AppShell() {
 
         {/* Row 2: section links + search/go-to -- fixed, always visible, never depends on row 1's width. */}
         <div className="flex items-center gap-1 overflow-x-auto border-t border-gray-100 px-3 py-1.5 dark:border-gray-900">
-          {NAV_LINKS.map((link) => (
-            <Link
-              key={link.to}
-              to={link.to}
-              className={`shrink-0 rounded px-2 py-1 text-sm ${
-                location.pathname.startsWith(link.to)
-                  ? "bg-blue-50 font-medium text-blue-700 dark:bg-blue-950 dark:text-blue-300"
-                  : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
-              }`}
-            >
-              {link.label}
-            </Link>
-          ))}
+          {NAV_LINKS.map((link) => {
+            const isActive = link.end
+              ? location.pathname === link.to
+              : location.pathname.startsWith(link.to);
+            return (
+              <Link
+                key={link.to}
+                to={link.to}
+                className={`shrink-0 rounded px-2 py-1 text-sm ${
+                  isActive
+                    ? "bg-blue-50 font-medium text-blue-700 dark:bg-blue-950 dark:text-blue-300"
+                    : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+                }`}
+              >
+                {link.label}
+              </Link>
+            );
+          })}
           <div className="flex-1" />
           <button
             onClick={() => setSearchOpen(true)}
