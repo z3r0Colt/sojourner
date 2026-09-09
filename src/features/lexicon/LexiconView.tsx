@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../../api/client";
 import { useStrongsEntry } from "../../api/queries";
+import { ConcordancePanel } from "./ConcordancePanel";
 
 export function LexiconView() {
   const { id } = useParams();
@@ -117,6 +118,7 @@ export function LexiconView() {
             <Link to="/" className="mt-4 inline-block text-sm text-blue-600 hover:underline dark:text-blue-400">
               ← Back to reading
             </Link>
+            <ConcordancePanel strongsId={entry.id} />
           </div>
         )}
       </div>

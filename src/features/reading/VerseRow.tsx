@@ -81,6 +81,7 @@ export function VerseRow({
   onHighlightClick,
   onNoteSymbolClick,
   onFootnoteClick,
+  onContextMenu,
   ttsActive,
 }: {
   verse: Verse;
@@ -96,6 +97,7 @@ export function VerseRow({
   onHighlightClick: (highlightId: number, x: number, y: number) => void;
   onNoteSymbolClick: (note: Note) => void;
   onFootnoteClick?: (footnote: Footnote, x: number, y: number) => void;
+  onContextMenu?: (verseNum: number, x: number, y: number) => void;
   /** True while this verse is the one currently being read aloud -- swaps to word-by-word highlighting. */
   ttsActive?: boolean;
 }) {
@@ -109,6 +111,11 @@ export function VerseRow({
     <div
       data-verse-row={verse.verse}
       onClick={() => onSelectVerse(verse.verse)}
+      onContextMenu={(e) => {
+        if (!onContextMenu) return;
+        e.preventDefault();
+        onContextMenu(verse.verse, e.clientX, e.clientY);
+      }}
       className={`reading-font mb-1 cursor-default rounded px-2 py-0.5 leading-relaxed transition-colors ${
         isActive ? "bg-blue-50 dark:bg-blue-950/40" : ""
       }`}
