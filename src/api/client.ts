@@ -18,6 +18,7 @@ import type {
   ConcordanceEntry,
   SermonNote,
   SermonNotePassageLink,
+  PrayerEntry,
   DictionaryEntry,
   DictionaryEntrySummary,
   InterlinearWord,
@@ -233,4 +234,56 @@ export const api = {
     }),
   deleteSermonNotePassage: (id: number) => invoke<void>("delete_sermon_note_passage", { id }),
   searchSermonNotes: (query: string, limit = 50) => invoke<SermonNote[]>("search_sermon_notes", { query, limit }),
+
+  listPrayerEntries: () => invoke<PrayerEntry[]>("list_prayer_entries"),
+  createPrayerEntry: (input: {
+    entryDate: string;
+    adoration?: string;
+    confession?: string;
+    thanksgiving?: string;
+    supplication?: string;
+    bookId?: number;
+    chapter?: number;
+    verseStart?: number;
+    verseEnd?: number;
+  }) =>
+    invoke<PrayerEntry>("create_prayer_entry", {
+      entryDate: input.entryDate,
+      adoration: input.adoration ?? null,
+      confession: input.confession ?? null,
+      thanksgiving: input.thanksgiving ?? null,
+      supplication: input.supplication ?? null,
+      bookId: input.bookId ?? null,
+      chapter: input.chapter ?? null,
+      verseStart: input.verseStart ?? null,
+      verseEnd: input.verseEnd ?? null,
+    }),
+  updatePrayerEntry: (
+    id: number,
+    input: {
+      entryDate: string;
+      adoration?: string;
+      confession?: string;
+      thanksgiving?: string;
+      supplication?: string;
+      bookId?: number;
+      chapter?: number;
+      verseStart?: number;
+      verseEnd?: number;
+    },
+  ) =>
+    invoke<void>("update_prayer_entry", {
+      id,
+      entryDate: input.entryDate,
+      adoration: input.adoration ?? null,
+      confession: input.confession ?? null,
+      thanksgiving: input.thanksgiving ?? null,
+      supplication: input.supplication ?? null,
+      bookId: input.bookId ?? null,
+      chapter: input.chapter ?? null,
+      verseStart: input.verseStart ?? null,
+      verseEnd: input.verseEnd ?? null,
+    }),
+  deletePrayerEntry: (id: number) => invoke<void>("delete_prayer_entry", { id }),
+  searchPrayerEntries: (query: string, limit = 50) => invoke<PrayerEntry[]>("search_prayer_entries", { query, limit }),
 };

@@ -436,4 +436,43 @@ export function useDeleteSermonNotePassage() {
   });
 }
 
+export function usePrayerEntries() {
+  return useQuery({ queryKey: ["prayerEntries"], queryFn: api.listPrayerEntries });
+}
+
+export function useCreatePrayerEntry() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: api.createPrayerEntry,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["prayerEntries"] }),
+  });
+}
+
+export function useUpdatePrayerEntry() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: {
+      id: number;
+      entryDate: string;
+      adoration?: string;
+      confession?: string;
+      thanksgiving?: string;
+      supplication?: string;
+      bookId?: number;
+      chapter?: number;
+      verseStart?: number;
+      verseEnd?: number;
+    }) => api.updatePrayerEntry(input.id, input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["prayerEntries"] }),
+  });
+}
+
+export function useDeletePrayerEntry() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: api.deletePrayerEntry,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["prayerEntries"] }),
+  });
+}
+
 export type { Verse };
