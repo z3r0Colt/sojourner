@@ -6,6 +6,7 @@ pub mod interlinear;
 pub mod morphology;
 pub mod psalter;
 pub mod strongs;
+pub mod treasury;
 pub mod westminster;
 pub mod westminster_commentary;
 
@@ -23,6 +24,7 @@ pub struct ReferenceImportReport {
     pub westminster_commentary_entries: usize,
     pub confession_sections: usize,
     pub metrical_psalm_verses: usize,
+    pub treasury_entries: usize,
 }
 
 fn table_count(conn: &Connection, table: &str) -> i64 {
@@ -40,6 +42,15 @@ fn document_exists(conn: &Connection, code: &str) -> bool {
         |_| Ok(()),
     )
     .is_ok()
+}
+
+/// treasury::import shares commentary_sources/sections/entries with the ThML
+/// commentaries (Barnes/Calvin/Matthew Henry/JFB, imported separately via
+/// scan_files before this function ever runs), so it can't be gated on that
+/// table being empty either -- gate on its own source code existing instead.
+fn commentary_source_exists(conn: &Connection, code: &str) -> bool {
+    conn.query_row("SELECT 1 FROM commentary_sources WHERE code = ?1", [code], |_| Ok(()))
+        .is_ok()
 }
 
 /// One-time import of bundled reference data (Strong's lexicon, Bible dictionary,
@@ -123,6 +134,13 @@ pub fn import_all(conn: &mut Connection, reference_dir: &Path) -> anyhow::Result
         0
     };
 
+    let treasury_entries = if !commentary_source_exists(conn, "treasury") {
+        treasury::import(conn, &reference_dir.join("treasury_of_david"))
+            .map_err(|e| anyhow::anyhow!("treasury of david import failed: {e:#}"))?
+    } else {
+        0
+    };
+
     Ok(ReferenceImportReport {
         strongs_entries,
         dictionary_entries,
@@ -134,5 +152,6 @@ pub fn import_all(conn: &mut Connection, reference_dir: &Path) -> anyhow::Result
         westminster_commentary_entries,
         confession_sections,
         metrical_psalm_verses,
+        treasury_entries,
     })
 }
