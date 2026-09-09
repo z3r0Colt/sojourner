@@ -22,56 +22,57 @@ pub fn run() {
                 .path()
                 .app_data_dir()
                 .expect("could not resolve app data dir");
-            let mut conn = db::open(&app_data_dir).expect("failed to open database");
 
-            let translation_count: i64 = conn
-                .query_row("SELECT COUNT(*) FROM translations", [], |r| r.get(0))
-                .unwrap_or(0);
-            let commentary_count: i64 = conn
-                .query_row("SELECT COUNT(*) FROM commentary_sources", [], |r| r.get(0))
-                .unwrap_or(0);
+            // Production installs ship a prebuilt, populated content.db as a
+            // bundled resource (see the `build_content_db` binary, run via
+            // `npm run build:content` ahead of `tauri build`) -- first launch
+            // never imports anything. The only way to reach the fallback below
+            // is `cargo tauri dev` without having run that builder first, or a
+            // release package that was assembled incorrectly.
+            let bundled_content_db = handle.path().resource_dir().ok().map(|d| d.join("content.db"));
+            let bundled_is_populated = bundled_content_db.as_deref().is_some_and(db::is_populated_content_db);
 
-            if translation_count == 0 || commentary_count == 0 {
-                let roots = paths::default_import_roots(&handle);
-                let files = import::discover_candidate_files(&roots);
-                let results = import::scan_files(&mut conn, &files);
-                for r in &results {
-                    println!("[first-run import] {} ({}): {}", r.path, r.format, r.status);
-                    if let Some(d) = &r.detail {
-                        println!("    {d}");
+            let content_db_path = if bundled_is_populated {
+                bundled_content_db.unwrap()
+            } else {
+                let fallback = app_data_dir.join("content.db");
+                #[cfg(debug_assertions)]
+                {
+                    let mut content_conn =
+                        db::open_content_db(&fallback).expect("failed to create content database");
+                    if db::content_db_is_empty(&content_conn) {
+                        // Compile-time path into this dev checkout -- never a real path once
+                        // built in release mode, since this whole block is compiled out then.
+                        let repo_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+                            .parent()
+                            .expect("src-tauri has a parent directory");
+                        println!("[dev] content.db is empty, building it from {}", repo_root.display());
+                        match import::populate_content_db(
+                            &mut content_conn,
+                            &repo_root.join("bibles"),
+                            &repo_root.join("commentaries"),
+                            &repo_root.join("reference"),
+                        ) {
+                            Ok(results) => {
+                                for r in &results {
+                                    println!("[dev import] {} ({}): {}", r.path, r.format, r.status);
+                                }
+                            }
+                            Err(e) => eprintln!("[dev import] content import failed: {e:#}"),
+                        }
                     }
                 }
-            }
-
-            let reference_tables = [
-                "strongs_entries",
-                "dictionary_entries",
-                "interlinear_words",
-                "cross_references",
-                "westminster_sections",
-                "morphology_words",
-                "footnotes",
-                "westminster_commentary_entries",
-            ];
-            let needs_reference_import = reference_tables.iter().any(|t| {
-                conn.query_row(&format!("SELECT COUNT(*) FROM {t}"), [], |r| r.get::<_, i64>(0))
-                    .unwrap_or(0)
-                    == 0
-            });
-            if needs_reference_import {
-                if let Some(reference_dir) = paths::reference_dir(&handle) {
-                    match import::reference::import_all(&mut conn, &reference_dir) {
-                        Ok(report) => println!(
-                            "[first-run import] reference data: {} strongs, {} dictionary, {} interlinear words, {} cross-refs, {} westminster sections, {} morphology words, {} footnotes, {} westminster commentary entries",
-                            report.strongs_entries, report.dictionary_entries, report.interlinear_words,
-                            report.cross_references, report.westminster_sections, report.morphology_words, report.footnotes,
-                            report.westminster_commentary_entries
-                        ),
-                        Err(e) => eprintln!("[first-run import] reference data import failed: {e:#}"),
-                    }
+                #[cfg(not(debug_assertions))]
+                {
+                    eprintln!(
+                        "[warning] no populated content.db bundled with this build -- \
+                         run `npm run build:content` before `tauri build`. Starting with no Bible content."
+                    );
                 }
-            }
+                fallback
+            };
 
+            let conn = db::open(&app_data_dir, &content_db_path).expect("failed to open database");
             app.manage(DbState(Mutex::new(conn)));
             Ok(())
         })

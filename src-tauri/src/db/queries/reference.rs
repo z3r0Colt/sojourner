@@ -55,7 +55,7 @@ pub fn search_strongs(conn: &Connection, query: &str, language: Option<&str>, li
         "SELECT se.id, se.language, se.original_word, se.transliteration, se.pronunciation, se.short_definition, se.definition, se.derivation, se.kjv_usage
          FROM strongs_fts f JOIN strongs_entries se ON se.rowid = f.rowid
          WHERE f MATCH ?1 {lang_clause}
-         ORDER BY se.id LIMIT ?2"
+         ORDER BY bm25(f) LIMIT ?2"
     );
     let mut stmt = conn.prepare(&sql)?;
     let rows = if let Some(lang) = language {
@@ -108,7 +108,7 @@ pub fn search_dictionary(conn: &Connection, query: &str, limit: i64) -> anyhow::
         .join(" ");
     let mut stmt = conn.prepare(
         "SELECT de.id, de.term, de.slug FROM dictionary_fts f JOIN dictionary_entries de ON de.id = f.rowid
-         WHERE f MATCH ?1 ORDER BY de.term LIMIT ?2",
+         WHERE f MATCH ?1 ORDER BY bm25(f) LIMIT ?2",
     )?;
     let rows = stmt.query_map(params![match_expr, limit], |r| {
         Ok(DictionaryEntrySummary {

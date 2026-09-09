@@ -16,7 +16,11 @@ fn main() -> anyhow::Result<()> {
     };
 
     let app_data_dir = PathBuf::from(std::env::var("APPDATA").unwrap()).join("com.shadesinc.biblestudy");
-    let mut conn = db::open(&app_data_dir)?;
+    let content_db_path = app_data_dir.join("content.db");
+    if !content_db_path.exists() {
+        db::open_content_db(&content_db_path)?;
+    }
+    let mut conn = db::open(&app_data_dir, &content_db_path)?;
 
     let files = import::discover_candidate_files(&dirs);
     println!("found {} candidate file(s)", files.len());

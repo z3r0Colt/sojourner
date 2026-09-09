@@ -6,7 +6,7 @@
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "npm run build",
+    "beforeBuildCommand": "npm run build:content && npm run build",
     "frontendDist": "../dist"
   },
   "app": {
@@ -38,9 +38,7 @@
       "icons/icon.ico"
     ],
     "resources": {
-      "../bibles": "bibles",
-      "../commentaries": "commentaries",
-      "../reference": "reference"
+      "../content/content.db": "content.db"
     }
   }
 }

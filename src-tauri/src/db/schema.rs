@@ -1,4 +1,29 @@
-pub const MIGRATION_0001: &str = r#"
+// Schema is split across two physical database files (see db/mod.rs):
+//
+//   content.db -- read-mostly, ships with the app: canon/book metadata,
+//   translations, verse text, commentaries, lexicon, dictionary,
+//   cross-references, interlinear/morphology, footnotes, Westminster
+//   Standards + their commentaries. Built ahead of time by the
+//   `build_content_db` binary and shipped as a bundled resource; see
+//   CONTENT_MIGRATIONS.
+//
+//   user.db -- writable, per-install: highlights, notes, bookmarks,
+//   passage links, reading position, settings, the user's resource library
+//   (epub/pdf/mobi/audio/video) and its passage/resource links. See
+//   USER_MIGRATIONS.
+//
+// The runtime connection opens user.db as its `main` schema and ATTACHes
+// content.db as `content`. Table names never collide between the two files,
+// so every existing unqualified query (`SELECT ... FROM verses JOIN books`)
+// keeps resolving correctly -- SQLite falls through to the attached schema
+// when `main` has no match for a name. Because of that split, columns in
+// user.db that logically reference content.db rows (e.g. `highlights.book_id`)
+// are plain integers with no FOREIGN KEY clause: SQLite foreign keys cannot
+// span two different database files. Columns referencing another row within
+// the *same* file (e.g. `notes.highlight_id` -> `highlights.id`, both in
+// user.db) keep their REFERENCES clause and are still enforced.
+
+pub const CONTENT_MIGRATION_0001: &str = r#"
 CREATE TABLE books (
   id            INTEGER PRIMARY KEY,
   osis_code     TEXT NOT NULL UNIQUE,
@@ -90,6 +115,7 @@ CREATE TABLE commentary_entries (
   plain_text     TEXT NOT NULL
 );
 CREATE INDEX idx_commentary_lookup ON commentary_entries(book_id, chapter, verse_start, verse_end);
+CREATE INDEX idx_commentary_entries_section ON commentary_entries(section_id);
 
 CREATE VIRTUAL TABLE commentary_fts USING fts5(
   plain_text,
@@ -109,71 +135,140 @@ CREATE TRIGGER commentary_entries_au AFTER UPDATE ON commentary_entries BEGIN
   INSERT INTO commentary_fts(rowid, plain_text) VALUES (new.id, new.plain_text);
 END;
 
-CREATE TABLE highlights (
-  id             INTEGER PRIMARY KEY,
-  book_id        INTEGER NOT NULL REFERENCES books(id),
-  chapter        INTEGER NOT NULL,
-  verse_start    INTEGER NOT NULL,
-  verse_end      INTEGER NOT NULL,
-  char_start     INTEGER,
-  char_end       INTEGER,
-  color          TEXT NOT NULL,
-  style          TEXT NOT NULL DEFAULT 'highlight',
-  translation_id INTEGER REFERENCES translations(id),
-  created_at     TEXT NOT NULL,
-  updated_at     TEXT NOT NULL
+CREATE TABLE strongs_entries (
+  id                TEXT PRIMARY KEY,
+  language          TEXT NOT NULL CHECK(language IN ('hebrew','greek')),
+  original_word     TEXT NOT NULL,
+  transliteration   TEXT,
+  pronunciation     TEXT,
+  short_definition  TEXT,
+  definition        TEXT NOT NULL,
+  derivation        TEXT,
+  kjv_usage         TEXT
 );
-CREATE INDEX idx_highlights_lookup ON highlights(book_id, chapter);
 
-CREATE TABLE notes (
-  id             INTEGER PRIMARY KEY,
-  book_id        INTEGER NOT NULL REFERENCES books(id),
-  chapter        INTEGER NOT NULL,
-  verse_start    INTEGER NOT NULL,
-  verse_end      INTEGER NOT NULL,
-  body           TEXT NOT NULL,
-  created_at     TEXT NOT NULL,
-  updated_at     TEXT NOT NULL
+CREATE VIRTUAL TABLE strongs_fts USING fts5(
+  original_word, transliteration, definition, kjv_usage,
+  content='strongs_entries', content_rowid='rowid'
 );
-CREATE INDEX idx_notes_lookup ON notes(book_id, chapter);
+CREATE TRIGGER strongs_ai AFTER INSERT ON strongs_entries BEGIN
+  INSERT INTO strongs_fts(rowid, original_word, transliteration, definition, kjv_usage)
+  VALUES (new.rowid, new.original_word, new.transliteration, new.definition, new.kjv_usage);
+END;
 
-CREATE TABLE bookmarks (
+CREATE TABLE dictionary_entries (
+  id    INTEGER PRIMARY KEY,
+  term  TEXT NOT NULL,
+  slug  TEXT NOT NULL UNIQUE,
+  body  TEXT NOT NULL
+);
+CREATE VIRTUAL TABLE dictionary_fts USING fts5(
+  term, body, content='dictionary_entries', content_rowid='id'
+);
+CREATE TRIGGER dictionary_ai AFTER INSERT ON dictionary_entries BEGIN
+  INSERT INTO dictionary_fts(rowid, term, body) VALUES (new.id, new.term, new.body);
+END;
+
+CREATE TABLE interlinear_words (
   id          INTEGER PRIMARY KEY,
   book_id     INTEGER NOT NULL REFERENCES books(id),
   chapter     INTEGER NOT NULL,
-  verse       INTEGER,
-  label       TEXT,
-  created_at  TEXT NOT NULL
+  verse       INTEGER NOT NULL,
+  sort_order  INTEGER NOT NULL,
+  text        TEXT NOT NULL,
+  strongs_id  TEXT
+);
+CREATE INDEX idx_interlinear_lookup ON interlinear_words(book_id, chapter, verse, sort_order);
+
+CREATE TABLE cross_references (
+  id              INTEGER PRIMARY KEY,
+  from_book_id    INTEGER NOT NULL REFERENCES books(id),
+  from_chapter    INTEGER NOT NULL,
+  from_verse      INTEGER NOT NULL,
+  to_book_id      INTEGER NOT NULL REFERENCES books(id),
+  to_chapter      INTEGER NOT NULL,
+  to_verse_start  INTEGER NOT NULL,
+  to_verse_end    INTEGER NOT NULL,
+  votes           INTEGER NOT NULL
+);
+CREATE INDEX idx_xref_from ON cross_references(from_book_id, from_chapter, from_verse, votes);
+
+CREATE TABLE westminster_documents (
+  id    INTEGER PRIMARY KEY,
+  code  TEXT NOT NULL UNIQUE,
+  title TEXT NOT NULL
 );
 
-CREATE TABLE passage_links (
-  id                     INTEGER PRIMARY KEY,
-  from_book_id           INTEGER NOT NULL REFERENCES books(id),
-  from_chapter           INTEGER NOT NULL,
-  from_verse_start       INTEGER NOT NULL,
-  from_verse_end         INTEGER NOT NULL,
-  to_book_id             INTEGER REFERENCES books(id),
-  to_chapter             INTEGER,
-  to_verse_start         INTEGER,
-  to_verse_end           INTEGER,
-  to_commentary_entry_id INTEGER REFERENCES commentary_entries(id),
-  note                   TEXT,
-  created_at             TEXT NOT NULL
+CREATE TABLE westminster_sections (
+  id                INTEGER PRIMARY KEY,
+  document_id       INTEGER NOT NULL REFERENCES westminster_documents(id) ON DELETE CASCADE,
+  sort_order        INTEGER NOT NULL,
+  heading           TEXT NOT NULL,
+  prompt            TEXT,
+  body              TEXT NOT NULL,
+  body_with_proofs  TEXT NOT NULL
+);
+CREATE VIRTUAL TABLE westminster_fts USING fts5(
+  heading, prompt, body, content='westminster_sections', content_rowid='id'
+);
+CREATE TRIGGER westminster_ai AFTER INSERT ON westminster_sections BEGIN
+  INSERT INTO westminster_fts(rowid, heading, prompt, body) VALUES (new.id, new.heading, new.prompt, new.body);
+END;
+
+CREATE TABLE westminster_proofs (
+  id          INTEGER PRIMARY KEY,
+  section_id  INTEGER NOT NULL REFERENCES westminster_sections(id) ON DELETE CASCADE,
+  marker      INTEGER NOT NULL,
+  sort_order  INTEGER NOT NULL,
+  book_id     INTEGER NOT NULL REFERENCES books(id),
+  chapter     INTEGER NOT NULL,
+  verse_start INTEGER NOT NULL,
+  verse_end   INTEGER NOT NULL
+);
+CREATE INDEX idx_westminster_proofs_section ON westminster_proofs(section_id, marker);
+
+CREATE TABLE morphology_words (
+  id            INTEGER PRIMARY KEY,
+  book_id       INTEGER NOT NULL REFERENCES books(id),
+  chapter       INTEGER NOT NULL,
+  verse         INTEGER NOT NULL,
+  sort_order    INTEGER NOT NULL,
+  original_word TEXT NOT NULL,
+  lemma         TEXT,
+  morph_code    TEXT,
+  strongs_id    TEXT
+);
+CREATE INDEX idx_morphology_lookup ON morphology_words(book_id, chapter, verse, sort_order);
+
+CREATE TABLE footnotes (
+  id             INTEGER PRIMARY KEY,
+  translation_id INTEGER NOT NULL REFERENCES translations(id) ON DELETE CASCADE,
+  book_id        INTEGER NOT NULL REFERENCES books(id),
+  chapter        INTEGER NOT NULL,
+  verse          INTEGER NOT NULL,
+  sort_order     INTEGER NOT NULL,
+  marker         TEXT NOT NULL,
+  text           TEXT NOT NULL,
+  char_offset    INTEGER
+);
+CREATE INDEX idx_footnotes_lookup ON footnotes(translation_id, book_id, chapter, verse);
+
+CREATE TABLE westminster_commentary_sources (
+  id      INTEGER PRIMARY KEY,
+  code    TEXT NOT NULL UNIQUE,
+  title   TEXT NOT NULL,
+  author  TEXT
 );
 
-CREATE TABLE reading_position (
-  id             INTEGER PRIMARY KEY CHECK (id = 1),
-  translation_id INTEGER REFERENCES translations(id),
-  book_id        INTEGER REFERENCES books(id),
-  chapter        INTEGER,
-  verse          INTEGER,
-  updated_at     TEXT NOT NULL
+CREATE TABLE westminster_commentary_entries (
+  id          INTEGER PRIMARY KEY,
+  source_id   INTEGER NOT NULL REFERENCES westminster_commentary_sources(id) ON DELETE CASCADE,
+  chapter     INTEGER NOT NULL,
+  section     INTEGER,
+  sort_order  INTEGER NOT NULL,
+  body        TEXT NOT NULL
 );
-
-CREATE TABLE settings (
-  key   TEXT PRIMARY KEY,
-  value TEXT NOT NULL
-);
+CREATE INDEX idx_wcc_entries_lookup ON westminster_commentary_entries(source_id, chapter, sort_order);
 
 INSERT INTO books (id, osis_code, name, short_name, testament, chapter_count) VALUES
 (1,'Gen','Genesis','Gen','OT',50),
@@ -244,100 +339,75 @@ INSERT INTO books (id, osis_code, name, short_name, testament, chapter_count) VA
 (66,'Rev','Revelation','Rev','NT',22);
 "#;
 
-pub const MIGRATION_0002: &str = r#"
-CREATE TABLE strongs_entries (
-  id                TEXT PRIMARY KEY,
-  language          TEXT NOT NULL CHECK(language IN ('hebrew','greek')),
-  original_word     TEXT NOT NULL,
-  transliteration   TEXT,
-  pronunciation     TEXT,
-  short_definition  TEXT,
-  definition        TEXT NOT NULL,
-  derivation        TEXT,
-  kjv_usage         TEXT
-);
+pub const CONTENT_MIGRATIONS: &[&str] = &[CONTENT_MIGRATION_0001];
 
-CREATE VIRTUAL TABLE strongs_fts USING fts5(
-  original_word, transliteration, definition, kjv_usage,
-  content='strongs_entries', content_rowid='rowid'
+pub const USER_MIGRATION_0001: &str = r#"
+CREATE TABLE highlights (
+  id             INTEGER PRIMARY KEY,
+  book_id        INTEGER NOT NULL,
+  chapter        INTEGER NOT NULL,
+  verse_start    INTEGER NOT NULL,
+  verse_end      INTEGER NOT NULL,
+  char_start     INTEGER,
+  char_end       INTEGER,
+  color          TEXT NOT NULL,
+  style          TEXT NOT NULL DEFAULT 'highlight',
+  translation_id INTEGER,
+  created_at     TEXT NOT NULL,
+  updated_at     TEXT NOT NULL
 );
-CREATE TRIGGER strongs_ai AFTER INSERT ON strongs_entries BEGIN
-  INSERT INTO strongs_fts(rowid, original_word, transliteration, definition, kjv_usage)
-  VALUES (new.rowid, new.original_word, new.transliteration, new.definition, new.kjv_usage);
-END;
+CREATE INDEX idx_highlights_lookup ON highlights(book_id, chapter);
 
-CREATE TABLE dictionary_entries (
-  id    INTEGER PRIMARY KEY,
-  term  TEXT NOT NULL,
-  slug  TEXT NOT NULL UNIQUE,
-  body  TEXT NOT NULL
+CREATE TABLE notes (
+  id             INTEGER PRIMARY KEY,
+  book_id        INTEGER NOT NULL,
+  chapter        INTEGER NOT NULL,
+  verse_start    INTEGER NOT NULL,
+  verse_end      INTEGER NOT NULL,
+  body           TEXT NOT NULL,
+  highlight_id   INTEGER REFERENCES highlights(id),
+  created_at     TEXT NOT NULL,
+  updated_at     TEXT NOT NULL
 );
-CREATE VIRTUAL TABLE dictionary_fts USING fts5(
-  term, body, content='dictionary_entries', content_rowid='id'
-);
-CREATE TRIGGER dictionary_ai AFTER INSERT ON dictionary_entries BEGIN
-  INSERT INTO dictionary_fts(rowid, term, body) VALUES (new.id, new.term, new.body);
-END;
+CREATE INDEX idx_notes_lookup ON notes(book_id, chapter);
 
-CREATE TABLE interlinear_words (
+CREATE TABLE bookmarks (
   id          INTEGER PRIMARY KEY,
-  book_id     INTEGER NOT NULL REFERENCES books(id),
+  book_id     INTEGER NOT NULL,
   chapter     INTEGER NOT NULL,
-  verse       INTEGER NOT NULL,
-  sort_order  INTEGER NOT NULL,
-  text        TEXT NOT NULL,
-  strongs_id  TEXT
-);
-CREATE INDEX idx_interlinear_lookup ON interlinear_words(book_id, chapter, verse, sort_order);
-"#;
-
-pub const MIGRATION_0003: &str = r#"
-CREATE TABLE cross_references (
-  id              INTEGER PRIMARY KEY,
-  from_book_id    INTEGER NOT NULL REFERENCES books(id),
-  from_chapter    INTEGER NOT NULL,
-  from_verse      INTEGER NOT NULL,
-  to_book_id      INTEGER NOT NULL REFERENCES books(id),
-  to_chapter      INTEGER NOT NULL,
-  to_verse_start  INTEGER NOT NULL,
-  to_verse_end    INTEGER NOT NULL,
-  votes           INTEGER NOT NULL
-);
-CREATE INDEX idx_xref_from ON cross_references(from_book_id, from_chapter, from_verse, votes);
-
-CREATE TABLE westminster_documents (
-  id    INTEGER PRIMARY KEY,
-  code  TEXT NOT NULL UNIQUE,
-  title TEXT NOT NULL
+  verse       INTEGER,
+  label       TEXT,
+  created_at  TEXT NOT NULL
 );
 
-CREATE TABLE westminster_sections (
-  id                INTEGER PRIMARY KEY,
-  document_id       INTEGER NOT NULL REFERENCES westminster_documents(id) ON DELETE CASCADE,
-  sort_order        INTEGER NOT NULL,
-  heading           TEXT NOT NULL,
-  prompt            TEXT,
-  body              TEXT NOT NULL,
-  body_with_proofs  TEXT NOT NULL
+CREATE TABLE passage_links (
+  id                     INTEGER PRIMARY KEY,
+  from_book_id           INTEGER NOT NULL,
+  from_chapter           INTEGER NOT NULL,
+  from_verse_start       INTEGER NOT NULL,
+  from_verse_end         INTEGER NOT NULL,
+  to_book_id             INTEGER,
+  to_chapter             INTEGER,
+  to_verse_start         INTEGER,
+  to_verse_end           INTEGER,
+  to_commentary_entry_id INTEGER,
+  note                   TEXT,
+  created_at             TEXT NOT NULL
 );
-CREATE VIRTUAL TABLE westminster_fts USING fts5(
-  heading, prompt, body, content='westminster_sections', content_rowid='id'
-);
-CREATE TRIGGER westminster_ai AFTER INSERT ON westminster_sections BEGIN
-  INSERT INTO westminster_fts(rowid, heading, prompt, body) VALUES (new.id, new.heading, new.prompt, new.body);
-END;
 
-CREATE TABLE westminster_proofs (
-  id          INTEGER PRIMARY KEY,
-  section_id  INTEGER NOT NULL REFERENCES westminster_sections(id) ON DELETE CASCADE,
-  marker      INTEGER NOT NULL,
-  sort_order  INTEGER NOT NULL,
-  book_id     INTEGER NOT NULL REFERENCES books(id),
-  chapter     INTEGER NOT NULL,
-  verse_start INTEGER NOT NULL,
-  verse_end   INTEGER NOT NULL
+CREATE TABLE reading_position (
+  id             INTEGER PRIMARY KEY CHECK (id = 1),
+  translation_id INTEGER,
+  book_id        INTEGER,
+  chapter        INTEGER,
+  verse          INTEGER,
+  updated_at     TEXT NOT NULL
 );
-CREATE INDEX idx_westminster_proofs_section ON westminster_proofs(section_id, marker);
+
+CREATE TABLE settings (
+  key   TEXT PRIMARY KEY,
+  value TEXT NOT NULL
+);
 
 CREATE TABLE resources (
   id              INTEGER PRIMARY KEY,
@@ -365,7 +435,7 @@ END;
 CREATE TABLE resource_passage_links (
   id           INTEGER PRIMARY KEY,
   resource_id  INTEGER NOT NULL REFERENCES resources(id) ON DELETE CASCADE,
-  book_id      INTEGER NOT NULL REFERENCES books(id),
+  book_id      INTEGER NOT NULL,
   chapter      INTEGER NOT NULL,
   verse_start  INTEGER,
   verse_end    INTEGER,
@@ -388,87 +458,13 @@ CREATE INDEX idx_resource_links_from ON resource_links(from_resource_id);
 
 CREATE TABLE chapter_notes (
   id         INTEGER PRIMARY KEY,
-  book_id    INTEGER NOT NULL REFERENCES books(id),
+  book_id    INTEGER NOT NULL,
   chapter    INTEGER NOT NULL,
   body       TEXT NOT NULL,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
 );
 CREATE INDEX idx_chapter_notes_passage ON chapter_notes(book_id, chapter);
-
-ALTER TABLE notes ADD COLUMN highlight_id INTEGER REFERENCES highlights(id);
-
-CREATE TABLE morphology_words (
-  id            INTEGER PRIMARY KEY,
-  book_id       INTEGER NOT NULL REFERENCES books(id),
-  chapter       INTEGER NOT NULL,
-  verse         INTEGER NOT NULL,
-  sort_order    INTEGER NOT NULL,
-  original_word TEXT NOT NULL,
-  lemma         TEXT,
-  morph_code    TEXT,
-  strongs_id    TEXT
-);
-CREATE INDEX idx_morphology_lookup ON morphology_words(book_id, chapter, verse, sort_order);
 "#;
 
-pub const MIGRATION_0004: &str = r#"
-CREATE TABLE footnotes (
-  id             INTEGER PRIMARY KEY,
-  translation_id INTEGER NOT NULL REFERENCES translations(id) ON DELETE CASCADE,
-  book_id        INTEGER NOT NULL REFERENCES books(id),
-  chapter        INTEGER NOT NULL,
-  verse          INTEGER NOT NULL,
-  sort_order     INTEGER NOT NULL,
-  marker         TEXT NOT NULL,
-  text           TEXT NOT NULL
-);
-CREATE INDEX idx_footnotes_lookup ON footnotes(translation_id, book_id, chapter, verse);
-"#;
-
-pub const MIGRATION_0005: &str = r#"
-ALTER TABLE footnotes ADD COLUMN char_offset INTEGER;
-"#;
-
-// commentary_entries had no index on section_id, so every per-section delete
-// during a commentary re-import (see thml.rs's insert_section) was a full
-// table scan -- painfully slow once the table holds 100k+ rows across
-// multiple large commentaries.
-pub const MIGRATION_0006: &str = r#"
-CREATE INDEX idx_commentary_entries_section ON commentary_entries(section_id);
-"#;
-
-// Commentaries on the Westminster Confession (Hodge, Shaw), keyed by WCF
-// chapter number rather than by westminster_sections.id -- section-level
-// granularity in the source texts is inconsistent enough (see the importer)
-// that per-chapter is the reliable unit; `section` is populated when a
-// source's own text does cleanly split by WCF section (e.g. Shaw), and left
-// NULL when a source is stored as one whole-chapter block (e.g. Hodge).
-pub const MIGRATION_0007: &str = r#"
-CREATE TABLE westminster_commentary_sources (
-  id      INTEGER PRIMARY KEY,
-  code    TEXT NOT NULL UNIQUE,
-  title   TEXT NOT NULL,
-  author  TEXT
-);
-
-CREATE TABLE westminster_commentary_entries (
-  id          INTEGER PRIMARY KEY,
-  source_id   INTEGER NOT NULL REFERENCES westminster_commentary_sources(id) ON DELETE CASCADE,
-  chapter     INTEGER NOT NULL,
-  section     INTEGER,
-  sort_order  INTEGER NOT NULL,
-  body        TEXT NOT NULL
-);
-CREATE INDEX idx_wcc_entries_lookup ON westminster_commentary_entries(source_id, chapter, sort_order);
-"#;
-
-pub const MIGRATIONS: &[&str] = &[
-    MIGRATION_0001,
-    MIGRATION_0002,
-    MIGRATION_0003,
-    MIGRATION_0004,
-    MIGRATION_0005,
-    MIGRATION_0006,
-    MIGRATION_0007,
-];
+pub const USER_MIGRATIONS: &[&str] = &[USER_MIGRATION_0001];
