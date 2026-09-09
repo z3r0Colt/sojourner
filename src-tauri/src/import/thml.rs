@@ -142,55 +142,47 @@ impl CommentaryImporter for ThmlCommentaryImporter {
                 if books_seen.insert(book_id) {
                     books_matched += 1;
                 }
-
-                let mut chapter_counter = 0i64;
-                for div2 in div1.children().filter(|n| n.is_element() && n.tag_name().name() == "div2") {
-                    let section_title = div2.attribute("title").map(|s| s.to_string());
-                    let (chapter, default_vs, default_ve) = match section_title.as_deref().and_then(|t| chapter_heading_match(t, &book_map)) {
-                        Some((_, ch, vs, ve)) => (Some(ch), vs, ve),
-                        None => {
-                            let is_intro = section_title.as_deref().map(|t| t.to_lowercase().contains("introduction")).unwrap_or(false);
-                            if is_intro {
-                                (None, None, None)
-                            } else {
-                                chapter_counter += 1;
-                                (Some(chapter_counter), None, None)
-                            }
-                        }
-                    };
-                    let div2_id = div2.attribute("id").map(|s| s.to_string()).unwrap_or_else(|| {
-                        let n = section_sort.entry(book_id).or_insert(0);
-                        format!("{div1_id}.{n}")
-                    });
-                    let sort = section_sort.entry(book_id).or_insert(0);
-                    let this_sort = *sort;
-                    *sort += 1;
-
-                    let section_id = insert_section(&tx, source_id, book_id, chapter, &ns(&div2_id), section_title, this_sort)?;
-                    insert_entries_for_section(&tx, section_id, book_id, &osis_for(book_id), chapter, (default_vs, default_ve), div2, &book_map, &mut entries_inserted)?;
-                }
+                process_book_chapters(
+                    &tx, source_id, book_id, &div1_id, div1, "div2", &book_map, &book_osis_codes,
+                    &filename_stem, &mut section_sort, &mut entries_inserted,
+                )?;
             } else {
-                // Not a book heading itself (front matter, or a bare "Chapter N"
-                // wrapper like Calvin's commentaries) -- check whether any direct
-                // div2 child independently names a "Book Chapter[:verse]" span.
+                // Not a book heading itself (front matter, or a bare wrapper --
+                // Calvin's "Chapter N" wrappers, or CCEL/JFB's "The Old
+                // Testament"/"The New Testament" top-level divs, which nest an
+                // entire extra div level: div1 "The Old Testament" > div2
+                // "Genesis" (a book) > div3 "Chapter 1"). Check both: whether
+                // any direct div2 child independently names a "Book
+                // Chapter[:verse]" span (Calvin-style), or whether it's itself a
+                // bare book name with div3 chapter children (JFB-style).
                 let mut any_matched = false;
                 for div2 in div1.children().filter(|n| n.is_element() && n.tag_name().name() == "div2") {
                     let section_title = div2.attribute("title").unwrap_or("").to_string();
-                    let Some((book_id, chapter, vs, ve)) = chapter_heading_match(&section_title, &book_map) else {
-                        continue;
-                    };
-                    any_matched = true;
-                    ensure_book(&tx, source_id, book_id, &div1_id)?;
-                    if books_seen.insert(book_id) {
-                        books_matched += 1;
-                    }
-                    let div2_id = div2.attribute("id").map(|s| s.to_string()).unwrap_or_else(|| format!("{div1_id}.{section_title}"));
-                    let sort = section_sort.entry(book_id).or_insert(0);
-                    let this_sort = *sort;
-                    *sort += 1;
+                    if let Some((book_id, chapter, vs, ve)) = chapter_heading_match(&section_title, &book_map) {
+                        any_matched = true;
+                        ensure_book(&tx, source_id, book_id, &div1_id)?;
+                        if books_seen.insert(book_id) {
+                            books_matched += 1;
+                        }
+                        let div2_id = div2.attribute("id").map(|s| s.to_string()).unwrap_or_else(|| format!("{div1_id}.{section_title}"));
+                        let sort = section_sort.entry(book_id).or_insert(0);
+                        let this_sort = *sort;
+                        *sort += 1;
 
-                    let section_id = insert_section(&tx, source_id, book_id, Some(chapter), &ns(&div2_id), Some(section_title), this_sort)?;
-                    insert_entries_for_section(&tx, section_id, book_id, &osis_for(book_id), Some(chapter), (vs, ve), div2, &book_map, &mut entries_inserted)?;
+                        let section_id = insert_section(&tx, source_id, book_id, Some(chapter), &ns(&div2_id), Some(section_title), this_sort)?;
+                        insert_entries_for_section(&tx, section_id, book_id, &osis_for(book_id), Some(chapter), (vs, ve), div2, &book_map, &mut entries_inserted)?;
+                    } else if let Some(book_id) = book_only_match(&section_title, &book_map) {
+                        any_matched = true;
+                        let div2_id = div2.attribute("id").unwrap_or(&section_title).to_string();
+                        ensure_book(&tx, source_id, book_id, &div2_id)?;
+                        if books_seen.insert(book_id) {
+                            books_matched += 1;
+                        }
+                        process_book_chapters(
+                            &tx, source_id, book_id, &div2_id, div2, "div3", &book_map, &book_osis_codes,
+                            &filename_stem, &mut section_sort, &mut entries_inserted,
+                        )?;
+                    }
                 }
                 if !any_matched && !raw_title.is_empty() {
                     books_skipped.push(raw_title);
@@ -236,6 +228,7 @@ fn curated_source_title(source_code: &str) -> Option<&'static str> {
         "mhc" => Some("Matthew Henry's Concise Commentary"),
         "calcom" => Some("Calvin's Commentaries"),
         "ntnotes" => Some("Barnes' Notes on the New Testament"),
+        "jfb" => Some("Jamieson, Fausset & Brown Commentary"),
         _ => None,
     }
 }
@@ -443,6 +436,56 @@ fn chapter_heading_match(title: &str, book_map: &HashMap<String, i64>) -> Option
     let verse_start: Option<i64> = caps.get(3).and_then(|m| m.as_str().parse().ok());
     let verse_end = caps.get(4).and_then(|m| m.as_str().parse().ok()).or(verse_start);
     Some((book_id, chapter, verse_start, verse_end))
+}
+
+/// Processes every `chapter_tag` child of `book_div` (a div already known to
+/// represent one whole book) as one chapter -- shared by the two places a
+/// book can appear: directly as a div1 (Matthew Henry, Barnes-style), or one
+/// level deeper as a div2 nested inside a bare "The Old Testament"/"The New
+/// Testament" div1 wrapper (JFB-style, where chapters are then div3s).
+#[allow(clippy::too_many_arguments)]
+fn process_book_chapters(
+    tx: &Connection,
+    source_id: i64,
+    book_id: i64,
+    book_div_id: &str,
+    book_div: roxmltree::Node,
+    chapter_tag: &str,
+    book_map: &HashMap<String, i64>,
+    book_osis_codes: &HashMap<i64, String>,
+    filename_stem: &str,
+    section_sort: &mut HashMap<i64, i64>,
+    entries_inserted: &mut usize,
+) -> anyhow::Result<()> {
+    let book_osis = book_osis_codes.get(&book_id).cloned().unwrap_or_default();
+    let mut chapter_counter = 0i64;
+    for chapter_div in book_div.children().filter(|n| n.is_element() && n.tag_name().name() == chapter_tag) {
+        let section_title = chapter_div.attribute("title").map(|s| s.to_string());
+        let (chapter, default_vs, default_ve) = match section_title.as_deref().and_then(|t| chapter_heading_match(t, book_map)) {
+            Some((_, ch, vs, ve)) => (Some(ch), vs, ve),
+            None => {
+                let is_intro = section_title.as_deref().map(|t| t.to_lowercase().contains("introduction")).unwrap_or(false);
+                if is_intro {
+                    (None, None, None)
+                } else {
+                    chapter_counter += 1;
+                    (Some(chapter_counter), None, None)
+                }
+            }
+        };
+        let chapter_div_id = chapter_div.attribute("id").map(|s| s.to_string()).unwrap_or_else(|| {
+            let n = section_sort.entry(book_id).or_insert(0);
+            format!("{book_div_id}.{n}")
+        });
+        let sort = section_sort.entry(book_id).or_insert(0);
+        let this_sort = *sort;
+        *sort += 1;
+
+        let ns_id = format!("{filename_stem}:{chapter_div_id}");
+        let section_id = insert_section(tx, source_id, book_id, chapter, &ns_id, section_title, this_sort)?;
+        insert_entries_for_section(tx, section_id, book_id, &book_osis, chapter, (default_vs, default_ve), chapter_div, book_map, entries_inserted)?;
+    }
+    Ok(())
 }
 
 fn ensure_book(tx: &Connection, source_id: i64, book_id: i64, div1_id: &str) -> anyhow::Result<()> {
