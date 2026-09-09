@@ -19,6 +19,7 @@ import type {
   SermonNote,
   SermonNotePassageLink,
   PrayerEntry,
+  MemoryVerse,
   DictionaryEntry,
   DictionaryEntrySummary,
   InterlinearWord,
@@ -286,4 +287,19 @@ export const api = {
     }),
   deletePrayerEntry: (id: number) => invoke<void>("delete_prayer_entry", { id }),
   searchPrayerEntries: (query: string, limit = 50) => invoke<PrayerEntry[]>("search_prayer_entries", { query, limit }),
+
+  listMemoryVerses: () => invoke<MemoryVerse[]>("list_memory_verses"),
+  listDueMemoryVerses: () => invoke<MemoryVerse[]>("list_due_memory_verses"),
+  createMemoryVerse: (
+    bookId: number,
+    chapter: number,
+    verseStart: number,
+    verseEnd: number,
+    translationId: number | undefined,
+    mode: "first-letter" | "blank-word",
+  ) => invoke<MemoryVerse>("create_memory_verse", { bookId, chapter, verseStart, verseEnd, translationId: translationId ?? null, mode }),
+  setMemoryVerseMode: (id: number, mode: "first-letter" | "blank-word") =>
+    invoke<void>("set_memory_verse_mode", { id, mode }),
+  deleteMemoryVerse: (id: number) => invoke<void>("delete_memory_verse", { id }),
+  reviewMemoryVerse: (id: number, quality: number) => invoke<MemoryVerse>("review_memory_verse", { id, quality }),
 };

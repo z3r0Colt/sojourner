@@ -179,6 +179,22 @@ export interface PrayerEntry {
   updated_at: string;
 }
 
+export interface MemoryVerse {
+  id: number;
+  book_id: number;
+  chapter: number;
+  verse_start: number;
+  verse_end: number;
+  translation_id: number | null;
+  mode: "first-letter" | "blank-word";
+  ease_factor: number;
+  interval_days: number;
+  repetitions: number;
+  due_at: string;
+  last_reviewed_at: string | null;
+  created_at: string;
+}
+
 export interface ConcordanceEntry {
   book_id: number;
   chapter: number;
