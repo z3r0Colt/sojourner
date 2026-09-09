@@ -1,8 +1,8 @@
-use crate::db::queries::{commentary, verses};
+use crate::db::queries::{commentary, verses, versification};
 use crate::db::DbState;
 use crate::error::AppResult;
 use crate::import;
-use crate::models::{Book, CommentarySource, ImportReportItem, Translation};
+use crate::models::{Book, BookAlias, BookCoverage, CommentarySource, ImportReportItem, Translation};
 use crate::paths::default_import_roots;
 use std::path::PathBuf;
 use tauri::{AppHandle, Manager, State};
@@ -14,9 +14,21 @@ pub fn list_books(db: State<DbState>) -> AppResult<Vec<Book>> {
 }
 
 #[tauri::command]
+pub fn list_book_aliases(db: State<DbState>) -> AppResult<Vec<BookAlias>> {
+    let conn = db.0.lock().unwrap();
+    Ok(versification::list_book_aliases(&conn)?)
+}
+
+#[tauri::command]
 pub fn list_translations(db: State<DbState>) -> AppResult<Vec<Translation>> {
     let conn = db.0.lock().unwrap();
     Ok(verses::list_translations(&conn)?)
+}
+
+#[tauri::command]
+pub fn get_translation_coverage(db: State<DbState>, translation_id: i64) -> AppResult<Vec<BookCoverage>> {
+    let conn = db.0.lock().unwrap();
+    Ok(verses::get_translation_coverage(&conn, translation_id)?)
 }
 
 #[tauri::command]

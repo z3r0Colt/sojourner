@@ -1,4 +1,4 @@
-import type { Book } from "../api/types";
+import type { Book, BookAlias } from "../api/types";
 
 export interface ParsedReference {
   book: Book;
@@ -12,9 +12,13 @@ function normalize(s: string): string {
 }
 
 /** Builds a lookup from normalized book name/short-name/osis-code (and common
- * numeral variants: "1cor", "icor", "firstcor") to the book. */
-export function buildBookLookup(books: Book[]): Map<string, Book> {
+ * numeral variants: "1cor", "icor", "firstcor") to the book. `aliases` adds
+ * alternate names a bundled translation's own source uses (e.g. a
+ * Vulgate-named edition's "Josue" for Joshua), so typing either name
+ * resolves to the same canonical book. */
+export function buildBookLookup(books: Book[], aliases: BookAlias[] = []): Map<string, Book> {
   const map = new Map<string, Book>();
+  const byId = new Map(books.map((b) => [b.id, b]));
   for (const b of books) {
     for (const key of [b.name, b.short_name, b.osis_code]) {
       map.set(normalize(key), b);
@@ -26,6 +30,13 @@ export function buildBookLookup(books: Book[]): Map<string, Book> {
       for (const word of words[num] ?? []) {
         map.set(normalize(`${word} ${rest}`), b);
       }
+    }
+  }
+  for (const a of aliases) {
+    const book = byId.get(a.book_id);
+    if (!book) continue;
+    for (const key of [a.name, a.short_name]) {
+      if (key) map.set(normalize(key), book);
     }
   }
   return map;

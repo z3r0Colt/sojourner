@@ -109,7 +109,7 @@ export function AppShell() {
           </button>
 
           {books && position && location.pathname === "/" && (
-            <ChapterNav books={books} position={position} onNavigate={(p) => goTo(p)} />
+            <ChapterNav books={books} position={position} translationId={primaryTranslationId} onNavigate={(p) => goTo(p)} />
           )}
 
           <div className="min-w-0 flex-1" />
@@ -206,6 +206,8 @@ export function AppShell() {
       {paletteOpen && books && (
         <GoToCommandPalette
           books={books}
+          translationId={primaryTranslationId}
+          translationLabel={translations?.find((t) => t.id === primaryTranslationId)?.name}
           onClose={() => setPaletteOpen(false)}
           onNavigate={(p) => {
             goTo(p);

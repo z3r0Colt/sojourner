@@ -78,8 +78,10 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             commands::library::list_books,
+            commands::library::list_book_aliases,
             commands::library::list_translations,
             commands::library::list_commentary_sources,
+            commands::library::get_translation_coverage,
             commands::library::remove_translation,
             commands::library::remove_commentary_source,
             commands::library::scan_library,

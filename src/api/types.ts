@@ -17,6 +17,17 @@ export interface Translation {
   verse_count: number;
 }
 
+export interface BookCoverage {
+  book_id: number;
+  chapters: number[];
+}
+
+export interface BookAlias {
+  book_id: number;
+  name: string;
+  short_name: string;
+}
+
 export interface Verse {
   id: number;
   translation_id: number;

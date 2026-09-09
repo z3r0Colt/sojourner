@@ -253,6 +253,45 @@ CREATE TABLE footnotes (
 );
 CREATE INDEX idx_footnotes_lookup ON footnotes(translation_id, book_id, chapter, verse);
 
+-- A translation's own (chapter, verse) numbering for a verse maps to
+-- (canonical_chapter, canonical_verse) in the traditional/KJV reference
+-- scheme. Populated from ground-truth markers some digitizations embed at
+-- exactly the points where their versification diverges (see zefania.rs's
+-- VERSIFICATION_MARKER) -- e.g. Webster's Bible numbering a Psalm
+-- superscription as its own verse, or following the Hebrew 4-chapter
+-- division of Joel rather than the traditional 3-chapter one. A verse with
+-- no row here has identical (chapter, verse) in both schemes -- true for
+-- the overwhelming majority of verses in every bundled translation, so this
+-- table only needs rows where they actually differ, not the full 31,000+
+-- verses per translation.
+CREATE TABLE versification_map (
+  id                 INTEGER PRIMARY KEY,
+  translation_id     INTEGER NOT NULL REFERENCES translations(id) ON DELETE CASCADE,
+  book_id            INTEGER NOT NULL REFERENCES books(id),
+  chapter            INTEGER NOT NULL,
+  verse              INTEGER NOT NULL,
+  canonical_chapter  INTEGER NOT NULL,
+  canonical_verse    INTEGER NOT NULL,
+  UNIQUE(translation_id, book_id, chapter, verse)
+);
+CREATE INDEX idx_versification_map_canonical ON versification_map(translation_id, book_id, canonical_chapter, canonical_verse);
+
+-- A book's own name/short-name as a given translation's source labels it,
+-- captured whenever it differs from the canonical name in `books` (e.g.
+-- Douay-Rheims' "Josue" for Joshua, "1 Kings" for our "1 Samuel",
+-- "Paralipomenon" for Chronicles). Used to resolve the book/chapter picker
+-- and the Go To command palette against whichever naming the user types or
+-- currently has selected.
+CREATE TABLE book_aliases (
+  id             INTEGER PRIMARY KEY,
+  translation_id INTEGER NOT NULL REFERENCES translations(id) ON DELETE CASCADE,
+  book_id        INTEGER NOT NULL REFERENCES books(id),
+  name           TEXT NOT NULL,
+  short_name     TEXT,
+  UNIQUE(translation_id, book_id)
+);
+CREATE INDEX idx_book_aliases_book ON book_aliases(book_id);
+
 CREATE TABLE westminster_commentary_sources (
   id      INTEGER PRIMARY KEY,
   code    TEXT NOT NULL UNIQUE,

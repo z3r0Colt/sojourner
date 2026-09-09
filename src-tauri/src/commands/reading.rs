@@ -21,7 +21,10 @@ pub fn get_parallel_chapter(
     let conn = db.0.lock().unwrap();
     let mut map = HashMap::new();
     for tid in translation_ids {
-        map.insert(tid, verses::get_chapter(&conn, tid, book_id, chapter)?);
+        // `chapter` here is treated as the canonical (KJV-reference) chapter --
+        // resolves through versification_map so editions with a different
+        // chapter/verse division for this book still line up correctly.
+        map.insert(tid, verses::get_chapter_canonical(&conn, tid, book_id, chapter)?);
     }
     Ok(map)
 }

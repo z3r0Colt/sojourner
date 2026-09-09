@@ -6,6 +6,20 @@ export function useBooks() {
   return useQuery({ queryKey: ["books"], queryFn: api.listBooks, staleTime: Infinity });
 }
 
+export function useBookAliases() {
+  return useQuery({ queryKey: ["bookAliases"], queryFn: api.listBookAliases, staleTime: Infinity });
+}
+
+/** Which chapters of each book `translationId` covers -- null while no translation is selected. */
+export function useTranslationCoverage(translationId: number | null) {
+  return useQuery({
+    queryKey: ["translationCoverage", translationId],
+    queryFn: () => api.getTranslationCoverage(translationId as number),
+    enabled: translationId != null,
+    staleTime: Infinity,
+  });
+}
+
 export function useTranslations() {
   return useQuery({ queryKey: ["translations"], queryFn: api.listTranslations });
 }

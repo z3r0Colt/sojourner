@@ -1,6 +1,8 @@
 import { invoke } from "@tauri-apps/api/core";
 import type {
   Book,
+  BookCoverage,
+  BookAlias,
   Translation,
   Verse,
   CommentarySource,
@@ -34,6 +36,9 @@ import type {
 
 export const api = {
   listBooks: () => invoke<Book[]>("list_books"),
+  listBookAliases: () => invoke<BookAlias[]>("list_book_aliases"),
+  getTranslationCoverage: (translationId: number) =>
+    invoke<BookCoverage[]>("get_translation_coverage", { translationId }),
   listTranslations: () => invoke<Translation[]>("list_translations"),
   listCommentarySources: () => invoke<CommentarySource[]>("list_commentary_sources"),
   removeTranslation: (translationId: number) =>
