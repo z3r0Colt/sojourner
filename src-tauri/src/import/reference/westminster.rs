@@ -64,15 +64,20 @@ struct CatechismItem {
     proofs: Vec<ProofEntry>,
 }
 
-struct ParsedSection {
-    heading: String,
-    prompt: Option<String>,
-    body: String,
-    body_with_proofs: String,
-    proofs: Vec<(i64, Vec<String>)>,
+/// Reused by `confessions.rs` -- any document that fits "ordered sections,
+/// each with a heading/optional prompt/body/optional proof texts" (which
+/// covers the Westminster Standards, the ecumenical creeds, and the Three
+/// Forms of Unity alike) goes through the same `import_document` sink into
+/// the shared westminster_documents/sections/proofs tables.
+pub(super) struct ParsedSection {
+    pub heading: String,
+    pub prompt: Option<String>,
+    pub body: String,
+    pub body_with_proofs: String,
+    pub proofs: Vec<(i64, Vec<String>)>,
 }
 
-fn import_document(
+pub(super) fn import_document(
     conn: &mut Connection,
     code: &str,
     title: &str,
