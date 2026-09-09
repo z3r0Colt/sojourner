@@ -164,6 +164,21 @@ export interface SermonNote {
   passages: SermonNotePassageLink[];
 }
 
+export interface PrayerEntry {
+  id: number;
+  entry_date: string;
+  adoration: string | null;
+  confession: string | null;
+  thanksgiving: string | null;
+  supplication: string | null;
+  book_id: number | null;
+  chapter: number | null;
+  verse_start: number | null;
+  verse_end: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface ConcordanceEntry {
   book_id: number;
   chapter: number;

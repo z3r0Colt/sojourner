@@ -10,6 +10,7 @@ import { WestminsterView } from "./features/westminster/WestminsterView";
 import { ResourceLibraryView } from "./features/resources/ResourceLibraryView";
 import { ResourceReaderView } from "./features/resources/ResourceReaderView";
 import { SermonNotesView } from "./features/sermons/SermonNotesView";
+import { PrayerJournalView } from "./features/prayer/PrayerJournalView";
 
 export const router = createHashRouter([
   {
@@ -22,6 +23,7 @@ export const router = createHashRouter([
       { path: "commentary/:sourceId/:bookId/:sectionId", element: <CommentaryStandaloneView /> },
       { path: "notes", element: <NotesListView /> },
       { path: "sermons", element: <SermonNotesView /> },
+      { path: "prayer", element: <PrayerJournalView /> },
       { path: "library", element: <LibrarySettingsView /> },
       { path: "lexicon", element: <LexiconView /> },
       { path: "lexicon/:id", element: <LexiconView /> },

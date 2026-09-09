@@ -1,5 +1,6 @@
 pub mod annotations;
 pub mod library;
+pub mod prayer_journal;
 pub mod reading;
 pub mod reference;
 pub mod resources;
