@@ -31,6 +31,18 @@ pub struct BookCoverage {
     pub chapters: Vec<i64>,
 }
 
+#[derive(Debug, Clone, Serialize)]
+pub struct MetricalPsalmVerse {
+    pub verse: i64,
+    pub text: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct MetricalPsalmVersion {
+    pub label: Option<String>,
+    pub verses: Vec<MetricalPsalmVerse>,
+}
+
 /// An alternate book name a bundled translation's own source uses (e.g. a
 /// Vulgate-named edition's "Josue" for Joshua) -- see `book_aliases`.
 #[derive(Debug, Clone, Serialize)]

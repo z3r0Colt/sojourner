@@ -276,6 +276,23 @@ CREATE TABLE versification_map (
 );
 CREATE INDEX idx_versification_map_canonical ON versification_map(translation_id, book_id, canonical_chapter, canonical_verse);
 
+-- The 1650 Scottish Metrical Psalter, toggleable alongside the Psalms text
+-- in the Reading view. `psalm` is the standard (KJV-reference) Psalm number;
+-- `verse` is that version's own stanza number, which sometimes combines more
+-- than one Bible verse into a single metrical stanza (a normal, deliberate
+-- feature of metrical psalmody, not a mapping to fix) -- so it's a display
+-- ordinal, not a versification_map target. A handful of psalms (e.g. 100)
+-- carry two traditional metrical settings, distinguished by `version_label`.
+CREATE TABLE metrical_psalms (
+  id             INTEGER PRIMARY KEY,
+  psalm          INTEGER NOT NULL,
+  version_label  TEXT,
+  verse          INTEGER NOT NULL,
+  text           TEXT NOT NULL,
+  UNIQUE(psalm, version_label, verse)
+);
+CREATE INDEX idx_metrical_psalms_lookup ON metrical_psalms(psalm, version_label, verse);
+
 -- A book's own name/short-name as a given translation's source labels it,
 -- captured whenever it differs from the canonical name in `books` (e.g.
 -- Douay-Rheims' "Josue" for Joshua, "1 Kings" for our "1 Samuel",

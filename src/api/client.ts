@@ -22,6 +22,7 @@ import type {
   Footnote,
   ChapterNote,
   CrossReference,
+  MetricalPsalmVersion,
   WestminsterDocument,
   WestminsterSectionSummary,
   WestminsterSection,
@@ -134,6 +135,7 @@ export const api = {
 
   getCrossReferences: (bookId: number, chapter: number, verse: number) =>
     invoke<CrossReference[]>("get_cross_references", { bookId, chapter, verse }),
+  getMetricalPsalm: (psalm: number) => invoke<MetricalPsalmVersion[]>("get_metrical_psalm", { psalm }),
 
   listWestminsterDocuments: () => invoke<WestminsterDocument[]>("list_westminster_documents"),
   listWestminsterSections: (documentId: number) =>

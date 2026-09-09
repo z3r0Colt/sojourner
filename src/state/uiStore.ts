@@ -11,7 +11,7 @@ interface UiState {
   showHighlights: boolean;
   showNoteSymbols: boolean;
   showMorphology: boolean;
-  rightPanelTab: "commentary" | "crossrefs";
+  rightPanelTab: "commentary" | "crossrefs" | "metrical";
   sermonAudioApiKey: string;
   setTheme: (t: Theme) => void;
   setFontSize: (n: number) => void;
@@ -21,7 +21,7 @@ interface UiState {
   toggleShowHighlights: () => void;
   toggleShowNoteSymbols: () => void;
   toggleShowMorphology: () => void;
-  setRightPanelTab: (t: "commentary" | "crossrefs") => void;
+  setRightPanelTab: (t: "commentary" | "crossrefs" | "metrical") => void;
   setSermonAudioApiKey: (k: string) => void;
 }
 

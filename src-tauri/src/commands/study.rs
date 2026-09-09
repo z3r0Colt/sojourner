@@ -1,9 +1,9 @@
-use crate::db::queries::{crossrefs, westminster};
+use crate::db::queries::{crossrefs, psalter, westminster};
 use crate::db::DbState;
 use crate::error::AppResult;
 use crate::models::{
-    CrossReference, WestminsterCommentaryEntry, WestminsterCommentarySource, WestminsterDocument, WestminsterSection,
-    WestminsterSectionSummary,
+    CrossReference, MetricalPsalmVersion, WestminsterCommentaryEntry, WestminsterCommentarySource, WestminsterDocument,
+    WestminsterSection, WestminsterSectionSummary,
 };
 use serde::Serialize;
 use tauri::State;
@@ -12,6 +12,12 @@ use tauri::State;
 pub fn get_cross_references(db: State<DbState>, book_id: i64, chapter: i64, verse: i64) -> AppResult<Vec<CrossReference>> {
     let conn = db.0.lock().unwrap();
     Ok(crossrefs::get_cross_references(&conn, book_id, chapter, verse)?)
+}
+
+#[tauri::command]
+pub fn get_metrical_psalm(db: State<DbState>, psalm: i64) -> AppResult<Vec<MetricalPsalmVersion>> {
+    let conn = db.0.lock().unwrap();
+    Ok(psalter::get_metrical_psalm(&conn, psalm)?)
 }
 
 #[tauri::command]

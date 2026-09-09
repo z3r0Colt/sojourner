@@ -113,6 +113,7 @@ pub fn run() {
             commands::annotations::delete_chapter_note,
             commands::search::search,
             commands::study::get_cross_references,
+            commands::study::get_metrical_psalm,
             commands::study::list_westminster_documents,
             commands::study::list_westminster_sections,
             commands::study::get_westminster_section,
