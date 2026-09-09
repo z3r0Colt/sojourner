@@ -16,6 +16,8 @@ import type {
   ImportReportItem,
   StrongsEntry,
   ConcordanceEntry,
+  SermonNote,
+  SermonNotePassageLink,
   DictionaryEntry,
   DictionaryEntrySummary,
   InterlinearWord,
@@ -188,4 +190,47 @@ export const api = {
   createResourceLink: (fromResourceId: number, toResourceId: number, fromLocation?: string, label?: string) =>
     invoke<ResourceLink>("create_resource_link", { fromResourceId, toResourceId, fromLocation: fromLocation ?? null, label: label ?? null }),
   deleteResourceLink: (id: number) => invoke<void>("delete_resource_link", { id }),
+
+  listSermonNotes: () => invoke<SermonNote[]>("list_sermon_notes"),
+  getSermonNote: (id: number) => invoke<SermonNote | null>("get_sermon_note", { id }),
+  createSermonNote: (input: {
+    date: string;
+    preacher?: string;
+    title?: string;
+    passageText?: string;
+    outline?: string;
+    application?: string;
+  }) =>
+    invoke<SermonNote>("create_sermon_note", {
+      date: input.date,
+      preacher: input.preacher ?? null,
+      title: input.title ?? null,
+      passageText: input.passageText ?? null,
+      outline: input.outline ?? null,
+      application: input.application ?? null,
+    }),
+  updateSermonNote: (
+    id: number,
+    input: { date: string; preacher?: string; title?: string; passageText?: string; outline?: string; application?: string },
+  ) =>
+    invoke<void>("update_sermon_note", {
+      id,
+      date: input.date,
+      preacher: input.preacher ?? null,
+      title: input.title ?? null,
+      passageText: input.passageText ?? null,
+      outline: input.outline ?? null,
+      application: input.application ?? null,
+    }),
+  deleteSermonNote: (id: number) => invoke<void>("delete_sermon_note", { id }),
+  addSermonNotePassage: (sermonNoteId: number, bookId: number, chapter: number, verseStart?: number, verseEnd?: number) =>
+    invoke<SermonNotePassageLink>("add_sermon_note_passage", {
+      sermonNoteId,
+      bookId,
+      chapter,
+      verseStart: verseStart ?? null,
+      verseEnd: verseEnd ?? null,
+    }),
+  deleteSermonNotePassage: (id: number) => invoke<void>("delete_sermon_note_passage", { id }),
+  searchSermonNotes: (query: string, limit = 50) => invoke<SermonNote[]>("search_sermon_notes", { query, limit }),
 };

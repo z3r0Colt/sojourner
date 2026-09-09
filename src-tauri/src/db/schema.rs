@@ -523,4 +523,114 @@ CREATE TABLE chapter_notes (
 CREATE INDEX idx_chapter_notes_passage ON chapter_notes(book_id, chapter);
 "#;
 
-pub const USER_MIGRATIONS: &[&str] = &[USER_MIGRATION_0001];
+pub const USER_MIGRATION_0002: &str = r#"
+-- A sermon note is distinct from a passage/chapter note: it records a
+-- sermon heard (or preached), not a study observation on the text itself.
+-- Linked to the passage(s) preached the same way resources link to
+-- passages (a separate many-to-many table), since a topical sermon can
+-- range across more than one text.
+CREATE TABLE sermon_notes (
+  id           INTEGER PRIMARY KEY,
+  date         TEXT NOT NULL,
+  preacher     TEXT,
+  title        TEXT,
+  passage_text TEXT,
+  outline      TEXT,
+  application  TEXT,
+  created_at   TEXT NOT NULL,
+  updated_at   TEXT NOT NULL
+);
+CREATE VIRTUAL TABLE sermon_notes_fts USING fts5(
+  preacher, title, passage_text, outline, application,
+  content='sermon_notes', content_rowid='id'
+);
+CREATE TRIGGER sermon_notes_ai AFTER INSERT ON sermon_notes BEGIN
+  INSERT INTO sermon_notes_fts(rowid, preacher, title, passage_text, outline, application)
+  VALUES (new.id, new.preacher, new.title, new.passage_text, new.outline, new.application);
+END;
+CREATE TRIGGER sermon_notes_au AFTER UPDATE ON sermon_notes BEGIN
+  INSERT INTO sermon_notes_fts(sermon_notes_fts, rowid, preacher, title, passage_text, outline, application)
+  VALUES('delete', old.id, old.preacher, old.title, old.passage_text, old.outline, old.application);
+  INSERT INTO sermon_notes_fts(rowid, preacher, title, passage_text, outline, application)
+  VALUES (new.id, new.preacher, new.title, new.passage_text, new.outline, new.application);
+END;
+CREATE TRIGGER sermon_notes_ad AFTER DELETE ON sermon_notes BEGIN
+  INSERT INTO sermon_notes_fts(sermon_notes_fts, rowid, preacher, title, passage_text, outline, application)
+  VALUES('delete', old.id, old.preacher, old.title, old.passage_text, old.outline, old.application);
+END;
+
+CREATE TABLE sermon_note_passage_links (
+  id              INTEGER PRIMARY KEY,
+  sermon_note_id  INTEGER NOT NULL REFERENCES sermon_notes(id) ON DELETE CASCADE,
+  book_id         INTEGER NOT NULL,
+  chapter         INTEGER NOT NULL,
+  verse_start     INTEGER,
+  verse_end       INTEGER,
+  created_at      TEXT NOT NULL
+);
+CREATE INDEX idx_sermon_note_passage_links_passage ON sermon_note_passage_links(book_id, chapter);
+CREATE INDEX idx_sermon_note_passage_links_note ON sermon_note_passage_links(sermon_note_id);
+
+-- ACTS-structured (Adoration, Confession, Thanksgiving, Supplication) prayer
+-- journal. Each field is optional since not every entry uses all four.
+-- Optionally tied to a passage (a single one -- unlike sermons, a prayer
+-- entry isn't naturally multi-passage, so a direct column is simpler than a
+-- link table here).
+CREATE TABLE prayer_entries (
+  id            INTEGER PRIMARY KEY,
+  entry_date    TEXT NOT NULL,
+  adoration     TEXT,
+  confession    TEXT,
+  thanksgiving  TEXT,
+  supplication  TEXT,
+  book_id       INTEGER,
+  chapter       INTEGER,
+  verse_start   INTEGER,
+  verse_end     INTEGER,
+  created_at    TEXT NOT NULL,
+  updated_at    TEXT NOT NULL
+);
+CREATE INDEX idx_prayer_entries_date ON prayer_entries(entry_date);
+CREATE VIRTUAL TABLE prayer_entries_fts USING fts5(
+  adoration, confession, thanksgiving, supplication,
+  content='prayer_entries', content_rowid='id'
+);
+CREATE TRIGGER prayer_entries_ai AFTER INSERT ON prayer_entries BEGIN
+  INSERT INTO prayer_entries_fts(rowid, adoration, confession, thanksgiving, supplication)
+  VALUES (new.id, new.adoration, new.confession, new.thanksgiving, new.supplication);
+END;
+CREATE TRIGGER prayer_entries_au AFTER UPDATE ON prayer_entries BEGIN
+  INSERT INTO prayer_entries_fts(prayer_entries_fts, rowid, adoration, confession, thanksgiving, supplication)
+  VALUES('delete', old.id, old.adoration, old.confession, old.thanksgiving, old.supplication);
+  INSERT INTO prayer_entries_fts(rowid, adoration, confession, thanksgiving, supplication)
+  VALUES (new.id, new.adoration, new.confession, new.thanksgiving, new.supplication);
+END;
+CREATE TRIGGER prayer_entries_ad AFTER DELETE ON prayer_entries BEGIN
+  INSERT INTO prayer_entries_fts(prayer_entries_fts, rowid, adoration, confession, thanksgiving, supplication)
+  VALUES('delete', old.id, old.adoration, old.confession, old.thanksgiving, old.supplication);
+END;
+
+-- Scripture memory: a verse card (one per memorized passage) plus its own
+-- spaced-repetition schedule state, and per-passage user preference for
+-- which practice mode(s) to use (first-letter / blank-the-word).
+CREATE TABLE memory_verses (
+  id            INTEGER PRIMARY KEY,
+  book_id       INTEGER NOT NULL,
+  chapter       INTEGER NOT NULL,
+  verse_start   INTEGER NOT NULL,
+  verse_end     INTEGER NOT NULL,
+  translation_id INTEGER,
+  mode          TEXT NOT NULL DEFAULT 'first-letter' CHECK(mode IN ('first-letter','blank-word')),
+  -- SM-2-style spaced repetition state.
+  ease_factor   REAL NOT NULL DEFAULT 2.5,
+  interval_days INTEGER NOT NULL DEFAULT 0,
+  repetitions   INTEGER NOT NULL DEFAULT 0,
+  due_at        TEXT NOT NULL,
+  last_reviewed_at TEXT,
+  created_at    TEXT NOT NULL,
+  UNIQUE(book_id, chapter, verse_start, verse_end, translation_id)
+);
+CREATE INDEX idx_memory_verses_due ON memory_verses(due_at);
+"#;
+
+pub const USER_MIGRATIONS: &[&str] = &[USER_MIGRATION_0001, USER_MIGRATION_0002];

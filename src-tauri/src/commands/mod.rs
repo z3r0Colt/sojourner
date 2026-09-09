@@ -4,4 +4,5 @@ pub mod reading;
 pub mod reference;
 pub mod resources;
 pub mod search;
+pub mod sermon_notes;
 pub mod study;

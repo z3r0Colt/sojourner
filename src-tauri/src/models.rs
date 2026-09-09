@@ -325,6 +325,64 @@ pub struct ConcordanceEntry {
     pub text: String,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SermonNote {
+    pub id: i64,
+    pub date: String,
+    pub preacher: Option<String>,
+    pub title: Option<String>,
+    pub passage_text: Option<String>,
+    pub outline: Option<String>,
+    pub application: Option<String>,
+    pub created_at: String,
+    pub updated_at: String,
+    pub passages: Vec<SermonNotePassageLink>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SermonNotePassageLink {
+    pub id: i64,
+    pub sermon_note_id: i64,
+    pub book_id: i64,
+    pub chapter: i64,
+    pub verse_start: Option<i64>,
+    pub verse_end: Option<i64>,
+    pub created_at: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PrayerEntry {
+    pub id: i64,
+    pub entry_date: String,
+    pub adoration: Option<String>,
+    pub confession: Option<String>,
+    pub thanksgiving: Option<String>,
+    pub supplication: Option<String>,
+    pub book_id: Option<i64>,
+    pub chapter: Option<i64>,
+    pub verse_start: Option<i64>,
+    pub verse_end: Option<i64>,
+    pub created_at: String,
+    pub updated_at: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MemoryVerse {
+    pub id: i64,
+    pub book_id: i64,
+    pub chapter: i64,
+    pub verse_start: i64,
+    pub verse_end: i64,
+    pub translation_id: Option<i64>,
+    pub mode: String,
+    pub ease_factor: f64,
+    pub interval_days: i64,
+    pub repetitions: i64,
+    pub due_at: String,
+    pub last_reviewed_at: Option<String>,
+    pub created_at: String,
+}
+
 #[derive(Debug, Clone, Serialize)]
 pub struct MorphologyWord {
     pub id: i64,
