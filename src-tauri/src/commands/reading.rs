@@ -29,6 +29,26 @@ pub fn get_parallel_chapter(
     Ok(map)
 }
 
+/// A single verse's text in every installed translation that covers it --
+/// the lighter-weight "Compare" view from a verse's context menu, as
+/// opposed to full chapter Parallel mode. Resolves through the same
+/// versification-aware lookup as Parallel mode, and simply omits any
+/// translation that doesn't have this verse (e.g. Tyndale outside the NT
+/// and Pentateuch) rather than erroring.
+#[tauri::command]
+pub fn compare_verse(db: State<DbState>, book_id: i64, chapter: i64, verse: i64) -> AppResult<Vec<Verse>> {
+    let conn = db.0.lock().unwrap();
+    let translations = verses::list_translations(&conn)?;
+    let mut result = Vec::new();
+    for t in translations {
+        let chapter_verses = verses::get_chapter_canonical(&conn, t.id, book_id, chapter)?;
+        if let Some(v) = chapter_verses.into_iter().find(|v| v.verse == verse) {
+            result.push(v);
+        }
+    }
+    Ok(result)
+}
+
 #[tauri::command]
 pub fn get_commentary_for_passage(
     db: State<DbState>,

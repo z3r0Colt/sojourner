@@ -44,6 +44,14 @@ export function useParallelChapter(translationIds: number[], bookId: number | nu
   });
 }
 
+export function useCompareVerse(bookId: number | null, chapter: number | null, verse: number | null) {
+  return useQuery({
+    queryKey: ["compareVerse", bookId, chapter, verse],
+    queryFn: () => api.compareVerse(bookId as number, chapter as number, verse as number),
+    enabled: bookId != null && chapter != null && verse != null,
+  });
+}
+
 export function useCommentaryForPassage(
   sourceId: number | null,
   bookId: number | null,
@@ -305,6 +313,19 @@ export function useStrongsEntry(id: string | null) {
     queryKey: ["strongs", id],
     queryFn: () => api.getStrongsEntry(id as string),
     enabled: id != null,
+    staleTime: Infinity,
+  });
+}
+
+/** All verses using a given Strong's-tagged word, with KJV context -- not
+ * fetched until the concordance section is actually opened (`enabled`),
+ * since a common word's occurrence list can be large and most lexicon
+ * lookups never open it. */
+export function useConcordance(strongsId: string | null, enabled: boolean) {
+  return useQuery({
+    queryKey: ["concordance", strongsId],
+    queryFn: () => api.getConcordance(strongsId as string),
+    enabled: enabled && strongsId != null,
     staleTime: Infinity,
   });
 }

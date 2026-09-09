@@ -15,6 +15,7 @@ import type {
   SearchResults,
   ImportReportItem,
   StrongsEntry,
+  ConcordanceEntry,
   DictionaryEntry,
   DictionaryEntrySummary,
   InterlinearWord,
@@ -53,6 +54,8 @@ export const api = {
     invoke<Verse[]>("get_chapter", { translationId, bookId, chapter }),
   getParallelChapter: (translationIds: number[], bookId: number, chapter: number) =>
     invoke<Record<number, Verse[]>>("get_parallel_chapter", { translationIds, bookId, chapter }),
+  compareVerse: (bookId: number, chapter: number, verse: number) =>
+    invoke<Verse[]>("compare_verse", { bookId, chapter, verse }),
   getCommentaryForPassage: (sourceId: number, bookId: number, chapter: number, verse?: number) =>
     invoke<CommentaryEntry[]>("get_commentary_for_passage", { sourceId, bookId, chapter, verse: verse ?? null }),
   bookHasCommentary: (sourceId: number, bookId: number) =>
@@ -117,6 +120,7 @@ export const api = {
     invoke<SearchResults>("search", { query, translationIds, commentarySourceIds, limit }),
 
   getStrongsEntry: (id: string) => invoke<StrongsEntry | null>("get_strongs_entry", { id }),
+  getConcordance: (strongsId: string) => invoke<ConcordanceEntry[]>("get_concordance", { strongsId }),
   getStrongsEntries: (ids: string[]) => invoke<StrongsEntry[]>("get_strongs_entries", { ids }),
   searchStrongs: (query: string, language?: "hebrew" | "greek", limit = 50) =>
     invoke<StrongsEntry[]>("search_strongs", { query, language: language ?? null, limit }),

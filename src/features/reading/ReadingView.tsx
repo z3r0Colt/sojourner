@@ -29,6 +29,8 @@ import { HighlightPopup } from "./HighlightPopup";
 import { CommentaryPanel } from "../commentary/CommentaryPanel";
 import { CrossReferencesPanel } from "./CrossReferencesPanel";
 import { MetricalPsalmPanel } from "./MetricalPsalmPanel";
+import { VerseContextMenu } from "./VerseContextMenu";
+import { CompareVerseModal } from "./CompareVerseModal";
 import { FootnotePopup } from "./FootnotePopup";
 import { NoteEditorModal } from "../notes/NoteEditorModal";
 import { NoteBody } from "../notes/NoteBody";
@@ -103,6 +105,8 @@ export function ReadingView() {
   const [noteTarget, setNoteTarget] = useState<NoteTarget | null>(null);
   const [chapterNoteOpen, setChapterNoteOpen] = useState(false);
   const [activeFootnote, setActiveFootnote] = useState<{ footnote: Footnote; x: number; y: number } | null>(null);
+  const [verseMenu, setVerseMenu] = useState<{ verseNum: number; x: number; y: number } | null>(null);
+  const [compareVerse, setCompareVerse] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Virtualized so long chapters (Psalm 119, 176 verses) don't render every
@@ -266,6 +270,7 @@ export function ReadingView() {
                     setNoteTarget({ verseStart: note.verse_start, verseEnd: note.verse_end, highlightId: note.highlight_id ?? undefined, existing: note })
                   }
                   onFootnoteClick={(footnote, x, y) => setActiveFootnote({ footnote, x, y })}
+                  onContextMenu={(verseNum, x, y) => setVerseMenu({ verseNum, x, y })}
                 />
               </div>
             );
@@ -338,6 +343,19 @@ export function ReadingView() {
           }}
           onClose={() => setPending(null)}
         />
+      )}
+
+      {verseMenu && (
+        <VerseContextMenu
+          x={verseMenu.x}
+          y={verseMenu.y}
+          onCompare={() => setCompareVerse(verseMenu.verseNum)}
+          onClose={() => setVerseMenu(null)}
+        />
+      )}
+
+      {compareVerse != null && (
+        <CompareVerseModal book={book} chapter={chapter} verse={compareVerse} onClose={() => setCompareVerse(null)} />
       )}
 
       {activeFootnote && (

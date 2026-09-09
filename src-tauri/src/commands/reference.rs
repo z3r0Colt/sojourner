@@ -1,7 +1,7 @@
-use crate::db::queries::reference as queries;
+use crate::db::queries::{concordance, reference as queries};
 use crate::db::DbState;
 use crate::error::AppResult;
-use crate::models::{DictionaryEntry, DictionaryEntrySummary, Footnote, InterlinearWord, MorphologyWord, StrongsEntry};
+use crate::models::{ConcordanceEntry, DictionaryEntry, DictionaryEntrySummary, Footnote, InterlinearWord, MorphologyWord, StrongsEntry};
 use std::collections::HashMap;
 use tauri::State;
 
@@ -9,6 +9,12 @@ use tauri::State;
 pub fn get_strongs_entry(db: State<DbState>, id: String) -> AppResult<Option<StrongsEntry>> {
     let conn = db.0.lock().unwrap();
     Ok(queries::get_strongs_entry(&conn, &id)?)
+}
+
+#[tauri::command]
+pub fn get_concordance(db: State<DbState>, strongs_id: String) -> AppResult<Vec<ConcordanceEntry>> {
+    let conn = db.0.lock().unwrap();
+    Ok(concordance::get_concordance(&conn, &strongs_id)?)
 }
 
 #[tauri::command]

@@ -141,6 +141,13 @@ export interface ImportReportItem {
   detail: string | null;
 }
 
+export interface ConcordanceEntry {
+  book_id: number;
+  chapter: number;
+  verse: number;
+  text: string;
+}
+
 export interface StrongsEntry {
   id: string;
   language: "hebrew" | "greek";

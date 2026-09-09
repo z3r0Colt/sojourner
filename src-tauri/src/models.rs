@@ -316,6 +316,15 @@ pub struct ResourceSearchResult {
     pub snippet: String,
 }
 
+/// One verse where a given Strong's-tagged word occurs -- see `concordance`.
+#[derive(Debug, Clone, Serialize)]
+pub struct ConcordanceEntry {
+    pub book_id: i64,
+    pub chapter: i64,
+    pub verse: i64,
+    pub text: String,
+}
+
 #[derive(Debug, Clone, Serialize)]
 pub struct MorphologyWord {
     pub id: i64,
