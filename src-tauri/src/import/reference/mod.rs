@@ -5,6 +5,7 @@ pub mod footnotes;
 pub mod interlinear;
 pub mod morphology;
 pub mod psalter;
+pub mod reading_plans;
 pub mod strongs;
 pub mod treasury;
 pub mod westminster;
@@ -25,6 +26,7 @@ pub struct ReferenceImportReport {
     pub confession_sections: usize,
     pub metrical_psalm_verses: usize,
     pub treasury_entries: usize,
+    pub reading_plan_readings: usize,
 }
 
 fn table_count(conn: &Connection, table: &str) -> i64 {
@@ -141,6 +143,13 @@ pub fn import_all(conn: &mut Connection, reference_dir: &Path) -> anyhow::Result
         0
     };
 
+    let reading_plan_readings = if table_count(conn, "reading_plans") == 0 {
+        reading_plans::import(conn, &reference_dir.join("reading_plans"))
+            .map_err(|e| anyhow::anyhow!("reading plans import failed: {e:#}"))?
+    } else {
+        0
+    };
+
     Ok(ReferenceImportReport {
         strongs_entries,
         dictionary_entries,
@@ -153,5 +162,6 @@ pub fn import_all(conn: &mut Connection, reference_dir: &Path) -> anyhow::Result
         confession_sections,
         metrical_psalm_verses,
         treasury_entries,
+        reading_plan_readings,
     })
 }

@@ -20,6 +20,9 @@ import type {
   SermonNotePassageLink,
   PrayerEntry,
   MemoryVerse,
+  ReadingPlan,
+  ReadingPlanDay,
+  ReadingPlanProgress,
   DictionaryEntry,
   DictionaryEntrySummary,
   InterlinearWord,
@@ -302,4 +305,16 @@ export const api = {
     invoke<void>("set_memory_verse_mode", { id, mode }),
   deleteMemoryVerse: (id: number) => invoke<void>("delete_memory_verse", { id }),
   reviewMemoryVerse: (id: number, quality: number) => invoke<MemoryVerse>("review_memory_verse", { id, quality }),
+
+  listReadingPlans: () => invoke<ReadingPlan[]>("list_reading_plans"),
+  getReadingPlanDays: (planCode: string) => invoke<ReadingPlanDay[]>("get_reading_plan_days", { planCode }),
+  listReadingPlanProgress: () => invoke<ReadingPlanProgress[]>("list_reading_plan_progress"),
+  getReadingPlanProgress: (planCode: string) => invoke<ReadingPlanProgress | null>("get_reading_plan_progress", { planCode }),
+  startReadingPlan: (planCode: string, startDate: string) =>
+    invoke<ReadingPlanProgress>("start_reading_plan", { planCode, startDate }),
+  abandonReadingPlan: (planCode: string) => invoke<void>("abandon_reading_plan", { planCode }),
+  markReadingPlanDay: (planCode: string, dayNumber: number) =>
+    invoke<ReadingPlanProgress>("mark_reading_plan_day", { planCode, dayNumber }),
+  unmarkReadingPlanDay: (planCode: string, dayNumber: number) =>
+    invoke<ReadingPlanProgress>("unmark_reading_plan_day", { planCode, dayNumber }),
 };
