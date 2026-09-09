@@ -1,17 +1,29 @@
+import { useTranslationCoverage } from "../../api/queries";
 import type { Book } from "../../api/types";
 import type { Position } from "../../state/navigationStore";
 
 export function ChapterNav({
   books,
   position,
+  translationId,
   onNavigate,
 }: {
   books: Book[];
   position: Position;
+  translationId: number | null;
   onNavigate: (p: Position) => void;
 }) {
   const book = books.find((b) => b.id === position.bookId) ?? books[0];
   const chapters = Array.from({ length: book.chapter_count }, (_, i) => i + 1);
+
+  // Which books/chapters the selected translation actually has verses for --
+  // e.g. Tyndale is NT + Pentateuch only. Undefined while loading, in which
+  // case nothing is grayed out yet rather than flashing every book disabled.
+  const { data: coverage } = useTranslationCoverage(translationId);
+  const coverageByBook = coverage ? new Map(coverage.map((c) => [c.book_id, new Set(c.chapters)])) : null;
+  const isBookCovered = (bookId: number) => !coverageByBook || (coverageByBook.get(bookId)?.size ?? 0) > 0;
+  const isChapterCovered = (bookId: number, chapter: number) =>
+    !coverageByBook || (coverageByBook.get(bookId)?.has(chapter) ?? false);
 
   function prevChapter() {
     if (position.chapter > 1) {
@@ -41,8 +53,9 @@ export function ChapterNav({
         onChange={(e) => onNavigate({ bookId: Number(e.target.value), chapter: 1 })}
       >
         {books.map((b) => (
-          <option key={b.id} value={b.id}>
+          <option key={b.id} value={b.id} disabled={!isBookCovered(b.id)}>
             {b.name}
+            {!isBookCovered(b.id) ? " (not in this translation)" : ""}
           </option>
         ))}
       </select>
@@ -52,7 +65,7 @@ export function ChapterNav({
         onChange={(e) => onNavigate({ bookId: book.id, chapter: Number(e.target.value) })}
       >
         {chapters.map((c) => (
-          <option key={c} value={c}>
+          <option key={c} value={c} disabled={!isChapterCovered(book.id, c)}>
             {c}
           </option>
         ))}

@@ -21,6 +21,25 @@ pub struct Translation {
     pub verse_count: i64,
 }
 
+/// Which chapters of a book a given translation actually has verses for --
+/// used by the book/chapter picker and Go To palette to gray out or reject
+/// passages a translation doesn't cover (e.g. Tyndale is NT + Pentateuch
+/// only) instead of navigating to an empty chapter.
+#[derive(Debug, Clone, Serialize)]
+pub struct BookCoverage {
+    pub book_id: i64,
+    pub chapters: Vec<i64>,
+}
+
+/// An alternate book name a bundled translation's own source uses (e.g. a
+/// Vulgate-named edition's "Josue" for Joshua) -- see `book_aliases`.
+#[derive(Debug, Clone, Serialize)]
+pub struct BookAlias {
+    pub book_id: i64,
+    pub name: String,
+    pub short_name: String,
+}
+
 #[derive(Debug, Clone, Serialize)]
 pub struct Verse {
     pub id: i64,
