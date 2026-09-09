@@ -1,6 +1,19 @@
-# Tauri + React + Typescript
+# Sojourner's Study Companion
 
-This template should help get you started developing with Tauri, React and Typescript in Vite.
+A desktop Bible study application built with Tauri, Rust, and React/TypeScript. It bundles multiple public-domain Bible translations, classic commentaries, Strong's lexicon data, cross-references, and the Westminster Standards for offline study, reading, and note-taking.
+
+## Development
+
+```
+npm install
+npm run tauri dev
+```
+
+## Build
+
+```
+npm run tauri build
+```
 
 ## Recommended IDE Setup
 
