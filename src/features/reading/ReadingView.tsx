@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { useNavigationStore } from "../../state/navigationStore";
 import { useUiStore } from "../../state/uiStore";
 import {
@@ -103,6 +104,17 @@ export function ReadingView() {
   const [activeFootnote, setActiveFootnote] = useState<{ footnote: Footnote; x: number; y: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Virtualized so long chapters (Psalm 119, 176 verses) don't render every
+  // verse row -- with highlights, note markers, and footnotes each row can be
+  // non-trivial -- at once. Rows vary in height (wrapped text, highlight
+  // spans), so sizes are measured after render rather than assumed fixed.
+  const rowVirtualizer = useVirtualizer({
+    count: verses?.length ?? 0,
+    getScrollElement: () => containerRef.current,
+    estimateSize: () => 56,
+    overscan: 8,
+  });
+
   const ttsSourceKind = useTtsStore((s) => s.sourceKind);
   const ttsCurrentSegmentId = useTtsStore((s) => s.segments[s.currentSegmentIndex]?.id ?? null);
   useEffect(() => {
@@ -113,12 +125,14 @@ export function ReadingView() {
 
   useEffect(() => setActiveVerse(position?.verse ?? null), [position?.bookId, position?.chapter, position?.verse]);
 
-  // Scroll the target verse into view once its row exists in the DOM (verses load async).
+  // Scroll the target verse into view once verses are loaded. Rows are
+  // virtualized, so the target row may not be mounted yet -- ask the
+  // virtualizer to scroll to its index rather than querying the DOM.
   useEffect(() => {
-    if (activeVerse == null || !containerRef.current) return;
-    const el = containerRef.current.querySelector(`[data-verse-row="${activeVerse}"]`);
-    el?.scrollIntoView({ block: "center", behavior: "smooth" });
-  }, [activeVerse, verses]);
+    if (activeVerse == null || !verses) return;
+    const index = verses.findIndex((v) => v.verse === activeVerse);
+    if (index >= 0) rowVirtualizer.scrollToIndex(index, { align: "center" });
+  }, [activeVerse, verses, rowVirtualizer]);
 
   // Persist reading position (debounced) whenever it changes.
   useEffect(() => {
@@ -221,30 +235,41 @@ export function ReadingView() {
             </button>
           ))}
         </div>
-        {verses?.map((v) => (
-          <VerseRow
-            key={v.id}
-            verse={v}
-            highlights={highlights ?? []}
-            notes={notes ?? []}
-            footnotes={footnotes?.[v.verse]}
-            isActive={activeVerse === v.verse}
-            ttsActive={ttsSourceKind === "scripture" && ttsCurrentSegmentId === v.verse}
-            showVerseNumbers={showVerseNumbers}
-            showHighlights={showHighlights}
-            showNoteSymbols={showNoteSymbols}
-            fontSize={fontSize}
-            onSelectVerse={setActiveVerse}
-            onHighlightClick={(id, x, y) => {
-              const h = highlights?.find((hl) => hl.id === id);
-              if (h) setActiveHighlight({ id, verseStart: h.verse_start, verseEnd: h.verse_end, x, y });
-            }}
-            onNoteSymbolClick={(note) =>
-              setNoteTarget({ verseStart: note.verse_start, verseEnd: note.verse_end, highlightId: note.highlight_id ?? undefined, existing: note })
-            }
-            onFootnoteClick={(footnote, x, y) => setActiveFootnote({ footnote, x, y })}
-          />
-        ))}
+        <div style={{ position: "relative", height: rowVirtualizer.getTotalSize() }}>
+          {rowVirtualizer.getVirtualItems().map((item) => {
+            const v = verses![item.index];
+            return (
+              <div
+                key={v.id}
+                ref={rowVirtualizer.measureElement}
+                data-index={item.index}
+                style={{ position: "absolute", top: 0, left: 0, right: 0, transform: `translateY(${item.start}px)` }}
+              >
+                <VerseRow
+                  verse={v}
+                  highlights={highlights ?? []}
+                  notes={notes ?? []}
+                  footnotes={footnotes?.[v.verse]}
+                  isActive={activeVerse === v.verse}
+                  ttsActive={ttsSourceKind === "scripture" && ttsCurrentSegmentId === v.verse}
+                  showVerseNumbers={showVerseNumbers}
+                  showHighlights={showHighlights}
+                  showNoteSymbols={showNoteSymbols}
+                  fontSize={fontSize}
+                  onSelectVerse={setActiveVerse}
+                  onHighlightClick={(id, x, y) => {
+                    const h = highlights?.find((hl) => hl.id === id);
+                    if (h) setActiveHighlight({ id, verseStart: h.verse_start, verseEnd: h.verse_end, x, y });
+                  }}
+                  onNoteSymbolClick={(note) =>
+                    setNoteTarget({ verseStart: note.verse_start, verseEnd: note.verse_end, highlightId: note.highlight_id ?? undefined, existing: note })
+                  }
+                  onFootnoteClick={(footnote, x, y) => setActiveFootnote({ footnote, x, y })}
+                />
+              </div>
+            );
+          })}
+        </div>
         <div className="h-24" />
       </div>
 

@@ -139,3 +139,26 @@ fn visit_dir(dir: &Path, out: &mut Vec<PathBuf>) {
         }
     }
 }
+
+/// Populates an empty content.db connection (see `db::open_content_db`) from
+/// the source Bible/commentary/reference directories shipped in this repo.
+/// This is the one place that knows how to go from raw Zefania/ThML/reference
+/// source files to a finished content.db -- used by the `build_content_db`
+/// binary (the supported, ahead-of-time way to produce the file the app
+/// ships) and, as a dev-only convenience, by the running app itself when no
+/// prebuilt content.db resource is found.
+pub fn populate_content_db(
+    conn: &mut Connection,
+    bibles_dir: &Path,
+    commentaries_dir: &Path,
+    reference_dir: &Path,
+) -> anyhow::Result<Vec<ScannedFile>> {
+    let files = discover_candidate_files(&[bibles_dir.to_path_buf(), commentaries_dir.to_path_buf()]);
+    let results = scan_files(conn, &files);
+
+    if reference_dir.is_dir() {
+        reference::import_all(conn, reference_dir)?;
+    }
+
+    Ok(results)
+}

@@ -4,6 +4,10 @@ version = "0.1.0"
 description = "A Tauri App"
 authors = ["you"]
 edition = "2021"
+# `src/bin/build_content_db.rs` makes this crate produce two binaries; without
+# this, `cargo run` (used by `tauri dev`/`tauri build`) can't tell which one to
+# launch and refuses to start.
+default-run = "tauri-app"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
