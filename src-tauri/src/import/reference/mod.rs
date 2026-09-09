@@ -1,3 +1,4 @@
+pub mod confessions;
 pub mod crossrefs;
 pub mod dictionary;
 pub mod footnotes;
@@ -19,11 +20,24 @@ pub struct ReferenceImportReport {
     pub morphology_words: usize,
     pub footnotes: usize,
     pub westminster_commentary_entries: usize,
+    pub confession_sections: usize,
 }
 
 fn table_count(conn: &Connection, table: &str) -> i64 {
     conn.query_row(&format!("SELECT COUNT(*) FROM {table}"), [], |r| r.get(0))
         .unwrap_or(0)
+}
+
+/// confessions::import shares westminster_documents/sections with the
+/// Westminster Standards, so it can't be gated on that table being empty --
+/// gate on one of its own document codes existing instead.
+fn document_exists(conn: &Connection, code: &str) -> bool {
+    conn.query_row(
+        "SELECT 1 FROM westminster_documents WHERE code = ?1",
+        [code],
+        |_| Ok(()),
+    )
+    .is_ok()
 }
 
 /// One-time import of bundled reference data (Strong's lexicon, Bible dictionary,
@@ -93,6 +107,13 @@ pub fn import_all(conn: &mut Connection, reference_dir: &Path) -> anyhow::Result
         0
     };
 
+    let confession_sections = if !document_exists(conn, "belgic") {
+        confessions::import(conn, &reference_dir.join("confessions"))
+            .map_err(|e| anyhow::anyhow!("confessions import failed: {e:#}"))?
+    } else {
+        0
+    };
+
     Ok(ReferenceImportReport {
         strongs_entries,
         dictionary_entries,
@@ -102,5 +123,6 @@ pub fn import_all(conn: &mut Connection, reference_dir: &Path) -> anyhow::Result
         morphology_words,
         footnotes,
         westminster_commentary_entries,
+        confession_sections,
     })
 }

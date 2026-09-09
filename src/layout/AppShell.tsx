@@ -13,7 +13,7 @@ const NAV_LINKS: { to: string; label: string; end?: boolean }[] = [
   { to: "/", label: "Bible", end: true },
   { to: "/lexicon", label: "Lexicon" },
   { to: "/dictionary", label: "Dictionary" },
-  { to: "/westminster", label: "Westminster" },
+  { to: "/westminster", label: "Confessions" },
   { to: "/resources", label: "Resources" },
   { to: "/notes", label: "Notes" },
   { to: "/library", label: "Library" },
