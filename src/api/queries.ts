@@ -475,4 +475,60 @@ export function useDeletePrayerEntry() {
   });
 }
 
+export function useMemoryVerses() {
+  return useQuery({ queryKey: ["memoryVerses"], queryFn: api.listMemoryVerses });
+}
+
+export function useDueMemoryVerses() {
+  return useQuery({ queryKey: ["dueMemoryVerses"], queryFn: api.listDueMemoryVerses });
+}
+
+export function useCreateMemoryVerse() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: {
+      bookId: number;
+      chapter: number;
+      verseStart: number;
+      verseEnd: number;
+      translationId?: number;
+      mode: "first-letter" | "blank-word";
+    }) => api.createMemoryVerse(input.bookId, input.chapter, input.verseStart, input.verseEnd, input.translationId, input.mode),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["memoryVerses"] });
+      qc.invalidateQueries({ queryKey: ["dueMemoryVerses"] });
+    },
+  });
+}
+
+export function useSetMemoryVerseMode() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { id: number; mode: "first-letter" | "blank-word" }) => api.setMemoryVerseMode(input.id, input.mode),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["memoryVerses"] }),
+  });
+}
+
+export function useDeleteMemoryVerse() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: api.deleteMemoryVerse,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["memoryVerses"] });
+      qc.invalidateQueries({ queryKey: ["dueMemoryVerses"] });
+    },
+  });
+}
+
+export function useReviewMemoryVerse() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { id: number; quality: number }) => api.reviewMemoryVerse(input.id, input.quality),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["memoryVerses"] });
+      qc.invalidateQueries({ queryKey: ["dueMemoryVerses"] });
+    },
+  });
+}
+
 export type { Verse };
