@@ -227,6 +227,12 @@ export interface ReadingPlanProgress {
   created_at: string;
 }
 
+export interface BackupInfo {
+  file_name: string;
+  created_at: string;
+  size_bytes: number;
+}
+
 export interface RedLetterRange {
   verse_start: number;
   verse_end: number;

@@ -25,6 +25,7 @@ import type {
   ReadingPlanProgress,
   HarmonySection,
   RedLetterRange,
+  BackupInfo,
   DictionaryEntry,
   DictionaryEntrySummary,
   InterlinearWord,
@@ -342,4 +343,13 @@ export const api = {
 
   getRedLetterRanges: (bookId: number, chapter: number) =>
     invoke<RedLetterRange[]>("get_red_letter_ranges", { bookId, chapter }),
+
+  createBackup: () => invoke<string>("create_backup"),
+  listBackups: () => invoke<BackupInfo[]>("list_backups"),
+  exportDatabase: (destPath: string) => invoke<void>("export_database", { destPath }),
+  stageImport: (sourcePath: string) => invoke<void>("stage_import", { sourcePath }),
+  stageRestore: (fileName: string) => invoke<void>("stage_restore", { fileName }),
+  quickCheck: () => invoke<string[]>("quick_check"),
+  getBackupSyncFolder: () => invoke<string | null>("get_backup_sync_folder"),
+  setBackupSyncFolder: (folder: string | null) => invoke<void>("set_backup_sync_folder", { folder }),
 };

@@ -610,6 +610,30 @@ export function useDeleteSearchHistory() {
   });
 }
 
+export function useBackups() {
+  return useQuery({ queryKey: ["backups"], queryFn: api.listBackups });
+}
+
+export function useCreateBackup() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: api.createBackup,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["backups"] }),
+  });
+}
+
+export function useBackupSyncFolder() {
+  return useQuery({ queryKey: ["backupSyncFolder"], queryFn: api.getBackupSyncFolder });
+}
+
+export function useSetBackupSyncFolder() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: api.setBackupSyncFolder,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["backupSyncFolder"] }),
+  });
+}
+
 export function useHarmonySections() {
   return useQuery({ queryKey: ["harmonySections"], queryFn: api.listHarmonySections, staleTime: Infinity });
 }
