@@ -331,6 +331,7 @@ pub struct ConcordanceEntry {
 pub struct SermonNote {
     pub id: i64,
     pub date: String,
+    pub series: Option<String>,
     pub preacher: Option<String>,
     pub title: Option<String>,
     pub passage_text: Option<String>,
@@ -339,6 +340,31 @@ pub struct SermonNote {
     pub created_at: String,
     pub updated_at: String,
     pub passages: Vec<SermonNotePassageLink>,
+    pub tags: Vec<String>,
+    pub confession_links: Vec<SermonNoteConfessionLink>,
+    pub word_studies: Vec<SermonNoteWordStudy>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SermonNoteConfessionLink {
+    pub id: i64,
+    pub sermon_note_id: i64,
+    pub westminster_section_id: i64,
+    pub document_code: String,
+    pub document_title: String,
+    pub heading: String,
+    pub created_at: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SermonNoteWordStudy {
+    pub id: i64,
+    pub sermon_note_id: i64,
+    pub strongs_id: String,
+    pub original_word: Option<String>,
+    pub transliteration: Option<String>,
+    pub note: Option<String>,
+    pub created_at: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

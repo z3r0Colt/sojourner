@@ -877,6 +877,47 @@ ALTER TABLE memory_verses_new RENAME TO memory_verses;
 CREATE INDEX idx_memory_verses_due ON memory_verses(due_at);
 "#;
 
+pub const USER_MIGRATION_0007: &str = r#"
+-- Sermon notes revamp: a series to group a multi-week sermon set (grouping
+-- by book is already free -- it comes from each note's passage links), a
+-- free-tag system for doctrine/topic search, and two more link kinds
+-- alongside the existing passage links: to a Westminster confession
+-- section, and to a Strong's-tagged word study (an observation on a
+-- specific original-language word, pointing back into the interlinear).
+-- The confession/word-study link tables reference content.db rows
+-- (westminster_sections, strongs_entries) with plain integer/text columns
+-- and no FOREIGN KEY, same reasoning as every other content.db reference
+-- from user.db elsewhere in this schema (see the file-level comment above).
+ALTER TABLE sermon_notes ADD COLUMN series TEXT;
+CREATE INDEX idx_sermon_notes_series ON sermon_notes(series);
+
+CREATE TABLE sermon_note_tags (
+  id              INTEGER PRIMARY KEY,
+  sermon_note_id  INTEGER NOT NULL REFERENCES sermon_notes(id) ON DELETE CASCADE,
+  tag             TEXT NOT NULL,
+  UNIQUE(sermon_note_id, tag)
+);
+CREATE INDEX idx_sermon_note_tags_tag ON sermon_note_tags(tag);
+CREATE INDEX idx_sermon_note_tags_note ON sermon_note_tags(sermon_note_id);
+
+CREATE TABLE sermon_note_confession_links (
+  id                     INTEGER PRIMARY KEY,
+  sermon_note_id         INTEGER NOT NULL REFERENCES sermon_notes(id) ON DELETE CASCADE,
+  westminster_section_id INTEGER NOT NULL,
+  created_at             TEXT NOT NULL
+);
+CREATE INDEX idx_sermon_note_confession_links_note ON sermon_note_confession_links(sermon_note_id);
+
+CREATE TABLE sermon_note_word_studies (
+  id              INTEGER PRIMARY KEY,
+  sermon_note_id  INTEGER NOT NULL REFERENCES sermon_notes(id) ON DELETE CASCADE,
+  strongs_id      TEXT NOT NULL,
+  note            TEXT,
+  created_at      TEXT NOT NULL
+);
+CREATE INDEX idx_sermon_note_word_studies_note ON sermon_note_word_studies(sermon_note_id);
+"#;
+
 pub const USER_MIGRATIONS: &[&str] = &[
     USER_MIGRATION_0001,
     USER_MIGRATION_0002,
@@ -884,4 +925,5 @@ pub const USER_MIGRATIONS: &[&str] = &[
     USER_MIGRATION_0004,
     USER_MIGRATION_0005,
     USER_MIGRATION_0006,
+    USER_MIGRATION_0007,
 ];

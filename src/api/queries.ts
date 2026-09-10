@@ -392,6 +392,7 @@ export function useUpdateSermonNote() {
     mutationFn: (input: {
       id: number;
       date: string;
+      series?: string;
       preacher?: string;
       title?: string;
       passageText?: string;
@@ -433,6 +434,71 @@ export function useDeleteSermonNotePassage() {
       qc.invalidateQueries({ queryKey: ["sermonNotes"] });
       qc.invalidateQueries({ queryKey: ["sermonNote"] });
     },
+  });
+}
+
+function invalidateSermonNotes(qc: ReturnType<typeof useQueryClient>) {
+  qc.invalidateQueries({ queryKey: ["sermonNotes"] });
+  qc.invalidateQueries({ queryKey: ["sermonNote"] });
+  qc.invalidateQueries({ queryKey: ["sermonNoteTags"] });
+  qc.invalidateQueries({ queryKey: ["sermonNoteSeries"] });
+}
+
+export function useSermonNoteTags() {
+  return useQuery({ queryKey: ["sermonNoteTags"], queryFn: api.listSermonNoteTags });
+}
+
+export function useSermonNoteSeries() {
+  return useQuery({ queryKey: ["sermonNoteSeries"], queryFn: api.listSermonNoteSeries });
+}
+
+export function useAddSermonNoteTag() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { sermonNoteId: number; tag: string }) => api.addSermonNoteTag(input.sermonNoteId, input.tag),
+    onSuccess: () => invalidateSermonNotes(qc),
+  });
+}
+
+export function useRemoveSermonNoteTag() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { sermonNoteId: number; tag: string }) => api.removeSermonNoteTag(input.sermonNoteId, input.tag),
+    onSuccess: () => invalidateSermonNotes(qc),
+  });
+}
+
+export function useAddSermonNoteConfessionLink() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { sermonNoteId: number; westminsterSectionId: number }) =>
+      api.addSermonNoteConfessionLink(input.sermonNoteId, input.westminsterSectionId),
+    onSuccess: () => invalidateSermonNotes(qc),
+  });
+}
+
+export function useDeleteSermonNoteConfessionLink() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: api.deleteSermonNoteConfessionLink,
+    onSuccess: () => invalidateSermonNotes(qc),
+  });
+}
+
+export function useAddSermonNoteWordStudy() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { sermonNoteId: number; strongsId: string; note?: string }) =>
+      api.addSermonNoteWordStudy(input.sermonNoteId, input.strongsId, input.note),
+    onSuccess: () => invalidateSermonNotes(qc),
+  });
+}
+
+export function useDeleteSermonNoteWordStudy() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: api.deleteSermonNoteWordStudy,
+    onSuccess: () => invalidateSermonNotes(qc),
   });
 }
 
