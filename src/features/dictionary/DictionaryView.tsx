@@ -1,8 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, Fragment, type ReactNode } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../../api/client";
-import { useDictionaryIndex, useDictionaryEntry } from "../../api/queries";
+import { useDictionaryIndex, useDictionaryEntry, useBooks } from "../../api/queries";
+import { useNavigationStore } from "../../state/navigationStore";
+import { buildBookLookup, scanScriptureRefs } from "../../hooks/useReferenceParser";
 
 const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
@@ -11,9 +13,12 @@ export function DictionaryView() {
   const navigate = useNavigate();
   const { data: index } = useDictionaryIndex();
   const { data: entry } = useDictionaryEntry(slug ?? null);
+  const { data: books } = useBooks();
+  const goTo = useNavigationStore((s) => s.goTo);
   const [query, setQuery] = useState("");
   const [debounced, setDebounced] = useState("");
   const [activeLetter, setActiveLetter] = useState("A");
+  const bookLookup = useMemo(() => buildBookLookup(books ?? []), [books]);
 
   useEffect(() => {
     const t = setTimeout(() => setDebounced(query), 250);
@@ -33,6 +38,33 @@ export function DictionaryView() {
 
   const showingSearch = debounced.trim().length > 1;
   const list = showingSearch ? searchResults ?? [] : letterEntries;
+
+  function jumpToRef(bookId: number, chapter: number, verse?: number) {
+    goTo({ bookId, chapter, verse });
+    navigate("/");
+  }
+
+  function renderLinkedBody(body: string) {
+    const matches = scanScriptureRefs(body, bookLookup);
+    if (matches.length === 0) return body;
+    const nodes: ReactNode[] = [];
+    let cursor = 0;
+    matches.forEach((m, i) => {
+      if (m.start > cursor) nodes.push(<Fragment key={`t${i}`}>{body.slice(cursor, m.start)}</Fragment>);
+      nodes.push(
+        <button
+          key={`r${i}`}
+          onClick={() => jumpToRef(m.ref.book.id, m.ref.chapter, m.ref.verse)}
+          className="text-blue-600 underline decoration-dotted hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+        >
+          {m.text}
+        </button>,
+      );
+      cursor = m.end;
+    });
+    if (cursor < body.length) nodes.push(<Fragment key="tail">{body.slice(cursor)}</Fragment>);
+    return nodes;
+  }
 
   return (
     <div className="flex h-full">
@@ -86,7 +118,7 @@ export function DictionaryView() {
           <div className="max-w-2xl">
             <h1 className="mb-3 text-2xl font-semibold">{entry.term}</h1>
             <div className="whitespace-pre-wrap text-base leading-relaxed text-gray-800 dark:text-gray-200">
-              {entry.body}
+              {renderLinkedBody(entry.body)}
             </div>
             <Link to="/" className="mt-6 inline-block text-sm text-blue-600 hover:underline dark:text-blue-400">
               ← Back to reading
