@@ -18,6 +18,8 @@ import type {
   ConcordanceEntry,
   SermonNote,
   SermonNotePassageLink,
+  SermonNoteConfessionLink,
+  SermonNoteWordStudy,
   PrayerEntry,
   PrayerEntryMode,
   PrayerListPerson,
@@ -226,6 +228,7 @@ export const api = {
   getSermonNote: (id: number) => invoke<SermonNote | null>("get_sermon_note", { id }),
   createSermonNote: (input: {
     date: string;
+    series?: string;
     preacher?: string;
     title?: string;
     passageText?: string;
@@ -234,6 +237,7 @@ export const api = {
   }) =>
     invoke<SermonNote>("create_sermon_note", {
       date: input.date,
+      series: input.series ?? null,
       preacher: input.preacher ?? null,
       title: input.title ?? null,
       passageText: input.passageText ?? null,
@@ -242,11 +246,20 @@ export const api = {
     }),
   updateSermonNote: (
     id: number,
-    input: { date: string; preacher?: string; title?: string; passageText?: string; outline?: string; application?: string },
+    input: {
+      date: string;
+      series?: string;
+      preacher?: string;
+      title?: string;
+      passageText?: string;
+      outline?: string;
+      application?: string;
+    },
   ) =>
     invoke<void>("update_sermon_note", {
       id,
       date: input.date,
+      series: input.series ?? null,
       preacher: input.preacher ?? null,
       title: input.title ?? null,
       passageText: input.passageText ?? null,
@@ -264,6 +277,17 @@ export const api = {
     }),
   deleteSermonNotePassage: (id: number) => invoke<void>("delete_sermon_note_passage", { id }),
   searchSermonNotes: (query: string, limit = 50) => invoke<SermonNote[]>("search_sermon_notes", { query, limit }),
+  addSermonNoteTag: (sermonNoteId: number, tag: string) => invoke<void>("add_sermon_note_tag", { sermonNoteId, tag }),
+  removeSermonNoteTag: (sermonNoteId: number, tag: string) => invoke<void>("remove_sermon_note_tag", { sermonNoteId, tag }),
+  listSermonNoteTags: () => invoke<string[]>("list_sermon_note_tags"),
+  listSermonNoteSeries: () => invoke<string[]>("list_sermon_note_series"),
+  sermonNotesByTag: (tag: string) => invoke<SermonNote[]>("sermon_notes_by_tag", { tag }),
+  addSermonNoteConfessionLink: (sermonNoteId: number, westminsterSectionId: number) =>
+    invoke<SermonNoteConfessionLink>("add_sermon_note_confession_link", { sermonNoteId, westminsterSectionId }),
+  deleteSermonNoteConfessionLink: (id: number) => invoke<void>("delete_sermon_note_confession_link", { id }),
+  addSermonNoteWordStudy: (sermonNoteId: number, strongsId: string, note?: string) =>
+    invoke<SermonNoteWordStudy>("add_sermon_note_word_study", { sermonNoteId, strongsId, note: note ?? null }),
+  deleteSermonNoteWordStudy: (id: number) => invoke<void>("delete_sermon_note_word_study", { id }),
 
   listPrayerEntries: () => invoke<PrayerEntry[]>("list_prayer_entries"),
   createPrayerEntry: (input: {

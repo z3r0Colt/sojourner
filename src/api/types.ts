@@ -152,9 +152,30 @@ export interface SermonNotePassageLink {
   created_at: string;
 }
 
+export interface SermonNoteConfessionLink {
+  id: number;
+  sermon_note_id: number;
+  westminster_section_id: number;
+  document_code: string;
+  document_title: string;
+  heading: string;
+  created_at: string;
+}
+
+export interface SermonNoteWordStudy {
+  id: number;
+  sermon_note_id: number;
+  strongs_id: string;
+  original_word: string | null;
+  transliteration: string | null;
+  note: string | null;
+  created_at: string;
+}
+
 export interface SermonNote {
   id: number;
   date: string;
+  series: string | null;
   preacher: string | null;
   title: string | null;
   passage_text: string | null;
@@ -163,6 +184,9 @@ export interface SermonNote {
   created_at: string;
   updated_at: string;
   passages: SermonNotePassageLink[];
+  tags: string[];
+  confession_links: SermonNoteConfessionLink[];
+  word_studies: SermonNoteWordStudy[];
 }
 
 export type PrayerEntryMode = "acts" | "free";
