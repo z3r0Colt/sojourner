@@ -132,6 +132,7 @@ export interface SearchResult {
 export interface SearchResults {
   verses: SearchResult[];
   commentary: SearchResult[];
+  notes: SearchResult[];
 }
 
 export interface ImportReportItem {

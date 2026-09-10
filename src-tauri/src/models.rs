@@ -264,6 +264,7 @@ pub struct WestminsterCommentaryEntry {
 pub struct SearchResults {
     pub verses: Vec<SearchResult>,
     pub commentary: Vec<SearchResult>,
+    pub notes: Vec<SearchResult>,
 }
 
 #[derive(Debug, Clone, Serialize)]
