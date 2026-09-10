@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "SojournersStudy (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "SojournersStudy (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
