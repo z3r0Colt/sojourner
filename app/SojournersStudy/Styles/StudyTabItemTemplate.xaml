@@ -3,7 +3,8 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="using:Microsoft.UI.Xaml.Controls"
-    xmlns:models="using:SojournersStudy.Models">
+    xmlns:models="using:SojournersStudy.Models"
+    xmlns:views="using:SojournersStudy.Views">
 
     <!--
         Shared between every window that can host a study TabView (the main
@@ -12,15 +13,37 @@
         of a TabItemTemplate must itself be a TabViewItem when using
         TabItemsSource: the template supplies the whole container, not just
         its header.
+
+        The tab's body is picked per-item by TabContentTemplateSelector (see
+        StudyTabItem.Kind) rather than hard-coded here, since different tabs
+        (plain text today, interlinear now, more kinds later) need different
+        body content built fresh from data in whichever window they land in.
     -->
+    <DataTemplate x:Key="PlainTextBodyTemplate">
+        <ScrollViewer Padding="16">
+            <TextBlock Text="{Binding BodyText}" TextWrapping="Wrap" />
+        </ScrollViewer>
+    </DataTemplate>
+
+    <DataTemplate x:Key="InterlinearBodyTemplate">
+        <views:InterlinearView Words="{Binding InterlinearWords}" />
+    </DataTemplate>
+
+    <views:TabContentTemplateSelector
+        x:Key="TabBodyTemplateSelector"
+        InterlinearTemplate="{StaticResource InterlinearBodyTemplate}"
+        PlainTextTemplate="{StaticResource PlainTextBodyTemplate}" />
+
     <DataTemplate x:Key="StudyTabItemTemplate">
         <controls:TabViewItem Header="{Binding Header}">
             <controls:TabViewItem.IconSource>
                 <FontIconSource Glyph="{Binding IconGlyph}" />
             </controls:TabViewItem.IconSource>
-            <ScrollViewer Padding="16">
-                <TextBlock Text="{Binding BodyText}" TextWrapping="Wrap" />
-            </ScrollViewer>
+            <ContentControl
+                Content="{Binding}"
+                ContentTemplateSelector="{StaticResource TabBodyTemplateSelector}"
+                HorizontalContentAlignment="Stretch"
+                VerticalContentAlignment="Stretch" />
         </controls:TabViewItem>
     </DataTemplate>
 </ResourceDictionary>

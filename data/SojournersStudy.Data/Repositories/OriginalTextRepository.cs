@@ -9,13 +9,14 @@ public static class OriginalTextRepository
     public static void UpsertWord(IDbConnection db, OriginalTextWord word)
     {
         const string sql = """
-            INSERT INTO Original_Texts (bcv_id, word_order, surface_word, lemma, strongs_number, morph_code)
-            VALUES (@BcvId, @WordOrder, @SurfaceWord, @Lemma, @StrongsNumber, @MorphCode)
+            INSERT INTO Original_Texts (bcv_id, word_order, surface_word, lemma, strongs_number, morph_code, gloss)
+            VALUES (@BcvId, @WordOrder, @SurfaceWord, @Lemma, @StrongsNumber, @MorphCode, @Gloss)
             ON CONFLICT (bcv_id, word_order) DO UPDATE SET
                 surface_word = excluded.surface_word,
                 lemma = excluded.lemma,
                 strongs_number = excluded.strongs_number,
-                morph_code = excluded.morph_code;
+                morph_code = excluded.morph_code,
+                gloss = excluded.gloss;
             """;
         db.Execute(sql, word);
     }
@@ -24,7 +25,7 @@ public static class OriginalTextRepository
         db.Query<OriginalTextWord>(
             """
             SELECT bcv_id AS BcvId, word_order AS WordOrder, surface_word AS SurfaceWord,
-                   lemma AS Lemma, strongs_number AS StrongsNumber, morph_code AS MorphCode
+                   lemma AS Lemma, strongs_number AS StrongsNumber, morph_code AS MorphCode, gloss AS Gloss
             FROM Original_Texts
             WHERE bcv_id = @bcvId
             ORDER BY word_order;
@@ -38,7 +39,7 @@ public static class OriginalTextRepository
         return db.Query<OriginalTextWord>(
             """
             SELECT bcv_id AS BcvId, word_order AS WordOrder, surface_word AS SurfaceWord,
-                   lemma AS Lemma, strongs_number AS StrongsNumber, morph_code AS MorphCode
+                   lemma AS Lemma, strongs_number AS StrongsNumber, morph_code AS MorphCode, gloss AS Gloss
             FROM Original_Texts
             WHERE bcv_id BETWEEN @start AND @end
             ORDER BY bcv_id, word_order;

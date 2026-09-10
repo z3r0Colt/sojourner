@@ -35,6 +35,7 @@ internal static class Schema
             lemma TEXT,
             strongs_number TEXT,
             morph_code TEXT,
+            gloss TEXT,
             PRIMARY KEY (bcv_id, word_order)
         ) WITHOUT ROWID;
 

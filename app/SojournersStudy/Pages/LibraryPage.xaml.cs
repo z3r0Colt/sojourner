@@ -1,6 +1,8 @@
 using System.Collections.ObjectModel;
 using Microsoft.UI.Xaml.Controls;
+using SojournersStudy.Data.Database;
 using SojournersStudy.Models;
+using SojournersStudy.Seeding;
 using SojournersStudy.Services;
 
 namespace SojournersStudy.Pages;
@@ -8,26 +10,27 @@ namespace SojournersStudy.Pages;
 /// <summary>
 /// The main study workspace: a tear-out-capable TabView holding whatever a
 /// pastor currently has open (Bible chapters, lexicon entries, commentary
-/// excerpts). Placeholder tabs/content here will be replaced once the SQLite
-/// data tier (Phase 2) and interlinear view (Phase 3) exist.
+/// excerpts).
 /// </summary>
 public sealed partial class LibraryPage : Page
 {
-    public ObservableCollection<StudyTabItem> Items { get; } = new()
-    {
-        new StudyTabItem
-        {
-            Header = "Genesis 1",
-            IconGlyph = "",
-            BodyText = "In the beginning God created the heaven and the earth...\n\n(Placeholder -- real chapter text arrives with the SQLite data tier in Phase 2.)",
-        },
-    };
+    public ObservableCollection<StudyTabItem> Items { get; } = new();
 
     public TabView TabViewControl => StudyTabView;
 
     public LibraryPage()
     {
         InitializeComponent();
+
+        var db = SojournersDatabase.CreateDefault();
+        var johnWords = DemoDataSeeder.EnsureJohn1_1Seeded(db);
+        Items.Add(new StudyTabItem
+        {
+            Header = "John 1:1",
+            IconGlyph = "",
+            Kind = TabContentKind.Interlinear,
+            InterlinearWords = new ObservableCollection<Data.Models.OriginalTextWord>(johnWords),
+        });
     }
 
     private void StudyTabView_AddTabButtonClick(TabView sender, object args)
@@ -35,7 +38,7 @@ public sealed partial class LibraryPage : Page
         Items.Add(new StudyTabItem
         {
             Header = "New Tab",
-            IconGlyph = "",
+            IconGlyph = "",
             BodyText = "Open a passage, lexicon entry, or commentary to begin.",
         });
     }

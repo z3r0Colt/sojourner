@@ -8,4 +8,5 @@ public sealed class OriginalTextWord
     public string? Lemma { get; set; }
     public string? StrongsNumber { get; set; }
     public string? MorphCode { get; set; }
+    public string? Gloss { get; set; }
 }

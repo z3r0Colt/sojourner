@@ -108,19 +108,38 @@ public sealed class SchemaTests : IDisposable
     }
 
     [Fact]
-    public void Original_text_words_for_a_verse_come_back_in_word_order()
+    public void Original_text_words_for_a_verse_come_back_in_word_order_with_gloss()
     {
         using var conn = _db.OpenConnection();
         int bcv = BcvReference.Encode(45, 1, 8);
 
-        OriginalTextRepository.UpsertWord(conn, new OriginalTextWord { BcvId = bcv, WordOrder = 1, SurfaceWord = "ἀλλὰ", StrongsNumber = "G235" });
-        OriginalTextRepository.UpsertWord(conn, new OriginalTextWord { BcvId = bcv, WordOrder = 0, SurfaceWord = "λήμψεσθε", StrongsNumber = "G2983" });
+        OriginalTextRepository.UpsertWord(conn, new OriginalTextWord { BcvId = bcv, WordOrder = 1, SurfaceWord = "ἀλλὰ", StrongsNumber = "G235", Gloss = "but" });
+        OriginalTextRepository.UpsertWord(conn, new OriginalTextWord { BcvId = bcv, WordOrder = 0, SurfaceWord = "λήμψεσθε", StrongsNumber = "G2983", Gloss = "you will receive" });
 
         List<OriginalTextWord> words = OriginalTextRepository.GetWordsForVerse(conn, bcv).ToList();
 
         Assert.Equal(2, words.Count);
         Assert.Equal("λήμψεσθε", words[0].SurfaceWord);
+        Assert.Equal("you will receive", words[0].Gloss);
         Assert.Equal("ἀλλὰ", words[1].SurfaceWord);
+        Assert.Equal("but", words[1].Gloss);
+    }
+
+    [Fact]
+    public void Original_text_words_for_a_chapter_span_multiple_verses_in_bcv_then_word_order()
+    {
+        using var conn = _db.OpenConnection();
+        int v8 = BcvReference.Encode(44, 1, 8);
+        int v9 = BcvReference.Encode(44, 1, 9);
+
+        OriginalTextRepository.UpsertWord(conn, new OriginalTextWord { BcvId = v9, WordOrder = 0, SurfaceWord = "Καὶ", Gloss = "And" });
+        OriginalTextRepository.UpsertWord(conn, new OriginalTextWord { BcvId = v8, WordOrder = 1, SurfaceWord = "δύναμιν", Gloss = "power" });
+        OriginalTextRepository.UpsertWord(conn, new OriginalTextWord { BcvId = v8, WordOrder = 0, SurfaceWord = "λήμψεσθε", Gloss = "you will receive" });
+
+        List<OriginalTextWord> words = OriginalTextRepository.GetWordsForChapter(conn, 44, 1).ToList();
+
+        Assert.Equal(3, words.Count);
+        Assert.Equal(["you will receive", "power", "And"], words.Select(w => w.Gloss));
     }
 
     [Fact]
