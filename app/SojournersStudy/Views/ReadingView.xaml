@@ -4,7 +4,9 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:controls="using:CommunityToolkit.WinUI.Controls"
     xmlns:local="using:SojournersStudy.Views"
+    xmlns:models="using:SojournersStudy.Data.Models"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
@@ -14,24 +16,63 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <TextBox
-            x:Name="SearchBox"
-            Grid.Row="0"
-            Margin="24,16,24,0"
-            PlaceholderText="Highlight a word in this chapter…"
-            TextChanged="SearchBox_TextChanged" />
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="24,16,24,0" Spacing="8">
+            <TextBox
+                x:Name="SearchBox"
+                Width="320"
+                PlaceholderText="Highlight a word in this chapter…"
+                TextChanged="SearchBox_TextChanged" />
+            <Button x:Name="CommentaryToggle" Content="Cloud of Witnesses" Click="CommentaryToggle_Click" />
+        </StackPanel>
 
-        <ScrollViewer Grid.Row="1" Padding="24,8,24,24">
-            <RichTextBlock
-                x:Name="ChapterBlock"
-                FontFamily="/Assets/Fonts/EBGaramond-Variable.ttf#EB Garamond"
-                FontSize="18"
-                IsTextSelectionEnabled="True"
-                LineHeight="30"
-                TextWrapping="Wrap">
-                <Paragraph x:Name="TitleParagraph" FontSize="26" FontWeight="SemiBold" />
-                <Paragraph x:Name="ChapterParagraph" />
-            </RichTextBlock>
-        </ScrollViewer>
+        <!--
+            Right-aligned commentary drawer (architecture doc section 4):
+            DisplayMode="Inline" reserves space alongside the reading column
+            rather than overlaying it, and the GridSplitter inside the pane
+            (from CommunityToolkit.WinUI.Controls.Sizers; WinUI has no
+            built-in GridSplitter) lets the user drag to resize it, matching
+            the doc's separate "Multi-Panel Grid / GridSplitter" bullet.
+        -->
+        <SplitView
+            x:Name="CommentarySplitView"
+            Grid.Row="1"
+            DisplayMode="Inline"
+            IsPaneOpen="False"
+            OpenPaneLength="380"
+            PanePlacement="Right">
+            <SplitView.Pane>
+                <Grid Background="{StaticResource FloatingMenuBackgroundBrush}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <controls:GridSplitter Grid.Column="0" Width="6" ResizeBehavior="BasedOnAlignment" ResizeDirection="Auto" />
+                    <ScrollViewer Grid.Column="1" Padding="12">
+                        <ItemsControl x:Name="CommentaryList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="models:WorkContentBlock">
+                                    <StackPanel Margin="0,0,0,16" Spacing="4">
+                                        <TextBlock Text="{x:Bind BodyText}" TextWrapping="Wrap" FontSize="14" Foreground="{StaticResource PageForegroundBrush}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
+            </SplitView.Pane>
+            <ScrollViewer Padding="24,8,24,24">
+                <RichTextBlock
+                    x:Name="ChapterBlock"
+                    FontFamily="/Assets/Fonts/EBGaramond-Variable.ttf#EB Garamond"
+                    FontSize="18"
+                    Foreground="{StaticResource PageForegroundBrush}"
+                    IsTextSelectionEnabled="True"
+                    LineHeight="30"
+                    TextWrapping="Wrap">
+                    <Paragraph x:Name="TitleParagraph" FontSize="26" FontWeight="SemiBold" />
+                    <Paragraph x:Name="ChapterParagraph" />
+                </RichTextBlock>
+            </ScrollViewer>
+        </SplitView>
     </Grid>
 </UserControl>

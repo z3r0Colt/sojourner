@@ -165,6 +165,37 @@ public sealed class SchemaTests : IDisposable
     }
 
     [Fact]
+    public void Work_content_block_chapter_range_query_finds_overlapping_but_not_unrelated_blocks()
+    {
+        using var conn = _db.OpenConnection();
+        int workId = WorksRepository.InsertWork(conn, new WorksCatalogEntry { Author = "Matthew Henry", Title = "Commentary on Romans" });
+
+        int inChapter = WorksRepository.InsertContentBlock(conn, new WorkContentBlock
+        {
+            WorkId = workId,
+            StartBcv = BcvReference.Encode(45, 8, 26),
+            EndBcv = BcvReference.Encode(45, 8, 28),
+            BodyText = "The Believer's Privileges.",
+            SortOrder = 0,
+        });
+        WorksRepository.InsertContentBlock(conn, new WorkContentBlock
+        {
+            WorkId = workId,
+            StartBcv = BcvReference.Encode(45, 9, 1),
+            EndBcv = BcvReference.Encode(45, 9, 5),
+            BodyText = "Unrelated to chapter 8.",
+            SortOrder = 1,
+        });
+
+        int chapterStart = BcvReference.ChapterStart(45, 8);
+        int chapterEnd = BcvReference.ChapterEnd(45, 8);
+        List<WorkContentBlock> blocks = WorksRepository.GetBlocksOverlappingRange(conn, chapterStart, chapterEnd).ToList();
+
+        Assert.Single(blocks);
+        Assert.Equal(inChapter, blocks[0].BlockId);
+    }
+
+    [Fact]
     public void Confessional_proof_text_links_a_verse_to_a_document_and_is_deduplicated_on_reinsert()
     {
         using var conn = _db.OpenConnection();

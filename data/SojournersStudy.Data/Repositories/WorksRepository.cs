@@ -46,4 +46,17 @@ public static class WorksRepository
             ORDER BY work_id, sort_order;
             """,
             new { bcvId });
+
+    /// Blocks overlapping any part of [chapterStartBcv, chapterEndBcv] -- one query for a whole chapter's
+    /// Commentary Drawer contents rather than one GetBlocksForVerse call per verse.
+    public static IEnumerable<WorkContentBlock> GetBlocksOverlappingRange(IDbConnection db, int chapterStartBcv, int chapterEndBcv) =>
+        db.Query<WorkContentBlock>(
+            """
+            SELECT block_id AS BlockId, work_id AS WorkId, start_bcv AS StartBcv, end_bcv AS EndBcv,
+                   body_text AS BodyText, sort_order AS SortOrder
+            FROM Work_Content_Blocks
+            WHERE start_bcv <= @chapterEndBcv AND end_bcv >= @chapterStartBcv
+            ORDER BY work_id, sort_order;
+            """,
+            new { chapterStartBcv, chapterEndBcv });
 }

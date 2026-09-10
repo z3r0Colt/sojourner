@@ -11,11 +11,11 @@ namespace SojournersStudy.Views;
 
 /// <summary>
 /// The main chapter reading experience: a RichTextBlock rendering real KJV
-/// text (EB Garamond) with a confessional-citation badge (InlineUIContainer)
-/// injected after any verse the Westminster Standards cite, and a live
-/// TextHighlighter search box. Queries the database itself from Book/Chapter
-/// (see StudyTabItem's own comment on why tab content stays plain data
-/// rather than pre-loaded rows).
+/// text (EB Garamond) with a confessional-citation badge injected after any
+/// verse the Westminster Standards cite, and a live TextHighlighter search
+/// box. Queries the database itself from Book/Chapter (see StudyTabItem's
+/// own comment on why tab content stays plain data rather than pre-loaded
+/// rows).
 /// </summary>
 public sealed partial class ReadingView : UserControl
 {
@@ -87,11 +87,8 @@ public sealed partial class ReadingView : UserControl
         {
             (_, _, int verseNumber) = BcvReference.Decode(verse.BcvId);
 
-            var verseNumberRun = new Run { Text = $"{verseNumber} ", FontWeight = FontWeights.Bold, FontSize = 12 };
-            ChapterParagraph.Inlines.Add(verseNumberRun);
-
-            var verseTextRun = new Run { Text = verse.VerseText + "  " };
-            ChapterParagraph.Inlines.Add(verseTextRun);
+            ChapterParagraph.Inlines.Add(new Run { Text = $"{verseNumber} ", FontWeight = FontWeights.Bold, FontSize = 12 });
+            ChapterParagraph.Inlines.Add(new Run { Text = verse.VerseText + "  " });
 
             List<ConfessionalProofText> citations = ConfessionsRepository.GetProofTextsForVerse(conn, verse.BcvId).ToList();
             foreach (var group in citations.GroupBy(c => (c.DocumentId, c.ChapterNum)))
@@ -101,29 +98,39 @@ public sealed partial class ReadingView : UserControl
                     continue;
                 }
 
-                var badge = new Button
-                {
-                    Content = $"{document.Code} {group.Key.ChapterNum}",
-                    Padding = new Thickness(6, 0, 6, 0),
-                    FontSize = 11,
-                    Tag = (document.DocumentId, group.Key.ChapterNum),
-                };
-                badge.Click += Badge_Click;
-                ChapterParagraph.Inlines.Add(new InlineUIContainer { Child = badge });
+                // A Hyperlink (not InlineUIContainer+Button): its content is
+                // plain Run text, so it has a predictable, exactly-summable
+                // length in TextHighlighter's character-offset space. An
+                // InlineUIContainer wrapping a real control does not -- its
+                // actual cost there isn't documented, and empirically isn't
+                // the fixed 1-position assumption a first attempt at this
+                // made (confirmed by highlight drift proportional to
+                // accumulated badge text, visible once the badges' own text
+                // grew across a chapter). The tradeoff is the confirmation
+                // Flyout anchors to the whole RichTextBlock rather than the
+                // exact badge, since a Hyperlink has no UIElement of its own
+                // to call FlyoutBase.ShowAt on.
+                int documentId = document.DocumentId;
+                int chapterNum = group.Key.ChapterNum;
+                var badgeLink = new Hyperlink();
+                badgeLink.Inlines.Add(new Run { Text = $"[{document.Code} {chapterNum}]" });
+                badgeLink.Click += (_, _) => ShowConfessionFlyout(documentId, chapterNum);
+                ChapterParagraph.Inlines.Add(badgeLink);
                 ChapterParagraph.Inlines.Add(new Run { Text = " " });
             }
         }
 
+        int chapterStart = BcvReference.ChapterStart(Book, Chapter);
+        int chapterEnd = BcvReference.ChapterEnd(Book, Chapter);
+        CommentaryList.ItemsSource = WorksRepository.GetBlocksOverlappingRange(conn, chapterStart, chapterEnd).ToList();
+
         ApplyHighlight(SearchBox.Text);
     }
 
-    private void Badge_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is not Button { Tag: (int documentId, int chapterNum) })
-        {
-            return;
-        }
+    private void CommentaryToggle_Click(object sender, RoutedEventArgs e) => CommentarySplitView.IsPaneOpen = !CommentarySplitView.IsPaneOpen;
 
+    private void ShowConfessionFlyout(int documentId, int chapterNum)
+    {
         var db = SojournersDatabase.CreateDefault();
         using var conn = db.OpenConnection();
         List<ConfessionalSection> sections = ConfessionsRepository.GetSections(conn, documentId, chapterNum, articleNum: null).ToList();
@@ -140,20 +147,22 @@ public sealed partial class ReadingView : UserControl
             panel.Children.Add(new TextBlock { Text = section.ContentText, TextWrapping = TextWrapping.Wrap });
         }
 
-        new Flyout { Content = new ScrollViewer { Content = panel, MaxHeight = 400 } }.ShowAt((FrameworkElement)sender);
+        new Flyout { Content = new ScrollViewer { Content = panel, MaxHeight = 400 } }.ShowAt(ChapterBlock);
     }
 
     private void SearchBox_TextChanged(object sender, TextChangedEventArgs e) => ApplyHighlight(SearchBox.Text);
 
     /// TextHighlighter ranges are character offsets into the RichTextBlock's
-    /// flattened plain-text content, so this walks the same inlines built in
-    /// LoadChapter (verse-number run, verse-text run, badge InlineUIContainer
-    /// (1 position) + its trailing space run) tracking a running offset,
-    /// rather than re-deriving structure from the built UI tree.
+    /// flattened plain-text content. Rather than re-deriving that offset in
+    /// a second, parallel computation (the previous version of this method
+    /// did, and it drifted out of sync with LoadChapter's actual output --
+    /// see the badge-construction comment above), this walks the real,
+    /// already-built Inlines collections directly, so the count can never
+    /// diverge from what's actually on screen.
     private void ApplyHighlight(string? term)
     {
         ChapterBlock.TextHighlighters.Clear();
-        if (string.IsNullOrWhiteSpace(term) || _verses.Count == 0)
+        if (string.IsNullOrWhiteSpace(term))
         {
             return;
         }
@@ -164,18 +173,35 @@ public sealed partial class ReadingView : UserControl
             Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Black),
         };
 
-        int offset = TitleParagraph.Inlines.Sum(TextLength) + 1; // RichTextBlock separates blocks with an implicit break.
-        using var db = SojournersDatabase.CreateDefault().OpenConnection();
-        foreach (BibleVerse verse in _verses)
+        int offset = 0;
+        foreach (Paragraph paragraph in new[] { TitleParagraph, ChapterParagraph })
         {
-            (_, _, int verseNumber) = BcvReference.Decode(verse.BcvId);
-            offset += $"{verseNumber} ".Length;
+            foreach (Inline inline in paragraph.Inlines)
+            {
+                offset = ScanInline(inline, term, offset, highlighter);
+            }
 
-            string text = verse.VerseText;
+            offset += 1; // Implicit break between this block and the next.
+        }
+
+        if (highlighter.Ranges.Count > 0)
+        {
+            ChapterBlock.TextHighlighters.Add(highlighter);
+        }
+    }
+
+    /// Recursively walks one inline, returning the offset just past its end.
+    /// Run contributes its own text length; Span-derived inlines (Hyperlink
+    /// included) contribute the sum of their children -- both are exact,
+    /// unlike an embedded UIElement's cost in this coordinate space.
+    private static int ScanInline(Inline inline, string term, int offset, TextHighlighter highlighter)
+    {
+        if (inline is Run run)
+        {
             int searchFrom = 0;
             while (true)
             {
-                int index = text.IndexOf(term, searchFrom, StringComparison.OrdinalIgnoreCase);
+                int index = run.Text.IndexOf(term, searchFrom, StringComparison.OrdinalIgnoreCase);
                 if (index < 0)
                 {
                     break;
@@ -185,18 +211,19 @@ public sealed partial class ReadingView : UserControl
                 searchFrom = index + term.Length;
             }
 
-            offset += text.Length + 2; // "  " trailing separator added in LoadChapter.
-
-            int badgeCount = ConfessionsRepository.GetProofTextsForVerse(db, verse.BcvId)
-                .Select(c => (c.DocumentId, c.ChapterNum)).Distinct().Count();
-            offset += badgeCount * 2; // each badge: 1 position for the InlineUIContainer + 1-length trailing space run.
+            return offset + run.Text.Length;
         }
 
-        if (highlighter.Ranges.Count > 0)
+        if (inline is Span span)
         {
-            ChapterBlock.TextHighlighters.Add(highlighter);
-        }
-    }
+            foreach (Inline child in span.Inlines)
+            {
+                offset = ScanInline(child, term, offset, highlighter);
+            }
 
-    private static int TextLength(Inline inline) => inline is Run run ? run.Text.Length : 1;
+            return offset;
+        }
+
+        return offset + 1;
+    }
 }
