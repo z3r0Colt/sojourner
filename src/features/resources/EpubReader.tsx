@@ -8,14 +8,18 @@ export function EpubReader({ filePath }: { filePath: string }) {
   const renditionRef = useRef<Rendition | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // epubjs's paginated flow computes its column layout from the container's
-  // pixel size at the moment renderTo runs. Rendering immediately on mount
-  // (as this used to) could run against a container that hadn't settled to
-  // its final flex-derived size yet -- with an unreset book stylesheet on
-  // top, that produced an oversized column track: the title page shows,
-  // then everything past it is blank horizontal overflow. A ResizeObserver
-  // defers the first render until the container has a real size, and keeps
-  // pagination in sync with it afterward (window resizes, sidebar toggles).
+  // epubjs's paginated flow (CSS multi-column) computes its column track
+  // width from the container's pixel size at renderTo time, and is fragile
+  // against many books' own stylesheets (fixed-width body, viewport meta,
+  // etc): the title page would show, then every "page" after it landed on
+  // genuinely empty horizontal space because the column track epub.js
+  // thought it was paginating across didn't match what actually rendered.
+  // A ResizeObserver-deferred renderTo (tried previously) didn't fix this --
+  // it's not a sizing-timing bug, it's the column-pagination model itself
+  // being unreliable across arbitrary EPUB stylesheets. "scrolled-doc" flow
+  // (one continuously-scrollable vertical column, like a normal web page)
+  // sidesteps that whole class of bug at the cost of Prev/Next paging
+  // between sections instead of columns.
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -32,8 +36,8 @@ export function EpubReader({ filePath }: { filePath: string }) {
         rendition = book.renderTo(container, {
           width,
           height,
-          flow: "paginated",
-          spread: "none", // always exactly one column, regardless of window width
+          flow: "scrolled-doc",
+          manager: "continuous",
         });
         rendition.themes.default({
           "html, body": { margin: "0 !important", padding: "0 !important" },
@@ -59,7 +63,7 @@ export function EpubReader({ filePath }: { filePath: string }) {
   return (
     <div className="flex h-full flex-col">
       <div className="relative min-h-0 flex-1">
-        <div ref={containerRef} className="absolute inset-0" />
+        <div ref={containerRef} className="absolute inset-0 overflow-y-auto" />
         {isLoading && (
           <div className="absolute inset-0 flex items-center justify-center bg-white text-sm text-gray-400 dark:bg-gray-950">
             Loading…
@@ -70,12 +74,14 @@ export function EpubReader({ filePath }: { filePath: string }) {
         <button
           onClick={() => renditionRef.current?.prev()}
           className="rounded border border-gray-300 px-3 py-1 text-sm hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800"
+          title="Previous section"
         >
           ← Previous
         </button>
         <button
           onClick={() => renditionRef.current?.next()}
           className="rounded border border-gray-300 px-3 py-1 text-sm hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800"
+          title="Next section"
         >
           Next →
         </button>
