@@ -59,8 +59,8 @@ pub fn search(conn: &Connection, query: &str, limit: i64) -> anyhow::Result<Vec<
         .join(" ");
     let mut stmt = conn.prepare(
         "SELECT res.id, res.title, res.kind, snippet(resources_fts, 2, '[', ']', '…', 12)
-         FROM resources_fts f JOIN resources res ON res.id = f.rowid
-         WHERE f MATCH ?1 ORDER BY bm25(f) LIMIT ?2",
+         FROM resources_fts JOIN resources res ON res.id = resources_fts.rowid
+         WHERE resources_fts MATCH ?1 ORDER BY bm25(resources_fts) LIMIT ?2",
     )?;
     let rows = stmt.query_map(params![match_expr, limit], |r| {
         Ok(ResourceSearchResult {
