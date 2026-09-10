@@ -1,14 +1,43 @@
 @import "tailwindcss";
 
+/* Tailwind v4's `dark:` variant defaults to `@media (prefers-color-scheme:
+   dark)`, which ignores this app's own in-app theme choice entirely --
+   `ThemedRoot` (main.tsx) sets `data-theme` on <html>, so `dark:` needs to
+   key off that instead. "oled" is a dark-family theme too (true-black
+   variant), so it activates the same utilities as "dark". */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *, [data-theme="oled"], [data-theme="oled"] *));
+
 :root {
   color-scheme: light dark;
 }
 
+/* Belt-and-suspenders background: previously only `body` ever got an
+   explicit background (and only for sepia), so any content that overflows
+   AppShell's h-screen container exposed unstyled white beneath it. Giving
+   `html` itself a background per theme means that can't happen regardless
+   of what layout leak (if any) allowed the page to scroll past that point. */
+html {
+  background-color: #ffffff;
+}
 html[data-theme="light"] {
   color-scheme: light;
 }
 html[data-theme="dark"] {
   color-scheme: dark;
+  background-color: #030712;
+}
+html[data-theme="oled"] {
+  color-scheme: dark;
+  background-color: #000000;
+  /* True black rather than Tailwind's gray-950 (oklch ~#030712) for OLED
+     displays -- overriding the theme variables here cascades into every
+     dark:bg-gray-9xx utility already used throughout the app. */
+  --color-gray-950: #000000;
+  --color-gray-900: #050505;
+  --color-gray-800: #0d0d0d;
+}
+html[data-theme="oled"] body {
+  background-color: #000000;
 }
 html[data-theme="sepia"] {
   color-scheme: light;
