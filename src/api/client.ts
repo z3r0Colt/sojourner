@@ -352,4 +352,5 @@ export const api = {
   quickCheck: () => invoke<string[]>("quick_check"),
   getBackupSyncFolder: () => invoke<string | null>("get_backup_sync_folder"),
   setBackupSyncFolder: (folder: string | null) => invoke<void>("set_backup_sync_folder", { folder }),
+  getLogsDir: () => invoke<string>("get_logs_dir"),
 };

@@ -138,6 +138,7 @@ export function SearchOverlay({
                       <button
                         onClick={() => deleteSearchHistory.mutate(q)}
                         title="Remove"
+                        aria-label={`Remove "${q}" from recent searches`}
                         className="rounded-r-full px-1.5 py-0.5 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
                       >
                         ✕

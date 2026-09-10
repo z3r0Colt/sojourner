@@ -12,7 +12,6 @@ interface UiState {
   showNoteSymbols: boolean;
   showMorphology: boolean;
   rightPanelTab: "commentary" | "crossrefs" | "metrical" | "split";
-  sermonAudioApiKey: string;
   redLetterMode: boolean;
   paragraphMode: boolean;
   distractionFreeMode: boolean;
@@ -25,7 +24,6 @@ interface UiState {
   toggleShowNoteSymbols: () => void;
   toggleShowMorphology: () => void;
   setRightPanelTab: (t: "commentary" | "crossrefs" | "metrical" | "split") => void;
-  setSermonAudioApiKey: (k: string) => void;
   toggleRedLetterMode: () => void;
   toggleParagraphMode: () => void;
   toggleDistractionFreeMode: () => void;
@@ -61,7 +59,6 @@ export const useUiStore = create<UiState>((set) => ({
   showNoteSymbols: stored.showNoteSymbols ?? true,
   showMorphology: stored.showMorphology ?? true,
   rightPanelTab: "commentary",
-  sermonAudioApiKey: stored.sermonAudioApiKey ?? "",
   redLetterMode: stored.redLetterMode ?? false,
   paragraphMode: stored.paragraphMode ?? false,
   distractionFreeMode: false,
@@ -104,10 +101,6 @@ export const useUiStore = create<UiState>((set) => ({
       return { showMorphology: !s.showMorphology };
     }),
   setRightPanelTab: (rightPanelTab) => set({ rightPanelTab }),
-  setSermonAudioApiKey: (sermonAudioApiKey) => {
-    persist({ sermonAudioApiKey });
-    set({ sermonAudioApiKey });
-  },
   toggleRedLetterMode: () =>
     set((s) => {
       persist({ redLetterMode: !s.redLetterMode });

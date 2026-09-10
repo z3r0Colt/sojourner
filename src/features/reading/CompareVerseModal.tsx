@@ -34,7 +34,7 @@ export function CompareVerseModal({
           <h3 className="text-sm font-semibold">
             {book.name} {chapter}:{verse}
           </h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600" title="Close">
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600" title="Close" aria-label="Close">
             ✕
           </button>
         </div>

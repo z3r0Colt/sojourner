@@ -22,6 +22,7 @@ function ToolbarButton({
     <button
       type="button"
       title={title}
+      aria-label={title}
       onMouseDown={(e) => e.preventDefault()}
       onClick={onClick}
       className={`rounded px-2 py-1 text-xs font-medium ${

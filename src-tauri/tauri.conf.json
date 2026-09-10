@@ -39,6 +39,15 @@
     ],
     "resources": {
       "../content/content.db": "content.db"
+    },
+    "windows": {
+      "webviewInstallMode": {
+        "type": "offlineInstaller"
+      },
+      "nsis": {
+        "installMode": "currentUser",
+        "displayLanguageSelector": false
+      }
     }
   }
 }

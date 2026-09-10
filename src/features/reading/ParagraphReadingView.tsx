@@ -60,6 +60,7 @@ function ParagraphVerse({
         <button
           className="mr-0.5 align-middle text-amber-500"
           title="Has a note"
+          aria-label="Has a note"
           onClick={(e) => {
             e.stopPropagation();
             onNoteSymbolClick(verseLevelNote);
@@ -108,6 +109,7 @@ function ParagraphVerse({
                 <sup
                   className="ml-0.5 cursor-pointer text-amber-600"
                   title="Has a note"
+                  aria-label="Has a note"
                   onClick={(e) => {
                     e.stopPropagation();
                     onNoteSymbolClick(linkedNote);

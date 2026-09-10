@@ -70,10 +70,20 @@ export function ChapterNav({
           </option>
         ))}
       </select>
-      <button onClick={prevChapter} className="rounded px-1.5 py-1 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800">
+      <button
+        onClick={prevChapter}
+        title="Previous chapter"
+        aria-label="Previous chapter"
+        className="rounded px-1.5 py-1 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"
+      >
         ‹
       </button>
-      <button onClick={nextChapter} className="rounded px-1.5 py-1 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800">
+      <button
+        onClick={nextChapter}
+        title="Next chapter"
+        aria-label="Next chapter"
+        className="rounded px-1.5 py-1 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"
+      >
         ›
       </button>
     </div>

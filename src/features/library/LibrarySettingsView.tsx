@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { open, save, confirm, message } from "@tauri-apps/plugin-dialog";
+import { openPath } from "@tauri-apps/plugin-opener";
 import { api } from "../../api/client";
 import {
   useTranslations,
@@ -38,8 +39,6 @@ export function LibrarySettingsView() {
     toggleShowNoteSymbols,
     showMorphology,
     toggleShowMorphology,
-    sermonAudioApiKey,
-    setSermonAudioApiKey,
     redLetterMode,
     toggleRedLetterMode,
     paragraphMode,
@@ -123,6 +122,10 @@ export function LibrarySettingsView() {
     const folder = await open({ directory: true });
     if (!folder || Array.isArray(folder)) return;
     setBackupSyncFolder.mutate(folder);
+  }
+
+  async function handleOpenLogsFolder() {
+    await openPath(await api.getLogsDir());
   }
 
   return (
@@ -288,6 +291,12 @@ export function LibrarySettingsView() {
           >
             {checking ? "Checking…" : "Check Database Integrity"}
           </button>
+          <button
+            onClick={handleOpenLogsFolder}
+            className="rounded border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+          >
+            Open Logs Folder
+          </button>
         </div>
 
         {checkResult && (
@@ -337,21 +346,6 @@ export function LibrarySettingsView() {
             </li>
           ))}
         </ul>
-      </div>
-
-      <div>
-        <h2 className="mb-2 text-sm font-semibold text-gray-500">SermonAudio</h2>
-        <p className="mb-2 text-xs text-gray-400">
-          Requires an API key from a registered broadcaster account at sermonaudio.com (no public/keyless access is
-          available). Once set, sermons for the chapter you're reading will appear in the Sermons tab.
-        </p>
-        <input
-          type="password"
-          value={sermonAudioApiKey}
-          onChange={(e) => setSermonAudioApiKey(e.target.value)}
-          placeholder="SermonAudio API key"
-          className="w-full max-w-sm rounded border border-gray-300 px-2 py-1.5 text-sm outline-none focus:border-blue-500 dark:border-gray-700 dark:bg-gray-900"
-        />
       </div>
     </div>
   );

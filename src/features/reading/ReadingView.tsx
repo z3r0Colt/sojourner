@@ -556,7 +556,7 @@ export function ReadingView() {
               <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200">
                 Chapter Notes — {book.name} {chapter}
               </h3>
-              <button onClick={() => setChapterNoteOpen(false)} className="text-gray-400 hover:text-gray-600">
+              <button onClick={() => setChapterNoteOpen(false)} className="text-gray-400 hover:text-gray-600" title="Close" aria-label="Close">
                 ✕
               </button>
             </div>

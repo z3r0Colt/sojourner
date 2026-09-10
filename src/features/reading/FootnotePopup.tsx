@@ -19,7 +19,7 @@ export function FootnotePopup({
     >
       <div className="mb-1 flex items-start justify-between">
         <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">Note {marker}</span>
-        <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+        <button onClick={onClose} className="text-gray-400 hover:text-gray-600" title="Close" aria-label="Close">
           ✕
         </button>
       </div>

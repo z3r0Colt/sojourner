@@ -1,5 +1,6 @@
 pub mod backup;
 mod commands;
+pub mod crash_log;
 pub mod db;
 mod error;
 pub mod import;
@@ -80,6 +81,7 @@ pub fn run() {
                 fallback
             };
 
+            crash_log::install_panic_hook(app_data_dir.clone());
             backup::apply_pending_import(&app_data_dir).expect("failed to apply a staged import/restore");
 
             let conn = db::open(&app_data_dir, &content_db_path).expect("failed to open database");
@@ -197,6 +199,8 @@ pub fn run() {
             commands::backup::quick_check,
             commands::backup::get_backup_sync_folder,
             commands::backup::set_backup_sync_folder,
+            commands::diagnostics::log_frontend_error,
+            commands::diagnostics::get_logs_dir,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -1,5 +1,6 @@
 pub mod annotations;
 pub mod backup;
+pub mod diagnostics;
 pub mod harmony;
 pub mod library;
 pub mod prayer_journal;
