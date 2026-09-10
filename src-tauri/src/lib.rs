@@ -1,3 +1,4 @@
+pub mod backup;
 mod commands;
 pub mod db;
 mod error;
@@ -7,8 +8,15 @@ pub mod paths;
 mod resources;
 
 use db::DbState;
+use std::path::PathBuf;
 use std::sync::Mutex;
 use tauri::Manager;
+
+/// The resolved app-data directory, managed as Tauri state so backup/export/
+/// import commands can find `user.db`, its `backups/` folder, and the
+/// pending-import marker without re-deriving the path (and without needing
+/// their own `AppHandle` plumbing just for that).
+pub struct AppDataDir(pub PathBuf);
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -72,8 +80,11 @@ pub fn run() {
                 fallback
             };
 
+            backup::apply_pending_import(&app_data_dir).expect("failed to apply a staged import/restore");
+
             let conn = db::open(&app_data_dir, &content_db_path).expect("failed to open database");
             app.manage(DbState(Mutex::new(conn)));
+            app.manage(AppDataDir(app_data_dir));
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -178,6 +189,14 @@ pub fn run() {
             commands::resources::list_resource_links,
             commands::resources::create_resource_link,
             commands::resources::delete_resource_link,
+            commands::backup::create_backup,
+            commands::backup::list_backups,
+            commands::backup::export_database,
+            commands::backup::stage_import,
+            commands::backup::stage_restore,
+            commands::backup::quick_check,
+            commands::backup::get_backup_sync_folder,
+            commands::backup::set_backup_sync_folder,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
