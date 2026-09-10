@@ -1,3 +1,5 @@
+import { useViewportClampedPosition } from "../../lib/useViewportClampedPosition";
+
 export function VerseContextMenu({
   x,
   y,
@@ -11,11 +13,14 @@ export function VerseContextMenu({
   onCopy?: () => void;
   onClose: () => void;
 }) {
+  const { ref, style } = useViewportClampedPosition<HTMLDivElement>(x, y);
+
   return (
     <div className="fixed inset-0 z-40" onClick={onClose} onContextMenu={(e) => e.preventDefault()}>
       <div
-        className="absolute w-56 rounded-lg border border-gray-200 bg-white py-1 text-sm shadow-xl dark:border-gray-700 dark:bg-gray-900"
-        style={{ left: Math.min(x, window.innerWidth - 230), top: y }}
+        ref={ref}
+        className="w-56 rounded-lg border border-gray-200 bg-white py-1 text-sm shadow-xl dark:border-gray-700 dark:bg-gray-900"
+        style={style}
         onClick={(e) => e.stopPropagation()}
       >
         <button

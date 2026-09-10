@@ -1,3 +1,5 @@
+import { useViewportClampedPosition } from "../../lib/useViewportClampedPosition";
+
 export function FootnotePopup({
   marker,
   text,
@@ -11,10 +13,13 @@ export function FootnotePopup({
   y: number;
   onClose: () => void;
 }) {
+  const { ref, style } = useViewportClampedPosition<HTMLDivElement>(x, y);
+
   return (
     <div
-      className="fixed z-40 w-72 rounded-lg border border-gray-200 bg-white p-3 text-sm shadow-xl dark:border-gray-700 dark:bg-gray-900"
-      style={{ left: Math.min(x, window.innerWidth - 300), top: y }}
+      ref={ref}
+      className="z-40 w-72 rounded-lg border border-gray-200 bg-white p-3 text-sm shadow-xl dark:border-gray-700 dark:bg-gray-900"
+      style={style}
       onMouseDown={(e) => e.stopPropagation()}
     >
       <div className="mb-1 flex items-start justify-between">

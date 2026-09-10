@@ -1,3 +1,5 @@
+import { useViewportClampedPosition } from "../../lib/useViewportClampedPosition";
+
 const COLORS = ["#fef08a", "#bbf7d0", "#bfdbfe", "#fbcfe8", "#fed7aa"];
 
 export function SelectionToolbar({
@@ -17,10 +19,13 @@ export function SelectionToolbar({
   onCopy?: () => void;
   onClose: () => void;
 }) {
+  const { ref, style } = useViewportClampedPosition<HTMLDivElement>(x, y, { align: "above-center" });
+
   return (
     <div
-      className="fixed z-40 flex items-center gap-1 rounded-lg border border-gray-200 bg-white p-1.5 shadow-lg dark:border-gray-700 dark:bg-gray-900"
-      style={{ left: x, top: y, transform: "translate(-50%, -110%)" }}
+      ref={ref}
+      className="z-40 flex items-center gap-1 rounded-lg border border-gray-200 bg-white p-1.5 shadow-lg dark:border-gray-700 dark:bg-gray-900"
+      style={style}
       onMouseDown={(e) => e.preventDefault()}
     >
       {COLORS.map((c) => (
