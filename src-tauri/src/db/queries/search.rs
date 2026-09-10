@@ -21,6 +21,14 @@ use rusqlite::Connection;
 /// applies, so this is a superset of the plain free-text search that existed
 /// before rather than a behavior change for the common case.
 ///
+/// The three keywords only act as operators in exact uppercase (`AND`/`OR`/
+/// `NOT`), matching SQLite FTS5's own documented convention -- lowercase
+/// "not"/"and"/"or" are ordinary search terms. This matters a lot for this
+/// app specifically: "not" is one of the commonest words in English Bible
+/// text ("Fear not", "Judge not"), so treating it as an operator regardless
+/// of case broke plain-language search on some of the most common queries a
+/// user would type.
+///
 /// FTS5's NOT is a binary operator (`a NOT b`), not a unary prefix, so a
 /// negated term with nothing positive before it (e.g. a query that's just
 /// `-word`) has no left-hand side to attach to and is simply dropped rather
@@ -68,7 +76,7 @@ fn build_match_expr(query: &str) -> String {
             continue;
         }
 
-        match word.to_ascii_uppercase().as_str() {
+        match word.as_str() {
             "AND" => continue, // FTS5's default between adjacent terms; nothing to emit.
             "OR" => {
                 // Also a binary operator -- dropped if there's no left-hand term yet.
@@ -147,6 +155,23 @@ mod tests {
     #[test]
     fn embedded_quote_in_a_word_is_escaped() {
         assert_eq!(build_match_expr("o\"brien"), "\"o\"\"brien\"*");
+    }
+
+    #[test]
+    fn lowercase_not_is_an_ordinary_term_not_an_operator() {
+        // "not" is extremely common in English Bible text (Fear not, Judge
+        // not) -- it must never be silently reinterpreted as negation.
+        assert_eq!(
+            build_match_expr("let not your heart be troubled"),
+            "\"let\"* \"not\"* \"your\"* \"heart\"* \"be\"* \"troubled\"*"
+        );
+    }
+
+    #[test]
+    fn bare_lowercase_and_or_not_are_ordinary_terms() {
+        assert_eq!(build_match_expr("not"), "\"not\"*");
+        assert_eq!(build_match_expr("and"), "\"and\"*");
+        assert_eq!(build_match_expr("or"), "\"or\"*");
     }
 }
 
