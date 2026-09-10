@@ -168,7 +168,7 @@ public sealed class SchemaTests : IDisposable
     public void Confessional_proof_text_links_a_verse_to_a_document_and_is_deduplicated_on_reinsert()
     {
         using var conn = _db.OpenConnection();
-        int docId = ConfessionsRepository.InsertDocument(conn, new ConfessionalDocument { Code = "WCF", Title = "Westminster Confession of Faith" });
+        int docId = ConfessionsRepository.UpsertDocument(conn, new ConfessionalDocument { Code = "WCF", Title = "Westminster Confession of Faith" });
 
         int bcv = BcvReference.Encode(45, 8, 28);
         var proofText = new ConfessionalProofText { BcvId = bcv, DocumentId = docId, ChapterNum = 3, ArticleNum = 1 };
@@ -181,5 +181,81 @@ public sealed class SchemaTests : IDisposable
         Assert.Equal(docId, results[0].DocumentId);
         Assert.Equal(3, results[0].ChapterNum);
         Assert.Equal(1, results[0].ArticleNum);
+    }
+
+    [Fact]
+    public void Upserting_a_document_by_code_updates_in_place_rather_than_duplicating()
+    {
+        using var conn = _db.OpenConnection();
+        int firstId = ConfessionsRepository.UpsertDocument(conn, new ConfessionalDocument { Code = "WCF", Title = "Old Title" });
+        int secondId = ConfessionsRepository.UpsertDocument(conn, new ConfessionalDocument { Code = "WCF", Title = "Westminster Confession of Faith" });
+
+        Assert.Equal(firstId, secondId);
+        List<ConfessionalDocument> docs = ConfessionsRepository.GetDocuments(conn).ToList();
+        Assert.Single(docs);
+        Assert.Equal("Westminster Confession of Faith", docs[0].Title);
+    }
+
+    [Fact]
+    public void Confessional_sections_round_trip_and_resolve_by_chapter_and_article()
+    {
+        using var conn = _db.OpenConnection();
+        int docId = ConfessionsRepository.UpsertDocument(conn, new ConfessionalDocument { Code = "WCF", Title = "Westminster Confession of Faith" });
+
+        ConfessionsRepository.InsertSection(conn, new ConfessionalSection
+        {
+            DocumentId = docId,
+            ChapterNum = 6,
+            ArticleNum = 1,
+            Heading = "Of the Fall of Man, of Sin, and of the Punishment thereof",
+            ContentText = "Our first parents, being seduced by the subtlety and temptation of Satan, sinned in eating the forbidden fruit.",
+            SortOrder = 0,
+        });
+        ConfessionsRepository.InsertSection(conn, new ConfessionalSection
+        {
+            DocumentId = docId,
+            ChapterNum = 6,
+            ArticleNum = 2,
+            Heading = null,
+            ContentText = "By this sin they fell from their original righteousness and communion with God.",
+            SortOrder = 1,
+        });
+
+        List<ConfessionalSection> all = ConfessionsRepository.GetSectionsForDocument(conn, docId).ToList();
+        Assert.Equal(2, all.Count);
+        Assert.Equal(0, all[0].SortOrder);
+
+        List<ConfessionalSection> badgeTarget = ConfessionsRepository.GetSections(conn, docId, chapterNum: 6, articleNum: 1).ToList();
+        Assert.Single(badgeTarget);
+        Assert.Contains("forbidden fruit", badgeTarget[0].ContentText);
+    }
+
+    [Fact]
+    public void Sermon_manuscript_round_trips_and_updates_in_place()
+    {
+        using var conn = _db.OpenConnection();
+        int sermonId = SermonRepository.InsertSermon(conn, new SermonManuscript
+        {
+            Title = "Grace Abounding",
+            PassageStartBcv = BcvReference.Encode(45, 8, 28),
+            PassageEndBcv = BcvReference.Encode(45, 8, 30),
+            LawText = "None of us, left to ourselves, works all things for our own good.",
+            GospelText = "God works all things for the good of those who love him.",
+            BodyRtf = "{\\rtf1 draft}",
+            CreatedAt = "2026-09-10T00:00:00Z",
+            UpdatedAt = "2026-09-10T00:00:00Z",
+        });
+
+        SermonManuscript? fetched = SermonRepository.GetSermon(conn, sermonId);
+        Assert.NotNull(fetched);
+        Assert.Equal("Grace Abounding", fetched!.Title);
+
+        fetched.Title = "Grace Abounding (revised)";
+        fetched.UpdatedAt = "2026-09-11T00:00:00Z";
+        SermonRepository.UpdateSermon(conn, fetched);
+
+        SermonManuscript? updated = SermonRepository.GetSermon(conn, sermonId);
+        Assert.Equal("Grace Abounding (revised)", updated!.Title);
+        Assert.Single(SermonRepository.GetAllSermons(conn));
     }
 }

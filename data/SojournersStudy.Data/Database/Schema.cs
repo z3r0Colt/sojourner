@@ -74,5 +74,38 @@ internal static class Schema
         );
         CREATE INDEX IF NOT EXISTS idx_confessional_proof_texts_bcv ON Confessional_Proof_Texts(bcv_id);
         CREATE INDEX IF NOT EXISTS idx_confessional_proof_texts_doc ON Confessional_Proof_Texts(document_id, chapter_num, article_num);
+
+        -- The architecture doc's schema only described the verse<->citation
+        -- mapping (Confessional_Proof_Texts above), not where the
+        -- confession's own text lives -- there is nowhere to fetch "WCF 6.1"'s
+        -- actual wording from otherwise. chapter_num/article_num are reused
+        -- loosely per document shape: WCF chapter/section, Larger/Shorter
+        -- Catechism question number (article_num null), Heidelberg Lord's
+        -- Day/question, Belgic/Canons of Dort article number.
+        CREATE TABLE IF NOT EXISTS Confessional_Sections (
+            id INTEGER PRIMARY KEY,
+            document_id INTEGER NOT NULL REFERENCES Confessional_Documents(document_id),
+            chapter_num INTEGER,
+            article_num INTEGER,
+            heading TEXT,
+            content_text TEXT NOT NULL,
+            sort_order INTEGER NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_confessional_sections_doc ON Confessional_Sections(document_id, sort_order);
+
+        -- Not in the architecture doc's schema section at all -- added here
+        -- since the Sermon Builder (section 7) needs somewhere to persist
+        -- the manuscript, passage, and Law/Gospel matrix fields.
+        CREATE TABLE IF NOT EXISTS Sermon_Manuscripts (
+            sermon_id INTEGER PRIMARY KEY,
+            title TEXT NOT NULL,
+            passage_start_bcv INTEGER,
+            passage_end_bcv INTEGER,
+            law_text TEXT,
+            gospel_text TEXT,
+            body_rtf TEXT NOT NULL DEFAULT '',
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
         """;
 }
