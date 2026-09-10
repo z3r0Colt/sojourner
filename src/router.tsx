@@ -3,7 +3,7 @@ import { AppShell } from "./layout/AppShell";
 import { ReadingView } from "./features/reading/ReadingView";
 import { CommentaryStandaloneView } from "./features/commentary/CommentaryStandaloneView";
 import { NotesListView } from "./features/notes/NotesListView";
-import { LibrarySettingsView } from "./features/library/LibrarySettingsView";
+import { SettingsView } from "./features/settings/SettingsView";
 import { LexiconView } from "./features/lexicon/LexiconView";
 import { DictionaryView } from "./features/dictionary/DictionaryView";
 import { WestminsterView } from "./features/westminster/WestminsterView";
@@ -30,7 +30,7 @@ export const router = createHashRouter([
       { path: "memory", element: <MemoryView /> },
       { path: "plans", element: <ReadingPlansView /> },
       { path: "harmony", element: <HarmonyView /> },
-      { path: "library", element: <LibrarySettingsView /> },
+      { path: "settings", element: <SettingsView /> },
       { path: "lexicon", element: <LexiconView /> },
       { path: "lexicon/:id", element: <LexiconView /> },
       { path: "dictionary", element: <DictionaryView /> },
