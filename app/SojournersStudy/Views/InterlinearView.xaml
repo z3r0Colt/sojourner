@@ -24,6 +24,7 @@
                         ToolTipService.ToolTip="{x:Bind local:InterlinearTooltip.Format(Lemma, StrongsNumber, MorphCode)}">
                         <TextBlock
                             Text="{x:Bind SurfaceWord}"
+                            FontFamily="/Assets/Fonts/GentiumPlus-Regular.ttf#Gentium Plus"
                             FontSize="22"
                             TextAlignment="Center"
                             TextWrapping="NoWrap" />

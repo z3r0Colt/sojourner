@@ -1,6 +1,7 @@
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
 using SojournersStudy.Pages;
 using SojournersStudy.Services;
@@ -12,6 +13,9 @@ namespace SojournersStudy;
 
 public sealed partial class MainWindow : Window
 {
+    private bool _zenMode;
+    private NavigationViewPaneDisplayMode _paneDisplayModeBeforeZen;
+
     public MainWindow()
     {
         InitializeComponent();
@@ -21,7 +25,43 @@ public sealed partial class MainWindow : Window
         AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
         AppWindow.SetIcon("Assets/AppIcon.ico");
 
-        Closed += (_, _) => TabTearOutCoordinator.Unregister(AppWindow.Id);
+        ThemeService.ThemeChanged += OnThemeChanged;
+        RootGrid.RequestedTheme = ThemeService.ElementThemeFor(ThemeService.Current);
+
+        Closed += (_, _) =>
+        {
+            ThemeService.ThemeChanged -= OnThemeChanged;
+            TabTearOutCoordinator.Unregister(AppWindow.Id);
+        };
+    }
+
+    private void OnThemeChanged(AppTheme theme) => RootGrid.RequestedTheme = ThemeService.ElementThemeFor(theme);
+
+    private void ThemeButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: string tagName } && Enum.TryParse(tagName, out AppTheme theme))
+        {
+            ThemeService.Apply(theme);
+        }
+    }
+
+    private void ZenModeAccelerator_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+    {
+        _zenMode = !_zenMode;
+        if (_zenMode)
+        {
+            _paneDisplayModeBeforeZen = NavView.PaneDisplayMode;
+            NavView.PaneDisplayMode = NavigationViewPaneDisplayMode.LeftMinimal;
+            NavView.IsPaneOpen = false;
+            TitleBarRow.Height = new GridLength(0);
+        }
+        else
+        {
+            NavView.PaneDisplayMode = _paneDisplayModeBeforeZen;
+            TitleBarRow.Height = new GridLength(48);
+        }
+
+        args.Handled = true;
     }
 
     private void NavFrame_Navigated(object sender, NavigationEventArgs e)

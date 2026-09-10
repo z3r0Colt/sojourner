@@ -8,15 +8,20 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Title="SojournersStudy"
     mc:Ignorable="d">
-    <Window.SystemBackdrop>
-        <MicaBackdrop />
-    </Window.SystemBackdrop>
-
-    <Grid>
+    <!--
+        No SystemBackdrop: Mica's OS-drawn translucency would tint/override
+        the three named themes' explicit solid background colors
+        unpredictably. Named-theme mode trades Mica's blur for exact,
+        predictable colors instead.
+    -->
+    <Grid x:Name="RootGrid" Background="{StaticResource PageBackgroundBrush}">
         <Grid.RowDefinitions>
-            <RowDefinition Height="48" />
+            <RowDefinition x:Name="TitleBarRow" Height="48" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
+        <Grid.KeyboardAccelerators>
+            <KeyboardAccelerator Key="F11" Invoked="ZenModeAccelerator_Invoked" />
+        </Grid.KeyboardAccelerators>
 
         <TitleBar
             x:Name="AppTitleBar"
@@ -28,11 +33,19 @@
             <TitleBar.IconSource>
                 <ImageIconSource ImageSource="Assets/AppIcon.ico" />
             </TitleBar.IconSource>
+            <TitleBar.Content>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="4" VerticalAlignment="Center">
+                    <Button Content="Geneva" Click="ThemeButton_Click" Tag="Geneva" />
+                    <Button Content="Parchment" Click="ThemeButton_Click" Tag="Parchment" />
+                    <Button Content="Covenanter" Click="ThemeButton_Click" Tag="Covenanter" />
+                </StackPanel>
+            </TitleBar.Content>
         </TitleBar>
 
         <NavigationView
             x:Name="NavView"
             Grid.Row="1"
+            Background="{StaticResource PageBackgroundBrush}"
             IsBackButtonVisible="Collapsed"
             IsPaneToggleButtonVisible="False"
             SelectionChanged="NavView_SelectionChanged">

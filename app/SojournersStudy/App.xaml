@@ -11,7 +11,22 @@
                 <ResourceDictionary Source="Styles/StudyTabItemTemplate.xaml" />
                 <!-- Other merged dictionaries here -->
             </ResourceDictionary.MergedDictionaries>
-            <!-- Other app resources here -->
+
+            <!--
+                Named theme brushes (see ThemeService): these are mutated
+                in place at runtime rather than swapped out, since a
+                StaticResource binding only resolves once; mutating the
+                same brush instance's Color/TintColor is what makes theme
+                switching apply live across every control already on
+                screen, with no page reload needed.
+            -->
+            <SolidColorBrush x:Key="PageBackgroundBrush" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="PageForegroundBrush" Color="#1A1A1A" />
+            <AcrylicBrush
+                x:Key="FloatingMenuBackgroundBrush"
+                TintColor="#FFFFFF"
+                TintOpacity="0.6"
+                FallbackColor="#FFFFFF" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>
