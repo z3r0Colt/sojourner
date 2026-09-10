@@ -1,15 +1,23 @@
 import type { Highlight, Footnote } from "../../api/types";
+import type { RedLetterSpan } from "./redLetterSpans";
 
 export interface Segment {
   text: string;
   color: string | null;
   style: string | null;
   highlightId: number | null;
+  isRedLetter: boolean;
 }
 
 export type Token = { kind: "text"; segment: Segment } | { kind: "footnote"; footnote: Footnote };
 
-export function buildTokens(text: string, highlights: Highlight[], verseNum: number, footnotes: Footnote[]): Token[] {
+export function buildTokens(
+  text: string,
+  highlights: Highlight[],
+  verseNum: number,
+  footnotes: Footnote[],
+  redLetterSpans: RedLetterSpan[] = [],
+): Token[] {
   const relevant = highlights.filter((h) => verseNum >= h.verse_start && verseNum <= h.verse_end);
 
   const boundaries = new Set<number>([0, text.length]);
@@ -18,6 +26,10 @@ export function buildTokens(text: string, highlights: Highlight[], verseNum: num
       boundaries.add(Math.max(0, Math.min(text.length, h.char_start)));
       boundaries.add(Math.max(0, Math.min(text.length, h.char_end)));
     }
+  }
+  for (const s of redLetterSpans) {
+    boundaries.add(Math.max(0, Math.min(text.length, s.start)));
+    boundaries.add(Math.max(0, Math.min(text.length, s.end)));
   }
   const notesByOffset = new Map<number, Footnote[]>();
   for (const f of footnotes) {
@@ -44,6 +56,7 @@ export function buildTokens(text: string, highlights: Highlight[], verseNum: num
         relevant.find(
           (h) => h.char_start != null && h.char_end != null && h.verse_start === h.verse_end && start >= h.char_start && end <= h.char_end,
         ) ?? relevant.find((h) => h.char_start == null);
+      const isRedLetter = redLetterSpans.some((s) => start >= s.start && end <= s.end);
       tokens.push({
         kind: "text",
         segment: {
@@ -51,6 +64,7 @@ export function buildTokens(text: string, highlights: Highlight[], verseNum: num
           color: covering?.color ?? null,
           style: covering?.style ?? null,
           highlightId: covering?.id ?? null,
+          isRedLetter,
         },
       });
     }

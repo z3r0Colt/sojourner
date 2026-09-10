@@ -1,5 +1,6 @@
 import type { Highlight, Note, Verse, Footnote } from "../../api/types";
 import { buildTokens } from "./verseTokens";
+import type { RedLetterSpan } from "./redLetterSpans";
 
 /** Paragraph mode's per-verse renderer: the same highlight/footnote token
  * splitting VerseRow uses, but flowed inline (a small superscript verse
@@ -21,7 +22,7 @@ function ParagraphVerse({
   onNoteSymbolClick,
   onFootnoteClick,
   onContextMenu,
-  isRedLetter,
+  redLetterSpans,
 }: {
   verse: Verse;
   highlights: Highlight[];
@@ -35,9 +36,9 @@ function ParagraphVerse({
   onNoteSymbolClick: (note: Note) => void;
   onFootnoteClick?: (footnote: Footnote, x: number, y: number) => void;
   onContextMenu?: (verseNum: number, x: number, y: number) => void;
-  isRedLetter?: boolean;
+  redLetterSpans?: RedLetterSpan[];
 }) {
-  const tokens = buildTokens(verse.text, highlights, verse.verse, footnotes ?? []);
+  const tokens = buildTokens(verse.text, highlights, verse.verse, footnotes ?? [], redLetterSpans);
   const notesByHighlight = new Map(notes.filter((n) => n.highlight_id != null).map((n) => [n.highlight_id as number, n]));
   const verseLevelNote = notes.find(
     (n) => n.highlight_id == null && verse.verse >= n.verse_start && verse.verse <= n.verse_end,
@@ -69,7 +70,7 @@ function ParagraphVerse({
           📝
         </button>
       )}
-      <span data-verse-text={verse.verse} className={isRedLetter ? "text-red-600 dark:text-red-400" : undefined}>
+      <span data-verse-text={verse.verse}>
         {tokens.map((tok, i) => {
           if (tok.kind === "footnote") {
             const f = tok.footnote;
@@ -89,7 +90,13 @@ function ParagraphVerse({
             );
           }
           const seg = tok.segment;
-          if (!seg.color) return <span key={i}>{seg.text} </span>;
+          if (!seg.color) {
+            return (
+              <span key={i} className={seg.isRedLetter ? "text-red-600 dark:text-red-400" : undefined}>
+                {seg.text}{" "}
+              </span>
+            );
+          }
           const linkedNote = seg.highlightId != null ? notesByHighlight.get(seg.highlightId) : undefined;
           return (
             <mark
@@ -136,7 +143,7 @@ export function ParagraphVerses({
   showHighlights,
   showNoteSymbols,
   fontSize,
-  isRedLetterVerse,
+  redLetterSpansByVerse,
   onSelectVerse,
   onHighlightClick,
   onNoteSymbolClick,
@@ -152,7 +159,7 @@ export function ParagraphVerses({
   showHighlights: boolean;
   showNoteSymbols: boolean;
   fontSize: number;
-  isRedLetterVerse?: (verseNum: number) => boolean;
+  redLetterSpansByVerse?: Map<number, RedLetterSpan[]> | null;
   onSelectVerse: (verseNum: number) => void;
   onHighlightClick: (highlightId: number, x: number, y: number) => void;
   onNoteSymbolClick: (note: Note) => void;
@@ -171,7 +178,7 @@ export function ParagraphVerses({
           isActive={activeVerse === v.verse}
           showVerseNumbers={showVerseNumbers}
           showNoteSymbols={showNoteSymbols}
-          isRedLetter={isRedLetterVerse?.(v.verse)}
+          redLetterSpans={redLetterSpansByVerse?.get(v.verse)}
           onSelectVerse={onSelectVerse}
           onHighlightClick={onHighlightClick}
           onNoteSymbolClick={onNoteSymbolClick}

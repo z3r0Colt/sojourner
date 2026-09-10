@@ -1,6 +1,7 @@
 import type { Highlight, Note, Verse, Footnote } from "../../api/types";
 import { ReadAloudWords } from "../tts/ReadAloudWords";
 import { buildTokens } from "./verseTokens";
+import type { RedLetterSpan } from "./redLetterSpans";
 
 export function VerseRow({
   verse,
@@ -18,7 +19,7 @@ export function VerseRow({
   onFootnoteClick,
   onContextMenu,
   ttsActive,
-  isRedLetter,
+  redLetterSpans,
 }: {
   verse: Verse;
   highlights: Highlight[];
@@ -36,10 +37,12 @@ export function VerseRow({
   onContextMenu?: (verseNum: number, x: number, y: number) => void;
   /** True while this verse is the one currently being read aloud -- swaps to word-by-word highlighting. */
   ttsActive?: boolean;
-  /** True when this verse falls inside a words-of-Jesus range and red-letter mode is on. */
-  isRedLetter?: boolean;
+  /** Character ranges within this verse that are Christ's actual quoted
+   * words (red-letter mode) -- only those ranges render in red, not the
+   * whole verse. */
+  redLetterSpans?: RedLetterSpan[];
 }) {
-  const tokens = buildTokens(verse.text, showHighlights ? highlights : [], verse.verse, footnotes ?? []);
+  const tokens = buildTokens(verse.text, showHighlights ? highlights : [], verse.verse, footnotes ?? [], redLetterSpans);
   const notesByHighlight = new Map(notes.filter((n) => n.highlight_id != null).map((n) => [n.highlight_id as number, n]));
   const verseLevelNote = notes.find(
     (n) => n.highlight_id == null && verse.verse >= n.verse_start && verse.verse <= n.verse_end,
@@ -75,7 +78,7 @@ export function VerseRow({
           📝
         </button>
       )}
-      <span data-verse-text={verse.verse} className={isRedLetter ? "text-red-600 dark:text-red-400" : undefined}>
+      <span data-verse-text={verse.verse}>
         {ttsActive ? (
           <ReadAloudWords text={verse.text} active />
         ) : (
@@ -98,7 +101,13 @@ export function VerseRow({
             );
           }
           const seg = tok.segment;
-          if (!seg.color) return <span key={i}>{seg.text}</span>;
+          if (!seg.color) {
+            return (
+              <span key={i} className={seg.isRedLetter ? "text-red-600 dark:text-red-400" : undefined}>
+                {seg.text}
+              </span>
+            );
+          }
           const linkedNote = seg.highlightId != null ? notesByHighlight.get(seg.highlightId) : undefined;
           return (
             <mark
