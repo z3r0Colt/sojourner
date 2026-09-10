@@ -22,7 +22,7 @@ const NAV_LINKS: { to: string; label: string; end?: boolean }[] = [
   { to: "/memory", label: "Memory" },
   { to: "/plans", label: "Plans" },
   { to: "/harmony", label: "Harmony" },
-  { to: "/library", label: "Library" },
+  { to: "/settings", label: "Settings" },
 ];
 
 export function AppShell() {
