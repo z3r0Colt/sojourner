@@ -54,7 +54,7 @@ export function SearchOverlay({
   );
   const isSaved = savedSearches?.includes(debounced.trim()) ?? false;
 
-  const { data: results, isFetching } = useQuery({
+  const { data: results, isFetching, isError, error } = useQuery({
     queryKey: ["search", debounced, translationIds, sourceIds, scope],
     queryFn: () => api.search(debounced, translationIds, sourceIds, scope, 50),
     enabled: active && translationIds.length > 0,
@@ -209,6 +209,11 @@ export function SearchOverlay({
           </div>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto p-2">
+          {isError && (tab === "verses" || tab === "commentary" || tab === "notes") && (
+            <p className="p-3 text-sm text-red-500">
+              Search failed: {error instanceof Error ? error.message : "unknown error"}
+            </p>
+          )}
           {(tab === "verses" || tab === "commentary" || tab === "notes") && (
             <>
               {(tab === "verses" ? results?.verses : tab === "commentary" ? results?.commentary : results?.notes)
