@@ -125,8 +125,26 @@ export const api = {
     invoke<Bookmark>("create_bookmark", { bookId, chapter, verse: verse ?? null, label: label ?? null }),
   deleteBookmark: (id: number) => invoke<void>("delete_bookmark", { id }),
 
-  search: (query: string, translationIds: number[], commentarySourceIds: number[], limit = 50) =>
-    invoke<SearchResults>("search", { query, translationIds, commentarySourceIds, limit }),
+  search: (
+    query: string,
+    translationIds: number[],
+    commentarySourceIds: number[],
+    scope: { bookId?: number; testament?: "OT" | "NT" } = {},
+    limit = 50,
+  ) =>
+    invoke<SearchResults>("search", {
+      query,
+      translationIds,
+      commentarySourceIds,
+      bookId: scope.bookId ?? null,
+      testament: scope.testament ?? null,
+      limit,
+    }),
+  recordSearchQuery: (query: string) => invoke<void>("record_search_query", { query }),
+  listRecentSearches: (limit = 10) => invoke<string[]>("list_recent_searches", { limit }),
+  listSavedSearches: () => invoke<string[]>("list_saved_searches"),
+  setSearchSaved: (query: string, saved: boolean) => invoke<void>("set_search_saved", { query, saved }),
+  deleteSearchHistory: (query: string) => invoke<void>("delete_search_history", { query }),
 
   getStrongsEntry: (id: string) => invoke<StrongsEntry | null>("get_strongs_entry", { id }),
   getConcordance: (strongsId: string) => invoke<ConcordanceEntry[]>("get_concordance", { strongsId }),

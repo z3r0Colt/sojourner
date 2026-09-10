@@ -730,4 +730,52 @@ CREATE TABLE reading_plan_completions (
 CREATE INDEX idx_reading_plan_completions_plan ON reading_plan_completions(plan_code);
 "#;
 
-pub const USER_MIGRATIONS: &[&str] = &[USER_MIGRATION_0001, USER_MIGRATION_0002, USER_MIGRATION_0003];
+pub const USER_MIGRATION_0004: &str = r#"
+-- Full-text search over the user's own study notes (chapter notes and
+-- passage notes share the `notes`/`chapter_notes` split already used
+-- elsewhere; both get indexed here so "search" can surface a study
+-- observation the same way it surfaces a verse or commentary entry).
+CREATE VIRTUAL TABLE notes_fts USING fts5(
+  body, content='notes', content_rowid='id'
+);
+CREATE TRIGGER notes_search_ai AFTER INSERT ON notes BEGIN
+  INSERT INTO notes_fts(rowid, body) VALUES (new.id, new.body);
+END;
+CREATE TRIGGER notes_search_au AFTER UPDATE ON notes BEGIN
+  INSERT INTO notes_fts(notes_fts, rowid, body) VALUES('delete', old.id, old.body);
+  INSERT INTO notes_fts(rowid, body) VALUES (new.id, new.body);
+END;
+CREATE TRIGGER notes_search_ad AFTER DELETE ON notes BEGIN
+  INSERT INTO notes_fts(notes_fts, rowid, body) VALUES('delete', old.id, old.body);
+END;
+
+CREATE VIRTUAL TABLE chapter_notes_fts USING fts5(
+  body, content='chapter_notes', content_rowid='id'
+);
+CREATE TRIGGER chapter_notes_search_ai AFTER INSERT ON chapter_notes BEGIN
+  INSERT INTO chapter_notes_fts(rowid, body) VALUES (new.id, new.body);
+END;
+CREATE TRIGGER chapter_notes_search_au AFTER UPDATE ON chapter_notes BEGIN
+  INSERT INTO chapter_notes_fts(chapter_notes_fts, rowid, body) VALUES('delete', old.id, old.body);
+  INSERT INTO chapter_notes_fts(rowid, body) VALUES (new.id, new.body);
+END;
+CREATE TRIGGER chapter_notes_search_ad AFTER DELETE ON chapter_notes BEGIN
+  INSERT INTO chapter_notes_fts(chapter_notes_fts, rowid, body) VALUES('delete', old.id, old.body);
+END;
+
+-- Search history: every executed query is upserted here (bumping
+-- created_at on a repeat rather than duplicating), pruned to the most
+-- recent 20 *unsaved* entries after each insert. A user can pin one via
+-- `saved = 1`, which exempts it from that pruning -- saved searches are
+-- kept indefinitely until explicitly deleted.
+CREATE TABLE search_history (
+  id          INTEGER PRIMARY KEY,
+  query       TEXT NOT NULL UNIQUE,
+  saved       INTEGER NOT NULL DEFAULT 0,
+  created_at  TEXT NOT NULL
+);
+CREATE INDEX idx_search_history_recent ON search_history(saved, created_at);
+"#;
+
+pub const USER_MIGRATIONS: &[&str] =
+    &[USER_MIGRATION_0001, USER_MIGRATION_0002, USER_MIGRATION_0003, USER_MIGRATION_0004];

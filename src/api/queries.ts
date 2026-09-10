@@ -580,6 +580,36 @@ export function useUnmarkReadingPlanDay() {
   });
 }
 
+export function useRecentSearches() {
+  return useQuery({ queryKey: ["recentSearches"], queryFn: () => api.listRecentSearches() });
+}
+
+export function useSavedSearches() {
+  return useQuery({ queryKey: ["savedSearches"], queryFn: api.listSavedSearches });
+}
+
+export function useSetSearchSaved() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { query: string; saved: boolean }) => api.setSearchSaved(input.query, input.saved),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["recentSearches"] });
+      qc.invalidateQueries({ queryKey: ["savedSearches"] });
+    },
+  });
+}
+
+export function useDeleteSearchHistory() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: api.deleteSearchHistory,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["recentSearches"] });
+      qc.invalidateQueries({ queryKey: ["savedSearches"] });
+    },
+  });
+}
+
 export function useHarmonySections() {
   return useQuery({ queryKey: ["harmonySections"], queryFn: api.listHarmonySections, staleTime: Infinity });
 }
