@@ -139,6 +139,7 @@ pub fn run() {
             commands::reading_plans::abandon_reading_plan,
             commands::reading_plans::mark_reading_plan_day,
             commands::reading_plans::unmark_reading_plan_day,
+            commands::harmony::list_harmony_sections,
             commands::search::search,
             commands::study::get_cross_references,
             commands::study::get_metrical_psalm,

@@ -1,0 +1,3039 @@
+{
+ "code": "gospel_harmony",
+ "title": "Harmony of the Gospels",
+ "description": "The events of Christ's life in chronological order across all four Gospels (plus Acts 1 for the ascension), each event's title paired with where it's told in Matthew, Mark, Luke, and John.",
+ "sections": [
+  {
+   "order": 1,
+   "title": "Authorial introductions",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 1,
+     "verse_start": 1,
+     "chapter_end": 1,
+     "verse_end": 1,
+     "label": "Matthew 1:1"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 1,
+     "verse_start": 1,
+     "chapter_end": 1,
+     "verse_end": 1,
+     "label": "Mark 1:1"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 1,
+     "verse_start": 1,
+     "chapter_end": 1,
+     "verse_end": 4,
+     "label": "Luke 1:1-4"
+    },
+    {
+     "book": "John",
+     "chapter_start": 1,
+     "verse_start": 1,
+     "chapter_end": 1,
+     "verse_end": 18,
+     "label": "John 1:1-18"
+    }
+   ]
+  },
+  {
+   "order": 2,
+   "title": "Jesus’ genealogy",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 1,
+     "verse_start": 2,
+     "chapter_end": 1,
+     "verse_end": 17,
+     "label": "Matthew 1:2-17"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 3,
+     "verse_start": 23,
+     "chapter_end": 3,
+     "verse_end": 38,
+     "label": "Luke 3:23-38"
+    }
+   ]
+  },
+  {
+   "order": 3,
+   "title": "The angel’s revelation to Zechariah and his response",
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 1,
+     "verse_start": 5,
+     "chapter_end": 1,
+     "verse_end": 25,
+     "label": "Luke 1:5-25"
+    }
+   ]
+  },
+  {
+   "order": 4,
+   "title": "The angel’s revelation to Mary and her response",
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 1,
+     "verse_start": 26,
+     "chapter_end": 1,
+     "verse_end": 56,
+     "label": "Luke 1:26-56"
+    }
+   ]
+  },
+  {
+   "order": 5,
+   "title": "The angel’s revelation to Joseph and his response",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 1,
+     "verse_start": 18,
+     "chapter_end": 1,
+     "verse_end": 25,
+     "label": "Matthew 1:18-25"
+    }
+   ]
+  },
+  {
+   "order": 6,
+   "title": "The birth of John the Baptist and Zechariah’s response",
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 1,
+     "verse_start": 57,
+     "chapter_end": 1,
+     "verse_end": 80,
+     "label": "Luke 1:57-80"
+    }
+   ]
+  },
+  {
+   "order": 7,
+   "title": "Caesar’s census and the birth of Jesus",
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 2,
+     "verse_start": 1,
+     "chapter_end": 2,
+     "verse_end": 7,
+     "label": "Luke 2:1-7"
+    }
+   ]
+  },
+  {
+   "order": 8,
+   "title": "The angel’s revelation to the Bethlehem shepherds and their discovery of Jesus",
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 2,
+     "verse_start": 8,
+     "chapter_end": 2,
+     "verse_end": 20,
+     "label": "Luke 2:8-20"
+    }
+   ]
+  },
+  {
+   "order": 9,
+   "title": "Jesus’ circumcision in the Temple and Simeon’s and Anna’s discovery of Jesus",
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 2,
+     "verse_start": 21,
+     "chapter_end": 2,
+     "verse_end": 39,
+     "label": "Luke 2:21-39"
+    }
+   ]
+  },
+  {
+   "order": 10,
+   "title": "Wise men journey from the east and their discovery of Jesus",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 2,
+     "verse_start": 1,
+     "chapter_end": 2,
+     "verse_end": 12,
+     "label": "Matthew 2:1-12"
+    }
+   ]
+  },
+  {
+   "order": 11,
+   "title": "Joseph, Mary and Jesus flee into Egypt and return",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 2,
+     "verse_start": 13,
+     "chapter_end": 2,
+     "verse_end": 23,
+     "label": "Matthew 2:13-23"
+    }
+   ]
+  },
+  {
+   "order": 12,
+   "title": "Jesus’ early life in Nazareth",
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 2,
+     "verse_start": 39,
+     "chapter_end": 2,
+     "verse_end": 40,
+     "label": "Luke 2:39-40"
+    }
+   ]
+  },
+  {
+   "order": 13,
+   "title": "Jesus’ trip to Jerusalem at age 12",
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 2,
+     "verse_start": 41,
+     "chapter_end": 2,
+     "verse_end": 51,
+     "label": "Luke 2:41-51"
+    }
+   ]
+  },
+  {
+   "order": 14,
+   "title": "Jesus’ early life in Nazareth continued",
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 2,
+     "verse_start": 52,
+     "chapter_end": 2,
+     "verse_end": 52,
+     "label": "Luke 2:52"
+    }
+   ]
+  },
+  {
+   "order": 15,
+   "title": "John the Baptist baptizes Jesus",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 3,
+     "verse_start": 1,
+     "chapter_end": 3,
+     "verse_end": 17,
+     "label": "Matthew 3:1-17"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 1,
+     "verse_start": 2,
+     "chapter_end": 1,
+     "verse_end": 11,
+     "label": "Mark 1:2-11"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 3,
+     "verse_start": 1,
+     "chapter_end": 3,
+     "verse_end": 22,
+     "label": "Luke 3:1-22"
+    },
+    {
+     "book": "John",
+     "chapter_start": 1,
+     "verse_start": 6,
+     "chapter_end": 1,
+     "verse_end": 14,
+     "label": "John 1:6-14"
+    },
+    {
+     "book": "John",
+     "chapter_start": 1,
+     "verse_start": 19,
+     "chapter_end": 1,
+     "verse_end": 34,
+     "label": "John 1:19-34"
+    }
+   ]
+  },
+  {
+   "order": 16,
+   "title": "Jesus meets his future disciples: Andrew, John, Philip, Nathanael",
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 1,
+     "verse_start": 35,
+     "chapter_end": 1,
+     "verse_end": 51,
+     "label": "John 1:35-51"
+    }
+   ]
+  },
+  {
+   "order": 17,
+   "title": "Jesus and friends go to a wedding in Cana",
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 2,
+     "verse_start": 1,
+     "chapter_end": 2,
+     "verse_end": 11,
+     "label": "John 2:1-11"
+    }
+   ]
+  },
+  {
+   "order": 18,
+   "title": "Jesus goes to Capernaum with family and friends",
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 2,
+     "verse_start": 12,
+     "chapter_end": 2,
+     "verse_end": 12,
+     "label": "John 2:12"
+    }
+   ]
+  },
+  {
+   "order": 19,
+   "title": "Jesus is tempted by the devil in the wilderness",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 4,
+     "verse_start": 1,
+     "chapter_end": 4,
+     "verse_end": 11,
+     "label": "Matthew 4:1-11"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 1,
+     "verse_start": 12,
+     "chapter_end": 1,
+     "verse_end": 13,
+     "label": "Mark 1:12-13"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 4,
+     "verse_start": 1,
+     "chapter_end": 4,
+     "verse_end": 13,
+     "label": "Luke 4:1-13"
+    }
+   ]
+  },
+  {
+   "order": 20,
+   "title": "Jesus cleanses the Temple for the first time",
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 2,
+     "verse_start": 13,
+     "chapter_end": 2,
+     "verse_end": 25,
+     "label": "John 2:13-25"
+    }
+   ]
+  },
+  {
+   "order": 21,
+   "title": "Jesus meets with Nicodemus the Pharisee that night",
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 2,
+     "verse_start": 23,
+     "chapter_end": 3,
+     "verse_end": 21,
+     "label": "John 2:23-3:21"
+    }
+   ]
+  },
+  {
+   "order": 22,
+   "title": "Jesus instructs his disciples and they baptize",
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 3,
+     "verse_start": 22,
+     "chapter_end": 3,
+     "verse_end": 36,
+     "label": "John 3:22-36"
+    }
+   ]
+  },
+  {
+   "order": 23,
+   "title": "John is arrested and Jesus leave for Galilee",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 4,
+     "verse_start": 12,
+     "chapter_end": 4,
+     "verse_end": 12,
+     "label": "Matthew 4:12"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 1,
+     "verse_start": 14,
+     "chapter_end": 1,
+     "verse_end": 14,
+     "label": "Mark 1:14"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 4,
+     "verse_start": 14,
+     "chapter_end": 4,
+     "verse_end": 14,
+     "label": "Luke 4:14"
+    },
+    {
+     "book": "John",
+     "chapter_start": 4,
+     "verse_start": 1,
+     "chapter_end": 4,
+     "verse_end": 3,
+     "label": "John 4:1-3"
+    }
+   ]
+  },
+  {
+   "order": 24,
+   "title": "Jesus meets the Samaritan woman at the well",
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 4,
+     "verse_start": 4,
+     "chapter_end": 4,
+     "verse_end": 42,
+     "label": "John 4:4-42"
+    }
+   ]
+  },
+  {
+   "order": 25,
+   "title": "Jesus arrives in Galilee",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 4,
+     "verse_start": 12,
+     "chapter_end": 4,
+     "verse_end": 17,
+     "label": "Matthew 4:12-17"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 1,
+     "verse_start": 14,
+     "chapter_end": 1,
+     "verse_end": 15,
+     "label": "Mark 1:14-15"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 4,
+     "verse_start": 14,
+     "chapter_end": 4,
+     "verse_end": 15,
+     "label": "Luke 4:14-15"
+    },
+    {
+     "book": "John",
+     "chapter_start": 4,
+     "verse_start": 43,
+     "chapter_end": 4,
+     "verse_end": 45,
+     "label": "John 4:43-45"
+    }
+   ]
+  },
+  {
+   "order": 26,
+   "title": "Jesus heals a royal official’s son",
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 4,
+     "verse_start": 46,
+     "chapter_end": 4,
+     "verse_end": 54,
+     "label": "John 4:46-54"
+    }
+   ]
+  },
+  {
+   "order": 27,
+   "title": "Jesus calls Simon, Andrew, James and John a second time",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 4,
+     "verse_start": 18,
+     "chapter_end": 4,
+     "verse_end": 22,
+     "label": "Matthew 4:18-22"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 1,
+     "verse_start": 16,
+     "chapter_end": 1,
+     "verse_end": 20,
+     "label": "Mark 1:16-20"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 5,
+     "verse_start": 1,
+     "chapter_end": 5,
+     "verse_end": 11,
+     "label": "Luke 5:1-11"
+    }
+   ]
+  },
+  {
+   "order": 28,
+   "title": "Jesus delivers a Capernaum sermon",
+   "readings": [
+    {
+     "book": "Mark",
+     "chapter_start": 1,
+     "verse_start": 21,
+     "chapter_end": 1,
+     "verse_end": 28,
+     "label": "Mark 1:21-28"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 4,
+     "verse_start": 31,
+     "chapter_end": 4,
+     "verse_end": 37,
+     "label": "Luke 4:31-37"
+    }
+   ]
+  },
+  {
+   "order": 29,
+   "title": "Jesus delivers the Sermon on the Mount",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 4,
+     "verse_start": 23,
+     "chapter_end": 7,
+     "verse_end": 29,
+     "label": "Matthew 4:23-7:29"
+    }
+   ]
+  },
+  {
+   "order": 30,
+   "title": "Jesus heals a leper",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 8,
+     "verse_start": 1,
+     "chapter_end": 8,
+     "verse_end": 4,
+     "label": "Matthew 8:1-4"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 1,
+     "verse_start": 40,
+     "chapter_end": 1,
+     "verse_end": 45,
+     "label": "Mark 1:40-45"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 5,
+     "verse_start": 12,
+     "chapter_end": 5,
+     "verse_end": 16,
+     "label": "Luke 5:12-16"
+    }
+   ]
+  },
+  {
+   "order": 31,
+   "title": "Jesus heals a centurion’s servant",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 8,
+     "verse_start": 5,
+     "chapter_end": 8,
+     "verse_end": 13,
+     "label": "Matthew 8:5-13"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 7,
+     "verse_start": 1,
+     "chapter_end": 7,
+     "verse_end": 10,
+     "label": "Luke 7:1-10"
+    }
+   ]
+  },
+  {
+   "order": 32,
+   "title": "Jesus raises the son of the widow of Nain from the dead",
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 7,
+     "verse_start": 11,
+     "chapter_end": 7,
+     "verse_end": 17,
+     "label": "Luke 7:11-17"
+    }
+   ]
+  },
+  {
+   "order": 33,
+   "title": "Jesus heals Peter’s mother-in-law and others",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 8,
+     "verse_start": 14,
+     "chapter_end": 8,
+     "verse_end": 17,
+     "label": "Matthew 8:14-17"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 1,
+     "verse_start": 29,
+     "chapter_end": 1,
+     "verse_end": 34,
+     "label": "Mark 1:29-34"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 4,
+     "verse_start": 38,
+     "chapter_end": 4,
+     "verse_end": 44,
+     "label": "Luke 4:38-44"
+    }
+   ]
+  },
+  {
+   "order": 34,
+   "title": "Jesus crosses the Sea of Galilee, and calms the Sea",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 8,
+     "verse_start": 18,
+     "chapter_end": 8,
+     "verse_end": 27,
+     "label": "Matthew 8:18-27"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 4,
+     "verse_start": 35,
+     "chapter_end": 4,
+     "verse_end": 41,
+     "label": "Mark 4:35-41"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 8,
+     "verse_start": 22,
+     "chapter_end": 8,
+     "verse_end": 26,
+     "label": "Luke 8:22-26"
+    }
+   ]
+  },
+  {
+   "order": 35,
+   "title": "Jesus heals two Gergesene/Gadarene demoniacs and their response",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 8,
+     "verse_start": 28,
+     "chapter_end": 9,
+     "verse_end": 1,
+     "label": "Matthew 8:28-9:1"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 5,
+     "verse_start": 1,
+     "chapter_end": 5,
+     "verse_end": 20,
+     "label": "Mark 5:1-20"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 8,
+     "verse_start": 26,
+     "chapter_end": 8,
+     "verse_end": 39,
+     "label": "Luke 8:26-39"
+    }
+   ]
+  },
+  {
+   "order": 36,
+   "title": "Jesus heals a paralyzed man on a bed and forgives sin",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 9,
+     "verse_start": 1,
+     "chapter_end": 9,
+     "verse_end": 8,
+     "label": "Matthew 9:1-8"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 2,
+     "verse_start": 1,
+     "chapter_end": 2,
+     "verse_end": 12,
+     "label": "Mark 2:1-12"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 5,
+     "verse_start": 17,
+     "chapter_end": 5,
+     "verse_end": 26,
+     "label": "Luke 5:17-26"
+    }
+   ]
+  },
+  {
+   "order": 37,
+   "title": "Jesus meets his future disciple Matthew and dines with sinners",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 9,
+     "verse_start": 9,
+     "chapter_end": 9,
+     "verse_end": 17,
+     "label": "Matthew 9:9-17"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 2,
+     "verse_start": 13,
+     "chapter_end": 2,
+     "verse_end": 22,
+     "label": "Mark 2:13-22"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 5,
+     "verse_start": 27,
+     "chapter_end": 5,
+     "verse_end": 39,
+     "label": "Luke 5:27-39"
+    }
+   ]
+  },
+  {
+   "order": 38,
+   "title": "Jesus heals a hemorrhaging woman and raises Jairus’s daughter from the dead",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 9,
+     "verse_start": 18,
+     "chapter_end": 9,
+     "verse_end": 26,
+     "label": "Matthew 9:18-26"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 5,
+     "verse_start": 22,
+     "chapter_end": 5,
+     "verse_end": 43,
+     "label": "Mark 5:22-43"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 8,
+     "verse_start": 40,
+     "chapter_end": 8,
+     "verse_end": 56,
+     "label": "Luke 8:40-56"
+    }
+   ]
+  },
+  {
+   "order": 39,
+   "title": "Jesus heals two blind men",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 9,
+     "verse_start": 27,
+     "chapter_end": 9,
+     "verse_end": 31,
+     "label": "Matthew 9:27-31"
+    }
+   ]
+  },
+  {
+   "order": 40,
+   "title": "Jesus heals a mute demoniac",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 9,
+     "verse_start": 32,
+     "chapter_end": 9,
+     "verse_end": 34,
+     "label": "Matthew 9:32-34"
+    }
+   ]
+  },
+  {
+   "order": 41,
+   "title": "Jesus does a Galilean tour",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 9,
+     "verse_start": 35,
+     "chapter_end": 9,
+     "verse_end": 38,
+     "label": "Matthew 9:35-38"
+    }
+   ]
+  },
+  {
+   "order": 42,
+   "title": "Jesus chooses 12 disciples for a Jewish ministry",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 10,
+     "verse_start": 1,
+     "chapter_end": 10,
+     "verse_end": 42,
+     "label": "Matthew 10:1-42"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 3,
+     "verse_start": 13,
+     "chapter_end": 3,
+     "verse_end": 19,
+     "label": "Mark 3:13-19"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 6,
+     "verse_start": 6,
+     "chapter_end": 6,
+     "verse_end": 13,
+     "label": "Mark 6:6-13"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 6,
+     "verse_start": 12,
+     "chapter_end": 6,
+     "verse_end": 16,
+     "label": "Luke 6:12-16"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 8,
+     "verse_start": 1,
+     "chapter_end": 8,
+     "verse_end": 3,
+     "label": "Luke 8:1-3"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 9,
+     "verse_start": 1,
+     "chapter_end": 9,
+     "verse_end": 6,
+     "label": "Luke 9:1-6"
+    }
+   ]
+  },
+  {
+   "order": 43,
+   "title": "Jesus delivers the Sermon on the Plain",
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 6,
+     "verse_start": 17,
+     "chapter_end": 6,
+     "verse_end": 49,
+     "label": "Luke 6:17-49"
+    }
+   ]
+  },
+  {
+   "order": 44,
+   "title": "John the Baptist, through disciples, questions Jesus about his ministry",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 11,
+     "verse_start": 1,
+     "chapter_end": 11,
+     "verse_end": 30,
+     "label": "Matthew 11:1-30"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 7,
+     "verse_start": 18,
+     "chapter_end": 7,
+     "verse_end": 35,
+     "label": "Luke 7:18-35"
+    }
+   ]
+  },
+  {
+   "order": 45,
+   "title": "Jesus dines at the house of Simon the Pharisee",
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 7,
+     "verse_start": 36,
+     "chapter_end": 7,
+     "verse_end": 50,
+     "label": "Luke 7:36-50"
+    }
+   ]
+  },
+  {
+   "order": 46,
+   "title": "Jesus’ disciples pluck grain on the Sabbath",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 12,
+     "verse_start": 1,
+     "chapter_end": 12,
+     "verse_end": 8,
+     "label": "Matthew 12:1-8"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 2,
+     "verse_start": 23,
+     "chapter_end": 2,
+     "verse_end": 28,
+     "label": "Mark 2:23-28"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 6,
+     "verse_start": 1,
+     "chapter_end": 6,
+     "verse_end": 5,
+     "label": "Luke 6:1-5"
+    }
+   ]
+  },
+  {
+   "order": 47,
+   "title": "Jesus heals a man with a withered hand on the Sabbath",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 12,
+     "verse_start": 9,
+     "chapter_end": 12,
+     "verse_end": 21,
+     "label": "Matthew 12:9-21"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 3,
+     "verse_start": 1,
+     "chapter_end": 3,
+     "verse_end": 12,
+     "label": "Mark 3:1-12"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 6,
+     "verse_start": 6,
+     "chapter_end": 6,
+     "verse_end": 11,
+     "label": "Luke 6:6-11"
+    }
+   ]
+  },
+  {
+   "order": 48,
+   "title": "Jesus heals a blind mute demoniac",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 12,
+     "verse_start": 22,
+     "chapter_end": 12,
+     "verse_end": 50,
+     "label": "Matthew 12:22-50"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 3,
+     "verse_start": 19,
+     "chapter_end": 3,
+     "verse_end": 35,
+     "label": "Mark 3:19-35"
+    }
+   ]
+  },
+  {
+   "order": 49,
+   "title": "Jesus delivers a series of parables on the kingdom of heaven",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 13,
+     "verse_start": 1,
+     "chapter_end": 13,
+     "verse_end": 53,
+     "label": "Matthew 13:1-53"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 4,
+     "verse_start": 1,
+     "chapter_end": 4,
+     "verse_end": 34,
+     "label": "Mark 4:1-34"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 8,
+     "verse_start": 4,
+     "chapter_end": 8,
+     "verse_end": 21,
+     "label": "Luke 8:4-21"
+    }
+   ]
+  },
+  {
+   "order": 50,
+   "title": "Jesus heals and invalid at the pool of Bethesda on the Sabbath",
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 5,
+     "verse_start": 1,
+     "chapter_end": 5,
+     "verse_end": 47,
+     "label": "John 5:1-47"
+    }
+   ]
+  },
+  {
+   "order": 51,
+   "title": "Jesus delivers a sermon in Nazareth",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 13,
+     "verse_start": 54,
+     "chapter_end": 13,
+     "verse_end": 58,
+     "label": "Matthew 13:54-58"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 6,
+     "verse_start": 1,
+     "chapter_end": 6,
+     "verse_end": 6,
+     "label": "Mark 6:1-6"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 4,
+     "verse_start": 16,
+     "chapter_end": 4,
+     "verse_end": 30,
+     "label": "Luke 4:16-30"
+    }
+   ]
+  },
+  {
+   "order": 52,
+   "title": "Herod Antipas's interest in Jesus as John the Baptist returned from the dead",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 14,
+     "verse_start": 1,
+     "chapter_end": 14,
+     "verse_end": 12,
+     "label": "Matthew 14:1-12"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 6,
+     "verse_start": 14,
+     "chapter_end": 6,
+     "verse_end": 29,
+     "label": "Mark 6:14-29"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 9,
+     "verse_start": 7,
+     "chapter_end": 9,
+     "verse_end": 9,
+     "label": "Luke 9:7-9"
+    }
+   ]
+  },
+  {
+   "order": 53,
+   "title": "Jesus feeds 5000 and the crowds attempt to make him king",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 14,
+     "verse_start": 13,
+     "chapter_end": 14,
+     "verse_end": 23,
+     "label": "Matthew 14:13-23"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 6,
+     "verse_start": 30,
+     "chapter_end": 6,
+     "verse_end": 44,
+     "label": "Mark 6:30-44"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 9,
+     "verse_start": 10,
+     "chapter_end": 9,
+     "verse_end": 17,
+     "label": "Luke 9:10-17"
+    },
+    {
+     "book": "John",
+     "chapter_start": 6,
+     "verse_start": 1,
+     "chapter_end": 6,
+     "verse_end": 15,
+     "label": "John 6:1-15"
+    }
+   ]
+  },
+  {
+   "order": 54,
+   "title": "Jesus crosses the Sea of Galilee by walking on water",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 14,
+     "verse_start": 24,
+     "chapter_end": 14,
+     "verse_end": 33,
+     "label": "Matthew 14:24-33"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 6,
+     "verse_start": 45,
+     "chapter_end": 6,
+     "verse_end": 52,
+     "label": "Mark 6:45-52"
+    },
+    {
+     "book": "John",
+     "chapter_start": 6,
+     "verse_start": 16,
+     "chapter_end": 6,
+     "verse_end": 21,
+     "label": "John 6:16-21"
+    }
+   ]
+  },
+  {
+   "order": 55,
+   "title": "Jesus heals the sick in Gennesaret",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 14,
+     "verse_start": 34,
+     "chapter_end": 14,
+     "verse_end": 36,
+     "label": "Matthew 14:34-36"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 6,
+     "verse_start": 53,
+     "chapter_end": 6,
+     "verse_end": 56,
+     "label": "Mark 6:53-56"
+    }
+   ]
+  },
+  {
+   "order": 56,
+   "title": "Jesus delivers the Bread of Life sermon in Capernaum",
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 6,
+     "verse_start": 22,
+     "chapter_end": 7,
+     "verse_end": 1,
+     "label": "John 6:22-7:1"
+    }
+   ]
+  },
+  {
+   "order": 57,
+   "title": "Jesus declares the oral and oral ceremonial law obsolete",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 15,
+     "verse_start": 1,
+     "chapter_end": 15,
+     "verse_end": 20,
+     "label": "Matthew 15:1-20"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 7,
+     "verse_start": 1,
+     "chapter_end": 7,
+     "verse_end": 23,
+     "label": "Mark 7:1-23"
+    }
+   ]
+  },
+  {
+   "order": 58,
+   "title": "Jesus heals the demoniac child of a Syrophoenician woman",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 15,
+     "verse_start": 21,
+     "chapter_end": 15,
+     "verse_end": 28,
+     "label": "Matthew 15:21-28"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 7,
+     "verse_start": 24,
+     "chapter_end": 7,
+     "verse_end": 30,
+     "label": "Mark 7:24-30"
+    }
+   ]
+  },
+  {
+   "order": 59,
+   "title": "Jesus heals the mute, deaf, lame and blind in Decapolis",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 15,
+     "verse_start": 29,
+     "chapter_end": 15,
+     "verse_end": 31,
+     "label": "Matthew 15:29-31"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 7,
+     "verse_start": 31,
+     "chapter_end": 7,
+     "verse_end": 37,
+     "label": "Mark 7:31-37"
+    }
+   ]
+  },
+  {
+   "order": 60,
+   "title": "Jesus feeds 4000",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 15,
+     "verse_start": 32,
+     "chapter_end": 15,
+     "verse_end": 38,
+     "label": "Matthew 15:32-38"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 8,
+     "verse_start": 1,
+     "chapter_end": 8,
+     "verse_end": 9,
+     "label": "Mark 8:1-9"
+    }
+   ]
+  },
+  {
+   "order": 61,
+   "title": "Jesus talks about the sign of Jonah and the leaven of the Pharisees",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 15,
+     "verse_start": 39,
+     "chapter_end": 16,
+     "verse_end": 12,
+     "label": "Matthew 15:39-16:12"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 8,
+     "verse_start": 10,
+     "chapter_end": 8,
+     "verse_end": 21,
+     "label": "Mark 8:10-21"
+    },
+    {
+     "book": "John",
+     "chapter_start": 7,
+     "verse_start": 1,
+     "chapter_end": 7,
+     "verse_end": 1,
+     "label": "John 7:1"
+    }
+   ]
+  },
+  {
+   "order": 62,
+   "title": "Jesus heals a blind man",
+   "readings": [
+    {
+     "book": "Mark",
+     "chapter_start": 8,
+     "verse_start": 22,
+     "chapter_end": 8,
+     "verse_end": 26,
+     "label": "Mark 8:22-26"
+    }
+   ]
+  },
+  {
+   "order": 63,
+   "title": "Peter confesses Jesus to be the Messiah",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 16,
+     "verse_start": 13,
+     "chapter_end": 16,
+     "verse_end": 20,
+     "label": "Matthew 16:13-20"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 8,
+     "verse_start": 27,
+     "chapter_end": 8,
+     "verse_end": 30,
+     "label": "Mark 8:27-30"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 9,
+     "verse_start": 18,
+     "chapter_end": 9,
+     "verse_end": 21,
+     "label": "Luke 9:18-21"
+    }
+   ]
+  },
+  {
+   "order": 64,
+   "title": "Jesus predicts his death in Jerusalem for the first time",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 16,
+     "verse_start": 21,
+     "chapter_end": 16,
+     "verse_end": 28,
+     "label": "Matthew 16:21-28"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 8,
+     "verse_start": 30,
+     "chapter_end": 9,
+     "verse_end": 1,
+     "label": "Mark 8:30-9:1"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 9,
+     "verse_start": 22,
+     "chapter_end": 9,
+     "verse_end": 27,
+     "label": "Luke 9:22-27"
+    }
+   ]
+  },
+  {
+   "order": 65,
+   "title": "Jesus is transfigured",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 17,
+     "verse_start": 1,
+     "chapter_end": 17,
+     "verse_end": 13,
+     "label": "Matthew 17:1-13"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 9,
+     "verse_start": 2,
+     "chapter_end": 9,
+     "verse_end": 13,
+     "label": "Mark 9:2-13"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 9,
+     "verse_start": 28,
+     "chapter_end": 9,
+     "verse_end": 36,
+     "label": "Luke 9:28-36"
+    }
+   ]
+  },
+  {
+   "order": 66,
+   "title": "Jesus heals an epileptic demoniac child",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 17,
+     "verse_start": 14,
+     "chapter_end": 17,
+     "verse_end": 21,
+     "label": "Matthew 17:14-21"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 9,
+     "verse_start": 14,
+     "chapter_end": 9,
+     "verse_end": 29,
+     "label": "Mark 9:14-29"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 9,
+     "verse_start": 37,
+     "chapter_end": 9,
+     "verse_end": 43,
+     "label": "Luke 9:37-43"
+    }
+   ]
+  },
+  {
+   "order": 67,
+   "title": "Jesus predicts his death in Jerusalem for a second time",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 17,
+     "verse_start": 21,
+     "chapter_end": 17,
+     "verse_end": 23,
+     "label": "Matthew 17:21-23"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 9,
+     "verse_start": 30,
+     "chapter_end": 9,
+     "verse_end": 32,
+     "label": "Mark 9:30-32"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 9,
+     "verse_start": 43,
+     "chapter_end": 9,
+     "verse_end": 45,
+     "label": "Luke 9:43-45"
+    }
+   ]
+  },
+  {
+   "order": 68,
+   "title": "Jesus pays the temple tax",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 17,
+     "verse_start": 24,
+     "chapter_end": 17,
+     "verse_end": 27,
+     "label": "Matthew 17:24-27"
+    }
+   ]
+  },
+  {
+   "order": 69,
+   "title": "The disciples’ dispute over who is the greatest in the kingdom of heaven",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 18,
+     "verse_start": 1,
+     "chapter_end": 18,
+     "verse_end": 22,
+     "label": "Matthew 18:1-22"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 9,
+     "verse_start": 33,
+     "chapter_end": 9,
+     "verse_end": 50,
+     "label": "Mark 9:33-50"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 9,
+     "verse_start": 46,
+     "chapter_end": 9,
+     "verse_end": 50,
+     "label": "Luke 9:46-50"
+    }
+   ]
+  },
+  {
+   "order": 70,
+   "title": "Jesus contemplates going to Jerusalem for Tabernacles, leaves Galilee",
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 7,
+     "verse_start": 1,
+     "chapter_end": 7,
+     "verse_end": 13,
+     "label": "John 7:1-13"
+    }
+   ]
+  },
+  {
+   "order": 71,
+   "title": "Jesus at the Feast of Tabernacles: the political controversy",
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 7,
+     "verse_start": 14,
+     "chapter_end": 7,
+     "verse_end": 36,
+     "label": "John 7:14-36"
+    }
+   ]
+  },
+  {
+   "order": 72,
+   "title": "Jesus at the Feast of Tabernacles: the water controversy",
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 7,
+     "verse_start": 37,
+     "chapter_end": 7,
+     "verse_end": 58,
+     "label": "John 7:37-58"
+    }
+   ]
+  },
+  {
+   "order": 73,
+   "title": "Jesus at the Feast of Tabernacles: the woman caught in adultery",
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 7,
+     "verse_start": 59,
+     "chapter_end": 8,
+     "verse_end": 11,
+     "label": "John 7:59-8:11"
+    }
+   ]
+  },
+  {
+   "order": 74,
+   "title": "Jesus at the Feast of Tabernacles: the light of the world controversy",
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 8,
+     "verse_start": 12,
+     "chapter_end": 8,
+     "verse_end": 59,
+     "label": "John 8:12-59"
+    }
+   ]
+  },
+  {
+   "order": 75,
+   "title": "Jesus at the Feast of Tabernacles: the man born blind controversy",
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 9,
+     "verse_start": 1,
+     "chapter_end": 10,
+     "verse_end": 6,
+     "label": "John 9:1-10:6"
+    }
+   ]
+  },
+  {
+   "order": 76,
+   "title": "Jesus goes to Jerusalem for the Feast of Dedication",
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 10,
+     "verse_start": 7,
+     "chapter_end": 10,
+     "verse_end": 42,
+     "label": "John 10:7-42"
+    }
+   ]
+  },
+  {
+   "order": 77,
+   "title": "Jesus begins his final journey to Jerusalem",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 19,
+     "verse_start": 1,
+     "chapter_end": 19,
+     "verse_end": 1,
+     "label": "Matthew 19:1"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 10,
+     "verse_start": 1,
+     "chapter_end": 10,
+     "verse_end": 1,
+     "label": "Mark 10:1"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 9,
+     "verse_start": 51,
+     "chapter_end": 9,
+     "verse_end": 52,
+     "label": "Luke 9:51-52"
+    }
+   ]
+  },
+  {
+   "order": 78,
+   "title": "Jesus in Samaria and reprimands James and John, the sons of thunder",
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 9,
+     "verse_start": 51,
+     "chapter_end": 9,
+     "verse_end": 62,
+     "label": "Luke 9:51-62"
+    }
+   ]
+  },
+  {
+   "order": 79,
+   "title": "Jesus picks 70 disciples for a Samaritan ministry",
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 10,
+     "verse_start": 1,
+     "chapter_end": 10,
+     "verse_end": 24,
+     "label": "Luke 10:1-24"
+    }
+   ]
+  },
+  {
+   "order": 80,
+   "title": "Jesus and the parable of the Good Samaritan",
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 10,
+     "verse_start": 25,
+     "chapter_end": 10,
+     "verse_end": 37,
+     "label": "Luke 10:25-37"
+    }
+   ]
+  },
+  {
+   "order": 81,
+   "title": "Jesus visits with Mary and Martha",
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 10,
+     "verse_start": 38,
+     "chapter_end": 10,
+     "verse_end": 42,
+     "label": "Luke 10:38-42"
+    }
+   ]
+  },
+  {
+   "order": 82,
+   "title": "Jesus teaches on the power of prayer",
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 11,
+     "verse_start": 1,
+     "chapter_end": 11,
+     "verse_end": 13,
+     "label": "Luke 11:1-13"
+    }
+   ]
+  },
+  {
+   "order": 83,
+   "title": "Jesus exorcises a demoniac and is challenged",
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 11,
+     "verse_start": 14,
+     "chapter_end": 11,
+     "verse_end": 36,
+     "label": "Luke 11:14-36"
+    }
+   ]
+  },
+  {
+   "order": 84,
+   "title": "Jesus dines with a Pharisee",
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 11,
+     "verse_start": 37,
+     "chapter_end": 11,
+     "verse_end": 54,
+     "label": "Luke 11:37-54"
+    }
+   ]
+  },
+  {
+   "order": 85,
+   "title": "Jesus teaches about blasphemy against the Spirit",
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 12,
+     "verse_start": 1,
+     "chapter_end": 12,
+     "verse_end": 12,
+     "label": "Luke 12:1-12"
+    }
+   ]
+  },
+  {
+   "order": 86,
+   "title": "Jesus delivers a series of parables",
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 12,
+     "verse_start": 13,
+     "chapter_end": 13,
+     "verse_end": 9,
+     "label": "Luke 12:13-13:9"
+    }
+   ]
+  },
+  {
+   "order": 87,
+   "title": "Jesus heals a crippled woman on the Sabbath",
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 13,
+     "verse_start": 10,
+     "chapter_end": 13,
+     "verse_end": 17,
+     "label": "Luke 13:10-17"
+    }
+   ]
+  },
+  {
+   "order": 88,
+   "title": "Jesus delivers a further series of parables",
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 13,
+     "verse_start": 18,
+     "chapter_end": 13,
+     "verse_end": 21,
+     "label": "Luke 13:18-21"
+    }
+   ]
+  },
+  {
+   "order": 89,
+   "title": "Jesus speaks of the narrow gate to heaven",
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 13,
+     "verse_start": 22,
+     "chapter_end": 13,
+     "verse_end": 30,
+     "label": "Luke 13:22-30"
+    }
+   ]
+  },
+  {
+   "order": 90,
+   "title": "Jesus is warned about Herod Antipas and laments over Jerusalem",
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 13,
+     "verse_start": 31,
+     "chapter_end": 13,
+     "verse_end": 35,
+     "label": "Luke 13:31-35"
+    }
+   ]
+  },
+  {
+   "order": 91,
+   "title": "Jesus a man with dropsy on the Sabbath",
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 14,
+     "verse_start": 1,
+     "chapter_end": 14,
+     "verse_end": 6,
+     "label": "Luke 14:1-6"
+    }
+   ]
+  },
+  {
+   "order": 92,
+   "title": "Jesus delivers a further series of parables",
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 14,
+     "verse_start": 7,
+     "chapter_end": 17,
+     "verse_end": 10,
+     "label": "Luke 14:7-17:10"
+    }
+   ]
+  },
+  {
+   "order": 93,
+   "title": "Jesus heals 10 lepers",
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 17,
+     "verse_start": 11,
+     "chapter_end": 17,
+     "verse_end": 19,
+     "label": "Luke 17:11-19"
+    }
+   ]
+  },
+  {
+   "order": 94,
+   "title": "Jesus speaks of the coming of the Son of Man",
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 17,
+     "verse_start": 20,
+     "chapter_end": 17,
+     "verse_end": 37,
+     "label": "Luke 17:20-37"
+    }
+   ]
+  },
+  {
+   "order": 95,
+   "title": "Jesus delivers a further series of parables",
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 18,
+     "verse_start": 1,
+     "chapter_end": 18,
+     "verse_end": 14,
+     "label": "Luke 18:1-14"
+    }
+   ]
+  },
+  {
+   "order": 96,
+   "title": "Jesus speaks on marriage, divorce, celibacy and blesses children",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 19,
+     "verse_start": 3,
+     "chapter_end": 19,
+     "verse_end": 15,
+     "label": "Matthew 19:3-15"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 10,
+     "verse_start": 2,
+     "chapter_end": 10,
+     "verse_end": 16,
+     "label": "Mark 10:2-16"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 18,
+     "verse_start": 15,
+     "chapter_end": 18,
+     "verse_end": 17,
+     "label": "Luke 18:15-17"
+    }
+   ]
+  },
+  {
+   "order": 97,
+   "title": "Jesus encounters a rich ruler",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 19,
+     "verse_start": 16,
+     "chapter_end": 19,
+     "verse_end": 30,
+     "label": "Matthew 19:16-30"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 10,
+     "verse_start": 17,
+     "chapter_end": 10,
+     "verse_end": 31,
+     "label": "Mark 10:17-31"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 18,
+     "verse_start": 18,
+     "chapter_end": 18,
+     "verse_end": 30,
+     "label": "Luke 18:18-30"
+    }
+   ]
+  },
+  {
+   "order": 98,
+   "title": "Jesus delivers the parable of labourers in the vineyard",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 20,
+     "verse_start": 1,
+     "chapter_end": 20,
+     "verse_end": 16,
+     "label": "Matthew 20:1-16"
+    }
+   ]
+  },
+  {
+   "order": 99,
+   "title": "Jesus raises Lazarus from the dead",
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 11,
+     "verse_start": 1,
+     "chapter_end": 11,
+     "verse_end": 57,
+     "label": "John 11:1-57"
+    }
+   ]
+  },
+  {
+   "order": 100,
+   "title": "Jesus predicts his death in Jerusalem a third time",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 20,
+     "verse_start": 17,
+     "chapter_end": 20,
+     "verse_end": 19,
+     "label": "Matthew 20:17-19"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 10,
+     "verse_start": 32,
+     "chapter_end": 10,
+     "verse_end": 34,
+     "label": "Mark 10:32-34"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 18,
+     "verse_start": 31,
+     "chapter_end": 18,
+     "verse_end": 34,
+     "label": "Luke 18:31-34"
+    }
+   ]
+  },
+  {
+   "order": 101,
+   "title": "James and John vie for positions in the kingdom of heaven",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 20,
+     "verse_start": 20,
+     "chapter_end": 20,
+     "verse_end": 28,
+     "label": "Matthew 20:20-28"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 10,
+     "verse_start": 35,
+     "chapter_end": 10,
+     "verse_end": 45,
+     "label": "Mark 10:35-45"
+    }
+   ]
+  },
+  {
+   "order": 102,
+   "title": "Jesus heals a blind man Bartimaus",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 20,
+     "verse_start": 29,
+     "chapter_end": 20,
+     "verse_end": 34,
+     "label": "Matthew 20:29-34"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 10,
+     "verse_start": 46,
+     "chapter_end": 10,
+     "verse_end": 52,
+     "label": "Mark 10:46-52"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 18,
+     "verse_start": 35,
+     "chapter_end": 18,
+     "verse_end": 43,
+     "label": "Luke 18:35-43"
+    }
+   ]
+  },
+  {
+   "order": 103,
+   "title": "Jesus meets a future disciple Zacchaeus",
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 19,
+     "verse_start": 1,
+     "chapter_end": 19,
+     "verse_end": 10,
+     "label": "Luke 19:1-10"
+    }
+   ]
+  },
+  {
+   "order": 104,
+   "title": "Jesus delivers the parable of the 10 servants",
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 19,
+     "verse_start": 11,
+     "chapter_end": 19,
+     "verse_end": 28,
+     "label": "Luke 19:11-28"
+    }
+   ]
+  },
+  {
+   "order": 105,
+   "title": "Jesus is anointed the first time",
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 12,
+     "verse_start": 1,
+     "chapter_end": 12,
+     "verse_end": 11,
+     "label": "John 12:1-11"
+    }
+   ]
+  },
+  {
+   "order": 106,
+   "title": "Jesus enters Jerusalem triumphantly",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 21,
+     "verse_start": 1,
+     "chapter_end": 21,
+     "verse_end": 11,
+     "label": "Matthew 21:1-11"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 11,
+     "verse_start": 1,
+     "chapter_end": 11,
+     "verse_end": 11,
+     "label": "Mark 11:1-11"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 19,
+     "verse_start": 29,
+     "chapter_end": 19,
+     "verse_end": 44,
+     "label": "Luke 19:29-44"
+    },
+    {
+     "book": "John",
+     "chapter_start": 12,
+     "verse_start": 12,
+     "chapter_end": 12,
+     "verse_end": 19,
+     "label": "John 12:12-19"
+    }
+   ]
+  },
+  {
+   "order": 107,
+   "title": "Greeks come to Jesus through Philip",
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 12,
+     "verse_start": 20,
+     "chapter_end": 12,
+     "verse_end": 50,
+     "label": "John 12:20-50"
+    }
+   ]
+  },
+  {
+   "order": 108,
+   "title": "Jesus cleanses the temple a second time",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 21,
+     "verse_start": 12,
+     "chapter_end": 21,
+     "verse_end": 27,
+     "label": "Matthew 21:12-27"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 11,
+     "verse_start": 12,
+     "chapter_end": 11,
+     "verse_end": 19,
+     "label": "Mark 11:12-19"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 19,
+     "verse_start": 45,
+     "chapter_end": 19,
+     "verse_end": 48,
+     "label": "Luke 19:45-48"
+    }
+   ]
+  },
+  {
+   "order": 109,
+   "title": "Jesus delivers the parable of the fig tree",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 21,
+     "verse_start": 18,
+     "chapter_end": 21,
+     "verse_end": 22,
+     "label": "Matthew 21:18-22"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 11,
+     "verse_start": 12,
+     "chapter_end": 11,
+     "verse_end": 14,
+     "label": "Mark 11:12-14"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 11,
+     "verse_start": 20,
+     "chapter_end": 11,
+     "verse_end": 26,
+     "label": "Mark 11:20-26"
+    }
+   ]
+  },
+  {
+   "order": 110,
+   "title": "Jesus comments on his authority and relationship to John the Baptist",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 21,
+     "verse_start": 23,
+     "chapter_end": 21,
+     "verse_end": 27,
+     "label": "Matthew 21:23-27"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 11,
+     "verse_start": 27,
+     "chapter_end": 11,
+     "verse_end": 33,
+     "label": "Mark 11:27-33"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 20,
+     "verse_start": 1,
+     "chapter_end": 20,
+     "verse_end": 8,
+     "label": "Luke 20:1-8"
+    }
+   ]
+  },
+  {
+   "order": 111,
+   "title": "Jesus delivers the parable of the 2 sons",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 21,
+     "verse_start": 28,
+     "chapter_end": 21,
+     "verse_end": 32,
+     "label": "Matthew 21:28-32"
+    }
+   ]
+  },
+  {
+   "order": 112,
+   "title": "Jesus delivers the parable of the vineyard",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 21,
+     "verse_start": 33,
+     "chapter_end": 21,
+     "verse_end": 46,
+     "label": "Matthew 21:33-46"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 12,
+     "verse_start": 1,
+     "chapter_end": 12,
+     "verse_end": 12,
+     "label": "Mark 12:1-12"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 20,
+     "verse_start": 9,
+     "chapter_end": 20,
+     "verse_end": 19,
+     "label": "Luke 20:9-19"
+    }
+   ]
+  },
+  {
+   "order": 113,
+   "title": "Jesus delivers the parable of the banquet",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 22,
+     "verse_start": 1,
+     "chapter_end": 22,
+     "verse_end": 14,
+     "label": "Matthew 22:1-14"
+    }
+   ]
+  },
+  {
+   "order": 114,
+   "title": "Jesus comments on the payment of taxes to Caesar",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 22,
+     "verse_start": 15,
+     "chapter_end": 22,
+     "verse_end": 22,
+     "label": "Matthew 22:15-22"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 12,
+     "verse_start": 13,
+     "chapter_end": 12,
+     "verse_end": 17,
+     "label": "Mark 12:13-17"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 20,
+     "verse_start": 20,
+     "chapter_end": 20,
+     "verse_end": 26,
+     "label": "Luke 20:20-26"
+    }
+   ]
+  },
+  {
+   "order": 115,
+   "title": "Jesus comments on the afterlife",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 22,
+     "verse_start": 23,
+     "chapter_end": 22,
+     "verse_end": 33,
+     "label": "Matthew 22:23-33"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 12,
+     "verse_start": 18,
+     "chapter_end": 12,
+     "verse_end": 27,
+     "label": "Mark 12:18-27"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 20,
+     "verse_start": 27,
+     "chapter_end": 20,
+     "verse_end": 40,
+     "label": "Luke 20:27-40"
+    }
+   ]
+  },
+  {
+   "order": 116,
+   "title": "Jesus comments on the greatest commandment",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 22,
+     "verse_start": 34,
+     "chapter_end": 22,
+     "verse_end": 40,
+     "label": "Matthew 22:34-40"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 12,
+     "verse_start": 28,
+     "chapter_end": 12,
+     "verse_end": 34,
+     "label": "Mark 12:28-34"
+    }
+   ]
+  },
+  {
+   "order": 117,
+   "title": "Jesus comments on David’s son and David’s lord",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 22,
+     "verse_start": 41,
+     "chapter_end": 22,
+     "verse_end": 46,
+     "label": "Matthew 22:41-46"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 12,
+     "verse_start": 35,
+     "chapter_end": 12,
+     "verse_end": 37,
+     "label": "Mark 12:35-37"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 20,
+     "verse_start": 41,
+     "chapter_end": 20,
+     "verse_end": 44,
+     "label": "Luke 20:41-44"
+    }
+   ]
+  },
+  {
+   "order": 118,
+   "title": "Jesus condemns the Pharisees",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 23,
+     "verse_start": 1,
+     "chapter_end": 23,
+     "verse_end": 39,
+     "label": "Matthew 23:1-39"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 12,
+     "verse_start": 38,
+     "chapter_end": 12,
+     "verse_end": 40,
+     "label": "Mark 12:38-40"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 20,
+     "verse_start": 45,
+     "chapter_end": 20,
+     "verse_end": 47,
+     "label": "Luke 20:45-47"
+    }
+   ]
+  },
+  {
+   "order": 119,
+   "title": "Jesus comments on the widow’s mite",
+   "readings": [
+    {
+     "book": "Mark",
+     "chapter_start": 12,
+     "verse_start": 41,
+     "chapter_end": 12,
+     "verse_end": 44,
+     "label": "Mark 12:41-44"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 21,
+     "verse_start": 1,
+     "chapter_end": 21,
+     "verse_end": 4,
+     "label": "Luke 21:1-4"
+    }
+   ]
+  },
+  {
+   "order": 120,
+   "title": "Jesus delivers the Olivet discourse to his disciples",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 24,
+     "verse_start": 1,
+     "chapter_end": 25,
+     "verse_end": 30,
+     "label": "Matthew 24:1-25:30"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 13,
+     "verse_start": 1,
+     "chapter_end": 13,
+     "verse_end": 37,
+     "label": "Mark 13:1-37"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 21,
+     "verse_start": 5,
+     "chapter_end": 21,
+     "verse_end": 38,
+     "label": "Luke 21:5-38"
+    }
+   ]
+  },
+  {
+   "order": 121,
+   "title": "Jesus's opponents finalize their plot to kill",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 26,
+     "verse_start": 1,
+     "chapter_end": 26,
+     "verse_end": 5,
+     "label": "Matthew 26:1-5"
+    },
+    {
+     "book": "Matthew",
+     "chapter_start": 26,
+     "verse_start": 14,
+     "chapter_end": 26,
+     "verse_end": 16,
+     "label": "Matthew 26:14-16"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 14,
+     "verse_start": 1,
+     "chapter_end": 14,
+     "verse_end": 2,
+     "label": "Mark 14:1-2"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 14,
+     "verse_start": 10,
+     "chapter_end": 14,
+     "verse_end": 11,
+     "label": "Mark 14:10-11"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 22,
+     "verse_start": 1,
+     "chapter_end": 22,
+     "verse_end": 6,
+     "label": "Luke 22:1-6"
+    }
+   ]
+  },
+  {
+   "order": 122,
+   "title": "Jesus is anointed a second time",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 26,
+     "verse_start": 6,
+     "chapter_end": 26,
+     "verse_end": 13,
+     "label": "Matthew 26:6-13"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 14,
+     "verse_start": 3,
+     "chapter_end": 14,
+     "verse_end": 9,
+     "label": "Mark 14:3-9"
+    }
+   ]
+  },
+  {
+   "order": 123,
+   "title": "Jesus celebrates the Last Supper",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 26,
+     "verse_start": 17,
+     "chapter_end": 26,
+     "verse_end": 35,
+     "label": "Matthew 26:17-35"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 14,
+     "verse_start": 12,
+     "chapter_end": 14,
+     "verse_end": 31,
+     "label": "Mark 14:12-31"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 22,
+     "verse_start": 7,
+     "chapter_end": 22,
+     "verse_end": 38,
+     "label": "Luke 22:7-38"
+    },
+    {
+     "book": "John",
+     "chapter_start": 13,
+     "verse_start": 1,
+     "chapter_end": 17,
+     "verse_end": 26,
+     "label": "John 13:1-17:26"
+    }
+   ]
+  },
+  {
+   "order": 124,
+   "title": "Jesus is arrested in the Garden of Gethsemene",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 26,
+     "verse_start": 36,
+     "chapter_end": 26,
+     "verse_end": 56,
+     "label": "Matthew 26:36-56"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 14,
+     "verse_start": 32,
+     "chapter_end": 14,
+     "verse_end": 52,
+     "label": "Mark 14:32-52"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 22,
+     "verse_start": 39,
+     "chapter_end": 22,
+     "verse_end": 53,
+     "label": "Luke 22:39-53"
+    },
+    {
+     "book": "John",
+     "chapter_start": 18,
+     "verse_start": 1,
+     "chapter_end": 18,
+     "verse_end": 12,
+     "label": "John 18:1-12"
+    }
+   ]
+  },
+  {
+   "order": 125,
+   "title": "Jesus' Jewish trial before Caiaphas",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 26,
+     "verse_start": 57,
+     "chapter_end": 27,
+     "verse_end": 2,
+     "label": "Matthew 26:57-27:2"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 14,
+     "verse_start": 53,
+     "chapter_end": 15,
+     "verse_end": 1,
+     "label": "Mark 14:53-15:1"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 22,
+     "verse_start": 54,
+     "chapter_end": 22,
+     "verse_end": 71,
+     "label": "Luke 22:54-71"
+    },
+    {
+     "book": "John",
+     "chapter_start": 18,
+     "verse_start": 13,
+     "chapter_end": 18,
+     "verse_end": 26,
+     "label": "John 18:13-26"
+    }
+   ]
+  },
+  {
+   "order": 126,
+   "title": "Judas commits suicide",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 27,
+     "verse_start": 3,
+     "chapter_end": 27,
+     "verse_end": 10,
+     "label": "Matthew 27:3-10"
+    }
+   ]
+  },
+  {
+   "order": 127,
+   "title": "Jesus' Roman trial before Pilate",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 27,
+     "verse_start": 11,
+     "chapter_end": 27,
+     "verse_end": 31,
+     "label": "Matthew 27:11-31"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 15,
+     "verse_start": 1,
+     "chapter_end": 15,
+     "verse_end": 20,
+     "label": "Mark 15:1-20"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 23,
+     "verse_start": 1,
+     "chapter_end": 23,
+     "verse_end": 25,
+     "label": "Luke 23:1-25"
+    },
+    {
+     "book": "John",
+     "chapter_start": 18,
+     "verse_start": 28,
+     "chapter_end": 19,
+     "verse_end": 18,
+     "label": "John 18:28-19:18"
+    }
+   ]
+  },
+  {
+   "order": 128,
+   "title": "Jesus is executed by crucifixion",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 27,
+     "verse_start": 31,
+     "chapter_end": 27,
+     "verse_end": 56,
+     "label": "Matthew 27:31-56"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 15,
+     "verse_start": 21,
+     "chapter_end": 15,
+     "verse_end": 41,
+     "label": "Mark 15:21-41"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 23,
+     "verse_start": 26,
+     "chapter_end": 23,
+     "verse_end": 49,
+     "label": "Luke 23:26-49"
+    },
+    {
+     "book": "John",
+     "chapter_start": 19,
+     "verse_start": 18,
+     "chapter_end": 19,
+     "verse_end": 30,
+     "label": "John 19:18-30"
+    }
+   ]
+  },
+  {
+   "order": 129,
+   "title": "Jesus is buried",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 27,
+     "verse_start": 57,
+     "chapter_end": 27,
+     "verse_end": 66,
+     "label": "Matthew 27:57-66"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 15,
+     "verse_start": 42,
+     "chapter_end": 15,
+     "verse_end": 47,
+     "label": "Mark 15:42-47"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 23,
+     "verse_start": 50,
+     "chapter_end": 23,
+     "verse_end": 56,
+     "label": "Luke 23:50-56"
+    },
+    {
+     "book": "John",
+     "chapter_start": 19,
+     "verse_start": 31,
+     "chapter_end": 19,
+     "verse_end": 42,
+     "label": "John 19:31-42"
+    }
+   ]
+  },
+  {
+   "order": 130,
+   "title": "Various women, Peter, John at the empty tomb and Jesus appears",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 28,
+     "verse_start": 1,
+     "chapter_end": 28,
+     "verse_end": 15,
+     "label": "Matthew 28:1-15"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 16,
+     "verse_start": 9,
+     "chapter_end": 16,
+     "verse_end": 11,
+     "label": "Mark 16:9-11"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 24,
+     "verse_start": 1,
+     "chapter_end": 24,
+     "verse_end": 12,
+     "label": "Luke 24:1-12"
+    },
+    {
+     "book": "John",
+     "chapter_start": 20,
+     "verse_start": 1,
+     "chapter_end": 20,
+     "verse_end": 18,
+     "label": "John 20:1-18"
+    }
+   ]
+  },
+  {
+   "order": 131,
+   "title": "Jesus appears to 2 disciples on the road to Emmaus",
+   "readings": [
+    {
+     "book": "Mark",
+     "chapter_start": 16,
+     "verse_start": 12,
+     "chapter_end": 16,
+     "verse_end": 13,
+     "label": "Mark 16:12-13"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 24,
+     "verse_start": 13,
+     "chapter_end": 24,
+     "verse_end": 35,
+     "label": "Luke 24:13-35"
+    }
+   ]
+  },
+  {
+   "order": 132,
+   "title": "Jesus appears to the disciples in Jerusalem absent Thomas",
+   "readings": [
+    {
+     "book": "Mark",
+     "chapter_start": 16,
+     "verse_start": 14,
+     "chapter_end": 16,
+     "verse_end": 18,
+     "label": "Mark 16:14-18"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 24,
+     "verse_start": 33,
+     "chapter_end": 24,
+     "verse_end": 49,
+     "label": "Luke 24:33-49"
+    },
+    {
+     "book": "John",
+     "chapter_start": 20,
+     "verse_start": 19,
+     "chapter_end": 20,
+     "verse_end": 23,
+     "label": "John 20:19-23"
+    }
+   ]
+  },
+  {
+   "order": 133,
+   "title": "Jesus appears to the disciples in Jerusalem with Thomas",
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 20,
+     "verse_start": 24,
+     "chapter_end": 20,
+     "verse_end": 30,
+     "label": "John 20:24-30"
+    }
+   ]
+  },
+  {
+   "order": 134,
+   "title": "Jesus appears to the disciples in Galilee",
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 21,
+     "verse_start": 1,
+     "chapter_end": 21,
+     "verse_end": 25,
+     "label": "John 21:1-25"
+    }
+   ]
+  },
+  {
+   "order": 135,
+   "title": "Jesus appears and delivers the great commission",
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 28,
+     "verse_start": 16,
+     "chapter_end": 28,
+     "verse_end": 20,
+     "label": "Matthew 28:16-20"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 16,
+     "verse_start": 15,
+     "chapter_end": 16,
+     "verse_end": 18,
+     "label": "Mark 16:15-18"
+    }
+   ]
+  },
+  {
+   "order": 136,
+   "title": "Jesus appears and ascends to heaven",
+   "readings": [
+    {
+     "book": "Mark",
+     "chapter_start": 16,
+     "verse_start": 19,
+     "chapter_end": 16,
+     "verse_end": 20,
+     "label": "Mark 16:19-20"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 24,
+     "verse_start": 50,
+     "chapter_end": 24,
+     "verse_end": 53,
+     "label": "Luke 24:50-53"
+    },
+    {
+     "book": "Acts",
+     "chapter_start": 1,
+     "verse_start": 1,
+     "chapter_end": 1,
+     "verse_end": 12,
+     "label": "Acts 1:1-12"
+    }
+   ]
+  }
+ ]
+}

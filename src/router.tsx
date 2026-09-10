@@ -13,6 +13,7 @@ import { SermonNotesView } from "./features/sermons/SermonNotesView";
 import { PrayerJournalView } from "./features/prayer/PrayerJournalView";
 import { MemoryView } from "./features/memory/MemoryView";
 import { ReadingPlansView } from "./features/plans/ReadingPlansView";
+import { HarmonyView } from "./features/harmony/HarmonyView";
 
 export const router = createHashRouter([
   {
@@ -28,6 +29,7 @@ export const router = createHashRouter([
       { path: "prayer", element: <PrayerJournalView /> },
       { path: "memory", element: <MemoryView /> },
       { path: "plans", element: <ReadingPlansView /> },
+      { path: "harmony", element: <HarmonyView /> },
       { path: "library", element: <LibrarySettingsView /> },
       { path: "lexicon", element: <LexiconView /> },
       { path: "lexicon/:id", element: <LexiconView /> },

@@ -2,6 +2,7 @@ pub mod bookmarks;
 pub mod commentary;
 pub mod concordance;
 pub mod crossrefs;
+pub mod harmony;
 pub mod highlights;
 pub mod notes;
 pub mod prayer_journal;

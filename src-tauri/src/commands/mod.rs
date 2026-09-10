@@ -1,4 +1,5 @@
 pub mod annotations;
+pub mod harmony;
 pub mod library;
 pub mod prayer_journal;
 pub mod reading;

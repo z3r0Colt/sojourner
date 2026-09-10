@@ -2,6 +2,7 @@ pub mod confessions;
 pub mod crossrefs;
 pub mod dictionary;
 pub mod footnotes;
+pub mod harmony;
 pub mod interlinear;
 pub mod morphology;
 pub mod psalter;
@@ -27,6 +28,7 @@ pub struct ReferenceImportReport {
     pub metrical_psalm_verses: usize,
     pub treasury_entries: usize,
     pub reading_plan_readings: usize,
+    pub harmony_readings: usize,
 }
 
 fn table_count(conn: &Connection, table: &str) -> i64 {
@@ -150,6 +152,13 @@ pub fn import_all(conn: &mut Connection, reference_dir: &Path) -> anyhow::Result
         0
     };
 
+    let harmony_readings = if table_count(conn, "harmony_sections") == 0 {
+        harmony::import(conn, &reference_dir.join("harmony"))
+            .map_err(|e| anyhow::anyhow!("gospel harmony import failed: {e:#}"))?
+    } else {
+        0
+    };
+
     Ok(ReferenceImportReport {
         strongs_entries,
         dictionary_entries,
@@ -163,5 +172,6 @@ pub fn import_all(conn: &mut Connection, reference_dir: &Path) -> anyhow::Result
         metrical_psalm_verses,
         treasury_entries,
         reading_plan_readings,
+        harmony_readings,
     })
 }

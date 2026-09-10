@@ -23,6 +23,7 @@ import type {
   ReadingPlan,
   ReadingPlanDay,
   ReadingPlanProgress,
+  HarmonySection,
   DictionaryEntry,
   DictionaryEntrySummary,
   InterlinearWord,
@@ -317,4 +318,6 @@ export const api = {
     invoke<ReadingPlanProgress>("mark_reading_plan_day", { planCode, dayNumber }),
   unmarkReadingPlanDay: (planCode: string, dayNumber: number) =>
     invoke<ReadingPlanProgress>("unmark_reading_plan_day", { planCode, dayNumber }),
+
+  listHarmonySections: () => invoke<HarmonySection[]>("list_harmony_sections"),
 };
