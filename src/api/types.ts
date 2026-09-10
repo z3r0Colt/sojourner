@@ -195,6 +195,8 @@ export interface PrayerListPerson {
   updated_at: string;
 }
 
+export type MemoryMode = "first-letter" | "blank-word" | "type-it";
+
 export interface MemoryVerse {
   id: number;
   book_id: number;
@@ -202,7 +204,7 @@ export interface MemoryVerse {
   verse_start: number;
   verse_end: number;
   translation_id: number | null;
-  mode: "first-letter" | "blank-word";
+  mode: MemoryMode;
   ease_factor: number;
   interval_days: number;
   repetitions: number;

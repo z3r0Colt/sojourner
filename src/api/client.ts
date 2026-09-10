@@ -22,6 +22,7 @@ import type {
   PrayerEntryMode,
   PrayerListPerson,
   MemoryVerse,
+  MemoryMode,
   ReadingPlan,
   ReadingPlanDay,
   ReadingPlanProgress,
@@ -350,9 +351,9 @@ export const api = {
     verseStart: number,
     verseEnd: number,
     translationId: number | undefined,
-    mode: "first-letter" | "blank-word",
+    mode: MemoryMode,
   ) => invoke<MemoryVerse>("create_memory_verse", { bookId, chapter, verseStart, verseEnd, translationId: translationId ?? null, mode }),
-  setMemoryVerseMode: (id: number, mode: "first-letter" | "blank-word") =>
+  setMemoryVerseMode: (id: number, mode: MemoryMode) =>
     invoke<void>("set_memory_verse_mode", { id, mode }),
   deleteMemoryVerse: (id: number) => invoke<void>("delete_memory_verse", { id }),
   reviewMemoryVerse: (id: number, quality: number) => invoke<MemoryVerse>("review_memory_verse", { id, quality }),
