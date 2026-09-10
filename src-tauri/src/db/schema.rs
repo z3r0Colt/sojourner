@@ -794,5 +794,65 @@ CREATE TABLE search_history (
 CREATE INDEX idx_search_history_recent ON search_history(saved, created_at);
 "#;
 
-pub const USER_MIGRATIONS: &[&str] =
-    &[USER_MIGRATION_0001, USER_MIGRATION_0002, USER_MIGRATION_0003, USER_MIGRATION_0004];
+pub const USER_MIGRATION_0005: &str = r#"
+-- Prayer journal gets a second entry style: free-form writing alongside the
+-- original four-part ACTS structure. `mode` records which the entry was
+-- written as (so the editor knows which fields to show); `free_text` holds
+-- the free-write body. The FTS5 table is external-content over the same
+-- row, so adding a column to what it indexes means recreating the virtual
+-- table (fts5 columns are fixed at creation) and rebuilding its index from
+-- the now-five source columns, then reinstalling the sync triggers.
+ALTER TABLE prayer_entries ADD COLUMN mode TEXT NOT NULL DEFAULT 'acts';
+ALTER TABLE prayer_entries ADD COLUMN free_text TEXT;
+
+DROP TRIGGER prayer_entries_ai;
+DROP TRIGGER prayer_entries_au;
+DROP TRIGGER prayer_entries_ad;
+DROP TABLE prayer_entries_fts;
+
+CREATE VIRTUAL TABLE prayer_entries_fts USING fts5(
+  adoration, confession, thanksgiving, supplication, free_text,
+  content='prayer_entries', content_rowid='id'
+);
+INSERT INTO prayer_entries_fts(rowid, adoration, confession, thanksgiving, supplication, free_text)
+  SELECT id, adoration, confession, thanksgiving, supplication, free_text FROM prayer_entries;
+
+CREATE TRIGGER prayer_entries_ai AFTER INSERT ON prayer_entries BEGIN
+  INSERT INTO prayer_entries_fts(rowid, adoration, confession, thanksgiving, supplication, free_text)
+  VALUES (new.id, new.adoration, new.confession, new.thanksgiving, new.supplication, new.free_text);
+END;
+CREATE TRIGGER prayer_entries_au AFTER UPDATE ON prayer_entries BEGIN
+  INSERT INTO prayer_entries_fts(prayer_entries_fts, rowid, adoration, confession, thanksgiving, supplication, free_text)
+  VALUES('delete', old.id, old.adoration, old.confession, old.thanksgiving, old.supplication, old.free_text);
+  INSERT INTO prayer_entries_fts(rowid, adoration, confession, thanksgiving, supplication, free_text)
+  VALUES (new.id, new.adoration, new.confession, new.thanksgiving, new.supplication, new.free_text);
+END;
+CREATE TRIGGER prayer_entries_ad AFTER DELETE ON prayer_entries BEGIN
+  INSERT INTO prayer_entries_fts(prayer_entries_fts, rowid, adoration, confession, thanksgiving, supplication, free_text)
+  VALUES('delete', old.id, old.adoration, old.confession, old.thanksgiving, old.supplication, old.free_text);
+END;
+
+-- Prayer list: ongoing people/requests to pray for, separate from the dated
+-- journal entries above. `active = 0` marks a request archived (e.g. an
+-- answered prayer) without deleting its history; `last_prayed_at` lets the
+-- list be sorted by what hasn't been prayed for in a while.
+CREATE TABLE prayer_list_people (
+  id              INTEGER PRIMARY KEY,
+  name            TEXT NOT NULL,
+  category        TEXT,
+  notes           TEXT,
+  active          INTEGER NOT NULL DEFAULT 1,
+  last_prayed_at  TEXT,
+  created_at      TEXT NOT NULL,
+  updated_at      TEXT NOT NULL
+);
+CREATE INDEX idx_prayer_list_people_active ON prayer_list_people(active);
+"#;
+
+pub const USER_MIGRATIONS: &[&str] = &[
+    USER_MIGRATION_0001,
+    USER_MIGRATION_0002,
+    USER_MIGRATION_0003,
+    USER_MIGRATION_0004,
+    USER_MIGRATION_0005,
+];

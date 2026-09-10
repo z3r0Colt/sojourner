@@ -4,6 +4,7 @@ pub mod diagnostics;
 pub mod harmony;
 pub mod library;
 pub mod prayer_journal;
+pub mod prayer_list;
 pub mod reading;
 pub mod reading_plans;
 pub mod red_letter;

@@ -19,6 +19,8 @@ import type {
   SermonNote,
   SermonNotePassageLink,
   PrayerEntry,
+  PrayerEntryMode,
+  PrayerListPerson,
   MemoryVerse,
   ReadingPlan,
   ReadingPlanDay,
@@ -265,10 +267,12 @@ export const api = {
   listPrayerEntries: () => invoke<PrayerEntry[]>("list_prayer_entries"),
   createPrayerEntry: (input: {
     entryDate: string;
+    mode: PrayerEntryMode;
     adoration?: string;
     confession?: string;
     thanksgiving?: string;
     supplication?: string;
+    freeText?: string;
     bookId?: number;
     chapter?: number;
     verseStart?: number;
@@ -276,10 +280,12 @@ export const api = {
   }) =>
     invoke<PrayerEntry>("create_prayer_entry", {
       entryDate: input.entryDate,
+      mode: input.mode,
       adoration: input.adoration ?? null,
       confession: input.confession ?? null,
       thanksgiving: input.thanksgiving ?? null,
       supplication: input.supplication ?? null,
+      freeText: input.freeText ?? null,
       bookId: input.bookId ?? null,
       chapter: input.chapter ?? null,
       verseStart: input.verseStart ?? null,
@@ -289,10 +295,12 @@ export const api = {
     id: number,
     input: {
       entryDate: string;
+      mode: PrayerEntryMode;
       adoration?: string;
       confession?: string;
       thanksgiving?: string;
       supplication?: string;
+      freeText?: string;
       bookId?: number;
       chapter?: number;
       verseStart?: number;
@@ -302,10 +310,12 @@ export const api = {
     invoke<void>("update_prayer_entry", {
       id,
       entryDate: input.entryDate,
+      mode: input.mode,
       adoration: input.adoration ?? null,
       confession: input.confession ?? null,
       thanksgiving: input.thanksgiving ?? null,
       supplication: input.supplication ?? null,
+      freeText: input.freeText ?? null,
       bookId: input.bookId ?? null,
       chapter: input.chapter ?? null,
       verseStart: input.verseStart ?? null,
@@ -313,6 +323,24 @@ export const api = {
     }),
   deletePrayerEntry: (id: number) => invoke<void>("delete_prayer_entry", { id }),
   searchPrayerEntries: (query: string, limit = 50) => invoke<PrayerEntry[]>("search_prayer_entries", { query, limit }),
+
+  listPrayerListPeople: () => invoke<PrayerListPerson[]>("list_prayer_list_people"),
+  createPrayerListPerson: (input: { name: string; category?: string; notes?: string }) =>
+    invoke<PrayerListPerson>("create_prayer_list_person", {
+      name: input.name,
+      category: input.category ?? null,
+      notes: input.notes ?? null,
+    }),
+  updatePrayerListPerson: (id: number, input: { name: string; category?: string; notes?: string }) =>
+    invoke<void>("update_prayer_list_person", {
+      id,
+      name: input.name,
+      category: input.category ?? null,
+      notes: input.notes ?? null,
+    }),
+  setPrayerListPersonActive: (id: number, active: boolean) => invoke<void>("set_prayer_list_person_active", { id, active }),
+  markPrayerListPersonPrayed: (id: number) => invoke<void>("mark_prayer_list_person_prayed", { id }),
+  deletePrayerListPerson: (id: number) => invoke<void>("delete_prayer_list_person", { id }),
 
   listMemoryVerses: () => invoke<MemoryVerse[]>("list_memory_verses"),
   listDueMemoryVerses: () => invoke<MemoryVerse[]>("list_due_memory_verses"),

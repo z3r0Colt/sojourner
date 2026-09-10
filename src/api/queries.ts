@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { api } from "./client";
-import type { Verse } from "./types";
+import type { Verse, PrayerEntryMode } from "./types";
 
 export function useBooks() {
   return useQuery({ queryKey: ["books"], queryFn: api.listBooks, staleTime: Infinity });
@@ -454,10 +454,12 @@ export function useUpdatePrayerEntry() {
     mutationFn: (input: {
       id: number;
       entryDate: string;
+      mode: PrayerEntryMode;
       adoration?: string;
       confession?: string;
       thanksgiving?: string;
       supplication?: string;
+      freeText?: string;
       bookId?: number;
       chapter?: number;
       verseStart?: number;
@@ -472,6 +474,51 @@ export function useDeletePrayerEntry() {
   return useMutation({
     mutationFn: api.deletePrayerEntry,
     onSuccess: () => qc.invalidateQueries({ queryKey: ["prayerEntries"] }),
+  });
+}
+
+export function usePrayerListPeople() {
+  return useQuery({ queryKey: ["prayerListPeople"], queryFn: api.listPrayerListPeople });
+}
+
+export function useCreatePrayerListPerson() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: api.createPrayerListPerson,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["prayerListPeople"] }),
+  });
+}
+
+export function useUpdatePrayerListPerson() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { id: number; name: string; category?: string; notes?: string }) =>
+      api.updatePrayerListPerson(input.id, input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["prayerListPeople"] }),
+  });
+}
+
+export function useSetPrayerListPersonActive() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { id: number; active: boolean }) => api.setPrayerListPersonActive(input.id, input.active),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["prayerListPeople"] }),
+  });
+}
+
+export function useMarkPrayerListPersonPrayed() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: api.markPrayerListPersonPrayed,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["prayerListPeople"] }),
+  });
+}
+
+export function useDeletePrayerListPerson() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: api.deletePrayerListPerson,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["prayerListPeople"] }),
   });
 }
 
