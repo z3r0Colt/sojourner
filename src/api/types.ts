@@ -226,6 +226,22 @@ export interface ReadingPlanProgress {
   created_at: string;
 }
 
+export interface HarmonyReading {
+  book_id: number;
+  chapter_start: number;
+  verse_start: number | null;
+  chapter_end: number;
+  verse_end: number | null;
+  label: string;
+}
+
+export interface HarmonySection {
+  id: number;
+  sort_order: number;
+  title: string;
+  readings: HarmonyReading[];
+}
+
 export interface ConcordanceEntry {
   book_id: number;
   chapter: number;

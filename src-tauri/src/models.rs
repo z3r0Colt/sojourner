@@ -418,6 +418,24 @@ pub struct ReadingPlanProgress {
     pub created_at: String,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HarmonyReading {
+    pub book_id: i64,
+    pub chapter_start: i64,
+    pub verse_start: Option<i64>,
+    pub chapter_end: i64,
+    pub verse_end: Option<i64>,
+    pub label: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HarmonySection {
+    pub id: i64,
+    pub sort_order: i64,
+    pub title: String,
+    pub readings: Vec<HarmonyReading>,
+}
+
 #[derive(Debug, Clone, Serialize)]
 pub struct MorphologyWord {
     pub id: i64,

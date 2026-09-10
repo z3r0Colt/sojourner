@@ -580,4 +580,8 @@ export function useUnmarkReadingPlanDay() {
   });
 }
 
+export function useHarmonySections() {
+  return useQuery({ queryKey: ["harmonySections"], queryFn: api.listHarmonySections, staleTime: Infinity });
+}
+
 export type { Verse };

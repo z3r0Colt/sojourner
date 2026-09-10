@@ -427,7 +427,35 @@ CREATE TABLE reading_plan_readings (
 CREATE INDEX idx_reading_plan_readings_day ON reading_plan_readings(plan_id, day_number, sort_order);
 "#;
 
-pub const CONTENT_MIGRATIONS: &[&str] = &[CONTENT_MIGRATION_0001, CONTENT_MIGRATION_0002];
+// A harmony of the Gospels: a fixed, chronologically-ordered sequence of
+// events in the life of Christ, each paired with where it's told across
+// Matthew/Mark/Luke/John (and, for the ascension, Acts 1). Same
+// chapter/verse-range shape as reading_plan_readings, for the same reason --
+// a reading can span chapters (John 2:23-3:21) or, rarely, be one of several
+// disjoint verse ranges within a single event (John 1:6-14 and 1:19-34 are
+// two separate `harmony_readings` rows under one section).
+pub const CONTENT_MIGRATION_0003: &str = r#"
+CREATE TABLE harmony_sections (
+  id          INTEGER PRIMARY KEY,
+  sort_order  INTEGER NOT NULL,
+  title       TEXT NOT NULL
+);
+
+CREATE TABLE harmony_readings (
+  id             INTEGER PRIMARY KEY,
+  section_id     INTEGER NOT NULL REFERENCES harmony_sections(id) ON DELETE CASCADE,
+  sort_order     INTEGER NOT NULL,
+  book_id        INTEGER NOT NULL REFERENCES books(id),
+  chapter_start  INTEGER NOT NULL,
+  verse_start    INTEGER,
+  chapter_end    INTEGER NOT NULL,
+  verse_end      INTEGER,
+  label          TEXT NOT NULL
+);
+CREATE INDEX idx_harmony_readings_section ON harmony_readings(section_id, sort_order);
+"#;
+
+pub const CONTENT_MIGRATIONS: &[&str] = &[CONTENT_MIGRATION_0001, CONTENT_MIGRATION_0002, CONTENT_MIGRATION_0003];
 
 pub const USER_MIGRATION_0001: &str = r#"
 CREATE TABLE highlights (
