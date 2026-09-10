@@ -1,13 +1,16 @@
 import { Link } from "react-router-dom";
 import { useStrongsEntry } from "../../api/queries";
+import { useViewportClampedPosition } from "../../lib/useViewportClampedPosition";
 
 export function StrongsPopup({ id, x, y, onClose }: { id: string; x: number; y: number; onClose: () => void }) {
   const { data: entry, isLoading } = useStrongsEntry(id);
+  const { ref, style } = useViewportClampedPosition<HTMLDivElement>(x, y);
 
   return (
     <div
-      className="fixed z-40 w-80 rounded-lg border border-gray-200 bg-white p-3 shadow-xl dark:border-gray-700 dark:bg-gray-900"
-      style={{ left: Math.min(x, window.innerWidth - 340), top: y }}
+      ref={ref}
+      className="z-40 w-80 rounded-lg border border-gray-200 bg-white p-3 shadow-xl dark:border-gray-700 dark:bg-gray-900"
+      style={style}
       onMouseDown={(e) => e.stopPropagation()}
     >
       <div className="mb-1 flex items-start justify-between">
