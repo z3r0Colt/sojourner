@@ -63,7 +63,10 @@ export function InterlinearView({ book, chapter }: { book: Book; chapter: number
             ))}
           </div>
           {showMorphology && morphology?.[vn] && (
-            <div className="mt-1 flex flex-wrap items-end gap-x-3 gap-y-2 border-l-2 border-gray-200 pl-3 dark:border-gray-700">
+            <div
+              dir={book.testament === "OT" ? "rtl" : "ltr"}
+              className="mt-1 flex flex-wrap items-end gap-x-3 gap-y-2 border-l-2 border-gray-200 pl-3 dark:border-gray-700"
+            >
               {morphology[vn].map((w) => (
                 <button
                   key={w.id}
