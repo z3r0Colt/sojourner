@@ -11,13 +11,16 @@ pub fn list_prayer_entries(db: State<DbState>) -> AppResult<Vec<PrayerEntry>> {
 }
 
 #[tauri::command]
+#[allow(clippy::too_many_arguments)]
 pub fn create_prayer_entry(
     db: State<DbState>,
     entry_date: String,
+    mode: String,
     adoration: Option<String>,
     confession: Option<String>,
     thanksgiving: Option<String>,
     supplication: Option<String>,
+    free_text: Option<String>,
     book_id: Option<i64>,
     chapter: Option<i64>,
     verse_start: Option<i64>,
@@ -25,19 +28,23 @@ pub fn create_prayer_entry(
 ) -> AppResult<PrayerEntry> {
     let conn = db.0.lock().unwrap();
     Ok(queries::create(
-        &conn, entry_date, adoration, confession, thanksgiving, supplication, book_id, chapter, verse_start, verse_end,
+        &conn, entry_date, mode, adoration, confession, thanksgiving, supplication, free_text, book_id, chapter,
+        verse_start, verse_end,
     )?)
 }
 
 #[tauri::command]
+#[allow(clippy::too_many_arguments)]
 pub fn update_prayer_entry(
     db: State<DbState>,
     id: i64,
     entry_date: String,
+    mode: String,
     adoration: Option<String>,
     confession: Option<String>,
     thanksgiving: Option<String>,
     supplication: Option<String>,
+    free_text: Option<String>,
     book_id: Option<i64>,
     chapter: Option<i64>,
     verse_start: Option<i64>,
@@ -45,7 +52,8 @@ pub fn update_prayer_entry(
 ) -> AppResult<()> {
     let conn = db.0.lock().unwrap();
     Ok(queries::update(
-        &conn, id, entry_date, adoration, confession, thanksgiving, supplication, book_id, chapter, verse_start, verse_end,
+        &conn, id, entry_date, mode, adoration, confession, thanksgiving, supplication, free_text, book_id, chapter,
+        verse_start, verse_end,
     )?)
 }
 

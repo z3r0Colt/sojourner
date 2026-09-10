@@ -356,14 +356,28 @@ pub struct SermonNotePassageLink {
 pub struct PrayerEntry {
     pub id: i64,
     pub entry_date: String,
+    pub mode: String,
     pub adoration: Option<String>,
     pub confession: Option<String>,
     pub thanksgiving: Option<String>,
     pub supplication: Option<String>,
+    pub free_text: Option<String>,
     pub book_id: Option<i64>,
     pub chapter: Option<i64>,
     pub verse_start: Option<i64>,
     pub verse_end: Option<i64>,
+    pub created_at: String,
+    pub updated_at: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PrayerListPerson {
+    pub id: i64,
+    pub name: String,
+    pub category: Option<String>,
+    pub notes: Option<String>,
+    pub active: bool,
+    pub last_prayed_at: Option<String>,
     pub created_at: String,
     pub updated_at: String,
 }

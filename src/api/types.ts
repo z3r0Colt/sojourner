@@ -165,17 +165,32 @@ export interface SermonNote {
   passages: SermonNotePassageLink[];
 }
 
+export type PrayerEntryMode = "acts" | "free";
+
 export interface PrayerEntry {
   id: number;
   entry_date: string;
+  mode: PrayerEntryMode;
   adoration: string | null;
   confession: string | null;
   thanksgiving: string | null;
   supplication: string | null;
+  free_text: string | null;
   book_id: number | null;
   chapter: number | null;
   verse_start: number | null;
   verse_end: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PrayerListPerson {
+  id: number;
+  name: string;
+  category: string | null;
+  notes: string | null;
+  active: boolean;
+  last_prayed_at: string | null;
   created_at: string;
   updated_at: string;
 }

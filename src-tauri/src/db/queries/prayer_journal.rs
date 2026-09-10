@@ -1,23 +1,24 @@
 use crate::models::PrayerEntry;
 use rusqlite::{params, Connection};
 
-const SELECT_COLS: &str =
-    "id, entry_date, adoration, confession, thanksgiving, supplication, book_id, chapter, verse_start, verse_end, created_at, updated_at";
+const SELECT_COLS: &str = "id, entry_date, mode, adoration, confession, thanksgiving, supplication, free_text, book_id, chapter, verse_start, verse_end, created_at, updated_at";
 
 fn map_row(r: &rusqlite::Row) -> rusqlite::Result<PrayerEntry> {
     Ok(PrayerEntry {
         id: r.get(0)?,
         entry_date: r.get(1)?,
-        adoration: r.get(2)?,
-        confession: r.get(3)?,
-        thanksgiving: r.get(4)?,
-        supplication: r.get(5)?,
-        book_id: r.get(6)?,
-        chapter: r.get(7)?,
-        verse_start: r.get(8)?,
-        verse_end: r.get(9)?,
-        created_at: r.get(10)?,
-        updated_at: r.get(11)?,
+        mode: r.get(2)?,
+        adoration: r.get(3)?,
+        confession: r.get(4)?,
+        thanksgiving: r.get(5)?,
+        supplication: r.get(6)?,
+        free_text: r.get(7)?,
+        book_id: r.get(8)?,
+        chapter: r.get(9)?,
+        verse_start: r.get(10)?,
+        verse_end: r.get(11)?,
+        created_at: r.get(12)?,
+        updated_at: r.get(13)?,
     })
 }
 
@@ -31,10 +32,12 @@ pub fn list_all(conn: &Connection) -> anyhow::Result<Vec<PrayerEntry>> {
 pub fn create(
     conn: &Connection,
     entry_date: String,
+    mode: String,
     adoration: Option<String>,
     confession: Option<String>,
     thanksgiving: Option<String>,
     supplication: Option<String>,
+    free_text: Option<String>,
     book_id: Option<i64>,
     chapter: Option<i64>,
     verse_start: Option<i64>,
@@ -42,9 +45,9 @@ pub fn create(
 ) -> anyhow::Result<PrayerEntry> {
     let now = chrono::Utc::now().to_rfc3339();
     conn.execute(
-        "INSERT INTO prayer_entries (entry_date, adoration, confession, thanksgiving, supplication, book_id, chapter, verse_start, verse_end, created_at, updated_at)
-         VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?10)",
-        params![entry_date, adoration, confession, thanksgiving, supplication, book_id, chapter, verse_start, verse_end, now],
+        "INSERT INTO prayer_entries (entry_date, mode, adoration, confession, thanksgiving, supplication, free_text, book_id, chapter, verse_start, verse_end, created_at, updated_at)
+         VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?12)",
+        params![entry_date, mode, adoration, confession, thanksgiving, supplication, free_text, book_id, chapter, verse_start, verse_end, now],
     )?;
     let id = conn.last_insert_rowid();
     Ok(conn.query_row(&format!("SELECT {SELECT_COLS} FROM prayer_entries WHERE id = ?1"), params![id], map_row)?)
@@ -55,10 +58,12 @@ pub fn update(
     conn: &Connection,
     id: i64,
     entry_date: String,
+    mode: String,
     adoration: Option<String>,
     confession: Option<String>,
     thanksgiving: Option<String>,
     supplication: Option<String>,
+    free_text: Option<String>,
     book_id: Option<i64>,
     chapter: Option<i64>,
     verse_start: Option<i64>,
@@ -66,9 +71,9 @@ pub fn update(
 ) -> anyhow::Result<()> {
     let now = chrono::Utc::now().to_rfc3339();
     conn.execute(
-        "UPDATE prayer_entries SET entry_date=?1, adoration=?2, confession=?3, thanksgiving=?4, supplication=?5,
-         book_id=?6, chapter=?7, verse_start=?8, verse_end=?9, updated_at=?10 WHERE id=?11",
-        params![entry_date, adoration, confession, thanksgiving, supplication, book_id, chapter, verse_start, verse_end, now, id],
+        "UPDATE prayer_entries SET entry_date=?1, mode=?2, adoration=?3, confession=?4, thanksgiving=?5,
+         supplication=?6, free_text=?7, book_id=?8, chapter=?9, verse_start=?10, verse_end=?11, updated_at=?12 WHERE id=?13",
+        params![entry_date, mode, adoration, confession, thanksgiving, supplication, free_text, book_id, chapter, verse_start, verse_end, now, id],
     )?;
     Ok(())
 }

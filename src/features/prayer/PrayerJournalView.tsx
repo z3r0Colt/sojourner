@@ -43,9 +43,8 @@ export function PrayerJournalView() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-6 py-6">
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Prayer Journal</h1>
+    <div>
+      <div className="mb-4 flex items-center justify-end">
         <button
           onClick={() => setEditing("new")}
           className="rounded bg-blue-600 px-3 py-1.5 text-sm text-white hover:bg-blue-700"
@@ -80,12 +79,16 @@ export function PrayerJournalView() {
               )}
             </div>
             <div className="space-y-1.5">
-              {SECTIONS.filter((s) => e[s.key]).map((s) => (
-                <div key={s.key}>
-                  <div className="text-xs font-semibold uppercase tracking-wide text-gray-400">{s.label}</div>
-                  <p className="whitespace-pre-wrap text-sm text-gray-700 dark:text-gray-300">{e[s.key]}</p>
-                </div>
-              ))}
+              {e.mode === "free" ? (
+                e.free_text && <p className="whitespace-pre-wrap text-sm text-gray-700 dark:text-gray-300">{e.free_text}</p>
+              ) : (
+                SECTIONS.filter((s) => e[s.key]).map((s) => (
+                  <div key={s.key}>
+                    <div className="text-xs font-semibold uppercase tracking-wide text-gray-400">{s.label}</div>
+                    <p className="whitespace-pre-wrap text-sm text-gray-700 dark:text-gray-300">{e[s.key]}</p>
+                  </div>
+                ))
+              )}
             </div>
             <div className="mt-2 flex gap-3 text-xs text-gray-400">
               <button onClick={() => setEditing(e)} className="hover:underline">
