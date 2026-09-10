@@ -3,8 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { open, confirm } from "@tauri-apps/plugin-dialog";
 import { api } from "../../api/client";
-import { useResources, useAddResource, useDeleteResource } from "../../api/queries";
-import type { ResourceKind } from "../../api/types";
+import { useResources, useAddResource, useDeleteResource, useBulkImportResources } from "../../api/queries";
+import type { ResourceKind, BulkImportOutcome } from "../../api/types";
 
 const KIND_ICON: Record<ResourceKind, string> = {
   epub: "📘",
@@ -18,10 +18,12 @@ export function ResourceLibraryView() {
   const { data: resources } = useResources();
   const addResource = useAddResource();
   const deleteResource = useDeleteResource();
+  const bulkImport = useBulkImportResources();
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [debounced, setDebounced] = useState("");
   const [busy, setBusy] = useState(false);
+  const [importReport, setImportReport] = useState<BulkImportOutcome | null>(null);
 
   useEffect(() => {
     const t = setTimeout(() => setDebounced(query), 250);
@@ -50,22 +52,67 @@ export function ResourceLibraryView() {
     }
   }
 
+  async function handleImportFolder() {
+    const folder = await open({ directory: true });
+    if (!folder || Array.isArray(folder)) return;
+    setBusy(true);
+    try {
+      setImportReport(await bulkImport.mutateAsync(folder));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="mx-auto max-w-3xl px-6 py-6">
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-xl font-semibold">Resources</h1>
-        <button
-          disabled={busy}
-          onClick={handleAdd}
-          className="rounded bg-blue-600 px-3 py-1.5 text-sm text-white hover:bg-blue-700 disabled:opacity-50"
-        >
-          Add Resource…
-        </button>
+        <div className="flex gap-2">
+          <button
+            disabled={busy}
+            onClick={handleImportFolder}
+            className="rounded border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+          >
+            Import Folder…
+          </button>
+          <button
+            disabled={busy}
+            onClick={handleAdd}
+            className="rounded bg-blue-600 px-3 py-1.5 text-sm text-white hover:bg-blue-700 disabled:opacity-50"
+          >
+            Add Resource…
+          </button>
+        </div>
       </div>
       <p className="mb-4 text-sm text-gray-500">
         Add EPUB, PDF, or MOBI books, or video/audio files. Attach them to specific passages or link them to each
-        other from the resource page. Text-bearing formats are deep-searched below.
+        other from the resource page. Text-bearing formats are deep-searched below. "Import Folder…" recursively adds
+        every recognized file under a folder at once -- author is taken from each file's immediate parent folder, so
+        an <code>Author/Book.epub</code> layout works well.
       </p>
+
+      {importReport && (
+        <div className="mb-4 rounded border border-gray-200 p-3 text-sm dark:border-gray-800">
+          <div className="mb-1 flex items-center justify-between">
+            <span className="font-medium">
+              Imported {importReport.imported.length}
+              {importReport.skipped_duplicate.length > 0 && `, skipped ${importReport.skipped_duplicate.length} already in the library`}
+              {importReport.skipped_unrecognized.length > 0 && `, ${importReport.skipped_unrecognized.length} unrecognized file(s)`}
+              {importReport.errors.length > 0 && `, ${importReport.errors.length} error(s)`}
+            </span>
+            <button onClick={() => setImportReport(null)} className="text-xs text-gray-400 hover:underline">
+              Dismiss
+            </button>
+          </div>
+          {importReport.errors.length > 0 && (
+            <ul className="mt-1 space-y-0.5 text-xs text-red-500">
+              {importReport.errors.map((e, i) => (
+                <li key={i}>{e}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
 
       <input
         value={query}

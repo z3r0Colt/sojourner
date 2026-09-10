@@ -365,6 +365,7 @@ export interface WestminsterCommentarySource {
   code: string;
   title: string;
   author: string | null;
+  document_code: string | null;
 }
 
 export interface WestminsterCommentaryEntry {
@@ -381,6 +382,14 @@ export interface WestminsterSearchResult {
   heading: string;
   prompt: string | null;
   snippet: string;
+}
+
+export interface BulkImportOutcome {
+  imported: string[];
+  skipped_duplicate: string[];
+  skipped_excluded: string[];
+  skipped_unrecognized: string[];
+  errors: string[];
 }
 
 export type ResourceKind = "epub" | "pdf" | "mobi" | "video" | "audio";

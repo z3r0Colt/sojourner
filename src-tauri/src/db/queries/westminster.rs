@@ -81,13 +81,15 @@ pub fn get_section(conn: &Connection, id: i64) -> anyhow::Result<Option<Westmins
 }
 
 pub fn list_commentary_sources(conn: &Connection) -> anyhow::Result<Vec<WestminsterCommentarySource>> {
-    let mut stmt = conn.prepare("SELECT id, code, title, author FROM westminster_commentary_sources ORDER BY id")?;
+    let mut stmt =
+        conn.prepare("SELECT id, code, title, author, document_code FROM westminster_commentary_sources ORDER BY id")?;
     let rows = stmt.query_map([], |r| {
         Ok(WestminsterCommentarySource {
             id: r.get(0)?,
             code: r.get(1)?,
             title: r.get(2)?,
             author: r.get(3)?,
+            document_code: r.get(4)?,
         })
     })?;
     Ok(rows.collect::<Result<Vec<_>, _>>()?)
