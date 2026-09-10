@@ -55,6 +55,12 @@ using (var conn = db.OpenConnection())
     count = ThreeFormsImporter.ImportCanonsOfDort(conn, Path.Combine(confessionsDir, "canons_of_dort.json"));
     Console.WriteLine($"  Canons of Dort: {count} sections.");
 
+    Console.WriteLine();
+    Console.WriteLine("== Matthew Henry's Commentary (Romans only -- see importer's own comment) ==");
+    string mhcPath = Path.Combine(repoRoot, "commentaries", "matthew henry", "mhc6.xml");
+    int blockCount = MatthewHenryImporter.ImportRomans(conn, mhcPath, MaxVerseForChapter);
+    Console.WriteLine($"  Romans: {blockCount} commentary blocks.");
+
     conn.Execute("COMMIT;");
 }
 
