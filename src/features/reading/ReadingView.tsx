@@ -40,6 +40,7 @@ import { ParallelReadingView } from "./ParallelReadingView";
 import { InterlinearView } from "./InterlinearView";
 import { ParagraphVerses } from "./ParagraphReadingView";
 import { computeRedLetterSpans } from "./redLetterSpans";
+import { DockPanel } from "../../components/DockPanel";
 import { closestWithAttr, textOffsetWithin } from "../../lib/domOffsets";
 import { copyWithReference } from "../../lib/clipboard";
 import { ReadAloudButton } from "../tts/ReadAloudButton";
@@ -77,6 +78,8 @@ export function ReadingView() {
     showVerseNumbers,
     commentaryPanelOpen,
     toggleCommentaryPanel,
+    commentaryPanelWidth,
+    setCommentaryPanelWidth,
     showHighlights,
     showNoteSymbols,
     rightPanelTab,
@@ -373,8 +376,13 @@ export function ReadingView() {
         <div className="h-24" />
       </div>
 
-      {!distractionFreeMode && commentaryPanelOpen ? (
-        <div style={{ width: 420 }} className="flex shrink-0 flex-col border-l border-gray-200 dark:border-gray-800">
+      {!distractionFreeMode && (
+        <DockPanel
+          open={commentaryPanelOpen}
+          onToggle={toggleCommentaryPanel}
+          width={commentaryPanelWidth}
+          onWidthChange={setCommentaryPanelWidth}
+        >
           <div className="flex border-b border-gray-200 text-xs dark:border-gray-800">
             <button
               onClick={() => setRightPanelTab("commentary")}
@@ -415,14 +423,7 @@ export function ReadingView() {
               <MetricalPsalmPanel psalm={chapter} onClose={toggleCommentaryPanel} />
             )}
           </div>
-        </div>
-      ) : distractionFreeMode ? null : (
-        <button
-          onClick={toggleCommentaryPanel}
-          className="shrink-0 border-l border-gray-200 px-1 text-xs text-gray-400 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-900"
-        >
-          ‹ Study
-        </button>
+        </DockPanel>
       )}
 
       {distractionFreeMode && (
