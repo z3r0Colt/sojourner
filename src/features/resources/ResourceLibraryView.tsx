@@ -27,6 +27,16 @@ export function ResourceLibraryView() {
   const [busy, setBusy] = useState(false);
   const [importReport, setImportReport] = useState<BulkImportOutcome | null>(null);
   const [manageId, setManageId] = useState<number | null>(null);
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+
+  function toggleAuthor(author: string) {
+    setCollapsed((prev) => {
+      const next = new Set(prev);
+      if (next.has(author)) next.delete(author);
+      else next.add(author);
+      return next;
+    });
+  }
 
   const groups = useMemo(() => {
     const byAuthor = new Map<string, Resource[]>();
@@ -161,9 +171,20 @@ export function ResourceLibraryView() {
       )}
 
       <div className="space-y-5">
-        {groups.map(([author, list]) => (
+        {groups.map(([author, list]) => {
+          const isCollapsed = collapsed.has(author);
+          return (
           <div key={author}>
-            <h2 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-gray-400">{author}</h2>
+            <button
+              onClick={() => toggleAuthor(author)}
+              className="mb-1.5 flex w-full items-center gap-1.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              aria-expanded={!isCollapsed}
+            >
+              <span className={`inline-block transition-transform ${isCollapsed ? "-rotate-90" : ""}`}>▾</span>
+              {author}
+              <span className="font-normal normal-case text-gray-300 dark:text-gray-600">({list.length})</span>
+            </button>
+            {!isCollapsed && (
             <ul className="space-y-2">
               {list.map((r) => (
                 <li
@@ -205,8 +226,10 @@ export function ResourceLibraryView() {
                 </li>
               ))}
             </ul>
+            )}
           </div>
-        ))}
+          );
+        })}
         {resources?.length === 0 && <p className="text-gray-400">No resources added yet.</p>}
       </div>
     </div>
