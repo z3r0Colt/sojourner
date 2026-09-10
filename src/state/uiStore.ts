@@ -11,8 +11,11 @@ interface UiState {
   showHighlights: boolean;
   showNoteSymbols: boolean;
   showMorphology: boolean;
-  rightPanelTab: "commentary" | "crossrefs" | "metrical";
+  rightPanelTab: "commentary" | "crossrefs" | "metrical" | "split";
   sermonAudioApiKey: string;
+  redLetterMode: boolean;
+  paragraphMode: boolean;
+  distractionFreeMode: boolean;
   setTheme: (t: Theme) => void;
   setFontSize: (n: number) => void;
   toggleVerseNumbers: () => void;
@@ -21,8 +24,12 @@ interface UiState {
   toggleShowHighlights: () => void;
   toggleShowNoteSymbols: () => void;
   toggleShowMorphology: () => void;
-  setRightPanelTab: (t: "commentary" | "crossrefs" | "metrical") => void;
+  setRightPanelTab: (t: "commentary" | "crossrefs" | "metrical" | "split") => void;
   setSermonAudioApiKey: (k: string) => void;
+  toggleRedLetterMode: () => void;
+  toggleParagraphMode: () => void;
+  toggleDistractionFreeMode: () => void;
+  setDistractionFreeMode: (on: boolean) => void;
 }
 
 const stored = (() => {
@@ -55,6 +62,9 @@ export const useUiStore = create<UiState>((set) => ({
   showMorphology: stored.showMorphology ?? true,
   rightPanelTab: "commentary",
   sermonAudioApiKey: stored.sermonAudioApiKey ?? "",
+  redLetterMode: stored.redLetterMode ?? false,
+  paragraphMode: stored.paragraphMode ?? false,
+  distractionFreeMode: false,
 
   setTheme: (theme) => {
     persist({ theme });
@@ -98,4 +108,16 @@ export const useUiStore = create<UiState>((set) => ({
     persist({ sermonAudioApiKey });
     set({ sermonAudioApiKey });
   },
+  toggleRedLetterMode: () =>
+    set((s) => {
+      persist({ redLetterMode: !s.redLetterMode });
+      return { redLetterMode: !s.redLetterMode };
+    }),
+  toggleParagraphMode: () =>
+    set((s) => {
+      persist({ paragraphMode: !s.paragraphMode });
+      return { paragraphMode: !s.paragraphMode };
+    }),
+  toggleDistractionFreeMode: () => set((s) => ({ distractionFreeMode: !s.distractionFreeMode })),
+  setDistractionFreeMode: (distractionFreeMode) => set({ distractionFreeMode }),
 }));

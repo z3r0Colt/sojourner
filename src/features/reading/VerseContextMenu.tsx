@@ -2,11 +2,13 @@ export function VerseContextMenu({
   x,
   y,
   onCompare,
+  onCopy,
   onClose,
 }: {
   x: number;
   y: number;
   onCompare: () => void;
+  onCopy?: () => void;
   onClose: () => void;
 }) {
   return (
@@ -25,6 +27,17 @@ export function VerseContextMenu({
         >
           Compare across translations
         </button>
+        {onCopy && (
+          <button
+            className="block w-full px-3 py-1.5 text-left hover:bg-gray-100 dark:hover:bg-gray-800"
+            onClick={() => {
+              onCopy();
+              onClose();
+            }}
+          >
+            Copy with reference
+          </button>
+        )}
       </div>
     </div>
   );

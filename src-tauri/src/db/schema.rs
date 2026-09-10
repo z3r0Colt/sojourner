@@ -455,7 +455,23 @@ CREATE TABLE harmony_readings (
 CREATE INDEX idx_harmony_readings_section ON harmony_readings(section_id, sort_order);
 "#;
 
-pub const CONTENT_MIGRATIONS: &[&str] = &[CONTENT_MIGRATION_0001, CONTENT_MIGRATION_0002, CONTENT_MIGRATION_0003];
+// Verse ranges containing the words of Jesus, for the reading view's
+// red-letter toggle. Translation-agnostic (chapter/verse offsets, not any
+// one translation's own wording), so the same ranges apply to every bundled
+// translation -- see reference/red_letter/red_letter.json for provenance.
+pub const CONTENT_MIGRATION_0004: &str = r#"
+CREATE TABLE red_letter_ranges (
+  id           INTEGER PRIMARY KEY,
+  book_id      INTEGER NOT NULL REFERENCES books(id),
+  chapter      INTEGER NOT NULL,
+  verse_start  INTEGER NOT NULL,
+  verse_end    INTEGER NOT NULL
+);
+CREATE INDEX idx_red_letter_lookup ON red_letter_ranges(book_id, chapter);
+"#;
+
+pub const CONTENT_MIGRATIONS: &[&str] =
+    &[CONTENT_MIGRATION_0001, CONTENT_MIGRATION_0002, CONTENT_MIGRATION_0003, CONTENT_MIGRATION_0004];
 
 pub const USER_MIGRATION_0001: &str = r#"
 CREATE TABLE highlights (

@@ -7,6 +7,7 @@ pub mod interlinear;
 pub mod morphology;
 pub mod psalter;
 pub mod reading_plans;
+pub mod red_letter;
 pub mod strongs;
 pub mod treasury;
 pub mod westminster;
@@ -29,6 +30,7 @@ pub struct ReferenceImportReport {
     pub treasury_entries: usize,
     pub reading_plan_readings: usize,
     pub harmony_readings: usize,
+    pub red_letter_ranges: usize,
 }
 
 fn table_count(conn: &Connection, table: &str) -> i64 {
@@ -159,6 +161,13 @@ pub fn import_all(conn: &mut Connection, reference_dir: &Path) -> anyhow::Result
         0
     };
 
+    let red_letter_ranges = if table_count(conn, "red_letter_ranges") == 0 {
+        red_letter::import(conn, &reference_dir.join("red_letter"))
+            .map_err(|e| anyhow::anyhow!("red letter import failed: {e:#}"))?
+    } else {
+        0
+    };
+
     Ok(ReferenceImportReport {
         strongs_entries,
         dictionary_entries,
@@ -173,5 +182,6 @@ pub fn import_all(conn: &mut Connection, reference_dir: &Path) -> anyhow::Result
         treasury_entries,
         reading_plan_readings,
         harmony_readings,
+        red_letter_ranges,
     })
 }
