@@ -8,12 +8,77 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <Grid Padding="24,16,24,16" RowSpacing="24">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
-        <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="Sermon Builder" />
-        <TextBlock Grid.Row="1" Text="The manuscript editor and Law/Gospel Application Matrix arrive in a later phase." TextWrapping="Wrap" />
-    </Grid>
+    <ScrollViewer Padding="24,16,24,24">
+        <StackPanel MaxWidth="900" HorizontalAlignment="Stretch" Spacing="16">
+            <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="Sermon Builder" />
+
+            <TextBox x:Name="TitleBox" Header="Title" PlaceholderText="Sermon title" />
+
+            <StackPanel Orientation="Horizontal" Spacing="12">
+                <ComboBox
+                    x:Name="BookCombo"
+                    Width="220"
+                    DisplayMemberPath="Name"
+                    Header="Passage: book" />
+                <NumberBox
+                    x:Name="ChapterBox"
+                    Width="120"
+                    Header="Chapter"
+                    Minimum="1"
+                    SpinButtonPlacementMode="Compact"
+                    Value="1" />
+            </StackPanel>
+
+            <!--
+                Law & Gospel Application Matrix (architecture doc section 7):
+                an Expander at the top of the editor with two fields prompting
+                the pastor to explicitly document how the text exposes sin
+                (Law) and where it points to grace/redemption (Gospel).
+            -->
+            <Expander
+                HorizontalAlignment="Stretch"
+                HorizontalContentAlignment="Stretch"
+                Header="Law &amp; Gospel Application Matrix"
+                IsExpanded="True">
+                <StackPanel Padding="4" Spacing="12">
+                    <TextBox
+                        x:Name="LawBox"
+                        AcceptsReturn="True"
+                        Header="Law -- how does this text expose sin?"
+                        Height="90"
+                        TextWrapping="Wrap" />
+                    <TextBox
+                        x:Name="GospelBox"
+                        AcceptsReturn="True"
+                        Header="Gospel -- where is grace and redemption here?"
+                        Height="90"
+                        TextWrapping="Wrap" />
+                </StackPanel>
+            </Expander>
+
+            <TextBlock FontWeight="SemiBold" Text="Manuscript" />
+            <!--
+                TextCommandBarFlyout (architecture doc section 7's contextual
+                CommandBarFlyout): a built-in control that shows Cut/Copy/
+                Paste plus Bold/Italic/Underline formatting commands, already
+                wired to whatever RichEditBox it's assigned to as
+                SelectionFlyout; no manual command wiring needed.
+            -->
+            <RichEditBox
+                x:Name="ManuscriptBox"
+                Height="420"
+                AcceptsReturn="True"
+                PlaceholderText="Write your manuscript…"
+                TextWrapping="Wrap">
+                <RichEditBox.SelectionFlyout>
+                    <TextCommandBarFlyout />
+                </RichEditBox.SelectionFlyout>
+            </RichEditBox>
+
+            <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                <Button Click="Save_Click" Content="Save" Style="{StaticResource AccentButtonStyle}" />
+                <TextBlock x:Name="StatusText" Opacity="0.7" VerticalAlignment="Center" />
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
 </Page>
