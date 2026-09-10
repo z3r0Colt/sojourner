@@ -64,6 +64,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\data\SojournersStudy.Data\SojournersStudy.Data.csproj" />
+    <ProjectReference Include="..\..\search\SojournersStudy.Search\SojournersStudy.Search.csproj" />
   </ItemGroup>
 
   <!--

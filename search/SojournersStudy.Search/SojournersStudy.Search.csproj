@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <!--
+    The native cdylib built by ../sojourners_search (cargo build, release
+    profile). Content items with CopyToOutputDirectory flow through
+    ProjectReference in SDK-style projects, so any project referencing this
+    one (the app, the test project) gets the DLL copied to its own output
+    automatically rather than needing this block repeated everywhere.
+  -->
+  <ItemGroup>
+    <Content Include="..\sojourners_search\target\release\sojourners_search.dll" Condition="Exists('..\sojourners_search\target\release\sojourners_search.dll')">
+      <Link>sojourners_search.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+</Project>

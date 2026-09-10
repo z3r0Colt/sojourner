@@ -1,0 +1,7 @@
+# Rust build artifacts
+/sojourners_search/target/
+
+# .NET build artifacts
+[Bb]in/
+[Oo]bj/
+*.user
