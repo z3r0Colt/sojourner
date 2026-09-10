@@ -22,6 +22,15 @@ public sealed partial class LibraryPage : Page
     {
         InitializeComponent();
 
+        Items.Add(new StudyTabItem
+        {
+            Header = "Romans 8",
+            IconGlyph = "",
+            Kind = TabContentKind.Reading,
+            ReadingBook = 45,
+            ReadingChapter = 8,
+        });
+
         var db = SojournersDatabase.CreateDefault();
         var johnWords = DemoDataSeeder.EnsureJohn1_1Seeded(db);
         Items.Add(new StudyTabItem

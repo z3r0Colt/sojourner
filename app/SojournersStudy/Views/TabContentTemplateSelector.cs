@@ -11,8 +11,17 @@ public sealed class TabContentTemplateSelector : DataTemplateSelector
 
     public DataTemplate? InterlinearTemplate { get; set; }
 
+    public DataTemplate? ReadingTemplate { get; set; }
+
     protected override DataTemplate? SelectTemplateCore(object item) =>
-        item is StudyTabItem { Kind: TabContentKind.Interlinear } ? InterlinearTemplate : PlainTextTemplate;
+        item is StudyTabItem tab
+            ? tab.Kind switch
+            {
+                TabContentKind.Interlinear => InterlinearTemplate,
+                TabContentKind.Reading => ReadingTemplate,
+                _ => PlainTextTemplate,
+            }
+            : PlainTextTemplate;
 
     protected override DataTemplate? SelectTemplateCore(object item, DependencyObject container) => SelectTemplateCore(item);
 }

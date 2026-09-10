@@ -29,10 +29,15 @@
         <views:InterlinearView Words="{Binding InterlinearWords}" />
     </DataTemplate>
 
+    <DataTemplate x:Key="ReadingBodyTemplate">
+        <views:ReadingView Book="{Binding ReadingBook}" Chapter="{Binding ReadingChapter}" />
+    </DataTemplate>
+
     <views:TabContentTemplateSelector
         x:Key="TabBodyTemplateSelector"
         InterlinearTemplate="{StaticResource InterlinearBodyTemplate}"
-        PlainTextTemplate="{StaticResource PlainTextBodyTemplate}" />
+        PlainTextTemplate="{StaticResource PlainTextBodyTemplate}"
+        ReadingTemplate="{StaticResource ReadingBodyTemplate}" />
 
     <DataTemplate x:Key="StudyTabItemTemplate">
         <controls:TabViewItem Header="{Binding Header}">

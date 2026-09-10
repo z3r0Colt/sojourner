@@ -34,6 +34,19 @@
     <Content Include="Assets\StoreLogo.png" />
     <Content Include="Assets\AppIcon.ico" />
     <Content Include="Assets\Wide310x150Logo.scale-200.png" />
+    <!--
+      EB Garamond (English) and Gentium Plus (Greek/Latin/Cyrillic) rather
+      than the architecture doc's named EB Garamond/SBL Greek pair: both are
+      SIL Open Font License, unambiguously free to bundle in a distributed
+      app, whereas SBL Greek's license terms weren't confirmed. Hebrew isn't
+      rendered by any view yet, so a Hebrew-capable font is deferred until
+      that's actually needed rather than sourced speculatively.
+    -->
+    <Content Include="Assets\Fonts\EBGaramond-Variable.ttf" />
+    <Content Include="Assets\Fonts\GentiumPlus-Regular.ttf" />
+    <Content Include="Assets\Fonts\GentiumPlus-Bold.ttf" />
+    <Content Include="Assets\Fonts\EBGaramond-OFL.txt" />
+    <Content Include="Assets\Fonts\GentiumPlus-OFL.txt" />
   </ItemGroup>
 
   <ItemGroup>

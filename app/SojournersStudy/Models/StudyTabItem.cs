@@ -7,6 +7,7 @@ public enum TabContentKind
 {
     PlainText,
     Interlinear,
+    Reading,
 }
 
 /// A single tab in a study workspace TabView -- e.g. an open Bible chapter, a
@@ -26,4 +27,13 @@ public sealed class StudyTabItem
     public string BodyText { get; set; } = string.Empty;
 
     public ObservableCollection<OriginalTextWord> InterlinearWords { get; set; } = new();
+
+    /// Only meaningful when Kind == Reading. ReadingView queries Bible_Verses
+    /// / Confessional_Proof_Texts itself from these primitives rather than
+    /// the tab item carrying pre-loaded rows -- keeps this a plain,
+    /// serializable-ish data item for tear-out, same reasoning as everything
+    /// else on this type.
+    public int ReadingBook { get; set; }
+
+    public int ReadingChapter { get; set; }
 }
