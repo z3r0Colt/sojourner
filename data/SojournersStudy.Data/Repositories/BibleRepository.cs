@@ -6,11 +6,13 @@ namespace SojournersStudy.Data.Repositories;
 
 public static class BibleRepository
 {
-    public static int InsertTranslation(IDbConnection db, BibleTranslation translation)
+    /// Upsert by `code` (its natural key) so an importer can be re-run without violating the UNIQUE constraint.
+    public static int UpsertTranslation(IDbConnection db, BibleTranslation translation)
     {
         const string sql = """
             INSERT INTO Bible_Translations (code, display_name, year, is_public_domain)
             VALUES (@Code, @DisplayName, @Year, @IsPublicDomain)
+            ON CONFLICT (code) DO UPDATE SET display_name = excluded.display_name, year = excluded.year, is_public_domain = excluded.is_public_domain
             RETURNING translation_id;
             """;
         return db.ExecuteScalar<int>(sql, translation);
@@ -24,6 +26,16 @@ public static class BibleRepository
             FROM Bible_Translations
             ORDER BY display_name;
             """);
+
+    public static BibleTranslation? GetTranslationByCode(IDbConnection db, string code) =>
+        db.QuerySingleOrDefault<BibleTranslation>(
+            """
+            SELECT translation_id AS TranslationId, code AS Code, display_name AS DisplayName,
+                   year AS Year, is_public_domain AS IsPublicDomain
+            FROM Bible_Translations
+            WHERE code = @code;
+            """,
+            new { code });
 
     public static void UpsertVerse(IDbConnection db, BibleVerse verse)
     {

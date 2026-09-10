@@ -49,7 +49,7 @@ public sealed class SchemaTests : IDisposable
     public void Bible_verse_round_trips_through_the_without_rowid_composite_key()
     {
         using var conn = _db.OpenConnection();
-        int translationId = BibleRepository.InsertTranslation(conn, new BibleTranslation
+        int translationId = BibleRepository.UpsertTranslation(conn, new BibleTranslation
         {
             Code = "KJV",
             DisplayName = "King James Version",
@@ -82,7 +82,7 @@ public sealed class SchemaTests : IDisposable
     public void Chapter_range_query_returns_only_that_chapters_verses_in_order()
     {
         using var conn = _db.OpenConnection();
-        int translationId = BibleRepository.InsertTranslation(conn, new BibleTranslation { Code = "KJV", DisplayName = "King James Version" });
+        int translationId = BibleRepository.UpsertTranslation(conn, new BibleTranslation { Code = "KJV", DisplayName = "King James Version" });
 
         // Genesis 1:3, 1:1, 1:2 inserted out of order, plus a Genesis 2:1 decoy.
         foreach (int verse in new[] { 3, 1, 2 })
