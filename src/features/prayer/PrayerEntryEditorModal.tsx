@@ -54,7 +54,7 @@ export function PrayerEntryEditorModal({
       >
         <div className="flex items-center justify-between border-b border-gray-200 p-3 dark:border-gray-800">
           <h3 className="text-sm font-semibold">{existing ? "Edit Prayer Entry" : "New Prayer Entry"}</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600" title="Close" aria-label="Close">
             ✕
           </button>
         </div>

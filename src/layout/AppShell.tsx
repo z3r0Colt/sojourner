@@ -104,6 +104,7 @@ export function AppShell() {
             disabled={history.length === 0}
             className="rounded px-2 py-1 text-sm text-gray-500 hover:bg-gray-100 disabled:opacity-30 dark:hover:bg-gray-800"
             title="Back (Alt+Left)"
+            aria-label="Back"
           >
             ←
           </button>
@@ -112,6 +113,7 @@ export function AppShell() {
             disabled={future.length === 0}
             className="rounded px-2 py-1 text-sm text-gray-500 hover:bg-gray-100 disabled:opacity-30 dark:hover:bg-gray-800"
             title="Forward (Alt+Right)"
+            aria-label="Forward"
           >
             →
           </button>

@@ -59,7 +59,7 @@ export function SermonNoteEditorModal({
       >
         <div className="flex items-center justify-between border-b border-gray-200 p-3 dark:border-gray-800">
           <h3 className="text-sm font-semibold">{existing ? "Edit Sermon Note" : "New Sermon Note"}</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600" title="Close" aria-label="Close">
             ✕
           </button>
         </div>
@@ -135,6 +135,7 @@ export function SermonNoteEditorModal({
                       onClick={() => deletePassage.mutate(p.id)}
                       className="text-gray-400 hover:text-gray-600"
                       title="Remove"
+                      aria-label={`Remove passage ${bookName(p.book_id)} ${p.chapter}`}
                     >
                       ✕
                     </button>

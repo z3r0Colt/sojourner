@@ -42,7 +42,7 @@ function TtsSettingsPopover({ onClose }: { onClose: () => void }) {
     >
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-sm font-semibold">Read Aloud settings</h3>
-        <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+        <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" title="Close" aria-label="Close">
           ✕
         </button>
       </div>
@@ -193,6 +193,7 @@ export function TtsPlayerBar() {
           disabled={currentSegmentIndex === 0}
           className="rounded px-2 py-1 text-lg hover:bg-gray-100 disabled:opacity-30 dark:hover:bg-gray-800"
           title="Previous"
+          aria-label="Previous"
         >
           ⏮
         </button>
@@ -207,6 +208,7 @@ export function TtsPlayerBar() {
           disabled={currentSegmentIndex >= segments.length - 1}
           className="rounded px-2 py-1 text-lg hover:bg-gray-100 disabled:opacity-30 dark:hover:bg-gray-800"
           title="Next"
+          aria-label="Next"
         >
           ⏭
         </button>
@@ -226,6 +228,7 @@ export function TtsPlayerBar() {
           onClick={stop}
           className="rounded border border-gray-300 px-2 py-1 text-sm text-gray-500 hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800"
           title="Stop"
+          aria-label="Stop reading aloud"
         >
           ✕
         </button>

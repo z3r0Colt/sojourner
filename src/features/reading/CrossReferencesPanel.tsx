@@ -27,7 +27,7 @@ export function CrossReferencesPanel({
         <span>
           {activeVerse ? `Cross references for ${book.name} ${chapter}:${activeVerse}` : "Select a verse to see cross references"}
         </span>
-        <button onClick={onClose} className="text-gray-400 hover:text-gray-600" title="Close panel">
+        <button onClick={onClose} className="text-gray-400 hover:text-gray-600" title="Close panel" aria-label="Close panel">
           ✕
         </button>
       </div>

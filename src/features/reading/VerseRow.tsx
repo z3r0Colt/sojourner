@@ -66,6 +66,7 @@ export function VerseRow({
         <button
           className="mr-1 align-middle text-amber-500"
           title="Has a note"
+          aria-label="Has a note"
           onClick={(e) => {
             e.stopPropagation();
             onNoteSymbolClick(verseLevelNote);
@@ -117,6 +118,7 @@ export function VerseRow({
                 <sup
                   className="ml-0.5 cursor-pointer text-amber-600"
                   title="Has a note"
+                  aria-label="Has a note"
                   onClick={(e) => {
                     e.stopPropagation();
                     onNoteSymbolClick(linkedNote);

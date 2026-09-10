@@ -84,7 +84,7 @@ export function CommentaryPanel({
           label="🔊"
           className="rounded border border-gray-300 px-1.5 py-0.5 text-xs text-gray-500 hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800"
         />
-        <button onClick={onClose} className="text-gray-400 hover:text-gray-600" title="Close panel">
+        <button onClick={onClose} className="text-gray-400 hover:text-gray-600" title="Close panel" aria-label="Close panel">
           ✕
         </button>
       </div>

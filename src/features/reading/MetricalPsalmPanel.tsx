@@ -10,7 +10,7 @@ export function MetricalPsalmPanel({ psalm, onClose }: { psalm: number; onClose:
     <aside className="flex h-full w-full flex-col bg-gray-50 dark:bg-gray-900/40">
       <div className="flex items-center justify-between border-b border-gray-200 p-2 text-xs text-gray-500 dark:border-gray-800">
         <span>1650 Scottish Metrical Psalter — Psalm {psalm}</span>
-        <button onClick={onClose} className="text-gray-400 hover:text-gray-600" title="Close panel">
+        <button onClick={onClose} className="text-gray-400 hover:text-gray-600" title="Close panel" aria-label="Close panel">
           ✕
         </button>
       </div>

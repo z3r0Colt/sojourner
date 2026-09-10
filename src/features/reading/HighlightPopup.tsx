@@ -58,6 +58,8 @@ export function HighlightPopup({
       <button
         className="rounded px-2 py-1 text-xs text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
         onClick={onClose}
+        title="Close"
+        aria-label="Close"
       >
         ✕
       </button>
