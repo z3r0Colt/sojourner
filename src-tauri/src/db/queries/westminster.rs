@@ -123,8 +123,8 @@ pub fn search(conn: &Connection, query: &str, limit: i64) -> anyhow::Result<Vec<
         .join(" ");
     let mut stmt = conn.prepare(
         "SELECT ws.id, ws.document_id, ws.heading, ws.prompt, snippet(westminster_fts, 2, '[', ']', '…', 12)
-         FROM westminster_fts f JOIN westminster_sections ws ON ws.id = f.rowid
-         WHERE f MATCH ?1 ORDER BY bm25(f) LIMIT ?2",
+         FROM westminster_fts JOIN westminster_sections ws ON ws.id = westminster_fts.rowid
+         WHERE westminster_fts MATCH ?1 ORDER BY bm25(westminster_fts) LIMIT ?2",
     )?;
     let rows = stmt.query_map(params![match_expr, limit], |r| {
         Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?, r.get(4)?))

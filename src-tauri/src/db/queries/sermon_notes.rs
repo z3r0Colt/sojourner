@@ -286,8 +286,8 @@ pub fn search(conn: &Connection, query: &str, limit: i64) -> anyhow::Result<Vec<
         .collect::<Vec<_>>()
         .join(" ");
     let sql = format!(
-        "SELECT {SELECT_COLS_SN} FROM sermon_notes_fts f JOIN sermon_notes sn ON sn.id = f.rowid
-         WHERE f MATCH ?1 ORDER BY bm25(f) LIMIT ?2"
+        "SELECT {SELECT_COLS_SN} FROM sermon_notes_fts JOIN sermon_notes sn ON sn.id = sermon_notes_fts.rowid
+         WHERE sermon_notes_fts MATCH ?1 ORDER BY bm25(sermon_notes_fts) LIMIT ?2"
     );
     let mut stmt = conn.prepare(&sql)?;
     let rows = stmt.query_map(params![match_expr, limit], map_row)?;
