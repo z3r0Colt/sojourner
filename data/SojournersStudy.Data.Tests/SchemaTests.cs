@@ -146,7 +146,7 @@ public sealed class SchemaTests : IDisposable
     public void Work_content_block_range_lookup_finds_a_block_spanning_multiple_verses()
     {
         using var conn = _db.OpenConnection();
-        int workId = WorksRepository.InsertWork(conn, new WorksCatalogEntry { Author = "John Calvin", Title = "Commentary on Romans" });
+        int workId = WorksRepository.UpsertWork(conn, new WorksCatalogEntry { Author = "John Calvin", Title = "Commentary on Romans" });
         int blockId = WorksRepository.InsertContentBlock(conn, new WorkContentBlock
         {
             WorkId = workId,
@@ -168,7 +168,7 @@ public sealed class SchemaTests : IDisposable
     public void Work_content_block_chapter_range_query_finds_overlapping_but_not_unrelated_blocks()
     {
         using var conn = _db.OpenConnection();
-        int workId = WorksRepository.InsertWork(conn, new WorksCatalogEntry { Author = "Matthew Henry", Title = "Commentary on Romans" });
+        int workId = WorksRepository.UpsertWork(conn, new WorksCatalogEntry { Author = "Matthew Henry", Title = "Commentary on Romans" });
 
         int inChapter = WorksRepository.InsertContentBlock(conn, new WorkContentBlock
         {

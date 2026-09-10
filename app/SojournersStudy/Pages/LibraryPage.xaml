@@ -8,13 +8,38 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <TabView
-        x:Name="StudyTabView"
-        AddTabButtonClick="StudyTabView_AddTabButtonClick"
-        CanTearOutTabs="True"
-        TabItemTemplate="{StaticResource StudyTabItemTemplate}"
-        TabItemsSource="{x:Bind Items}"
-        TabTearOutRequested="StudyTabView_TabTearOutRequested"
-        TabTearOutWindowRequested="StudyTabView_TabTearOutWindowRequested"
-        TabWidthMode="Equal" />
+    <Grid RowSpacing="0">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!--
+            Wires up the Tantivy search engine (built in an earlier phase but
+            never used by any UI until now) over Work_Content_Blocks.
+            AutoSuggestBox fits this well: type, see live hits as
+            suggestions, pick one to jump to that passage.
+        -->
+        <AutoSuggestBox
+            x:Name="SearchBox"
+            Grid.Row="0"
+            Margin="12,8"
+            MaxWidth="500"
+            HorizontalAlignment="Left"
+            PlaceholderText="Search commentary… (try: grace NEAR(5) covenant)"
+            QueryIcon="Find"
+            SuggestionChosen="SearchBox_SuggestionChosen"
+            TextChanged="SearchBox_TextChanged" />
+
+        <TabView
+            x:Name="StudyTabView"
+            Grid.Row="1"
+            AddTabButtonClick="StudyTabView_AddTabButtonClick"
+            CanTearOutTabs="True"
+            TabItemTemplate="{StaticResource StudyTabItemTemplate}"
+            TabItemsSource="{x:Bind Items}"
+            TabTearOutRequested="StudyTabView_TabTearOutRequested"
+            TabTearOutWindowRequested="StudyTabView_TabTearOutWindowRequested"
+            TabWidthMode="Equal" />
+    </Grid>
 </Page>

@@ -40,12 +40,13 @@ public static partial class MatthewHenryImporter
         int nextBookStart = content.IndexOf("<div1 ", bookStart + 1, StringComparison.Ordinal);
         string section = nextBookStart > 0 ? content[bookStart..nextBookStart] : content[bookStart..];
 
-        int workId = WorksRepository.InsertWork(db, new WorksCatalogEntry
+        int workId = WorksRepository.UpsertWork(db, new WorksCatalogEntry
         {
             Author = "Matthew Henry",
             Title = "Commentary on the Whole Bible: Romans",
             Year = 1710,
         });
+        WorksRepository.DeleteBlocksForWork(db, workId);
 
         int sortOrder = 0;
         int blockCount = 0;

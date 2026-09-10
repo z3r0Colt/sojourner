@@ -44,7 +44,8 @@ internal static class Schema
             author TEXT NOT NULL,
             title TEXT NOT NULL,
             year INTEGER,
-            is_public_domain INTEGER NOT NULL DEFAULT 1
+            is_public_domain INTEGER NOT NULL DEFAULT 1,
+            UNIQUE (author, title)
         );
 
         CREATE TABLE IF NOT EXISTS Work_Content_Blocks (

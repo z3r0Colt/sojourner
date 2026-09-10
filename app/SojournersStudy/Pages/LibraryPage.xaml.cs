@@ -1,7 +1,9 @@
 using System.Collections.ObjectModel;
 using Microsoft.UI.Xaml.Controls;
+using SojournersStudy.Data;
 using SojournersStudy.Data.Database;
 using SojournersStudy.Models;
+using SojournersStudy.Search;
 using SojournersStudy.Seeding;
 using SojournersStudy.Services;
 
@@ -10,7 +12,7 @@ namespace SojournersStudy.Pages;
 /// <summary>
 /// The main study workspace: a tear-out-capable TabView holding whatever a
 /// pastor currently has open (Bible chapters, lexicon entries, commentary
-/// excerpts).
+/// excerpts), plus the commentary search box (see SearchIndexService).
 /// </summary>
 public sealed partial class LibraryPage : Page
 {
@@ -40,6 +42,8 @@ public sealed partial class LibraryPage : Page
             Kind = TabContentKind.Interlinear,
             InterlinearWords = new ObservableCollection<Data.Models.OriginalTextWord>(johnWords),
         });
+
+        SearchIndexService.EnsureIndexed();
     }
 
     private void StudyTabView_AddTabButtonClick(TabView sender, object args)
@@ -57,4 +61,51 @@ public sealed partial class LibraryPage : Page
 
     private void StudyTabView_TabTearOutRequested(TabView sender, TabViewTabTearOutRequestedEventArgs args)
         => TabTearOutCoordinator.HandleTearOutRequested(args, Items);
+
+    private void SearchBox_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
+    {
+        if (args.Reason != AutoSuggestionBoxTextChangeReason.UserInput || string.IsNullOrWhiteSpace(sender.Text))
+        {
+            sender.ItemsSource = null;
+            return;
+        }
+
+        TantivySearchIndex index = SearchIndexService.GetOrOpen();
+        IReadOnlyList<SearchHit> hits;
+        try
+        {
+            hits = index.Search(sender.Text, limit: 10);
+        }
+        catch (InvalidOperationException)
+        {
+            // A malformed in-progress query (e.g. an unbalanced quote while typing) -- just show no suggestions until it parses.
+            sender.ItemsSource = null;
+            return;
+        }
+
+        sender.ItemsSource = hits.Select(hit =>
+        {
+            (int book, int chapter, _) = BcvReference.Decode((int)hit.LinkedBcvs[0]);
+            string snippet = hit.TextBody.Length > 120 ? hit.TextBody[..120] + "…" : hit.TextBody;
+            return new SearchResultItem { Author = hit.Author, Snippet = snippet, Book = book, Chapter = chapter };
+        }).ToList();
+    }
+
+    private void SearchBox_SuggestionChosen(AutoSuggestBox sender, AutoSuggestBoxSuggestionChosenEventArgs args)
+    {
+        if (args.SelectedItem is not SearchResultItem result)
+        {
+            return;
+        }
+
+        Items.Add(new StudyTabItem
+        {
+            Header = $"{BibleBooks.Get(result.Book).Name} {result.Chapter}",
+            IconGlyph = "",
+            Kind = TabContentKind.Reading,
+            ReadingBook = result.Book,
+            ReadingChapter = result.Chapter,
+        });
+        StudyTabView.SelectedIndex = Items.Count - 1;
+    }
 }
