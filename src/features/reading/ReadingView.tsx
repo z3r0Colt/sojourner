@@ -40,7 +40,6 @@ import { ParallelReadingView } from "./ParallelReadingView";
 import { InterlinearView } from "./InterlinearView";
 import { ParagraphVerses } from "./ParagraphReadingView";
 import { computeRedLetterSpans } from "./redLetterSpans";
-import { SplitPaneView } from "./SplitPaneView";
 import { closestWithAttr, textOffsetWithin } from "../../lib/domOffsets";
 import { copyWithReference } from "../../lib/clipboard";
 import { ReadAloudButton } from "../tts/ReadAloudButton";
@@ -397,15 +396,8 @@ export function ReadingView() {
                 Metrical
               </button>
             )}
-            <button
-              onClick={() => setRightPanelTab("split")}
-              className={`flex-1 py-1.5 ${rightPanelTab === "split" ? "border-b-2 border-blue-500 font-medium text-blue-600 dark:text-blue-400" : "text-gray-500"}`}
-            >
-              Split
-            </button>
           </div>
           <div className="min-h-0 flex-1">
-            {rightPanelTab === "split" && <SplitPaneView initialPosition={{ bookId: book.id, chapter }} />}
             {rightPanelTab === "commentary" && (
               <CommentaryPanel
                 book={book}

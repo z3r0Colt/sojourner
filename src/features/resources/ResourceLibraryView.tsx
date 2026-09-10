@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { open, confirm } from "@tauri-apps/plugin-dialog";
 import { api } from "../../api/client";
 import { useResources, useAddResource, useDeleteResource, useBulkImportResources } from "../../api/queries";
-import type { ResourceKind, BulkImportOutcome } from "../../api/types";
+import type { Resource, ResourceKind, BulkImportOutcome } from "../../api/types";
 
 const KIND_ICON: Record<ResourceKind, string> = {
   epub: "📘",
@@ -13,6 +13,8 @@ const KIND_ICON: Record<ResourceKind, string> = {
   video: "🎬",
   audio: "🎧",
 };
+
+const UNKNOWN_AUTHOR = "Unknown Author";
 
 export function ResourceLibraryView() {
   const { data: resources } = useResources();
@@ -24,6 +26,21 @@ export function ResourceLibraryView() {
   const [debounced, setDebounced] = useState("");
   const [busy, setBusy] = useState(false);
   const [importReport, setImportReport] = useState<BulkImportOutcome | null>(null);
+  const [manageId, setManageId] = useState<number | null>(null);
+
+  const groups = useMemo(() => {
+    const byAuthor = new Map<string, Resource[]>();
+    for (const r of resources ?? []) {
+      const key = r.author?.trim() || UNKNOWN_AUTHOR;
+      if (!byAuthor.has(key)) byAuthor.set(key, []);
+      byAuthor.get(key)!.push(r);
+    }
+    return [...byAuthor.entries()].sort(([a], [b]) => {
+      if (a === UNKNOWN_AUTHOR) return 1;
+      if (b === UNKNOWN_AUTHOR) return -1;
+      return a.localeCompare(b);
+    });
+  }, [resources]);
 
   useEffect(() => {
     const t = setTimeout(() => setDebounced(query), 250);
@@ -143,31 +160,55 @@ export function ResourceLibraryView() {
         </ul>
       )}
 
-      <ul className="space-y-2">
-        {resources?.map((r) => (
-          <li
-            key={r.id}
-            className="flex items-center justify-between rounded border border-gray-200 px-3 py-2 dark:border-gray-800"
-          >
-            <button onClick={() => navigate(`/resources/${r.id}`)} className="flex-1 text-left text-sm hover:underline">
-              {KIND_ICON[r.kind]} {r.title}
-              {r.author && <span className="ml-2 text-gray-400">— {r.author}</span>}
-              {!r.has_text && r.kind !== "video" && r.kind !== "audio" && (
-                <span className="ml-2 text-xs text-amber-500">(not indexed for search)</span>
-              )}
-            </button>
-            <button
-              onClick={async () => {
-                if (await confirm(`Remove ${r.title}?`)) deleteResource.mutate(r.id);
-              }}
-              className="text-xs text-red-500 hover:underline"
-            >
-              Remove
-            </button>
-          </li>
+      <div className="space-y-5">
+        {groups.map(([author, list]) => (
+          <div key={author}>
+            <h2 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-gray-400">{author}</h2>
+            <ul className="space-y-2">
+              {list.map((r) => (
+                <li
+                  key={r.id}
+                  className="flex items-center justify-between rounded border border-gray-200 px-3 py-2 dark:border-gray-800"
+                >
+                  <button onClick={() => navigate(`/resources/${r.id}`)} className="flex-1 text-left text-sm hover:underline">
+                    {KIND_ICON[r.kind]} {r.title}
+                    {!r.has_text && r.kind !== "video" && r.kind !== "audio" && (
+                      <span className="ml-2 text-xs text-amber-500">(not indexed for search)</span>
+                    )}
+                  </button>
+                  <div className="relative">
+                    <button
+                      onClick={() => setManageId(manageId === r.id ? null : r.id)}
+                      title="Manage"
+                      aria-label="Manage resource"
+                      className="rounded px-1.5 py-0.5 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+                    >
+                      ⋮
+                    </button>
+                    {manageId === r.id && (
+                      <div
+                        className="absolute right-0 z-10 mt-1 w-32 rounded border border-gray-200 bg-white p-1 shadow-lg dark:border-gray-700 dark:bg-gray-900"
+                        onMouseLeave={() => setManageId(null)}
+                      >
+                        <button
+                          onClick={async () => {
+                            setManageId(null);
+                            if (await confirm(`Remove ${r.title}?`)) deleteResource.mutate(r.id);
+                          }}
+                          className="block w-full rounded px-2 py-1 text-left text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
         ))}
         {resources?.length === 0 && <p className="text-gray-400">No resources added yet.</p>}
-      </ul>
+      </div>
     </div>
   );
 }
