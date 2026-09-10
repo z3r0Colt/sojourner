@@ -17,7 +17,7 @@ fn map_strongs(r: &rusqlite::Row) -> rusqlite::Result<StrongsEntry> {
     })
 }
 
-const STRONGS_COLS: &str = "se.id, se.language, se.original_word, se.transliteration, se.pronunciation, se.short_definition, se.definition, se.derivation, se.kjv_usage, th.definition";
+const STRONGS_COLS: &str = "se.id, se.language, se.original_word, se.transliteration, se.pronunciation, se.short_definition, se.definition, se.derivation, se.kjv_usage, th.html";
 const STRONGS_FROM: &str = "FROM strongs_entries se LEFT JOIN thayers_entries th ON th.strongs_id = se.id";
 
 pub fn get_strongs_entry(conn: &Connection, id: &str) -> anyhow::Result<Option<StrongsEntry>> {

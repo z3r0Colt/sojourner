@@ -1,10 +1,24 @@
-import { Link } from "react-router-dom";
-import { useStrongsEntry } from "../../api/queries";
+import { Link, useNavigate } from "react-router-dom";
+import { useBooks, useStrongsEntry } from "../../api/queries";
 import { useViewportClampedPosition } from "../../lib/useViewportClampedPosition";
+import { CommentaryHtml } from "../commentary/CommentaryPanel";
+import { useNavigationStore } from "../../state/navigationStore";
 
 export function StrongsPopup({ id, x, y, onClose }: { id: string; x: number; y: number; onClose: () => void }) {
   const { data: entry, isLoading } = useStrongsEntry(id);
   const { ref, style } = useViewportClampedPosition<HTMLDivElement>(x, y);
+  const { data: books } = useBooks();
+  const { goTo } = useNavigationStore();
+  const navigate = useNavigate();
+
+  function jumpToRef(bookOsisCode: string, chapter: number, verse: number) {
+    const target = books?.find((b) => b.osis_code === bookOsisCode);
+    if (target) {
+      goTo({ bookId: target.id, chapter, verse });
+      navigate("/");
+      onClose();
+    }
+  }
 
   return (
     <div
@@ -34,9 +48,9 @@ export function StrongsPopup({ id, x, y, onClose }: { id: string; x: number; y: 
           )}
           <p className="mb-2 text-gray-700 dark:text-gray-300">{entry.definition}</p>
           {entry.thayers_definition && (
-            <div className="mb-2 border-l-2 border-gray-200 pl-2 text-xs text-gray-600 dark:border-gray-700 dark:text-gray-400">
+            <div className="mb-2 max-h-48 overflow-y-auto border-l-2 border-gray-200 pl-2 text-xs text-gray-600 dark:border-gray-700 dark:text-gray-400">
               <span className="font-semibold text-gray-500 dark:text-gray-400">Thayer's: </span>
-              {entry.thayers_definition}
+              <CommentaryHtml html={entry.thayers_definition} onJumpToRef={jumpToRef} />
             </div>
           )}
           {entry.derivation && (
