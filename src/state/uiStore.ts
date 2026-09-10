@@ -8,6 +8,7 @@ interface UiState {
   showVerseNumbers: boolean;
   commentaryPanelOpen: boolean;
   commentaryPanelWidth: number;
+  commentaryPanelSide: "left" | "right";
   showHighlights: boolean;
   showNoteSymbols: boolean;
   showMorphology: boolean;
@@ -20,6 +21,7 @@ interface UiState {
   toggleVerseNumbers: () => void;
   toggleCommentaryPanel: () => void;
   setCommentaryPanelWidth: (n: number) => void;
+  setCommentaryPanelSide: (side: "left" | "right") => void;
   toggleShowHighlights: () => void;
   toggleShowNoteSymbols: () => void;
   toggleShowMorphology: () => void;
@@ -55,6 +57,7 @@ export const useUiStore = create<UiState>((set) => ({
   showVerseNumbers: stored.showVerseNumbers ?? true,
   commentaryPanelOpen: stored.commentaryPanelOpen ?? true,
   commentaryPanelWidth: stored.commentaryPanelWidth ?? 420,
+  commentaryPanelSide: stored.commentaryPanelSide ?? "right",
   showHighlights: stored.showHighlights ?? true,
   showNoteSymbols: stored.showNoteSymbols ?? true,
   showMorphology: stored.showMorphology ?? true,
@@ -84,6 +87,10 @@ export const useUiStore = create<UiState>((set) => ({
   setCommentaryPanelWidth: (commentaryPanelWidth) => {
     persist({ commentaryPanelWidth });
     set({ commentaryPanelWidth });
+  },
+  setCommentaryPanelSide: (commentaryPanelSide) => {
+    persist({ commentaryPanelSide });
+    set({ commentaryPanelSide });
   },
   toggleShowHighlights: () =>
     set((s) => {

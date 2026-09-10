@@ -9,6 +9,7 @@ pub mod psalter;
 pub mod reading_plans;
 pub mod red_letter;
 pub mod strongs;
+pub mod thayers;
 pub mod treasury;
 pub mod westminster;
 pub mod westminster_commentary;
@@ -31,6 +32,7 @@ pub struct ReferenceImportReport {
     pub reading_plan_readings: usize,
     pub harmony_readings: usize,
     pub red_letter_ranges: usize,
+    pub thayers_entries: usize,
 }
 
 fn table_count(conn: &Connection, table: &str) -> i64 {
@@ -168,6 +170,13 @@ pub fn import_all(conn: &mut Connection, reference_dir: &Path) -> anyhow::Result
         0
     };
 
+    let thayers_entries = if table_count(conn, "thayers_entries") == 0 {
+        thayers::import(conn, &reference_dir.join("thayers").join("thayers.xml"))
+            .map_err(|e| anyhow::anyhow!("thayers import failed: {e:#}"))?
+    } else {
+        0
+    };
+
     Ok(ReferenceImportReport {
         strongs_entries,
         dictionary_entries,
@@ -183,5 +192,6 @@ pub fn import_all(conn: &mut Connection, reference_dir: &Path) -> anyhow::Result
         reading_plan_readings,
         harmony_readings,
         red_letter_ranges,
+        thayers_entries,
     })
 }

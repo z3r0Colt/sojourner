@@ -80,6 +80,8 @@ export function ReadingView() {
     toggleCommentaryPanel,
     commentaryPanelWidth,
     setCommentaryPanelWidth,
+    commentaryPanelSide,
+    setCommentaryPanelSide,
     showHighlights,
     showNoteSymbols,
     rightPanelTab,
@@ -382,6 +384,9 @@ export function ReadingView() {
           onToggle={toggleCommentaryPanel}
           width={commentaryPanelWidth}
           onWidthChange={setCommentaryPanelWidth}
+          side={commentaryPanelSide}
+          onSideChange={setCommentaryPanelSide}
+          collapsedLabel="Study"
         >
           <div className="flex border-b border-gray-200 text-xs dark:border-gray-800">
             <button

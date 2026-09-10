@@ -33,6 +33,12 @@ export function StrongsPopup({ id, x, y, onClose }: { id: string; x: number; y: 
             <div className="mb-2 text-xs text-gray-400">pronounced: {entry.pronunciation}</div>
           )}
           <p className="mb-2 text-gray-700 dark:text-gray-300">{entry.definition}</p>
+          {entry.thayers_definition && (
+            <div className="mb-2 border-l-2 border-gray-200 pl-2 text-xs text-gray-600 dark:border-gray-700 dark:text-gray-400">
+              <span className="font-semibold text-gray-500 dark:text-gray-400">Thayer's: </span>
+              {entry.thayers_definition}
+            </div>
+          )}
           {entry.derivation && (
             <p className="mb-1 text-xs text-gray-500">
               <span className="font-semibold">Derivation:</span> {entry.derivation}

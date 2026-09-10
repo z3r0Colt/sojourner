@@ -105,6 +105,12 @@ export function LexiconView() {
               <div className="mb-4 text-sm text-gray-400">pronounced: {entry.pronunciation}</div>
             )}
             <p className="mb-4 text-base leading-relaxed text-gray-800 dark:text-gray-200">{entry.definition}</p>
+            {entry.thayers_definition && (
+              <div className="mb-4 rounded border-l-2 border-gray-200 bg-gray-50 p-3 text-sm leading-relaxed text-gray-700 dark:border-gray-700 dark:bg-gray-900/50 dark:text-gray-300">
+                <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-400">Thayer's Greek-English Lexicon</div>
+                {entry.thayers_definition}
+              </div>
+            )}
             {entry.derivation && (
               <p className="mb-2 text-sm text-gray-600 dark:text-gray-400">
                 <span className="font-semibold">Derivation:</span> {entry.derivation}
