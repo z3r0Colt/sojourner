@@ -312,6 +312,7 @@ export interface StrongsEntry {
   definition: string;
   derivation: string | null;
   kjv_usage: string | null;
+  thayers_definition: string | null;
 }
 
 export interface DictionaryEntry {

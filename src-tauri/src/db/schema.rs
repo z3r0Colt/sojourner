@@ -482,12 +482,26 @@ pub const CONTENT_MIGRATION_0005: &str = r#"
 ALTER TABLE westminster_commentary_sources ADD COLUMN document_code TEXT;
 "#;
 
+// Thayer's Greek-English Lexicon of the New Testament entries, keyed by the
+// same Strong's Greek id used throughout the app (strongs_entries.id) so the
+// lexicon popup/view can show it alongside (not instead of) the terser
+// Strong's gloss -- Thayer's is the much longer, scholarly definition.
+// One row per Strong's number; no FOREIGN KEY needed since both tables live
+// in content.db and are populated by the same reference import pass.
+pub const CONTENT_MIGRATION_0006: &str = r#"
+CREATE TABLE thayers_entries (
+  strongs_id  TEXT PRIMARY KEY,
+  definition  TEXT NOT NULL
+);
+"#;
+
 pub const CONTENT_MIGRATIONS: &[&str] = &[
     CONTENT_MIGRATION_0001,
     CONTENT_MIGRATION_0002,
     CONTENT_MIGRATION_0003,
     CONTENT_MIGRATION_0004,
     CONTENT_MIGRATION_0005,
+    CONTENT_MIGRATION_0006,
 ];
 
 pub const USER_MIGRATION_0001: &str = r#"

@@ -174,6 +174,7 @@ pub struct StrongsEntry {
     pub definition: String,
     pub derivation: Option<String>,
     pub kjv_usage: Option<String>,
+    pub thayers_definition: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]

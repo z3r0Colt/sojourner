@@ -13,16 +13,17 @@ fn map_strongs(r: &rusqlite::Row) -> rusqlite::Result<StrongsEntry> {
         definition: r.get(6)?,
         derivation: r.get(7)?,
         kjv_usage: r.get(8)?,
+        thayers_definition: r.get(9)?,
     })
 }
 
-const STRONGS_COLS: &str =
-    "id, language, original_word, transliteration, pronunciation, short_definition, definition, derivation, kjv_usage";
+const STRONGS_COLS: &str = "se.id, se.language, se.original_word, se.transliteration, se.pronunciation, se.short_definition, se.definition, se.derivation, se.kjv_usage, th.definition";
+const STRONGS_FROM: &str = "FROM strongs_entries se LEFT JOIN thayers_entries th ON th.strongs_id = se.id";
 
 pub fn get_strongs_entry(conn: &Connection, id: &str) -> anyhow::Result<Option<StrongsEntry>> {
     Ok(conn
         .query_row(
-            &format!("SELECT {STRONGS_COLS} FROM strongs_entries WHERE id = ?1"),
+            &format!("SELECT {STRONGS_COLS} {STRONGS_FROM} WHERE se.id = ?1"),
             params![id],
             map_strongs,
         )
@@ -34,7 +35,7 @@ pub fn get_strongs_entries(conn: &Connection, ids: &[String]) -> anyhow::Result<
         return Ok(vec![]);
     }
     let placeholders = ids.iter().map(|_| "?").collect::<Vec<_>>().join(",");
-    let sql = format!("SELECT {STRONGS_COLS} FROM strongs_entries WHERE id IN ({placeholders})");
+    let sql = format!("SELECT {STRONGS_COLS} {STRONGS_FROM} WHERE se.id IN ({placeholders})");
     let mut stmt = conn.prepare(&sql)?;
     let param_refs: Vec<&dyn rusqlite::ToSql> = ids.iter().map(|s| s as &dyn rusqlite::ToSql).collect();
     let rows = stmt.query_map(param_refs.as_slice(), map_strongs)?;
@@ -52,8 +53,8 @@ pub fn search_strongs(conn: &Connection, query: &str, language: Option<&str>, li
         .join(" ");
     let lang_clause = if language.is_some() { "AND se.language = ?3" } else { "" };
     let sql = format!(
-        "SELECT se.id, se.language, se.original_word, se.transliteration, se.pronunciation, se.short_definition, se.definition, se.derivation, se.kjv_usage
-         FROM strongs_fts f JOIN strongs_entries se ON se.rowid = f.rowid
+        "SELECT {STRONGS_COLS}
+         FROM strongs_fts f JOIN strongs_entries se ON se.rowid = f.rowid LEFT JOIN thayers_entries th ON th.strongs_id = se.id
          WHERE f MATCH ?1 {lang_clause}
          ORDER BY bm25(f) LIMIT ?2"
     );
