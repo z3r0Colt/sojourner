@@ -44,6 +44,7 @@ import type {
   ResourcePassageLink,
   ResourceLink,
   ResourceSearchResult,
+  BulkImportOutcome,
 } from "./types";
 
 export const api = {
@@ -185,6 +186,7 @@ export const api = {
   getResourceText: (id: number) => invoke<string | null>("get_resource_text", { id }),
   addResource: (sourcePath: string, title: string, author?: string) =>
     invoke<Resource>("add_resource", { sourcePath, title, author: author ?? null }),
+  bulkImportResources: (folderPath: string) => invoke<BulkImportOutcome>("bulk_import_resources", { folderPath }),
   deleteResource: (id: number) => invoke<void>("delete_resource", { id }),
   searchResources: (query: string, limit = 50) => invoke<ResourceSearchResult[]>("search_resources", { query, limit }),
 

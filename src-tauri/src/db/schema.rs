@@ -470,8 +470,25 @@ CREATE TABLE red_letter_ranges (
 CREATE INDEX idx_red_letter_lookup ON red_letter_ranges(book_id, chapter);
 "#;
 
-pub const CONTENT_MIGRATIONS: &[&str] =
-    &[CONTENT_MIGRATION_0001, CONTENT_MIGRATION_0002, CONTENT_MIGRATION_0003, CONTENT_MIGRATION_0004];
+// A commentary on one of the three Westminster Standards is scoped to
+// whichever of them it comments on -- Hodge and Shaw both comment on the WCF
+// (33 chapters), Vincent on the WSC (107 questions) -- so the numbering in
+// westminster_commentary_entries.chapter only means the same thing as
+// another source's numbering when both share a document_code. Without this,
+// the UI has no way to know Vincent's "chapter 5" is WSC Question 5, not
+// WCF Chapter 5, and could offer it as a commentary option on the wrong
+// document entirely.
+pub const CONTENT_MIGRATION_0005: &str = r#"
+ALTER TABLE westminster_commentary_sources ADD COLUMN document_code TEXT;
+"#;
+
+pub const CONTENT_MIGRATIONS: &[&str] = &[
+    CONTENT_MIGRATION_0001,
+    CONTENT_MIGRATION_0002,
+    CONTENT_MIGRATION_0003,
+    CONTENT_MIGRATION_0004,
+    CONTENT_MIGRATION_0005,
+];
 
 pub const USER_MIGRATION_0001: &str = r#"
 CREATE TABLE highlights (

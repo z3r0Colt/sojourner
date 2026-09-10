@@ -634,6 +634,14 @@ export function useSetBackupSyncFolder() {
   });
 }
 
+export function useBulkImportResources() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: api.bulkImportResources,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["resources"] }),
+  });
+}
+
 export function useHarmonySections() {
   return useQuery({ queryKey: ["harmonySections"], queryFn: api.listHarmonySections, staleTime: Infinity });
 }

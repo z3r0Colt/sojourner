@@ -2,6 +2,7 @@ use crate::db::queries::resources as queries;
 use crate::db::DbState;
 use crate::error::AppResult;
 use crate::models::{Resource, ResourceLink, ResourcePassageLink, ResourceSearchResult};
+use crate::resources::BulkImportOutcome;
 use crate::{paths, resources};
 use std::path::PathBuf;
 use tauri::{AppHandle, State};
@@ -61,6 +62,17 @@ pub fn add_resource(
         &dest_path.display().to_string(),
         extracted.as_deref(),
     )?)
+}
+
+/// Recursively imports every epub/pdf/mobi/video/audio file under a
+/// user-chosen folder as a Resource (title from file name, author from its
+/// immediate parent folder) -- for a personal library organized as
+/// `Author/Book.epub`, adding it all at once rather than one file at a time.
+#[tauri::command]
+pub fn bulk_import_resources(app: AppHandle, db: State<DbState>, folder_path: String) -> AppResult<BulkImportOutcome> {
+    let dest_dir = paths::resources_dir(&app).ok_or_else(|| anyhow::anyhow!("could not resolve resources directory"))?;
+    let conn = db.0.lock().unwrap();
+    Ok(resources::import_folder(&conn, &dest_dir, &PathBuf::from(folder_path), &[])?)
 }
 
 #[tauri::command]

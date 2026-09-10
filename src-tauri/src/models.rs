@@ -249,6 +249,7 @@ pub struct WestminsterCommentarySource {
     pub code: String,
     pub title: String,
     pub author: Option<String>,
+    pub document_code: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]

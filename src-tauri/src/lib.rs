@@ -6,7 +6,7 @@ mod error;
 pub mod import;
 pub mod models;
 pub mod paths;
-mod resources;
+pub mod resources;
 
 use db::DbState;
 use std::path::PathBuf;
@@ -182,6 +182,7 @@ pub fn run() {
             commands::resources::get_resource,
             commands::resources::get_resource_text,
             commands::resources::add_resource,
+            commands::resources::bulk_import_resources,
             commands::resources::delete_resource,
             commands::resources::search_resources,
             commands::resources::list_resource_passage_links_for_chapter,

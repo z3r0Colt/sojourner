@@ -19,6 +19,16 @@ function parseChapterHeading(heading: string): { chapter: number; section: numbe
   return m ? { chapter: Number(m[1]), section: Number(m[2]) } : null;
 }
 
+// WLC/WSC section headings are formatted "Question N" by the same importer.
+// There's no sub-section number to a catechism question, so `section` is a
+// value no real commentary entry will ever match (Vincent's are all
+// section-less) -- it only exists so this can share CommentaryPanel's props
+// with the WCF chapter/section case.
+function parseQuestionHeading(heading: string): { chapter: number; section: number } | null {
+  const m = heading.match(/^Question (\d+)$/);
+  return m ? { chapter: Number(m[1]), section: -1 } : null;
+}
+
 export function WestminsterView() {
   const { docCode, sectionId: sectionIdParam } = useParams();
   const navigate = useNavigate();
@@ -61,14 +71,24 @@ export function WestminsterView() {
   const prev = idx > 0 ? sections?.[idx - 1] : null;
   const next = sections && idx >= 0 && idx < sections.length - 1 ? sections[idx + 1] : null;
 
-  const chapterRef = section && doc?.code === "wcf" ? parseChapterHeading(section.heading) : null;
-  const { data: commentarySources } = useWestminsterCommentarySources();
+  const chapterRef =
+    section && doc?.code === "wcf"
+      ? parseChapterHeading(section.heading)
+      : section && (doc?.code === "wsc" || doc?.code === "wlc")
+        ? parseQuestionHeading(section.heading)
+        : null;
+  const { data: allCommentarySources } = useWestminsterCommentarySources();
+  const commentarySources = useMemo(
+    () => allCommentarySources?.filter((s) => s.document_code === doc?.code) ?? [],
+    [allCommentarySources, doc?.code],
+  );
   const [commentarySourceId, setCommentarySourceId] = useState<number | null>(null);
   useEffect(() => {
-    if (commentarySourceId == null && commentarySources && commentarySources.length > 0) {
-      setCommentarySourceId(commentarySources[0].id);
-    }
-  }, [commentarySources, commentarySourceId]);
+    // Reset to the new document's first source (or none) whenever the
+    // available sources change -- otherwise switching from WCF to WSC would
+    // keep Hodge selected while showing Vincent's questions underneath it.
+    setCommentarySourceId(commentarySources.length > 0 ? commentarySources[0].id : null);
+  }, [commentarySources]);
 
   function renderBody(text: string) {
     const parts = text.split(/(\[\d+\])/g);
