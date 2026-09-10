@@ -61,6 +61,14 @@ using (var conn = db.OpenConnection())
     int blockCount = MatthewHenryImporter.ImportRomans(conn, mhcPath, MaxVerseForChapter);
     Console.WriteLine($"  Romans: {blockCount} commentary blocks.");
 
+    Console.WriteLine();
+    Console.WriteLine("== Strong's Dictionary (stands in for Thayer's/BDB -- see importer's own comment) ==");
+    string strongsDir = Path.Combine(repoRoot, "reference", "strongs");
+    int greekCount = LexiconImporter.ImportGreek(conn, Path.Combine(strongsDir, "greek.xml"));
+    Console.WriteLine($"  Greek: {greekCount} entries.");
+    int hebrewCount = LexiconImporter.ImportHebrew(conn, Path.Combine(strongsDir, "hebrew.xml"));
+    Console.WriteLine($"  Hebrew: {hebrewCount} entries.");
+
     conn.Execute("COMMIT;");
 }
 

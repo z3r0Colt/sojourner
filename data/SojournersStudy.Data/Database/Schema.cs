@@ -107,5 +107,21 @@ internal static class Schema
             created_at TEXT NOT NULL,
             updated_at TEXT NOT NULL
         );
+
+        -- The architecture doc calls for Thayer's/BDB lexicon flyouts on
+        -- interlinear words, but no clean public-domain Thayer's/BDB text
+        -- was sourced this session. Strong's Dictionary (reference/strongs/
+        -- greek.xml, hebrew.xml -- James Strong, 1890/1894, public domain)
+        -- is real, clean, structured lexicon data keyed by the same
+        -- strongs_number already on Original_Texts, so it fills the same
+        -- functional need honestly labeled as what it actually is.
+        CREATE TABLE IF NOT EXISTS Lexicon_Entries (
+            strongs_id TEXT PRIMARY KEY,
+            original_word TEXT NOT NULL,
+            transliteration TEXT,
+            pronunciation TEXT,
+            definition TEXT NOT NULL,
+            kjv_usage TEXT
+        );
         """;
 }

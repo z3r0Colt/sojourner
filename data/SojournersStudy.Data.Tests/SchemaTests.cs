@@ -289,4 +289,31 @@ public sealed class SchemaTests : IDisposable
         Assert.Equal("Grace Abounding (revised)", updated!.Title);
         Assert.Single(SermonRepository.GetAllSermons(conn));
     }
+
+    [Fact]
+    public void Lexicon_entry_round_trips_and_upserts_by_strongs_id()
+    {
+        using var conn = _db.OpenConnection();
+        LexiconRepository.UpsertEntry(conn, new LexiconEntry
+        {
+            StrongsId = "G26",
+            OriginalWord = "ἀγάπη",
+            Transliteration = "agápē",
+            Pronunciation = "ag-ah'-pay",
+            Definition = "love, i.e. affection or benevolence",
+            KjvUsage = "charity, dear, love",
+        });
+
+        LexiconEntry? fetched = LexiconRepository.GetEntry(conn, "G26");
+        Assert.NotNull(fetched);
+        Assert.Equal("ἀγάπη", fetched!.OriginalWord);
+
+        LexiconRepository.UpsertEntry(conn, new LexiconEntry
+        {
+            StrongsId = "G26",
+            OriginalWord = "ἀγάπη",
+            Definition = "updated definition",
+        });
+        Assert.Equal("updated definition", LexiconRepository.GetEntry(conn, "G26")!.Definition);
+    }
 }
