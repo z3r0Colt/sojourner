@@ -109,3 +109,22 @@ mark.underline-only {
   pointer-events: none;
   color: rgb(156 163 175);
 }
+
+/* Printing (ReadingView's "Print" button) shows only the chapter text --
+   everything else (nav, side panels, popups, the app's own chrome) is
+   irrelevant on paper. */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #print-chapter,
+  #print-chapter * {
+    visibility: visible;
+  }
+  #print-chapter {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+}

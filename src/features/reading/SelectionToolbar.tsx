@@ -6,6 +6,7 @@ export function SelectionToolbar({
   onPickColor,
   onUnderline,
   onAddNote,
+  onCopy,
   onClose,
 }: {
   x: number;
@@ -13,6 +14,7 @@ export function SelectionToolbar({
   onPickColor: (color: string) => void;
   onUnderline: (color: string) => void;
   onAddNote: () => void;
+  onCopy?: () => void;
   onClose: () => void;
 }) {
   return (
@@ -44,6 +46,15 @@ export function SelectionToolbar({
       >
         Note
       </button>
+      {onCopy && (
+        <button
+          className="rounded px-2 py-1 text-xs text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+          onClick={onCopy}
+          title="Copy with reference"
+        >
+          Copy
+        </button>
+      )}
       <button
         className="rounded px-2 py-1 text-xs text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
         onClick={onClose}

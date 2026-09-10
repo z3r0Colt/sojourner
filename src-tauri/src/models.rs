@@ -419,6 +419,12 @@ pub struct ReadingPlanProgress {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RedLetterRange {
+    pub verse_start: i64,
+    pub verse_end: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HarmonyReading {
     pub book_id: i64,
     pub chapter_start: i64,

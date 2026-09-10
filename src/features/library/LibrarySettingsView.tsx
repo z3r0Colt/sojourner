@@ -27,6 +27,10 @@ export function LibrarySettingsView() {
     toggleShowMorphology,
     sermonAudioApiKey,
     setSermonAudioApiKey,
+    redLetterMode,
+    toggleRedLetterMode,
+    paragraphMode,
+    toggleParagraphMode,
   } = useUiStore();
 
   function refreshLibrary() {
@@ -178,6 +182,14 @@ export function LibrarySettingsView() {
           <label className="flex items-center gap-2">
             <input type="checkbox" checked={showMorphology} onChange={toggleShowMorphology} />
             Show morphological codes (interlinear)
+          </label>
+          <label className="flex items-center gap-2">
+            <input type="checkbox" checked={redLetterMode} onChange={toggleRedLetterMode} />
+            Red-letter (words of Jesus)
+          </label>
+          <label className="flex items-center gap-2">
+            <input type="checkbox" checked={paragraphMode} onChange={toggleParagraphMode} />
+            Paragraph mode (flowing text instead of one verse per line)
           </label>
         </div>
       </div>

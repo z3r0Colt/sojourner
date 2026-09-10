@@ -24,6 +24,7 @@ import type {
   ReadingPlanDay,
   ReadingPlanProgress,
   HarmonySection,
+  RedLetterRange,
   DictionaryEntry,
   DictionaryEntrySummary,
   InterlinearWord,
@@ -320,4 +321,7 @@ export const api = {
     invoke<ReadingPlanProgress>("unmark_reading_plan_day", { planCode, dayNumber }),
 
   listHarmonySections: () => invoke<HarmonySection[]>("list_harmony_sections"),
+
+  getRedLetterRanges: (bookId: number, chapter: number) =>
+    invoke<RedLetterRange[]>("get_red_letter_ranges", { bookId, chapter }),
 };

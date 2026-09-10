@@ -226,6 +226,11 @@ export interface ReadingPlanProgress {
   created_at: string;
 }
 
+export interface RedLetterRange {
+  verse_start: number;
+  verse_end: number;
+}
+
 export interface HarmonyReading {
   book_id: number;
   chapter_start: number;

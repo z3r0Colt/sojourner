@@ -584,4 +584,13 @@ export function useHarmonySections() {
   return useQuery({ queryKey: ["harmonySections"], queryFn: api.listHarmonySections, staleTime: Infinity });
 }
 
+export function useRedLetterRanges(bookId: number | null, chapter: number | null) {
+  return useQuery({
+    queryKey: ["redLetterRanges", bookId, chapter],
+    queryFn: () => api.getRedLetterRanges(bookId!, chapter!),
+    enabled: bookId != null && chapter != null,
+    staleTime: Infinity,
+  });
+}
+
 export type { Verse };

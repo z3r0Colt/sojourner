@@ -9,6 +9,7 @@ pub mod prayer_journal;
 pub mod reading_position;
 pub mod psalter;
 pub mod reading_plans;
+pub mod red_letter;
 pub mod reference;
 pub mod resources;
 pub mod scripture_memory;
