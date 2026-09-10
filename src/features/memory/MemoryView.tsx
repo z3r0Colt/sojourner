@@ -47,6 +47,8 @@ export function MemoryView() {
 
   const [practicing, setPracticing] = useState(false);
   const [queue, setQueue] = useState<MemoryVerse[]>([]);
+  const [history, setHistory] = useState<MemoryVerse[]>([]);
+  const [sessionSet, setSessionSet] = useState<MemoryVerse[]>([]);
   const [reference, setReference] = useState("");
   const [newMode, setNewMode] = useState<MemoryMode>("first-letter");
   const [error, setError] = useState<string | null>(null);
@@ -63,16 +65,39 @@ export function MemoryView() {
 
   function startPractice() {
     if (!due || due.length === 0) return;
+    setSessionSet(due);
     setQueue(due);
+    setHistory([]);
+    setPracticing(true);
+  }
+
+  function practiceOne(v: MemoryVerse) {
+    setSessionSet([v]);
+    setQueue([v]);
+    setHistory([]);
     setPracticing(true);
   }
 
   function nextCard() {
     setQueue((q) => {
-      const rest = q.slice(1);
-      if (rest.length === 0) setPracticing(false);
+      const [done, ...rest] = q;
+      if (done) setHistory((h) => [...h, done]);
       return rest;
     });
+  }
+
+  function previousCard() {
+    setHistory((h) => {
+      if (h.length === 0) return h;
+      const last = h[h.length - 1];
+      setQueue((q) => [last, ...q]);
+      return h.slice(0, -1);
+    });
+  }
+
+  function replaySession() {
+    setQueue(sessionSet);
+    setHistory([]);
   }
 
   function addVerse() {
@@ -98,12 +123,46 @@ export function MemoryView() {
       <div className="mx-auto max-w-3xl px-6 py-10">
         <div className="mb-4 flex items-center justify-between">
           <h1 className="text-xl font-semibold">Practice</h1>
-          <button onClick={() => setPracticing(false)} className="text-sm text-gray-400 hover:underline">
-            Stop
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={previousCard}
+              disabled={history.length === 0}
+              className="text-sm text-gray-400 hover:underline disabled:opacity-30 disabled:hover:no-underline"
+            >
+              ← Back
+            </button>
+            <button onClick={() => setPracticing(false)} className="text-sm text-gray-400 hover:underline">
+              Stop
+            </button>
+          </div>
         </div>
         <p className="mb-4 text-xs text-gray-400">{queue.length} card{queue.length === 1 ? "" : "s"} remaining</p>
         <MemoryPracticeCard key={queue[0].id} card={queue[0]} onDone={nextCard} />
+      </div>
+    );
+  }
+
+  if (practicing && queue.length === 0) {
+    return (
+      <div className="mx-auto max-w-3xl px-6 py-10 text-center">
+        <h1 className="mb-2 text-xl font-semibold">Session complete 🎉</h1>
+        <p className="mb-6 text-sm text-gray-400">
+          You reviewed {sessionSet.length} verse{sessionSet.length === 1 ? "" : "s"}.
+        </p>
+        <div className="flex justify-center gap-3">
+          <button
+            onClick={replaySession}
+            className="rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700"
+          >
+            Practice again
+          </button>
+          <button
+            onClick={() => setPracticing(false)}
+            className="rounded border border-gray-300 px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+          >
+            Done
+          </button>
+        </div>
       </div>
     );
   }
@@ -184,6 +243,13 @@ export function MemoryView() {
               </span>
             </div>
             <div className="flex items-center gap-3">
+              <button
+                onClick={() => practiceOne(v)}
+                className="rounded border border-blue-300 px-2 py-1 text-xs text-blue-700 hover:bg-blue-50 dark:border-blue-700 dark:text-blue-300 dark:hover:bg-blue-950/40"
+                title="Practice this verse"
+              >
+                ▶ Practice
+              </button>
               <select
                 value={v.mode}
                 onChange={(e) => setMode.mutate({ id: v.id, mode: e.target.value as MemoryMode })}
