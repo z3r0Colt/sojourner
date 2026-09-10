@@ -849,10 +849,39 @@ CREATE TABLE prayer_list_people (
 CREATE INDEX idx_prayer_list_people_active ON prayer_list_people(active);
 "#;
 
+pub const USER_MIGRATION_0006: &str = r#"
+-- Scripture Memory gets a third practice mode: typing the verse from memory
+-- rather than only being shown a masked version of it. SQLite can't widen a
+-- CHECK constraint in place, so the table is rebuilt with the extended list;
+-- `PRAGMA foreign_keys=OFF` isn't needed here (no FK on this table) but the
+-- rebuild-copy-drop-rename sequence is the standard way to change a CHECK.
+CREATE TABLE memory_verses_new (
+  id            INTEGER PRIMARY KEY,
+  book_id       INTEGER NOT NULL,
+  chapter       INTEGER NOT NULL,
+  verse_start   INTEGER NOT NULL,
+  verse_end     INTEGER NOT NULL,
+  translation_id INTEGER,
+  mode          TEXT NOT NULL DEFAULT 'first-letter' CHECK(mode IN ('first-letter','blank-word','type-it')),
+  ease_factor   REAL NOT NULL DEFAULT 2.5,
+  interval_days INTEGER NOT NULL DEFAULT 0,
+  repetitions   INTEGER NOT NULL DEFAULT 0,
+  due_at        TEXT NOT NULL,
+  last_reviewed_at TEXT,
+  created_at    TEXT NOT NULL,
+  UNIQUE(book_id, chapter, verse_start, verse_end, translation_id)
+);
+INSERT INTO memory_verses_new SELECT * FROM memory_verses;
+DROP TABLE memory_verses;
+ALTER TABLE memory_verses_new RENAME TO memory_verses;
+CREATE INDEX idx_memory_verses_due ON memory_verses(due_at);
+"#;
+
 pub const USER_MIGRATIONS: &[&str] = &[
     USER_MIGRATION_0001,
     USER_MIGRATION_0002,
     USER_MIGRATION_0003,
     USER_MIGRATION_0004,
     USER_MIGRATION_0005,
+    USER_MIGRATION_0006,
 ];

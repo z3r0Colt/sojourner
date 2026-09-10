@@ -9,7 +9,32 @@ import {
 } from "../../api/queries";
 import { buildBookLookup, parseReference } from "../../hooks/useReferenceParser";
 import { MemoryPracticeCard } from "./MemoryPracticeCard";
-import type { MemoryVerse } from "../../api/types";
+import type { MemoryMode, MemoryVerse } from "../../api/types";
+
+const MODE_LABELS: Record<MemoryMode, string> = {
+  "first-letter": "First letter",
+  "blank-word": "Blank word",
+  "type-it": "Type it",
+};
+
+/** Counts consecutive calendar days with at least one review, working
+ * backward from today (a day is still "current" if the streak's last day
+ * was yesterday -- it isn't broken until a full day passes with no review). */
+function computeStreak(reviewDates: string[]): number {
+  const days = new Set(reviewDates.map((d) => new Date(d).toDateString()));
+  if (days.size === 0) return 0;
+  let streak = 0;
+  const cursor = new Date();
+  if (!days.has(cursor.toDateString())) {
+    cursor.setDate(cursor.getDate() - 1);
+    if (!days.has(cursor.toDateString())) return 0;
+  }
+  while (days.has(cursor.toDateString())) {
+    streak++;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  return streak;
+}
 
 export function MemoryView() {
   const { data: books } = useBooks();
@@ -23,8 +48,14 @@ export function MemoryView() {
   const [practicing, setPracticing] = useState(false);
   const [queue, setQueue] = useState<MemoryVerse[]>([]);
   const [reference, setReference] = useState("");
-  const [newMode, setNewMode] = useState<"first-letter" | "blank-word">("first-letter");
+  const [newMode, setNewMode] = useState<MemoryMode>("first-letter");
   const [error, setError] = useState<string | null>(null);
+
+  const streak = useMemo(
+    () => computeStreak((all ?? []).map((v) => v.last_reviewed_at).filter((d): d is string => d != null)),
+    [all],
+  );
+  const mastered = (all ?? []).filter((v) => v.repetitions >= 5).length;
 
   function bookName(id: number) {
     return books?.find((b) => b.id === id)?.name ?? `#${id}`;
@@ -90,6 +121,21 @@ export function MemoryView() {
         </button>
       </div>
 
+      <div className="mb-6 flex gap-4 rounded border border-gray-200 p-3 text-center text-sm dark:border-gray-800">
+        <div className="flex-1">
+          <div className="text-xl font-semibold">{streak}</div>
+          <div className="text-xs text-gray-400">day streak{streak > 0 ? " 🔥" : ""}</div>
+        </div>
+        <div className="flex-1 border-l border-gray-200 dark:border-gray-800">
+          <div className="text-xl font-semibold">{all?.length ?? 0}</div>
+          <div className="text-xs text-gray-400">verses memorized</div>
+        </div>
+        <div className="flex-1 border-l border-gray-200 dark:border-gray-800">
+          <div className="text-xl font-semibold">{mastered}</div>
+          <div className="text-xs text-gray-400">mastered (5+ reps)</div>
+        </div>
+      </div>
+
       <div className="mb-6 flex flex-wrap items-end gap-2 rounded border border-gray-200 p-3 dark:border-gray-800">
         <label className="flex-1">
           <span className="mb-1 block text-xs font-semibold text-gray-500">Add a verse</span>
@@ -105,11 +151,14 @@ export function MemoryView() {
           <span className="mb-1 block text-xs font-semibold text-gray-500">Mode</span>
           <select
             value={newMode}
-            onChange={(e) => setNewMode(e.target.value as "first-letter" | "blank-word")}
+            onChange={(e) => setNewMode(e.target.value as MemoryMode)}
             className="rounded border border-gray-300 px-2 py-1.5 text-sm dark:border-gray-700 dark:bg-gray-950"
           >
-            <option value="first-letter">First letter</option>
-            <option value="blank-word">Blank word</option>
+            {(Object.keys(MODE_LABELS) as MemoryMode[]).map((m) => (
+              <option key={m} value={m}>
+                {MODE_LABELS[m]}
+              </option>
+            ))}
           </select>
         </label>
         <button onClick={addVerse} className="rounded bg-blue-600 px-3 py-1.5 text-sm text-white hover:bg-blue-700">
@@ -137,11 +186,14 @@ export function MemoryView() {
             <div className="flex items-center gap-3">
               <select
                 value={v.mode}
-                onChange={(e) => setMode.mutate({ id: v.id, mode: e.target.value as "first-letter" | "blank-word" })}
+                onChange={(e) => setMode.mutate({ id: v.id, mode: e.target.value as MemoryMode })}
                 className="rounded border border-gray-300 px-1.5 py-1 text-xs dark:border-gray-700 dark:bg-gray-950"
               >
-                <option value="first-letter">First letter</option>
-                <option value="blank-word">Blank word</option>
+                {(Object.keys(MODE_LABELS) as MemoryMode[]).map((m) => (
+                  <option key={m} value={m}>
+                    {MODE_LABELS[m]}
+                  </option>
+                ))}
               </select>
               <button onClick={() => deleteVerse.mutate(v.id)} className="text-xs text-gray-400 hover:underline">
                 Delete

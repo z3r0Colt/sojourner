@@ -21,3 +21,41 @@ export function blankWordHint(text: string): string {
 export function applyMemoryMode(text: string, mode: "first-letter" | "blank-word"): string {
   return mode === "first-letter" ? firstLetterHint(text) : blankWordHint(text);
 }
+
+function normalizeWord(w: string): string {
+  return w.toLowerCase().replace(/[^a-z0-9']/g, "");
+}
+
+export interface WordDiffToken {
+  word: string;
+  status: "correct" | "wrong" | "missing";
+}
+
+/** Word-by-word comparison of what the reader typed against the actual
+ * verse text, for "type-it" mode's recall check. Case and punctuation are
+ * ignored (this checks recall of the words, not exact transcription).
+ * Walks both word lists in lockstep by position rather than doing a real
+ * alignment/diff -- simple, and sufficient for judging "did they recall
+ * this in order," which is what the mode is actually testing. */
+export function diffTyped(actual: string, typed: string): WordDiffToken[] {
+  const actualWords = actual.match(/[A-Za-z0-9']+/g) ?? [];
+  const typedWords = typed.match(/[A-Za-z0-9']+/g) ?? [];
+  const tokens: WordDiffToken[] = [];
+  for (let i = 0; i < actualWords.length; i++) {
+    const a = actualWords[i];
+    const t = typedWords[i];
+    if (t == null) {
+      tokens.push({ word: a, status: "missing" });
+    } else if (normalizeWord(a) === normalizeWord(t)) {
+      tokens.push({ word: a, status: "correct" });
+    } else {
+      tokens.push({ word: a, status: "wrong" });
+    }
+  }
+  return tokens;
+}
+
+export function diffAccuracy(tokens: WordDiffToken[]): number {
+  if (tokens.length === 0) return 1;
+  return tokens.filter((t) => t.status === "correct").length / tokens.length;
+}

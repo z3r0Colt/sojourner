@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { api } from "./client";
-import type { Verse, PrayerEntryMode } from "./types";
+import type { Verse, PrayerEntryMode, MemoryMode } from "./types";
 
 export function useBooks() {
   return useQuery({ queryKey: ["books"], queryFn: api.listBooks, staleTime: Infinity });
@@ -539,7 +539,7 @@ export function useCreateMemoryVerse() {
       verseStart: number;
       verseEnd: number;
       translationId?: number;
-      mode: "first-letter" | "blank-word";
+      mode: MemoryMode;
     }) => api.createMemoryVerse(input.bookId, input.chapter, input.verseStart, input.verseEnd, input.translationId, input.mode),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["memoryVerses"] });
@@ -551,7 +551,7 @@ export function useCreateMemoryVerse() {
 export function useSetMemoryVerseMode() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: { id: number; mode: "first-letter" | "blank-word" }) => api.setMemoryVerseMode(input.id, input.mode),
+    mutationFn: (input: { id: number; mode: MemoryMode }) => api.setMemoryVerseMode(input.id, input.mode),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["memoryVerses"] }),
   });
 }
