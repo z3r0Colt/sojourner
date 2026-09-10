@@ -216,6 +216,7 @@ export function LibrarySettingsView() {
               <option value="system">System</option>
               <option value="light">Light</option>
               <option value="dark">Dark</option>
+              <option value="oled">True Black (OLED)</option>
               <option value="sepia">Sepia</option>
             </select>
           </div>

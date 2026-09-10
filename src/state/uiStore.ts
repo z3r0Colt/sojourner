@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-type Theme = "light" | "dark" | "sepia" | "system";
+export type Theme = "light" | "dark" | "oled" | "sepia" | "system";
 
 interface UiState {
   theme: Theme;

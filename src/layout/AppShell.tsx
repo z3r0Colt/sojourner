@@ -90,7 +90,7 @@ export function AppShell() {
   }, [goBack, goForward]);
 
   return (
-    <div className="flex h-screen flex-col bg-white text-gray-900 dark:bg-gray-950 dark:text-gray-100">
+    <div className="flex h-screen flex-col overflow-hidden bg-white text-gray-900 dark:bg-gray-950 dark:text-gray-100">
       {!distractionFreeMode && (
       <header className="border-b border-gray-200 dark:border-gray-800">
         {/* Row 1: brand, history, chapter nav, translation controls -- always present, never wraps. */}
