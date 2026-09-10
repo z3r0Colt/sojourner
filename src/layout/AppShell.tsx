@@ -208,7 +208,7 @@ export function AppShell() {
       </header>
       )}
 
-      <main className={`min-h-0 flex-1 ${isReading ? "pb-14" : ""}`}>
+      <main className={`min-h-0 flex-1 overflow-y-auto ${isReading ? "pb-14" : ""}`}>
         <Outlet />
       </main>
 
