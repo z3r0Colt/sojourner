@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useNavigationStore } from "../../state/navigationStore";
 import { useUiStore } from "../../state/uiStore";
@@ -39,6 +39,7 @@ import { RichTextEditor } from "../notes/RichTextEditor";
 import { ParallelReadingView } from "./ParallelReadingView";
 import { InterlinearView } from "./InterlinearView";
 import { ParagraphVerses } from "./ParagraphReadingView";
+import { computeRedLetterSpans } from "./redLetterSpans";
 import { SplitPaneView } from "./SplitPaneView";
 import { closestWithAttr, textOffsetWithin } from "../../lib/domOffsets";
 import { copyWithReference } from "../../lib/clipboard";
@@ -102,6 +103,13 @@ export function ReadingView() {
   function isRedLetterVerse(verseNum: number) {
     return !!redLetterRanges?.some((r) => verseNum >= r.verse_start && verseNum <= r.verse_end);
   }
+  // Computed once per chapter (not per row) since quote depth carries across
+  // verses -- see redLetterSpans.ts.
+  const redLetterSpansByVerse = useMemo(
+    () => (redLetterMode && verses ? computeRedLetterSpans(verses, isRedLetterVerse) : null),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [redLetterMode, verses, redLetterRanges],
+  );
   const navigate = useNavigate();
   const createHighlight = useCreateHighlight();
   const deleteHighlight = useDeleteHighlight();
@@ -311,7 +319,7 @@ export function ReadingView() {
               showHighlights={showHighlights}
               showNoteSymbols={showNoteSymbols}
               fontSize={fontSize}
-              isRedLetterVerse={redLetterMode ? isRedLetterVerse : undefined}
+              redLetterSpansByVerse={redLetterSpansByVerse}
               onSelectVerse={setActiveVerse}
               onHighlightClick={(id, x, y) => {
                 const h = highlights?.find((hl) => hl.id === id);
@@ -346,7 +354,7 @@ export function ReadingView() {
                     showHighlights={showHighlights}
                     showNoteSymbols={showNoteSymbols}
                     fontSize={fontSize}
-                    isRedLetter={redLetterMode && isRedLetterVerse(v.verse)}
+                    redLetterSpans={redLetterSpansByVerse?.get(v.verse)}
                     onSelectVerse={setActiveVerse}
                     onHighlightClick={(id, x, y) => {
                       const h = highlights?.find((hl) => hl.id === id);
