@@ -11,7 +11,7 @@ interface UiState {
   showHighlights: boolean;
   showNoteSymbols: boolean;
   showMorphology: boolean;
-  rightPanelTab: "commentary" | "crossrefs" | "metrical" | "split";
+  rightPanelTab: "commentary" | "crossrefs" | "metrical";
   redLetterMode: boolean;
   paragraphMode: boolean;
   distractionFreeMode: boolean;
@@ -23,7 +23,7 @@ interface UiState {
   toggleShowHighlights: () => void;
   toggleShowNoteSymbols: () => void;
   toggleShowMorphology: () => void;
-  setRightPanelTab: (t: "commentary" | "crossrefs" | "metrical" | "split") => void;
+  setRightPanelTab: (t: "commentary" | "crossrefs" | "metrical") => void;
   toggleRedLetterMode: () => void;
   toggleParagraphMode: () => void;
   toggleDistractionFreeMode: () => void;
