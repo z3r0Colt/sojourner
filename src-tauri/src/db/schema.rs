@@ -495,6 +495,16 @@ CREATE TABLE thayers_entries (
 );
 "#;
 
+// Thayer's was originally imported as flat plain text (see migration 0006).
+// The real source data is richly marked up (bold Greek headwords, clickable
+// scripture refs), so it's now rendered the same way commentary_entries is:
+// a small sanitized HTML string for display, plus a plain-text rendition for
+// any future FTS/search use. `definition` is dropped in favor of these two.
+pub const CONTENT_MIGRATION_0007: &str = r#"
+ALTER TABLE thayers_entries RENAME COLUMN definition TO plain_text;
+ALTER TABLE thayers_entries ADD COLUMN html TEXT NOT NULL DEFAULT '';
+"#;
+
 pub const CONTENT_MIGRATIONS: &[&str] = &[
     CONTENT_MIGRATION_0001,
     CONTENT_MIGRATION_0002,
@@ -502,6 +512,7 @@ pub const CONTENT_MIGRATIONS: &[&str] = &[
     CONTENT_MIGRATION_0004,
     CONTENT_MIGRATION_0005,
     CONTENT_MIGRATION_0006,
+    CONTENT_MIGRATION_0007,
 ];
 
 pub const USER_MIGRATION_0001: &str = r#"

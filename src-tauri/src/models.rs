@@ -174,6 +174,8 @@ pub struct StrongsEntry {
     pub definition: String,
     pub derivation: Option<String>,
     pub kjv_usage: Option<String>,
+    /// HTML (small sanitized allow-list, same convention as
+    /// commentary_entries.html -- <b>/<u>/<sup>/<p>/scripref links).
     pub thayers_definition: Option<String>,
 }
 

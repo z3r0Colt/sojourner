@@ -257,7 +257,7 @@ fn find_title(doc: &roxmltree::Document) -> Option<String> {
     })
 }
 
-fn load_book_lookup(conn: &Connection) -> anyhow::Result<HashMap<String, i64>> {
+pub(crate) fn load_book_lookup(conn: &Connection) -> anyhow::Result<HashMap<String, i64>> {
     let mut stmt = conn.prepare("SELECT id, name, short_name, osis_code FROM books")?;
     let rows = stmt.query_map([], |r| {
         Ok((
@@ -296,7 +296,7 @@ fn load_book_lookup(conn: &Connection) -> anyhow::Result<HashMap<String, i64>> {
 /// scripRef's `parsed`/`osisRef` attributes -- e.g. "Gen", "1Cor". Used to
 /// filter out cross-references to OTHER books that happen to appear in a
 /// paragraph (see `collect_verse_refs`).
-fn load_book_osis_codes(conn: &Connection) -> anyhow::Result<HashMap<i64, String>> {
+pub(crate) fn load_book_osis_codes(conn: &Connection) -> anyhow::Result<HashMap<i64, String>> {
     let mut stmt = conn.prepare("SELECT id, osis_code FROM books")?;
     let rows = stmt.query_map([], |r| Ok((r.get::<_, i64>(0)?, r.get::<_, String>(1)?)))?;
     let mut map = HashMap::new();
@@ -307,7 +307,7 @@ fn load_book_osis_codes(conn: &Connection) -> anyhow::Result<HashMap<i64, String
     Ok(map)
 }
 
-fn normalize_book_title(s: &str) -> String {
+pub(crate) fn normalize_book_title(s: &str) -> String {
     let lower = s.trim().to_lowercase();
     let lower = if let Some(rest) = lower.strip_prefix("first ") {
         format!("1 {rest}")

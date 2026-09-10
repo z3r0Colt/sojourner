@@ -2,8 +2,10 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../../api/client";
-import { useStrongsEntry } from "../../api/queries";
+import { useBooks, useStrongsEntry } from "../../api/queries";
 import { ConcordancePanel } from "./ConcordancePanel";
+import { CommentaryHtml } from "../commentary/CommentaryPanel";
+import { useNavigationStore } from "../../state/navigationStore";
 
 export function LexiconView() {
   const { id } = useParams();
@@ -28,6 +30,16 @@ export function LexiconView() {
   });
 
   const { data: entry } = useStrongsEntry(id ?? directIdMatch ?? null);
+  const { data: books } = useBooks();
+  const { goTo } = useNavigationStore();
+
+  function jumpToRef(bookOsisCode: string, chapter: number, verse: number) {
+    const target = books?.find((b) => b.osis_code === bookOsisCode);
+    if (target) {
+      goTo({ bookId: target.id, chapter, verse });
+      navigate("/");
+    }
+  }
 
   return (
     <div className="flex h-full">
@@ -108,7 +120,7 @@ export function LexiconView() {
             {entry.thayers_definition && (
               <div className="mb-4 rounded border-l-2 border-gray-200 bg-gray-50 p-3 text-sm leading-relaxed text-gray-700 dark:border-gray-700 dark:bg-gray-900/50 dark:text-gray-300">
                 <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-400">Thayer's Greek-English Lexicon</div>
-                {entry.thayers_definition}
+                <CommentaryHtml html={entry.thayers_definition} onJumpToRef={jumpToRef} />
               </div>
             )}
             {entry.derivation && (
