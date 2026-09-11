@@ -4,11 +4,12 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import { BookOpenText, MessageSquareText } from "lucide-react";
 import { api } from "../../api/client";
 import { useCommentaryForPassage, useCommentarySources } from "../../api/queries";
-import { useTtsStore } from "../../state/ttsStore";
+import { useTtsReadingHere, useTtsStore } from "../../state/ttsStore";
 import { useReadingTypography } from "../../state/uiStore";
 import { ReadAloudButton } from "../tts/ReadAloudButton";
 import { ReadAloudWords } from "../tts/ReadAloudWords";
 import { PaneLink } from "../../workspace/PaneLink";
+import { usePane } from "../../workspace/PaneContext";
 import type { Book } from "../../api/types";
 import { selectSmClass, cx } from "../../components/ui/classes";
 import { EmptyState, LoadingState } from "../../components/ui/EmptyState";
@@ -42,8 +43,8 @@ export function CommentaryPanel({
   });
 
   const { data: entries, isLoading } = useCommentaryForPassage(sourceId, book.id, chapter);
-  const ttsSourceKind = useTtsStore((s) => s.sourceKind);
-  const ttsCurrentSegmentId = useTtsStore((s) => s.segments[s.currentSegmentIndex]?.id ?? null);
+  const ttsHere = useTtsReadingHere(usePane().id, "commentary");
+  const ttsCurrentSegmentId = useTtsStore((s) => (ttsHere ? (s.segments[s.currentSegmentIndex]?.id ?? null) : null));
   const sourceTitle = sources?.find((s) => s.id === sourceId)?.title ?? "Commentary";
 
   const listRef = useRef<HTMLDivElement>(null);
@@ -126,7 +127,7 @@ export function CommentaryPanel({
                     </button>
                   )}
                   <div className="reading-font text-ink-2" style={typography}>
-                    {ttsSourceKind === "commentary" && ttsCurrentSegmentId === e.id ? (
+                    {ttsHere && ttsCurrentSegmentId === e.id ? (
                       <ReadAloudWords text={e.plain_text} active />
                     ) : (
                       <CommentaryHtml html={e.html} onJumpToRef={onJumpToRef} />

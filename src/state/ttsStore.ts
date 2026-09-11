@@ -25,6 +25,9 @@ interface TtsState {
   // Playback session (not persisted)
   title: string;
   sourceKind: TtsSourceKind | null;
+  /** The pane whose text is being read; null outside any pane. Only one
+   * pane reads at a time -- starting another stops the first. */
+  paneId: string | null;
   segments: TtsSegment[];
   currentSegmentIndex: number;
   currentWordIndex: number;
@@ -40,7 +43,7 @@ interface TtsState {
   setHighlightStyle: (s: TtsHighlightStyle) => void;
   setAutoScroll: (b: boolean) => void;
 
-  start: (title: string, sourceKind: TtsSourceKind, segments: TtsSegment[], startIndex?: number) => void;
+  start: (title: string, sourceKind: TtsSourceKind, segments: TtsSegment[], opts?: { startIndex?: number; paneId?: string | null }) => void;
   pause: () => void;
   resume: () => void;
   stop: () => void;
@@ -111,6 +114,12 @@ function speakCurrentSegment(get: () => TtsState, set: (partial: Partial<TtsStat
   );
 }
 
+/** Whether the read-aloud player is reading `sourceKind` text in pane
+ * `paneId` (null for text outside any pane). */
+export function useTtsReadingHere(paneId: string | null, sourceKind: TtsSourceKind): boolean {
+  return useTtsStore((s) => s.sourceKind === sourceKind && s.paneId === paneId);
+}
+
 export const useTtsStore = create<TtsState>((set, get) => ({
   engineId: stored.engineId ?? "webspeech",
   voiceId: stored.voiceId ?? null,
@@ -123,6 +132,7 @@ export const useTtsStore = create<TtsState>((set, get) => ({
 
   title: "",
   sourceKind: null,
+  paneId: null,
   segments: [],
   currentSegmentIndex: 0,
   currentWordIndex: -1,
@@ -164,11 +174,13 @@ export const useTtsStore = create<TtsState>((set, get) => ({
     set({ autoScroll });
   },
 
-  start: (title, sourceKind, segments, startIndex = 0) => {
+  start: (title, sourceKind, segments, opts) => {
+    const startIndex = opts?.startIndex ?? 0;
     engine().cancel();
     set({
       title,
       sourceKind,
+      paneId: opts?.paneId ?? null,
       segments,
       currentSegmentIndex: Math.min(startIndex, Math.max(segments.length - 1, 0)),
       currentWordIndex: -1,
@@ -186,7 +198,7 @@ export const useTtsStore = create<TtsState>((set, get) => ({
   },
   stop: () => {
     engine().cancel();
-    set({ isPlaying: false, isPaused: false, segments: [], currentSegmentIndex: 0, currentWordIndex: -1, title: "", sourceKind: null });
+    set({ isPlaying: false, isPaused: false, segments: [], currentSegmentIndex: 0, currentWordIndex: -1, title: "", sourceKind: null, paneId: null });
   },
   next: () => {
     const s = get();

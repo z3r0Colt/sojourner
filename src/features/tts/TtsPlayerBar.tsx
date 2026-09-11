@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Pause, Play, Settings2, SkipBack, SkipForward, X } from "lucide-react";
 import { useTtsStore } from "../../state/ttsStore";
+import { useWorkspaceStore } from "../../state/workspaceStore";
 import { ttsEngines, type TtsVoice } from "./ttsEngine";
 import { IconButton, Button } from "../../components/ui/Button";
 import { Popover } from "../../components/ui/Popover";
@@ -137,6 +138,12 @@ export function TtsPlayerBar() {
   const stop = useTtsStore((s) => s.stop);
   const next = useTtsStore((s) => s.next);
   const prev = useTtsStore((s) => s.prev);
+  const paneId = useTtsStore((s) => s.paneId);
+  const paneLabel = useWorkspaceStore((s) => {
+    if (s.panes.length < 2 || paneId == null) return null;
+    const idx = s.panes.findIndex((p) => p.id === paneId);
+    return idx >= 0 ? `Pane ${idx + 1}` : null;
+  });
 
   if (segments.length === 0) return null;
 
@@ -149,6 +156,7 @@ export function TtsPlayerBar() {
         <div className="min-w-0 flex-1">
           <div className="truncate text-sm font-medium text-ink">{title}</div>
           <div className="truncate text-xs text-ink-3">
+            {paneLabel ? `${paneLabel} · ` : ""}
             {currentLabel ? `${currentLabel} · ` : ""}
             {currentSegmentIndex + 1} of {segments.length}
             {error && <span className="text-danger"> · {error}</span>}

@@ -47,7 +47,7 @@ import { computeRedLetterSpans } from "./redLetterSpans";
 import { closestWithAttr, textOffsetWithin } from "../../lib/domOffsets";
 import { copyWithReference } from "../../lib/clipboard";
 import { ReadAloudButton } from "../tts/ReadAloudButton";
-import { useTtsStore } from "../../state/ttsStore";
+import { useTtsReadingHere, useTtsStore } from "../../state/ttsStore";
 import { Button, IconButton } from "../../components/ui/Button";
 import { Popover, PopoverItem, PopoverLabel } from "../../components/ui/Popover";
 import { Modal } from "../../components/ui/Modal";
@@ -217,13 +217,13 @@ export function ReadingPane() {
 
   const setActiveVerse = (v: number | null) => setParams({ activeVerse: v });
 
-  const ttsSourceKind = useTtsStore((s) => s.sourceKind);
-  const ttsCurrentSegmentId = useTtsStore((s) => s.segments[s.currentSegmentIndex]?.id ?? null);
+  const ttsHere = useTtsReadingHere(paneId, "scripture");
+  const ttsCurrentSegmentId = useTtsStore((s) => (ttsHere ? (s.segments[s.currentSegmentIndex]?.id ?? null) : null));
   useEffect(() => {
-    if (ttsSourceKind === "scripture" && typeof ttsCurrentSegmentId === "number") {
+    if (ttsHere && typeof ttsCurrentSegmentId === "number") {
       setParams({ activeVerse: ttsCurrentSegmentId });
     }
-  }, [ttsSourceKind, ttsCurrentSegmentId, setParams]);
+  }, [ttsHere, ttsCurrentSegmentId, setParams]);
 
   // Scroll the target verse into view once verses are loaded. Rows are
   // virtualized, so the target row may not be mounted yet -- ask the
@@ -567,7 +567,7 @@ export function ReadingPane() {
                         verse={v}
                         footnotes={footnotes?.[v.verse]}
                         isActive={activeVerse === v.verse}
-                        ttsActive={ttsSourceKind === "scripture" && ttsCurrentSegmentId === v.verse}
+                        ttsActive={ttsHere && ttsCurrentSegmentId === v.verse}
                         redLetterSpans={redLetterSpansByVerse?.get(v.verse)}
                         {...rowProps}
                       />
