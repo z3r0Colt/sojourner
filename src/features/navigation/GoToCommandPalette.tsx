@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { BookA, BookOpen, History, Languages, ScrollText, type LucideIcon } from "lucide-react";
 import type { Book } from "../../api/types";
-import { useNavigationStore, type Position } from "../../state/navigationStore";
+import { recentPositions, useWorkspaceStore, type Position } from "../../state/workspaceStore";
+import { openContent } from "../../workspace/openContent";
 import { buildBookLookup, parseReference } from "../../hooks/useReferenceParser";
 import { useBookAliases, useTranslationCoverage, useDictionaryIndex, useWestminsterDocuments } from "../../api/queries";
 import { Modal } from "../../components/ui/Modal";
@@ -44,8 +44,7 @@ export function GoToCommandPalette({
   const { data: coverage } = useTranslationCoverage(translationId ?? null);
   const { data: dictionaryIndex } = useDictionaryIndex();
   const { data: westminsterDocs } = useWestminsterDocuments();
-  const history = useNavigationStore((s) => s.history);
-  const navigate = useNavigate();
+  const recent = useWorkspaceStore((s) => recentPositions(s));
   const lookup = useMemo(() => buildBookLookup(books, aliases ?? []), [books, aliases]);
   const trimmed = query.trim();
   const parsed = useMemo(() => (trimmed ? parseReference(query, lookup) : null), [query, lookup, trimmed]);
@@ -62,22 +61,13 @@ export function GoToCommandPalette({
 
   const candidates = useMemo<Candidate[]>(() => {
     if (trimmed === "") {
-      const seen = new Set<string>();
-      const recent: Candidate[] = [];
-      for (let i = history.length - 1; i >= 0 && recent.length < 6; i--) {
-        const p = history[i];
-        const key = `${p.bookId}:${p.chapter}`;
-        if (seen.has(key)) continue;
-        seen.add(key);
-        recent.push({
-          key: `recent-${key}`,
-          icon: History,
-          label: `${bookName(p.bookId)} ${p.chapter}`,
-          hint: "Recently read",
-          run: () => onNavigate({ bookId: p.bookId, chapter: p.chapter }),
-        });
-      }
-      return recent;
+      return recent.map<Candidate>((p) => ({
+        key: `recent-${p.bookId}:${p.chapter}`,
+        icon: History,
+        label: `${bookName(p.bookId)} ${p.chapter}`,
+        hint: "Recently read",
+        run: () => onNavigate({ bookId: p.bookId, chapter: p.chapter }),
+      }));
     }
     if (parsed) {
       return [
@@ -100,7 +90,7 @@ export function GoToCommandPalette({
           label: `Strong's ${id}`,
           hint: "Open in the Lexicon",
           run: () => {
-            navigate(`/lexicon/${id}`);
+            openContent("lexicon", { id });
             onClose();
           },
         },
@@ -117,7 +107,7 @@ export function GoToCommandPalette({
         label: d.term,
         hint: "Dictionary",
         run: () => {
-          navigate(`/dictionary/${d.slug}`);
+          openContent("dictionary", { slug: d.slug });
           onClose();
         },
       }));
@@ -130,13 +120,13 @@ export function GoToCommandPalette({
         label: d.title,
         hint: "Confessions",
         run: () => {
-          navigate(`/westminster/${d.code}`);
+          openContent("westminster", { docCode: d.code });
           onClose();
         },
       }));
     return [...dict, ...docs];
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [trimmed, parsed, isStrongs, notCovered, dictionaryIndex, westminsterDocs, history, translationLabel]);
+  }, [trimmed, parsed, isStrongs, notCovered, dictionaryIndex, westminsterDocs, recent, translationLabel]);
 
   useEffect(() => setSelected(0), [trimmed]);
 

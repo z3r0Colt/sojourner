@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useBooks, useChapter, useReviewMemoryVerse } from "../../api/queries";
-import { useNavigationStore } from "../../state/navigationStore";
+import { useReaderTranslationId } from "../../state/workspaceStore";
 import { useReadingTypography } from "../../state/uiStore";
 import { applyMemoryMode, diffTyped, diffAccuracy } from "./memoryText";
 import { GradeButtons } from "./GradeButtons";
@@ -15,7 +15,7 @@ import { joinVerses } from "../../lib/passage";
  * tried recalling it, then grades their own recall. */
 export function MemoryPracticeCard({ card, onDone }: { card: MemoryVerse; onDone: () => void }) {
   const { data: books } = useBooks();
-  const primaryTranslationId = useNavigationStore((s) => s.primaryTranslationId);
+  const primaryTranslationId = useReaderTranslationId();
   const translationId = card.translation_id ?? primaryTranslationId;
   const { data: verses } = useChapter(translationId, card.book_id, card.chapter);
   const review = useReviewMemoryVerse();

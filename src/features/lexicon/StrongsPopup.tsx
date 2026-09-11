@@ -1,9 +1,9 @@
-import { Link, useNavigate } from "react-router-dom";
 import { X } from "lucide-react";
 import { useBooks, useStrongsEntry } from "../../api/queries";
 import { useViewportClampedPosition } from "../../lib/useViewportClampedPosition";
 import { CommentaryHtml } from "../commentary/CommentaryPanel";
-import { useNavigationStore } from "../../state/navigationStore";
+import { PaneLink as Link } from "../../workspace/PaneLink";
+import { openPassage } from "../../workspace/openContent";
 import { IconButton } from "../../components/ui/Button";
 import { LoadingState } from "../../components/ui/EmptyState";
 
@@ -11,14 +11,11 @@ export function StrongsPopup({ id, x, y, onClose }: { id: string; x: number; y: 
   const { data: entry, isLoading } = useStrongsEntry(id);
   const { ref, style } = useViewportClampedPosition<HTMLDivElement>(x, y);
   const { data: books } = useBooks();
-  const { goTo } = useNavigationStore();
-  const navigate = useNavigate();
 
   function jumpToRef(bookOsisCode: string, chapter: number, verse: number) {
     const target = books?.find((b) => b.osis_code === bookOsisCode);
     if (target) {
-      goTo({ bookId: target.id, chapter, verse });
-      navigate("/");
+      openPassage({ bookId: target.id, chapter, verse });
       onClose();
     }
   }

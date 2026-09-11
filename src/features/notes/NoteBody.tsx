@@ -1,8 +1,8 @@
 import { useMemo } from "react";
-import { useNavigate } from "react-router-dom";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { useBooks } from "../../api/queries";
-import { useNavigationStore } from "../../state/navigationStore";
+import { usePaneNavigate } from "../../workspace/PaneContext";
+import { openPassage, targetFor } from "../../workspace/openContent";
 import { buildRefMatcher, autoLinkScriptureRefs, parseInternalHref } from "../../lib/noteLinks";
 
 /** Renders a note's HTML (from the rich text editor, or legacy plain text),
@@ -10,8 +10,7 @@ import { buildRefMatcher, autoLinkScriptureRefs, parseInternalHref } from "../..
  * internal verse/resource links within the app instead of navigating away. */
 export function NoteBody({ body, className }: { body: string; className?: string }) {
   const { data: books } = useBooks();
-  const goTo = useNavigationStore((s) => s.goTo);
-  const navigate = useNavigate();
+  const navigate = usePaneNavigate();
   const matcher = useMemo(() => (books && books.length > 0 ? buildRefMatcher(books) : null), [books]);
   const html = useMemo(() => autoLinkScriptureRefs(body, matcher), [body, matcher]);
 
@@ -22,14 +21,20 @@ export function NoteBody({ body, className }: { body: string; className?: string
     const href = link.getAttribute("href") ?? "";
     const internal = parseInternalHref(href);
     if (internal?.kind === "verse") {
-      goTo({ bookId: internal.bookId, chapter: internal.chapter, verse: internal.verse });
-      navigate("/");
+      openPassage({ bookId: internal.bookId, chapter: internal.chapter, verse: internal.verse }, { target: targetFor(e) });
     } else if (internal?.kind === "resource") {
-      navigate(`/resources/${internal.id}`);
+      navigate(`/resources/${internal.id}`, e);
     } else if (/^https?:\/\//.test(href)) {
       openUrl(href).catch(() => {});
     }
   }
 
-  return <span className={`note-html ${className ?? ""}`} onClick={handleClick} dangerouslySetInnerHTML={{ __html: html }} />;
+  return (
+    <span
+      className={`note-html ${className ?? ""}`}
+      onClick={handleClick}
+      onAuxClick={(e) => e.button === 1 && handleClick(e)}
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
+  );
 }

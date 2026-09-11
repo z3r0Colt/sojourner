@@ -1,6 +1,7 @@
 import { Bookmark, BookmarkCheck, BookmarkPlus, Trash2 } from "lucide-react";
 import { useBookmarks, useBooks, useCreateBookmark, useDeleteBookmark } from "../../api/queries";
-import { useNavigationStore } from "../../state/navigationStore";
+import { usePane } from "../../workspace/PaneContext";
+import { openPassage, targetFor } from "../../workspace/openContent";
 import { IconButton } from "../../components/ui/Button";
 import { Popover, PopoverItem, PopoverLabel } from "../../components/ui/Popover";
 import { toast } from "../../components/ui/toast";
@@ -14,7 +15,7 @@ export function BookmarksMenu({ bookId, chapter, activeVerse }: { bookId: number
   const { data: books } = useBooks();
   const createBookmark = useCreateBookmark();
   const deleteBookmark = useDeleteBookmark();
-  const goTo = useNavigationStore((s) => s.goTo);
+  const { id: paneId } = usePane();
 
   function bookName(id: number) {
     return books?.find((b) => b.id === id)?.name ?? `#${id}`;
@@ -75,8 +76,8 @@ export function BookmarksMenu({ bookId, chapter, activeVerse }: { bookId: number
               <li key={b.id} className="group flex items-center">
                 <button
                   type="button"
-                  onClick={() => {
-                    goTo({ bookId: b.book_id, chapter: b.chapter, verse: b.verse ?? undefined });
+                  onClick={(e) => {
+                    openPassage({ bookId: b.book_id, chapter: b.chapter, verse: b.verse ?? undefined }, { target: targetFor(e, paneId), from: paneId });
                     close();
                   }}
                   className={cx(

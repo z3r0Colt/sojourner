@@ -1,10 +1,9 @@
 import { useRef, useState } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { useNavigate } from "react-router-dom";
 import { ChevronDown } from "lucide-react";
 import { useConcordance } from "../../api/queries";
 import { useBooks } from "../../api/queries";
-import { useNavigationStore } from "../../state/navigationStore";
+import { openPassage, targetFor } from "../../workspace/openContent";
 import { EmptyState, LoadingState } from "../../components/ui/EmptyState";
 import { cx } from "../../components/ui/classes";
 
@@ -15,8 +14,6 @@ export function ConcordancePanel({ strongsId }: { strongsId: string }) {
   const [open, setOpen] = useState(false);
   const { data: entries } = useConcordance(strongsId, open);
   const { data: books } = useBooks();
-  const goTo = useNavigationStore((s) => s.goTo);
-  const navigate = useNavigate();
   const listRef = useRef<HTMLDivElement>(null);
 
   const rowVirtualizer = useVirtualizer({
@@ -57,10 +54,7 @@ export function ConcordancePanel({ strongsId }: { strongsId: string }) {
                     data-index={item.index}
                     style={{ position: "absolute", top: 0, left: 0, right: 0, transform: `translateY(${item.start}px)` }}
                     className="block w-full rounded-md p-2 text-left hover:bg-hover"
-                    onClick={() => {
-                      goTo({ bookId: e.book_id, chapter: e.chapter, verse: e.verse });
-                      navigate("/");
-                    }}
+                    onClick={(ev) => openPassage({ bookId: e.book_id, chapter: e.chapter, verse: e.verse }, { target: targetFor(ev) })}
                   >
                     <div className="text-xs font-medium text-accent">
                       {bookName(e.book_id)} {e.chapter}:{e.verse}

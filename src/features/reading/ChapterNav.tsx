@@ -1,7 +1,7 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useTranslationCoverage } from "../../api/queries";
 import type { Book } from "../../api/types";
-import type { Position } from "../../state/navigationStore";
+import type { Position } from "../../state/workspaceStore";
 import { IconButton } from "../../components/ui/Button";
 import { selectSmClass } from "../../components/ui/classes";
 import { stepChapter } from "./chapterStep";
