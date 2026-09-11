@@ -1,43 +1,8 @@
 import { createHashRouter } from "react-router-dom";
 import { AppShell } from "./layout/AppShell";
-import { ReadingView } from "./features/reading/ReadingView";
-import { CommentaryStandaloneView } from "./features/commentary/CommentaryStandaloneView";
-import { NotesListView } from "./features/notes/NotesListView";
-import { SettingsView } from "./features/settings/SettingsView";
-import { LexiconView } from "./features/lexicon/LexiconView";
-import { DictionaryView } from "./features/dictionary/DictionaryView";
-import { WestminsterView } from "./features/westminster/WestminsterView";
-import { ResourceLibraryView } from "./features/resources/ResourceLibraryView";
-import { ResourceReaderView } from "./features/resources/ResourceReaderView";
-import { PrayerView } from "./features/prayer/PrayerView";
-import { MemoryHubView } from "./features/memory/MemoryHubView";
-import { ReadingPlansView } from "./features/plans/ReadingPlansView";
-import { HarmonyView } from "./features/harmony/HarmonyView";
 
-export const router = createHashRouter([
-  {
-    path: "/",
-    element: <AppShell />,
-    children: [
-      { index: true, element: <ReadingView /> },
-      { path: "commentary/:sourceId", element: <CommentaryStandaloneView /> },
-      { path: "commentary/:sourceId/:bookId", element: <CommentaryStandaloneView /> },
-      { path: "commentary/:sourceId/:bookId/:sectionId", element: <CommentaryStandaloneView /> },
-      { path: "notes", element: <NotesListView /> },
-      { path: "prayer", element: <PrayerView /> },
-      { path: "memory", element: <MemoryHubView /> },
-      { path: "plans", element: <ReadingPlansView /> },
-      { path: "harmony", element: <HarmonyView /> },
-      { path: "settings", element: <SettingsView /> },
-      { path: "lexicon", element: <LexiconView /> },
-      { path: "lexicon/:id", element: <LexiconView /> },
-      { path: "dictionary", element: <DictionaryView /> },
-      { path: "dictionary/:slug", element: <DictionaryView /> },
-      { path: "westminster", element: <WestminsterView /> },
-      { path: "westminster/:docCode", element: <WestminsterView /> },
-      { path: "westminster/:docCode/:sectionId", element: <WestminsterView /> },
-      { path: "resources", element: <ResourceLibraryView /> },
-      { path: "resources/:id", element: <ResourceReaderView /> },
-    ],
-  },
-]);
+/** The router keeps only the shell. The URL mirrors the focused pane's
+ * content (see workspace/paneKinds.ts for the paths), so deep links, the
+ * sidebar, and the command palette keep working; what is actually shown
+ * comes from the workspace store. */
+export const router = createHashRouter([{ path: "/*", element: <AppShell /> }]);

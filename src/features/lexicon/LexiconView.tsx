@@ -1,20 +1,21 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Languages, Search } from "lucide-react";
 import { api } from "../../api/client";
 import { useBooks, useStrongsEntry } from "../../api/queries";
 import { ConcordancePanel } from "./ConcordancePanel";
 import { CommentaryHtml } from "../commentary/CommentaryPanel";
-import { useNavigationStore } from "../../state/navigationStore";
+import { usePaneNavigate, usePaneParams } from "../../workspace/PaneContext";
+import { openPassage } from "../../workspace/openContent";
 import { useReadingTypography } from "../../state/uiStore";
 import { Button } from "../../components/ui/Button";
 import { EmptyState, LoadingState } from "../../components/ui/EmptyState";
 import { cx, inputSmClass } from "../../components/ui/classes";
 
 export function LexiconView() {
-  const { id } = useParams();
-  const navigate = useNavigate();
+  const [{ id: paneEntryId }] = usePaneParams("lexicon");
+  const id = paneEntryId ?? undefined;
+  const navigate = usePaneNavigate();
   const [query, setQuery] = useState("");
   const [debounced, setDebounced] = useState("");
   const [language, setLanguage] = useState<"hebrew" | "greek" | undefined>(undefined);
@@ -35,14 +36,10 @@ export function LexiconView() {
 
   const { data: entry } = useStrongsEntry(id ?? directIdMatch ?? null);
   const { data: books } = useBooks();
-  const { goTo } = useNavigationStore();
 
   function jumpToRef(bookOsisCode: string, chapter: number, verse: number) {
     const target = books?.find((b) => b.osis_code === bookOsisCode);
-    if (target) {
-      goTo({ bookId: target.id, chapter, verse });
-      navigate("/");
-    }
+    if (target) openPassage({ bookId: target.id, chapter, verse });
   }
 
   return (
@@ -70,7 +67,7 @@ export function LexiconView() {
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto">
           {directIdMatch && (
-            <button type="button" onClick={() => navigate(`/lexicon/${directIdMatch}`)} className="block w-full border-b border-line px-3 py-2 text-left text-sm text-accent hover:bg-hover">
+            <button type="button" onClick={(e) => navigate(`/lexicon/${directIdMatch}`, e)} className="block w-full border-b border-line px-3 py-2 text-left text-sm text-accent hover:bg-hover">
               Open {directIdMatch}
             </button>
           )}
@@ -78,7 +75,7 @@ export function LexiconView() {
             <button
               key={r.id}
               type="button"
-              onClick={() => navigate(`/lexicon/${r.id}`)}
+              onClick={(e) => navigate(`/lexicon/${r.id}`, e)}
               className={cx("block w-full border-b border-line px-3 py-2 text-left text-sm hover:bg-hover", id === r.id && "bg-accent-soft")}
             >
               <div className="flex items-baseline gap-2">

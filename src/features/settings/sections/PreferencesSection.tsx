@@ -1,4 +1,5 @@
 import { useReadingTypography, useUiStore } from "../../../state/uiStore";
+import { resolveBiblePane, useWorkspaceStore } from "../../../state/workspaceStore";
 import { Button } from "../../../components/ui/Button";
 import { checkboxClass, cx, selectClass } from "../../../components/ui/classes";
 
@@ -14,10 +15,10 @@ function Row({ label, hint, children }: { label: string; hint?: string; children
   );
 }
 
-function Toggle({ label, hint, checked, onChange }: { label: string; hint?: string; checked: boolean; onChange: () => void }) {
+function Toggle({ label, hint, checked, onChange, disabled }: { label: string; hint?: string; checked: boolean; onChange: () => void; disabled?: boolean }) {
   return (
-    <label className="flex cursor-pointer items-start gap-3 py-2">
-      <input type="checkbox" className={cx(checkboxClass, "mt-0.5")} checked={checked} onChange={onChange} />
+    <label className={cx("flex items-start gap-3 py-2", disabled ? "opacity-50" : "cursor-pointer")}>
+      <input type="checkbox" className={cx(checkboxClass, "mt-0.5")} checked={checked} onChange={onChange} disabled={disabled} />
       <span>
         <span className="block text-sm text-ink">{label}</span>
         {hint && <span className="block text-xs text-ink-3">{hint}</span>}
@@ -44,12 +45,16 @@ export function PreferencesSection() {
     toggleShowNoteSymbols,
     showMorphology,
     toggleShowMorphology,
-    redLetterMode,
-    toggleRedLetterMode,
-    paragraphMode,
-    toggleParagraphMode,
   } = useUiStore();
   const typography = useReadingTypography();
+
+  // Paragraph mode and red letters belong to each Bible pane; these
+  // switches change the pane the reader is working in.
+  const bible = useWorkspaceStore((s) => resolveBiblePane(s));
+  const setPaneParams = useWorkspaceStore((s) => s.setPaneParams);
+  const paragraphMode = bible?.params.paragraphMode ?? false;
+  const redLetterMode = bible?.params.redLetterMode ?? false;
+  const noBible = !bible;
 
   return (
     <div>
@@ -97,10 +102,26 @@ export function PreferencesSection() {
       </div>
 
       <h2 className="mb-1 mt-8 text-lg font-semibold text-ink">Bible text</h2>
+      <p className="mb-2 text-sm text-ink-3">
+        Paragraph mode and red letters belong to each Bible pane, so a second pane can show the same chapter differently. These two switches change the pane you are reading in
+        {noBible ? " (open a Bible pane to use them)" : ""}.
+      </p>
       <div className="divide-y divide-line">
-        <Toggle label="Paragraph mode" hint="Flowing prose instead of one verse per line" checked={paragraphMode} onChange={toggleParagraphMode} />
+        <Toggle
+          label="Paragraph mode"
+          hint="Flowing prose instead of one verse per line"
+          checked={paragraphMode}
+          disabled={noBible}
+          onChange={() => bible && setPaneParams(bible.id, "bible", { paragraphMode: !paragraphMode })}
+        />
         <Toggle label="Show verse numbers" checked={showVerseNumbers} onChange={toggleVerseNumbers} />
-        <Toggle label="Words of Jesus in red" hint="Only his quoted words, not the whole verse" checked={redLetterMode} onChange={toggleRedLetterMode} />
+        <Toggle
+          label="Words of Jesus in red"
+          hint="Only his quoted words, not the whole verse"
+          checked={redLetterMode}
+          disabled={noBible}
+          onChange={() => bible && setPaneParams(bible.id, "bible", { redLetterMode: !redLetterMode })}
+        />
         <Toggle label="Show highlights" checked={showHighlights} onChange={toggleShowHighlights} />
         <Toggle label="Show note markers" checked={showNoteSymbols} onChange={toggleShowNoteSymbols} />
         <Toggle label="Show grammar codes in interlinear view" checked={showMorphology} onChange={toggleShowMorphology} />

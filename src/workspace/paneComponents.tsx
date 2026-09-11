@@ -1,38 +1,36 @@
 import type { ComponentType } from "react";
 import type { PaneKind } from "../state/workspaceStore";
-import { EmptyState } from "../components/ui/EmptyState";
-import { PANE_KINDS } from "./paneKinds";
-import { usePane } from "./PaneContext";
-import { useWorkspaceStore, findPane } from "../state/workspaceStore";
-
-/** Placeholder until a kind's view is ported (W1.3 replaces every entry). */
-function PanePlaceholder() {
-  const { id } = usePane();
-  const kind = useWorkspaceStore((s) => findPane(s.panes, id)?.kind);
-  return <EmptyState compact title={kind ? PANE_KINDS[kind].label : "Empty pane"} description="This content is not available in a pane yet." />;
-}
+import { ReadingPane } from "../features/reading/ReadingPane";
+import { WestminsterView } from "../features/westminster/WestminsterView";
+import { LexiconView } from "../features/lexicon/LexiconView";
+import { DictionaryView } from "../features/dictionary/DictionaryView";
+import { ResourceReaderView } from "../features/resources/ResourceReaderView";
+import { CommentaryStandaloneView } from "../features/commentary/CommentaryStandaloneView";
+import { SettingsView } from "../features/settings/SettingsView";
+import { CommentaryPane, ConfessionPane, CrossRefsPane, InterlinearPane, MetricalPane } from "./panes/StudyPanes";
+import { HarmonyPane, MemoryPane, NotesPane, PlansPane, PrayerPane, ResourcesPane } from "./panes/PagePanes";
 
 /** Kind → the component that renders it. Each reads its params from the
  * pane (see `usePaneParams`), never from the URL. Kept apart from the
  * metadata registry so views can import `paneKinds` and `openContent`
  * without a circular import back through themselves. */
 export const PANE_COMPONENTS: Record<PaneKind, ComponentType> = {
-  bible: PanePlaceholder,
-  interlinear: PanePlaceholder,
-  commentary: PanePlaceholder,
-  crossrefs: PanePlaceholder,
-  "confession-for-passage": PanePlaceholder,
-  metrical: PanePlaceholder,
-  westminster: PanePlaceholder,
-  lexicon: PanePlaceholder,
-  dictionary: PanePlaceholder,
-  resource: PanePlaceholder,
-  resources: PanePlaceholder,
-  "commentary-book": PanePlaceholder,
-  notes: PanePlaceholder,
-  prayer: PanePlaceholder,
-  memory: PanePlaceholder,
-  plans: PanePlaceholder,
-  harmony: PanePlaceholder,
-  settings: PanePlaceholder,
+  bible: ReadingPane,
+  interlinear: InterlinearPane,
+  commentary: CommentaryPane,
+  crossrefs: CrossRefsPane,
+  "confession-for-passage": ConfessionPane,
+  metrical: MetricalPane,
+  westminster: WestminsterView,
+  lexicon: LexiconView,
+  dictionary: DictionaryView,
+  resource: ResourceReaderView,
+  resources: ResourcesPane,
+  "commentary-book": CommentaryStandaloneView,
+  notes: NotesPane,
+  prayer: PrayerPane,
+  memory: MemoryPane,
+  plans: PlansPane,
+  harmony: HarmonyPane,
+  settings: SettingsView,
 };

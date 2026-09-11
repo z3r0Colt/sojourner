@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState, Fragment, type ReactNode } from "react";
-import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { BookA, Search } from "lucide-react";
 import { api } from "../../api/client";
 import { useDictionaryIndex, useDictionaryEntry, useBooks } from "../../api/queries";
-import { useNavigationStore } from "../../state/navigationStore";
+import { usePaneNavigate, usePaneParams } from "../../workspace/PaneContext";
+import { openPassage } from "../../workspace/openContent";
 import { useReadingTypography } from "../../state/uiStore";
 import { buildBookLookup, scanScriptureRefs } from "../../hooks/useReferenceParser";
 import { EmptyState, LoadingState } from "../../components/ui/EmptyState";
@@ -13,12 +13,12 @@ import { cx, inputSmClass } from "../../components/ui/classes";
 const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
 export function DictionaryView() {
-  const { slug } = useParams();
-  const navigate = useNavigate();
+  const [{ slug: paneSlug }] = usePaneParams("dictionary");
+  const slug = paneSlug ?? undefined;
+  const navigate = usePaneNavigate();
   const { data: index } = useDictionaryIndex();
   const { data: entry } = useDictionaryEntry(slug ?? null);
   const { data: books } = useBooks();
-  const goTo = useNavigationStore((s) => s.goTo);
   const typography = useReadingTypography(0.95);
   const [query, setQuery] = useState("");
   const [debounced, setDebounced] = useState("");
@@ -42,8 +42,7 @@ export function DictionaryView() {
   const list = showingSearch ? searchResults ?? [] : letterEntries;
 
   function jumpToRef(bookId: number, chapter: number, verse?: number) {
-    goTo({ bookId, chapter, verse });
-    navigate("/");
+    openPassage({ bookId, chapter, verse });
   }
 
   function renderLinkedBody(body: string) {
@@ -99,7 +98,7 @@ export function DictionaryView() {
             <button
               key={e.id}
               type="button"
-              onClick={() => navigate(`/dictionary/${e.slug}`)}
+              onClick={(ev) => navigate(`/dictionary/${e.slug}`, ev)}
               className={cx("block w-full border-b border-line px-3 py-2 text-left text-sm hover:bg-hover", slug === e.slug ? "bg-accent-soft font-medium text-accent" : "text-ink-2")}
             >
               {e.term}

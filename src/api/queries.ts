@@ -3,7 +3,7 @@ import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { api } from "./client";
 import type { Verse, Passage, PassageRef, PrayerEntryMode, MemoryMode, TrashKind } from "./types";
 import { toast } from "../components/ui/toast";
-import { useNavigationStore } from "../state/navigationStore";
+import { useReaderTranslationId } from "../state/workspaceStore";
 import { refKey } from "../lib/passage";
 
 export function useBooks() {
@@ -46,7 +46,7 @@ const PASSAGE_STALE_MS = 5 * 60_000;
  * translation. Returns a `Map` keyed by `refKey(ref)` so callers look up
  * each item without caring about order. Empty `refs` fetches nothing. */
 export function usePassages(refs: PassageRef[]) {
-  const translationId = useNavigationStore((s) => s.primaryTranslationId);
+  const translationId = useReaderTranslationId();
   const keys = refs.map(refKey).join(",");
   const query = useQuery({
     queryKey: ["passages", translationId, keys],
@@ -66,7 +66,7 @@ export function usePassages(refs: PassageRef[]) {
  * Each reference is cached on its own key, so repeated hovers over the
  * same reference never refetch. `null` disables the query. */
 export function usePassageText(ref: PassageRef | null) {
-  const translationId = useNavigationStore((s) => s.primaryTranslationId);
+  const translationId = useReaderTranslationId();
   return useQuery({
     queryKey: ["passage", translationId, ref ? refKey(ref) : null],
     queryFn: async () => (await api.getPassages(translationId as number, [ref as PassageRef]))[0] ?? null,

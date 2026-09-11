@@ -1,25 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { useNavigate } from "react-router-dom";
-import {
-  Columns2,
-  Languages,
-  Link2,
-  Maximize2,
-  MessageSquareText,
-  Minimize2,
-  Music,
-  Paperclip,
-  Printer,
-  ScrollText,
-  SlidersHorizontal,
-  Sparkles,
-  StickyNote,
-  Type,
-  X,
-} from "lucide-react";
-import { useNavigationStore } from "../../state/navigationStore";
-import { useReadingTypography, useUiStore, type StudyTab } from "../../state/uiStore";
+import { Columns2, Languages, Maximize2, Paperclip, Printer, SlidersHorizontal, Sparkles, StickyNote, Type } from "lucide-react";
+import { useReadingTypography, useUiStore } from "../../state/uiStore";
+import { useWorkspaceStore } from "../../state/workspaceStore";
 import {
   useBooks,
   useBookmarks,
@@ -51,36 +34,30 @@ import { api } from "../../api/client";
 import { VerseRow } from "./VerseRow";
 import { SelectionToolbar } from "./SelectionToolbar";
 import { HighlightPopup } from "./HighlightPopup";
-import { CommentaryPanel } from "../commentary/CommentaryPanel";
-import { CrossReferencesPanel } from "./CrossReferencesPanel";
-import { ConfessionForPassagePanel } from "./ConfessionForPassagePanel";
-import { MetricalPsalmPanel } from "./MetricalPsalmPanel";
 import { VerseContextMenu } from "./VerseContextMenu";
 import { CompareVerseModal } from "./CompareVerseModal";
 import { FootnotePopup } from "./FootnotePopup";
 import { NoteEditorModal } from "../notes/NoteEditorModal";
 import { NoteBody } from "../notes/NoteBody";
 import { RichTextEditor } from "../notes/RichTextEditor";
-import { ParallelReadingView } from "./ParallelReadingView";
-import { InterlinearView } from "./InterlinearView";
 import { ParagraphVerses } from "./ParagraphReadingView";
 import { ChapterNav } from "./ChapterNav";
 import { BookmarksMenu } from "./BookmarksMenu";
 import { computeRedLetterSpans } from "./redLetterSpans";
-import { DockPanel } from "../../components/DockPanel";
 import { closestWithAttr, textOffsetWithin } from "../../lib/domOffsets";
 import { copyWithReference } from "../../lib/clipboard";
 import { ReadAloudButton } from "../tts/ReadAloudButton";
 import { useTtsStore } from "../../state/ttsStore";
 import { Button, IconButton } from "../../components/ui/Button";
-import { Popover, PopoverItem } from "../../components/ui/Popover";
+import { Popover, PopoverItem, PopoverLabel } from "../../components/ui/Popover";
 import { Modal } from "../../components/ui/Modal";
-import { Tabs } from "../../components/ui/Tabs";
 import { LoadingState } from "../../components/ui/EmptyState";
 import { toast } from "../../components/ui/toast";
 import { confirmTrash } from "../../components/ui/confirm";
 import { checkboxClass, cx, selectSmClass } from "../../components/ui/classes";
 import { formatRef, joinVerses, toPassageRef } from "../../lib/passage";
+import { usePane, usePaneNavigate, usePaneParams } from "../../workspace/PaneContext";
+import { openContent, openPassage } from "../../workspace/openContent";
 import type { Note, Footnote } from "../../api/types";
 
 interface PendingSelection {
@@ -109,28 +86,20 @@ interface NoteTarget {
   existing?: Note;
 }
 
-const STUDY_TABS: { key: StudyTab; label: string; icon: typeof MessageSquareText; title: string; psalmsOnly?: boolean }[] = [
-  { key: "commentary", label: "Commentary", icon: MessageSquareText, title: "Commentary on this chapter" },
-  { key: "crossrefs", label: "Cross refs", icon: Link2, title: "Cross references for the selected verse" },
-  { key: "confession", label: "Confessions", icon: ScrollText, title: "Where the Westminster Confession and Catechisms cite the selected verse" },
-  { key: "metrical", label: "Metrical", icon: Music, title: "The 1650 Scottish Metrical Psalter", psalmsOnly: true },
-];
+/** The Bible chapter view, living in a pane. Everything about *what* is
+ * shown (translation, chapter, selected verse, paragraph and red-letter
+ * modes) is the pane's; everything about *how* it is shown (text size,
+ * font, theme, highlights, note markers) is global. */
+export function ReadingPane() {
+  const { id: paneId, isFocused } = usePane();
+  const [params, setParams] = usePaneParams("bible");
+  const { translationId, bookId, chapter, verse: scrollTarget, activeVerse, paragraphMode, redLetterMode } = params;
+  const paneNavigate = usePaneNavigate();
+  const ready = useWorkspaceStore((s) => s.ready);
+  const setLastTranslation = useWorkspaceStore((s) => s.setLastTranslation);
+  const publishPassage = useWorkspaceStore((s) => s.publishPassage);
 
-export function ReadingView() {
   const { data: books } = useBooks();
-  const {
-    primaryTranslationId,
-    parallelTranslationIds,
-    position,
-    goTo,
-    interlinearMode,
-    toggleInterlinearMode,
-    setPrimaryTranslation,
-    toggleParallelTranslation,
-    clearParallelTranslations,
-    activeVerse,
-    setActiveVerse,
-  } = useNavigationStore();
   const {
     fontSize,
     setFontSize,
@@ -142,40 +111,51 @@ export function ReadingView() {
     setTheme,
     showVerseNumbers,
     toggleVerseNumbers,
-    commentaryPanelOpen,
-    toggleCommentaryPanel,
-    setCommentaryPanelOpen,
-    commentaryPanelWidth,
-    setCommentaryPanelWidth,
-    commentaryPanelSide,
-    setCommentaryPanelSide,
     showHighlights,
     toggleShowHighlights,
     showNoteSymbols,
     toggleShowNoteSymbols,
-    rightPanelTab,
-    setRightPanelTab,
-    redLetterMode,
-    toggleRedLetterMode,
-    paragraphMode,
-    toggleParagraphMode,
     distractionFreeMode,
-    toggleDistractionFreeMode,
   } = useUiStore();
   const typography = useReadingTypography();
-  const book = books?.find((b) => b.id === position?.bookId) ?? null;
-  const chapter = position?.chapter ?? null;
+  const book = books?.find((b) => b.id === bookId) ?? null;
 
   const { data: translations } = useTranslations();
-  const { data: verses, isLoading: versesLoading } = useChapter(primaryTranslationId, position?.bookId ?? null, chapter);
-  const { data: highlights } = useHighlights(position?.bookId ?? null, chapter);
-  const { data: notes } = useNotesForChapter(position?.bookId ?? null, chapter);
-  const { data: chapterNotes } = useChapterNotes(position?.bookId ?? null, chapter);
-  const { data: resourceLinks } = useResourcePassageLinksForChapter(position?.bookId ?? null, chapter);
+
+  // A pane with no translation yet (fresh install), or one whose translation
+  // was removed from the library, falls back to the KJV or the first one.
+  useEffect(() => {
+    if (!translations || translations.length === 0) return;
+    if (translationId != null && translations.some((t) => t.id === translationId)) return;
+    const preferred = translations.find((t) => t.code === "KJV") ?? translations[0];
+    setParams({ translationId: preferred.id });
+  }, [translations, translationId, setParams]);
+
+  useEffect(() => {
+    if (translationId != null) setLastTranslation(translationId);
+  }, [translationId, setLastTranslation]);
+
+  // Linked panes follow this one's chapter and selected verse. Not on
+  // mount: a restored workspace must not have its panes overwrite each
+  // other in mount order.
+  const publishedOnce = useRef(false);
+  useEffect(() => {
+    if (!publishedOnce.current) {
+      publishedOnce.current = true;
+      return;
+    }
+    publishPassage(paneId, { bookId, chapter, verse: activeVerse });
+  }, [paneId, bookId, chapter, activeVerse, publishPassage]);
+
+  const { data: verses, isLoading: versesLoading } = useChapter(translationId, bookId, chapter);
+  const { data: highlights } = useHighlights(bookId, chapter);
+  const { data: notes } = useNotesForChapter(bookId, chapter);
+  const { data: chapterNotes } = useChapterNotes(bookId, chapter);
+  const { data: resourceLinks } = useResourcePassageLinksForChapter(bookId, chapter);
   const { data: allResources } = useResources();
-  const { data: suggestedResources } = useSuggestedResourcesForPassage(position?.bookId ?? null, chapter);
-  const { data: footnotes } = useFootnotesForChapter(primaryTranslationId, position?.bookId ?? null, chapter);
-  const { data: redLetterRanges } = useRedLetterRanges(redLetterMode ? position?.bookId ?? null : null, chapter);
+  const { data: suggestedResources } = useSuggestedResourcesForPassage(bookId, chapter);
+  const { data: footnotes } = useFootnotesForChapter(translationId, bookId, chapter);
+  const { data: redLetterRanges } = useRedLetterRanges(redLetterMode ? bookId : null, chapter);
   const { data: bookmarks } = useBookmarks();
   function isRedLetterVerse(verseNum: number) {
     return !!redLetterRanges?.some((r) => verseNum >= r.verse_start && verseNum <= r.verse_end);
@@ -187,12 +167,8 @@ export function ReadingView() {
   // Tyndale, Webster's, Wycliffe, YLT, Douay-Rheims). Skipped entirely for
   // WEB itself, since it needs no help locating its own quotes.
   const webTranslationId = translations?.find((t) => t.code === "WEB")?.id ?? null;
-  const needsRedLetterReference = redLetterMode && webTranslationId != null && webTranslationId !== primaryTranslationId;
-  const { data: redLetterReferenceVerses } = useChapter(
-    needsRedLetterReference ? webTranslationId : null,
-    position?.bookId ?? null,
-    chapter,
-  );
+  const needsRedLetterReference = redLetterMode && webTranslationId != null && webTranslationId !== translationId;
+  const { data: redLetterReferenceVerses } = useChapter(needsRedLetterReference ? webTranslationId : null, bookId, chapter);
   // Computed once per chapter (not per row) since quote depth carries across
   // verses -- see redLetterSpans.ts.
   const redLetterSpansByVerse = useMemo(
@@ -203,7 +179,6 @@ export function ReadingView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [redLetterMode, verses, redLetterRanges, needsRedLetterReference, redLetterReferenceVerses],
   );
-  const navigate = useNavigate();
   const createHighlight = useCreateHighlight();
   const deleteHighlight = useDeleteHighlight();
   const updateHighlight = useUpdateHighlight();
@@ -240,32 +215,34 @@ export function ReadingView() {
     overscan: 8,
   });
 
+  const setActiveVerse = (v: number | null) => setParams({ activeVerse: v });
+
   const ttsSourceKind = useTtsStore((s) => s.sourceKind);
   const ttsCurrentSegmentId = useTtsStore((s) => s.segments[s.currentSegmentIndex]?.id ?? null);
   useEffect(() => {
     if (ttsSourceKind === "scripture" && typeof ttsCurrentSegmentId === "number") {
-      setActiveVerse(ttsCurrentSegmentId);
+      setParams({ activeVerse: ttsCurrentSegmentId });
     }
-  }, [ttsSourceKind, ttsCurrentSegmentId, setActiveVerse]);
+  }, [ttsSourceKind, ttsCurrentSegmentId, setParams]);
 
   // Scroll the target verse into view once verses are loaded. Rows are
   // virtualized, so the target row may not be mounted yet -- ask the
   // virtualizer to scroll to its index rather than querying the DOM.
-  const scrollTarget = position?.verse ?? null;
   useEffect(() => {
     if (scrollTarget == null || !verses) return;
     const index = verses.findIndex((v) => v.verse === scrollTarget);
     if (index >= 0) rowVirtualizer.scrollToIndex(index, { align: "center" });
-  }, [scrollTarget, verses, rowVirtualizer, position?.bookId, position?.chapter]);
+  }, [scrollTarget, verses, rowVirtualizer, bookId, chapter]);
 
-  // Persist reading position (debounced) whenever it changes.
+  // Persist the reading position (debounced) whenever it changes -- only
+  // from the focused Bible pane, and not before the shell has bootstrapped.
   useEffect(() => {
-    if (!position || primaryTranslationId == null) return;
+    if (!isFocused || !ready || translationId == null) return;
     const t = setTimeout(() => {
-      api.setReadingPosition(primaryTranslationId, position.bookId, position.chapter, activeVerse ?? undefined);
+      api.setReadingPosition(translationId, bookId, chapter, activeVerse ?? undefined);
     }, 400);
     return () => clearTimeout(t);
-  }, [position, primaryTranslationId, activeVerse]);
+  }, [isFocused, ready, translationId, bookId, chapter, activeVerse]);
 
   // Printing: the virtualizer only mounts the rows on screen, so render the
   // whole chapter statically for the print pass, then go back.
@@ -277,15 +254,6 @@ export function ReadingView() {
     });
     return () => cancelAnimationFrame(id);
   }, [printing]);
-
-  useEffect(() => {
-    if (!distractionFreeMode) return;
-    function onKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") toggleDistractionFreeMode();
-    }
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [distractionFreeMode, toggleDistractionFreeMode]);
 
   function handleMouseUp() {
     const sel = window.getSelection();
@@ -316,7 +284,6 @@ export function ReadingView() {
   }
 
   function commitHighlight(style: "highlight" | "underline", color: string, target?: { verseStart: number; verseEnd: number }) {
-    if (!position) return;
     const range = target ?? (pending ? { verseStart: pending.verseStart, verseEnd: pending.verseEnd } : null);
     if (!range) return;
     // Character offsets only apply to a selection within one verse; a
@@ -324,61 +291,57 @@ export function ReadingView() {
     const charStart = target ? undefined : (pending?.charStart ?? undefined);
     const charEnd = target ? undefined : (pending?.charEnd ?? undefined);
     createHighlight.mutate({
-      bookId: position.bookId,
-      chapter: position.chapter,
+      bookId,
+      chapter,
       verseStart: range.verseStart,
       verseEnd: range.verseEnd,
       charStart,
       charEnd,
       color,
       style,
-      translationId: primaryTranslationId ?? undefined,
+      translationId: translationId ?? undefined,
     });
     window.getSelection()?.removeAllRanges();
     setPending(null);
-  }
-
-  function jumpToRef(bookOsisCode: string, chapter: number, verse: number) {
-    const target = books?.find((b) => b.osis_code === bookOsisCode);
-    if (target) goTo({ bookId: target.id, chapter, verse });
   }
 
   function verseText(verseNum: number) {
     return verses?.find((v) => v.verse === verseNum)?.text ?? "";
   }
 
-  function openPanelTab(tab: StudyTab) {
-    setRightPanelTab(tab);
-    setCommentaryPanelOpen(true);
+  function openInterlinear() {
+    const s = useWorkspaceStore.getState();
+    const me = s.panes.find((p) => p.id === paneId);
+    const existing = s.panes.find((p) => p.kind === "interlinear" && p.linkGroup != null && p.linkGroup === me?.linkGroup);
+    if (existing) s.focusPane(existing.id);
+    else openContent("interlinear", { bookId, chapter, verse: activeVerse }, { target: "new", from: paneId });
+  }
+
+  function enterFocusMode() {
+    useWorkspaceStore.getState().setMaximized(paneId);
+    useUiStore.getState().setDistractionFreeMode(true);
   }
 
   const activeHighlightNote = activeHighlight ? notes?.find((n) => n.highlight_id === activeHighlight.id) : undefined;
 
-  if (!book || !chapter) {
+  if (!book) {
     return <LoadingState className="p-8" label="Opening your last reading position…" />;
   }
 
   const verseMenuBookmark =
     verseMenu != null ? bookmarks?.find((b) => b.book_id === book.id && b.chapter === chapter && b.verse === verseMenu.verseNum) : undefined;
-  const visibleTabs = STUDY_TABS.filter((t) => !t.psalmsOnly || book.id === 19);
-  const parallelActive = parallelTranslationIds.length > 0;
   const suggested = suggestedResources?.filter((r) => !resourceLinks?.some((l) => l.resource_id === r.id)) ?? [];
   const shownSuggested = showAllSuggested ? suggested : suggested.slice(0, 3);
   const hiddenSuggested = suggested.length - shownSuggested.length;
   const hasRelated = (resourceLinks?.length ?? 0) > 0 || suggested.length > 0;
   const chapterNoteCount = chapterNotes?.length ?? 0;
 
-  const toolbar = !distractionFreeMode && books && position && (
+  const toolbar = !distractionFreeMode && books && (
     <div className="flex h-11 shrink-0 items-center gap-1 border-b border-line bg-surface px-2">
-      <ChapterNav books={books} position={position} translationId={primaryTranslationId} onNavigate={(p) => goTo(p)} />
+      <ChapterNav books={books} position={{ bookId, chapter }} translationId={translationId} onNavigate={(p) => openPassage(p, { target: paneId })} />
       <span className="mx-1 h-5 w-px bg-line" aria-hidden="true" />
       {translations && (
-        <select
-          aria-label="Translation"
-          className={selectSmClass}
-          value={primaryTranslationId ?? ""}
-          onChange={(e) => setPrimaryTranslation(Number(e.target.value))}
-        >
+        <select aria-label="Translation" className={selectSmClass} value={translationId ?? ""} onChange={(e) => setParams({ translationId: Number(e.target.value) })}>
           {translations.map((t) => (
             <option key={t.id} value={t.id}>
               {t.code}
@@ -391,28 +354,33 @@ export function ReadingView() {
           width="w-64"
           align="left"
           trigger={({ toggle, open }) => (
-            <Button size="sm" variant="ghost" icon={Columns2} active={open || parallelActive} onClick={toggle} title="Read alongside other translations">
-              Parallel{parallelActive ? ` (${parallelTranslationIds.length})` : ""}
+            <Button size="sm" variant="ghost" icon={Columns2} active={open} onClick={toggle} title="Open this chapter in another translation beside this one">
+              Compare
             </Button>
           )}
         >
-          <div className="px-1 pb-1 text-xs text-ink-3">Show the chapter side by side with:</div>
-          {translations
-            .filter((t) => t.id !== primaryTranslationId)
-            .map((t) => (
-              <label key={t.id} className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1 text-sm hover:bg-hover">
-                <input type="checkbox" className={checkboxClass} checked={parallelTranslationIds.includes(t.id)} onChange={() => toggleParallelTranslation(t.id)} />
-                <span className="text-ink-2">{t.name}</span>
-              </label>
-            ))}
-          {parallelActive && (
-            <PopoverItem onClick={clearParallelTranslations} className="mt-1 border-t border-line pt-2">
-              <X className="h-4 w-4" aria-hidden="true" /> Exit parallel view
-            </PopoverItem>
+          {(close) => (
+            <>
+              <PopoverLabel>Compare in a new pane</PopoverLabel>
+              {translations
+                .filter((t) => t.id !== translationId)
+                .map((t) => (
+                  <PopoverItem
+                    key={t.id}
+                    onClick={() => {
+                      openContent("bible", { translationId: t.id, bookId, chapter, activeVerse }, { target: "new", from: paneId, link: true });
+                      close();
+                    }}
+                  >
+                    <span className="w-12 shrink-0 font-mono text-xs text-ink-3">{t.code}</span>
+                    <span className="truncate">{t.name}</span>
+                  </PopoverItem>
+                ))}
+            </>
           )}
         </Popover>
       )}
-      <Button size="sm" variant="ghost" icon={Languages} active={interlinearMode} onClick={toggleInterlinearMode} title="Interlinear: Hebrew/Greek with Strong's numbers">
+      <Button size="sm" variant="ghost" icon={Languages} onClick={openInterlinear} title="Interlinear: Hebrew/Greek with Strong's numbers, in a pane beside this one">
         Interlinear
       </Button>
       <div className="min-w-0 flex-1" />
@@ -482,9 +450,9 @@ export function ReadingView() {
         trigger={({ toggle, open }) => <IconButton icon={SlidersHorizontal} label="View options" active={open} onClick={toggle} />}
       >
         {[
-          { label: "Paragraph mode", checked: paragraphMode, onChange: toggleParagraphMode, hint: "Flowing prose instead of one verse per line" },
+          { label: "Paragraph mode", checked: paragraphMode, onChange: () => setParams({ paragraphMode: !paragraphMode }), hint: "Flowing prose instead of one verse per line" },
           { label: "Verse numbers", checked: showVerseNumbers, onChange: toggleVerseNumbers },
-          { label: "Words of Jesus in red", checked: redLetterMode, onChange: toggleRedLetterMode },
+          { label: "Words of Jesus in red", checked: redLetterMode, onChange: () => setParams({ redLetterMode: !redLetterMode }) },
           { label: "Show highlights", checked: showHighlights, onChange: toggleShowHighlights },
           { label: "Show note markers", checked: showNoteSymbols, onChange: toggleShowNoteSymbols },
         ].map((opt) => (
@@ -501,33 +469,9 @@ export function ReadingView() {
           <Printer className="h-4 w-4 text-ink-3" aria-hidden="true" /> Print this chapter
         </PopoverItem>
       </Popover>
-      <IconButton icon={Maximize2} label="Focus mode: just the text (F11)" onClick={toggleDistractionFreeMode} />
+      <IconButton icon={Maximize2} label="Focus mode: just the text (F11)" onClick={enterFocusMode} />
     </div>
   );
-
-  if (interlinearMode) {
-    return (
-      <div className="flex h-full flex-col">
-        {toolbar}
-        <InterlinearView book={book} chapter={chapter} onExit={toggleInterlinearMode} />
-      </div>
-    );
-  }
-
-  if (parallelActive) {
-    return (
-      <div className="flex h-full flex-col">
-        {toolbar}
-        <ParallelReadingView
-          book={book}
-          chapter={chapter}
-          primaryTranslationId={primaryTranslationId}
-          parallelTranslationIds={parallelTranslationIds}
-          onExit={clearParallelTranslations}
-        />
-      </div>
-    );
-  }
 
   const rowProps = {
     highlights: highlights ?? [],
@@ -562,12 +506,12 @@ export function ReadingView() {
               <div className="mb-4 flex flex-wrap items-center gap-1.5 text-sm">
                 <span className="mr-1 text-xs font-medium uppercase tracking-wide text-ink-3">Related</span>
                 {resourceLinks?.map((l) => (
-                  <Button key={l.id} size="sm" variant="secondary" icon={Paperclip} onClick={() => navigate(`/resources/${l.resource_id}`)}>
+                  <Button key={l.id} size="sm" variant="secondary" icon={Paperclip} onClick={(e) => paneNavigate(`/resources/${l.resource_id}`, e)}>
                     {l.label ?? allResources?.find((r) => r.id === l.resource_id)?.title ?? `Resource #${l.resource_id}`}
                   </Button>
                 ))}
                 {shownSuggested.map((r) => (
-                  <Button key={r.id} size="sm" variant="ghost" icon={Sparkles} onClick={() => navigate(`/resources/${r.id}`)} title="Suggested by topic tag">
+                  <Button key={r.id} size="sm" variant="ghost" icon={Sparkles} onClick={(e) => paneNavigate(`/resources/${r.id}`, e)} title="Suggested by topic tag">
                     {r.title}
                   </Button>
                 ))}
@@ -635,60 +579,7 @@ export function ReadingView() {
             <div className="h-24" />
           </div>
         </div>
-
-        {!distractionFreeMode && (
-          <DockPanel
-            open={commentaryPanelOpen}
-            onToggle={toggleCommentaryPanel}
-            width={commentaryPanelWidth}
-            onWidthChange={setCommentaryPanelWidth}
-            side={commentaryPanelSide}
-            onSideChange={setCommentaryPanelSide}
-            rail={visibleTabs.map((t) => (
-              <IconButton key={t.key} icon={t.icon} label={t.title} active={false} onClick={() => openPanelTab(t.key)} />
-            ))}
-            header={
-              <Tabs
-                size="sm"
-                stretch
-                bare
-                hideLabels={commentaryPanelWidth < 460}
-                items={visibleTabs.map((t) => ({ key: t.key, label: t.label, icon: t.icon, title: t.title }))}
-                value={visibleTabs.some((t) => t.key === rightPanelTab) ? rightPanelTab : "commentary"}
-                onChange={setRightPanelTab}
-              />
-            }
-          >
-            <div className="min-h-0 flex-1">
-              {rightPanelTab === "commentary" && (
-                <CommentaryPanel
-                  book={book}
-                  chapter={chapter}
-                  activeVerse={activeVerse}
-                  onJumpToVerse={(c, v) => goTo({ bookId: book.id, chapter: c, verse: v })}
-                  onJumpToRef={jumpToRef}
-                />
-              )}
-              {rightPanelTab === "crossrefs" && <CrossReferencesPanel book={book} chapter={chapter} activeVerse={activeVerse} />}
-              {rightPanelTab === "confession" && <ConfessionForPassagePanel book={book} chapter={chapter} activeVerse={activeVerse} />}
-              {rightPanelTab === "metrical" && book.id === 19 && <MetricalPsalmPanel psalm={chapter} />}
-            </div>
-          </DockPanel>
-        )}
       </div>
-
-      {distractionFreeMode && (
-        <Button
-          variant="secondary"
-          size="sm"
-          icon={Minimize2}
-          onClick={toggleDistractionFreeMode}
-          title="Exit focus mode (Esc)"
-          className="fixed right-4 top-4 z-40 shadow-lg"
-        >
-          Exit focus
-        </Button>
-      )}
 
       {pending && (
         <SelectionToolbar
@@ -737,14 +628,14 @@ export function ReadingView() {
                 chapter,
                 verseStart: verseMenu.verseNum,
                 verseEnd: verseMenu.verseNum,
-                translationId: primaryTranslationId ?? undefined,
+                translationId: translationId ?? undefined,
                 mode: "first-letter",
               },
               {
                 onSuccess: () =>
                   toast.success(`Added ${book.name} ${chapter}:${verseMenu.verseNum} to Scripture memory`, {
                     label: "Open Memory",
-                    onClick: () => navigate("/memory"),
+                    onClick: () => openContent("memory", {}, { target: "focused" }),
                   }),
               },
             );
@@ -804,7 +695,7 @@ export function ReadingView() {
         />
       )}
 
-      {noteTarget && position && (
+      {noteTarget && (
         <NoteEditorModal
           title={`Note on ${book.name} ${chapter}:${noteTarget.verseStart}${noteTarget.verseEnd !== noteTarget.verseStart ? `-${noteTarget.verseEnd}` : ""}`}
           initialBody={noteTarget.existing?.body}
@@ -814,8 +705,8 @@ export function ReadingView() {
             } else {
               createNote.mutate(
                 {
-                  bookId: position.bookId,
-                  chapter: position.chapter,
+                  bookId,
+                  chapter,
                   verseStart: noteTarget.verseStart,
                   verseEnd: noteTarget.verseEnd,
                   body,
@@ -839,7 +730,7 @@ export function ReadingView() {
         />
       )}
 
-      {chapterNoteOpen && position && (
+      {chapterNoteOpen && (
         <Modal title={`Chapter notes · ${book.name} ${chapter}`} onClose={() => setChapterNoteOpen(false)} size="md">
           <div className="space-y-3">
             {chapterNotes?.map((n) => (
@@ -856,7 +747,7 @@ export function ReadingView() {
               body=""
               placeholder="Add a note for this whole chapter…"
               onSave={(body) => {
-                if (body.trim()) createChapterNote.mutate({ bookId: position.bookId, chapter: position.chapter, body }, { onSuccess: () => toast.success("Note saved") });
+                if (body.trim()) createChapterNote.mutate({ bookId, chapter, body }, { onSuccess: () => toast.success("Note saved") });
               }}
               clearAfterSave
             />

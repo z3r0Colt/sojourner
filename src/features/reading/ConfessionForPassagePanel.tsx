@@ -1,14 +1,14 @@
-import { useNavigate } from "react-router-dom";
 import { ScrollText } from "lucide-react";
 import { useConfessionForPassage } from "../../api/queries";
 import type { Book } from "../../api/types";
 import { EmptyState } from "../../components/ui/EmptyState";
+import { usePaneNavigate } from "../../workspace/PaneContext";
 
 const DOC_ORDER: Record<string, number> = { wcf: 0, wsc: 1, wlc: 2 };
 
 export function ConfessionForPassagePanel({ book, chapter, activeVerse }: { book: Book; chapter: number; activeVerse: number | null }) {
   const { data: matches } = useConfessionForPassage(book.id, chapter, activeVerse);
-  const navigate = useNavigate();
+  const navigate = usePaneNavigate();
 
   const sorted = [...(matches ?? [])].sort(
     (a, b) => (DOC_ORDER[a.document_code] ?? 9) - (DOC_ORDER[b.document_code] ?? 9),
@@ -35,7 +35,8 @@ export function ConfessionForPassagePanel({ book, chapter, activeVerse }: { book
               <button
                 type="button"
                 className="w-full rounded-md px-2 py-1.5 text-left hover:bg-hover"
-                onClick={() => navigate(`/westminster/${m.document_code}/${m.section_id}`)}
+                onClick={(e) => navigate(`/westminster/${m.document_code}/${m.section_id}`, e)}
+                onAuxClick={(e) => e.button === 1 && navigate(`/westminster/${m.document_code}/${m.section_id}`, e)}
               >
                 <div className="flex items-baseline justify-between">
                   <span className="font-medium text-ink">

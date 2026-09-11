@@ -3,23 +3,23 @@ import { create } from "zustand";
 export type Theme = "light" | "dark" | "oled" | "sepia" | "system";
 export type LineSpacing = "compact" | "normal" | "relaxed";
 export type ReadingFont = "serif" | "sans";
-export type StudyTab = "commentary" | "crossrefs" | "metrical" | "confession";
 
+/**
+ * Global, window-level preferences (local storage). Anything about *what*
+ * a pane shows -- translation, chapter, selected verse, paragraph mode,
+ * red letters -- is per pane and lives in `workspaceStore`; anything a
+ * user would miss after reinstalling goes through `useSetting`.
+ */
 interface UiState {
   theme: Theme;
   fontSize: number;
   lineSpacing: LineSpacing;
   readingFont: ReadingFont;
   showVerseNumbers: boolean;
-  commentaryPanelOpen: boolean;
-  commentaryPanelWidth: number;
-  commentaryPanelSide: "left" | "right";
   showHighlights: boolean;
   showNoteSymbols: boolean;
   showMorphology: boolean;
-  rightPanelTab: StudyTab;
-  redLetterMode: boolean;
-  paragraphMode: boolean;
+  /** F11: chrome hidden, the focused pane maximized (see workspaceStore). */
   distractionFreeMode: boolean;
   sidebarCollapsed: boolean;
   setTheme: (t: Theme) => void;
@@ -27,16 +27,9 @@ interface UiState {
   setLineSpacing: (s: LineSpacing) => void;
   setReadingFont: (f: ReadingFont) => void;
   toggleVerseNumbers: () => void;
-  toggleCommentaryPanel: () => void;
-  setCommentaryPanelOpen: (open: boolean) => void;
-  setCommentaryPanelWidth: (n: number) => void;
-  setCommentaryPanelSide: (side: "left" | "right") => void;
   toggleShowHighlights: () => void;
   toggleShowNoteSymbols: () => void;
   toggleShowMorphology: () => void;
-  setRightPanelTab: (t: StudyTab) => void;
-  toggleRedLetterMode: () => void;
-  toggleParagraphMode: () => void;
   toggleDistractionFreeMode: () => void;
   setDistractionFreeMode: (on: boolean) => void;
   toggleSidebar: () => void;
@@ -67,19 +60,9 @@ export const useUiStore = create<UiState>((set) => ({
   lineSpacing: stored.lineSpacing ?? "normal",
   readingFont: stored.readingFont ?? "serif",
   showVerseNumbers: stored.showVerseNumbers ?? true,
-  // Closed by default so a first-time reader's very first view of a
-  // chapter is just the text -- the study panel is one click away via its
-  // collapsed rail, and this only governs the *default*: anyone who's
-  // already toggled it keeps their own preference via `stored`.
-  commentaryPanelOpen: stored.commentaryPanelOpen ?? false,
-  commentaryPanelWidth: stored.commentaryPanelWidth ?? 420,
-  commentaryPanelSide: stored.commentaryPanelSide ?? "right",
   showHighlights: stored.showHighlights ?? true,
   showNoteSymbols: stored.showNoteSymbols ?? true,
   showMorphology: stored.showMorphology ?? true,
-  rightPanelTab: "commentary",
-  redLetterMode: stored.redLetterMode ?? false,
-  paragraphMode: stored.paragraphMode ?? false,
   distractionFreeMode: false,
   sidebarCollapsed: stored.sidebarCollapsed ?? false,
 
@@ -104,23 +87,6 @@ export const useUiStore = create<UiState>((set) => ({
       persist({ showVerseNumbers: !s.showVerseNumbers });
       return { showVerseNumbers: !s.showVerseNumbers };
     }),
-  toggleCommentaryPanel: () =>
-    set((s) => {
-      persist({ commentaryPanelOpen: !s.commentaryPanelOpen });
-      return { commentaryPanelOpen: !s.commentaryPanelOpen };
-    }),
-  setCommentaryPanelOpen: (commentaryPanelOpen) => {
-    persist({ commentaryPanelOpen });
-    set({ commentaryPanelOpen });
-  },
-  setCommentaryPanelWidth: (commentaryPanelWidth) => {
-    persist({ commentaryPanelWidth });
-    set({ commentaryPanelWidth });
-  },
-  setCommentaryPanelSide: (commentaryPanelSide) => {
-    persist({ commentaryPanelSide });
-    set({ commentaryPanelSide });
-  },
   toggleShowHighlights: () =>
     set((s) => {
       persist({ showHighlights: !s.showHighlights });
@@ -135,17 +101,6 @@ export const useUiStore = create<UiState>((set) => ({
     set((s) => {
       persist({ showMorphology: !s.showMorphology });
       return { showMorphology: !s.showMorphology };
-    }),
-  setRightPanelTab: (rightPanelTab) => set({ rightPanelTab }),
-  toggleRedLetterMode: () =>
-    set((s) => {
-      persist({ redLetterMode: !s.redLetterMode });
-      return { redLetterMode: !s.redLetterMode };
-    }),
-  toggleParagraphMode: () =>
-    set((s) => {
-      persist({ paragraphMode: !s.paragraphMode });
-      return { paragraphMode: !s.paragraphMode };
     }),
   toggleDistractionFreeMode: () => set((s) => ({ distractionFreeMode: !s.distractionFreeMode })),
   setDistractionFreeMode: (distractionFreeMode) => set({ distractionFreeMode }),
