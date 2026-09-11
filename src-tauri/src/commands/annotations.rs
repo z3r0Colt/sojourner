@@ -1,7 +1,7 @@
 use crate::db::queries::{bookmarks, highlights, notes, trash};
 use crate::db::DbState;
 use crate::error::AppResult;
-use crate::models::{Bookmark, ChapterNote, Highlight, Note, TrashContents, TrashKind};
+use crate::models::{Backlink, Bookmark, ChapterNote, Highlight, Note, NoteKind, NoteRefInput, TrashContents, TrashKind};
 use tauri::State;
 
 // Trash: soft-deleted notes, chapter notes, and prayer entries in one
@@ -102,15 +102,31 @@ pub fn create_note(
     verse_end: i64,
     body: String,
     highlight_id: Option<i64>,
+    refs: Option<Vec<NoteRefInput>>,
 ) -> AppResult<Note> {
     let conn = db.0.lock().unwrap();
-    Ok(notes::create(&conn, book_id, chapter, verse_start, verse_end, body, highlight_id)?)
+    Ok(notes::create(&conn, book_id, chapter, verse_start, verse_end, body, highlight_id, refs)?)
 }
 
 #[tauri::command]
-pub fn update_note(db: State<DbState>, id: i64, body: String) -> AppResult<()> {
+pub fn update_note(db: State<DbState>, id: i64, body: String, refs: Option<Vec<NoteRefInput>>) -> AppResult<()> {
     let conn = db.0.lock().unwrap();
-    Ok(notes::update(&conn, id, body)?)
+    Ok(notes::update(&conn, id, body, refs)?)
+}
+
+// Backlinks (F2.2): the references a note mentions, kept per save, and the
+// reverse lookup for a chapter.
+
+#[tauri::command]
+pub fn set_note_refs(db: State<DbState>, kind: NoteKind, id: i64, refs: Vec<NoteRefInput>) -> AppResult<()> {
+    let conn = db.0.lock().unwrap();
+    Ok(notes::set_refs(&conn, kind, id, &refs)?)
+}
+
+#[tauri::command]
+pub fn list_backlinks(db: State<DbState>, book_id: i64, chapter: i64) -> AppResult<Vec<Backlink>> {
+    let conn = db.0.lock().unwrap();
+    Ok(notes::list_backlinks(&conn, book_id, chapter)?)
 }
 
 #[tauri::command]
@@ -132,15 +148,15 @@ pub fn list_all_chapter_notes(db: State<DbState>) -> AppResult<Vec<ChapterNote>>
 }
 
 #[tauri::command]
-pub fn create_chapter_note(db: State<DbState>, book_id: i64, chapter: i64, body: String) -> AppResult<ChapterNote> {
+pub fn create_chapter_note(db: State<DbState>, book_id: i64, chapter: i64, body: String, refs: Option<Vec<NoteRefInput>>) -> AppResult<ChapterNote> {
     let conn = db.0.lock().unwrap();
-    Ok(notes::create_chapter_note(&conn, book_id, chapter, body)?)
+    Ok(notes::create_chapter_note(&conn, book_id, chapter, body, refs)?)
 }
 
 #[tauri::command]
-pub fn update_chapter_note(db: State<DbState>, id: i64, body: String) -> AppResult<()> {
+pub fn update_chapter_note(db: State<DbState>, id: i64, body: String, refs: Option<Vec<NoteRefInput>>) -> AppResult<()> {
     let conn = db.0.lock().unwrap();
-    Ok(notes::update_chapter_note(&conn, id, body)?)
+    Ok(notes::update_chapter_note(&conn, id, body, refs)?)
 }
 
 #[tauri::command]

@@ -30,7 +30,9 @@ import {
   useRedLetterRanges,
   useTranslations,
   useTrashToast,
+  useBacklinks,
 } from "../../api/queries";
+import { useNoteRefExtractor } from "../../lib/noteLinks";
 import { useSetting } from "../../hooks/useSetting";
 import { StrongsPopup } from "../lexicon/StrongsPopup";
 import { matchStrongs, wordFromSelection, type WordAtPoint } from "./wordLookup";
@@ -163,6 +165,18 @@ export function ReadingPane() {
   const { data: highlights } = useHighlights(bookId, chapter);
   const { data: notes } = useNotesForChapter(bookId, chapter);
   const { data: chapterNotes } = useChapterNotes(bookId, chapter);
+  // Backlinks (F2.2): verses that notes elsewhere mention get a faint dot
+  // by their number; the "Mine" pane lists the notes themselves.
+  const { data: backlinks } = useBacklinks(bookId, chapter);
+  const backlinkVerses = useMemo(() => {
+    const set = new Set<number>();
+    for (const b of backlinks ?? []) {
+      if (b.ref_verse_start == null) continue;
+      for (let v = b.ref_verse_start; v <= (b.ref_verse_end ?? b.ref_verse_start); v++) set.add(v);
+    }
+    return set;
+  }, [backlinks]);
+  const extractNoteRefs = useNoteRefExtractor();
   const { data: resourceLinks } = useResourcePassageLinksForChapter(bookId, chapter);
   const { data: allResources } = useResources();
   const { data: suggestedResources } = useSuggestedResourcesForPassage(bookId, chapter);
@@ -951,6 +965,7 @@ export function ReadingPane() {
                     activeVerse={activeVerse}
                     redLetterSpansByVerse={redLetterSpansByVerse}
                     findRangesByVerse={findByVerse}
+                    backlinkVerses={backlinkVerses}
                     {...rowProps}
                   />
                 ) : (
@@ -961,6 +976,7 @@ export function ReadingPane() {
                       footnotes={footnotes?.[v.verse]}
                       isActive={false}
                       redLetterSpans={redLetterSpansByVerse?.get(v.verse)}
+                      hasBacklinks={backlinkVerses.has(v.verse)}
                       {...rowProps}
                     />
                   ))
@@ -984,6 +1000,7 @@ export function ReadingPane() {
                         ttsActive={ttsHere && ttsCurrentSegmentId === v.verse}
                         redLetterSpans={redLetterSpansByVerse?.get(v.verse)}
                         findRanges={findByVerse?.get(v.verse)}
+                        hasBacklinks={backlinkVerses.has(v.verse)}
                         {...rowProps}
                       />
                     </div>
@@ -1148,9 +1165,9 @@ export function ReadingPane() {
         <NoteEditorModal
           title={`Note on ${book.name} ${chapter}:${noteTarget.verseStart}${noteTarget.verseEnd !== noteTarget.verseStart ? `-${noteTarget.verseEnd}` : ""}`}
           initialBody={noteTarget.existing?.body}
-          onSave={(body) => {
+          onSave={(body, refs) => {
             if (noteTarget.existing) {
-              updateNote.mutate({ id: noteTarget.existing.id, body }, { onSuccess: () => toast.success("Note saved") });
+              updateNote.mutate({ id: noteTarget.existing.id, body, refs }, { onSuccess: () => toast.success("Note saved") });
             } else {
               createNote.mutate(
                 {
@@ -1160,6 +1177,7 @@ export function ReadingPane() {
                   verseEnd: noteTarget.verseEnd,
                   body,
                   highlightId: noteTarget.highlightId,
+                  refs,
                 },
                 { onSuccess: () => toast.success("Note saved") },
               );
@@ -1186,7 +1204,7 @@ export function ReadingPane() {
               <ChapterNoteItem
                 key={n.id}
                 body={n.body}
-                onSave={(body) => updateChapterNote.mutate({ id: n.id, body }, { onSuccess: () => toast.success("Note saved") })}
+                onSave={(body) => updateChapterNote.mutate({ id: n.id, body, refs: extractNoteRefs(body) }, { onSuccess: () => toast.success("Note saved") })}
                 onDelete={async () => {
                   if (await confirmTrash("this chapter note")) deleteChapterNote.mutate(n.id, { onSuccess: () => trashToast("chapter_note", n.id) });
                 }}
@@ -1196,7 +1214,7 @@ export function ReadingPane() {
               body=""
               placeholder="Add a note for this whole chapter…"
               onSave={(body) => {
-                if (body.trim()) createChapterNote.mutate({ bookId, chapter, body }, { onSuccess: () => toast.success("Note saved") });
+                if (body.trim()) createChapterNote.mutate({ bookId, chapter, body, refs: extractNoteRefs(body) }, { onSuccess: () => toast.success("Note saved") });
               }}
               clearAfterSave
             />

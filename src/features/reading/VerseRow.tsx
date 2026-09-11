@@ -35,6 +35,7 @@ export function VerseRow({
   ttsActive,
   redLetterSpans,
   findRanges,
+  hasBacklinks,
 }: {
   verse: Verse;
   highlights: Highlight[];
@@ -57,6 +58,8 @@ export function VerseRow({
   redLetterSpans?: RedLetterSpan[];
   /** Find-in-chapter matches within this verse. */
   findRanges?: FindRange[];
+  /** A note elsewhere mentions this verse (backlinks): a faint dot by the number. */
+  hasBacklinks?: boolean;
 }) {
   const tokens = buildTokens(verse.text, showHighlights ? highlights : [], verse.verse, footnotes ?? [], redLetterSpans, findRanges);
   const notesByHighlight = new Map(notes.filter((n) => n.highlight_id != null).map((n) => [n.highlight_id as number, n]));
@@ -89,15 +92,16 @@ export function VerseRow({
               onContextMenu(verse.verse, rect.right + 4, rect.top);
             }
           }}
-          title={`Verse ${verse.verse}: highlight, note, copy, compare…`}
-          aria-label={`Verse ${verse.verse} actions`}
+          title={`Verse ${verse.verse}: highlight, note, copy, compare…${hasBacklinks ? " (mentioned in your notes)" : ""}`}
+          aria-label={`Verse ${verse.verse} actions${hasBacklinks ? ", mentioned in your notes" : ""}`}
           className={cx(
-            "mr-1 mt-[0.15em] w-7 shrink-0 select-none rounded text-right font-sans text-xs font-semibold leading-none tabular-nums",
+            "relative mr-1 mt-[0.15em] w-7 shrink-0 select-none rounded text-right font-sans text-xs font-semibold leading-none tabular-nums",
             isActive ? "text-accent" : "text-ink-4 group-hover:text-ink-3",
           )}
           style={{ fontSize: "0.65em", lineHeight: 1.9 }}
         >
           {verse.verse}
+          {hasBacklinks && <span aria-hidden="true" className="backlink-dot" />}
         </button>
       )}
       <span className="min-w-0 flex-1">

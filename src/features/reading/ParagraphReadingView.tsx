@@ -28,6 +28,7 @@ function ParagraphVerse({
   onContextMenu,
   redLetterSpans,
   findRanges,
+  hasBacklinks,
 }: {
   verse: Verse;
   highlights: Highlight[];
@@ -43,6 +44,7 @@ function ParagraphVerse({
   onContextMenu?: (verseNum: number, x: number, y: number) => void;
   redLetterSpans?: RedLetterSpan[];
   findRanges?: FindRange[];
+  hasBacklinks?: boolean;
 }) {
   const tokens = buildTokens(verse.text, highlights, verse.verse, footnotes ?? [], redLetterSpans, findRanges);
   const notesByHighlight = new Map(notes.filter((n) => n.highlight_id != null).map((n) => [n.highlight_id as number, n]));
@@ -72,11 +74,12 @@ function ParagraphVerse({
               onContextMenu(verse.verse, rect.left, rect.bottom + 2);
             }
           }}
-          title={`Verse ${verse.verse}: highlight, note, copy, compare…`}
-          aria-label={`Verse ${verse.verse} actions`}
-          className={cx("mr-0.5 select-none align-super font-sans text-[0.6em] font-semibold leading-none", isActive ? "text-accent" : "text-ink-4")}
+          title={`Verse ${verse.verse}: highlight, note, copy, compare…${hasBacklinks ? " (mentioned in your notes)" : ""}`}
+          aria-label={`Verse ${verse.verse} actions${hasBacklinks ? ", mentioned in your notes" : ""}`}
+          className={cx("relative mr-0.5 select-none align-super font-sans text-[0.6em] font-semibold leading-none", isActive ? "text-accent" : "text-ink-4")}
         >
           {verse.verse}
+          {hasBacklinks && <span aria-hidden="true" className="backlink-dot" />}
         </button>
       )}
       {showNoteSymbols && verseLevelNote && (
@@ -168,6 +171,7 @@ export function ParagraphVerses({
   showNoteSymbols,
   redLetterSpansByVerse,
   findRangesByVerse,
+  backlinkVerses,
   onSelectVerse,
   onHighlightClick,
   onNoteSymbolClick,
@@ -184,6 +188,7 @@ export function ParagraphVerses({
   showNoteSymbols: boolean;
   redLetterSpansByVerse?: Map<number, RedLetterSpan[]> | null;
   findRangesByVerse?: Map<number, FindRange[]> | null;
+  backlinkVerses?: Set<number>;
   onSelectVerse: (verseNum: number) => void;
   onHighlightClick: (highlightId: number, x: number, y: number) => void;
   onNoteSymbolClick: (note: Note) => void;
@@ -204,6 +209,7 @@ export function ParagraphVerses({
           showNoteSymbols={showNoteSymbols}
           redLetterSpans={redLetterSpansByVerse?.get(v.verse)}
           findRanges={findRangesByVerse?.get(v.verse)}
+          hasBacklinks={backlinkVerses?.has(v.verse)}
           onSelectVerse={onSelectVerse}
           onHighlightClick={onHighlightClick}
           onNoteSymbolClick={onNoteSymbolClick}

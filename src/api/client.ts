@@ -36,6 +36,9 @@ import type {
   MorphologyWord,
   Footnote,
   ChapterNote,
+  NoteRefInput,
+  NoteKind,
+  Backlink,
   TrashContents,
   TrashKind,
   CrossReference,
@@ -123,9 +126,13 @@ export const api = {
   listNotesForChapter: (bookId: number, chapter: number) =>
     invoke<Note[]>("list_notes_for_chapter", { bookId, chapter }),
   listAllNotes: () => invoke<Note[]>("list_all_notes"),
-  createNote: (bookId: number, chapter: number, verseStart: number, verseEnd: number, body: string, highlightId?: number) =>
-    invoke<Note>("create_note", { bookId, chapter, verseStart, verseEnd, body, highlightId: highlightId ?? null }),
-  updateNote: (id: number, body: string) => invoke<void>("update_note", { id, body }),
+  createNote: (bookId: number, chapter: number, verseStart: number, verseEnd: number, body: string, highlightId?: number, refs?: NoteRefInput[]) =>
+    invoke<Note>("create_note", { bookId, chapter, verseStart, verseEnd, body, highlightId: highlightId ?? null, refs: refs ?? null }),
+  updateNote: (id: number, body: string, refs?: NoteRefInput[]) => invoke<void>("update_note", { id, body, refs: refs ?? null }),
+  // Backlinks: the references a note's body mentions (kept per save, and
+  // backfilled once for older notes) and the reverse lookup for a chapter.
+  setNoteRefs: (kind: NoteKind, id: number, refs: NoteRefInput[]) => invoke<void>("set_note_refs", { kind, id, refs }),
+  listBacklinks: (bookId: number, chapter: number) => invoke<Backlink[]>("list_backlinks", { bookId, chapter }),
   deleteNote: (id: number) => invoke<void>("delete_note", { id }),
   addNoteTag: (noteId: number, tag: string) => invoke<void>("add_note_tag", { noteId, tag }),
   removeNoteTag: (noteId: number, tag: string) => invoke<void>("remove_note_tag", { noteId, tag }),
@@ -134,9 +141,9 @@ export const api = {
 
   listChapterNotes: (bookId: number, chapter: number) => invoke<ChapterNote[]>("list_chapter_notes", { bookId, chapter }),
   listAllChapterNotes: () => invoke<ChapterNote[]>("list_all_chapter_notes"),
-  createChapterNote: (bookId: number, chapter: number, body: string) =>
-    invoke<ChapterNote>("create_chapter_note", { bookId, chapter, body }),
-  updateChapterNote: (id: number, body: string) => invoke<void>("update_chapter_note", { id, body }),
+  createChapterNote: (bookId: number, chapter: number, body: string, refs?: NoteRefInput[]) =>
+    invoke<ChapterNote>("create_chapter_note", { bookId, chapter, body, refs: refs ?? null }),
+  updateChapterNote: (id: number, body: string, refs?: NoteRefInput[]) => invoke<void>("update_chapter_note", { id, body, refs: refs ?? null }),
   deleteChapterNote: (id: number) => invoke<void>("delete_chapter_note", { id }),
   addChapterNoteTag: (chapterNoteId: number, tag: string) => invoke<void>("add_chapter_note_tag", { chapterNoteId, tag }),
   removeChapterNoteTag: (chapterNoteId: number, tag: string) => invoke<void>("remove_chapter_note_tag", { chapterNoteId, tag }),

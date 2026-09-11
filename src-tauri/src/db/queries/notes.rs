@@ -1,5 +1,5 @@
 use super::NOT_DELETED;
-use crate::models::{ChapterNote, Note};
+use crate::models::{Backlink, ChapterNote, Note, NoteKind, NoteRefInput};
 use rusqlite::{params, Connection};
 
 fn map_row(r: &rusqlite::Row) -> rusqlite::Result<Note> {
@@ -47,6 +47,10 @@ pub fn get(conn: &Connection, id: i64) -> anyhow::Result<Option<Note>> {
     Ok(conn.query_row(&format!("SELECT {SELECT_COLS} FROM notes WHERE id = ?1"), params![id], map_row).optional()?)
 }
 
+/// `refs` is what the editor found in the body (see USER_MIGRATION_0012);
+/// `None` leaves the note's references untouched, which only the backfill
+/// path and older callers rely on.
+#[allow(clippy::too_many_arguments)]
 pub fn create(
     conn: &Connection,
     book_id: i64,
@@ -55,27 +59,113 @@ pub fn create(
     verse_end: i64,
     body: String,
     highlight_id: Option<i64>,
+    refs: Option<Vec<NoteRefInput>>,
 ) -> anyhow::Result<Note> {
     let now = chrono::Utc::now().to_rfc3339();
-    conn.execute(
+    let tx = conn.unchecked_transaction()?;
+    tx.execute(
         "INSERT INTO notes (book_id, chapter, verse_start, verse_end, body, created_at, updated_at, highlight_id) VALUES (?1,?2,?3,?4,?5,?6,?6,?7)",
         params![book_id, chapter, verse_start, verse_end, body, now, highlight_id],
     )?;
-    let id = conn.last_insert_rowid();
-    Ok(conn.query_row(
-        &format!("SELECT {SELECT_COLS} FROM notes WHERE id = ?1"),
-        params![id],
-        map_row,
-    )?)
+    let id = tx.last_insert_rowid();
+    if let Some(refs) = refs {
+        set_refs(&tx, NoteKind::Note, id, &refs)?;
+    }
+    let note = tx.query_row(&format!("SELECT {SELECT_COLS} FROM notes WHERE id = ?1"), params![id], map_row)?;
+    tx.commit()?;
+    Ok(note)
 }
 
-pub fn update(conn: &Connection, id: i64, body: String) -> anyhow::Result<()> {
+pub fn update(conn: &Connection, id: i64, body: String, refs: Option<Vec<NoteRefInput>>) -> anyhow::Result<()> {
     let now = chrono::Utc::now().to_rfc3339();
-    conn.execute(
+    let tx = conn.unchecked_transaction()?;
+    tx.execute(
         "UPDATE notes SET body = ?1, updated_at = ?2 WHERE id = ?3",
         params![body, now, id],
     )?;
+    if let Some(refs) = refs {
+        set_refs(&tx, NoteKind::Note, id, &refs)?;
+    }
+    tx.commit()?;
     Ok(())
+}
+
+// ---------------------------------------------------------------------------
+// Backlinks (USER_MIGRATION_0012)
+
+/// Replaces every reference row of one note with `refs`. Runs inside the
+/// caller's transaction when there is one (the save commands) or on its own.
+pub fn set_refs(conn: &Connection, kind: NoteKind, id: i64, refs: &[NoteRefInput]) -> anyhow::Result<()> {
+    let (own, other) = match kind {
+        NoteKind::Note => ("note_id", "chapter_note_id"),
+        NoteKind::ChapterNote => ("chapter_note_id", "note_id"),
+    };
+    conn.execute(&format!("DELETE FROM note_refs WHERE {own} = ?1"), params![id])?;
+    let mut stmt = conn.prepare(&format!(
+        "INSERT INTO note_refs ({own}, {other}, book_id, chapter, verse_start, verse_end) VALUES (?1, NULL, ?2, ?3, ?4, ?5)"
+    ))?;
+    for r in refs {
+        let (vs, ve) = match (r.verse_start, r.verse_end) {
+            (Some(s), e) => (Some(s), Some(e.unwrap_or(s).max(s))),
+            (None, _) => (None, None),
+        };
+        stmt.execute(params![id, r.book_id, r.chapter, vs, ve])?;
+    }
+    Ok(())
+}
+
+/// Notes and chapter notes *elsewhere* (not on this chapter) whose body
+/// mentions a passage in `book_id` `chapter`, in the order of the notes'
+/// own passages. Trash rows are hidden like everywhere else.
+pub fn list_backlinks(conn: &Connection, book_id: i64, chapter: i64) -> anyhow::Result<Vec<Backlink>> {
+    let mut out = Vec::new();
+    let mut stmt = conn.prepare(&format!(
+        "SELECT n.id, n.book_id, n.chapter, n.verse_start, n.verse_end, n.body, n.updated_at, r.verse_start, r.verse_end
+         FROM note_refs r JOIN notes n ON n.id = r.note_id
+         WHERE r.book_id = ?1 AND r.chapter = ?2 AND n.{NOT_DELETED}
+           AND NOT (n.book_id = ?1 AND n.chapter = ?2)
+         ORDER BY n.book_id, n.chapter, n.verse_start, r.verse_start"
+    ))?;
+    let rows = stmt.query_map(params![book_id, chapter], |r| {
+        Ok(Backlink {
+            kind: NoteKind::Note,
+            id: r.get(0)?,
+            book_id: r.get(1)?,
+            chapter: r.get(2)?,
+            verse_start: r.get(3)?,
+            verse_end: r.get(4)?,
+            body: r.get(5)?,
+            updated_at: r.get(6)?,
+            ref_verse_start: r.get(7)?,
+            ref_verse_end: r.get(8)?,
+        })
+    })?;
+    out.extend(rows.collect::<Result<Vec<_>, _>>()?);
+
+    let mut stmt = conn.prepare(&format!(
+        "SELECT cn.id, cn.book_id, cn.chapter, cn.body, cn.updated_at, r.verse_start, r.verse_end
+         FROM note_refs r JOIN chapter_notes cn ON cn.id = r.chapter_note_id
+         WHERE r.book_id = ?1 AND r.chapter = ?2 AND cn.{NOT_DELETED}
+           AND NOT (cn.book_id = ?1 AND cn.chapter = ?2)
+         ORDER BY cn.book_id, cn.chapter, r.verse_start"
+    ))?;
+    let rows = stmt.query_map(params![book_id, chapter], |r| {
+        Ok(Backlink {
+            kind: NoteKind::ChapterNote,
+            id: r.get(0)?,
+            book_id: r.get(1)?,
+            chapter: r.get(2)?,
+            verse_start: None,
+            verse_end: None,
+            body: r.get(3)?,
+            updated_at: r.get(4)?,
+            ref_verse_start: r.get(5)?,
+            ref_verse_end: r.get(6)?,
+        })
+    })?;
+    out.extend(rows.collect::<Result<Vec<_>, _>>()?);
+    out.sort_by(|a, b| (a.book_id, a.chapter, a.verse_start.unwrap_or(0), a.ref_verse_start.unwrap_or(0)).cmp(&(b.book_id, b.chapter, b.verse_start.unwrap_or(0), b.ref_verse_start.unwrap_or(0))));
+    Ok(out)
 }
 
 /// Soft delete: the row moves to the Trash (see `queries::trash`) rather
@@ -124,19 +214,30 @@ pub fn get_chapter_note(conn: &Connection, id: i64) -> anyhow::Result<Option<Cha
     Ok(conn.query_row(&format!("SELECT {CHAPTER_COLS} FROM chapter_notes WHERE id = ?1"), params![id], map_chapter_row).optional()?)
 }
 
-pub fn create_chapter_note(conn: &Connection, book_id: i64, chapter: i64, body: String) -> anyhow::Result<ChapterNote> {
+pub fn create_chapter_note(conn: &Connection, book_id: i64, chapter: i64, body: String, refs: Option<Vec<NoteRefInput>>) -> anyhow::Result<ChapterNote> {
     let now = chrono::Utc::now().to_rfc3339();
-    conn.execute(
+    let tx = conn.unchecked_transaction()?;
+    tx.execute(
         "INSERT INTO chapter_notes (book_id, chapter, body, created_at, updated_at) VALUES (?1,?2,?3,?4,?4)",
         params![book_id, chapter, body, now],
     )?;
-    let id = conn.last_insert_rowid();
-    Ok(conn.query_row(&format!("SELECT {CHAPTER_COLS} FROM chapter_notes WHERE id = ?1"), params![id], map_chapter_row)?)
+    let id = tx.last_insert_rowid();
+    if let Some(refs) = refs {
+        set_refs(&tx, NoteKind::ChapterNote, id, &refs)?;
+    }
+    let note = tx.query_row(&format!("SELECT {CHAPTER_COLS} FROM chapter_notes WHERE id = ?1"), params![id], map_chapter_row)?;
+    tx.commit()?;
+    Ok(note)
 }
 
-pub fn update_chapter_note(conn: &Connection, id: i64, body: String) -> anyhow::Result<()> {
+pub fn update_chapter_note(conn: &Connection, id: i64, body: String, refs: Option<Vec<NoteRefInput>>) -> anyhow::Result<()> {
     let now = chrono::Utc::now().to_rfc3339();
-    conn.execute("UPDATE chapter_notes SET body = ?1, updated_at = ?2 WHERE id = ?3", params![body, now, id])?;
+    let tx = conn.unchecked_transaction()?;
+    tx.execute("UPDATE chapter_notes SET body = ?1, updated_at = ?2 WHERE id = ?3", params![body, now, id])?;
+    if let Some(refs) = refs {
+        set_refs(&tx, NoteKind::ChapterNote, id, &refs)?;
+    }
+    tx.commit()?;
     Ok(())
 }
 
