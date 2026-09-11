@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { BookOpenText, MessageSquareText } from "lucide-react";
@@ -165,6 +165,10 @@ export function parseOsis(osis: string): { book: string; chapter: number; verse:
 export function CommentaryHtml({ html, onJumpToRef }: { html: string; onJumpToRef: JumpToRef }) {
   const ref = useRef<HTMLDivElement>(null);
   const { data: books } = useBooks();
+  // One object per HTML string: React resets innerHTML whenever this
+  // object's identity changes, which would wipe the attributes added below
+  // on every parent re-render.
+  const inner = useMemo(() => ({ __html: html }), [html]);
 
   // Hover previews: every `a.scripref` gets a data-ref derived from its
   // data-osis after render, so the stored HTML stays as imported. Runs
@@ -192,7 +196,7 @@ export function CommentaryHtml({ html, onJumpToRef }: { html: string; onJumpToRe
       className="commentary-html"
       onClick={handleClick}
       onAuxClick={(e) => e.button === 1 && handleClick(e)}
-      dangerouslySetInnerHTML={{ __html: html }}
+      dangerouslySetInnerHTML={inner}
     />
   );
 }

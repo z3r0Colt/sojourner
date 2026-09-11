@@ -16,6 +16,9 @@ export function NoteBody({ body, className }: { body: string; className?: string
   const ref = useRef<HTMLSpanElement>(null);
   const matcher = useMemo(() => (books && books.length > 0 ? buildRefMatcher(books) : null), [books]);
   const html = useMemo(() => autoLinkScriptureRefs(body, matcher), [body, matcher]);
+  // Stable per HTML string: a new object would make React reset innerHTML
+  // on every re-render and drop the attributes added below.
+  const inner = useMemo(() => ({ __html: html }), [html]);
 
   // Hover previews for every verse link (typed, pasted, or auto-linked). A
   // chapter-only link ("Genesis 3") has no verse to preview and is skipped.
@@ -49,7 +52,7 @@ export function NoteBody({ body, className }: { body: string; className?: string
       className={`note-html ${className ?? ""}`}
       onClick={handleClick}
       onAuxClick={(e) => e.button === 1 && handleClick(e)}
-      dangerouslySetInnerHTML={{ __html: html }}
+      dangerouslySetInnerHTML={inner}
     />
   );
 }
