@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Play, Plus, ScrollText, Trash2 } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
+import { ArrowLeft, Play, Plus, ScrollText, Trash2 } from "lucide-react";
 import {
   useWestminsterDocuments,
   useWestminsterSections,
@@ -15,12 +15,15 @@ import { useReadingTypography } from "../../state/uiStore";
 import { applyMemoryMode, diffTyped, diffAccuracy } from "./memoryText";
 import { MemoryModeSelect } from "./MemoryModeSelect";
 import { GradeButtons } from "./GradeButtons";
+import { usePracticeKeys } from "./practiceKeys";
 import type { CatechismMemory, MemoryMode } from "../../api/types";
 import { Button, IconButton } from "../../components/ui/Button";
 import { EmptyState, LoadingState } from "../../components/ui/EmptyState";
+import { Kbd } from "../../components/ui/Page";
 import { confirmDelete } from "../../components/ui/confirm";
 import { toast } from "../../components/ui/toast";
 import { cardClass, cx, selectClass, textareaClass } from "../../components/ui/classes";
+import { usePaneNavigate } from "../../workspace/PaneContext";
 
 /** Catechism Study mode: pairs a Shorter (or Larger) Catechism question with
  * its answer for spaced-repetition memorization, the same SM-2 engine and
@@ -42,6 +45,7 @@ export function CatechismMemoryView() {
 
   const [practicing, setPracticing] = useState(false);
   const [queue, setQueue] = useState<CatechismMemory[]>([]);
+  const [history, setHistory] = useState<CatechismMemory[]>([]);
 
   function addCard() {
     if (addSectionId === "") return;
@@ -52,16 +56,31 @@ export function CatechismMemoryView() {
   function startPractice() {
     if (!due || due.length === 0) return;
     setQueue(due);
+    setHistory([]);
     setPracticing(true);
   }
 
   function practiceOne(c: CatechismMemory) {
     setQueue([c]);
+    setHistory([]);
     setPracticing(true);
   }
 
   function nextCard() {
-    setQueue((q) => q.slice(1));
+    setQueue((q) => {
+      const [done, ...rest] = q;
+      if (done) setHistory((h) => [...h, done]);
+      return rest;
+    });
+  }
+
+  function previousCard() {
+    setHistory((h) => {
+      if (h.length === 0) return h;
+      const last = h[h.length - 1];
+      setQueue((q) => [last, ...q]);
+      return h.slice(0, -1);
+    });
   }
 
   if (practicing && queue.length > 0) {
@@ -71,11 +90,16 @@ export function CatechismMemoryView() {
           <div className="text-sm text-ink-3">
             {queue.length} question{queue.length === 1 ? "" : "s"} remaining
           </div>
-          <Button size="sm" variant="ghost" onClick={() => setPracticing(false)}>
-            Stop
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button size="sm" variant="ghost" icon={ArrowLeft} onClick={previousCard} disabled={history.length === 0} title="Previous question (Backspace)">
+              Back
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setPracticing(false)}>
+              Stop
+            </Button>
+          </div>
         </div>
-        <CatechismPracticeCard key={queue[0].id} card={queue[0]} onDone={nextCard} />
+        <CatechismPracticeCard key={queue[0].id} card={queue[0]} onDone={nextCard} onBack={history.length > 0 ? previousCard : undefined} />
       </div>
     );
   }
@@ -204,23 +228,40 @@ function CardRow({
   );
 }
 
-function CatechismPracticeCard({ card, onDone }: { card: CatechismMemory; onDone: () => void }) {
+function CatechismPracticeCard({ card, onDone, onBack }: { card: CatechismMemory; onDone: () => void; onBack?: () => void }) {
   const { data: section } = useWestminsterSection(card.westminster_section_id);
+  const { data: docs } = useWestminsterDocuments();
   const review = useReviewCatechismMemory();
   const typography = useReadingTypography(1.05);
+  const navigate = usePaneNavigate();
   const [revealed, setRevealed] = useState(false);
   const [typed, setTyped] = useState("");
   const [checked, setChecked] = useState(false);
 
   const answer = section?.body ?? "";
+  const typeIt = card.mode === "type-it";
+  const answerShowing = !!answer && (typeIt ? checked : revealed);
+  const docCode = section ? docs?.find((d) => d.id === section.document_id)?.code : undefined;
 
-  function grade(quality: number) {
-    review.mutate({ id: card.id, quality });
-    setRevealed(false);
-    setChecked(false);
-    setTyped("");
-    onDone();
-  }
+  const grade = useCallback(
+    (quality: number) => {
+      review.mutate({ id: card.id, quality });
+      setRevealed(false);
+      setChecked(false);
+      setTyped("");
+      onDone();
+    },
+    [review, card.id, onDone],
+  );
+  const reveal = useCallback(() => setRevealed(true), []);
+  const check = useCallback(() => setChecked(true), []);
+
+  usePracticeKeys({
+    onReveal: answer && !typeIt && !revealed ? reveal : undefined,
+    onCheck: answer && typeIt && !checked ? check : undefined,
+    onGrade: answerShowing ? grade : undefined,
+    onBack,
+  });
 
   const diff = answer && checked ? diffTyped(answer, typed) : null;
   const accuracy = diff ? diffAccuracy(diff) : null;
@@ -228,7 +269,21 @@ function CatechismPracticeCard({ card, onDone }: { card: CatechismMemory; onDone
 
   return (
     <div className="mx-auto max-w-xl rounded-xl border border-line bg-surface p-6 shadow-sm">
-      <div className="mb-1 text-sm font-semibold text-ink-3">{section?.heading ?? `#${card.westminster_section_id}`}</div>
+      <div className="mb-1 flex items-baseline justify-between gap-3">
+        <div className="text-sm font-semibold text-ink-3">{section?.heading ?? `#${card.westminster_section_id}`}</div>
+        {docCode && (
+          <button
+            type="button"
+            className="inline-flex items-center gap-1 text-xs text-accent hover:underline"
+            title="Open this question in the Confessions with its proof texts (Ctrl+click for a new pane)"
+            onClick={(e) => navigate(`/westminster/${docCode}/${card.westminster_section_id}`, e)}
+            onAuxClick={(e) => e.button === 1 && navigate(`/westminster/${docCode}/${card.westminster_section_id}`, e)}
+          >
+            <ScrollText className="h-3.5 w-3.5" aria-hidden="true" />
+            Read in context
+          </button>
+        )}
+      </div>
       {!section && <LoadingState />}
       {section?.prompt && (
         <p className="reading-font mb-4 font-medium italic text-ink" style={typography}>
@@ -236,16 +291,23 @@ function CatechismPracticeCard({ card, onDone }: { card: CatechismMemory; onDone
         </p>
       )}
 
-      {answer && card.mode !== "type-it" && (
+      {answer && !typeIt && (
         <>
           <p className="reading-font mb-5 text-ink" style={typography}>
-            {revealed ? answer : applyMemoryMode(answer, card.mode)}
+            {revealed || card.mode === "type-it" ? answer : applyMemoryMode(answer, card.mode)}
           </p>
-          {!revealed ? <Button onClick={() => setRevealed(true)}>Reveal</Button> : <GradeButtons onGrade={grade} />}
+          {!revealed ? (
+            <Button onClick={reveal} aria-keyshortcuts="Space">
+              Reveal
+              <Kbd>Space</Kbd>
+            </Button>
+          ) : (
+            <GradeButtons onGrade={grade} />
+          )}
         </>
       )}
 
-      {answer && card.mode === "type-it" && (
+      {answer && typeIt && (
         <>
           {!checked ? (
             <>
@@ -254,12 +316,13 @@ function CatechismPracticeCard({ card, onDone }: { card: CatechismMemory; onDone
                 value={typed}
                 onChange={(e) => setTyped(e.target.value)}
                 rows={4}
-                placeholder="Type the answer from memory…"
+                placeholder="Type the answer from memory… (Enter checks, Shift+Enter for a new line)"
                 className={cx(textareaClass, "reading-font mb-3 w-full")}
                 style={typography}
               />
-              <Button variant="primary" onClick={() => setChecked(true)}>
+              <Button variant="primary" onClick={check} aria-keyshortcuts="Enter">
                 Check
+                <Kbd>Enter</Kbd>
               </Button>
             </>
           ) : (

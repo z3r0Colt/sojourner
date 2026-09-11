@@ -148,7 +148,8 @@ const CATEGORIES: Category[] = [
       { q: "Add a verse", a: "Type a reference on the Memory page, or right-click any verse while reading and choose “Add to Scripture memory”." },
       { q: "Practice modes", a: "“First letter” shows only the first letter of each word, “Blank word” hides random words, and “Type it” has you type the verse and checks it word for word. Change the mode any time from the verse's row." },
       { q: "Catechism", a: "The Catechism tab memorizes Shorter or Larger Catechism answers with the same tools." },
-      { q: "Spaced repetition", a: "Verses come due on a schedule that spaces out as you get them right. “Practice what's due” works through today's cards." },
+      { q: "Spaced repetition", a: "Verses come due on a schedule that spaces out as you get them right. “Practice what's due” works through today's cards; the Memory item in the sidebar shows how many are due today." },
+      { q: "Practice from the keyboard", a: <>During practice, <Kbd>Space</Kbd> reveals the verse or answer, <Kbd>Enter</Kbd> checks what you typed, <Kbd>1</Kbd> to <Kbd>4</Kbd> grade it (Again, Hard, Good, Easy), and <Kbd>Backspace</Kbd> goes back a card. Each card's “Read in context” link opens the verse in the Bible (or the question in the Confessions).</> },
     ],
   },
   {
