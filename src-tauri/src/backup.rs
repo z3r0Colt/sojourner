@@ -172,25 +172,14 @@ pub fn quick_check(conn: &Connection) -> anyhow::Result<Vec<String>> {
 }
 
 fn get_setting(conn: &Connection, key: &str) -> anyhow::Result<Option<String>> {
-    Ok(conn
-        .query_row("SELECT value FROM settings WHERE key = ?1", [key], |r| r.get(0))
-        .ok())
+    crate::db::queries::settings::get(conn, key)
 }
 
 pub fn set_backup_sync_folder(conn: &Connection, folder: Option<String>) -> anyhow::Result<()> {
     match folder {
-        Some(folder) => {
-            conn.execute(
-                "INSERT INTO settings (key, value) VALUES ('backup_sync_folder', ?1)
-                 ON CONFLICT(key) DO UPDATE SET value = excluded.value",
-                [folder],
-            )?;
-        }
-        None => {
-            conn.execute("DELETE FROM settings WHERE key = 'backup_sync_folder'", [])?;
-        }
+        Some(folder) => crate::db::queries::settings::set(conn, "backup_sync_folder", &folder),
+        None => crate::db::queries::settings::delete(conn, "backup_sync_folder"),
     }
-    Ok(())
 }
 
 pub fn get_backup_sync_folder(conn: &Connection) -> anyhow::Result<Option<String>> {

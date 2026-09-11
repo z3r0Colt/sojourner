@@ -17,6 +17,7 @@ pub mod reference;
 pub mod resources;
 pub mod scripture_memory;
 pub mod search;
+pub mod settings;
 pub mod verses;
 pub mod versification;
 pub mod westminster;
