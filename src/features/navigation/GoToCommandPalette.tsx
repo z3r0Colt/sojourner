@@ -11,6 +11,7 @@ import { Modal } from "../../components/ui/Modal";
 import { Kbd } from "../../components/ui/Page";
 import { cx, inputClass } from "../../components/ui/classes";
 import { allCommands, commandQueryText, filterCommands, isCommandQuery, type Command } from "./commands";
+import type { SavedWorkspace } from "../../workspace/presets";
 
 const STRONGS_RE = /^[GgHh]\d{1,5}$/;
 /** How many matching commands ride along with an ordinary query. */
@@ -35,12 +36,14 @@ interface Candidate {
  * `>` first lists commands alone. */
 export function GoToCommandPalette({
   books,
+  savedWorkspaces,
   translationId,
   translationLabel,
   onClose,
   onNavigate,
 }: {
   books: Book[];
+  savedWorkspaces?: SavedWorkspace[];
   translationId?: number | null;
   translationLabel?: string;
   onClose: () => void;
@@ -69,9 +72,9 @@ export function GoToCommandPalette({
   const focusMode = useUiStore((s) => s.distractionFreeMode);
   const titles = useTitleContext();
   const commands = useMemo(
-    () => allCommands({ titles }),
+    () => allCommands({ titles, savedWorkspaces, commentarySources: titles.commentarySources }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [titles, panes, focusedPaneId, maximizedPaneId, layout, focusMode],
+    [titles, savedWorkspaces, panes, focusedPaneId, maximizedPaneId, layout, focusMode],
   );
   function commandCandidate(c: Command): Candidate {
     return {

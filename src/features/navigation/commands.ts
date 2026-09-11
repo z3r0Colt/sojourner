@@ -2,16 +2,22 @@ import {
   ArrowLeftToLine,
   ArrowRightToLine,
   Columns2,
+  Layers,
   LayoutGrid,
   Link2,
   Maximize2,
   Minimize2,
   MessageSquareText,
   Replace,
+  Save,
   SquareDashed,
   X,
   type LucideIcon,
 } from "lucide-react";
+import type { CommentarySource } from "../../api/types";
+import { toast } from "../../components/ui/toast";
+import { PRESET_WORKSPACES, applyWorkspace, type SavedWorkspace } from "../../workspace/presets";
+import { useWorkspaceDialog } from "../../workspace/WorkspacesMenu";
 import {
   LINK_GROUPS,
   MAX_PANES,
@@ -52,6 +58,9 @@ export interface Command {
 
 export interface CommandContext {
   titles: TitleContext;
+  /** The reader's saved workspaces (W4); presets are always offered. */
+  savedWorkspaces?: SavedWorkspace[];
+  commentarySources?: CommentarySource[];
 }
 
 const PANES = "Panes";
@@ -213,9 +222,35 @@ export function layoutCommands(): Command[] {
   }));
 }
 
+/** Presets, saved workspaces, and "Save workspace as…" (W4). */
+export function workspaceCommands(ctx: CommandContext): Command[] {
+  const group = "Workspaces";
+  const all = [...PRESET_WORKSPACES, ...(ctx.savedWorkspaces ?? [])];
+  const out = all.map<Command>((w) => ({
+    id: `workspace-${w.name}`,
+    group,
+    label: `Workspace: ${w.name}`,
+    icon: Layers,
+    keywords: `preset switch ${w.description ?? ""} ${w.panes.map((p) => p.kind).join(" ")}`,
+    run: () => {
+      applyWorkspace(w, ctx.commentarySources);
+      toast.info(`Workspace: ${w.name}`);
+    },
+  }));
+  out.push({
+    id: "workspace-save-as",
+    group,
+    label: "Save workspace as…",
+    icon: Save,
+    keywords: "name store remember panes layout",
+    run: () => useWorkspaceDialog.getState().openSaveAs(),
+  });
+  return out;
+}
+
 /** Every command the palette can offer right now. */
 export function allCommands(ctx: CommandContext): Command[] {
-  return [...paneCommands(ctx), ...layoutCommands()];
+  return [...paneCommands(ctx), ...layoutCommands(), ...workspaceCommands(ctx)];
 }
 
 /** True when the typed text asks for commands only (`>` prefix). */
