@@ -21,7 +21,8 @@ pub fn search(
     let verses = search_queries::search_verses(&conn, &query, &translation_ids, &scope, limit)?;
     let commentary = search_queries::search_commentary(&conn, &query, &commentary_source_ids, limit)?;
     let notes = search_queries::search_notes(&conn, &query, limit)?;
-    Ok(SearchResults { verses, commentary, notes })
+    let prayers = search_queries::search_prayer_entries(&conn, &query, limit)?;
+    Ok(SearchResults { verses, commentary, notes, prayers })
 }
 
 /// Called explicitly when the user commits to a search (Enter, or re-running

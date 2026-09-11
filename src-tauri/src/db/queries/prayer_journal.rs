@@ -28,6 +28,11 @@ pub fn list_all(conn: &Connection) -> anyhow::Result<Vec<PrayerEntry>> {
     Ok(rows.collect::<Result<Vec<_>, _>>()?)
 }
 
+pub fn get(conn: &Connection, id: i64) -> anyhow::Result<Option<PrayerEntry>> {
+    use rusqlite::OptionalExtension;
+    Ok(conn.query_row(&format!("SELECT {SELECT_COLS} FROM prayer_entries WHERE id = ?1"), params![id], map_row).optional()?)
+}
+
 #[allow(clippy::too_many_arguments)]
 pub fn create(
     conn: &Connection,
@@ -103,5 +108,41 @@ pub fn search(conn: &Connection, query: &str, limit: i64) -> anyhow::Result<Vec<
     );
     let mut stmt = conn.prepare(&sql)?;
     let rows = stmt.query_map(params![match_expr, limit], map_row)?;
+    Ok(rows.collect::<Result<Vec<_>, _>>()?)
+}
+
+// Doctrine/use tagging, same shape as sermon_note_tags/note_tags.
+
+pub fn add_tag(conn: &Connection, prayer_entry_id: i64, tag: String) -> anyhow::Result<()> {
+    conn.execute(
+        "INSERT OR IGNORE INTO prayer_entry_tags (prayer_entry_id, tag) VALUES (?1, ?2)",
+        params![prayer_entry_id, tag.trim()],
+    )?;
+    Ok(())
+}
+
+pub fn remove_tag(conn: &Connection, prayer_entry_id: i64, tag: String) -> anyhow::Result<()> {
+    conn.execute(
+        "DELETE FROM prayer_entry_tags WHERE prayer_entry_id = ?1 AND tag = ?2",
+        params![prayer_entry_id, tag],
+    )?;
+    Ok(())
+}
+
+pub fn list_tags(conn: &Connection, prayer_entry_id: i64) -> anyhow::Result<Vec<String>> {
+    let mut stmt = conn.prepare("SELECT tag FROM prayer_entry_tags WHERE prayer_entry_id = ?1 ORDER BY tag")?;
+    let rows = stmt.query_map(params![prayer_entry_id], |r| r.get::<_, String>(0))?;
+    Ok(rows.collect::<Result<Vec<_>, _>>()?)
+}
+
+pub fn list_all_tags(conn: &Connection) -> anyhow::Result<Vec<String>> {
+    let mut stmt = conn.prepare("SELECT DISTINCT tag FROM prayer_entry_tags ORDER BY tag")?;
+    let rows = stmt.query_map([], |r| r.get::<_, String>(0))?;
+    Ok(rows.collect::<Result<Vec<_>, _>>()?)
+}
+
+pub fn list_all_tags_by_entry(conn: &Connection) -> anyhow::Result<Vec<(i64, String)>> {
+    let mut stmt = conn.prepare("SELECT prayer_entry_id, tag FROM prayer_entry_tags ORDER BY prayer_entry_id, tag")?;
+    let rows = stmt.query_map([], |r| Ok((r.get(0)?, r.get(1)?)))?;
     Ok(rows.collect::<Result<Vec<_>, _>>()?)
 }

@@ -1,6 +1,6 @@
 use crate::models::{
-    WestminsterCommentaryEntry, WestminsterCommentarySource, WestminsterDocument, WestminsterProofRef, WestminsterSection,
-    WestminsterSectionSummary,
+    WestminsterCommentaryEntry, WestminsterCommentarySource, WestminsterDocument, WestminsterPassageMatch, WestminsterProofRef,
+    WestminsterSection, WestminsterSectionSummary,
 };
 use rusqlite::{params, Connection};
 
@@ -78,6 +78,56 @@ pub fn get_section(conn: &Connection, id: i64) -> anyhow::Result<Option<Westmins
         body_with_proofs,
         proofs,
     }))
+}
+
+/// The reverse of a proof marker: given a single verse reference, every
+/// Standards paragraph that cites it as a proof text, across all three
+/// documents. Mirrors `crossrefs::get_cross_references`'s single-verse
+/// signature since both are driven by the reading pane's active verse.
+pub fn get_confession_for_passage(conn: &Connection, book_id: i64, chapter: i64, verse: i64) -> anyhow::Result<Vec<WestminsterPassageMatch>> {
+    let mut stmt = conn.prepare(
+        "SELECT DISTINCT ws.id, ws.document_id, wd.code, wd.title, ws.heading, ws.prompt, wp.marker
+         FROM westminster_proofs wp
+         JOIN westminster_sections ws ON ws.id = wp.section_id
+         JOIN westminster_documents wd ON wd.id = ws.document_id
+         WHERE wp.book_id = ?1 AND wp.chapter = ?2 AND ?3 BETWEEN wp.verse_start AND wp.verse_end
+         ORDER BY wd.id, ws.sort_order, wp.marker",
+    )?;
+    let rows = stmt.query_map(params![book_id, chapter, verse], |r| {
+        Ok(WestminsterPassageMatch {
+            section_id: r.get(0)?,
+            document_id: r.get(1)?,
+            document_code: r.get(2)?,
+            document_title: r.get(3)?,
+            heading: r.get(4)?,
+            prompt: r.get(5)?,
+            marker: r.get(6)?,
+        })
+    })?;
+    Ok(rows.collect::<Result<Vec<_>, _>>()?)
+}
+
+/// Every WCF chapter number cited anywhere in a given Bible chapter (any
+/// verse, not one specific verse like `get_confession_for_passage`) -- the
+/// building block for "what doctrines does this chapter touch on," used by
+/// the resource auto-suggestion feature. Parses each matching section's
+/// "Chapter N, M" heading (the format `westminster::import` writes) rather
+/// than storing a redundant chapter-number column.
+pub fn list_wcf_chapters_cited(conn: &Connection, book_id: i64, chapter: i64) -> anyhow::Result<Vec<i64>> {
+    let mut stmt = conn.prepare(
+        "SELECT DISTINCT ws.heading FROM westminster_proofs wp
+         JOIN westminster_sections ws ON ws.id = wp.section_id
+         JOIN westminster_documents wd ON wd.id = ws.document_id
+         WHERE wd.code = 'wcf' AND wp.book_id = ?1 AND wp.chapter = ?2",
+    )?;
+    let headings: Vec<String> = stmt.query_map(params![book_id, chapter], |r| r.get(0))?.collect::<Result<_, _>>()?;
+    let mut chapters: Vec<i64> = headings
+        .iter()
+        .filter_map(|h| h.strip_prefix("Chapter ")?.split(',').next()?.trim().parse().ok())
+        .collect();
+    chapters.sort_unstable();
+    chapters.dedup();
+    Ok(chapters)
 }
 
 pub fn list_commentary_sources(conn: &Connection) -> anyhow::Result<Vec<WestminsterCommentarySource>> {

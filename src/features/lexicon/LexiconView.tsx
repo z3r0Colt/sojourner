@@ -1,11 +1,16 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { Languages, Search } from "lucide-react";
 import { api } from "../../api/client";
 import { useBooks, useStrongsEntry } from "../../api/queries";
 import { ConcordancePanel } from "./ConcordancePanel";
 import { CommentaryHtml } from "../commentary/CommentaryPanel";
 import { useNavigationStore } from "../../state/navigationStore";
+import { useReadingTypography } from "../../state/uiStore";
+import { Button } from "../../components/ui/Button";
+import { EmptyState, LoadingState } from "../../components/ui/EmptyState";
+import { cx, inputSmClass } from "../../components/ui/classes";
 
 export function LexiconView() {
   const { id } = useParams();
@@ -13,15 +18,14 @@ export function LexiconView() {
   const [query, setQuery] = useState("");
   const [debounced, setDebounced] = useState("");
   const [language, setLanguage] = useState<"hebrew" | "greek" | undefined>(undefined);
+  const typography = useReadingTypography(0.95);
 
   useEffect(() => {
     const t = setTimeout(() => setDebounced(query), 250);
     return () => clearTimeout(t);
   }, [query]);
 
-  const directIdMatch = /^[hg]\s*\d+$/i.test(debounced.trim())
-    ? debounced.trim().replace(/\s+/g, "").toUpperCase()
-    : null;
+  const directIdMatch = /^[hg]\s*\d+$/i.test(debounced.trim()) ? debounced.trim().replace(/\s+/g, "").toUpperCase() : null;
 
   const { data: results, isFetching } = useQuery({
     queryKey: ["lexiconSearch", debounced, language],
@@ -43,99 +47,90 @@ export function LexiconView() {
 
   return (
     <div className="flex h-full">
-      <aside className="flex w-80 shrink-0 flex-col border-r border-gray-200 dark:border-gray-800">
-        <div className="border-b border-gray-200 p-3 dark:border-gray-800">
-          <input
-            autoFocus
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search or enter a number (e.g. H1, G25)…"
-            className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm outline-none focus:border-blue-500 dark:border-gray-700 dark:bg-gray-950"
-          />
-          <div className="mt-2 flex gap-1 text-xs">
+      <aside className="flex w-80 shrink-0 flex-col border-r border-line bg-surface-2/60">
+        <div className="border-b border-line p-3">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-4" aria-hidden="true" />
+            <input
+              autoFocus
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Word, meaning, or number (H1, G25)…"
+              className={cx(inputSmClass, "w-full pl-7")}
+            />
+          </div>
+          <div className="mt-2 flex items-center gap-1">
             {(["hebrew", "greek"] as const).map((l) => (
-              <button
-                key={l}
-                onClick={() => setLanguage(language === l ? undefined : l)}
-                className={`rounded px-2 py-1 capitalize ${
-                  language === l
-                    ? "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
-                    : "text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"
-                }`}
-              >
+              <Button key={l} size="sm" variant="ghost" active={language === l} onClick={() => setLanguage(language === l ? undefined : l)} className="capitalize">
                 {l}
-              </button>
+              </Button>
             ))}
-            {isFetching && <span className="self-center text-gray-400">searching…</span>}
+            {isFetching && <LoadingState className="ml-auto py-0" label="Searching…" />}
           </div>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto">
           {directIdMatch && (
-            <button
-              onClick={() => navigate(`/lexicon/${directIdMatch}`)}
-              className="block w-full border-b border-gray-100 px-3 py-2 text-left text-sm hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800"
-            >
-              Go to {directIdMatch} →
+            <button type="button" onClick={() => navigate(`/lexicon/${directIdMatch}`)} className="block w-full border-b border-line px-3 py-2 text-left text-sm text-accent hover:bg-hover">
+              Open {directIdMatch}
             </button>
           )}
           {results?.map((r) => (
             <button
               key={r.id}
+              type="button"
               onClick={() => navigate(`/lexicon/${r.id}`)}
-              className={`block w-full border-b border-gray-100 px-3 py-2 text-left text-sm hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800 ${
-                id === r.id ? "bg-blue-50 dark:bg-blue-950/40" : ""
-              }`}
+              className={cx("block w-full border-b border-line px-3 py-2 text-left text-sm hover:bg-hover", id === r.id && "bg-accent-soft")}
             >
               <div className="flex items-baseline gap-2">
-                <span className="font-mono text-xs text-gray-400">{r.id}</span>
-                <span lang={r.language === "hebrew" ? "he" : "el"}>{r.original_word}</span>
-                {r.transliteration && <span className="italic text-gray-500">{r.transliteration}</span>}
+                <span className="font-mono text-xs text-ink-3">{r.id}</span>
+                <span className="text-base text-ink" lang={r.language === "hebrew" ? "he" : "el"}>
+                  {r.original_word}
+                </span>
+                {r.transliteration && <span className="italic text-ink-3">{r.transliteration}</span>}
               </div>
-              <div className="truncate text-xs text-gray-500">{r.definition}</div>
+              <div className="truncate text-xs text-ink-3">{r.definition}</div>
             </button>
           ))}
-          {!results?.length && debounced.trim().length > 1 && !directIdMatch && !isFetching && (
-            <p className="p-3 text-sm text-gray-400">No matches.</p>
+          {!results?.length && debounced.trim().length > 1 && !directIdMatch && !isFetching && <EmptyState compact title="No matches" />}
+          {debounced.trim().length <= 1 && !id && (
+            <p className="p-3 text-xs text-ink-3">Search by English meaning, transliteration, or Strong's number. Or click any word in interlinear view while reading.</p>
           )}
         </div>
       </aside>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-8 py-6">
-        {!entry && <p className="text-gray-400">Search the Hebrew and Greek lexicon, or select an entry.</p>}
+        {!entry && <EmptyState icon={Languages} title="Hebrew and Greek lexicon" description="Search on the left, or pick an entry, to see its definition, Thayer's notes, and every verse that uses it." />}
         {entry && (
-          <div className="max-w-2xl">
-            <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-400">
+          <div className="mx-auto w-full max-w-[70ch]">
+            <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-ink-3">
               {entry.id} · {entry.language}
             </div>
             <div className="mb-2 flex items-baseline gap-3">
-              <span className="text-4xl" lang={entry.language === "hebrew" ? "he" : "el"}>
+              <span className="text-4xl text-ink" lang={entry.language === "hebrew" ? "he" : "el"}>
                 {entry.original_word}
               </span>
-              {entry.transliteration && <span className="text-lg italic text-gray-500">{entry.transliteration}</span>}
+              {entry.transliteration && <span className="text-lg italic text-ink-3">{entry.transliteration}</span>}
             </div>
-            {entry.pronunciation && (
-              <div className="mb-4 text-sm text-gray-400">pronounced: {entry.pronunciation}</div>
-            )}
-            <p className="mb-4 text-base leading-relaxed text-gray-800 dark:text-gray-200">{entry.definition}</p>
+            {entry.pronunciation && <div className="mb-4 text-sm text-ink-3">pronounced {entry.pronunciation}</div>}
+            <p className="mb-4 text-ink" style={typography}>
+              {entry.definition}
+            </p>
             {entry.thayers_definition && (
-              <div className="mb-4 rounded border-l-2 border-gray-200 bg-gray-50 p-3 text-sm leading-relaxed text-gray-700 dark:border-gray-700 dark:bg-gray-900/50 dark:text-gray-300">
-                <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-400">Thayer's Greek-English Lexicon</div>
+              <div className="mb-4 rounded-lg border-l-2 border-line-2 bg-surface-2 p-3 text-ink-2" style={typography}>
+                <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-ink-3">Thayer's Greek-English Lexicon</div>
                 <CommentaryHtml html={entry.thayers_definition} onJumpToRef={jumpToRef} />
               </div>
             )}
             {entry.derivation && (
-              <p className="mb-2 text-sm text-gray-600 dark:text-gray-400">
+              <p className="mb-2 text-sm text-ink-2">
                 <span className="font-semibold">Derivation:</span> {entry.derivation}
               </p>
             )}
             {entry.kjv_usage && (
-              <p className="mb-2 text-sm text-gray-600 dark:text-gray-400">
+              <p className="mb-2 text-sm text-ink-2">
                 <span className="font-semibold">KJV usage:</span> {entry.kjv_usage}
               </p>
             )}
-            <Link to="/" className="mt-4 inline-block text-sm text-blue-600 hover:underline dark:text-blue-400">
-              ← Back to reading
-            </Link>
             <ConcordancePanel strongsId={entry.id} />
           </div>
         )}

@@ -1,18 +1,10 @@
 import { useBooks, useCrossReferences } from "../../api/queries";
 import { useNavigationStore } from "../../state/navigationStore";
 import type { Book } from "../../api/types";
+import { EmptyState } from "../../components/ui/EmptyState";
+import { Link2 } from "lucide-react";
 
-export function CrossReferencesPanel({
-  book,
-  chapter,
-  activeVerse,
-  onClose,
-}: {
-  book: Book;
-  chapter: number;
-  activeVerse: number | null;
-  onClose: () => void;
-}) {
+export function CrossReferencesPanel({ book, chapter, activeVerse }: { book: Book; chapter: number; activeVerse: number | null }) {
   const { data: books } = useBooks();
   const { data: refs } = useCrossReferences(book.id, chapter, activeVerse);
   const goTo = useNavigationStore((s) => s.goTo);
@@ -22,33 +14,33 @@ export function CrossReferencesPanel({
   }
 
   return (
-    <aside className="flex h-full w-full flex-col bg-gray-50 dark:bg-gray-900/40">
-      <div className="flex items-center justify-between border-b border-gray-200 p-2 text-xs text-gray-500 dark:border-gray-800">
-        <span>
-          {activeVerse ? `Cross references for ${book.name} ${chapter}:${activeVerse}` : "Select a verse to see cross references"}
-        </span>
-        <button onClick={onClose} className="text-gray-400 hover:text-gray-600" title="Close panel" aria-label="Close panel">
-          ✕
-        </button>
+    <div className="flex h-full w-full flex-col">
+      <div className="border-b border-line px-3 py-2 text-xs text-ink-3">
+        {activeVerse ? `Cross references for ${book.name} ${chapter}:${activeVerse}` : "Cross references"}
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto p-2 text-sm">
-        {activeVerse == null && <p className="p-2 text-gray-400">Click a verse in the reading pane.</p>}
-        {activeVerse != null && (!refs || refs.length === 0) && <p className="p-2 text-gray-400">No cross references found.</p>}
-        <ul className="space-y-1">
+        {activeVerse == null && (
+          <EmptyState compact icon={Link2} title="Click a verse to see its cross references" description="The verse number on the left of each line is a handy target." />
+        )}
+        {activeVerse != null && refs && refs.length === 0 && <EmptyState compact title="No cross references for this verse" />}
+        <ul className="space-y-0.5">
           {refs?.map((r, i) => (
             <li key={i}>
               <button
-                className="w-full rounded px-2 py-1 text-left hover:bg-gray-100 dark:hover:bg-gray-800"
+                type="button"
+                className="flex w-full items-baseline justify-between rounded-md px-2 py-1.5 text-left hover:bg-hover"
                 onClick={() => goTo({ bookId: r.to_book_id, chapter: r.to_chapter, verse: r.to_verse_start })}
               >
-                {bookName(r.to_book_id)} {r.to_chapter}:{r.to_verse_start}
-                {r.to_verse_end !== r.to_verse_start ? `-${r.to_verse_end}` : ""}
-                <span className="ml-2 text-xs text-gray-400">({r.votes} votes)</span>
+                <span className="text-ink">
+                  {bookName(r.to_book_id)} {r.to_chapter}:{r.to_verse_start}
+                  {r.to_verse_end !== r.to_verse_start ? `-${r.to_verse_end}` : ""}
+                </span>
+                <span className="ml-2 shrink-0 text-xs text-ink-4">{r.votes} votes</span>
               </button>
             </li>
           ))}
         </ul>
       </div>
-    </aside>
+    </div>
   );
 }

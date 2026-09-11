@@ -9,9 +9,8 @@ import { DictionaryView } from "./features/dictionary/DictionaryView";
 import { WestminsterView } from "./features/westminster/WestminsterView";
 import { ResourceLibraryView } from "./features/resources/ResourceLibraryView";
 import { ResourceReaderView } from "./features/resources/ResourceReaderView";
-import { SermonNotesView } from "./features/sermons/SermonNotesView";
 import { PrayerView } from "./features/prayer/PrayerView";
-import { MemoryView } from "./features/memory/MemoryView";
+import { MemoryHubView } from "./features/memory/MemoryHubView";
 import { ReadingPlansView } from "./features/plans/ReadingPlansView";
 import { HarmonyView } from "./features/harmony/HarmonyView";
 
@@ -25,9 +24,8 @@ export const router = createHashRouter([
       { path: "commentary/:sourceId/:bookId", element: <CommentaryStandaloneView /> },
       { path: "commentary/:sourceId/:bookId/:sectionId", element: <CommentaryStandaloneView /> },
       { path: "notes", element: <NotesListView /> },
-      { path: "sermons", element: <SermonNotesView /> },
       { path: "prayer", element: <PrayerView /> },
-      { path: "memory", element: <MemoryView /> },
+      { path: "memory", element: <MemoryHubView /> },
       { path: "plans", element: <ReadingPlansView /> },
       { path: "harmony", element: <HarmonyView /> },
       { path: "settings", element: <SettingsView /> },

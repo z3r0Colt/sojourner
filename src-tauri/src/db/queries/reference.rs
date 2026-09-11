@@ -81,6 +81,27 @@ pub fn list_dictionary_index(conn: &Connection) -> anyhow::Result<Vec<Dictionary
     Ok(rows.collect::<Result<Vec<_>, _>>()?)
 }
 
+/// Exact (case-insensitive) match on a dictionary term -- used to link a
+/// Topic Search entry to its glossary definition when one exists, without
+/// needing to know that entry's slug ahead of time (unlike book/place
+/// names, a doctrine topic's own name doesn't reliably predict how its
+/// dictionary entry -- if any -- is titled or slugged).
+pub fn find_dictionary_entry_by_term(conn: &Connection, term: &str) -> anyhow::Result<Option<DictionaryEntrySummary>> {
+    Ok(conn
+        .query_row(
+            "SELECT id, term, slug FROM dictionary_entries WHERE term = ?1 COLLATE NOCASE LIMIT 1",
+            params![term],
+            |r| {
+                Ok(DictionaryEntrySummary {
+                    id: r.get(0)?,
+                    term: r.get(1)?,
+                    slug: r.get(2)?,
+                })
+            },
+        )
+        .optional()?)
+}
+
 pub fn get_dictionary_entry(conn: &Connection, slug: &str) -> anyhow::Result<Option<DictionaryEntry>> {
     Ok(conn
         .query_row(

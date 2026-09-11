@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { BookA, ChevronDown, ChevronLeft, ChevronRight, ListTree, Search } from "lucide-react";
 import { api } from "../../api/client";
 import {
   useWestminsterDocuments,
@@ -9,9 +10,32 @@ import {
   useBooks,
   useWestminsterCommentarySources,
   useWestminsterCommentary,
+  useDoctrineTopics,
+  useSuggestedResourcesForTopic,
+  useDictionaryEntryByTerm,
 } from "../../api/queries";
 import { useNavigationStore } from "../../state/navigationStore";
-import type { WestminsterProofRef } from "../../api/types";
+import { useReadingTypography } from "../../state/uiStore";
+import type { WestminsterProofRef, DoctrineTopic } from "../../api/types";
+import { Tabs } from "../../components/ui/Tabs";
+import { EmptyState, LoadingState } from "../../components/ui/EmptyState";
+import { cx, inputSmClass, selectSmClass } from "../../components/ui/classes";
+
+/** The order these categories are presented in the Topics sidebar tab --
+ * traditional systematic-theology order, matching the sequence
+ * import::reference::doctrine_topics seeds them in. */
+const CATEGORY_ORDER = [
+  "Scripture & the Knowledge of God",
+  "God, the Trinity & His Decrees",
+  "Creation & Providence",
+  "The Fall, Sin & the Covenant",
+  "Christ the Mediator",
+  "The Application of Salvation",
+  "The Law & the Christian Life",
+  "The Church & the Means of Grace",
+  "Church Order & Prayer",
+  "Last Things",
+];
 
 // WCF section headings are formatted "Chapter N, M" by the confession importer.
 function parseChapterHeading(heading: string): { chapter: number; section: number } | null {
@@ -20,14 +44,12 @@ function parseChapterHeading(heading: string): { chapter: number; section: numbe
 }
 
 // WLC/WSC section headings are formatted "Question N" by the same importer.
-// There's no sub-section number to a catechism question, so `section` is a
-// value no real commentary entry will ever match (Vincent's are all
-// section-less) -- it only exists so this can share CommentaryPanel's props
-// with the WCF chapter/section case.
 function parseQuestionHeading(heading: string): { chapter: number; section: number } | null {
   const m = heading.match(/^Question (\d+)$/);
   return m ? { chapter: Number(m[1]), section: -1 } : null;
 }
+
+const sidebarItemClass = "block w-full border-b border-line px-3 py-2 text-left text-sm hover:bg-hover";
 
 export function WestminsterView() {
   const { docCode, sectionId: sectionIdParam } = useParams();
@@ -39,9 +61,11 @@ export function WestminsterView() {
   const { data: sections } = useWestminsterSections(doc?.id ?? null);
   const sectionId = sectionIdParam ? Number(sectionIdParam) : sections?.[0]?.id ?? null;
   const { data: section } = useWestminsterSection(sectionId);
+  const typography = useReadingTypography(0.95);
 
   const [query, setQuery] = useState("");
   const [debounced, setDebounced] = useState("");
+  const [sidebarMode, setSidebarMode] = useState<"sections" | "topics">("sections");
   useEffect(() => {
     const t = setTimeout(() => setDebounced(query), 250);
     return () => clearTimeout(t);
@@ -51,6 +75,17 @@ export function WestminsterView() {
     queryFn: () => api.searchWestminster(debounced, 100),
     enabled: debounced.trim().length > 1,
   });
+
+  const { data: topics } = useDoctrineTopics();
+  const topicsByCategory = useMemo(() => {
+    const map = new Map<string, DoctrineTopic[]>();
+    for (const t of topics ?? []) {
+      const arr = map.get(t.category) ?? [];
+      arr.push(t);
+      map.set(t.category, arr);
+    }
+    return map;
+  }, [topics]);
 
   function bookName(id: number) {
     return books?.find((b) => b.id === id)?.name ?? `#${id}`;
@@ -77,6 +112,26 @@ export function WestminsterView() {
       : section && (doc?.code === "wsc" || doc?.code === "wlc")
         ? parseQuestionHeading(section.heading)
         : null;
+
+  // Which curated topic (if any) the currently-viewed paragraph/question
+  // belongs to -- matched by chapter/question number rather than exact
+  // section id, so viewing WCF 11.3 still resolves to the "Justification"
+  // topic anchored at 11.1.
+  const currentTopic = useMemo(() => {
+    if (!chapterRef || !doc || !topics) return null;
+    return (
+      topics.find((t) => {
+        if (t.document_code !== doc.code) return false;
+        const topicRef = doc.code === "wcf" ? parseChapterHeading(t.heading) : parseQuestionHeading(t.heading);
+        return topicRef?.chapter === chapterRef.chapter;
+      }) ?? null
+    );
+  }, [chapterRef, doc, topics]);
+  const { data: relatedResources } = useSuggestedResourcesForTopic(currentTopic?.id ?? null);
+
+  const topicKeyword = currentTopic?.name.replace(/^Of the |^Of /, "") ?? null;
+  const { data: glossaryEntry } = useDictionaryEntryByTerm(topicKeyword);
+
   const { data: allCommentarySources } = useWestminsterCommentarySources();
   const commentarySources = useMemo(
     () => allCommentarySources?.filter((s) => s.document_code === doc?.code) ?? [],
@@ -84,9 +139,6 @@ export function WestminsterView() {
   );
   const [commentarySourceId, setCommentarySourceId] = useState<number | null>(null);
   useEffect(() => {
-    // Reset to the new document's first source (or none) whenever the
-    // available sources change -- otherwise switching from WCF to WSC would
-    // keep Hodge selected while showing Vincent's questions underneath it.
     setCommentarySourceId(commentarySources.length > 0 ? commentarySources[0].id : null);
   }, [commentarySources]);
 
@@ -101,7 +153,8 @@ export function WestminsterView() {
       return (
         <sup key={i}>
           <button
-            className="text-blue-600 hover:underline dark:text-blue-400"
+            type="button"
+            className="text-accent hover:underline"
             title={refs?.map((r) => `${bookName(r.book_id)} ${r.chapter}:${r.verse_start}`).join("; ")}
             onClick={() => {
               if (first) {
@@ -119,79 +172,130 @@ export function WestminsterView() {
 
   return (
     <div className="flex h-full">
-      <aside className="flex w-72 shrink-0 flex-col border-r border-gray-200 dark:border-gray-800">
-        <div className="border-b border-gray-200 p-3 dark:border-gray-800">
-          <select
-            className="mb-2 w-full rounded border border-gray-300 bg-white px-2 py-1 text-xs dark:border-gray-700 dark:bg-gray-900"
-            value={doc?.code ?? ""}
-            onChange={(e) => navigate(`/westminster/${e.target.value}`)}
-          >
-            {documents?.map((d) => (
-              <option key={d.id} value={d.code}>
-                {d.title}
-              </option>
+      <aside className="flex w-72 shrink-0 flex-col border-r border-line bg-surface-2/60">
+        <Tabs
+          size="sm"
+          stretch
+          items={[
+            { key: "sections" as const, label: "Contents", icon: ListTree },
+            { key: "topics" as const, label: "By topic", icon: BookA },
+          ]}
+          value={sidebarMode}
+          onChange={setSidebarMode}
+        />
+        {sidebarMode === "sections" && (
+          <>
+            <div className="space-y-2 border-b border-line p-3">
+              <select aria-label="Document" className={cx(selectSmClass, "w-full")} value={doc?.code ?? ""} onChange={(e) => navigate(`/westminster/${e.target.value}`)}>
+                {documents?.map((d) => (
+                  <option key={d.id} value={d.code}>
+                    {d.title}
+                  </option>
+                ))}
+              </select>
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-4" aria-hidden="true" />
+                <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search all documents…" className={cx(inputSmClass, "w-full pl-7")} />
+              </div>
+            </div>
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              {debounced.trim().length > 1
+                ? searchResults?.map((r) => (
+                    <button
+                      key={r.section_id}
+                      type="button"
+                      onClick={() => {
+                        const targetDoc = documents?.find((d) => d.id === r.document_id);
+                        if (targetDoc) navigate(`/westminster/${targetDoc.code}/${r.section_id}`);
+                      }}
+                      className={sidebarItemClass}
+                    >
+                      <div className="font-medium text-ink">{r.heading}</div>
+                      {r.prompt && <div className="text-xs text-ink-2">{r.prompt}</div>}
+                      <div
+                        className="text-xs text-ink-3"
+                        dangerouslySetInnerHTML={{ __html: r.snippet.replace(/\[/g, "<mark class='rounded bg-accent-soft px-0.5 text-accent'>").replace(/\]/g, "</mark>") }}
+                      />
+                    </button>
+                  ))
+                : sections?.map((s) => (
+                    <Link
+                      key={s.id}
+                      to={`/westminster/${doc?.code}/${s.id}`}
+                      className={cx(sidebarItemClass, s.id === sectionId ? "bg-accent-soft font-medium text-accent" : "text-ink-2")}
+                    >
+                      {s.heading}
+                    </Link>
+                  ))}
+            </div>
+          </>
+        )}
+        {sidebarMode === "topics" && (
+          <div className="min-h-0 flex-1 overflow-y-auto p-2">
+            <p className="mb-2 px-1 text-xs text-ink-3">
+              A topical index of the Standards: every Confession chapter, plus Shorter Catechism questions on doctrines the chapter list alone doesn't surface.
+            </p>
+            {CATEGORY_ORDER.filter((c) => (topicsByCategory.get(c)?.length ?? 0) > 0).map((category) => (
+              <div key={category} className="mb-3">
+                <h3 className="mb-1 px-1 text-xs font-semibold uppercase tracking-wide text-ink-3">{category}</h3>
+                <ul>
+                  {topicsByCategory.get(category)!.map((t) => (
+                    <li key={t.id}>
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/westminster/${t.document_code}/${t.westminster_section_id}`)}
+                        className={cx(
+                          "flex w-full items-baseline justify-between rounded-md px-2 py-1 text-left text-sm hover:bg-hover",
+                          currentTopic?.id === t.id ? "bg-accent-soft font-medium text-accent" : "text-ink-2",
+                        )}
+                      >
+                        <span>{t.name}</span>
+                        <span className="ml-1.5 text-xs uppercase text-ink-4">{t.document_code}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             ))}
-          </select>
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search all three documents…"
-            className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm outline-none focus:border-blue-500 dark:border-gray-700 dark:bg-gray-950"
-          />
-        </div>
-        <div className="min-h-0 flex-1 overflow-y-auto">
-          {debounced.trim().length > 1
-            ? searchResults?.map((r) => (
-                <button
-                  key={r.section_id}
-                  onClick={() => {
-                    const targetDoc = documents?.find((d) => d.id === r.document_id);
-                    if (targetDoc) navigate(`/westminster/${targetDoc.code}/${r.section_id}`);
-                  }}
-                  className="block w-full border-b border-gray-100 px-3 py-2 text-left text-sm hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800"
-                >
-                  <div className="font-medium">{r.heading}</div>
-                  {r.prompt && <div className="text-xs text-gray-500">{r.prompt}</div>}
-                  <div
-                    className="text-xs text-gray-400"
-                    dangerouslySetInnerHTML={{ __html: r.snippet.replace(/\[/g, "<b>").replace(/\]/g, "</b>") }}
-                  />
-                </button>
-              ))
-            : sections?.map((s) => (
-                <Link
-                  key={s.id}
-                  to={`/westminster/${doc?.code}/${s.id}`}
-                  className={`block border-b border-gray-100 px-3 py-2 text-sm hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800 ${
-                    s.id === sectionId ? "bg-blue-50 font-medium text-blue-700 dark:bg-blue-950 dark:text-blue-300" : ""
-                  }`}
-                >
-                  {s.heading}
-                </Link>
-              ))}
-        </div>
+          </div>
+        )}
       </aside>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-8 py-6">
-        {!section && <p className="text-gray-400">Select a section.</p>}
+        {!section && sections && sections.length === 0 && <EmptyState title="Nothing to show" />}
+        {!section && (!sections || sections.length > 0) && <LoadingState />}
         {section && (
-          <div className="max-w-2xl">
-            <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-400">{doc?.title}</div>
-            <h1 className="mb-3 text-xl font-semibold">{section.heading}</h1>
-            {section.prompt && <p className="mb-3 text-base font-medium italic">{section.prompt}</p>}
-            <div className="reading-font mb-6 text-[15px] leading-relaxed">{renderBody(section.body_with_proofs)}</div>
+          <div className="mx-auto w-full max-w-[70ch]">
+            <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-ink-3">{doc?.title}</div>
+            <div className="mb-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <h1 className="reading-font text-2xl font-semibold text-ink">{section.heading}</h1>
+              {glossaryEntry && (
+                <Link to={`/dictionary/${glossaryEntry.slug}`} className="text-sm text-accent hover:underline" title={`Dictionary definition of "${glossaryEntry.term}"`}>
+                  What does “{glossaryEntry.term}” mean?
+                </Link>
+              )}
+            </div>
+            {section.prompt && (
+              <p className="reading-font mb-3 font-medium italic text-ink" style={typography}>
+                {section.prompt}
+              </p>
+            )}
+            <div className="reading-font mb-6 text-ink" style={typography}>
+              {renderBody(section.body_with_proofs)}
+            </div>
 
             {section.proofs.length > 0 && (
-              <div className="mb-6 border-t border-gray-200 pt-3 text-sm text-gray-500 dark:border-gray-800">
-                <h3 className="mb-1 text-xs font-semibold uppercase text-gray-400">Scripture Proofs</h3>
+              <div className="mb-6 border-t border-line pt-3 text-sm">
+                <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-ink-3">Scripture proofs</h3>
                 <ul className="space-y-0.5">
                   {Array.from(proofsByMarker.entries()).map(([marker, refs]) => (
-                    <li key={marker}>
-                      <span className="mr-1 font-mono text-xs">[{marker}]</span>
+                    <li key={marker} className="text-ink-2">
+                      <span className="mr-1.5 font-mono text-xs text-ink-3">[{marker}]</span>
                       {refs.map((r, i) => (
                         <button
                           key={i}
-                          className="mr-2 text-blue-600 hover:underline dark:text-blue-400"
+                          type="button"
+                          className="mr-2 text-accent hover:underline"
                           onClick={() => {
                             goTo({ bookId: r.book_id, chapter: r.chapter, verse: r.verse_start });
                             navigate("/");
@@ -217,17 +321,32 @@ export function WestminsterView() {
               />
             )}
 
-            <div className="flex justify-between text-sm">
+            {currentTopic && relatedResources && relatedResources.length > 0 && (
+              <div className="mb-6 border-t border-line pt-3">
+                <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-ink-3">Resources on “{currentTopic.name}”</h3>
+                <ul className="space-y-1">
+                  {relatedResources.map((r) => (
+                    <li key={r.id}>
+                      <Link to={`/resources/${r.id}`} className="text-sm text-accent hover:underline">
+                        {r.title}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <div className="flex justify-between gap-4 border-t border-line pt-4 text-sm">
               {prev ? (
-                <Link to={`/westminster/${doc?.code}/${prev.id}`} className="text-blue-600 hover:underline dark:text-blue-400">
-                  ← {prev.heading}
+                <Link to={`/westminster/${doc?.code}/${prev.id}`} className="inline-flex items-center gap-1 text-accent hover:underline">
+                  <ChevronLeft className="h-4 w-4" aria-hidden="true" /> {prev.heading}
                 </Link>
               ) : (
                 <span />
               )}
               {next && (
-                <Link to={`/westminster/${doc?.code}/${next.id}`} className="text-blue-600 hover:underline dark:text-blue-400">
-                  {next.heading} →
+                <Link to={`/westminster/${doc?.code}/${next.id}`} className="inline-flex items-center gap-1 text-right text-accent hover:underline">
+                  {next.heading} <ChevronRight className="h-4 w-4" aria-hidden="true" />
                 </Link>
               )}
             </div>
@@ -254,23 +373,28 @@ function CommentaryPanel({
   const [open, setOpen] = useState(false);
   const { data: entries } = useWestminsterCommentary(open ? sourceId : null, chapter);
   const source = sources.find((s) => s.id === sourceId);
+  const typography = useReadingTypography(0.9);
 
   return (
-    <div className="mb-6 border-t border-gray-200 pt-3 dark:border-gray-800">
+    <div className="mb-6 border-t border-line pt-3">
       <div className="flex items-center justify-between gap-2">
         <button
+          type="button"
           onClick={() => setOpen((v) => !v)}
-          className="text-xs font-semibold uppercase tracking-wide text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+          aria-expanded={open}
+          className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-ink-3 hover:text-ink"
         >
-          {open ? "▾" : "▸"} Commentary on Chapter {chapter}
+          <ChevronDown className={cx("h-3.5 w-3.5 transition-transform", !open && "-rotate-90")} aria-hidden="true" />
+          Commentary on chapter {chapter}
         </button>
         <select
+          aria-label="Commentary source"
           value={sourceId ?? ""}
           onChange={(e) => {
             onSourceChange(Number(e.target.value));
             setOpen(true);
           }}
-          className="rounded border border-gray-300 bg-white px-2 py-1 text-xs dark:border-gray-700 dark:bg-gray-900"
+          className={selectSmClass}
         >
           {sources.map((s) => (
             <option key={s.id} value={s.id}>
@@ -281,17 +405,12 @@ function CommentaryPanel({
       </div>
 
       {open && (
-        <div className="reading-font mt-3 space-y-4 text-[15px] leading-relaxed text-gray-700 dark:text-gray-300">
-          {!entries && <p className="text-sm text-gray-400">Loading…</p>}
-          {entries?.length === 0 && <p className="text-sm text-gray-400">No commentary on this chapter.</p>}
+        <div className="reading-font mt-3 space-y-4 text-ink-2" style={typography}>
+          {!entries && <LoadingState />}
+          {entries?.length === 0 && <p className="text-sm text-ink-3">No commentary on this chapter.</p>}
           {entries?.map((e) => (
-            <div
-              key={e.id}
-              className={e.section === currentSection ? "-mx-3 rounded bg-amber-50 px-3 py-2 dark:bg-amber-950/30" : ""}
-            >
-              {e.section != null && (
-                <div className="mb-1 text-xs font-semibold text-gray-400">Section {e.section}</div>
-              )}
+            <div key={e.id} className={cx(e.section === currentSection && "-mx-3 rounded-md bg-amber-50 px-3 py-2 ring-1 ring-amber-200 dark:bg-amber-950/30 dark:ring-amber-900")}>
+              {e.section != null && <div className="mb-1 font-sans text-xs font-semibold text-ink-3">Section {e.section}</div>}
               {e.body.split(/\n\s*\n/).map((para, i) => (
                 <p key={i} className="mb-3 whitespace-pre-line">
                   {para}
@@ -300,9 +419,9 @@ function CommentaryPanel({
             </div>
           ))}
           {source && (
-            <p className="border-t border-gray-100 pt-2 text-xs text-gray-400 dark:border-gray-800">
+            <p className="border-t border-line pt-2 font-sans text-xs text-ink-3">
               {source.title}
-              {source.author ? ` — ${source.author}` : ""}
+              {source.author ? ` · ${source.author}` : ""}
             </p>
           )}
         </div>

@@ -1,20 +1,43 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { open, confirm } from "@tauri-apps/plugin-dialog";
+import { open } from "@tauri-apps/plugin-dialog";
+import { Book, ChevronDown, FileText, Film, FolderOpen, Headphones, HelpCircle, Library, MoreVertical, Plus, Trash2, type LucideIcon } from "lucide-react";
 import { api } from "../../api/client";
-import { useResources, useAddResource, useDeleteResource, useBulkImportResources } from "../../api/queries";
+import {
+  useResources,
+  useAddResource,
+  useDeleteResource,
+  useBulkImportResources,
+  useAllResourceTags,
+  useAllResourceTagsByResource,
+  useAddResourceTag,
+  useRemoveResourceTag,
+} from "../../api/queries";
+import { TagRow, TagFilterBar } from "../../components/TagRow";
+import { Page } from "../../components/ui/Page";
+import { Button, IconButton } from "../../components/ui/Button";
+import { Popover, PopoverItem } from "../../components/ui/Popover";
+import { EmptyState, LoadingState } from "../../components/ui/EmptyState";
+import { confirmDelete } from "../../components/ui/confirm";
+import { toast } from "../../components/ui/toast";
+import { cardClass, cx, inputClass } from "../../components/ui/classes";
 import type { Resource, ResourceKind, BulkImportOutcome } from "../../api/types";
 
-const KIND_ICON: Record<ResourceKind, string> = {
-  epub: "📘",
-  pdf: "📕",
-  mobi: "📙",
-  video: "🎬",
-  audio: "🎧",
+const KIND_ICON: Record<ResourceKind, LucideIcon> = {
+  epub: Book,
+  pdf: FileText,
+  mobi: Book,
+  video: Film,
+  audio: Headphones,
 };
 
-const UNKNOWN_AUTHOR = "Unknown Author";
+const UNKNOWN_AUTHOR = "Unknown author";
+
+function KindIcon({ kind }: { kind: ResourceKind }) {
+  const Icon = KIND_ICON[kind];
+  return <Icon className="h-4 w-4 shrink-0 text-ink-3" aria-hidden="true" />;
+}
 
 export function ResourceLibraryView() {
   const { data: resources } = useResources();
@@ -26,11 +49,25 @@ export function ResourceLibraryView() {
   const [debounced, setDebounced] = useState("");
   const [busy, setBusy] = useState(false);
   const [importReport, setImportReport] = useState<BulkImportOutcome | null>(null);
-  const [manageId, setManageId] = useState<number | null>(null);
-  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  // Tracks which author groups are *expanded* (empty set = everything
+  // collapsed, the default) rather than which are collapsed -- so a
+  // brand-new library, or one with many authors, opens as a scannable list
+  // of names instead of every book's full entry at once.
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [activeTag, setActiveTag] = useState<string | null>(null);
+
+  const { data: tagPairs } = useAllResourceTagsByResource();
+  const { data: allTags } = useAllResourceTags();
+  const addTag = useAddResourceTag();
+  const removeTag = useRemoveResourceTag();
+  const tagsById = useMemo(() => {
+    const m = new Map<number, string[]>();
+    for (const [id, tag] of tagPairs ?? []) m.set(id, [...(m.get(id) ?? []), tag]);
+    return m;
+  }, [tagPairs]);
 
   function toggleAuthor(author: string) {
-    setCollapsed((prev) => {
+    setExpanded((prev) => {
       const next = new Set(prev);
       if (next.has(author)) next.delete(author);
       else next.add(author);
@@ -39,8 +76,9 @@ export function ResourceLibraryView() {
   }
 
   const groups = useMemo(() => {
+    const filtered = activeTag ? (resources ?? []).filter((r) => (tagsById.get(r.id) ?? []).includes(activeTag)) : resources ?? [];
     const byAuthor = new Map<string, Resource[]>();
-    for (const r of resources ?? []) {
+    for (const r of filtered) {
       const key = r.author?.trim() || UNKNOWN_AUTHOR;
       if (!byAuthor.has(key)) byAuthor.set(key, []);
       byAuthor.get(key)!.push(r);
@@ -50,7 +88,12 @@ export function ResourceLibraryView() {
       if (b === UNKNOWN_AUTHOR) return -1;
       return a.localeCompare(b);
     });
-  }, [resources]);
+  }, [resources, activeTag, tagsById]);
+
+  const allExpanded = groups.length > 0 && groups.every(([author]) => expanded.has(author));
+  function toggleAllAuthors() {
+    setExpanded(allExpanded ? new Set() : new Set(groups.map(([author]) => author)));
+  }
 
   useEffect(() => {
     const t = setTimeout(() => setDebounced(query), 250);
@@ -74,6 +117,7 @@ export function ResourceLibraryView() {
     setBusy(true);
     try {
       await addResource.mutateAsync({ sourcePath: selected, title });
+      toast.success(`Added “${title}”`);
     } finally {
       setBusy(false);
     }
@@ -90,49 +134,52 @@ export function ResourceLibraryView() {
     }
   }
 
-  return (
-    <div className="mx-auto max-w-3xl px-6 py-6">
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Resources</h1>
-        <div className="flex gap-2">
-          <button
-            disabled={busy}
-            onClick={handleImportFolder}
-            className="rounded border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
-          >
-            Import Folder…
-          </button>
-          <button
-            disabled={busy}
-            onClick={handleAdd}
-            className="rounded bg-blue-600 px-3 py-1.5 text-sm text-white hover:bg-blue-700 disabled:opacity-50"
-          >
-            Add Resource…
-          </button>
-        </div>
-      </div>
-      <p className="mb-4 text-sm text-gray-500">
-        Add EPUB, PDF, or MOBI books, or video/audio files. Attach them to specific passages or link them to each
-        other from the resource page. Text-bearing formats are deep-searched below. "Import Folder…" recursively adds
-        every recognized file under a folder at once -- author is taken from each file's immediate parent folder, so
-        an <code>Author/Book.epub</code> layout works well.
-      </p>
+  const hasAny = (resources?.length ?? 0) > 0;
+  const searching = debounced.trim().length > 1;
 
+  return (
+    <Page
+      title="Resources"
+      lead={hasAny ? `${resources?.length} books and media files, grouped by author` : undefined}
+      actions={
+        <>
+          <Popover
+            width="w-80"
+            trigger={({ toggle, open: isOpen }) => <IconButton icon={HelpCircle} label="About resources" active={isOpen} onClick={toggle} />}
+          >
+            <div className="space-y-2 p-1 text-sm text-ink-2">
+              <p>Add EPUB, PDF, or MOBI books, or video and audio files. Text formats are indexed so you can search inside them.</p>
+              <p>Open a resource to attach it to a passage. Linked resources then appear under that chapter's title while reading.</p>
+              <p>
+                “Import folder” adds every recognized file under a folder at once. The author is taken from each file's parent folder, so an{" "}
+                <code className="rounded bg-surface-2 px-1">Author/Book.epub</code> layout works well.
+              </p>
+            </div>
+          </Popover>
+          <Button icon={FolderOpen} disabled={busy} onClick={handleImportFolder}>
+            Import folder
+          </Button>
+          <Button variant="primary" icon={Plus} disabled={busy} onClick={handleAdd}>
+            Add resource
+          </Button>
+        </>
+      }
+    >
       {importReport && (
-        <div className="mb-4 rounded border border-gray-200 p-3 text-sm dark:border-gray-800">
-          <div className="mb-1 flex items-center justify-between">
-            <span className="font-medium">
+        <div className="mb-4 rounded-lg border border-line bg-surface-2 p-3 text-sm">
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-ink">
               Imported {importReport.imported.length}
               {importReport.skipped_duplicate.length > 0 && `, skipped ${importReport.skipped_duplicate.length} already in the library`}
               {importReport.skipped_unrecognized.length > 0 && `, ${importReport.skipped_unrecognized.length} unrecognized file(s)`}
               {importReport.errors.length > 0 && `, ${importReport.errors.length} error(s)`}
             </span>
-            <button onClick={() => setImportReport(null)} className="text-xs text-gray-400 hover:underline">
+            <Button size="sm" variant="ghost" onClick={() => setImportReport(null)}>
               Dismiss
-            </button>
+            </Button>
           </div>
           {importReport.errors.length > 0 && (
-            <ul className="mt-1 space-y-0.5 text-xs text-red-500">
+            <ul className="mt-1 space-y-0.5 text-xs text-danger">
               {importReport.errors.map((e, i) => (
                 <li key={i}>{e}</li>
               ))}
@@ -141,97 +188,121 @@ export function ResourceLibraryView() {
         </div>
       )}
 
-      <input
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        placeholder="Deep search resource text…"
-        className="mb-4 w-full rounded border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 dark:border-gray-700 dark:bg-gray-950"
-      />
-      {isFetching && <p className="mb-2 text-xs text-gray-400">Searching…</p>}
-      {debounced.trim().length > 1 && (
+      {hasAny && (
+        <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search inside your books…" className={cx(inputClass, "mb-4 w-full")} />
+      )}
+      {isFetching && <LoadingState className="mb-2 py-0" label="Searching…" />}
+      {searching && (
         <ul className="mb-6 space-y-1">
           {deepResults?.map((r) => (
             <li key={r.resource_id}>
-              <button
-                onClick={() => navigate(`/resources/${r.resource_id}`)}
-                className="block w-full rounded border border-gray-200 p-2 text-left text-sm hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800"
-              >
-                <div className="font-medium">
-                  {KIND_ICON[r.kind]} {r.title}
+              <button type="button" onClick={() => navigate(`/resources/${r.resource_id}`)} className={cx(cardClass, "block w-full text-left hover:bg-hover/40")}>
+                <div className="flex items-center gap-2 font-medium text-ink">
+                  <KindIcon kind={r.kind} />
+                  {r.title}
                 </div>
                 <div
-                  className="text-xs text-gray-500"
-                  dangerouslySetInnerHTML={{ __html: r.snippet.replace(/\[/g, "<b>").replace(/\]/g, "</b>") }}
+                  className="mt-0.5 text-sm text-ink-2"
+                  dangerouslySetInnerHTML={{ __html: r.snippet.replace(/\[/g, "<mark class='rounded bg-accent-soft px-0.5 text-accent'>").replace(/\]/g, "</mark>") }}
                 />
               </button>
             </li>
           ))}
-          {deepResults?.length === 0 && <p className="text-sm text-gray-400">No matches.</p>}
+          {deepResults?.length === 0 && <EmptyState compact title="No matches inside your books" />}
         </ul>
       )}
 
-      <div className="space-y-5">
+      <TagFilterBar tags={allTags ?? []} activeTag={activeTag} onSelect={setActiveTag} label="Topics" />
+
+      {groups.length > 1 && (
+        <div className="mb-2 flex justify-end">
+          <Button size="sm" variant="ghost" onClick={toggleAllAuthors}>
+            {allExpanded ? "Collapse all" : "Expand all"}
+          </Button>
+        </div>
+      )}
+
+      <div className="space-y-4">
         {groups.map(([author, list]) => {
-          const isCollapsed = collapsed.has(author);
+          const isCollapsed = !expanded.has(author);
           return (
-          <div key={author}>
-            <button
-              onClick={() => toggleAuthor(author)}
-              className="mb-1.5 flex w-full items-center gap-1.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-              aria-expanded={!isCollapsed}
-            >
-              <span className={`inline-block transition-transform ${isCollapsed ? "-rotate-90" : ""}`}>▾</span>
-              {author}
-              <span className="font-normal normal-case text-gray-300 dark:text-gray-600">({list.length})</span>
-            </button>
-            {!isCollapsed && (
-            <ul className="space-y-2">
-              {list.map((r) => (
-                <li
-                  key={r.id}
-                  className="flex items-center justify-between rounded border border-gray-200 px-3 py-2 dark:border-gray-800"
-                >
-                  <button onClick={() => navigate(`/resources/${r.id}`)} className="flex-1 text-left text-sm hover:underline">
-                    {KIND_ICON[r.kind]} {r.title}
-                    {!r.has_text && r.kind !== "video" && r.kind !== "audio" && (
-                      <span className="ml-2 text-xs text-amber-500">(not indexed for search)</span>
-                    )}
-                  </button>
-                  <div className="relative">
-                    <button
-                      onClick={() => setManageId(manageId === r.id ? null : r.id)}
-                      title="Manage"
-                      aria-label="Manage resource"
-                      className="rounded px-1.5 py-0.5 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
-                    >
-                      ⋮
-                    </button>
-                    {manageId === r.id && (
-                      <div
-                        className="absolute right-0 z-10 mt-1 w-32 rounded border border-gray-200 bg-white p-1 shadow-lg dark:border-gray-700 dark:bg-gray-900"
-                        onMouseLeave={() => setManageId(null)}
-                      >
-                        <button
-                          onClick={async () => {
-                            setManageId(null);
-                            if (await confirm(`Remove ${r.title}?`)) deleteResource.mutate(r.id);
-                          }}
-                          className="block w-full rounded px-2 py-1 text-left text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40"
-                        >
-                          Remove
+            <section key={author}>
+              <button
+                type="button"
+                onClick={() => toggleAuthor(author)}
+                className="mb-1.5 flex w-full items-center gap-1.5 rounded-md px-1 py-1 text-left text-sm font-semibold text-ink-2 hover:bg-hover"
+                aria-expanded={!isCollapsed}
+              >
+                <ChevronDown className={cx("h-4 w-4 text-ink-3 transition-transform", isCollapsed && "-rotate-90")} aria-hidden="true" />
+                {author}
+                <span className="font-normal text-ink-3">({list.length})</span>
+              </button>
+              {!isCollapsed && (
+                <ul className="space-y-2 pl-1">
+                  {list.map((r) => (
+                    <li key={r.id} className={cardClass}>
+                      <div className="flex items-center gap-2">
+                        <KindIcon kind={r.kind} />
+                        <button type="button" onClick={() => navigate(`/resources/${r.id}`)} className="min-w-0 flex-1 truncate text-left text-sm font-medium text-ink hover:text-accent hover:underline">
+                          {r.title}
                         </button>
+                        {!r.has_text && r.kind !== "video" && r.kind !== "audio" && (
+                          <span className="shrink-0 text-xs text-amber-700 dark:text-amber-400" title="No text could be extracted, so search can't look inside it">
+                            not searchable
+                          </span>
+                        )}
+                        <Popover
+                          width="w-44"
+                          trigger={({ toggle, open: isOpen }) => <IconButton icon={MoreVertical} label="More" size="sm" active={isOpen} onClick={toggle} />}
+                        >
+                          {(close) => (
+                            <PopoverItem
+                              danger
+                              onClick={async () => {
+                                close();
+                                if (await confirmDelete(`“${r.title}”`, "The file itself stays where it is; only the library entry, its links, and tags are removed.")) {
+                                  deleteResource.mutate(r.id, { onSuccess: () => toast.info(`Removed “${r.title}”`) });
+                                }
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4" aria-hidden="true" /> Remove from library
+                            </PopoverItem>
+                          )}
+                        </Popover>
                       </div>
-                    )}
-                  </div>
-                </li>
-              ))}
-            </ul>
-            )}
-          </div>
+                      <TagRow
+                        tags={tagsById.get(r.id) ?? []}
+                        onAdd={(tag) => addTag.mutate({ resourceId: r.id, tag })}
+                        onRemove={(tag) => removeTag.mutate({ resourceId: r.id, tag })}
+                        onFilter={setActiveTag}
+                        hint="e.g. justification, sanctification, the Sabbath"
+                      />
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
           );
         })}
-        {resources?.length === 0 && <p className="text-gray-400">No resources added yet.</p>}
+        {!hasAny && (
+          <EmptyState
+            icon={Library}
+            title="Your library is empty"
+            description="Add EPUB, PDF, or MOBI books, or audio and video files. Books are indexed so you can search inside them, and any resource can be linked to the passage it speaks to."
+            action={
+              <div className="flex gap-2">
+                <Button icon={FolderOpen} onClick={handleImportFolder}>
+                  Import a folder
+                </Button>
+                <Button variant="primary" icon={Plus} onClick={handleAdd}>
+                  Add a file
+                </Button>
+              </div>
+            }
+          />
+        )}
+        {hasAny && groups.length === 0 && <EmptyState compact title="No resources carry that topic tag" />}
       </div>
-    </div>
+    </Page>
   );
 }

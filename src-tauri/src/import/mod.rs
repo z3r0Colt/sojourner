@@ -155,10 +155,25 @@ pub fn populate_content_db(
 ) -> anyhow::Result<Vec<ScannedFile>> {
     let files = discover_candidate_files(&[bibles_dir.to_path_buf(), commentaries_dir.to_path_buf()]);
     let results = scan_files(conn, &files);
+    backfill_license_status(conn)?;
 
     if reference_dir.is_dir() {
         reference::import_all(conn, reference_dir)?;
     }
 
     Ok(results)
+}
+
+/// Marks the bundled translations that are modern copyrighted texts (kept
+/// under the operator's own license, not public domain) so the UI can show
+/// that distinction rather than implying every bundled translation is
+/// freely reproducible -- see the CONTENT_MIGRATION_0009 schema comment.
+/// Every other bundled translation is genuine public domain and keeps the
+/// column's default.
+fn backfill_license_status(conn: &Connection) -> anyhow::Result<()> {
+    const LICENSED_CODES: &[&str] = &["NASB", "NKJV"];
+    for code in LICENSED_CODES {
+        conn.execute("UPDATE translations SET license_status = 'licensed' WHERE code = ?1", rusqlite::params![code])?;
+    }
+    Ok(())
 }

@@ -2,6 +2,10 @@ import { useMemo, useState } from "react";
 import { useBooks } from "../../api/queries";
 import { buildBookLookup, parseReference } from "../../hooks/useReferenceParser";
 import type { PrayerEntry, PrayerEntryMode } from "../../api/types";
+import { Modal } from "../../components/ui/Modal";
+import { Button } from "../../components/ui/Button";
+import { Tabs } from "../../components/ui/Tabs";
+import { cx, inputClass, textareaClass } from "../../components/ui/classes";
 
 const FIELDS: { key: "adoration" | "confession" | "thanksgiving" | "supplication"; label: string; hint: string }[] = [
   { key: "adoration", label: "Adoration", hint: "Praise God for who he is." },
@@ -33,105 +37,62 @@ export function PrayerEntryEditorModal({
 }) {
   const { data: books } = useBooks();
   const lookup = useMemo(() => buildBookLookup(books ?? []), [books]);
-  const [entryDate, setEntryDate] = useState(existing?.entry_date ?? new Date().toISOString().slice(0, 10));
-  const [mode, setMode] = useState<PrayerEntryMode>(existing?.mode ?? "acts");
+  const initial = useMemo(
+    () => ({
+      entryDate: existing?.entry_date ?? new Date().toISOString().slice(0, 10),
+      mode: (existing?.mode ?? "acts") as PrayerEntryMode,
+      adoration: existing?.adoration ?? "",
+      confession: existing?.confession ?? "",
+      thanksgiving: existing?.thanksgiving ?? "",
+      supplication: existing?.supplication ?? "",
+      freeText: existing?.free_text ?? "",
+      passage:
+        existing?.book_id != null
+          ? `${books?.find((b) => b.id === existing.book_id)?.name ?? ""} ${existing.chapter}${existing.verse_start ? `:${existing.verse_start}` : ""}${
+              existing.verse_end && existing.verse_end !== existing.verse_start ? `-${existing.verse_end}` : ""
+            }`
+          : "",
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [existing?.id, books],
+  );
+  const [entryDate, setEntryDate] = useState(initial.entryDate);
+  const [mode, setMode] = useState<PrayerEntryMode>(initial.mode);
   const [values, setValues] = useState({
-    adoration: existing?.adoration ?? "",
-    confession: existing?.confession ?? "",
-    thanksgiving: existing?.thanksgiving ?? "",
-    supplication: existing?.supplication ?? "",
+    adoration: initial.adoration,
+    confession: initial.confession,
+    thanksgiving: initial.thanksgiving,
+    supplication: initial.supplication,
   });
-  const [freeText, setFreeText] = useState(existing?.free_text ?? "");
-  const existingPassage =
-    existing?.book_id != null
-      ? `${books?.find((b) => b.id === existing.book_id)?.name ?? ""} ${existing.chapter}${existing.verse_start ? `:${existing.verse_start}` : ""}${
-          existing.verse_end && existing.verse_end !== existing.verse_start ? `-${existing.verse_end}` : ""
-        }`
-      : "";
-  const [passageInput, setPassageInput] = useState(existingPassage);
+  const [freeText, setFreeText] = useState(initial.freeText);
+  const [passageInput, setPassageInput] = useState(initial.passage);
+
+  const dirty =
+    entryDate !== initial.entryDate ||
+    mode !== initial.mode ||
+    values.adoration !== initial.adoration ||
+    values.confession !== initial.confession ||
+    values.thanksgiving !== initial.thanksgiving ||
+    values.supplication !== initial.supplication ||
+    freeText !== initial.freeText ||
+    passageInput !== initial.passage;
+
+  const parsedPassage = passageInput.trim() ? parseReference(passageInput, lookup) : null;
+  const passageInvalid = passageInput.trim() !== "" && !parsedPassage;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-6" onClick={onClose}>
-      <div
-        className="flex max-h-[85vh] w-full max-w-lg flex-col rounded-lg bg-white shadow-xl dark:bg-gray-900"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between border-b border-gray-200 p-3 dark:border-gray-800">
-          <h3 className="text-sm font-semibold">{existing ? "Edit Prayer Entry" : "New Prayer Entry"}</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600" title="Close" aria-label="Close">
-            ✕
-          </button>
-        </div>
-        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4 text-sm">
-          <div className="flex items-center gap-3">
-            <label className="block flex-1">
-              <span className="mb-1 block text-xs font-semibold text-gray-500">Date</span>
-              <input
-                type="date"
-                value={entryDate}
-                onChange={(e) => setEntryDate(e.target.value)}
-                className="w-full rounded border border-gray-300 px-2 py-1.5 dark:border-gray-700 dark:bg-gray-950"
-              />
-            </label>
-            <div className="flex rounded border border-gray-300 text-xs dark:border-gray-700">
-              <button
-                type="button"
-                onClick={() => setMode("acts")}
-                className={`px-2.5 py-1.5 ${mode === "acts" ? "bg-blue-600 text-white" : "text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"}`}
-              >
-                ACTS
-              </button>
-              <button
-                type="button"
-                onClick={() => setMode("free")}
-                className={`px-2.5 py-1.5 ${mode === "free" ? "bg-blue-600 text-white" : "text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"}`}
-              >
-                Free writing
-              </button>
-            </div>
-          </div>
-          <label className="block">
-            <span className="mb-1 block text-xs font-semibold text-gray-500">Passage (optional)</span>
-            <input
-              value={passageInput}
-              onChange={(e) => setPassageInput(e.target.value)}
-              placeholder="e.g. Psalm 51:1-12"
-              className="w-full rounded border border-gray-300 px-2 py-1.5 dark:border-gray-700 dark:bg-gray-950"
-            />
-          </label>
-          {mode === "acts" ? (
-            FIELDS.map((f) => (
-              <label key={f.key} className="block">
-                <span className="mb-1 block text-xs font-semibold text-gray-500">{f.label}</span>
-                <span className="mb-1 block text-xs text-gray-400">{f.hint}</span>
-                <textarea
-                  value={values[f.key]}
-                  onChange={(e) => setValues((v) => ({ ...v, [f.key]: e.target.value }))}
-                  rows={3}
-                  className="w-full rounded border border-gray-300 px-2 py-1.5 dark:border-gray-700 dark:bg-gray-950"
-                />
-              </label>
-            ))
-          ) : (
-            <label className="block">
-              <span className="mb-1 block text-xs font-semibold text-gray-500">Prayer</span>
-              <textarea
-                value={freeText}
-                onChange={(e) => setFreeText(e.target.value)}
-                rows={10}
-                placeholder="Write your prayer however you like."
-                className="w-full rounded border border-gray-300 px-2 py-1.5 dark:border-gray-700 dark:bg-gray-950"
-              />
-            </label>
-          )}
-        </div>
-        <div className="flex justify-end gap-2 border-t border-gray-200 p-3 dark:border-gray-800">
-          <button onClick={onClose} className="rounded px-3 py-1.5 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800">
+    <Modal
+      title={existing ? "Edit prayer entry" : "New prayer entry"}
+      onClose={onClose}
+      dirty={dirty}
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose}>
             Cancel
-          </button>
-          <button
-            onClick={() => {
-              const parsed = passageInput.trim() ? parseReference(passageInput, lookup) : null;
+          </Button>
+          <Button
+            variant="primary"
+            onClick={() =>
               onSave({
                 entryDate,
                 mode,
@@ -140,18 +101,71 @@ export function PrayerEntryEditorModal({
                 thanksgiving: mode === "acts" ? values.thanksgiving || undefined : undefined,
                 supplication: mode === "acts" ? values.supplication || undefined : undefined,
                 freeText: mode === "free" ? freeText || undefined : undefined,
-                bookId: parsed?.book.id,
-                chapter: parsed?.chapter,
-                verseStart: parsed?.verse,
-                verseEnd: parsed?.verseEnd ?? parsed?.verse,
-              });
-            }}
-            className="rounded bg-blue-600 px-3 py-1.5 text-sm text-white hover:bg-blue-700"
+                bookId: parsedPassage?.book.id,
+                chapter: parsedPassage?.chapter,
+                verseStart: parsedPassage?.verse,
+                verseEnd: parsedPassage?.verseEnd ?? parsedPassage?.verse,
+              })
+            }
           >
-            Save
-          </button>
+            Save entry
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-4 text-sm">
+        <div className="grid grid-cols-2 gap-3">
+          <label className="block">
+            <span className="mb-1 block text-xs font-medium text-ink-3">Date</span>
+            <input type="date" value={entryDate} onChange={(e) => setEntryDate(e.target.value)} className={cx(inputClass, "w-full")} />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-xs font-medium text-ink-3">Passage (optional)</span>
+            <input
+              value={passageInput}
+              onChange={(e) => setPassageInput(e.target.value)}
+              placeholder="e.g. Psalm 51:1-12"
+              className={cx(inputClass, "w-full", passageInvalid && "border-danger")}
+            />
+            {passageInvalid && <span className="mt-1 block text-xs text-danger">Couldn't read that reference.</span>}
+          </label>
         </div>
+        <Tabs
+          size="sm"
+          items={[
+            { key: "acts" as const, label: "ACTS", title: "Adoration, Confession, Thanksgiving, Supplication" },
+            { key: "free" as const, label: "Free writing" },
+          ]}
+          value={mode}
+          onChange={setMode}
+        />
+        {mode === "acts" ? (
+          FIELDS.map((f) => (
+            <label key={f.key} className="block">
+              <span className="mb-0.5 block text-xs font-medium text-ink-3">
+                {f.label} <span className="font-normal text-ink-4">· {f.hint}</span>
+              </span>
+              <textarea
+                value={values[f.key]}
+                onChange={(e) => setValues((v) => ({ ...v, [f.key]: e.target.value }))}
+                rows={3}
+                className={cx(textareaClass, "w-full")}
+              />
+            </label>
+          ))
+        ) : (
+          <label className="block">
+            <span className="mb-1 block text-xs font-medium text-ink-3">Prayer</span>
+            <textarea
+              value={freeText}
+              onChange={(e) => setFreeText(e.target.value)}
+              rows={12}
+              placeholder="Write your prayer however you like."
+              className={cx(textareaClass, "w-full")}
+            />
+          </label>
+        )}
       </div>
-    </div>
+    </Modal>
   );
 }

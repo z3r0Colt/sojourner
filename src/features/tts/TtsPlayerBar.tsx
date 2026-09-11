@@ -1,10 +1,14 @@
 import { useEffect, useState } from "react";
+import { Pause, Play, Settings2, SkipBack, SkipForward, X } from "lucide-react";
 import { useTtsStore } from "../../state/ttsStore";
 import { ttsEngines, type TtsVoice } from "./ttsEngine";
+import { IconButton, Button } from "../../components/ui/Button";
+import { Popover } from "../../components/ui/Popover";
+import { selectClass, checkboxClass, cx } from "../../components/ui/classes";
 
 const HIGHLIGHT_COLORS = ["#fde047", "#86efac", "#93c5fd", "#f9a8d4", "#fdba74"];
 
-function TtsSettingsPopover({ onClose }: { onClose: () => void }) {
+function TtsSettings() {
   const engineId = useTtsStore((s) => s.engineId);
   const voiceId = useTtsStore((s) => s.voiceId);
   const rate = useTtsStore((s) => s.rate);
@@ -36,35 +40,11 @@ function TtsSettingsPopover({ onClose }: { onClose: () => void }) {
   useEffect(() => setPitchLocal(pitch), [pitch]);
 
   return (
-    <div
-      className="absolute bottom-full right-0 mb-2 w-80 rounded-lg border border-gray-200 bg-white p-3 shadow-xl dark:border-gray-700 dark:bg-gray-900"
-      onClick={(e) => e.stopPropagation()}
-    >
-      <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-sm font-semibold">Read Aloud settings</h3>
-        <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" title="Close" aria-label="Close">
-          ✕
-        </button>
-      </div>
+    <div className="p-1">
+      <h3 className="mb-3 text-sm font-semibold text-ink">Read aloud settings</h3>
 
-      <label className="mb-1 block text-xs font-medium text-gray-500">Engine</label>
-      <select
-        value={engineId}
-        disabled
-        className="mb-3 w-full rounded border border-gray-300 bg-gray-50 px-2 py-1 text-sm dark:border-gray-700 dark:bg-gray-800"
-      >
-        <option value="webspeech">Windows voices (offline)</option>
-      </select>
-      <p className="-mt-2 mb-3 text-xs text-gray-400">
-        Cloud voices (ElevenLabs, Azure, OpenAI) coming soon — add an API key here once available.
-      </p>
-
-      <label className="mb-1 block text-xs font-medium text-gray-500">Voice</label>
-      <select
-        value={voiceId ?? ""}
-        onChange={(e) => setVoiceId(e.target.value || null)}
-        className="mb-3 w-full rounded border border-gray-300 bg-white px-2 py-1 text-sm dark:border-gray-700 dark:bg-gray-950"
-      >
+      <label className="mb-1 block text-xs font-medium text-ink-3">Voice</label>
+      <select value={voiceId ?? ""} onChange={(e) => setVoiceId(e.target.value || null)} className={cx(selectClass, "mb-3 w-full")}>
         <option value="">System default</option>
         {voices.map((v) => (
           <option key={v.id} value={v.id}>
@@ -73,7 +53,7 @@ function TtsSettingsPopover({ onClose }: { onClose: () => void }) {
         ))}
       </select>
 
-      <label className="mb-1 flex items-center justify-between text-xs font-medium text-gray-500">
+      <label className="mb-1 flex items-center justify-between text-xs font-medium text-ink-3">
         <span>Speed</span>
         <span>{rateLocal.toFixed(2)}x</span>
       </label>
@@ -86,10 +66,10 @@ function TtsSettingsPopover({ onClose }: { onClose: () => void }) {
         onChange={(e) => setRateLocal(Number(e.target.value))}
         onPointerUp={(e) => setRate(Number(e.currentTarget.value))}
         onKeyUp={(e) => setRate(Number(e.currentTarget.value))}
-        className="mb-3 w-full"
+        className="mb-3 w-full accent-accent"
       />
 
-      <label className="mb-1 flex items-center justify-between text-xs font-medium text-gray-500">
+      <label className="mb-1 flex items-center justify-between text-xs font-medium text-ink-3">
         <span>Pitch</span>
         <span>{pitchLocal.toFixed(1)}</span>
       </label>
@@ -102,57 +82,44 @@ function TtsSettingsPopover({ onClose }: { onClose: () => void }) {
         onChange={(e) => setPitchLocal(Number(e.target.value))}
         onPointerUp={(e) => setPitch(Number(e.currentTarget.value))}
         onKeyUp={(e) => setPitch(Number(e.currentTarget.value))}
-        className="mb-3 w-full"
+        className="mb-3 w-full accent-accent"
       />
 
-      <label className="mb-1 flex items-center justify-between text-xs font-medium text-gray-500">
+      <label className="mb-1 flex items-center justify-between text-xs font-medium text-ink-3">
         <span>Volume</span>
         <span>{Math.round(volume * 100)}%</span>
       </label>
-      <input
-        type="range"
-        min={0}
-        max={1}
-        step={0.05}
-        value={volume}
-        onChange={(e) => setVolume(Number(e.target.value))}
-        className="mb-3 w-full"
-      />
+      <input type="range" min={0} max={1} step={0.05} value={volume} onChange={(e) => setVolume(Number(e.target.value))} className="mb-3 w-full accent-accent" />
 
-      <label className="mb-1 block text-xs font-medium text-gray-500">Highlight color</label>
+      <label className="mb-1 block text-xs font-medium text-ink-3">Highlight color</label>
       <div className="mb-3 flex gap-2">
         {HIGHLIGHT_COLORS.map((c) => (
           <button
             key={c}
+            type="button"
             onClick={() => setHighlightColor(c)}
-            className={`h-6 w-6 rounded-full border-2 ${highlightColor === c ? "border-blue-500" : "border-transparent"}`}
+            className={cx("h-6 w-6 rounded-full border-2", highlightColor === c ? "border-accent" : "border-transparent")}
             style={{ backgroundColor: c }}
             title={c}
+            aria-label={`Highlight color ${c}`}
           />
         ))}
       </div>
 
-      <label className="mb-1 block text-xs font-medium text-gray-500">Highlight style</label>
+      <label className="mb-1 block text-xs font-medium text-ink-3">Highlight style</label>
       <div className="mb-3 flex gap-1">
         {(["background", "underline", "bold"] as const).map((s) => (
-          <button
-            key={s}
-            onClick={() => setHighlightStyle(s)}
-            className={`flex-1 rounded border px-2 py-1 text-xs capitalize ${
-              highlightStyle === s
-                ? "border-blue-400 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-950 dark:text-blue-300"
-                : "border-gray-300 hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800"
-            }`}
-          >
+          <Button key={s} size="sm" active={highlightStyle === s} onClick={() => setHighlightStyle(s)} className="flex-1 capitalize">
             {s}
-          </button>
+          </Button>
         ))}
       </div>
 
-      <label className="flex items-center gap-2 text-xs font-medium text-gray-500">
-        <input type="checkbox" checked={autoScroll} onChange={(e) => setAutoScroll(e.target.checked)} />
+      <label className="flex items-center gap-2 text-sm text-ink-2">
+        <input type="checkbox" className={checkboxClass} checked={autoScroll} onChange={(e) => setAutoScroll(e.target.checked)} />
         Auto-scroll to the word being read
       </label>
+      <p className="mt-3 text-xs text-ink-3">Uses the Windows voices installed on this device. No audio leaves the computer.</p>
     </div>
   );
 }
@@ -170,68 +137,42 @@ export function TtsPlayerBar() {
   const stop = useTtsStore((s) => s.stop);
   const next = useTtsStore((s) => s.next);
   const prev = useTtsStore((s) => s.prev);
-  const [settingsOpen, setSettingsOpen] = useState(false);
 
   if (segments.length === 0) return null;
 
   const currentLabel = segments[currentSegmentIndex]?.label;
+  const playing = isPlaying && !isPaused;
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-gray-200 bg-white/95 px-4 py-2 backdrop-blur dark:border-gray-800 dark:bg-gray-900/95">
-      <div className="mx-auto flex max-w-3xl items-center gap-3">
+    <div className="shrink-0 border-t border-line bg-surface px-4 py-2">
+      <div className="mx-auto flex max-w-3xl items-center gap-2">
         <div className="min-w-0 flex-1">
-          <div className="truncate text-sm font-medium">{title}</div>
-          <div className="truncate text-xs text-gray-400">
-            {currentLabel ? `${currentLabel} — ` : ""}
-            {currentSegmentIndex + 1} / {segments.length}
-            {error && <span className="text-red-500"> — {error}</span>}
+          <div className="truncate text-sm font-medium text-ink">{title}</div>
+          <div className="truncate text-xs text-ink-3">
+            {currentLabel ? `${currentLabel} · ` : ""}
+            {currentSegmentIndex + 1} of {segments.length}
+            {error && <span className="text-danger"> · {error}</span>}
           </div>
         </div>
 
-        <button
-          onClick={prev}
-          disabled={currentSegmentIndex === 0}
-          className="rounded px-2 py-1 text-lg hover:bg-gray-100 disabled:opacity-30 dark:hover:bg-gray-800"
-          title="Previous"
-          aria-label="Previous"
-        >
-          ⏮
-        </button>
-        <button
-          onClick={() => (isPaused ? resume() : pause())}
-          className="rounded bg-blue-600 px-3 py-1.5 text-sm text-white hover:bg-blue-700"
-        >
-          {isPaused || !isPlaying ? "▶ Play" : "⏸ Pause"}
-        </button>
-        <button
-          onClick={next}
-          disabled={currentSegmentIndex >= segments.length - 1}
-          className="rounded px-2 py-1 text-lg hover:bg-gray-100 disabled:opacity-30 dark:hover:bg-gray-800"
-          title="Next"
-          aria-label="Next"
-        >
-          ⏭
-        </button>
+        <IconButton icon={SkipBack} label="Previous" onClick={prev} disabled={currentSegmentIndex === 0} />
+        <Button variant="primary" icon={playing ? Pause : Play} onClick={() => (playing ? pause() : resume())} className="w-24">
+          {playing ? "Pause" : "Play"}
+        </Button>
+        <IconButton icon={SkipForward} label="Next" onClick={next} disabled={currentSegmentIndex >= segments.length - 1} />
 
-        <div className="relative">
-          <button
-            onClick={() => setSettingsOpen((v) => !v)}
-            className="rounded border border-gray-300 px-2 py-1 text-xs hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800"
-            title="Voice, speed & highlight settings"
-          >
-            ⚙ {rate.toFixed(2)}x
-          </button>
-          {settingsOpen && <TtsSettingsPopover onClose={() => setSettingsOpen(false)} />}
-        </div>
-
-        <button
-          onClick={stop}
-          className="rounded border border-gray-300 px-2 py-1 text-sm text-gray-500 hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800"
-          title="Stop"
-          aria-label="Stop reading aloud"
+        <Popover
+          width="w-80"
+          trigger={({ toggle, open }) => (
+            <Button variant="ghost" size="sm" icon={Settings2} active={open} onClick={toggle} title="Voice, speed, and highlight settings">
+              {rate.toFixed(2)}x
+            </Button>
+          )}
         >
-          ✕
-        </button>
+          <TtsSettings />
+        </Popover>
+
+        <IconButton icon={X} label="Stop reading aloud" onClick={stop} />
       </div>
     </div>
   );

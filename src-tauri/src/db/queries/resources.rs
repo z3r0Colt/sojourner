@@ -170,3 +170,109 @@ pub fn delete_resource_link(conn: &Connection, id: i64) -> anyhow::Result<()> {
     conn.execute("DELETE FROM resource_links WHERE id = ?1", params![id])?;
     Ok(())
 }
+
+// Topic tagging (justification, sanctification, the covenants, the
+// Sabbath, the means of grace, ...), same shape as sermon_note_tags/
+// note_tags, so a resource can be filtered/browsed by doctrine the way
+// sermon notes already are.
+
+pub fn add_tag(conn: &Connection, resource_id: i64, tag: String) -> anyhow::Result<()> {
+    conn.execute("INSERT OR IGNORE INTO resource_tags (resource_id, tag) VALUES (?1, ?2)", params![resource_id, tag.trim()])?;
+    Ok(())
+}
+
+pub fn remove_tag(conn: &Connection, resource_id: i64, tag: String) -> anyhow::Result<()> {
+    conn.execute("DELETE FROM resource_tags WHERE resource_id = ?1 AND tag = ?2", params![resource_id, tag])?;
+    Ok(())
+}
+
+pub fn list_tags(conn: &Connection, resource_id: i64) -> anyhow::Result<Vec<String>> {
+    let mut stmt = conn.prepare("SELECT tag FROM resource_tags WHERE resource_id = ?1 ORDER BY tag")?;
+    let rows = stmt.query_map(params![resource_id], |r| r.get::<_, String>(0))?;
+    Ok(rows.collect::<Result<Vec<_>, _>>()?)
+}
+
+pub fn list_all_tags(conn: &Connection) -> anyhow::Result<Vec<String>> {
+    let mut stmt = conn.prepare("SELECT DISTINCT tag FROM resource_tags ORDER BY tag")?;
+    let rows = stmt.query_map([], |r| r.get::<_, String>(0))?;
+    Ok(rows.collect::<Result<Vec<_>, _>>()?)
+}
+
+pub fn list_all_tags_by_resource(conn: &Connection) -> anyhow::Result<Vec<(i64, String)>> {
+    let mut stmt = conn.prepare("SELECT resource_id, tag FROM resource_tags ORDER BY resource_id, tag")?;
+    let rows = stmt.query_map([], |r| Ok((r.get(0)?, r.get(1)?)))?;
+    Ok(rows.collect::<Result<Vec<_>, _>>()?)
+}
+
+/// Resources whose topic tags plausibly bear on a given doctrine topic --
+/// the topic's own name (with its "Of "/"Of the " prefix stripped, same as
+/// `suggest_for_passage`'s per-chapter keyword) matched against
+/// `resource_tags` by substring. Used inside the Confession/Catechism view
+/// so opening a topic surfaces related library material without a
+/// separate topic-browsing page.
+pub fn suggest_for_topic(conn: &Connection, topic_id: i64) -> anyhow::Result<Vec<Resource>> {
+    let name: Option<String> =
+        conn.query_row("SELECT name FROM doctrine_topics WHERE id = ?1", params![topic_id], |r| r.get(0)).optional()?;
+    let Some(name) = name else { return Ok(vec![]) };
+    let keyword = name.strip_prefix("Of the ").or_else(|| name.strip_prefix("Of ")).unwrap_or(&name);
+
+    let cols_r = RESOURCE_COLS.split(", ").map(|c| format!("r.{c}")).collect::<Vec<_>>().join(", ");
+    let mut stmt = conn.prepare(&format!(
+        "SELECT DISTINCT {cols_r} FROM resources r JOIN resource_tags t ON t.resource_id = r.id
+         WHERE t.tag LIKE '%' || ?1 || '%' ORDER BY r.title COLLATE NOCASE"
+    ))?;
+    let rows = stmt.query_map(params![keyword], map_resource)?;
+    Ok(rows.collect::<Result<Vec<_>, _>>()?)
+}
+
+/// Resources whose topic tags plausibly bear on a passage: WCF chapters the
+/// passage's proof texts cite (see `westminster::list_wcf_chapters_cited`)
+/// mapped to their doctrine_topics keyword (e.g. WCF 11 -> "Justification"),
+/// matched against `resource_tags` by substring -- a resource tagged
+/// "justification by faith" still matches the "Justification" keyword. This
+/// is a suggestion, not a citation: it surfaces resources that MIGHT bear on
+/// the text, same spirit as the manual resource_passage_links a user sets
+/// themselves, just automatic instead of hand-linked.
+pub fn suggest_for_passage(conn: &Connection, book_id: i64, chapter: i64) -> anyhow::Result<Vec<Resource>> {
+    let wcf_chapters = super::westminster::list_wcf_chapters_cited(conn, book_id, chapter)?;
+    if wcf_chapters.is_empty() {
+        return Ok(vec![]);
+    }
+    let placeholders = wcf_chapters.iter().map(|_| "?").collect::<Vec<_>>().join(",");
+    let mut stmt = conn.prepare(&format!("SELECT name FROM doctrine_topics WHERE wcf_chapter IN ({placeholders})"))?;
+    let topic_names: Vec<String> = stmt
+        .query_map(rusqlite::params_from_iter(wcf_chapters.iter()), |r| r.get(0))?
+        .collect::<Result<_, _>>()?;
+    if topic_names.is_empty() {
+        return Ok(vec![]);
+    }
+
+    let cols_r = RESOURCE_COLS.split(", ").map(|c| format!("r.{c}")).collect::<Vec<_>>().join(", ");
+    let mut resources = Vec::new();
+    let mut seen = std::collections::HashSet::new();
+    for name in &topic_names {
+        let keyword = name.strip_prefix("Of the ").or_else(|| name.strip_prefix("Of ")).unwrap_or(name);
+        let mut stmt = conn.prepare(&format!(
+            "SELECT DISTINCT {cols_r} FROM resources r JOIN resource_tags t ON t.resource_id = r.id
+             WHERE t.tag LIKE '%' || ?1 || '%' ORDER BY r.title COLLATE NOCASE"
+        ))?;
+        let rows = stmt.query_map(params![keyword], map_resource)?;
+        for row in rows {
+            let r = row?;
+            if seen.insert(r.id) {
+                resources.push(r);
+            }
+        }
+    }
+    Ok(resources)
+}
+
+pub fn list_by_tag(conn: &Connection, tag: &str) -> anyhow::Result<Vec<Resource>> {
+    let cols_r = RESOURCE_COLS.split(", ").map(|c| format!("r.{c}")).collect::<Vec<_>>().join(", ");
+    let mut stmt = conn.prepare(&format!(
+        "SELECT {cols_r} FROM resources r JOIN resource_tags t ON t.resource_id = r.id
+         WHERE t.tag = ?1 ORDER BY r.title COLLATE NOCASE"
+    ))?;
+    let rows = stmt.query_map(params![tag], map_resource)?;
+    Ok(rows.collect::<Result<Vec<_>, _>>()?)
+}

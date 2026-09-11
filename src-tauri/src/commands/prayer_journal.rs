@@ -68,3 +68,27 @@ pub fn search_prayer_entries(db: State<DbState>, query: String, limit: i64) -> A
     let conn = db.0.lock().unwrap();
     Ok(queries::search(&conn, &query, limit)?)
 }
+
+#[tauri::command]
+pub fn add_prayer_entry_tag(db: State<DbState>, prayer_entry_id: i64, tag: String) -> AppResult<()> {
+    let conn = db.0.lock().unwrap();
+    Ok(queries::add_tag(&conn, prayer_entry_id, tag)?)
+}
+
+#[tauri::command]
+pub fn remove_prayer_entry_tag(db: State<DbState>, prayer_entry_id: i64, tag: String) -> AppResult<()> {
+    let conn = db.0.lock().unwrap();
+    Ok(queries::remove_tag(&conn, prayer_entry_id, tag)?)
+}
+
+#[tauri::command]
+pub fn list_all_prayer_entry_tags(db: State<DbState>) -> AppResult<Vec<String>> {
+    let conn = db.0.lock().unwrap();
+    Ok(queries::list_all_tags(&conn)?)
+}
+
+#[tauri::command]
+pub fn list_all_prayer_entry_tags_by_entry(db: State<DbState>) -> AppResult<Vec<(i64, String)>> {
+    let conn = db.0.lock().unwrap();
+    Ok(queries::list_all_tags_by_entry(&conn)?)
+}

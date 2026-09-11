@@ -1,7 +1,8 @@
 use crate::models::PrayerListPerson;
 use rusqlite::{params, Connection};
 
-const SELECT_COLS: &str = "id, name, category, notes, active, last_prayed_at, created_at, updated_at";
+const SELECT_COLS: &str =
+    "id, name, category, notes, active, last_prayed_at, created_at, updated_at, answered_at, answer_note";
 
 fn map_row(r: &rusqlite::Row) -> rusqlite::Result<PrayerListPerson> {
     Ok(PrayerListPerson {
@@ -13,6 +14,8 @@ fn map_row(r: &rusqlite::Row) -> rusqlite::Result<PrayerListPerson> {
         last_prayed_at: r.get(5)?,
         created_at: r.get(6)?,
         updated_at: r.get(7)?,
+        answered_at: r.get(8)?,
+        answer_note: r.get(9)?,
     })
 }
 
@@ -62,6 +65,19 @@ pub fn mark_prayed(conn: &Connection, id: i64) -> anyhow::Result<()> {
     conn.execute(
         "UPDATE prayer_list_people SET last_prayed_at=?1, updated_at=?1 WHERE id=?2",
         params![now, id],
+    )?;
+    Ok(())
+}
+
+/// Marks a request answered: archives it (active=0, same as `set_active`)
+/// and records when/how, for the "record answers to prayer as a means of
+/// strengthening faith" use -- distinct from an ordinary archive, which
+/// leaves `answered_at` null.
+pub fn mark_answered(conn: &Connection, id: i64, answer_note: Option<String>) -> anyhow::Result<()> {
+    let now = chrono::Utc::now().to_rfc3339();
+    conn.execute(
+        "UPDATE prayer_list_people SET active=0, answered_at=?1, answer_note=?2, updated_at=?1 WHERE id=?3",
+        params![now, answer_note, id],
     )?;
     Ok(())
 }

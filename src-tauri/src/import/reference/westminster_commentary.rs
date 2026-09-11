@@ -18,46 +18,42 @@ struct RawEntry {
     text: String,
 }
 
+/// A confession/catechism exposition source, as declared in
+/// `manifest.json` alongside the entry files themselves -- adding a new
+/// exposition (once its entries file exists, in the same shape as
+/// hodge.json/shaw.json/vincent.json) is a manifest edit, not a code
+/// change. This is deliberately the same JSON-array-of-entries shape those
+/// three already use, so a work like Watson's Body of Divinity (which
+/// follows the WSC's own question order) drops in as `document_code:
+/// "wsc"` the same way Vincent does; a source keyed to individual verses
+/// rather than WCF chapters or WSC questions belongs in the ordinary
+/// commentary_sources/commentary_entries pipeline instead (see
+/// import::thml), not here.
+#[derive(Deserialize)]
 struct SourceSpec {
-    code: &'static str,
-    title: &'static str,
-    author: &'static str,
-    file: &'static str,
+    code: String,
+    title: String,
+    author: String,
+    file: String,
     /// Which Westminster document's own numbering `chapter` matches --
-    /// "wcf" chapters or "wsc" questions. See CONTENT_MIGRATION_0005.
-    document_code: &'static str,
+    /// "wcf" chapters or "wsc"/"wlc" questions. See CONTENT_MIGRATION_0005.
+    document_code: String,
 }
 
-const SOURCES: &[SourceSpec] = &[
-    SourceSpec {
-        code: "hodge",
-        title: "A Commentary on the Confession of Faith",
-        author: "A. A. Hodge",
-        file: "hodge.json",
-        document_code: "wcf",
-    },
-    SourceSpec {
-        code: "shaw",
-        title: "An Exposition of the Confession of Faith",
-        author: "Robert Shaw",
-        file: "shaw.json",
-        document_code: "wcf",
-    },
-    SourceSpec {
-        code: "vincent",
-        title: "An Explicatory Catechism",
-        author: "Thomas Vincent",
-        file: "vincent.json",
-        document_code: "wsc",
-    },
-];
-
 pub fn import(conn: &mut Connection, dir: &Path) -> anyhow::Result<usize> {
+    let manifest_path = dir.join("manifest.json");
+    if !manifest_path.exists() {
+        return Ok(0);
+    }
+    let manifest_raw = std::fs::read_to_string(&manifest_path)?;
+    let sources: Vec<SourceSpec> = serde_json::from_str(&manifest_raw)
+        .map_err(|e| anyhow::anyhow!("parsing {}: {e}", manifest_path.display()))?;
+
     let tx = conn.transaction()?;
     let mut total = 0usize;
 
-    for spec in SOURCES {
-        let path = dir.join(spec.file);
+    for spec in &sources {
+        let path = dir.join(&spec.file);
         if !path.exists() {
             continue;
         }

@@ -1,4 +1,6 @@
+import { X } from "lucide-react";
 import { useViewportClampedPosition } from "../../lib/useViewportClampedPosition";
+import { IconButton } from "../../components/ui/Button";
 
 export function FootnotePopup({
   marker,
@@ -18,17 +20,15 @@ export function FootnotePopup({
   return (
     <div
       ref={ref}
-      className="z-40 w-72 rounded-lg border border-gray-200 bg-white p-3 text-sm shadow-xl dark:border-gray-700 dark:bg-gray-900"
+      className="z-40 w-72 rounded-lg border border-line bg-surface p-3 text-sm shadow-xl"
       style={style}
       onMouseDown={(e) => e.stopPropagation()}
     >
       <div className="mb-1 flex items-start justify-between">
-        <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">Note {marker}</span>
-        <button onClick={onClose} className="text-gray-400 hover:text-gray-600" title="Close" aria-label="Close">
-          ✕
-        </button>
+        <span className="text-xs font-semibold uppercase tracking-wide text-ink-3">Note {marker}</span>
+        <IconButton icon={X} label="Close" size="sm" onClick={onClose} />
       </div>
-      <p className="text-gray-700 dark:text-gray-300">{text}</p>
+      <p className="text-ink-2">{text}</p>
     </div>
   );
 }

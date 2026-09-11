@@ -1,6 +1,7 @@
 pub mod confessions;
 pub mod crossrefs;
 pub mod dictionary;
+pub mod doctrine_topics;
 pub mod footnotes;
 pub mod harmony;
 pub mod interlinear;
@@ -27,6 +28,7 @@ pub struct ReferenceImportReport {
     pub footnotes: usize,
     pub westminster_commentary_entries: usize,
     pub confession_sections: usize,
+    pub doctrine_topics: usize,
     pub metrical_psalm_verses: usize,
     pub treasury_entries: usize,
     pub reading_plan_readings: usize,
@@ -135,6 +137,12 @@ pub fn import_all(conn: &mut Connection, reference_dir: &Path) -> anyhow::Result
         0
     };
 
+    let doctrine_topics = if table_count(conn, "doctrine_topics") == 0 {
+        doctrine_topics::import(conn).map_err(|e| anyhow::anyhow!("doctrine topics import failed: {e:#}"))?
+    } else {
+        0
+    };
+
     let metrical_psalm_verses = if table_count(conn, "metrical_psalms") == 0 {
         psalter::import(conn, &reference_dir.join("psalter"))
             .map_err(|e| anyhow::anyhow!("metrical psalter import failed: {e:#}"))?
@@ -187,6 +195,7 @@ pub fn import_all(conn: &mut Connection, reference_dir: &Path) -> anyhow::Result
         footnotes,
         westminster_commentary_entries,
         confession_sections,
+        doctrine_topics,
         metrical_psalm_verses,
         treasury_entries,
         reading_plan_readings,

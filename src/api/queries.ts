@@ -154,6 +154,27 @@ export function useAllNotes() {
   return useQuery({ queryKey: ["allNotes"], queryFn: api.listAllNotes });
 }
 
+export function useBookmarks() {
+  return useQuery({ queryKey: ["bookmarks"], queryFn: api.listBookmarks });
+}
+
+export function useCreateBookmark() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { bookId: number; chapter: number; verse?: number; label?: string }) =>
+      api.createBookmark(input.bookId, input.chapter, input.verse, input.label),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["bookmarks"] }),
+  });
+}
+
+export function useDeleteBookmark() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: api.deleteBookmark,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["bookmarks"] }),
+  });
+}
+
 export function useChapterNotes(bookId: number | null, chapter: number | null) {
   return useQuery({
     queryKey: ["chapterNotes", bookId, chapter],
@@ -200,10 +221,78 @@ export function useDeleteChapterNote() {
   });
 }
 
+export function useAllNoteTags() {
+  return useQuery({ queryKey: ["allNoteTags"], queryFn: api.listAllNoteTags });
+}
+
+export function useAllNoteTagsByNote() {
+  return useQuery({ queryKey: ["allNoteTagsByNote"], queryFn: api.listAllNoteTagsByNote });
+}
+
+export function useAddNoteTag() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { noteId: number; tag: string }) => api.addNoteTag(input.noteId, input.tag),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["allNoteTags"] });
+      qc.invalidateQueries({ queryKey: ["allNoteTagsByNote"] });
+    },
+  });
+}
+
+export function useRemoveNoteTag() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { noteId: number; tag: string }) => api.removeNoteTag(input.noteId, input.tag),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["allNoteTags"] });
+      qc.invalidateQueries({ queryKey: ["allNoteTagsByNote"] });
+    },
+  });
+}
+
+export function useAllChapterNoteTags() {
+  return useQuery({ queryKey: ["allChapterNoteTags"], queryFn: api.listAllChapterNoteTags });
+}
+
+export function useAllChapterNoteTagsByNote() {
+  return useQuery({ queryKey: ["allChapterNoteTagsByNote"], queryFn: api.listAllChapterNoteTagsByNote });
+}
+
+export function useAddChapterNoteTag() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { chapterNoteId: number; tag: string }) => api.addChapterNoteTag(input.chapterNoteId, input.tag),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["allChapterNoteTags"] });
+      qc.invalidateQueries({ queryKey: ["allChapterNoteTagsByNote"] });
+    },
+  });
+}
+
+export function useRemoveChapterNoteTag() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { chapterNoteId: number; tag: string }) => api.removeChapterNoteTag(input.chapterNoteId, input.tag),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["allChapterNoteTags"] });
+      qc.invalidateQueries({ queryKey: ["allChapterNoteTagsByNote"] });
+    },
+  });
+}
+
 export function useCrossReferences(bookId: number | null, chapter: number | null, verse: number | null) {
   return useQuery({
     queryKey: ["crossReferences", bookId, chapter, verse],
     queryFn: () => api.getCrossReferences(bookId as number, chapter as number, verse as number),
+    enabled: bookId != null && chapter != null && verse != null,
+  });
+}
+
+export function useConfessionForPassage(bookId: number | null, chapter: number | null, verse: number | null) {
+  return useQuery({
+    queryKey: ["confessionForPassage", bookId, chapter, verse],
+    queryFn: () => api.getConfessionForPassage(bookId as number, chapter as number, verse as number),
     enabled: bookId != null && chapter != null && verse != null,
   });
 }
@@ -234,6 +323,18 @@ export function useWestminsterSection(id: number | null) {
   return useQuery({
     queryKey: ["westminsterSection", id],
     queryFn: () => api.getWestminsterSection(id as number),
+    enabled: id != null,
+  });
+}
+
+export function useDoctrineTopics() {
+  return useQuery({ queryKey: ["doctrineTopics"], queryFn: api.listDoctrineTopics, staleTime: Infinity });
+}
+
+export function useDoctrineTopic(id: number | null) {
+  return useQuery({
+    queryKey: ["doctrineTopic", id],
+    queryFn: () => api.getDoctrineTopic(id as number),
     enabled: id != null,
   });
 }
@@ -308,6 +409,52 @@ export function useResourcePassageLinksForResource(resourceId: number | null) {
   });
 }
 
+export function useSuggestedResourcesForPassage(bookId: number | null, chapter: number | null) {
+  return useQuery({
+    queryKey: ["suggestedResources", bookId, chapter],
+    queryFn: () => api.suggestResourcesForPassage(bookId as number, chapter as number),
+    enabled: bookId != null && chapter != null,
+  });
+}
+
+export function useSuggestedResourcesForTopic(topicId: number | null) {
+  return useQuery({
+    queryKey: ["suggestedResourcesForTopic", topicId],
+    queryFn: () => api.suggestResourcesForTopic(topicId as number),
+    enabled: topicId != null,
+  });
+}
+
+export function useAllResourceTags() {
+  return useQuery({ queryKey: ["allResourceTags"], queryFn: api.listAllResourceTags });
+}
+
+export function useAllResourceTagsByResource() {
+  return useQuery({ queryKey: ["allResourceTagsByResource"], queryFn: api.listAllResourceTagsByResource });
+}
+
+export function useAddResourceTag() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { resourceId: number; tag: string }) => api.addResourceTag(input.resourceId, input.tag),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["allResourceTags"] });
+      qc.invalidateQueries({ queryKey: ["allResourceTagsByResource"] });
+    },
+  });
+}
+
+export function useRemoveResourceTag() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { resourceId: number; tag: string }) => api.removeResourceTag(input.resourceId, input.tag),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["allResourceTags"] });
+      qc.invalidateQueries({ queryKey: ["allResourceTagsByResource"] });
+    },
+  });
+}
+
 export function useStrongsEntry(id: string | null) {
   return useQuery({
     queryKey: ["strongs", id],
@@ -318,7 +465,7 @@ export function useStrongsEntry(id: string | null) {
 }
 
 /** All verses using a given Strong's-tagged word, with KJV context -- not
- * fetched until the concordance section is actually opened (`enabled`),
+ * fetched until the concordance section is actually opened ( `enabled`),
  * since a common word's occurrence list can be large and most lexicon
  * lookups never open it. */
 export function useConcordance(strongsId: string | null, enabled: boolean) {
@@ -339,6 +486,14 @@ export function useDictionaryEntry(slug: string | null) {
     queryKey: ["dictionaryEntry", slug],
     queryFn: () => api.getDictionaryEntry(slug as string),
     enabled: slug != null,
+  });
+}
+
+export function useDictionaryEntryByTerm(term: string | null) {
+  return useQuery({
+    queryKey: ["dictionaryEntryByTerm", term],
+    queryFn: () => api.findDictionaryEntryByTerm(term as string),
+    enabled: term != null,
   });
 }
 
@@ -363,142 +518,6 @@ export function useFootnotesForChapter(translationId: number | null, bookId: num
     queryKey: ["footnotes", translationId, bookId, chapter],
     queryFn: () => api.getFootnotesForChapter(translationId as number, bookId as number, chapter as number),
     enabled: translationId != null && bookId != null && chapter != null,
-  });
-}
-
-export function useSermonNotes() {
-  return useQuery({ queryKey: ["sermonNotes"], queryFn: api.listSermonNotes });
-}
-
-export function useSermonNote(id: number | null) {
-  return useQuery({
-    queryKey: ["sermonNote", id],
-    queryFn: () => api.getSermonNote(id as number),
-    enabled: id != null,
-  });
-}
-
-export function useCreateSermonNote() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: api.createSermonNote,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["sermonNotes"] }),
-  });
-}
-
-export function useUpdateSermonNote() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (input: {
-      id: number;
-      date: string;
-      series?: string;
-      preacher?: string;
-      title?: string;
-      passageText?: string;
-      outline?: string;
-      application?: string;
-    }) => api.updateSermonNote(input.id, input),
-    onSuccess: (_r, input) => {
-      qc.invalidateQueries({ queryKey: ["sermonNotes"] });
-      qc.invalidateQueries({ queryKey: ["sermonNote", input.id] });
-    },
-  });
-}
-
-export function useDeleteSermonNote() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: api.deleteSermonNote,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["sermonNotes"] }),
-  });
-}
-
-export function useAddSermonNotePassage() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (input: { sermonNoteId: number; bookId: number; chapter: number; verseStart?: number; verseEnd?: number }) =>
-      api.addSermonNotePassage(input.sermonNoteId, input.bookId, input.chapter, input.verseStart, input.verseEnd),
-    onSuccess: (_r, input) => {
-      qc.invalidateQueries({ queryKey: ["sermonNotes"] });
-      qc.invalidateQueries({ queryKey: ["sermonNote", input.sermonNoteId] });
-    },
-  });
-}
-
-export function useDeleteSermonNotePassage() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: api.deleteSermonNotePassage,
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["sermonNotes"] });
-      qc.invalidateQueries({ queryKey: ["sermonNote"] });
-    },
-  });
-}
-
-function invalidateSermonNotes(qc: ReturnType<typeof useQueryClient>) {
-  qc.invalidateQueries({ queryKey: ["sermonNotes"] });
-  qc.invalidateQueries({ queryKey: ["sermonNote"] });
-  qc.invalidateQueries({ queryKey: ["sermonNoteTags"] });
-  qc.invalidateQueries({ queryKey: ["sermonNoteSeries"] });
-}
-
-export function useSermonNoteTags() {
-  return useQuery({ queryKey: ["sermonNoteTags"], queryFn: api.listSermonNoteTags });
-}
-
-export function useSermonNoteSeries() {
-  return useQuery({ queryKey: ["sermonNoteSeries"], queryFn: api.listSermonNoteSeries });
-}
-
-export function useAddSermonNoteTag() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (input: { sermonNoteId: number; tag: string }) => api.addSermonNoteTag(input.sermonNoteId, input.tag),
-    onSuccess: () => invalidateSermonNotes(qc),
-  });
-}
-
-export function useRemoveSermonNoteTag() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (input: { sermonNoteId: number; tag: string }) => api.removeSermonNoteTag(input.sermonNoteId, input.tag),
-    onSuccess: () => invalidateSermonNotes(qc),
-  });
-}
-
-export function useAddSermonNoteConfessionLink() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (input: { sermonNoteId: number; westminsterSectionId: number }) =>
-      api.addSermonNoteConfessionLink(input.sermonNoteId, input.westminsterSectionId),
-    onSuccess: () => invalidateSermonNotes(qc),
-  });
-}
-
-export function useDeleteSermonNoteConfessionLink() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: api.deleteSermonNoteConfessionLink,
-    onSuccess: () => invalidateSermonNotes(qc),
-  });
-}
-
-export function useAddSermonNoteWordStudy() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (input: { sermonNoteId: number; strongsId: string; note?: string }) =>
-      api.addSermonNoteWordStudy(input.sermonNoteId, input.strongsId, input.note),
-    onSuccess: () => invalidateSermonNotes(qc),
-  });
-}
-
-export function useDeleteSermonNoteWordStudy() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: api.deleteSermonNoteWordStudy,
-    onSuccess: () => invalidateSermonNotes(qc),
   });
 }
 
@@ -543,6 +562,36 @@ export function useDeletePrayerEntry() {
   });
 }
 
+export function useAllPrayerEntryTags() {
+  return useQuery({ queryKey: ["allPrayerEntryTags"], queryFn: api.listAllPrayerEntryTags });
+}
+
+export function useAllPrayerEntryTagsByEntry() {
+  return useQuery({ queryKey: ["allPrayerEntryTagsByEntry"], queryFn: api.listAllPrayerEntryTagsByEntry });
+}
+
+export function useAddPrayerEntryTag() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { prayerEntryId: number; tag: string }) => api.addPrayerEntryTag(input.prayerEntryId, input.tag),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["allPrayerEntryTags"] });
+      qc.invalidateQueries({ queryKey: ["allPrayerEntryTagsByEntry"] });
+    },
+  });
+}
+
+export function useRemovePrayerEntryTag() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { prayerEntryId: number; tag: string }) => api.removePrayerEntryTag(input.prayerEntryId, input.tag),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["allPrayerEntryTags"] });
+      qc.invalidateQueries({ queryKey: ["allPrayerEntryTagsByEntry"] });
+    },
+  });
+}
+
 export function usePrayerListPeople() {
   return useQuery({ queryKey: ["prayerListPeople"], queryFn: api.listPrayerListPeople });
 }
@@ -576,6 +625,14 @@ export function useMarkPrayerListPersonPrayed() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: api.markPrayerListPersonPrayed,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["prayerListPeople"] }),
+  });
+}
+
+export function useMarkPrayerListPersonAnswered() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { id: number; answerNote?: string }) => api.markPrayerListPersonAnswered(input.id, input.answerNote),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["prayerListPeople"] }),
   });
 }
@@ -640,6 +697,68 @@ export function useReviewMemoryVerse() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["memoryVerses"] });
       qc.invalidateQueries({ queryKey: ["dueMemoryVerses"] });
+    },
+  });
+}
+
+export function useSetMemoryVerseDoctrinalLink() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { id: number; westminsterSectionId: number | null; doctrinalNote: string | null }) =>
+      api.setMemoryVerseDoctrinalLink(input.id, input.westminsterSectionId, input.doctrinalNote),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["memoryVerses"] });
+      qc.invalidateQueries({ queryKey: ["dueMemoryVerses"] });
+    },
+  });
+}
+
+export function useCatechismMemory() {
+  return useQuery({ queryKey: ["catechismMemory"], queryFn: api.listCatechismMemory });
+}
+
+export function useDueCatechismMemory() {
+  return useQuery({ queryKey: ["dueCatechismMemory"], queryFn: api.listDueCatechismMemory });
+}
+
+export function useCreateCatechismMemory() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { westminsterSectionId: number; mode: MemoryMode }) =>
+      api.createCatechismMemory(input.westminsterSectionId, input.mode),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["catechismMemory"] });
+      qc.invalidateQueries({ queryKey: ["dueCatechismMemory"] });
+    },
+  });
+}
+
+export function useSetCatechismMemoryMode() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { id: number; mode: MemoryMode }) => api.setCatechismMemoryMode(input.id, input.mode),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["catechismMemory"] }),
+  });
+}
+
+export function useDeleteCatechismMemory() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: api.deleteCatechismMemory,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["catechismMemory"] });
+      qc.invalidateQueries({ queryKey: ["dueCatechismMemory"] });
+    },
+  });
+}
+
+export function useReviewCatechismMemory() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { id: number; quality: number }) => api.reviewCatechismMemory(input.id, input.quality),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["catechismMemory"] });
+      qc.invalidateQueries({ queryKey: ["dueCatechismMemory"] });
     },
   });
 }

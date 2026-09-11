@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { ArrowLeft, Brain, Flame, Play, Plus, Trash2 } from "lucide-react";
 import {
   useBooks,
   useMemoryVerses,
@@ -6,16 +7,17 @@ import {
   useCreateMemoryVerse,
   useSetMemoryVerseMode,
   useDeleteMemoryVerse,
+  useSetMemoryVerseDoctrinalLink,
 } from "../../api/queries";
 import { buildBookLookup, parseReference } from "../../hooks/useReferenceParser";
 import { MemoryPracticeCard } from "./MemoryPracticeCard";
+import { MemoryModeSelect } from "./MemoryModeSelect";
 import type { MemoryMode, MemoryVerse } from "../../api/types";
-
-const MODE_LABELS: Record<MemoryMode, string> = {
-  "first-letter": "First letter",
-  "blank-word": "Blank word",
-  "type-it": "Type it",
-};
+import { Button, IconButton } from "../../components/ui/Button";
+import { EmptyState } from "../../components/ui/EmptyState";
+import { confirmDelete } from "../../components/ui/confirm";
+import { toast } from "../../components/ui/toast";
+import { cardClass, cx, inputClass } from "../../components/ui/classes";
 
 /** Counts consecutive calendar days with at least one review, working
  * backward from today (a day is still "current" if the streak's last day
@@ -43,6 +45,7 @@ export function MemoryView() {
   const createVerse = useCreateMemoryVerse();
   const setMode = useSetMemoryVerseMode();
   const deleteVerse = useDeleteMemoryVerse();
+  const setDoctrinalLink = useSetMemoryVerseDoctrinalLink();
   const lookup = useMemo(() => buildBookLookup(books ?? []), [books]);
 
   const [practicing, setPracticing] = useState(false);
@@ -104,39 +107,39 @@ export function MemoryView() {
     setError(null);
     const parsed = parseReference(reference, lookup);
     if (!parsed) {
-      setError("Couldn't parse that reference.");
+      setError("Couldn't read that reference. Try something like “Philippians 4:6-7”.");
       return;
     }
-    createVerse.mutate({
-      bookId: parsed.book.id,
-      chapter: parsed.chapter,
-      verseStart: parsed.verse ?? 1,
-      verseEnd: parsed.verseEnd ?? parsed.verse ?? 1,
-      translationId: undefined,
-      mode: newMode,
-    });
+    createVerse.mutate(
+      {
+        bookId: parsed.book.id,
+        chapter: parsed.chapter,
+        verseStart: parsed.verse ?? 1,
+        verseEnd: parsed.verseEnd ?? parsed.verse ?? 1,
+        translationId: undefined,
+        mode: newMode,
+      },
+      { onSuccess: () => toast.success(`Added ${parsed.book.name} ${parsed.chapter}:${parsed.verse ?? 1}`) },
+    );
     setReference("");
   }
 
   if (practicing && queue.length > 0) {
     return (
-      <div className="mx-auto max-w-3xl px-6 py-10">
+      <div className="py-4">
         <div className="mb-4 flex items-center justify-between">
-          <h1 className="text-xl font-semibold">Practice</h1>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={previousCard}
-              disabled={history.length === 0}
-              className="text-sm text-gray-400 hover:underline disabled:opacity-30 disabled:hover:no-underline"
-            >
-              ← Back
-            </button>
-            <button onClick={() => setPracticing(false)} className="text-sm text-gray-400 hover:underline">
+          <div className="text-sm text-ink-3">
+            {queue.length} card{queue.length === 1 ? "" : "s"} remaining
+          </div>
+          <div className="flex items-center gap-1">
+            <Button size="sm" variant="ghost" icon={ArrowLeft} onClick={previousCard} disabled={history.length === 0}>
+              Back
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setPracticing(false)}>
               Stop
-            </button>
+            </Button>
           </div>
         </div>
-        <p className="mb-4 text-xs text-gray-400">{queue.length} card{queue.length === 1 ? "" : "s"} remaining</p>
         <MemoryPracticeCard key={queue[0].id} card={queue[0]} onDone={nextCard} />
       </div>
     );
@@ -144,127 +147,120 @@ export function MemoryView() {
 
   if (practicing && queue.length === 0) {
     return (
-      <div className="mx-auto max-w-3xl px-6 py-10 text-center">
-        <h1 className="mb-2 text-xl font-semibold">Session complete 🎉</h1>
-        <p className="mb-6 text-sm text-gray-400">
+      <div className="py-10 text-center">
+        <h2 className="mb-2 text-xl font-semibold text-ink">Session complete</h2>
+        <p className="mb-6 text-sm text-ink-3">
           You reviewed {sessionSet.length} verse{sessionSet.length === 1 ? "" : "s"}.
         </p>
-        <div className="flex justify-center gap-3">
-          <button
-            onClick={replaySession}
-            className="rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700"
-          >
+        <div className="flex justify-center gap-2">
+          <Button variant="primary" onClick={replaySession}>
             Practice again
-          </button>
-          <button
-            onClick={() => setPracticing(false)}
-            className="rounded border border-gray-300 px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
-          >
-            Done
-          </button>
+          </Button>
+          <Button onClick={() => setPracticing(false)}>Done</Button>
         </div>
       </div>
     );
   }
 
+  const hasAny = (all?.length ?? 0) > 0;
+
   return (
-    <div className="mx-auto max-w-3xl px-6 py-6">
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Scripture Memory</h1>
-        <button
-          onClick={startPractice}
-          disabled={!due || due.length === 0}
-          className="rounded bg-blue-600 px-3 py-1.5 text-sm text-white hover:bg-blue-700 disabled:opacity-40"
-        >
-          Practice{due && due.length > 0 ? ` (${due.length} due)` : ""}
-        </button>
-      </div>
+    <div>
+      {hasAny && (
+        <div className="mb-5 grid grid-cols-3 gap-3">
+          {[
+            { value: streak, label: "day streak", icon: streak > 0 ? Flame : undefined },
+            { value: all?.length ?? 0, label: "verses in your deck" },
+            { value: mastered, label: "mastered (5+ reviews)" },
+          ].map((s) => (
+            <div key={s.label} className="rounded-lg border border-line bg-surface p-3 text-center">
+              <div className="flex items-center justify-center gap-1 text-2xl font-semibold text-ink">
+                {s.icon && <s.icon className="h-5 w-5 text-amber-500" aria-hidden="true" />}
+                {s.value}
+              </div>
+              <div className="text-xs text-ink-3">{s.label}</div>
+            </div>
+          ))}
+        </div>
+      )}
 
-      <div className="mb-6 flex gap-4 rounded border border-gray-200 p-3 text-center text-sm dark:border-gray-800">
-        <div className="flex-1">
-          <div className="text-xl font-semibold">{streak}</div>
-          <div className="text-xs text-gray-400">day streak{streak > 0 ? " 🔥" : ""}</div>
-        </div>
-        <div className="flex-1 border-l border-gray-200 dark:border-gray-800">
-          <div className="text-xl font-semibold">{all?.length ?? 0}</div>
-          <div className="text-xs text-gray-400">verses memorized</div>
-        </div>
-        <div className="flex-1 border-l border-gray-200 dark:border-gray-800">
-          <div className="text-xl font-semibold">{mastered}</div>
-          <div className="text-xs text-gray-400">mastered (5+ reps)</div>
-        </div>
-      </div>
-
-      <div className="mb-6 flex flex-wrap items-end gap-2 rounded border border-gray-200 p-3 dark:border-gray-800">
-        <label className="flex-1">
-          <span className="mb-1 block text-xs font-semibold text-gray-500">Add a verse</span>
+      <div className="mb-5 flex flex-wrap items-end gap-2 rounded-lg border border-line bg-surface-2 p-3">
+        <label className="min-w-48 flex-1">
+          <span className="mb-1 block text-xs font-medium text-ink-3">Add a verse or passage</span>
           <input
             value={reference}
             onChange={(e) => setReference(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && addVerse()}
             placeholder="e.g. Philippians 4:6-7"
-            className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm dark:border-gray-700 dark:bg-gray-950"
+            className={cx(inputClass, "w-full")}
           />
         </label>
         <label>
-          <span className="mb-1 block text-xs font-semibold text-gray-500">Mode</span>
-          <select
-            value={newMode}
-            onChange={(e) => setNewMode(e.target.value as MemoryMode)}
-            className="rounded border border-gray-300 px-2 py-1.5 text-sm dark:border-gray-700 dark:bg-gray-950"
-          >
-            {(Object.keys(MODE_LABELS) as MemoryMode[]).map((m) => (
-              <option key={m} value={m}>
-                {MODE_LABELS[m]}
-              </option>
-            ))}
-          </select>
+          <span className="mb-1 block text-xs font-medium text-ink-3">Practice mode</span>
+          <MemoryModeSelect value={newMode} onChange={setNewMode} />
         </label>
-        <button onClick={addVerse} className="rounded bg-blue-600 px-3 py-1.5 text-sm text-white hover:bg-blue-700">
+        <Button variant="primary" icon={Plus} onClick={addVerse}>
           Add
-        </button>
+        </Button>
+        {error && <p className="w-full text-sm text-danger">{error}</p>}
       </div>
-      {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
 
-      {(!all || all.length === 0) && <p className="text-gray-400">No memory verses yet.</p>}
+      {hasAny && (
+        <div className="mb-3 flex items-center justify-between">
+          <p className="text-sm text-ink-3">{due && due.length > 0 ? `${due.length} due for review today` : "Nothing due today"}</p>
+          <Button variant="primary" icon={Play} onClick={startPractice} disabled={!due || due.length === 0}>
+            Practice what's due
+          </Button>
+        </div>
+      )}
+
+      {!hasAny && (
+        <EmptyState
+          icon={Brain}
+          title="Nothing to memorize yet"
+          description="Add a reference above, or right-click any verse while reading and choose “Add to Scripture memory”. Verses come due on a schedule that spaces out as you get them right."
+        />
+      )}
+
       <ul className="space-y-2">
         {all?.map((v) => (
-          <li
-            key={v.id}
-            className="flex items-center justify-between rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-800"
-          >
-            <div>
-              <span className="font-medium">
-                {bookName(v.book_id)} {v.chapter}:{v.verse_start}
-                {v.verse_end !== v.verse_start ? `-${v.verse_end}` : ""}
-              </span>
-              <span className="ml-2 text-xs text-gray-400">
-                due {new Date(v.due_at).toLocaleDateString()} · reps {v.repetitions}
-              </span>
+          <li key={v.id} className={cardClass}>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="min-w-0 flex-1">
+                <span className="font-medium text-ink">
+                  {bookName(v.book_id)} {v.chapter}:{v.verse_start}
+                  {v.verse_end !== v.verse_start ? `-${v.verse_end}` : ""}
+                </span>
+                <span className="ml-2 text-xs text-ink-3">
+                  due {new Date(v.due_at).toLocaleDateString()} · {v.repetitions} review{v.repetitions === 1 ? "" : "s"}
+                </span>
+              </div>
+              <Button size="sm" variant="secondary" icon={Play} onClick={() => practiceOne(v)}>
+                Practice
+              </Button>
+              <MemoryModeSelect small value={v.mode} onChange={(mode) => setMode.mutate({ id: v.id, mode })} />
+              <IconButton
+                icon={Trash2}
+                label="Remove from deck"
+                size="sm"
+                onClick={async () => {
+                  if (await confirmDelete(`${bookName(v.book_id)} ${v.chapter}:${v.verse_start} from your deck`, "Your review history for it is lost.")) {
+                    deleteVerse.mutate(v.id, { onSuccess: () => toast.info("Removed from deck") });
+                  }
+                }}
+              />
             </div>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => practiceOne(v)}
-                className="rounded border border-blue-300 px-2 py-1 text-xs text-blue-700 hover:bg-blue-50 dark:border-blue-700 dark:text-blue-300 dark:hover:bg-blue-950/40"
-                title="Practice this verse"
-              >
-                ▶ Practice
-              </button>
-              <select
-                value={v.mode}
-                onChange={(e) => setMode.mutate({ id: v.id, mode: e.target.value as MemoryMode })}
-                className="rounded border border-gray-300 px-1.5 py-1 text-xs dark:border-gray-700 dark:bg-gray-950"
-              >
-                {(Object.keys(MODE_LABELS) as MemoryMode[]).map((m) => (
-                  <option key={m} value={m}>
-                    {MODE_LABELS[m]}
-                  </option>
-                ))}
-              </select>
-              <button onClick={() => deleteVerse.mutate(v.id)} className="text-xs text-gray-400 hover:underline">
-                Delete
-              </button>
-            </div>
+            <input
+              defaultValue={v.doctrinal_note ?? ""}
+              onBlur={(e) => {
+                const note = e.target.value.trim();
+                if (note === (v.doctrinal_note ?? "")) return;
+                setDoctrinalLink.mutate({ id: v.id, westminsterSectionId: v.westminster_section_id, doctrinalNote: note || null });
+              }}
+              placeholder="Add a doctrinal note or catechism connection (meditate on the sense)…"
+              aria-label="Doctrinal note"
+              className="mt-2 w-full rounded-md border border-dashed border-line-2 bg-transparent px-2 py-1 text-sm italic text-ink-2 placeholder:text-ink-4 focus:border-solid focus:border-accent"
+            />
           </li>
         ))}
       </ul>

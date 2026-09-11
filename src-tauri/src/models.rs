@@ -19,6 +19,7 @@ pub struct Translation {
     pub source_path: String,
     pub imported_at: String,
     pub verse_count: i64,
+    pub license_status: String,
 }
 
 /// Which chapters of a book a given translation actually has verses for --
@@ -154,8 +155,8 @@ pub struct ReadingPosition {
 
 #[derive(Debug, Clone, Serialize)]
 pub struct SearchResult {
-    pub kind: String, // "verse" | "commentary"
-    pub book_id: i64,
+    pub kind: String, // "verse" | "commentary" | "note" | "prayer"
+    pub book_id: Option<i64>,
     pub chapter: Option<i64>,
     pub verse: Option<i64>,
     pub snippet: String,
@@ -246,6 +247,35 @@ pub struct WestminsterSection {
     pub proofs: Vec<WestminsterProofRef>,
 }
 
+/// One Standards paragraph found to cite a given Scripture passage as proof
+/// -- the reverse of `WestminsterSection.proofs` (which goes
+/// section-to-verses; this goes verse-to-sections). `document_code`/`title`
+/// are denormalized in so the reading-pane panel can group and label matches
+/// without a second round trip.
+#[derive(Debug, Clone, Serialize)]
+pub struct WestminsterPassageMatch {
+    pub section_id: i64,
+    pub document_id: i64,
+    pub document_code: String,
+    pub document_title: String,
+    pub heading: String,
+    pub prompt: Option<String>,
+    pub marker: i64,
+}
+
+/// One entry in the doctrine/topic index -- see the doctrine_topics schema
+/// comment. `heading`/`document_code` are denormalized in from the resolved
+/// section so the UI can link straight to it without a second lookup.
+#[derive(Debug, Clone, Serialize)]
+pub struct DoctrineTopic {
+    pub id: i64,
+    pub name: String,
+    pub category: String,
+    pub westminster_section_id: i64,
+    pub document_code: String,
+    pub heading: String,
+}
+
 #[derive(Debug, Clone, Serialize)]
 pub struct WestminsterCommentarySource {
     pub id: i64,
@@ -269,6 +299,7 @@ pub struct SearchResults {
     pub verses: Vec<SearchResult>,
     pub commentary: Vec<SearchResult>,
     pub notes: Vec<SearchResult>,
+    pub prayers: Vec<SearchResult>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -331,57 +362,6 @@ pub struct ConcordanceEntry {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SermonNote {
-    pub id: i64,
-    pub date: String,
-    pub series: Option<String>,
-    pub preacher: Option<String>,
-    pub title: Option<String>,
-    pub passage_text: Option<String>,
-    pub outline: Option<String>,
-    pub application: Option<String>,
-    pub created_at: String,
-    pub updated_at: String,
-    pub passages: Vec<SermonNotePassageLink>,
-    pub tags: Vec<String>,
-    pub confession_links: Vec<SermonNoteConfessionLink>,
-    pub word_studies: Vec<SermonNoteWordStudy>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SermonNoteConfessionLink {
-    pub id: i64,
-    pub sermon_note_id: i64,
-    pub westminster_section_id: i64,
-    pub document_code: String,
-    pub document_title: String,
-    pub heading: String,
-    pub created_at: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SermonNoteWordStudy {
-    pub id: i64,
-    pub sermon_note_id: i64,
-    pub strongs_id: String,
-    pub original_word: Option<String>,
-    pub transliteration: Option<String>,
-    pub note: Option<String>,
-    pub created_at: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SermonNotePassageLink {
-    pub id: i64,
-    pub sermon_note_id: i64,
-    pub book_id: i64,
-    pub chapter: i64,
-    pub verse_start: Option<i64>,
-    pub verse_end: Option<i64>,
-    pub created_at: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PrayerEntry {
     pub id: i64,
     pub entry_date: String,
@@ -409,6 +389,8 @@ pub struct PrayerListPerson {
     pub last_prayed_at: Option<String>,
     pub created_at: String,
     pub updated_at: String,
+    pub answered_at: Option<String>,
+    pub answer_note: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -419,6 +401,25 @@ pub struct MemoryVerse {
     pub verse_start: i64,
     pub verse_end: i64,
     pub translation_id: Option<i64>,
+    pub mode: String,
+    pub ease_factor: f64,
+    pub interval_days: i64,
+    pub repetitions: i64,
+    pub due_at: String,
+    pub last_reviewed_at: Option<String>,
+    pub created_at: String,
+    pub westminster_section_id: Option<i64>,
+    pub doctrinal_note: Option<String>,
+}
+
+/// Catechism Study mode's spaced-repetition card: same shape and SM-2 state
+/// as `MemoryVerse`, but keyed to a Westminster question/paragraph instead
+/// of a Bible passage -- see the schema comment on `catechism_memory` for
+/// why this is a parallel table rather than a shared "memory item" type.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CatechismMemory {
+    pub id: i64,
+    pub westminster_section_id: i64,
     pub mode: String,
     pub ease_factor: f64,
     pub interval_days: i64,

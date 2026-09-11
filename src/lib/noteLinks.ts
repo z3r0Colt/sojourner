@@ -33,7 +33,7 @@ export function buildRefMatcher(books: Book[]): RefMatcher {
   }
   const sorted = Array.from(variants).sort((a, b) => b.length - a.length);
   const escaped = sorted.map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "\\s+"));
-  const regex = new RegExp(`\\b(${escaped.join("|")})\\.?\\s+(\\d{1,3})(?:[:.](\\d{1,3})(?:-(\\d{1,3}))?)?`, "gi");
+  const regex = new RegExp(`\\b(${escaped.join("|")})\\.?\\s+(\\d{1,3})(?:[:.](\\d{1,3})(?:-(\\d{1,3}))?)? `, "gi");
   return { regex, lookup };
 }
 

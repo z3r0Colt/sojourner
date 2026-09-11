@@ -2,13 +2,17 @@ import { useRef } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
+import { BookOpenText, MessageSquareText } from "lucide-react";
 import { api } from "../../api/client";
 import { useCommentaryForPassage, useCommentarySources } from "../../api/queries";
 import { useNavigationStore } from "../../state/navigationStore";
 import { useTtsStore } from "../../state/ttsStore";
+import { useReadingTypography } from "../../state/uiStore";
 import { ReadAloudButton } from "../tts/ReadAloudButton";
 import { ReadAloudWords } from "../tts/ReadAloudWords";
 import type { Book } from "../../api/types";
+import { selectSmClass, cx } from "../../components/ui/classes";
+import { EmptyState, LoadingState } from "../../components/ui/EmptyState";
 
 export function CommentaryPanel({
   book,
@@ -16,18 +20,17 @@ export function CommentaryPanel({
   activeVerse,
   onJumpToVerse,
   onJumpToRef,
-  onClose,
 }: {
   book: Book;
   chapter: number;
   activeVerse: number | null;
   onJumpToVerse: (chapter: number, verse: number) => void;
   onJumpToRef: (bookOsisCode: string, chapter: number, verse: number) => void;
-  onClose: () => void;
 }) {
   const { data: sources } = useCommentarySources();
   const { activeCommentarySourceId, setActiveCommentarySource } = useNavigationStore();
   const sourceId = activeCommentarySourceId ?? sources?.[0]?.id ?? null;
+  const typography = useReadingTypography(0.85);
 
   const { data: hasCommentary } = useQuery({
     queryKey: ["bookHasCommentary", sourceId, book.id],
@@ -35,7 +38,7 @@ export function CommentaryPanel({
     enabled: sourceId != null,
   });
 
-  const { data: entries } = useCommentaryForPassage(sourceId, book.id, chapter);
+  const { data: entries, isLoading } = useCommentaryForPassage(sourceId, book.id, chapter);
   const ttsSourceKind = useTtsStore((s) => s.sourceKind);
   const ttsCurrentSegmentId = useTtsStore((s) => s.segments[s.currentSegmentIndex]?.id ?? null);
   const sourceTitle = sources?.find((s) => s.id === sourceId)?.title ?? "Commentary";
@@ -52,10 +55,11 @@ export function CommentaryPanel({
   });
 
   return (
-    <aside className="flex h-full w-full flex-col border-l border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900/40">
-      <div className="flex items-center gap-2 border-b border-gray-200 p-2 dark:border-gray-800">
+    <div className="flex h-full w-full flex-col">
+      <div className="flex items-center gap-1.5 border-b border-line px-2 py-1.5">
         <select
-          className="flex-1 rounded border border-gray-300 bg-white px-2 py-1 text-xs dark:border-gray-700 dark:bg-gray-900"
+          aria-label="Commentary source"
+          className={cx(selectSmClass, "min-w-0 flex-1")}
           value={sourceId ?? ""}
           onChange={(e) => setActiveCommentarySource(Number(e.target.value))}
         >
@@ -68,72 +72,75 @@ export function CommentaryPanel({
         {sourceId != null && (
           <Link
             to={`/commentary/${sourceId}/${book.id}`}
-            className="whitespace-nowrap text-xs text-blue-600 hover:underline dark:text-blue-400"
+            className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-ink-3 hover:bg-hover hover:text-ink"
+            title="Read this commentary as a book"
+            aria-label="Read this commentary as a book"
           >
-            Read as book
+            <BookOpenText className="h-4 w-4" aria-hidden="true" />
           </Link>
         )}
         <ReadAloudButton
           title={`${sourceTitle}: ${book.name} ${chapter}`}
           sourceKind="commentary"
+          iconOnly
           segments={(entries ?? []).map((e) => ({
             id: e.id,
             text: e.plain_text,
             label: e.verse_start != null ? `v.${e.verse_start}${e.verse_end !== e.verse_start ? `-${e.verse_end}` : ""}` : undefined,
           }))}
-          label="🔊"
-          className="rounded border border-gray-300 px-1.5 py-0.5 text-xs text-gray-500 hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800"
         />
-        <button onClick={onClose} className="text-gray-400 hover:text-gray-600" title="Close panel" aria-label="Close panel">
-          ✕
-        </button>
       </div>
-      <div ref={listRef} className="min-h-0 flex-1 overflow-y-auto p-3 text-sm leading-relaxed">
-        {sourceId == null && <p className="text-gray-400">No commentary installed.</p>}
+      <div ref={listRef} className="min-h-0 flex-1 overflow-y-auto p-3">
+        {sourceId == null && <EmptyState compact icon={MessageSquareText} title="No commentary installed" description="Add one under Settings → Library." />}
+        {sourceId != null && isLoading && <LoadingState />}
         {sourceId != null && hasCommentary === false && (
-          <p className="text-gray-400">
-            No commentary available for {book.name} in this source.{" "}
-            <Link to={`/commentary/${sourceId}`} className="text-blue-600 hover:underline dark:text-blue-400">
-              Browse other books
-            </Link>
-          </p>
+          <EmptyState
+            compact
+            title={`No commentary on ${book.name} in this source`}
+            action={
+              <Link to={`/commentary/${sourceId}`} className="text-sm text-accent hover:underline">
+                Browse the books it does cover
+              </Link>
+            }
+          />
         )}
         {entries && entries.length > 0 && (
           <div style={{ position: "relative", height: rowVirtualizer.getTotalSize() }}>
             {rowVirtualizer.getVirtualItems().map((item) => {
               const e = entries[item.index];
+              const isCurrent =
+                activeVerse != null && e.verse_start != null && activeVerse >= e.verse_start && activeVerse <= (e.verse_end ?? e.verse_start);
               return (
                 <div
                   key={e.id}
                   ref={rowVirtualizer.measureElement}
                   data-index={item.index}
                   style={{ position: "absolute", top: 0, left: 0, right: 0, transform: `translateY(${item.start}px)` }}
-                  className={`mb-3 rounded p-1.5 ${
-                    activeVerse != null && e.verse_start != null && activeVerse >= e.verse_start && activeVerse <= (e.verse_end ?? e.verse_start)
-                      ? "bg-amber-50 dark:bg-amber-950/30"
-                      : ""
-                  }`}
+                  className={cx("mb-3 rounded-md p-2 -mx-1", isCurrent && "bg-amber-50 ring-1 ring-amber-200 dark:bg-amber-950/30 dark:ring-amber-900")}
                 >
                   {e.verse_start != null && (
                     <button
-                      className="mb-0.5 block text-xs font-semibold text-gray-500 hover:underline"
+                      type="button"
+                      className="mb-1 block text-xs font-semibold text-accent hover:underline"
                       onClick={() => onJumpToVerse(chapter, e.verse_start as number)}
                     >
-                      {e.verse_start === e.verse_end ? `v.${e.verse_start}` : `v.${e.verse_start}-${e.verse_end}`}
+                      {e.verse_start === e.verse_end ? `Verse ${e.verse_start}` : `Verses ${e.verse_start}-${e.verse_end}`}
                     </button>
                   )}
-                  {ttsSourceKind === "commentary" && ttsCurrentSegmentId === e.id ? (
-                    <ReadAloudWords text={e.plain_text} active className="reading-font" />
-                  ) : (
-                    <CommentaryHtml html={e.html} onJumpToRef={onJumpToRef} />
-                  )}
+                  <div className="reading-font text-ink-2" style={typography}>
+                    {ttsSourceKind === "commentary" && ttsCurrentSegmentId === e.id ? (
+                      <ReadAloudWords text={e.plain_text} active />
+                    ) : (
+                      <CommentaryHtml html={e.html} onJumpToRef={onJumpToRef} />
+                    )}
+                  </div>
                 </div>
               );
             })}
           </div>
         )}
       </div>
-    </aside>
+    </div>
   );
 }
 

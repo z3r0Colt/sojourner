@@ -1,0 +1,23 @@
+[
+  {
+    "code": "hodge",
+    "title": "A Commentary on the Confession of Faith",
+    "author": "A. A. Hodge",
+    "file": "hodge.json",
+    "document_code": "wcf"
+  },
+  {
+    "code": "shaw",
+    "title": "An Exposition of the Confession of Faith",
+    "author": "Robert Shaw",
+    "file": "shaw.json",
+    "document_code": "wcf"
+  },
+  {
+    "code": "vincent",
+    "title": "An Explicatory Catechism",
+    "author": "Thomas Vincent",
+    "file": "vincent.json",
+    "document_code": "wsc"
+  }
+]

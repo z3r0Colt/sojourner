@@ -1,9 +1,12 @@
 import { useRef, useState } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useNavigate } from "react-router-dom";
+import { ChevronDown } from "lucide-react";
 import { useConcordance } from "../../api/queries";
 import { useBooks } from "../../api/queries";
 import { useNavigationStore } from "../../state/navigationStore";
+import { EmptyState, LoadingState } from "../../components/ui/EmptyState";
+import { cx } from "../../components/ui/classes";
 
 /** Every occurrence of a Strong's-tagged word across the whole Bible, with
  * KJV context -- collapsed by default and only queried once opened, since a
@@ -28,17 +31,20 @@ export function ConcordancePanel({ strongsId }: { strongsId: string }) {
   }
 
   return (
-    <div className="mt-4 border-t border-gray-200 pt-3 dark:border-gray-800">
+    <div className="mt-6 border-t border-line pt-3">
       <button
+        type="button"
         onClick={() => setOpen((v) => !v)}
-        className="text-xs font-semibold uppercase tracking-wide text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+        aria-expanded={open}
+        className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-ink-3 hover:text-ink"
       >
-        {open ? "▾" : "▸"} Concordance{entries ? ` (${entries.length} occurrences)` : ""}
+        <ChevronDown className={cx("h-3.5 w-3.5 transition-transform", !open && "-rotate-90")} aria-hidden="true" />
+        Concordance{entries ? ` · ${entries.length} occurrence${entries.length === 1 ? "" : "s"}` : " · every verse using this word"}
       </button>
       {open && (
         <div ref={listRef} className="mt-2 max-h-96 overflow-y-auto text-sm">
-          {!entries && <p className="p-2 text-gray-400">Loading…</p>}
-          {entries && entries.length === 0 && <p className="p-2 text-gray-400">No occurrences found.</p>}
+          {!entries && <LoadingState />}
+          {entries && entries.length === 0 && <EmptyState compact title="No occurrences found" />}
           {entries && entries.length > 0 && (
             <div style={{ position: "relative", height: rowVirtualizer.getTotalSize() }}>
               {rowVirtualizer.getVirtualItems().map((item) => {
@@ -46,19 +52,20 @@ export function ConcordancePanel({ strongsId }: { strongsId: string }) {
                 return (
                   <button
                     key={item.index}
+                    type="button"
                     ref={rowVirtualizer.measureElement}
                     data-index={item.index}
                     style={{ position: "absolute", top: 0, left: 0, right: 0, transform: `translateY(${item.start}px)` }}
-                    className="block w-full rounded p-1.5 text-left hover:bg-gray-100 dark:hover:bg-gray-800"
+                    className="block w-full rounded-md p-2 text-left hover:bg-hover"
                     onClick={() => {
                       goTo({ bookId: e.book_id, chapter: e.chapter, verse: e.verse });
                       navigate("/");
                     }}
                   >
-                    <div className="text-xs font-medium text-gray-500">
+                    <div className="text-xs font-medium text-accent">
                       {bookName(e.book_id)} {e.chapter}:{e.verse}
                     </div>
-                    <div className="text-gray-700 dark:text-gray-300">{e.text}</div>
+                    <div className="reading-font text-ink-2">{e.text}</div>
                   </button>
                 );
               })}

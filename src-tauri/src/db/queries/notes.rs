@@ -34,6 +34,11 @@ pub fn list_all(conn: &Connection) -> anyhow::Result<Vec<Note>> {
     Ok(rows.collect::<Result<Vec<_>, _>>()?)
 }
 
+pub fn get(conn: &Connection, id: i64) -> anyhow::Result<Option<Note>> {
+    use rusqlite::OptionalExtension;
+    Ok(conn.query_row(&format!("SELECT {SELECT_COLS} FROM notes WHERE id = ?1"), params![id], map_row).optional()?)
+}
+
 pub fn create(
     conn: &Connection,
     book_id: i64,
@@ -96,6 +101,11 @@ pub fn list_all_chapter_notes(conn: &Connection) -> anyhow::Result<Vec<ChapterNo
     Ok(rows.collect::<Result<Vec<_>, _>>()?)
 }
 
+pub fn get_chapter_note(conn: &Connection, id: i64) -> anyhow::Result<Option<ChapterNote>> {
+    use rusqlite::OptionalExtension;
+    Ok(conn.query_row(&format!("SELECT {CHAPTER_COLS} FROM chapter_notes WHERE id = ?1"), params![id], map_chapter_row).optional()?)
+}
+
 pub fn create_chapter_note(conn: &Connection, book_id: i64, chapter: i64, body: String) -> anyhow::Result<ChapterNote> {
     let now = chrono::Utc::now().to_rfc3339();
     conn.execute(
@@ -115,4 +125,73 @@ pub fn update_chapter_note(conn: &Connection, id: i64, body: String) -> anyhow::
 pub fn delete_chapter_note(conn: &Connection, id: i64) -> anyhow::Result<()> {
     conn.execute("DELETE FROM chapter_notes WHERE id = ?1", params![id])?;
     Ok(())
+}
+
+// Doctrine/use tagging (conviction, comfort, duty, or a doctrine name) for
+// both note kinds -- kept as sibling tables rather than embedded on
+// Note/ChapterNote (see USER_MIGRATION_0009's schema comment), same
+// add/remove/list-all/list-by-tag shape as sermon_note_tags.
+
+pub fn add_tag(conn: &Connection, note_id: i64, tag: String) -> anyhow::Result<()> {
+    conn.execute("INSERT OR IGNORE INTO note_tags (note_id, tag) VALUES (?1, ?2)", params![note_id, tag.trim()])?;
+    Ok(())
+}
+
+pub fn remove_tag(conn: &Connection, note_id: i64, tag: String) -> anyhow::Result<()> {
+    conn.execute("DELETE FROM note_tags WHERE note_id = ?1 AND tag = ?2", params![note_id, tag])?;
+    Ok(())
+}
+
+pub fn list_tags(conn: &Connection, note_id: i64) -> anyhow::Result<Vec<String>> {
+    let mut stmt = conn.prepare("SELECT tag FROM note_tags WHERE note_id = ?1 ORDER BY tag")?;
+    let rows = stmt.query_map(params![note_id], |r| r.get::<_, String>(0))?;
+    Ok(rows.collect::<Result<Vec<_>, _>>()?)
+}
+
+pub fn list_all_tags(conn: &Connection) -> anyhow::Result<Vec<String>> {
+    let mut stmt = conn.prepare("SELECT DISTINCT tag FROM note_tags ORDER BY tag")?;
+    let rows = stmt.query_map([], |r| r.get::<_, String>(0))?;
+    Ok(rows.collect::<Result<Vec<_>, _>>()?)
+}
+
+/// Every note's tags in one round trip, as (note_id, tag) pairs -- for a
+/// list view that needs every row's tags without an N+1 query per note.
+pub fn list_all_tags_by_note(conn: &Connection) -> anyhow::Result<Vec<(i64, String)>> {
+    let mut stmt = conn.prepare("SELECT note_id, tag FROM note_tags ORDER BY note_id, tag")?;
+    let rows = stmt.query_map([], |r| Ok((r.get(0)?, r.get(1)?)))?;
+    Ok(rows.collect::<Result<Vec<_>, _>>()?)
+}
+
+pub fn add_chapter_note_tag(conn: &Connection, chapter_note_id: i64, tag: String) -> anyhow::Result<()> {
+    conn.execute(
+        "INSERT OR IGNORE INTO chapter_note_tags (chapter_note_id, tag) VALUES (?1, ?2)",
+        params![chapter_note_id, tag.trim()],
+    )?;
+    Ok(())
+}
+
+pub fn remove_chapter_note_tag(conn: &Connection, chapter_note_id: i64, tag: String) -> anyhow::Result<()> {
+    conn.execute(
+        "DELETE FROM chapter_note_tags WHERE chapter_note_id = ?1 AND tag = ?2",
+        params![chapter_note_id, tag],
+    )?;
+    Ok(())
+}
+
+pub fn list_chapter_note_tags(conn: &Connection, chapter_note_id: i64) -> anyhow::Result<Vec<String>> {
+    let mut stmt = conn.prepare("SELECT tag FROM chapter_note_tags WHERE chapter_note_id = ?1 ORDER BY tag")?;
+    let rows = stmt.query_map(params![chapter_note_id], |r| r.get::<_, String>(0))?;
+    Ok(rows.collect::<Result<Vec<_>, _>>()?)
+}
+
+pub fn list_all_chapter_note_tags(conn: &Connection) -> anyhow::Result<Vec<String>> {
+    let mut stmt = conn.prepare("SELECT DISTINCT tag FROM chapter_note_tags ORDER BY tag")?;
+    let rows = stmt.query_map([], |r| r.get::<_, String>(0))?;
+    Ok(rows.collect::<Result<Vec<_>, _>>()?)
+}
+
+pub fn list_all_chapter_note_tags_by_note(conn: &Connection) -> anyhow::Result<Vec<(i64, String)>> {
+    let mut stmt = conn.prepare("SELECT chapter_note_id, tag FROM chapter_note_tags ORDER BY chapter_note_id, tag")?;
+    let rows = stmt.query_map([], |r| Ok((r.get(0)?, r.get(1)?)))?;
+    Ok(rows.collect::<Result<Vec<_>, _>>()?)
 }

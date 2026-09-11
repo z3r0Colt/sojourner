@@ -1,6 +1,8 @@
 pub mod annotations;
 pub mod backup;
+pub mod catechism_memory;
 pub mod diagnostics;
+pub mod export;
 pub mod harmony;
 pub mod library;
 pub mod prayer_journal;
@@ -12,5 +14,4 @@ pub mod reference;
 pub mod resources;
 pub mod scripture_memory;
 pub mod search;
-pub mod sermon_notes;
 pub mod study;

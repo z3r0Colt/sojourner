@@ -149,3 +149,45 @@ pub fn delete_resource_link(db: State<DbState>, id: i64) -> AppResult<()> {
     let conn = db.0.lock().unwrap();
     Ok(queries::delete_resource_link(&conn, id)?)
 }
+
+#[tauri::command]
+pub fn add_resource_tag(db: State<DbState>, resource_id: i64, tag: String) -> AppResult<()> {
+    let conn = db.0.lock().unwrap();
+    Ok(queries::add_tag(&conn, resource_id, tag)?)
+}
+
+#[tauri::command]
+pub fn remove_resource_tag(db: State<DbState>, resource_id: i64, tag: String) -> AppResult<()> {
+    let conn = db.0.lock().unwrap();
+    Ok(queries::remove_tag(&conn, resource_id, tag)?)
+}
+
+#[tauri::command]
+pub fn list_all_resource_tags(db: State<DbState>) -> AppResult<Vec<String>> {
+    let conn = db.0.lock().unwrap();
+    Ok(queries::list_all_tags(&conn)?)
+}
+
+#[tauri::command]
+pub fn list_all_resource_tags_by_resource(db: State<DbState>) -> AppResult<Vec<(i64, String)>> {
+    let conn = db.0.lock().unwrap();
+    Ok(queries::list_all_tags_by_resource(&conn)?)
+}
+
+#[tauri::command]
+pub fn list_resources_by_tag(db: State<DbState>, tag: String) -> AppResult<Vec<Resource>> {
+    let conn = db.0.lock().unwrap();
+    Ok(queries::list_by_tag(&conn, &tag)?)
+}
+
+#[tauri::command]
+pub fn suggest_resources_for_passage(db: State<DbState>, book_id: i64, chapter: i64) -> AppResult<Vec<Resource>> {
+    let conn = db.0.lock().unwrap();
+    Ok(queries::suggest_for_passage(&conn, book_id, chapter)?)
+}
+
+#[tauri::command]
+pub fn suggest_resources_for_topic(db: State<DbState>, topic_id: i64) -> AppResult<Vec<Resource>> {
+    let conn = db.0.lock().unwrap();
+    Ok(queries::suggest_for_topic(&conn, topic_id)?)
+}

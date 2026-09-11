@@ -239,7 +239,7 @@ pub fn search_verses(
         Ok(SearchResult {
             kind: "verse".to_string(),
             entry_id: r.get(0)?,
-            book_id: r.get(1)?,
+            book_id: Some(r.get(1)?),
             chapter: r.get::<_, i64>(2)?.into(),
             verse: r.get::<_, i64>(3)?.into(),
             source_label: r.get(4)?,
@@ -284,7 +284,7 @@ pub fn search_commentary(
         Ok(SearchResult {
             kind: "commentary".to_string(),
             entry_id: r.get(0)?,
-            book_id: r.get(1)?,
+            book_id: Some(r.get(1)?),
             chapter: r.get(2)?,
             verse: r.get(3)?,
             source_label: r.get(4)?,
@@ -314,7 +314,7 @@ pub fn search_notes(conn: &Connection, query: &str, limit: i64) -> anyhow::Resul
             Ok(SearchResult {
                 kind: "note".to_string(),
                 entry_id: r.get(0)?,
-                book_id: r.get(1)?,
+                book_id: Some(r.get(1)?),
                 chapter: r.get::<_, i64>(2)?.into(),
                 verse: r.get::<_, i64>(3)?.into(),
                 source_label: "Note".to_string(),
@@ -334,7 +334,7 @@ pub fn search_notes(conn: &Connection, query: &str, limit: i64) -> anyhow::Resul
             Ok(SearchResult {
                 kind: "note".to_string(),
                 entry_id: r.get(0)?,
-                book_id: r.get(1)?,
+                book_id: Some(r.get(1)?),
                 chapter: r.get::<_, i64>(2)?.into(),
                 verse: None,
                 source_label: "Chapter Note".to_string(),
@@ -346,6 +346,36 @@ pub fn search_notes(conn: &Connection, query: &str, limit: i64) -> anyhow::Resul
     results.extend(chapter_results);
     results.truncate(limit as usize);
     Ok(results)
+}
+
+/// Prayer journal entries: at most one linked passage per entry (a direct
+/// column, not a link table -- see USER_MIGRATION_0002's schema comment),
+/// so this is a plain left-hand reference rather than a subquery.
+pub fn search_prayer_entries(conn: &Connection, query: &str, limit: i64) -> anyhow::Result<Vec<SearchResult>> {
+    if query.trim().is_empty() {
+        return Ok(vec![]);
+    }
+    let match_expr = build_match_expr(query);
+    let mut stmt = conn.prepare(
+        "SELECT pe.id, pe.entry_date, pe.book_id, pe.chapter, pe.verse_start,
+                snippet(prayer_entries_fts, -1, '[', ']', '…', 12)
+         FROM prayer_entries_fts JOIN prayer_entries pe ON pe.id = prayer_entries_fts.rowid
+         WHERE prayer_entries_fts MATCH ?1
+         ORDER BY bm25(prayer_entries_fts) LIMIT ?2",
+    )?;
+    let rows = stmt.query_map(rusqlite::params![match_expr, limit], |r| {
+        let entry_date: String = r.get(1)?;
+        Ok(SearchResult {
+            kind: "prayer".to_string(),
+            entry_id: r.get(0)?,
+            book_id: r.get(2)?,
+            chapter: r.get(3)?,
+            verse: r.get(4)?,
+            source_label: format!("Prayer: {entry_date}"),
+            snippet: r.get(5)?,
+        })
+    })?;
+    Ok(rows.collect::<Result<Vec<_>, _>>()?)
 }
 
 /// Records that a search was executed: bumps `created_at` on a repeat query

@@ -1,10 +1,14 @@
 import { useEffect, useMemo, useState, Fragment, type ReactNode } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { BookA, Search } from "lucide-react";
 import { api } from "../../api/client";
 import { useDictionaryIndex, useDictionaryEntry, useBooks } from "../../api/queries";
 import { useNavigationStore } from "../../state/navigationStore";
+import { useReadingTypography } from "../../state/uiStore";
 import { buildBookLookup, scanScriptureRefs } from "../../hooks/useReferenceParser";
+import { EmptyState, LoadingState } from "../../components/ui/EmptyState";
+import { cx, inputSmClass } from "../../components/ui/classes";
 
 const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
@@ -15,6 +19,7 @@ export function DictionaryView() {
   const { data: entry } = useDictionaryEntry(slug ?? null);
   const { data: books } = useBooks();
   const goTo = useNavigationStore((s) => s.goTo);
+  const typography = useReadingTypography(0.95);
   const [query, setQuery] = useState("");
   const [debounced, setDebounced] = useState("");
   const [activeLetter, setActiveLetter] = useState("A");
@@ -31,10 +36,7 @@ export function DictionaryView() {
     enabled: debounced.trim().length > 1,
   });
 
-  const letterEntries = useMemo(
-    () => (index ?? []).filter((e) => e.term.toUpperCase().startsWith(activeLetter)),
-    [index, activeLetter],
-  );
+  const letterEntries = useMemo(() => (index ?? []).filter((e) => e.term.toUpperCase().startsWith(activeLetter)), [index, activeLetter]);
 
   const showingSearch = debounced.trim().length > 1;
   const list = showingSearch ? searchResults ?? [] : letterEntries;
@@ -54,8 +56,9 @@ export function DictionaryView() {
       nodes.push(
         <button
           key={`r${i}`}
+          type="button"
           onClick={() => jumpToRef(m.ref.book.id, m.ref.chapter, m.ref.verse)}
-          className="text-blue-600 underline decoration-dotted hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+          className="text-accent underline decoration-dotted underline-offset-2 hover:text-accent-hover"
         >
           {m.text}
         </button>,
@@ -68,28 +71,23 @@ export function DictionaryView() {
 
   return (
     <div className="flex h-full">
-      <aside className="flex w-80 shrink-0 flex-col border-r border-gray-200 dark:border-gray-800">
-        <div className="border-b border-gray-200 p-3 dark:border-gray-800">
-          <input
-            autoFocus
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search the dictionary…"
-            className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm outline-none focus:border-blue-500 dark:border-gray-700 dark:bg-gray-950"
-          />
-          {isFetching && <span className="text-xs text-gray-400">searching…</span>}
+      <aside className="flex w-80 shrink-0 flex-col border-r border-line bg-surface-2/60">
+        <div className="border-b border-line p-3">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-4" aria-hidden="true" />
+            <input autoFocus value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search people, places, topics…" className={cx(inputSmClass, "w-full pl-7")} />
+          </div>
+          {isFetching && <LoadingState className="pt-2" label="Searching…" />}
         </div>
         {!showingSearch && (
-          <div className="flex flex-wrap gap-1 border-b border-gray-200 p-2 dark:border-gray-800">
+          <div className="flex flex-wrap gap-0.5 border-b border-line p-2">
             {LETTERS.map((l) => (
               <button
                 key={l}
+                type="button"
                 onClick={() => setActiveLetter(l)}
-                className={`h-6 w-6 rounded text-xs ${
-                  activeLetter === l
-                    ? "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
-                    : "text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"
-                }`}
+                aria-pressed={activeLetter === l}
+                className={cx("h-7 w-7 rounded-md text-xs font-medium", activeLetter === l ? "bg-accent-soft text-accent" : "text-ink-3 hover:bg-hover hover:text-ink")}
               >
                 {l}
               </button>
@@ -100,29 +98,25 @@ export function DictionaryView() {
           {list.map((e) => (
             <button
               key={e.id}
+              type="button"
               onClick={() => navigate(`/dictionary/${e.slug}`)}
-              className={`block w-full border-b border-gray-100 px-3 py-2 text-left text-sm hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800 ${
-                slug === e.slug ? "bg-blue-50 dark:bg-blue-950/40" : ""
-              }`}
+              className={cx("block w-full border-b border-line px-3 py-2 text-left text-sm hover:bg-hover", slug === e.slug ? "bg-accent-soft font-medium text-accent" : "text-ink-2")}
             >
               {e.term}
             </button>
           ))}
-          {list.length === 0 && <p className="p-3 text-sm text-gray-400">No entries.</p>}
+          {list.length === 0 && <EmptyState compact title={showingSearch ? "No entries match" : `No entries under ${activeLetter}`} />}
         </div>
       </aside>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-8 py-6">
-        {!entry && <p className="text-gray-400">Browse by letter, search, or select a term.</p>}
+        {!entry && <EmptyState icon={BookA} title="Bible dictionary" description="Browse by letter or search on the left. Scripture references inside an entry are clickable." />}
         {entry && (
-          <div className="max-w-2xl">
-            <h1 className="mb-3 text-2xl font-semibold">{entry.term}</h1>
-            <div className="whitespace-pre-wrap text-base leading-relaxed text-gray-800 dark:text-gray-200">
+          <div className="mx-auto w-full max-w-[70ch]">
+            <h1 className="reading-font mb-4 text-3xl font-semibold text-ink">{entry.term}</h1>
+            <div className="reading-font whitespace-pre-wrap text-ink" style={typography}>
               {renderLinkedBody(entry.body)}
             </div>
-            <Link to="/" className="mt-6 inline-block text-sm text-blue-600 hover:underline dark:text-blue-400">
-              ← Back to reading
-            </Link>
           </div>
         )}
       </div>

@@ -1,7 +1,9 @@
 pub mod bookmarks;
+pub mod catechism_memory;
 pub mod commentary;
 pub mod concordance;
 pub mod crossrefs;
+pub mod doctrine_topics;
 pub mod harmony;
 pub mod highlights;
 pub mod notes;
@@ -15,7 +17,6 @@ pub mod reference;
 pub mod resources;
 pub mod scripture_memory;
 pub mod search;
-pub mod sermon_notes;
 pub mod verses;
 pub mod versification;
 pub mod westminster;

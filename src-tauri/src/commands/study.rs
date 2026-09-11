@@ -1,9 +1,9 @@
-use crate::db::queries::{crossrefs, psalter, westminster};
+use crate::db::queries::{crossrefs, doctrine_topics, psalter, westminster};
 use crate::db::DbState;
 use crate::error::AppResult;
 use crate::models::{
-    CrossReference, MetricalPsalmVersion, WestminsterCommentaryEntry, WestminsterCommentarySource, WestminsterDocument,
-    WestminsterSection, WestminsterSectionSummary,
+    CrossReference, DoctrineTopic, MetricalPsalmVersion, WestminsterCommentaryEntry, WestminsterCommentarySource,
+    WestminsterDocument, WestminsterPassageMatch, WestminsterSection, WestminsterSectionSummary,
 };
 use serde::Serialize;
 use tauri::State;
@@ -39,6 +39,12 @@ pub fn get_westminster_section(db: State<DbState>, id: i64) -> AppResult<Option<
 }
 
 #[tauri::command]
+pub fn get_confession_for_passage(db: State<DbState>, book_id: i64, chapter: i64, verse: i64) -> AppResult<Vec<WestminsterPassageMatch>> {
+    let conn = db.0.lock().unwrap();
+    Ok(westminster::get_confession_for_passage(&conn, book_id, chapter, verse)?)
+}
+
+#[tauri::command]
 pub fn list_westminster_commentary_sources(db: State<DbState>) -> AppResult<Vec<WestminsterCommentarySource>> {
     let conn = db.0.lock().unwrap();
     Ok(westminster::list_commentary_sources(&conn)?)
@@ -48,6 +54,18 @@ pub fn list_westminster_commentary_sources(db: State<DbState>) -> AppResult<Vec<
 pub fn get_westminster_commentary(db: State<DbState>, source_id: i64, chapter: i64) -> AppResult<Vec<WestminsterCommentaryEntry>> {
     let conn = db.0.lock().unwrap();
     Ok(westminster::get_commentary_for_chapter(&conn, source_id, chapter)?)
+}
+
+#[tauri::command]
+pub fn list_doctrine_topics(db: State<DbState>) -> AppResult<Vec<DoctrineTopic>> {
+    let conn = db.0.lock().unwrap();
+    Ok(doctrine_topics::list_all(&conn)?)
+}
+
+#[tauri::command]
+pub fn get_doctrine_topic(db: State<DbState>, id: i64) -> AppResult<Option<DoctrineTopic>> {
+    let conn = db.0.lock().unwrap();
+    Ok(doctrine_topics::get(&conn, id)?)
 }
 
 #[derive(Serialize)]
