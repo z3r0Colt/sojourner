@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { useTtsStore } from "./ttsStore";
+import { ROW_SPLIT_DEFAULT, clampRowSplit, defaultLayoutFor, isLayoutId, layoutAfterAdd, layoutAfterClose, type LayoutId } from "../workspace/layouts";
 
 /**
  * The workspace: one to four panes side by side, each showing any content
@@ -182,20 +183,29 @@ export type Pane = PaneContent & PaneMeta;
 export const MAX_PANES = 4;
 const HISTORY_CAP = 50;
 const STORAGE_KEY = "bsa-workspace";
-export const WORKSPACE_VERSION = 1;
+/** Bump when the stored shape changes and add a case to `migrateWorkspace`.
+ *   1  panes, focusedPaneId, lastTranslationId
+ *   2  + layout, rowSplit (W3) */
+export const WORKSPACE_VERSION = 2;
 
 interface PersistedWorkspace {
   version: number;
   panes: Pane[];
   focusedPaneId: string;
   lastTranslationId: number | null;
+  layout: LayoutId;
+  rowSplit: number;
 }
 
 interface WorkspaceState {
   panes: Pane[];
   focusedPaneId: string;
-  /** F11: the one pane shown while chrome is hidden. */
+  /** The one pane shown alone: a double-clicked header, or F11 with chrome hidden. */
   maximizedPaneId: string | null;
+  /** Which template arranges the panes (see workspace/layouts.ts). */
+  layout: LayoutId;
+  /** Fraction of a stacked column's height the top pane takes. */
+  rowSplit: number;
   /** The translation most recently chosen in any Bible pane -- the default
    * for new Bible panes and for previews outside any pane. */
   lastTranslationId: number | null;
@@ -214,6 +224,13 @@ interface WorkspaceState {
   addPane: (content: PaneContent, opts: { width: number; after?: string; linkGroup?: LinkGroup; focus?: boolean }) => string | null;
   closePane: (id: string) => void;
   movePane: (id: string, direction: -1 | 1) => void;
+  /** Exchange two panes' positions (drag a header onto another pane). */
+  swapPanes: (aId: string, bId: string) => void;
+  setLayout: (layout: LayoutId) => void;
+  setRowSplit: (rowSplit: number) => void;
+  /** Replace every pane and the layout at once (W4: switching workspaces).
+   * History is cleared and the first pane is focused. */
+  replaceWorkspace: (panes: Pane[], layout: LayoutId, rowSplit?: number) => void;
   /** Shifts weight from the pane on the left of a divider to the one on its right (negative moves it back). */
   resizeBetween: (leftId: string, rightId: string, deltaWeight: number) => void;
   setLinkGroup: (id: string, group: LinkGroup) => void;
@@ -260,18 +277,18 @@ export function migrateWorkspace(raw: unknown): PersistedWorkspace | null {
   if (!isPlainObject(raw) || typeof raw.version !== "number") return null;
   let data = raw;
   // Version upgrades run in order; each case rewrites `data` to the next shape.
-  switch (data.version) {
-    case WORKSPACE_VERSION:
-      break;
-    default:
-      return null;
+  if (data.version === 1) {
+    // W3 added the layout template and the row split; a version-1
+    // workspace gets the layout its pane count always implied.
+    data = { ...data, version: 2, layout: defaultLayoutFor(Array.isArray(data.panes) ? data.panes.length : 1), rowSplit: ROW_SPLIT_DEFAULT };
   }
+  if (data.version !== WORKSPACE_VERSION) return null;
   if (!Array.isArray(data.panes)) return null;
   const panes: Pane[] = [];
   for (const p of data.panes) {
     if (!isContent(p) || typeof (p as Pane).id !== "string") continue;
     const meta = p as Pane;
-    const group = meta.linkGroup === "A" || meta.linkGroup === "B" || meta.linkGroup === "C" ? meta.linkGroup : null;
+    const group = isLinkGroup(meta.linkGroup) ? meta.linkGroup : null;
     panes.push({
       ...(contentOf(meta) as PaneContent),
       id: meta.id,
@@ -284,7 +301,10 @@ export function migrateWorkspace(raw: unknown): PersistedWorkspace | null {
   if (panes.length === 0) return null;
   const focusedPaneId = panes.some((p) => p.id === data.focusedPaneId) ? (data.focusedPaneId as string) : panes[0].id;
   const lastTranslationId = typeof data.lastTranslationId === "number" ? data.lastTranslationId : null;
-  return { version: WORKSPACE_VERSION, panes: panes.slice(0, MAX_PANES), focusedPaneId, lastTranslationId };
+  const kept = panes.slice(0, MAX_PANES);
+  const layout = isLayoutId(data.layout) ? data.layout : defaultLayoutFor(kept.length);
+  const rowSplit = typeof data.rowSplit === "number" && Number.isFinite(data.rowSplit) ? clampRowSplit(data.rowSplit) : ROW_SPLIT_DEFAULT;
+  return { version: WORKSPACE_VERSION, panes: kept, focusedPaneId, lastTranslationId, layout, rowSplit };
 }
 
 function loadWorkspace(): PersistedWorkspace | null {
@@ -343,15 +363,19 @@ function defaultWorkspace(): { panes: Pane[]; focusedPaneId: string } {
 
 const initial = (() => {
   const stored = loadWorkspace();
-  if (stored) return { panes: stored.panes, focusedPaneId: stored.focusedPaneId, lastTranslationId: stored.lastTranslationId, restored: true };
+  if (stored) {
+    return { panes: stored.panes, focusedPaneId: stored.focusedPaneId, lastTranslationId: stored.lastTranslationId, layout: stored.layout, rowSplit: stored.rowSplit, restored: true };
+  }
   const fresh = defaultWorkspace();
-  return { ...fresh, lastTranslationId: null, restored: false };
+  return { ...fresh, lastTranslationId: null, layout: defaultLayoutFor(fresh.panes.length), rowSplit: ROW_SPLIT_DEFAULT, restored: false };
 })();
 
 export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   panes: initial.panes,
   focusedPaneId: initial.focusedPaneId,
   maximizedPaneId: null,
+  layout: initial.layout,
+  rowSplit: initial.rowSplit,
   lastTranslationId: initial.lastTranslationId,
   restored: initial.restored,
   ready: false,
@@ -364,7 +388,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   },
 
   addPane: (content, opts) => {
-    const { panes, focusedPaneId } = get();
+    const { panes, focusedPaneId, layout } = get();
     if (panes.length >= MAX_PANES) return null;
     const afterId = opts.after ?? focusedPaneId;
     const idx = panes.findIndex((p) => p.id === afterId);
@@ -373,19 +397,24 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     const pane = { ...content, id: newId(), linkGroup, width: opts.width, history: [], future: [] } as Pane;
     const next = [...panes];
     next.splice(idx >= 0 ? idx + 1 : next.length, 0, pane);
-    set({ panes: next, focusedPaneId: opts.focus === false ? focusedPaneId : pane.id });
+    set({ panes: next, focusedPaneId: opts.focus === false ? focusedPaneId : pane.id, layout: layoutAfterAdd(layout, next.length) });
     return pane.id;
   },
 
   closePane: (id) => {
-    const { panes, focusedPaneId, maximizedPaneId } = get();
+    const { panes, focusedPaneId, maximizedPaneId, layout } = get();
     if (panes.length <= 1) return;
     const idx = panes.findIndex((p) => p.id === id);
     if (idx < 0) return;
     const next = panes.filter((p) => p.id !== id);
     const focused = focusedPaneId === id ? next[Math.min(idx, next.length - 1)].id : focusedPaneId;
     if (useTtsStore.getState().paneId === id) useTtsStore.getState().stop();
-    set({ panes: next, focusedPaneId: focused, maximizedPaneId: maximizedPaneId === id ? null : maximizedPaneId });
+    set({
+      panes: next,
+      focusedPaneId: focused,
+      maximizedPaneId: maximizedPaneId === id ? null : maximizedPaneId,
+      layout: layoutAfterClose(layout, next.length),
+    });
   },
 
   movePane: (id, direction) => {
@@ -396,6 +425,40 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     const next = [...panes];
     [next[idx], next[to]] = [next[to], next[idx]];
     set({ panes: next });
+  },
+
+  swapPanes: (aId, bId) => {
+    const { panes } = get();
+    const a = panes.findIndex((p) => p.id === aId);
+    const b = panes.findIndex((p) => p.id === bId);
+    if (a < 0 || b < 0 || a === b) return;
+    const next = [...panes];
+    // Positions swap; widths stay with the slot so the columns keep their size.
+    const wa = next[a].width;
+    const wb = next[b].width;
+    [next[a], next[b]] = [{ ...next[b], width: wa }, { ...next[a], width: wb }];
+    set({ panes: next });
+  },
+
+  setLayout: (layout) => {
+    if (get().layout !== layout) set({ layout, maximizedPaneId: null });
+  },
+
+  setRowSplit: (rowSplit) => {
+    const v = clampRowSplit(rowSplit);
+    if (get().rowSplit !== v) set({ rowSplit: v });
+  },
+
+  replaceWorkspace: (panes, layout, rowSplit) => {
+    if (panes.length === 0) return;
+    useTtsStore.getState().stop();
+    set({
+      panes: panes.slice(0, MAX_PANES),
+      focusedPaneId: panes[0].id,
+      maximizedPaneId: null,
+      layout,
+      rowSplit: rowSplit != null ? clampRowSplit(rowSplit) : get().rowSplit,
+    });
   },
 
   resizeBetween: (leftId, rightId, deltaWeight) => {
@@ -518,6 +581,8 @@ useWorkspaceStore.subscribe((s) => {
       panes: s.panes,
       focusedPaneId: s.focusedPaneId,
       lastTranslationId: s.lastTranslationId,
+      layout: s.layout,
+      rowSplit: s.rowSplit,
     };
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));

@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { ArrowLeftToLine, ArrowRightToLine, Check, MoreHorizontal, X } from "lucide-react";
+import { ArrowLeftToLine, ArrowRightToLine, Check, Maximize2, Minimize2, MoreHorizontal, X } from "lucide-react";
 import { useBooks, useCommentarySources, useDictionaryIndex, useResources, useTranslations, useWestminsterDocuments } from "../api/queries";
 import { useWorkspaceStore, LINK_GROUPS, PANE_KIND_LIST, PASSAGE_KINDS, type LinkGroup, type Pane } from "../state/workspaceStore";
 import { IconButton } from "../components/ui/Button";
@@ -88,29 +88,102 @@ export function usePaneTitle(pane: Pane): string {
   return paneTitle(pane, useTitleContext());
 }
 
-/** One row above a pane's content: its title, a menu (change content, move,
+/** The drag payload type for swapping panes by dragging a header. */
+export const PANE_DRAG_TYPE = "application/x-sojourner-pane";
+
+/** Tabs for the panes sharing one slot (a narrow window, or more panes than
+ * the layout has slots). Clicking a tab focuses that pane, which makes it
+ * the one shown. */
+function SlotTabs({ panes, activeId }: { panes: Pane[]; activeId: string }) {
+  const focusPane = useWorkspaceStore((s) => s.focusPane);
+  const ctx = useTitleContext();
+  return (
+    <div role="tablist" aria-label="Panes in this column" className="flex min-w-0 flex-1 items-stretch self-stretch overflow-hidden">
+      {panes.map((p) => {
+        const active = p.id === activeId;
+        const TabIcon = PANE_KINDS[p.kind].icon;
+        const title = paneTitle(p, ctx);
+        return (
+          <button
+            key={p.id}
+            type="button"
+            role="tab"
+            aria-selected={active}
+            title={title}
+            onClick={() => focusPane(p.id)}
+            className={cx(
+              "-mb-0.5 flex min-w-0 max-w-48 items-center gap-1.5 border-b-2 px-2 text-xs font-medium",
+              active ? "border-accent text-ink" : "border-transparent text-ink-3 hover:text-ink",
+            )}
+          >
+            <TabIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            <span className="truncate">{title}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/** One row above a pane's content: the link-group letter, its title (or
+ * the tabs of the panes sharing its slot), a menu (change content, move,
  * close), and a close button. The focused pane carries a thin accent rule
  * underneath. Shown only when the workspace has more than one pane, so a
- * single pane looks exactly as the page did before panes existed. */
-export function PaneHeader({ pane, focused, index, count }: { pane: Pane; focused: boolean; index: number; count: number }) {
+ * single pane looks exactly as the page did before panes existed.
+ * Double-click maximizes the pane (again restores it); dragging the header
+ * onto another pane swaps the two. */
+export function PaneHeader({ pane, focused, tabs, maximized }: { pane: Pane; focused: boolean; tabs?: Pane[]; maximized?: boolean }) {
   const title = usePaneTitle(pane);
   const closePane = useWorkspaceStore((s) => s.closePane);
   const movePane = useWorkspaceStore((s) => s.movePane);
+  const setMaximized = useWorkspaceStore((s) => s.setMaximized);
+  const index = useWorkspaceStore((s) => s.panes.findIndex((p) => p.id === pane.id));
+  const count = useWorkspaceStore((s) => s.panes.length);
   const Icon = PANE_KINDS[pane.kind].icon;
+
+  function toggleMaximized() {
+    setMaximized(maximized ? null : pane.id);
+  }
 
   return (
     <div
+      draggable
+      onDragStart={(e) => {
+        e.dataTransfer.setData(PANE_DRAG_TYPE, pane.id);
+        e.dataTransfer.effectAllowed = "move";
+      }}
+      onDoubleClick={(e) => {
+        // Buttons in the header keep their own double-clicks.
+        if ((e.target as HTMLElement).closest("button")) return;
+        if (count > 1) toggleMaximized();
+      }}
+      title={maximized ? "Double-click to restore all panes" : "Double-click to maximize · drag onto another pane to swap"}
       className={cx(
-        "flex h-8 shrink-0 items-center gap-1 border-b bg-surface-2/60 pl-1.5 pr-1",
+        "flex h-8 shrink-0 cursor-grab items-center gap-1 border-b bg-surface-2/60 pl-1.5 pr-1 active:cursor-grabbing",
         focused ? "border-accent" : "border-line",
       )}
       style={{ borderBottomWidth: 2 }}
     >
       <LinkGroupToggle pane={pane} />
-      <Icon className="h-3.5 w-3.5 shrink-0 text-ink-3" aria-hidden="true" />
-      <span className={cx("min-w-0 flex-1 truncate text-xs font-medium", focused ? "text-ink" : "text-ink-2")} title={title}>
-        {title}
-      </span>
+      {tabs && tabs.length > 1 ? (
+        <SlotTabs panes={tabs} activeId={pane.id} />
+      ) : (
+        <>
+          <Icon className="h-3.5 w-3.5 shrink-0 text-ink-3" aria-hidden="true" />
+          <span className={cx("min-w-0 flex-1 truncate text-xs font-medium", focused ? "text-ink" : "text-ink-2")} title={title}>
+            {title}
+          </span>
+        </>
+      )}
+      {count > 1 && (
+        <IconButton
+          icon={maximized ? Minimize2 : Maximize2}
+          label={maximized ? "Restore all panes" : "Maximize this pane"}
+          size="sm"
+          active={maximized}
+          onClick={toggleMaximized}
+        />
+      )}
       <Popover
         width="w-60"
         trigger={({ toggle, open }) => <IconButton icon={MoreHorizontal} label="Pane menu" size="sm" active={open} onClick={toggle} />}
@@ -144,7 +217,7 @@ export function PaneHeader({ pane, focused, index, count }: { pane: Pane; focuse
               }}
               className={cx(index === 0 && "opacity-45")}
             >
-              <ArrowLeftToLine className="h-4 w-4 text-ink-3" aria-hidden="true" /> Move left
+              <ArrowLeftToLine className="h-4 w-4 text-ink-3" aria-hidden="true" /> Swap with previous pane
             </PopoverItem>
             <PopoverItem
               onClick={() => {
@@ -153,7 +226,16 @@ export function PaneHeader({ pane, focused, index, count }: { pane: Pane; focuse
               }}
               className={cx(index === count - 1 && "opacity-45")}
             >
-              <ArrowRightToLine className="h-4 w-4 text-ink-3" aria-hidden="true" /> Move right
+              <ArrowRightToLine className="h-4 w-4 text-ink-3" aria-hidden="true" /> Swap with next pane
+            </PopoverItem>
+            <PopoverItem
+              onClick={() => {
+                toggleMaximized();
+                close();
+              }}
+            >
+              {maximized ? <Minimize2 className="h-4 w-4 text-ink-3" aria-hidden="true" /> : <Maximize2 className="h-4 w-4 text-ink-3" aria-hidden="true" />}
+              {maximized ? "Restore all panes" : "Maximize"}
             </PopoverItem>
             <PopoverItem
               onClick={() => {
