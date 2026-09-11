@@ -43,6 +43,14 @@ const CATEGORIES: Category[] = [
         ),
       },
       { q: "Read on to the next chapter", a: "A card below the last verse offers the next and previous chapters; click it to keep reading (Ctrl+click opens the chapter in a new pane)." },
+      {
+        q: "Move between verses with the keyboard",
+        a: (
+          <>
+            With nothing focused, <Kbd>↓</Kbd> and <Kbd>↑</Kbd> (or <Kbd>j</Kbd> and <Kbd>k</Kbd>) select the next or previous verse and keep it in view, so linked commentary and cross-reference panes follow without the mouse. <Kbd>Home</Kbd> and <Kbd>End</Kbd> jump to the first and last verse, and <Kbd>Enter</Kbd> opens the selected verse's menu.
+          </>
+        ),
+      },
       { q: "Change translation", a: "Pick from the translation dropdown in the reading toolbar. “Compare” opens the same chapter in another translation in a pane beside it, linked so both turn pages together; “Interlinear” opens the Hebrew or Greek beneath the English in its own pane." },
       { q: "Text size, spacing, font, and theme", a: <>The Aa button in the reading toolbar. These settings apply to commentary, confessions, and dictionary text too, and can also be changed under Settings → Reading. <Kbd>Ctrl</Kbd>+<Kbd>=</Kbd> and <Kbd>Ctrl</Kbd>+<Kbd>-</Kbd> (or <Kbd>Ctrl</Kbd>+scroll over the text) step the size; <Kbd>Ctrl</Kbd>+<Kbd>0</Kbd> resets it.</> },
       { q: "Paragraph mode, verse numbers, red letters", a: "The sliders button in the reading toolbar holds the view options, including printing the chapter." },
