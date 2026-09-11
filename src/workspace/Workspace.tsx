@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useRef, type RefObject } from "react";
+import { Fragment, useEffect, useRef, useState, type RefObject } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Minimize2 } from "lucide-react";
 import { api } from "../api/client";
@@ -7,7 +7,7 @@ import { useUiStore } from "../state/uiStore";
 import { currentPassage, findPane, useWorkspaceStore, type PaneKind } from "../state/workspaceStore";
 import { Button, IconButton } from "../components/ui/Button";
 import { cx } from "../components/ui/classes";
-import { Pane } from "./Pane";
+import { Pane, PANE_MIN_WIDTH } from "./Pane";
 import { PANE_KINDS, STUDY_STRIP_KINDS, parseRoute, routeFor } from "./paneKinds";
 import { openContent } from "./openContent";
 
@@ -92,6 +92,18 @@ function useBootstrap() {
       cancelled = true;
     };
   }, [restored, ready, books]);
+}
+
+function useElementWidth(ref: RefObject<HTMLElement | null>): number {
+  const [width, setWidth] = useState(0);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new ResizeObserver((entries) => setWidth(Math.round(entries[0]?.contentRect.width ?? 0)));
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [ref]);
+  return width;
 }
 
 /** The draggable rule between two panes. Arrow keys resize it too. */
@@ -190,6 +202,11 @@ export function Workspace() {
 
   const maximized = findPane(panes, maximizedPaneId);
   const visible = maximized ? [maximized] : panes;
+  // Three and four panes must still fit the window until W3 adds the
+  // tabbed fallback: the per-pane minimum shrinks so nothing is pushed
+  // off screen, and the compact toolbars take over.
+  const containerWidth = useElementWidth(containerRef);
+  const minWidth = containerWidth > 0 ? Math.min(PANE_MIN_WIDTH, Math.floor((containerWidth - 6 * (visible.length - 1)) / visible.length)) : PANE_MIN_WIDTH;
 
   return (
     <div className="flex h-full min-h-0">
@@ -197,7 +214,7 @@ export function Workspace() {
         {visible.map((pane, i) => (
           <Fragment key={pane.id}>
             {i > 0 && <Divider leftId={visible[i - 1].id} rightId={pane.id} containerRef={containerRef} />}
-            <Pane pane={pane} showHeader={visible.length > 1} index={i} count={visible.length} />
+            <Pane pane={pane} showHeader={visible.length > 1} index={i} count={visible.length} minWidth={minWidth} />
           </Fragment>
         ))}
       </div>

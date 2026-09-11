@@ -9,7 +9,7 @@ export const PANE_MIN_WIDTH = 280;
 /** One pane: an optional header, then the view for its kind. Clicking (or
  * focusing a control) anywhere inside focuses the pane. Width is measured
  * so views can fold their toolbars when narrow. */
-export function Pane({ pane, showHeader, index, count }: { pane: PaneModel; showHeader: boolean; index: number; count: number }) {
+export function Pane({ pane, showHeader, index, count, minWidth = PANE_MIN_WIDTH }: { pane: PaneModel; showHeader: boolean; index: number; count: number; minWidth?: number }) {
   const ref = useRef<HTMLElement>(null);
   const [width, setWidth] = useState(0);
   const focused = useWorkspaceStore((s) => s.focusedPaneId === pane.id);
@@ -38,8 +38,8 @@ export function Pane({ pane, showHeader, index, count }: { pane: PaneModel; show
       aria-label={title}
       onPointerDownCapture={() => focusPane(pane.id)}
       onFocusCapture={() => focusPane(pane.id)}
-      className="flex min-h-0 min-w-0 flex-col bg-bg"
-      style={{ flex: `${pane.width} 1 0px`, minWidth: PANE_MIN_WIDTH }}
+      className="flex min-h-0 min-w-0 flex-col overflow-hidden bg-bg"
+      style={{ flex: `${pane.width} 1 0px`, minWidth }}
     >
       {showHeader && <PaneHeader pane={pane} focused={focused} index={index} count={count} />}
       <PaneContext.Provider value={ctx}>

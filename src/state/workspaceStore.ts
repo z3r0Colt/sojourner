@@ -358,7 +358,9 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     if (panes.length >= MAX_PANES) return null;
     const afterId = opts.after ?? focusedPaneId;
     const idx = panes.findIndex((p) => p.id === afterId);
-    const pane = { ...content, id: newId(), linkGroup: opts.linkGroup ?? "A", width: opts.width, history: [], future: [] } as Pane;
+    // `null` is a real value here (an unlinked pane); only an omitted group defaults to A.
+    const linkGroup = opts.linkGroup === undefined ? "A" : opts.linkGroup;
+    const pane = { ...content, id: newId(), linkGroup, width: opts.width, history: [], future: [] } as Pane;
     const next = [...panes];
     next.splice(idx >= 0 ? idx + 1 : next.length, 0, pane);
     set({ panes: next, focusedPaneId: opts.focus === false ? focusedPaneId : pane.id });
@@ -546,15 +548,16 @@ export function useReaderTranslationId(): number | null {
   return useWorkspaceStore((s) => resolveBiblePane(s)?.params.translationId ?? s.lastTranslationId);
 }
 
-/** Recently read chapters across the focused pane's history, newest first,
- * deduplicated -- what the Go to palette lists with nothing typed. */
-export function recentPositions(s: Pick<WorkspaceState, "panes" | "focusedPaneId">, limit = 6): Position[] {
-  const pane = findPane(s.panes, s.focusedPaneId) ?? s.panes[0];
-  if (!pane) return [];
+/** Recently read chapters from a pane's history, newest first,
+ * deduplicated -- what the Go to palette lists with nothing typed. Pure,
+ * so callers memoize on the (stable) history array; a store selector must
+ * never return a fresh array. */
+export function recentPositions(history: PaneContent[] | undefined, limit = 6): Position[] {
+  if (!history) return [];
   const seen = new Set<string>();
   const out: Position[] = [];
-  for (let i = pane.history.length - 1; i >= 0 && out.length < limit; i--) {
-    const h = pane.history[i];
+  for (let i = history.length - 1; i >= 0 && out.length < limit; i--) {
+    const h = history[i];
     if (h.kind !== "bible") continue;
     const key = `${h.params.bookId}:${h.params.chapter}`;
     if (seen.has(key)) continue;

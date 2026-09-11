@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { BookA, BookOpen, History, Languages, ScrollText, type LucideIcon } from "lucide-react";
 import type { Book } from "../../api/types";
-import { recentPositions, useWorkspaceStore, type Position } from "../../state/workspaceStore";
+import { findPane, recentPositions, useWorkspaceStore, type Position } from "../../state/workspaceStore";
 import { openContent } from "../../workspace/openContent";
 import { buildBookLookup, parseReference } from "../../hooks/useReferenceParser";
 import { useBookAliases, useTranslationCoverage, useDictionaryIndex, useWestminsterDocuments } from "../../api/queries";
@@ -44,7 +44,8 @@ export function GoToCommandPalette({
   const { data: coverage } = useTranslationCoverage(translationId ?? null);
   const { data: dictionaryIndex } = useDictionaryIndex();
   const { data: westminsterDocs } = useWestminsterDocuments();
-  const recent = useWorkspaceStore((s) => recentPositions(s));
+  const focusedHistory = useWorkspaceStore((s) => findPane(s.panes, s.focusedPaneId)?.history);
+  const recent = useMemo(() => recentPositions(focusedHistory), [focusedHistory]);
   const lookup = useMemo(() => buildBookLookup(books, aliases ?? []), [books, aliases]);
   const trimmed = query.trim();
   const parsed = useMemo(() => (trimmed ? parseReference(query, lookup) : null), [query, lookup, trimmed]);
