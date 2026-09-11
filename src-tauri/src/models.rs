@@ -161,6 +161,44 @@ pub struct ChapterNote {
     pub deleted_at: Option<String>,
 }
 
+/// One Scripture reference found in a note's body -- the input to
+/// `set_note_refs` and to the `refs` argument of the note save commands.
+/// A chapter-only mention has no verses.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct NoteRefInput {
+    pub book_id: i64,
+    pub chapter: i64,
+    pub verse_start: Option<i64>,
+    pub verse_end: Option<i64>,
+}
+
+/// Which note table a reference row belongs to.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum NoteKind {
+    Note,
+    ChapterNote,
+}
+
+/// A note elsewhere that mentions a passage in the chapter asked about
+/// (`list_backlinks`): the note itself (its own passage, body, and date) plus
+/// the range it mentioned, so the reader can pin it to a verse.
+#[derive(Debug, Clone, Serialize)]
+pub struct Backlink {
+    pub kind: NoteKind,
+    pub id: i64,
+    /// The note's own passage (`verse_start`/`verse_end` are null for a chapter note).
+    pub book_id: i64,
+    pub chapter: i64,
+    pub verse_start: Option<i64>,
+    pub verse_end: Option<i64>,
+    pub body: String,
+    pub updated_at: String,
+    /// The mentioned range within the chapter asked about (null = the whole chapter).
+    pub ref_verse_start: Option<i64>,
+    pub ref_verse_end: Option<i64>,
+}
+
 /// Which soft-deletable table a Trash operation addresses.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]

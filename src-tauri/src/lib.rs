@@ -145,6 +145,8 @@ pub fn run() {
             commands::annotations::remove_chapter_note_tag,
             commands::annotations::list_all_chapter_note_tags,
             commands::annotations::list_all_chapter_note_tags_by_note,
+            commands::annotations::set_note_refs,
+            commands::annotations::list_backlinks,
             commands::annotations::list_trash,
             commands::annotations::restore_trash_item,
             commands::annotations::purge_trash_item,

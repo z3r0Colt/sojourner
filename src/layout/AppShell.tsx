@@ -20,6 +20,7 @@ import { toast } from "../components/ui/toast";
 import { stepChapter } from "../features/reading/chapterStep";
 import { resetZoom, zoomActionFor, zoomText } from "../features/reading/zoom";
 import { isTypingTarget } from "../lib/keyboard";
+import { useNoteRefsBackfill } from "../features/notes/useNoteRefsBackfill";
 
 const TUTORIAL_BANNER_DISMISSED_KEY = "bsa-tutorial-banner-dismissed";
 
@@ -36,6 +37,7 @@ export function AppShell() {
   const focusedPane = useWorkspaceStore((s) => findPane(s.panes, s.focusedPaneId));
   const canGoBack = (focusedPane?.history.length ?? 0) > 0;
   const canGoForward = (focusedPane?.future.length ?? 0) > 0;
+  useNoteRefsBackfill();
 
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);

@@ -1172,6 +1172,30 @@ CREATE INDEX idx_chapter_notes_deleted ON chapter_notes(deleted_at) WHERE delete
 CREATE INDEX idx_prayer_entries_deleted ON prayer_entries(deleted_at) WHERE deleted_at IS NOT NULL;
 "#;
 
+// Backlinks (F2.2): every Scripture reference a note mentions in its body,
+// so a verse can list the notes elsewhere that talk about it. Exactly one
+// of note_id / chapter_note_id is set. The references are extracted by the
+// note editor (the same scanner that auto-links them for display) and sent
+// with each save; a one-time frontend backfill fills the table for notes
+// that predate this. A chapter-only mention ("Genesis 3") has null verses.
+// Cascades keep the table in step with hard deletes and Trash purges;
+// soft-deleted notes are filtered at query time like everything else.
+pub const USER_MIGRATION_0012: &str = r#"
+CREATE TABLE note_refs (
+  id               INTEGER PRIMARY KEY,
+  note_id          INTEGER REFERENCES notes(id) ON DELETE CASCADE,
+  chapter_note_id  INTEGER REFERENCES chapter_notes(id) ON DELETE CASCADE,
+  book_id          INTEGER NOT NULL,
+  chapter          INTEGER NOT NULL,
+  verse_start      INTEGER,
+  verse_end        INTEGER,
+  CHECK ((note_id IS NULL) <> (chapter_note_id IS NULL))
+);
+CREATE INDEX idx_note_refs_passage ON note_refs(book_id, chapter);
+CREATE INDEX idx_note_refs_note ON note_refs(note_id);
+CREATE INDEX idx_note_refs_chapter_note ON note_refs(chapter_note_id);
+"#;
+
 pub const USER_MIGRATIONS: &[&str] = &[
     USER_MIGRATION_0001,
     USER_MIGRATION_0002,
@@ -1184,4 +1208,5 @@ pub const USER_MIGRATIONS: &[&str] = &[
     USER_MIGRATION_0009,
     USER_MIGRATION_0010,
     USER_MIGRATION_0011,
+    USER_MIGRATION_0012,
 ];

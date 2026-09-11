@@ -124,6 +124,33 @@ export interface ChapterNote {
   deleted_at: string | null;
 }
 
+/** One Scripture reference found in a note's body (backlinks, F2.2). A
+ * chapter-only mention ("Genesis 3") has null verses. */
+export interface NoteRefInput {
+  book_id: number;
+  chapter: number;
+  verse_start: number | null;
+  verse_end: number | null;
+}
+
+export type NoteKind = "note" | "chapter_note";
+
+/** A note elsewhere that mentions a passage in the chapter asked about. */
+export interface Backlink {
+  kind: NoteKind;
+  id: number;
+  /** The note's own passage; verses are null for a chapter note. */
+  book_id: number;
+  chapter: number;
+  verse_start: number | null;
+  verse_end: number | null;
+  body: string;
+  updated_at: string;
+  /** The mentioned range within the chapter asked about; null = whole chapter. */
+  ref_verse_start: number | null;
+  ref_verse_end: number | null;
+}
+
 /** Which soft-deletable table a Trash operation addresses. */
 export type TrashKind = "note" | "chapter_note" | "prayer_entry";
 

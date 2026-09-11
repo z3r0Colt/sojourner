@@ -4,6 +4,8 @@ import { RichTextEditor } from "./RichTextEditor";
 import { Modal } from "../../components/ui/Modal";
 import { Button } from "../../components/ui/Button";
 import { confirmTrash } from "../../components/ui/confirm";
+import { useNoteRefExtractor } from "../../lib/noteLinks";
+import type { NoteRefInput } from "../../api/types";
 
 export function NoteEditorModal({
   title,
@@ -14,11 +16,13 @@ export function NoteEditorModal({
 }: {
   title: string;
   initialBody?: string;
-  onSave: (body: string) => void;
+  /** `refs` are the Scripture references found in the body (backlinks); send them with the save. */
+  onSave: (body: string, refs: NoteRefInput[]) => void;
   onClose: () => void;
   onDelete?: () => void;
 }) {
   const [body, setBody] = useState(initialBody);
+  const extractRefs = useNoteRefExtractor();
   const dirty = body !== initialBody;
 
   return (
@@ -43,7 +47,7 @@ export function NoteEditorModal({
           <Button variant="ghost" onClick={onClose}>
             Cancel
           </Button>
-          <Button variant="primary" onClick={() => onSave(body)}>
+          <Button variant="primary" onClick={() => onSave(body, extractRefs(body))}>
             Save note
           </Button>
         </>
@@ -51,7 +55,7 @@ export function NoteEditorModal({
     >
       <RichTextEditor content={body} onChange={setBody} autoFocus placeholder="Write your note…" />
       <p className="mt-2 text-xs text-ink-3">
-        A reference like "John 3:16" becomes a link automatically. Use the link button to point at a resource or web page.
+        A reference like "John 3:16" becomes a link automatically, and the verse it names will list this note under "Mentioned in". Use the link button to point at a resource or web page.
       </p>
     </Modal>
   );

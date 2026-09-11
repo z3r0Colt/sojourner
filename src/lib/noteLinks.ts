@@ -1,4 +1,6 @@
-import type { Book } from "../api/types";
+import { useCallback, useMemo } from "react";
+import type { Book, NoteRefInput } from "../api/types";
+import { useBooks } from "../api/queries";
 
 export interface RefMatcher {
   regex: RegExp;
@@ -103,4 +105,51 @@ export function autoLinkScriptureRefs(html: string, matcherOrNull: RefMatcher | 
   }
   Array.from(container.childNodes).forEach(walk);
   return container.innerHTML;
+}
+
+/** Every Scripture reference a note body mentions (backlinks, F2.2): the
+ * internal verse links it already carries (typed, pasted, or added with the
+ * link button) plus plain-text references the auto-linker would recognize.
+ * Deduplicated; a chapter-only mention has null verses. The scan matches
+ * the auto-linker's, except that a reference at the very end of a text run
+ * counts too. */
+export function extractRefs(html: string, matcher: RefMatcher | null): NoteRefInput[] {
+  const found = new Map<string, NoteRefInput>();
+  function add(ref: NoteRefInput) {
+    found.set(`${ref.book_id}:${ref.chapter}:${ref.verse_start ?? ""}:${ref.verse_end ?? ""}`, ref);
+  }
+  const container = document.createElement("div");
+  container.innerHTML = html;
+
+  for (const a of container.querySelectorAll("a[href]")) {
+    const internal = parseInternalHref(a.getAttribute("href") ?? "");
+    if (internal?.kind === "verse") add({ book_id: internal.bookId, chapter: internal.chapter, verse_start: internal.verse ?? null, verse_end: internal.verse ?? null });
+  }
+
+  if (matcher) {
+    const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+      if ((node.parentElement as HTMLElement | null)?.closest("a")) continue;
+      const text = `${node.textContent ?? ""} `;
+      matcher.regex.lastIndex = 0;
+      let m: RegExpExecArray | null;
+      while ((m = matcher.regex.exec(text))) {
+        const book = matcher.lookup.get(normalize(m[1]));
+        if (!book) continue;
+        const chapter = Number(m[2]);
+        const verse = m[3] ? Number(m[3]) : null;
+        const verseEnd = m[4] ? Math.max(Number(m[4]), verse ?? 0) : verse;
+        add({ book_id: book.id, chapter, verse_start: verse, verse_end: verseEnd });
+      }
+    }
+  }
+  return [...found.values()];
+}
+
+/** `extractRefs` bound to the loaded book list, for the note editors'
+ * save paths. Returns an empty list while books are still loading. */
+export function useNoteRefExtractor(): (html: string) => NoteRefInput[] {
+  const { data: books } = useBooks();
+  const matcher = useMemo(() => (books && books.length > 0 ? buildRefMatcher(books) : null), [books]);
+  return useCallback((html: string) => extractRefs(html, matcher), [matcher]);
 }

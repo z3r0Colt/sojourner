@@ -276,8 +276,8 @@ export function NotesListView() {
         <NoteEditorModal
           title={`Note on ${formatRef(books, toPassageRef(editing.book_id, editing.chapter, editing.verse_start, editing.verse_end))}`}
           initialBody={editing.body}
-          onSave={(body) => {
-            updateNote.mutate({ id: editing.id, body }, { onSuccess: () => toast.success("Note saved") });
+          onSave={(body, refs) => {
+            updateNote.mutate({ id: editing.id, body, refs }, { onSuccess: () => toast.success("Note saved") });
             setEditing(null);
           }}
           onDelete={() => {
@@ -293,8 +293,8 @@ export function NotesListView() {
         <NoteEditorModal
           title={`Chapter note on ${formatChapterRef(books, editingChapter.book_id, editingChapter.chapter)}`}
           initialBody={editingChapter.body}
-          onSave={(body) => {
-            updateChapterNote.mutate({ id: editingChapter.id, body }, { onSuccess: () => toast.success("Note saved") });
+          onSave={(body, refs) => {
+            updateChapterNote.mutate({ id: editingChapter.id, body, refs }, { onSuccess: () => toast.success("Note saved") });
             setEditingChapter(null);
           }}
           onDelete={() => {

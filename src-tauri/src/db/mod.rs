@@ -242,7 +242,7 @@ mod tests {
         open_content_db(&content_db_path).unwrap();
         let conn = open(&dir, &content_db_path).unwrap();
 
-        let note = notes::create(&conn, 43, 3, 16, 16, "God so loved the world".into(), None).unwrap();
+        let note = notes::create(&conn, 43, 3, 16, 16, "God so loved the world".into(), None, None).unwrap();
         notes::add_tag(&conn, note.id, "gospel".into()).unwrap();
         assert_eq!(notes::list_for_chapter(&conn, 43, 3).unwrap().len(), 1);
         assert_eq!(search::search_notes(&conn, "loved", 10).unwrap().len(), 1);
@@ -274,13 +274,65 @@ mod tests {
         assert!(notes::get(&conn, note.id).unwrap().is_none());
 
         // The sweep leaves fresh deletions alone and removes stale ones.
-        let stale = notes::create(&conn, 1, 1, 1, 1, "old".into(), None).unwrap();
-        let fresh = notes::create(&conn, 1, 1, 2, 2, "new".into(), None).unwrap();
+        let stale = notes::create(&conn, 1, 1, 1, 1, "old".into(), None, None).unwrap();
+        let fresh = notes::create(&conn, 1, 1, 2, 2, "new".into(), None, None).unwrap();
         conn.execute("UPDATE notes SET deleted_at = '2000-01-01T00:00:00+00:00' WHERE id = ?1", [stale.id]).unwrap();
         notes::delete(&conn, fresh.id).unwrap();
         assert_eq!(trash::sweep_expired(&conn).unwrap(), 1);
         assert!(notes::get(&conn, stale.id).unwrap().is_none());
         assert!(notes::get(&conn, fresh.id).unwrap().is_some());
+
+        drop(conn);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// Backlinks (USER_MIGRATION_0012): a note's references are replaced on
+    /// each save, a chapter lists the notes elsewhere that mention it (not
+    /// its own notes), Trash hides them, and a purge cascades the rows away.
+    #[test]
+    fn backlinks_follow_note_refs_and_soft_delete() {
+        use crate::models::{NoteKind, NoteRefInput, TrashKind};
+        use queries::{notes, trash};
+
+        let dir = std::env::temp_dir().join(format!("sojourner-backlinks-test-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let content_db_path = dir.join("content.db");
+        open_content_db(&content_db_path).unwrap();
+        let conn = open(&dir, &content_db_path).unwrap();
+
+        let r = |chapter: i64, vs: Option<i64>, ve: Option<i64>| NoteRefInput { book_id: 45, chapter, verse_start: vs, verse_end: ve };
+        // A note on Genesis 1 mentioning Romans 8:28 and Romans 8 as a whole.
+        let note = notes::create(&conn, 1, 1, 1, 1, "see Romans 8:28".into(), None, Some(vec![r(8, Some(28), None), r(8, None, None)])).unwrap();
+        // A chapter note on Romans 8 itself mentioning 8:1 -- same chapter, so never a backlink.
+        notes::create_chapter_note(&conn, 45, 8, "own chapter".into(), Some(vec![r(8, Some(1), Some(1))])).unwrap();
+        // A chapter note on John 1 mentioning Romans 8:1-4.
+        let cn = notes::create_chapter_note(&conn, 43, 1, "cf. Rom 8:1-4".into(), Some(vec![r(8, Some(1), Some(4))])).unwrap();
+
+        let links = notes::list_backlinks(&conn, 45, 8).unwrap();
+        assert_eq!(links.len(), 3, "{links:?}");
+        assert!(links.iter().all(|l| !(l.book_id == 45 && l.chapter == 8)));
+        let single = links.iter().find(|l| l.kind == NoteKind::Note && l.ref_verse_start == Some(28)).unwrap();
+        assert_eq!(single.ref_verse_end, Some(28), "a missing end means a single verse");
+        assert!(links.iter().any(|l| l.kind == NoteKind::Note && l.ref_verse_start.is_none()), "chapter-only mention");
+        assert!(links.iter().any(|l| l.kind == NoteKind::ChapterNote && l.id == cn.id && l.ref_verse_end == Some(4)));
+
+        // Saving again replaces the rows; None leaves them alone.
+        notes::update(&conn, note.id, "now about Genesis".into(), Some(vec![])).unwrap();
+        assert_eq!(notes::list_backlinks(&conn, 45, 8).unwrap().len(), 1);
+        notes::set_refs(&conn, NoteKind::Note, note.id, &[r(8, Some(2), Some(3))]).unwrap();
+        notes::update(&conn, note.id, "unchanged refs".into(), None).unwrap();
+        assert_eq!(notes::list_backlinks(&conn, 45, 8).unwrap().len(), 2);
+
+        // Trash hides, restore shows, purge cascades.
+        notes::delete_chapter_note(&conn, cn.id).unwrap();
+        assert_eq!(notes::list_backlinks(&conn, 45, 8).unwrap().len(), 1);
+        assert!(trash::restore(&conn, TrashKind::ChapterNote, cn.id).unwrap());
+        assert_eq!(notes::list_backlinks(&conn, 45, 8).unwrap().len(), 2);
+        notes::delete_chapter_note(&conn, cn.id).unwrap();
+        assert!(trash::purge(&conn, TrashKind::ChapterNote, cn.id).unwrap());
+        let rows: i64 = conn.query_row("SELECT COUNT(*) FROM note_refs WHERE chapter_note_id = ?1", [cn.id], |r| r.get(0)).unwrap();
+        assert_eq!(rows, 0, "purge cascades note_refs");
 
         drop(conn);
         let _ = std::fs::remove_dir_all(&dir);

@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { api } from "./client";
-import type { Verse, Passage, PassageRef, PrayerEntryMode, MemoryMode, TrashKind } from "./types";
+import type { Verse, Passage, PassageRef, PrayerEntryMode, MemoryMode, TrashKind, NoteRefInput } from "./types";
 import { toast } from "../components/ui/toast";
 import { useReaderTranslationId } from "../state/workspaceStore";
 import { refKey } from "../lib/passage";
@@ -160,14 +160,25 @@ export function useUpdateHighlight() {
   });
 }
 
+/** Notes elsewhere that mention a passage in this chapter (backlinks,
+ * F2.2). Kept fresh by every note mutation and the Trash actions. */
+export function useBacklinks(bookId: number | null, chapter: number | null) {
+  return useQuery({
+    queryKey: ["backlinks", bookId, chapter],
+    queryFn: () => api.listBacklinks(bookId as number, chapter as number),
+    enabled: bookId != null && chapter != null,
+  });
+}
+
 export function useCreateNote() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: { bookId: number; chapter: number; verseStart: number; verseEnd: number; body: string; highlightId?: number }) =>
-      api.createNote(input.bookId, input.chapter, input.verseStart, input.verseEnd, input.body, input.highlightId),
+    mutationFn: (input: { bookId: number; chapter: number; verseStart: number; verseEnd: number; body: string; highlightId?: number; refs?: NoteRefInput[] }) =>
+      api.createNote(input.bookId, input.chapter, input.verseStart, input.verseEnd, input.body, input.highlightId, input.refs),
     onSuccess: (n) => {
       qc.invalidateQueries({ queryKey: ["notes", n.book_id, n.chapter] });
       qc.invalidateQueries({ queryKey: ["allNotes"] });
+      qc.invalidateQueries({ queryKey: ["backlinks"] });
     },
   });
 }
@@ -175,10 +186,11 @@ export function useCreateNote() {
 export function useUpdateNote() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: { id: number; body: string }) => api.updateNote(input.id, input.body),
+    mutationFn: (input: { id: number; body: string; refs?: NoteRefInput[] }) => api.updateNote(input.id, input.body, input.refs),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["notes"] });
       qc.invalidateQueries({ queryKey: ["allNotes"] });
+      qc.invalidateQueries({ queryKey: ["backlinks"] });
     },
   });
 }
@@ -192,6 +204,7 @@ export function useDeleteNote() {
       qc.invalidateQueries({ queryKey: ["allNotes"] });
       qc.invalidateQueries({ queryKey: ["allNoteTags"] });
       qc.invalidateQueries({ queryKey: ["allNoteTagsByNote"] });
+      qc.invalidateQueries({ queryKey: ["backlinks"] });
       qc.invalidateQueries({ queryKey: ["trash"] });
     },
   });
@@ -202,8 +215,8 @@ export function useTrash() {
 }
 
 const TRASH_KIND_LISTS: Record<TrashKind, string[][]> = {
-  note: [["notes"], ["allNotes"], ["allNoteTags"], ["allNoteTagsByNote"]],
-  chapter_note: [["chapterNotes"], ["allChapterNotes"], ["allChapterNoteTags"], ["allChapterNoteTagsByNote"]],
+  note: [["notes"], ["allNotes"], ["allNoteTags"], ["allNoteTagsByNote"], ["backlinks"]],
+  chapter_note: [["chapterNotes"], ["allChapterNotes"], ["allChapterNoteTags"], ["allChapterNoteTagsByNote"], ["backlinks"]],
   prayer_entry: [["prayerEntries"], ["prayerEntrySearch"], ["allPrayerEntryTags"], ["allPrayerEntryTagsByEntry"]],
 };
 
@@ -280,11 +293,12 @@ export function useAllChapterNotes() {
 export function useCreateChapterNote() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: { bookId: number; chapter: number; body: string }) =>
-      api.createChapterNote(input.bookId, input.chapter, input.body),
+    mutationFn: (input: { bookId: number; chapter: number; body: string; refs?: NoteRefInput[] }) =>
+      api.createChapterNote(input.bookId, input.chapter, input.body, input.refs),
     onSuccess: (n) => {
       qc.invalidateQueries({ queryKey: ["chapterNotes", n.book_id, n.chapter] });
       qc.invalidateQueries({ queryKey: ["allChapterNotes"] });
+      qc.invalidateQueries({ queryKey: ["backlinks"] });
     },
   });
 }
@@ -292,10 +306,11 @@ export function useCreateChapterNote() {
 export function useUpdateChapterNote() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: { id: number; body: string }) => api.updateChapterNote(input.id, input.body),
+    mutationFn: (input: { id: number; body: string; refs?: NoteRefInput[] }) => api.updateChapterNote(input.id, input.body, input.refs),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["chapterNotes"] });
       qc.invalidateQueries({ queryKey: ["allChapterNotes"] });
+      qc.invalidateQueries({ queryKey: ["backlinks"] });
     },
   });
 }
@@ -309,6 +324,7 @@ export function useDeleteChapterNote() {
       qc.invalidateQueries({ queryKey: ["allChapterNotes"] });
       qc.invalidateQueries({ queryKey: ["allChapterNoteTags"] });
       qc.invalidateQueries({ queryKey: ["allChapterNoteTagsByNote"] });
+      qc.invalidateQueries({ queryKey: ["backlinks"] });
       qc.invalidateQueries({ queryKey: ["trash"] });
     },
   });
