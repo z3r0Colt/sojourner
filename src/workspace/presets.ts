@@ -62,13 +62,13 @@ export const PRESET_WORKSPACES: readonly SavedWorkspace[] = [
   },
   {
     name: "Sermon prep",
-    description: "Bible, Matthew Henry, Confessions, and your notes.",
+    description: "Bible, Matthew Henry, Confessions, and Mine (your notes on the chapter).",
     layout: "two-by-two",
     panes: [
       { kind: "bible", params: {}, linkGroup: A, width: 1000 },
       { kind: "commentary", params: {}, linkGroup: A, width: 700, sourceCode: "mhc" },
       { kind: "confession-for-passage", params: {}, linkGroup: A, width: 420 },
-      { kind: "notes", params: {}, linkGroup: A, width: 420 },
+      { kind: "mine", params: {}, linkGroup: A, width: 420 },
     ],
   },
   {

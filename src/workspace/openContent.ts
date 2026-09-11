@@ -86,6 +86,7 @@ export function completeParams<K extends PaneKind>(kind: K, partial: Partial<Par
     case "crossrefs":
     case "confession-for-passage":
     case "metrical":
+    case "mine":
     case "commentary": {
       const passage: PassageParams = currentPassage(s) ?? { bookId: 1, chapter: 1, verse: null };
       const sourceId = target?.kind === "commentary" ? target.params.sourceId : null;
