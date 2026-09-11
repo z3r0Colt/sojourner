@@ -17,6 +17,18 @@ import {
 } from "lucide-react";
 import { useUiStore } from "../state/uiStore";
 import { cx } from "../components/ui/classes";
+import { parseRoute } from "../workspace/paneKinds";
+import { openContent } from "../workspace/openContent";
+
+/** Ctrl+click or middle-click on a sidebar item opens it in a new pane;
+ * a plain click goes through the router and lands in the focused pane. */
+function openInNewPane(e: React.MouseEvent, to: string) {
+  const [pathname, search] = to.split("?");
+  const parsed = parseRoute(pathname, search ? `?${search}` : "");
+  if (!parsed) return;
+  e.preventDefault();
+  openContent(parsed.kind, parsed.params as never, { target: "new" });
+}
 
 interface NavItem {
   to: string;
@@ -52,13 +64,21 @@ const GROUPS: { label: string; items: NavItem[] }[] = [
 
 function NavLink({ item, collapsed }: { item: NavItem; collapsed: boolean }) {
   const { pathname } = useLocation();
-  const active = item.end ? pathname === item.to || pathname.startsWith("/commentary") : pathname.startsWith(item.to);
+  const active = item.end
+    ? pathname === item.to || ["/commentary", "/study", "/interlinear"].some((p) => pathname.startsWith(p))
+    : pathname.startsWith(item.to);
   const Icon = item.icon;
   return (
     <Link
       to={item.to}
-      title={collapsed ? item.label : undefined}
+      title={collapsed ? `${item.label} (Ctrl+click for a new pane)` : "Ctrl+click for a new pane"}
       aria-current={active ? "page" : undefined}
+      onClick={(e) => {
+        if (e.ctrlKey || e.metaKey) openInNewPane(e, item.to);
+      }}
+      onAuxClick={(e) => {
+        if (e.button === 1) openInNewPane(e, item.to);
+      }}
       className={cx(
         "flex items-center gap-2.5 rounded-md text-sm transition-colors",
         collapsed ? "h-9 w-9 justify-center" : "h-8 px-2.5",
