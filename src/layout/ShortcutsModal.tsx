@@ -48,6 +48,15 @@ const GROUPS: { title: string; rows: { keys: string[]; label: string }[] }[] = [
       { keys: ["Hover a reference"], label: "Preview the passage; Tab to a reference does the same. Esc closes it" },
     ],
   },
+  {
+    title: "Memory practice",
+    rows: [
+      { keys: ["Space"], label: "Reveal the hidden verse or answer (first-letter and blank-word modes)" },
+      { keys: ["Enter"], label: "Check what you typed (type-it mode; Shift+Enter adds a line)" },
+      { keys: ["1"], label: "Grade the card: 1 Again, 2 Hard, 3 Good, 4 Easy" },
+      { keys: ["Backspace"], label: "Back to the previous card" },
+    ],
+  },
 ];
 
 export function ShortcutsModal({ onClose }: { onClose: () => void }) {

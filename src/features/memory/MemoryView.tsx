@@ -132,7 +132,7 @@ export function MemoryView() {
             {queue.length} card{queue.length === 1 ? "" : "s"} remaining
           </div>
           <div className="flex items-center gap-1">
-            <Button size="sm" variant="ghost" icon={ArrowLeft} onClick={previousCard} disabled={history.length === 0}>
+            <Button size="sm" variant="ghost" icon={ArrowLeft} onClick={previousCard} disabled={history.length === 0} title="Previous card (Backspace)">
               Back
             </Button>
             <Button size="sm" variant="ghost" onClick={() => setPracticing(false)}>
@@ -140,7 +140,7 @@ export function MemoryView() {
             </Button>
           </div>
         </div>
-        <MemoryPracticeCard key={queue[0].id} card={queue[0]} onDone={nextCard} />
+        <MemoryPracticeCard key={queue[0].id} card={queue[0]} onDone={nextCard} onBack={history.length > 0 ? previousCard : undefined} />
       </div>
     );
   }
