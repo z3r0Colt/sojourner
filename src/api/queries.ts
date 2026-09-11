@@ -75,14 +75,6 @@ export function usePassageText(ref: PassageRef | null) {
   });
 }
 
-export function useParallelChapter(translationIds: number[], bookId: number | null, chapter: number | null) {
-  return useQuery({
-    queryKey: ["parallelChapter", translationIds, bookId, chapter],
-    queryFn: () => api.getParallelChapter(translationIds, bookId as number, chapter as number),
-    enabled: translationIds.length > 0 && bookId != null && chapter != null,
-  });
-}
-
 export function useCompareVerse(bookId: number | null, chapter: number | null, verse: number | null) {
   return useQuery({
     queryKey: ["compareVerse", bookId, chapter, verse],
