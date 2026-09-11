@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQueries } from "@tanstack/react-query";
 import { save } from "@tauri-apps/plugin-dialog";
 import { Download, NotebookPen, Pencil } from "lucide-react";
 import { api } from "../../api/client";
@@ -8,6 +7,7 @@ import {
   useAllNotes,
   useAllChapterNotes,
   useBooks,
+  usePassages,
   useUpdateNote,
   useDeleteNote,
   useUpdateChapterNote,
@@ -30,6 +30,7 @@ import { Button } from "../../components/ui/Button";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { toast } from "../../components/ui/toast";
 import { cardClass, cx, inputClass, selectSmClass } from "../../components/ui/classes";
+import { refKey, toPassageRef } from "../../lib/passage";
 import type { Note, ChapterNote } from "../../api/types";
 
 type SortMode = "newest" | "oldest" | "bible";
@@ -43,7 +44,6 @@ export function NotesListView() {
   const { data: notes } = useAllNotes();
   const { data: chapterNotes } = useAllChapterNotes();
   const { data: books } = useBooks();
-  const primaryTranslationId = useNavigationStore((s) => s.primaryTranslationId);
   const goTo = useNavigationStore((s) => s.goTo);
   const navigate = useNavigate();
   const updateNote = useUpdateNote();
@@ -128,40 +128,21 @@ export function NotesListView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filteredNotes, sort, books]);
 
-  // Verse excerpts: one chapter fetch per distinct chapter among the notes
-  // shown, so a note reads as "what it was about" without opening it.
-  const chapterKeys = useMemo(() => {
-    const keys = new Map<string, { bookId: number; chapter: number }>();
-    for (const n of sortedNotes) keys.set(`${n.book_id}:${n.chapter}`, { bookId: n.book_id, chapter: n.chapter });
-    return [...keys.values()];
+  // Verse excerpts: one round trip for every note shown, so a note reads as
+  // "what it was about" without opening it.
+  const excerptRefs = useMemo(() => {
+    const seen = new Map<string, ReturnType<typeof toPassageRef>>();
+    for (const n of sortedNotes) {
+      const ref = toPassageRef(n.book_id, n.chapter, n.verse_start, n.verse_end);
+      seen.set(refKey(ref), ref);
+    }
+    return [...seen.values()];
   }, [sortedNotes]);
-  const chapterQueries = useQueries({
-    queries: chapterKeys.map((k) => ({
-      queryKey: ["chapter", primaryTranslationId, k.bookId, k.chapter],
-      queryFn: () => api.getChapter(primaryTranslationId as number, k.bookId, k.chapter),
-      enabled: primaryTranslationId != null,
-      staleTime: 5 * 60_000,
-    })),
-  });
-  const versesByChapter = useMemo(() => {
-    const m = new Map<string, Map<number, string>>();
-    chapterKeys.forEach((k, i) => {
-      const data = chapterQueries[i]?.data;
-      if (data) m.set(`${k.bookId}:${k.chapter}`, new Map(data.map((v) => [v.verse, v.text])));
-    });
-    return m;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chapterKeys, chapterQueries.map((q) => q.dataUpdatedAt).join(",")]);
+  const { byKey: passagesByKey } = usePassages(excerptRefs);
 
   function excerpt(n: Note) {
-    const verses = versesByChapter.get(`${n.book_id}:${n.chapter}`);
-    if (!verses) return null;
-    const parts: string[] = [];
-    for (let v = n.verse_start; v <= n.verse_end; v++) {
-      const t = verses.get(v);
-      if (t) parts.push(t);
-    }
-    const text = parts.join(" ");
+    const text = passagesByKey.get(refKey(toPassageRef(n.book_id, n.chapter, n.verse_start, n.verse_end)))?.text;
+    if (!text) return null;
     return text.length > 180 ? `${text.slice(0, 180).trimEnd()}…` : text;
   }
 

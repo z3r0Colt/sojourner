@@ -5,6 +5,8 @@ import type {
   BookAlias,
   Translation,
   Verse,
+  Passage,
+  PassageRef,
   CommentarySource,
   CommentaryEntry,
   CommentarySection,
@@ -67,6 +69,9 @@ export const api = {
 
   getChapter: (translationId: number, bookId: number, chapter: number) =>
     invoke<Verse[]>("get_chapter", { translationId, bookId, chapter }),
+  /** Text for one or many verse ranges in one round trip, in `refs` order. */
+  getPassages: (translationId: number, refs: PassageRef[]) =>
+    invoke<Passage[]>("get_passages", { translationId, refs }),
   getParallelChapter: (translationIds: number[], bookId: number, chapter: number) =>
     invoke<Record<number, Verse[]>>("get_parallel_chapter", { translationIds, bookId, chapter }),
   compareVerse: (bookId: number, chapter: number, verse: number) =>

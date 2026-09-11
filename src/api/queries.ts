@@ -1,6 +1,9 @@
+import { useMemo } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { api } from "./client";
-import type { Verse, PrayerEntryMode, MemoryMode } from "./types";
+import type { Verse, Passage, PassageRef, PrayerEntryMode, MemoryMode } from "./types";
+import { useNavigationStore } from "../state/navigationStore";
+import { refKey } from "../lib/passage";
 
 export function useBooks() {
   return useQuery({ queryKey: ["books"], queryFn: api.listBooks, staleTime: Infinity });
@@ -33,6 +36,41 @@ export function useChapter(translationId: number | null, bookId: number | null, 
     queryKey: ["chapter", translationId, bookId, chapter],
     queryFn: () => api.getChapter(translationId as number, bookId as number, chapter as number),
     enabled: translationId != null && bookId != null && chapter != null,
+  });
+}
+
+const PASSAGE_STALE_MS = 5 * 60_000;
+
+/** Text for many verse ranges in one round trip, in the reader's primary
+ * translation. Returns a `Map` keyed by `refKey(ref)` so callers look up
+ * each item without caring about order. Empty `refs` fetches nothing. */
+export function usePassages(refs: PassageRef[]) {
+  const translationId = useNavigationStore((s) => s.primaryTranslationId);
+  const keys = refs.map(refKey).join(",");
+  const query = useQuery({
+    queryKey: ["passages", translationId, keys],
+    queryFn: () => api.getPassages(translationId as number, refs),
+    enabled: translationId != null && refs.length > 0,
+    staleTime: PASSAGE_STALE_MS,
+  });
+  const byKey = useMemo(() => {
+    const m = new Map<string, Passage>();
+    for (const p of query.data ?? []) m.set(refKey(p.ref), p);
+    return m;
+  }, [query.data]);
+  return { ...query, byKey };
+}
+
+/** Text for a single verse range in the reader's primary translation.
+ * Each reference is cached on its own key, so repeated hovers over the
+ * same reference never refetch. `null` disables the query. */
+export function usePassageText(ref: PassageRef | null) {
+  const translationId = useNavigationStore((s) => s.primaryTranslationId);
+  return useQuery({
+    queryKey: ["passage", translationId, ref ? refKey(ref) : null],
+    queryFn: async () => (await api.getPassages(translationId as number, [ref as PassageRef]))[0] ?? null,
+    enabled: translationId != null && ref != null,
+    staleTime: PASSAGE_STALE_MS,
   });
 }
 
