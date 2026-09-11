@@ -67,7 +67,7 @@ const CATEGORIES: Category[] = [
       { q: "Work in a pane", a: <>Click anywhere in a pane to focus it; the focused pane has an accent line under its header, and shortcuts, Back and Forward, and the address all act on it. <Kbd>Ctrl</Kbd>+<Kbd>1</Kbd> to <Kbd>Ctrl</Kbd>+<Kbd>4</Kbd> focus panes left to right.</> },
       { q: "Change, move, or close a pane", a: "The ⋯ menu in a pane's header swaps its content for any other page, moves it left or right, or closes it. Drag the divider between panes to resize them. With one pane the app looks as it always has." },
       { q: "Follow a verse", a: "Click any verse in the text to select it. Cross references and confession proofs follow the selected verse, and the commentary entry that covers it is highlighted. A compare pane in another translation turns pages with you." },
-      { q: "Preview a reference", a: <>Rest the pointer on a cross reference for a moment (or Tab to it) and a small card shows the passage text with an Open link. <Kbd>Esc</Kbd> or moving away closes it.</> },
+      { q: "Preview a reference", a: <>Rest the pointer on any Scripture reference for a moment (or Tab to it) and a small card shows the passage text with an Open link: cross references, confession proof texts, references inside commentary, notes, dictionary entries, reading plans, and the Harmony. <Kbd>Ctrl</Kbd>+click Open to put it in a new pane. <Kbd>Esc</Kbd> or moving away closes it.</> },
       { q: "Switch commentary source", a: "Use the dropdown at the top of a Commentary pane to pick from every commentary you've installed. The book icon beside it opens that commentary as a book to page through on its own." },
     ],
   },

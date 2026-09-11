@@ -3,7 +3,7 @@ import { useBooks, useStrongsEntry } from "../../api/queries";
 import { useViewportClampedPosition } from "../../lib/useViewportClampedPosition";
 import { CommentaryHtml } from "../commentary/CommentaryPanel";
 import { PaneLink as Link } from "../../workspace/PaneLink";
-import { openPassage } from "../../workspace/openContent";
+import { openPassage, targetFor } from "../../workspace/openContent";
 import { IconButton } from "../../components/ui/Button";
 import { LoadingState } from "../../components/ui/EmptyState";
 
@@ -12,10 +12,10 @@ export function StrongsPopup({ id, x, y, onClose }: { id: string; x: number; y: 
   const { ref, style } = useViewportClampedPosition<HTMLDivElement>(x, y);
   const { data: books } = useBooks();
 
-  function jumpToRef(bookOsisCode: string, chapter: number, verse: number) {
+  function jumpToRef(bookOsisCode: string, chapter: number, verse: number, e?: React.MouseEvent) {
     const target = books?.find((b) => b.osis_code === bookOsisCode);
     if (target) {
-      openPassage({ bookId: target.id, chapter, verse });
+      openPassage({ bookId: target.id, chapter, verse }, { target: e ? targetFor(e) : "focused" });
       onClose();
     }
   }

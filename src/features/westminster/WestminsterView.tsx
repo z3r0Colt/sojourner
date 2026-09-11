@@ -17,6 +17,8 @@ import { usePaneNavigate, usePaneParams } from "../../workspace/PaneContext";
 import { PaneLink as Link } from "../../workspace/PaneLink";
 import { openPassage, targetFor } from "../../workspace/openContent";
 import { useReadingTypography } from "../../state/uiStore";
+import { refAttrs } from "../../lib/refAttr";
+import { toPassageRef } from "../../lib/passage";
 import type { WestminsterProofRef, DoctrineTopic } from "../../api/types";
 import { Tabs } from "../../components/ui/Tabs";
 import { EmptyState, LoadingState } from "../../components/ui/EmptyState";
@@ -158,9 +160,13 @@ export function WestminsterView() {
             type="button"
             className="text-accent hover:underline"
             title={refs?.map((r) => `${bookName(r.book_id)} ${r.chapter}:${r.verse_start}`).join("; ")}
-            onClick={() => {
-              if (first) openPassage({ bookId: first.book_id, chapter: first.chapter, verse: first.verse_start });
+            onClick={(e) => {
+              if (first) openPassage({ bookId: first.book_id, chapter: first.chapter, verse: first.verse_start }, { target: targetFor(e) });
             }}
+            onAuxClick={(e) => {
+              if (first && e.button === 1) openPassage({ bookId: first.book_id, chapter: first.chapter, verse: first.verse_start }, { target: "new" });
+            }}
+            {...(first ? refAttrs(toPassageRef(first.book_id, first.chapter, first.verse_start, first.verse_end)) : {})}
           >
             [{marker}]
           </button>
@@ -296,6 +302,8 @@ export function WestminsterView() {
                           type="button"
                           className="mr-2 text-accent hover:underline"
                           onClick={(e) => openPassage({ bookId: r.book_id, chapter: r.chapter, verse: r.verse_start }, { target: targetFor(e) })}
+                          onAuxClick={(e) => e.button === 1 && openPassage({ bookId: r.book_id, chapter: r.chapter, verse: r.verse_start }, { target: "new" })}
+                          {...refAttrs(toPassageRef(r.book_id, r.chapter, r.verse_start, r.verse_end))}
                         >
                           {bookName(r.book_id)} {r.chapter}:{r.verse_start}
                           {r.verse_end !== r.verse_start ? `-${r.verse_end}` : ""}

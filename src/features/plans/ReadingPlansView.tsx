@@ -11,6 +11,8 @@ import {
   useUnmarkReadingPlanDay,
 } from "../../api/queries";
 import { openPassage, targetFor } from "../../workspace/openContent";
+import { readingPreviewRef } from "../../lib/passage";
+import { refAttrs } from "../../lib/refAttr";
 import type { ReadingPlanReading } from "../../api/types";
 import { Page } from "../../components/ui/Page";
 import { Button } from "../../components/ui/Button";
@@ -37,8 +39,10 @@ function ReadingRefs({
             key={i}
             type="button"
             onClick={(e) => onNavigate(r.book_id, r.chapter_start, r.verse_start ?? undefined, e)}
+            onAuxClick={(e) => e.button === 1 && onNavigate(r.book_id, r.chapter_start, r.verse_start ?? undefined, e)}
             className="text-accent hover:underline"
             title={`Open ${name} ${r.label}`}
+            {...refAttrs(readingPreviewRef(r))}
           >
             {r.label}
           </button>

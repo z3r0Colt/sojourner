@@ -1,9 +1,11 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { BookOpenText, MessageSquareText } from "lucide-react";
 import { api } from "../../api/client";
-import { useCommentaryForPassage, useCommentarySources } from "../../api/queries";
+import { useBooks, useCommentaryForPassage, useCommentarySources } from "../../api/queries";
+import { decorateRefLinks } from "../../lib/refAttr";
+import { toPassageRef } from "../../lib/passage";
 import { useTtsReadingHere, useTtsStore } from "../../state/ttsStore";
 import { useReadingTypography } from "../../state/uiStore";
 import { ReadAloudButton } from "../tts/ReadAloudButton";
@@ -30,7 +32,7 @@ export function CommentaryPanel({
   sourceId: number | null;
   onSourceChange: (sourceId: number) => void;
   onJumpToVerse: (chapter: number, verse: number) => void;
-  onJumpToRef: (bookOsisCode: string, chapter: number, verse: number) => void;
+  onJumpToRef: JumpToRef;
 }) {
   const { data: sources } = useCommentarySources();
   const sourceId = requestedSourceId ?? sources?.[0]?.id ?? null;
@@ -143,25 +145,53 @@ export function CommentaryPanel({
   );
 }
 
-export function CommentaryHtml({
-  html,
-  onJumpToRef,
-}: {
-  html: string;
-  onJumpToRef: (bookOsisCode: string, chapter: number, verse: number) => void;
-}) {
+/** A click on a Scripture reference inside commentary HTML. The event is
+ * passed so callers can honor Ctrl+click and middle-click (a new pane). */
+export type JumpToRef = (bookOsisCode: string, chapter: number, verse: number, e?: React.MouseEvent) => void;
+
+/** "Bible:John.3.16", "John.3.16-John.3.18", or "John.3.16-18" (the forms
+ * the ThML and Thayer's importers write to `data-osis`). A range that
+ * crosses into another chapter keeps only its first verse. */
+export function parseOsis(osis: string): { book: string; chapter: number; verse: number; verseEnd: number } | null {
+  const m = osis.match(/^(?:Bible:)?([1-3]?[A-Za-z]+)\.(\d+)\.(\d+)(?:-(?:[1-3]?[A-Za-z]+\.)?(?:(\d+)\.)?(\d+))?/);
+  if (!m) return null;
+  const chapter = Number(m[2]);
+  const verse = Number(m[3]);
+  const endChapter = m[4] != null ? Number(m[4]) : chapter;
+  const verseEnd = m[5] != null && endChapter === chapter ? Math.max(verse, Number(m[5])) : verse;
+  return { book: m[1], chapter, verse, verseEnd };
+}
+
+export function CommentaryHtml({ html, onJumpToRef }: { html: string; onJumpToRef: JumpToRef }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const { data: books } = useBooks();
+
+  // Hover previews: every `a.scripref` gets a data-ref derived from its
+  // data-osis after render, so the stored HTML stays as imported. Runs
+  // again when the HTML changes (React rewrites innerHTML then).
+  useEffect(() => {
+    const root = ref.current;
+    if (!root || !books) return;
+    decorateRefLinks(root, "a.scripref[data-osis]", (el) => {
+      const parsed = parseOsis(el.getAttribute("data-osis") ?? "");
+      const book = parsed ? books.find((b) => b.osis_code === parsed.book) : undefined;
+      return parsed && book ? toPassageRef(book.id, parsed.chapter, parsed.verse, parsed.verseEnd) : null;
+    });
+  }, [html, books]);
+
+  function handleClick(e: React.MouseEvent) {
+    const link = (e.target as HTMLElement).closest<HTMLElement>("a.scripref");
+    if (!link) return;
+    const parsed = parseOsis(link.getAttribute("data-osis") ?? "");
+    if (parsed) onJumpToRef(parsed.book, parsed.chapter, parsed.verse, e);
+  }
+
   return (
     <div
+      ref={ref}
       className="commentary-html"
-      onClick={(e) => {
-        const target = e.target as HTMLElement;
-        const link = target.closest<HTMLElement>("a.scripref");
-        if (link) {
-          const osis = link.getAttribute("data-osis") ?? "";
-          const m = osis.match(/(?:Bible:)?([1-3]?[A-Za-z]+)\.(\d+)\.(\d+)/);
-          if (m) onJumpToRef(m[1], Number(m[2]), Number(m[3]));
-        }
-      }}
+      onClick={handleClick}
+      onAuxClick={(e) => e.button === 1 && handleClick(e)}
       dangerouslySetInnerHTML={{ __html: html }}
     />
   );

@@ -23,3 +23,15 @@ export function decodeRef(value: string | null | undefined): PassageRef | null {
 export function refAttrs(ref: PassageRef): { [REF_ATTR]: string } {
   return { [REF_ATTR]: encodeRef(ref) };
 }
+
+/** For HTML the app does not author itself (commentary, note bodies):
+ * marks every element matching `selector` under `root` that `resolve` can
+ * turn into a reference, leaving the source HTML untouched. Elements that
+ * already carry the attribute are skipped, so it is safe to run again. */
+export function decorateRefLinks(root: ParentNode, selector: string, resolve: (el: HTMLElement) => PassageRef | null): void {
+  for (const el of root.querySelectorAll<HTMLElement>(selector)) {
+    if (el.hasAttribute(REF_ATTR)) continue;
+    const ref = resolve(el);
+    if (ref) el.setAttribute(REF_ATTR, encodeRef(ref));
+  }
+}
