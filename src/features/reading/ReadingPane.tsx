@@ -56,6 +56,7 @@ import { useCopyPassage } from "../../lib/clipboard";
 import { ReadAloudButton } from "../tts/ReadAloudButton";
 import { useTtsReadingHere, useTtsStore } from "../../state/ttsStore";
 import { zoomText } from "./zoom";
+import { isDialogOpen, isTypingTarget, verseKeyAction } from "../../lib/keyboard";
 import { Button, IconButton } from "../../components/ui/Button";
 import { Popover, PopoverItem, PopoverLabel } from "../../components/ui/Popover";
 import { Modal } from "../../components/ui/Modal";
@@ -317,6 +318,66 @@ export function ReadingPane() {
       if (resolveBiblePane(useWorkspaceStore.getState())?.id !== paneId) return;
       e.preventDefault();
       openFind();
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  });
+
+  // Keyboard verse navigation (F1.8). Arrows and j/k move the selected
+  // verse and keep it in view (linked panes follow through publishPassage),
+  // Home and End jump to the chapter's ends, Enter opens the verse menu at
+  // the verse number. Only the Bible pane the reader is working in handles
+  // it, so two Bible panes never both move; nothing happens while typing,
+  // while a dialog, menu, or popup is up, or while a control has focus and
+  // Enter would mean "press it".
+  function firstVisibleVerse(): number | null {
+    const container = containerRef.current;
+    if (!container) return null;
+    const top = container.getBoundingClientRect().top;
+    for (const row of container.querySelectorAll<HTMLElement>("[data-verse-row]")) {
+      if (row.getBoundingClientRect().bottom > top + 1) return Number(row.dataset.verseRow);
+    }
+    return null;
+  }
+  function revealVerse(v: number) {
+    if (!verses) return;
+    if (!paragraphMode) {
+      const index = verses.findIndex((x) => x.verse === v);
+      if (index >= 0) rowVirtualizer.scrollToIndex(index, { align: "auto" });
+    }
+    containerRef.current?.querySelector(`[data-verse-row="${v}"]`)?.scrollIntoView({ block: "nearest" });
+  }
+  /** Opens the verse menu beside the verse number (or the row when the
+   * numbers are hidden), waiting a few frames for a virtualized row to mount. */
+  function openVerseMenuFor(v: number, tries = 0) {
+    const row = containerRef.current?.querySelector<HTMLElement>(`[data-verse-row="${v}"]`);
+    if (!row) {
+      if (tries < 6) window.setTimeout(() => openVerseMenuFor(v, tries + 1), 40);
+      return;
+    }
+    const numberButton = row.querySelector<HTMLElement>("button[aria-label^='Verse ']");
+    const rect = (numberButton ?? row).getBoundingClientRect();
+    setVerseMenu(paragraphMode ? { verseNum: v, x: rect.left, y: rect.bottom + 2 } : { verseNum: v, x: rect.right + 4, y: rect.top });
+  }
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      const action = verseKeyAction(e);
+      if (!action || isTypingTarget(e.target)) return;
+      if (verseMenu || pending || activeHighlight || noteTarget || wordLookup || activeFootnote || isDialogOpen()) return;
+      if (action === "open" && document.activeElement && document.activeElement !== document.body && document.activeElement !== containerRef.current) return;
+      if (resolveBiblePane(useWorkspaceStore.getState())?.id !== paneId) return;
+      if (!verses || verses.length === 0) return;
+      e.preventDefault();
+      const currentIndex = activeVerse != null ? verses.findIndex((x) => x.verse === activeVerse) : -1;
+      let target: number;
+      if (action === "first") target = verses[0].verse;
+      else if (action === "last") target = verses[verses.length - 1].verse;
+      else if (currentIndex < 0) target = firstVisibleVerse() ?? verses[0].verse;
+      else if (action === "open") target = verses[currentIndex].verse;
+      else target = verses[Math.max(0, Math.min(verses.length - 1, currentIndex + (action === "next" ? 1 : -1)))].verse;
+      setActiveVerse(target);
+      revealVerse(target);
+      if (action === "open") openVerseMenuFor(target);
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);

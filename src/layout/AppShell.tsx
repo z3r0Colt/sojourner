@@ -17,14 +17,9 @@ import { Kbd } from "../components/ui/Page";
 import { toast } from "../components/ui/toast";
 import { stepChapter } from "../features/reading/chapterStep";
 import { resetZoom, zoomActionFor, zoomText } from "../features/reading/zoom";
+import { isTypingTarget } from "../lib/keyboard";
 
 const TUTORIAL_BANNER_DISMISSED_KEY = "bsa-tutorial-banner-dismissed";
-
-function isTypingTarget(el: EventTarget | null): boolean {
-  if (!(el instanceof HTMLElement)) return false;
-  const tag = el.tagName;
-  return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || el.isContentEditable;
-}
 
 export function AppShell() {
   const distractionFreeMode = useUiStore((s) => s.distractionFreeMode);
