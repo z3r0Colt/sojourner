@@ -28,6 +28,9 @@ import type { PassageRef } from "../api/types";
 const HOVER_DELAY_MS = 350;
 const LEAVE_GRACE_MS = 150;
 const CARD_ATTR = "data-ref-preview-card";
+/** Matches the card's `w-80`. */
+const CARD_WIDTH = 320;
+const CARD_GAP = 8;
 
 interface PreviewState {
   ref: PassageRef | null;
@@ -45,7 +48,17 @@ const useRefPreviewStore = create<PreviewState>((set) => ({
   y: 0,
   open: (ref, anchor) => {
     const rect = anchor.getBoundingClientRect();
-    set({ ref, anchor, x: rect.left, y: rect.bottom + 6 });
+    // A full-width row (a cross-reference list, a proof-text list) gets the
+    // card beside it so the rows underneath stay hoverable; an inline
+    // reference in running text gets it just below, like a tooltip.
+    const wide = rect.width > CARD_WIDTH * 0.75;
+    if (!wide) {
+      set({ ref, anchor, x: rect.left, y: rect.bottom + 6 });
+    } else if (rect.left - CARD_WIDTH - CARD_GAP >= CARD_GAP) {
+      set({ ref, anchor, x: rect.left - CARD_WIDTH - CARD_GAP, y: rect.top });
+    } else {
+      set({ ref, anchor, x: rect.right + CARD_GAP, y: rect.top });
+    }
   },
   close: () => set({ ref: null, anchor: null }),
 }));
