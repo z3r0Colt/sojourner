@@ -56,6 +56,10 @@ const CATEGORIES: Category[] = [
       { q: "Paragraph mode, verse numbers, red letters", a: "The sliders button in the reading toolbar holds the view options, including printing the chapter." },
       { q: "Focus mode", a: <>Press <Kbd>F11</Kbd> or click the expand button in the reading toolbar to hide everything but the pane you are in. <Kbd>Esc</Kbd> brings it back.</> },
       { q: "Bookmarks", a: <>The bookmark button in the reading toolbar (or <Kbd>Ctrl</Kbd>+<Kbd>D</Kbd>) marks the chapter or selected verse and lists every bookmark for jumping back.</> },
+      {
+        q: "Read aloud",
+        a: "The speaker button in the reading toolbar reads the chapter with a Windows voice, following along word by word. The player's settings (the speed button in the bar) hold the voice, speed, and highlight choices, plus “Continue into the next chapter”, which turns the page and keeps reading when a chapter ends, and “Stop after”, a sleep timer that fades the voice out over its last ten seconds.",
+      },
     ],
   },
   {
