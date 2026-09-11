@@ -16,6 +16,7 @@ import {
   PanelLeftOpen,
   type LucideIcon,
 } from "lucide-react";
+import { useDueCatechismMemory, useDueMemoryVerses } from "../api/queries";
 import { useUiStore } from "../state/uiStore";
 import { cx } from "../components/ui/classes";
 import { parseRoute } from "../workspace/paneKinds";
@@ -36,6 +37,10 @@ interface NavItem {
   label: string;
   icon: LucideIcon;
   end?: boolean;
+  /** A small count after the label (a dot when the sidebar is collapsed);
+   * hidden at zero. Memory shows what is due today (F2.7); the Today page
+   * and prayer nudges can reuse it. */
+  badge?: { count: number; title: string };
 }
 
 /** Three groups, ordered by how a study session usually flows: read the
@@ -70,11 +75,14 @@ function NavLink({ item, collapsed }: { item: NavItem; collapsed: boolean }) {
     ? pathname === item.to || ["/commentary", "/study", "/interlinear"].some((p) => pathname.startsWith(p))
     : pathname.startsWith(item.to);
   const Icon = item.icon;
+  const badge = item.badge && item.badge.count > 0 ? item.badge : null;
+  const hint = collapsed ? `${item.label} (Ctrl+click for a new pane)` : "Ctrl+click for a new pane";
   return (
     <Link
       to={item.to}
-      title={collapsed ? `${item.label} (Ctrl+click for a new pane)` : "Ctrl+click for a new pane"}
+      title={badge ? `${badge.title}. ${hint}` : hint}
       aria-current={active ? "page" : undefined}
+      aria-label={badge ? `${item.label}, ${badge.title}` : undefined}
       onClick={(e) => {
         if (e.ctrlKey || e.metaKey) openInNewPane(e, item.to);
       }}
@@ -83,20 +91,36 @@ function NavLink({ item, collapsed }: { item: NavItem; collapsed: boolean }) {
       }}
       className={cx(
         "flex items-center gap-2.5 rounded-md text-sm transition-colors",
-        collapsed ? "h-9 w-9 justify-center" : "h-8 px-2.5",
+        collapsed ? "relative h-9 w-9 justify-center" : "h-8 px-2.5",
         active ? "bg-accent-soft font-medium text-accent" : "text-ink-2 hover:bg-hover hover:text-ink",
       )}
     >
       <Icon className="h-[18px] w-[18px] shrink-0" aria-hidden="true" />
-      {!collapsed && <span className="truncate">{item.label}</span>}
+      {!collapsed && <span className="min-w-0 flex-1 truncate">{item.label}</span>}
+      {badge && !collapsed && (
+        <span aria-hidden="true" className="ml-auto shrink-0 rounded-full bg-warn-soft px-1.5 text-xs font-semibold tabular-nums text-warn">
+          {badge.count}
+        </span>
+      )}
+      {badge && collapsed && <span aria-hidden="true" className="absolute right-1 top-1 h-2 w-2 rounded-full bg-warn ring-2 ring-surface-2" />}
     </Link>
   );
+}
+
+/** Verses plus catechism questions due for review today (F2.7). */
+function useMemoryDueBadge(): NavItem["badge"] {
+  const { data: dueVerses } = useDueMemoryVerses();
+  const { data: dueCatechism } = useDueCatechismMemory();
+  const count = (dueVerses?.length ?? 0) + (dueCatechism?.length ?? 0);
+  return { count, title: `${count} due for review today` };
 }
 
 export function Sidebar() {
   const collapsed = useUiStore((s) => s.sidebarCollapsed);
   const toggleSidebar = useUiStore((s) => s.toggleSidebar);
   const ToggleIcon = collapsed ? PanelLeftOpen : PanelLeftClose;
+  const memoryBadge = useMemoryDueBadge();
+  const badges: Record<string, NavItem["badge"]> = { "/memory": memoryBadge };
 
   return (
     <nav
@@ -131,7 +155,7 @@ export function Sidebar() {
               <div className="mb-1 h-px w-6 bg-line" aria-hidden="true" />
             )}
             {g.items.map((item) => (
-              <NavLink key={item.to} item={item} collapsed={collapsed} />
+              <NavLink key={item.to} item={badges[item.to] ? { ...item, badge: badges[item.to] } : item} collapsed={collapsed} />
             ))}
           </div>
         ))}
