@@ -233,6 +233,20 @@ mark.find-current {
 .note-html p {
   margin: 0.25rem 0;
 }
+/* Template section headings (the only heading level a note can hold). */
+.note-richtext h3,
+.note-html h3 {
+  margin: 0.6rem 0 0.15rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-ink-3);
+}
+.note-richtext h3:first-child,
+.note-html h3:first-child {
+  margin-top: 0.1rem;
+}
 .note-richtext a,
 .note-html a,
 .note-html a.auto-verse-link {
