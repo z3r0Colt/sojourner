@@ -62,6 +62,11 @@ export function isEmptyNoteHtml(html: string): boolean {
 /** Replaces the editor's content with a template and puts the caret in its
  * first empty paragraph, so typing can start at once. */
 export function applyTemplate(editor: Editor, template: NoteTemplate): void {
+  // The menu button holds focus when this runs. Focus the view first:
+  // tiptap's focus(pos) on a blurred editor defers the DOM focus a frame,
+  // and in WebView2 the next keystroke then lands at the start of the
+  // document instead of at `pos`.
+  editor.view.focus();
   editor.commands.setContent(template.html, { emitUpdate: true });
   let pos: number | null = null;
   editor.state.doc.descendants((node, p) => {
