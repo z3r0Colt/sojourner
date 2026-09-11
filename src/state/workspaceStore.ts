@@ -10,6 +10,22 @@ import { create } from "zustand";
  * `uiStore`. The rule: if a preference would surprise someone when it
  * changed in another pane, it is per pane.
  *
+ *   Global (uiStore)            Per pane (this store)
+ *   ------------------------    -------------------------------------
+ *   theme                       translation
+ *   text size, line spacing     book and chapter
+ *   font                        selected verse (activeVerse)
+ *   show verse numbers          paragraph mode
+ *   show highlights             red letters
+ *   show note markers           interlinear (a pane kind)
+ *   show morphology             find query (F1.2)
+ *   copy format (F1.6)          scroll position (the pane's own element)
+ *   zoom shortcuts (F1.7)       link group
+ *   focus mode (chrome hidden)  history and future
+ *
+ * The reading position (and the reading log, once F3.1 adds it) is written
+ * only by the focused Bible pane -- see ReadingPane.
+ *
  * The whole workspace is persisted to local storage under a version number;
  * `migrateWorkspace` upgrades older shapes instead of dropping them.
  */
