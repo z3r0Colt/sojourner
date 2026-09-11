@@ -2,20 +2,26 @@ import { useEffect, useMemo, useState } from "react";
 import { BookA, BookOpen, History, Languages, ScrollText, type LucideIcon } from "lucide-react";
 import type { Book } from "../../api/types";
 import { findPane, recentPositions, useWorkspaceStore, type Position } from "../../state/workspaceStore";
+import { useUiStore } from "../../state/uiStore";
 import { openContent } from "../../workspace/openContent";
+import { useTitleContext } from "../../workspace/PaneHeader";
 import { buildBookLookup, parseReference } from "../../hooks/useReferenceParser";
 import { useBookAliases, useTranslationCoverage, useDictionaryIndex, useWestminsterDocuments } from "../../api/queries";
 import { Modal } from "../../components/ui/Modal";
 import { Kbd } from "../../components/ui/Page";
 import { cx, inputClass } from "../../components/ui/classes";
+import { allCommands, commandQueryText, filterCommands, isCommandQuery, type Command } from "./commands";
 
 const STRONGS_RE = /^[GgHh]\d{1,5}$/;
+/** How many matching commands ride along with an ordinary query. */
+const MIXED_COMMAND_LIMIT = 6;
 
 interface Candidate {
   key: string;
   icon: LucideIcon;
   label: string;
   hint?: string;
+  keys?: string[];
   disabled?: boolean;
   run: () => void;
 }
@@ -24,7 +30,9 @@ interface Candidate {
  * (G26, h430) straight to the Lexicon, and otherwise offers dictionary
  * terms and Westminster Standards documents whose title contains the typed
  * text -- so one shortcut reaches anywhere a study session tends to jump.
- * With nothing typed it lists recently read passages. */
+ * With nothing typed it lists recently read passages. Commands from the
+ * registry (`commands.ts`) join the list when their name matches; typing
+ * `>` first lists commands alone. */
 export function GoToCommandPalette({
   books,
   translationId,
@@ -48,8 +56,35 @@ export function GoToCommandPalette({
   const recent = useMemo(() => recentPositions(focusedHistory), [focusedHistory]);
   const lookup = useMemo(() => buildBookLookup(books, aliases ?? []), [books, aliases]);
   const trimmed = query.trim();
-  const parsed = useMemo(() => (trimmed ? parseReference(query, lookup) : null), [query, lookup, trimmed]);
-  const isStrongs = !parsed && STRONGS_RE.test(trimmed);
+  const commandMode = isCommandQuery(query);
+  const parsed = useMemo(() => (trimmed && !commandMode ? parseReference(query, lookup) : null), [query, lookup, trimmed, commandMode]);
+  const isStrongs = !parsed && !commandMode && STRONGS_RE.test(trimmed);
+
+  // The registry reads the workspace when built; subscribing to what it
+  // names keeps the list current while the palette is open.
+  const panes = useWorkspaceStore((s) => s.panes);
+  const focusedPaneId = useWorkspaceStore((s) => s.focusedPaneId);
+  const maximizedPaneId = useWorkspaceStore((s) => s.maximizedPaneId);
+  const focusMode = useUiStore((s) => s.distractionFreeMode);
+  const titles = useTitleContext();
+  const commands = useMemo(
+    () => allCommands({ titles }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [titles, panes, focusedPaneId, maximizedPaneId, focusMode],
+  );
+  function commandCandidate(c: Command): Candidate {
+    return {
+      key: `cmd-${c.id}`,
+      icon: c.icon,
+      label: c.label,
+      hint: c.group,
+      keys: c.keys,
+      run: () => {
+        onClose();
+        c.run();
+      },
+    };
+  }
 
   const coveredChapters = parsed && coverage ? coverage.find((c) => c.book_id === parsed.book.id)?.chapters : undefined;
   // Only warn once coverage data has actually loaded for this translation --
@@ -61,6 +96,9 @@ export function GoToCommandPalette({
   }
 
   const candidates = useMemo<Candidate[]>(() => {
+    if (commandMode) {
+      return filterCommands(commands, commandQueryText(query)).map(commandCandidate);
+    }
     if (trimmed === "") {
       return recent.map<Candidate>((p) => ({
         key: `recent-${p.bookId}:${p.chapter}`,
@@ -125,9 +163,10 @@ export function GoToCommandPalette({
           onClose();
         },
       }));
-    return [...dict, ...docs];
+    const cmds = filterCommands(commands, trimmed).slice(0, MIXED_COMMAND_LIMIT).map(commandCandidate);
+    return [...dict, ...docs, ...cmds];
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [trimmed, parsed, isStrongs, notCovered, dictionaryIndex, westminsterDocs, recent, translationLabel]);
+  }, [trimmed, query, commandMode, commands, parsed, isStrongs, notCovered, dictionaryIndex, westminsterDocs, recent, translationLabel]);
 
   useEffect(() => setSelected(0), [trimmed]);
 
@@ -151,16 +190,16 @@ export function GoToCommandPalette({
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         onKeyDown={onKeyDown}
-        placeholder="John 3:16, Rom 8, G26, mercy, WCF…"
+        placeholder="John 3:16, Rom 8, G26, mercy, WCF, or > for commands…"
         aria-label="Go to"
         className={cx(inputClass, "w-full py-2 text-base")}
       />
       <div className="mt-2">
         {trimmed === "" && candidates.length === 0 && (
-          <p className="px-2 py-1 text-sm text-ink-3">Type a Bible reference, a Strong's number, a dictionary term, or a confession name.</p>
+          <p className="px-2 py-1 text-sm text-ink-3">Type a Bible reference, a Strong's number, a dictionary term, or a confession name. Type &gt; to list commands.</p>
         )}
         {trimmed !== "" && candidates.length === 0 && <p className="px-2 py-1 text-sm text-ink-3">Nothing matches that yet.</p>}
-        <ul role="listbox" className="space-y-0.5">
+        <ul role="listbox" className={cx("space-y-0.5", commandMode && "max-h-[50vh] overflow-y-auto")}>
           {candidates.map((c, i) => {
             const Icon = c.icon;
             return (
@@ -178,7 +217,14 @@ export function GoToCommandPalette({
                 >
                   <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
                   <span className="min-w-0 flex-1 truncate font-medium">{c.label}</span>
-                  {c.hint && <span className={cx("text-xs", c.disabled ? "text-amber-700 dark:text-amber-400" : "text-ink-3")}>{c.hint}</span>}
+                  {c.keys && (
+                    <span className="flex shrink-0 items-center gap-0.5" aria-label={`Shortcut ${c.keys.join(" ")}`}>
+                      {c.keys.map((k) => (
+                        <Kbd key={k}>{k}</Kbd>
+                      ))}
+                    </span>
+                  )}
+                  {c.hint && <span className={cx("shrink-0 text-xs", c.disabled ? "text-amber-700 dark:text-amber-400" : "text-ink-3")}>{c.hint}</span>}
                 </button>
               </li>
             );
@@ -186,7 +232,7 @@ export function GoToCommandPalette({
         </ul>
       </div>
       <div className="mt-2 flex items-center gap-2 border-t border-line px-1 pt-2 text-xs text-ink-3">
-        <Kbd>↑↓</Kbd> choose <Kbd>Enter</Kbd> open <Kbd>Esc</Kbd> close
+        <Kbd>↑↓</Kbd> choose <Kbd>Enter</Kbd> open <Kbd>&gt;</Kbd> commands <Kbd>Esc</Kbd> close
       </div>
     </Modal>
   );

@@ -1,13 +1,13 @@
 import { useEffect, type RefObject } from "react";
 import { create } from "zustand";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, Columns2 } from "lucide-react";
 import { useBooks, usePassageText } from "../api/queries";
 import { openPassage, targetFor } from "../workspace/openContent";
 import { useReadingTypography } from "../state/uiStore";
 import { useViewportClampedPosition } from "../lib/useViewportClampedPosition";
 import { decodeRef, REF_ATTR } from "../lib/refAttr";
 import { formatRef, refKey } from "../lib/passage";
-import { Button } from "./ui/Button";
+import { Button, IconButton } from "./ui/Button";
 import { LoadingState } from "./ui/EmptyState";
 import type { PassageRef } from "../api/types";
 
@@ -204,6 +204,10 @@ function RefPreviewCard({ passage, x, y }: { passage: PassageRef; x: number; y: 
     openPassage({ bookId: passage.book_id, chapter: passage.chapter, verse: passage.verse_start }, { target: targetFor(e) });
     close();
   }
+  function openInNewPane() {
+    openPassage({ bookId: passage.book_id, chapter: passage.chapter, verse: passage.verse_start }, { target: "new" });
+    close();
+  }
 
   return (
     <div
@@ -217,10 +221,13 @@ function RefPreviewCard({ passage, x, y }: { passage: PassageRef; x: number; y: 
       onMouseLeave={() => timers.scheduleClose()}
     >
       <div className="flex items-center justify-between gap-2 border-b border-line py-1 pl-3 pr-1">
-        <span className="truncate font-semibold text-ink">{heading}</span>
-        <Button size="sm" variant="ghost" icon={ArrowUpRight} onClick={open} onAuxClick={(e) => e.button === 1 && open(e)} title={`Open ${heading} (Ctrl+click for a new pane)`}>
-          Open
-        </Button>
+        <span className="min-w-0 truncate font-semibold text-ink">{heading}</span>
+        <div className="flex shrink-0 items-center">
+          <Button size="sm" variant="ghost" icon={ArrowUpRight} onClick={open} onAuxClick={(e) => e.button === 1 && open(e)} title={`Open ${heading} in the pane you are reading (Ctrl+click for a new pane)`}>
+            Open
+          </Button>
+          <IconButton size="sm" icon={Columns2} label={`Open ${heading} in a new pane`} onClick={openInNewPane} />
+        </div>
       </div>
       <div className="reading-font max-h-56 overflow-y-auto px-3 py-2 text-ink-2" style={typography}>
         {isLoading && <LoadingState className="py-1" />}

@@ -39,6 +39,12 @@ export interface Position {
 
 export type LinkGroup = "A" | "B" | "C" | null;
 
+export const LINK_GROUPS: readonly Exclude<LinkGroup, null>[] = ["A", "B", "C"];
+
+export function isLinkGroup(v: unknown): v is LinkGroup {
+  return v === null || v === "A" || v === "B" || v === "C";
+}
+
 export interface BibleParams {
   translationId: number | null;
   bookId: number;
@@ -406,7 +412,20 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     });
   },
 
-  setLinkGroup: (id, group) => set((s) => ({ panes: s.panes.map((p) => (p.id === id ? { ...p, linkGroup: group } : p)) })),
+  setLinkGroup: (id, group) => {
+    const { panes } = get();
+    const pane = panes.find((p) => p.id === id);
+    if (!pane || pane.linkGroup === group) return;
+    set({ panes: panes.map((p) => (p.id === id ? { ...p, linkGroup: group } : p)) });
+    // A pane that joins a group catches up with the group's passage at
+    // once, rather than waiting for the next verse click: the group's
+    // Bible pane republishes where it is.
+    if (group == null || !PASSAGE_KINDS.has(pane.kind)) return;
+    const leader = get().panes.find((p) => p.id !== id && p.kind === "bible" && p.linkGroup === group);
+    if (leader && leader.kind === "bible") {
+      get().publishPassage(leader.id, { bookId: leader.params.bookId, chapter: leader.params.chapter, verse: leader.params.activeVerse });
+    }
+  },
 
   setMaximized: (id) => set({ maximizedPaneId: id }),
 
@@ -528,6 +547,14 @@ export function resolveBiblePane(s: Pick<WorkspaceState, "panes" | "focusedPaneI
     if (linked) return linked;
   }
   return bibles[0];
+}
+
+/** The first link group no pane uses, or null when A, B, and C are all
+ * taken. Used when a study pane is opened from an unlinked Bible pane: the
+ * two get a group of their own so the new pane follows the pane it came
+ * from, as the roadmap promises, without dragging group A along. */
+export function freeLinkGroup(panes: Pane[]): Exclude<LinkGroup, null> | null {
+  return LINK_GROUPS.find((g) => !panes.some((p) => p.linkGroup === g)) ?? null;
 }
 
 /** The passage the focused pane is on (for seeding new study panes). */

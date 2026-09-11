@@ -6,6 +6,7 @@ const GROUPS: { title: string; rows: { keys: string[]; label: string }[] }[] = [
     title: "Navigate",
     rows: [
       { keys: ["Ctrl", "K"], label: "Go to a reference, Strong's number, or term" },
+      { keys: ["Ctrl", "K", ">"], label: "List commands in the Go to box: open in a new pane, change a pane, link groups, layouts, workspaces" },
       { keys: ["Ctrl", "F"], label: "Search everything" },
       { keys: ["Ctrl", "G"], label: "Find in the chapter you are reading (Enter next match, Shift+Enter previous, Esc closes)" },
       { keys: ["Ctrl", "["], label: "Previous chapter in the pane you are reading" },
@@ -20,6 +21,7 @@ const GROUPS: { title: string; rows: { keys: string[]; label: string }[] }[] = [
       { keys: ["Ctrl", "1"], label: "Focus the first pane (Ctrl+2 to Ctrl+4 for the others, left to right)" },
       { keys: ["Ctrl", "B"], label: "Add a study pane, or focus the one that is open" },
       { keys: ["Ctrl", "click"], label: "Open a link, a sidebar item, or a reference in a new pane (middle-click does the same)" },
+      { keys: ["Click the letter"], label: "In a pane header: move the pane to link group A, B, or C, or unlink it. Panes in one group follow each other's passage" },
       { keys: ["F11"], label: "Focus mode: maximize the focused pane and hide everything else" },
       { keys: ["Esc"], label: "Leave focus mode; close any panel, menu, or dialog" },
     ],
