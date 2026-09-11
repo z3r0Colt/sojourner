@@ -31,6 +31,12 @@ pub fn list_highlights(db: State<DbState>, book_id: i64, chapter: i64) -> AppRes
     Ok(highlights::list_for_chapter(&conn, book_id, chapter)?)
 }
 
+#[tauri::command]
+pub fn list_all_highlights(db: State<DbState>) -> AppResult<Vec<Highlight>> {
+    let conn = db.0.lock().unwrap();
+    Ok(highlights::list_all(&conn)?)
+}
+
 #[allow(clippy::too_many_arguments)]
 #[tauri::command]
 pub fn create_highlight(

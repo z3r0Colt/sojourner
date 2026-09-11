@@ -11,6 +11,18 @@ pub fn list_for_chapter(conn: &Connection, book_id: i64, chapter: i64) -> anyhow
     Ok(rows.collect::<Result<Vec<_>, _>>()?)
 }
 
+/// Every highlight in Bible order, for the Highlights page. Book ids follow
+/// canonical order, so ordering by them is ordering by the Bible.
+pub fn list_all(conn: &Connection) -> anyhow::Result<Vec<Highlight>> {
+    let mut stmt = conn.prepare(
+        "SELECT id, book_id, chapter, verse_start, verse_end, char_start, char_end, color, style,
+                translation_id, created_at, updated_at
+         FROM highlights ORDER BY book_id, chapter, verse_start, verse_end, id",
+    )?;
+    let rows = stmt.query_map([], map_row)?;
+    Ok(rows.collect::<Result<Vec<_>, _>>()?)
+}
+
 fn map_row(r: &rusqlite::Row) -> rusqlite::Result<Highlight> {
     Ok(Highlight {
         id: r.get(0)?,

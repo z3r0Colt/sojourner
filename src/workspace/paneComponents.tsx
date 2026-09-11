@@ -8,7 +8,7 @@ import { ResourceReaderView } from "../features/resources/ResourceReaderView";
 import { CommentaryStandaloneView } from "../features/commentary/CommentaryStandaloneView";
 import { SettingsView } from "../features/settings/SettingsView";
 import { CommentaryPane, ConfessionPane, CrossRefsPane, InterlinearPane, MetricalPane } from "./panes/StudyPanes";
-import { HarmonyPane, MemoryPane, NotesPane, PlansPane, PrayerPane, ResourcesPane } from "./panes/PagePanes";
+import { HarmonyPane, HighlightsPane, MemoryPane, NotesPane, PlansPane, PrayerPane, ResourcesPane } from "./panes/PagePanes";
 
 /** Kind → the component that renders it. Each reads its params from the
  * pane (see `usePaneParams`), never from the URL. Kept apart from the
@@ -28,6 +28,7 @@ export const PANE_COMPONENTS: Record<PaneKind, ComponentType> = {
   resources: ResourcesPane,
   "commentary-book": CommentaryStandaloneView,
   notes: NotesPane,
+  highlights: HighlightsPane,
   prayer: PrayerPane,
   memory: MemoryPane,
   plans: PlansPane,

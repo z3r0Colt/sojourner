@@ -6,6 +6,7 @@ import {
   CalendarCheck,
   Columns3,
   HeartHandshake,
+  Highlighter,
   Languages,
   Library,
   Link2,
@@ -185,6 +186,7 @@ export const PANE_KINDS: Registry = {
     listed: false,
   },
   notes: { kind: "notes", label: "Notes", icon: NotebookPen, title: () => "Notes", defaultWidth: 900, acceptsPassage: false, listed: true },
+  highlights: { kind: "highlights", label: "Highlights", icon: Highlighter, title: () => "Highlights", defaultWidth: 900, acceptsPassage: false, listed: true },
   prayer: { kind: "prayer", label: "Prayer", icon: HeartHandshake, title: () => "Prayer", defaultWidth: 900, acceptsPassage: false, listed: true },
   memory: { kind: "memory", label: "Memory", icon: Brain, title: () => "Memory", defaultWidth: 900, acceptsPassage: false, listed: true },
   plans: { kind: "plans", label: "Reading plans", icon: CalendarCheck, title: () => "Reading plans", defaultWidth: 900, acceptsPassage: false, listed: true },
@@ -246,6 +248,8 @@ export function routeFor(content: PaneContent): string {
     }
     case "notes":
       return "/notes";
+    case "highlights":
+      return "/highlights";
     case "prayer":
       return "/prayer";
     case "memory":
@@ -294,6 +298,8 @@ export function parseRoute(pathname: string, search = ""): ContentRequest | null
       return { kind: "commentary-book", params: { sourceId: num(a), bookId: num(b), sectionId: num(c) } };
     case "notes":
       return { kind: "notes", params: {} };
+    case "highlights":
+      return { kind: "highlights", params: {} };
     case "prayer":
       return { kind: "prayer", params: {} };
     case "memory":
