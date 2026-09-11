@@ -38,6 +38,23 @@ export interface Verse {
   text: string;
 }
 
+/** One verse range to look up by reference. `verse_end` is inclusive. */
+export interface PassageRef {
+  book_id: number;
+  chapter: number;
+  verse_start: number;
+  verse_end: number;
+}
+
+/** The text of one requested range: the echoed reference, the verses joined
+ * with spaces, and the individual verses. `verses` is empty when the
+ * translation has no text for that range. */
+export interface Passage {
+  ref: PassageRef;
+  text: string;
+  verses: Verse[];
+}
+
 export interface CommentarySource {
   id: number;
   code: string;

@@ -102,6 +102,7 @@ pub fn run() {
             commands::library::scan_library,
             commands::library::add_file,
             commands::reading::get_chapter,
+            commands::reading::get_passages,
             commands::reading::get_parallel_chapter,
             commands::reading::compare_verse,
             commands::reading::get_commentary_for_passage,

@@ -1,4 +1,4 @@
-use crate::models::{Book, BookCoverage, Translation, Verse};
+use crate::models::{Book, BookCoverage, Passage, PassageRef, Translation, Verse};
 use rusqlite::{params, Connection};
 
 pub fn list_books(conn: &Connection) -> anyhow::Result<Vec<Book>> {
@@ -61,6 +61,44 @@ pub fn get_chapter(
         })
     })?;
     Ok(rows.collect::<Result<Vec<_>, _>>()?)
+}
+
+/// The text of one or many verse ranges in a single call, without fetching
+/// whole chapters -- what hover previews, the notes list, and any page that
+/// shows "the verse this note is about" need. One prepared statement reused
+/// per range inside a read transaction, so a page of fifty notes costs one
+/// round trip and one snapshot rather than fifty chapter loads. Results
+/// come back in the same order as `refs`; a range the translation doesn't
+/// cover yields an empty `verses` and `text`.
+pub fn get_passages(conn: &Connection, translation_id: i64, refs: &[PassageRef]) -> anyhow::Result<Vec<Passage>> {
+    let tx = conn.unchecked_transaction()?;
+    let mut out = Vec::with_capacity(refs.len());
+    {
+        let mut stmt = tx.prepare(
+            "SELECT id, translation_id, book_id, chapter, verse, text FROM verses
+             WHERE translation_id = ?1 AND book_id = ?2 AND chapter = ?3 AND verse BETWEEN ?4 AND ?5
+             ORDER BY verse",
+        )?;
+        for r in refs {
+            let (lo, hi) = if r.verse_end < r.verse_start { (r.verse_end, r.verse_start) } else { (r.verse_start, r.verse_end) };
+            let verses = stmt
+                .query_map(params![translation_id, r.book_id, r.chapter, lo, hi], |row| {
+                    Ok(Verse {
+                        id: row.get(0)?,
+                        translation_id: row.get(1)?,
+                        book_id: row.get(2)?,
+                        chapter: row.get(3)?,
+                        verse: row.get(4)?,
+                        text: row.get(5)?,
+                    })
+                })?
+                .collect::<Result<Vec<_>, _>>()?;
+            let text = verses.iter().map(|v| v.text.trim()).collect::<Vec<_>>().join(" ");
+            out.push(Passage { passage_ref: r.clone(), text, verses });
+        }
+    }
+    tx.commit()?;
+    Ok(out)
 }
 
 /// Like `get_chapter`, but resolves through `versification_map` first: given

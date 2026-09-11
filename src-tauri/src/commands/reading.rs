@@ -1,7 +1,7 @@
 use crate::db::queries::{commentary, reading_position, verses};
 use crate::db::DbState;
 use crate::error::AppResult;
-use crate::models::{CommentaryEntry, CommentarySection, ReadingPosition, Verse};
+use crate::models::{CommentaryEntry, CommentarySection, Passage, PassageRef, ReadingPosition, Verse};
 use std::collections::HashMap;
 use tauri::State;
 
@@ -9,6 +9,13 @@ use tauri::State;
 pub fn get_chapter(db: State<DbState>, translation_id: i64, book_id: i64, chapter: i64) -> AppResult<Vec<Verse>> {
     let conn = db.0.lock().unwrap();
     Ok(verses::get_chapter(&conn, translation_id, book_id, chapter)?)
+}
+
+/// Text for one or many verse ranges in one call -- see `verses::get_passages`.
+#[tauri::command]
+pub fn get_passages(db: State<DbState>, translation_id: i64, refs: Vec<PassageRef>) -> AppResult<Vec<Passage>> {
+    let conn = db.0.lock().unwrap();
+    Ok(verses::get_passages(&conn, translation_id, &refs)?)
 }
 
 #[tauri::command]

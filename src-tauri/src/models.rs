@@ -63,6 +63,29 @@ pub struct Verse {
     pub text: String,
 }
 
+/// One verse range to look up by reference -- the input half of
+/// `get_passages`. `verse_end` is inclusive; a single verse has
+/// `verse_start == verse_end`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PassageRef {
+    pub book_id: i64,
+    pub chapter: i64,
+    pub verse_start: i64,
+    pub verse_end: i64,
+}
+
+/// The text of one requested verse range: the echoed reference, the verses
+/// joined with single spaces as `text`, and the individual verses for
+/// callers that need per-verse numbering. `verses` is empty when the
+/// translation has no text for that range (e.g. Tyndale outside the NT).
+#[derive(Debug, Clone, Serialize)]
+pub struct Passage {
+    #[serde(rename = "ref")]
+    pub passage_ref: PassageRef,
+    pub text: String,
+    pub verses: Vec<Verse>,
+}
+
 #[derive(Debug, Clone, Serialize)]
 pub struct CommentarySource {
     pub id: i64,
