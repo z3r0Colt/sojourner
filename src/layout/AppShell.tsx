@@ -16,6 +16,7 @@ import { Button, IconButton } from "../components/ui/Button";
 import { Kbd } from "../components/ui/Page";
 import { toast } from "../components/ui/toast";
 import { stepChapter } from "../features/reading/chapterStep";
+import { resetZoom, zoomActionFor, zoomText } from "../features/reading/zoom";
 
 const TUTORIAL_BANNER_DISMISSED_KEY = "bsa-tutorial-banner-dismissed";
 
@@ -97,7 +98,14 @@ export function AppShell() {
     function onKeyDown(e: KeyboardEvent) {
       const ctrl = e.ctrlKey || e.metaKey;
       const key = e.key.toLowerCase();
-      if (ctrl && key === "k") {
+      const zoom = zoomActionFor(e);
+      if (zoom) {
+        // Text size is global, so this lives in the shell (and must beat the
+        // WebView's own page zoom, hence preventDefault).
+        e.preventDefault();
+        if (zoom === "reset") resetZoom();
+        else zoomText(zoom === "in" ? 1 : -1);
+      } else if (ctrl && key === "k") {
         e.preventDefault();
         setPaletteOpen(true);
       } else if (ctrl && key === "f") {
