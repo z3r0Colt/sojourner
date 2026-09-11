@@ -20,6 +20,17 @@ export function toPassageRef(bookId: number, chapter: number, verseStart: number
   return { book_id: bookId, chapter, verse_start: verseStart, verse_end: verseEnd ?? verseStart };
 }
 
+/** The verse range a hover preview shows for a reading-plan or harmony
+ * reading, which may span whole chapters: the first chapter, from its
+ * first (or given) verse to its given end or the end of the chapter. The
+ * open end is written as 999; the passage lookup clamps it to the verses
+ * that exist. */
+export function readingPreviewRef(r: { book_id: number; chapter_start: number; verse_start: number | null; chapter_end: number; verse_end: number | null }): PassageRef {
+  const start = r.verse_start ?? 1;
+  const end = r.chapter_end === r.chapter_start && r.verse_end != null ? Math.max(start, r.verse_end) : 999;
+  return { book_id: r.book_id, chapter: r.chapter_start, verse_start: start, verse_end: end };
+}
+
 /** A book's display name, or "#id" while the book list is still loading. */
 export function bookName(books: Book[] | undefined, bookId: number): string {
   return books?.find((b) => b.id === bookId)?.name ?? `#${bookId}`;

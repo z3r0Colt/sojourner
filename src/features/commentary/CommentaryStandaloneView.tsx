@@ -4,7 +4,7 @@ import { api } from "../../api/client";
 import { useBooks, useCommentarySources } from "../../api/queries";
 import { usePane, usePaneNavigate, usePaneParams } from "../../workspace/PaneContext";
 import { PaneLink as Link } from "../../workspace/PaneLink";
-import { openPassage } from "../../workspace/openContent";
+import { openPassage, targetFor } from "../../workspace/openContent";
 import { useTtsReadingHere, useTtsStore } from "../../state/ttsStore";
 import { useReadingTypography } from "../../state/uiStore";
 import { ReadAloudButton } from "../tts/ReadAloudButton";
@@ -39,9 +39,9 @@ export function CommentaryStandaloneView() {
     enabled: activeSectionId != null,
   });
 
-  function jumpToRef(bookOsisCode: string, chapter: number, verse: number) {
+  function jumpToRef(bookOsisCode: string, chapter: number, verse: number, e?: React.MouseEvent) {
     const target = books?.find((b) => b.osis_code === bookOsisCode);
-    if (target) openPassage({ bookId: target.id, chapter, verse });
+    if (target) openPassage({ bookId: target.id, chapter, verse }, { target: e ? targetFor(e) : "focused" });
   }
 
   const sectionIdx = toc?.findIndex((s) => s.id === activeSectionId) ?? -1;

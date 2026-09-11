@@ -6,7 +6,7 @@ import { useBooks, useStrongsEntry } from "../../api/queries";
 import { ConcordancePanel } from "./ConcordancePanel";
 import { CommentaryHtml } from "../commentary/CommentaryPanel";
 import { usePaneNavigate, usePaneParams } from "../../workspace/PaneContext";
-import { openPassage } from "../../workspace/openContent";
+import { openPassage, targetFor } from "../../workspace/openContent";
 import { useReadingTypography } from "../../state/uiStore";
 import { Button } from "../../components/ui/Button";
 import { EmptyState, LoadingState } from "../../components/ui/EmptyState";
@@ -37,9 +37,9 @@ export function LexiconView() {
   const { data: entry } = useStrongsEntry(id ?? directIdMatch ?? null);
   const { data: books } = useBooks();
 
-  function jumpToRef(bookOsisCode: string, chapter: number, verse: number) {
+  function jumpToRef(bookOsisCode: string, chapter: number, verse: number, e?: React.MouseEvent) {
     const target = books?.find((b) => b.osis_code === bookOsisCode);
-    if (target) openPassage({ bookId: target.id, chapter, verse });
+    if (target) openPassage({ bookId: target.id, chapter, verse }, { target: e ? targetFor(e) : "focused" });
   }
 
   return (

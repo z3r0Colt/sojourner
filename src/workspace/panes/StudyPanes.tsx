@@ -11,7 +11,7 @@ import { MetricalPsalmPanel } from "../../features/reading/MetricalPsalmPanel";
 import { useUiStore } from "../../state/uiStore";
 import { useWorkspaceStore } from "../../state/workspaceStore";
 import { usePane, usePaneParams } from "../PaneContext";
-import { openContent, openPassage } from "../openContent";
+import { openContent, openPassage, targetFor } from "../openContent";
 
 /**
  * The study-panel tabs as pane kinds. Each follows the passage its link
@@ -69,9 +69,9 @@ export function CommentaryPane() {
       sourceId={params.sourceId}
       onSourceChange={(sourceId) => setParams({ sourceId })}
       onJumpToVerse={(c, v) => openPassage({ bookId: book.id, chapter: c, verse: v })}
-      onJumpToRef={(osis, c, v) => {
+      onJumpToRef={(osis, c, v, e) => {
         const target = books.find((b) => b.osis_code === osis);
-        if (target) openPassage({ bookId: target.id, chapter: c, verse: v });
+        if (target) openPassage({ bookId: target.id, chapter: c, verse: v }, { target: e ? targetFor(e) : "focused" });
       }}
     />
   );

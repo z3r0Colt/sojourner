@@ -4,9 +4,11 @@ import { BookA, Search } from "lucide-react";
 import { api } from "../../api/client";
 import { useDictionaryIndex, useDictionaryEntry, useBooks } from "../../api/queries";
 import { usePaneNavigate, usePaneParams } from "../../workspace/PaneContext";
-import { openPassage } from "../../workspace/openContent";
+import { openPassage, targetFor } from "../../workspace/openContent";
 import { useReadingTypography } from "../../state/uiStore";
 import { buildBookLookup, scanScriptureRefs } from "../../hooks/useReferenceParser";
+import { refAttrs } from "../../lib/refAttr";
+import { toPassageRef } from "../../lib/passage";
 import { EmptyState, LoadingState } from "../../components/ui/EmptyState";
 import { cx, inputSmClass } from "../../components/ui/classes";
 
@@ -41,8 +43,8 @@ export function DictionaryView() {
   const showingSearch = debounced.trim().length > 1;
   const list = showingSearch ? searchResults ?? [] : letterEntries;
 
-  function jumpToRef(bookId: number, chapter: number, verse?: number) {
-    openPassage({ bookId, chapter, verse });
+  function jumpToRef(bookId: number, chapter: number, verse: number | undefined, e: React.MouseEvent) {
+    openPassage({ bookId, chapter, verse }, { target: targetFor(e) });
   }
 
   function renderLinkedBody(body: string) {
@@ -56,8 +58,10 @@ export function DictionaryView() {
         <button
           key={`r${i}`}
           type="button"
-          onClick={() => jumpToRef(m.ref.book.id, m.ref.chapter, m.ref.verse)}
+          onClick={(e) => jumpToRef(m.ref.book.id, m.ref.chapter, m.ref.verse, e)}
+          onAuxClick={(e) => e.button === 1 && jumpToRef(m.ref.book.id, m.ref.chapter, m.ref.verse, e)}
           className="text-accent underline decoration-dotted underline-offset-2 hover:text-accent-hover"
+          {...(m.ref.verse != null ? refAttrs(toPassageRef(m.ref.book.id, m.ref.chapter, m.ref.verse, m.ref.verseEnd)) : {})}
         >
           {m.text}
         </button>,
