@@ -34,10 +34,10 @@ const CATEGORIES: Category[] = [
           </>
         ),
       },
-      { q: "Change translation", a: "Pick from the translation dropdown in the reading toolbar. “Parallel” shows the chapter side by side in several translations at once; “Interlinear” shows the Hebrew or Greek beneath the English." },
+      { q: "Change translation", a: "Pick from the translation dropdown in the reading toolbar. “Compare” opens the same chapter in another translation in a pane beside it, linked so both turn pages together; “Interlinear” opens the Hebrew or Greek beneath the English in its own pane." },
       { q: "Text size, spacing, font, and theme", a: "The Aa button in the reading toolbar. These settings apply to commentary, confessions, and dictionary text too, and can also be changed under Settings → Reading." },
       { q: "Paragraph mode, verse numbers, red letters", a: "The sliders button in the reading toolbar holds the view options, including printing the chapter." },
-      { q: "Focus mode", a: <>Press <Kbd>F11</Kbd> or click the expand button in the reading toolbar to hide everything but the text. <Kbd>Esc</Kbd> brings it back.</> },
+      { q: "Focus mode", a: <>Press <Kbd>F11</Kbd> or click the expand button in the reading toolbar to hide everything but the pane you are in. <Kbd>Esc</Kbd> brings it back.</> },
       { q: "Bookmarks", a: <>The bookmark button in the reading toolbar (or <Kbd>Ctrl</Kbd>+<Kbd>D</Kbd>) marks the chapter or selected verse and lists every bookmark for jumping back.</> },
     ],
   },
@@ -51,13 +51,15 @@ const CATEGORIES: Category[] = [
     ],
   },
   {
-    title: "Study panel",
+    title: "Panes",
     items: [
-      { q: "Open it", a: <>Click one of the icons on the right edge of the reading view, or press <Kbd>Ctrl</Kbd>+<Kbd>B</Kbd>. It has tabs for Commentary, Cross references, Confessions, and (in the Psalms) the Metrical Psalter.</> },
-      { q: "Follow a verse", a: "Click any verse in the text to select it. Cross references and confession proofs follow the selected verse, and the commentary entry that covers it is highlighted." },
+      { q: "Open a study pane", a: <>Click one of the icons on the right edge (Commentary, Cross references, Confessions, and in the Psalms the Metrical Psalter), or press <Kbd>Ctrl</Kbd>+<Kbd>B</Kbd>. Each opens as a pane beside the text and follows the verse you select.</> },
+      { q: "Open anything in a new pane", a: <><Kbd>Ctrl</Kbd>+click (or middle-click) a sidebar item, a reference, a cross reference, a note link, or a search result to open it beside what you are reading instead of replacing it.</> },
+      { q: "Work in a pane", a: <>Click anywhere in a pane to focus it; the focused pane has an accent line under its header, and shortcuts, Back and Forward, and the address all act on it. <Kbd>Ctrl</Kbd>+<Kbd>1</Kbd> to <Kbd>Ctrl</Kbd>+<Kbd>4</Kbd> focus panes left to right.</> },
+      { q: "Change, move, or close a pane", a: "The ⋯ menu in a pane's header swaps its content for any other page, moves it left or right, or closes it. Drag the divider between panes to resize them. With one pane the app looks as it always has." },
+      { q: "Follow a verse", a: "Click any verse in the text to select it. Cross references and confession proofs follow the selected verse, and the commentary entry that covers it is highlighted. A compare pane in another translation turns pages with you." },
       { q: "Preview a reference", a: <>Rest the pointer on a cross reference for a moment (or Tab to it) and a small card shows the passage text with an Open link. <Kbd>Esc</Kbd> or moving away closes it.</> },
-      { q: "Move, resize, or collapse it", a: "Drag its inner edge to resize, use the arrow button to dock it on the other side, or collapse it back to the icon strip." },
-      { q: "Switch commentary source", a: "Use the dropdown at the top of the Commentary tab to pick from every commentary you've installed. The book icon beside it opens that commentary as a book to page through on its own." },
+      { q: "Switch commentary source", a: "Use the dropdown at the top of a Commentary pane to pick from every commentary you've installed. The book icon beside it opens that commentary as a book to page through on its own." },
     ],
   },
   {
@@ -73,7 +75,7 @@ const CATEGORIES: Category[] = [
   {
     title: "Interlinear & word study",
     items: [
-      { q: "Turn on interlinear", a: "Click “Interlinear” in the reading toolbar to show the original Hebrew or Greek beneath each phrase, aligned word by word." },
+      { q: "Turn on interlinear", a: "Click “Interlinear” in the reading toolbar to open the original Hebrew or Greek beneath each phrase, aligned word by word, in a pane beside the English." },
       { q: "Look up a Strong's number", a: "Click any tagged word in interlinear view to see its lexicon entry in a popup. “View full entry” opens the Lexicon page with a concordance of every verse using that word." },
       { q: "Lexicon page", a: "Search by English meaning, transliteration, or Strong's number (H1, G25). Thayer's fuller Greek definitions appear when available." },
       { q: "Dictionary", a: "Encyclopedia-style entries for people, places, and topics, browsable by letter and searchable. Scripture references inside an entry are clickable." },
@@ -84,7 +86,7 @@ const CATEGORIES: Category[] = [
     items: [
       { q: "Browse the Westminster Standards", a: "The Confessions page holds the Westminster Confession and the Larger and Shorter Catechisms. Pick a document, then a chapter or question, or browse by doctrinal topic." },
       { q: "Proof texts", a: "Each section's Scripture proofs are numbered in the text and listed beneath it; each one jumps to the passage." },
-      { q: "From the Bible side", a: "The Confessions tab in the study panel shows where the Standards cite the verse you've selected." },
+      { q: "From the Bible side", a: "A Confessions pane (from the icons on the right edge) shows where the Standards cite the verse you've selected." },
     ],
   },
   {

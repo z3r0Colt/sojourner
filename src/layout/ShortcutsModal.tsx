@@ -7,25 +7,27 @@ const GROUPS: { title: string; rows: { keys: string[]; label: string }[] }[] = [
     rows: [
       { keys: ["Ctrl", "K"], label: "Go to a reference, Strong's number, or term" },
       { keys: ["Ctrl", "F"], label: "Search everything" },
-      { keys: ["Ctrl", "["], label: "Previous chapter" },
-      { keys: ["Ctrl", "]"], label: "Next chapter" },
-      { keys: ["Alt", "←"], label: "Back in reading history" },
-      { keys: ["Alt", "→"], label: "Forward in reading history" },
+      { keys: ["Ctrl", "["], label: "Previous chapter in the pane you are reading" },
+      { keys: ["Ctrl", "]"], label: "Next chapter in the pane you are reading" },
+      { keys: ["Alt", "←"], label: "Back in the focused pane's history" },
+      { keys: ["Alt", "→"], label: "Forward in the focused pane's history" },
+    ],
+  },
+  {
+    title: "Panes",
+    rows: [
+      { keys: ["Ctrl", "1"], label: "Focus the first pane (Ctrl+2 to Ctrl+4 for the others, left to right)" },
+      { keys: ["Ctrl", "B"], label: "Add a study pane, or focus the one that is open" },
+      { keys: ["Ctrl", "click"], label: "Open a link, a sidebar item, or a reference in a new pane (middle-click does the same)" },
+      { keys: ["F11"], label: "Focus mode: maximize the focused pane and hide everything else" },
+      { keys: ["Esc"], label: "Leave focus mode; close any panel, menu, or dialog" },
     ],
   },
   {
     title: "Reading",
     rows: [
-      { keys: ["Ctrl", "B"], label: "Show or hide the study panel" },
-      { keys: ["Ctrl", "D"], label: "Bookmark the current chapter or verse" },
-      { keys: ["F11"], label: "Focus mode (text only)" },
-      { keys: ["Esc"], label: "Close any panel, menu, or dialog" },
-    ],
-  },
-  {
-    title: "Text",
-    rows: [
-      { keys: ["Click a verse"], label: "Select it: the study panel follows the selected verse" },
+      { keys: ["Ctrl", "D"], label: "Bookmark the current chapter or selected verse" },
+      { keys: ["Click a verse"], label: "Select it: linked study panes follow the selected verse" },
       { keys: ["Right-click a verse"], label: "Highlight, note, copy, compare, memorize, or bookmark" },
       { keys: ["Select text"], label: "Highlight or annotate just that span" },
       { keys: ["Hover a reference"], label: "Preview the passage; Tab to a reference does the same. Esc closes it" },
