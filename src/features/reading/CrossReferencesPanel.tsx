@@ -1,5 +1,5 @@
 import { useBooks, useCrossReferences } from "../../api/queries";
-import { useNavigationStore } from "../../state/navigationStore";
+import { openPassage, targetFor } from "../../workspace/openContent";
 import type { Book } from "../../api/types";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { refAttrs } from "../../lib/refAttr";
@@ -9,7 +9,6 @@ import { Link2 } from "lucide-react";
 export function CrossReferencesPanel({ book, chapter, activeVerse }: { book: Book; chapter: number; activeVerse: number | null }) {
   const { data: books } = useBooks();
   const { data: refs } = useCrossReferences(book.id, chapter, activeVerse);
-  const goTo = useNavigationStore((s) => s.goTo);
 
   return (
     <div className="flex h-full w-full flex-col">
@@ -29,7 +28,8 @@ export function CrossReferencesPanel({ book, chapter, activeVerse }: { book: Boo
               <button
                 type="button"
                 className="flex w-full items-baseline justify-between rounded-md px-2 py-1.5 text-left hover:bg-hover"
-                onClick={() => goTo({ bookId: r.to_book_id, chapter: r.to_chapter, verse: r.to_verse_start })}
+                onClick={(e) => openPassage({ bookId: r.to_book_id, chapter: r.to_chapter, verse: r.to_verse_start }, { target: targetFor(e) })}
+                onAuxClick={(e) => e.button === 1 && openPassage({ bookId: r.to_book_id, chapter: r.to_chapter, verse: r.to_verse_start }, { target: "new" })}
                 {...refAttrs(ref)}
               >
                 <span className="text-ink">{formatRef(books, ref)}</span>

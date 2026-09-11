@@ -19,9 +19,10 @@ import { openContent } from "./openContent";
  */
 
 /** Keeps the URL and the focused pane's content in step, in both
- * directions. A change made by the workspace is written to the URL with
- * `replace`; a change made elsewhere (sidebar link, deep link, palette)
- * is applied to the focused pane. */
+ * directions. Whichever side changed since the last run wins: a change
+ * made by the workspace is written to the URL with `replace`; a change
+ * made elsewhere (sidebar link, palette) is applied to the focused pane.
+ * On mount the restored workspace wins over whatever hash was left over. */
 function useUrlMirror() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -30,28 +31,30 @@ function useUrlMirror() {
     return focused ? routeFor(focused) : "/";
   });
   const current = location.pathname + location.search;
-  const lastWritten = useRef<string | null>(null);
+  const prev = useRef({ route, current });
+  // The hash update lands asynchronously, so a URL we wrote ourselves can
+  // arrive after the pane has already moved on; it must not be mistaken
+  // for a navigation made elsewhere. Every URL we write is pending until
+  // it arrives.
+  const pending = useRef(new Set<string>());
 
-  // Pane → URL.
   useEffect(() => {
+    const before = prev.current;
+    prev.current = { route, current };
+    const echo = pending.current.delete(current);
     if (route === current) return;
-    lastWritten.current = route;
+    const urlChanged = !echo && current !== before.current && route === before.route;
+    if (urlChanged) {
+      const parsed = parseRoute(location.pathname, location.search);
+      if (parsed) {
+        openContent(parsed.kind, parsed.params as never, { target: "focused" });
+        return;
+      }
+    }
+    pending.current.add(route);
     navigate(route, { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [route]);
-
-  // URL → pane, for navigations the workspace did not make itself.
-  useEffect(() => {
-    if (current === route || current === lastWritten.current) return;
-    const parsed = parseRoute(location.pathname, location.search);
-    if (parsed) {
-      openContent(parsed.kind, parsed.params as never, { target: "focused" });
-    } else {
-      lastWritten.current = route;
-      navigate(route, { replace: true });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [current]);
+  }, [route, current]);
 }
 
 /** On a fresh workspace (first launch after the upgrade, or cleared

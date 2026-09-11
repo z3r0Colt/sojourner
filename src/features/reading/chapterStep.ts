@@ -1,5 +1,5 @@
 import type { Book } from "../../api/types";
-import type { Position } from "../../state/navigationStore";
+import type { Position } from "../../state/workspaceStore";
 
 /** The chapter before or after `position`, crossing book boundaries.
  * Returns null at the very start or end of the Bible. */

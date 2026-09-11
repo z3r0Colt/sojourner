@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Star, X } from "lucide-react";
 import { api } from "../../api/client";
@@ -13,6 +12,7 @@ import {
   useSetSearchSaved,
   useDeleteSearchHistory,
 } from "../../api/queries";
+import { openContent } from "../../workspace/openContent";
 import { Modal } from "../../components/ui/Modal";
 import { Tabs } from "../../components/ui/Tabs";
 import { Button } from "../../components/ui/Button";
@@ -54,7 +54,6 @@ export function SearchOverlay({
   const { data: savedSearches } = useSavedSearches();
   const setSearchSaved = useSetSearchSaved();
   const deleteSearchHistory = useDeleteSearchHistory();
-  const navigate = useNavigate();
 
   useEffect(() => {
     const t = setTimeout(() => setDebounced(query), 250);
@@ -109,7 +108,7 @@ export function SearchOverlay({
         heading: r.title,
         snippet: r.snippet,
         run: () => {
-          navigate(`/resources/${r.resource_id}`);
+          openContent("resource", { id: r.resource_id });
           onClose();
         },
       }));
@@ -120,8 +119,8 @@ export function SearchOverlay({
         heading: `${r.heading}${r.prompt ? ` · ${r.prompt}` : ""}`,
         snippet: r.snippet,
         run: () => {
-          const code = westminsterDocs?.find((d) => d.id === r.document_id)?.code ?? r.document_id;
-          navigate(`/westminster/${code}/${r.section_id}`);
+          const code = westminsterDocs?.find((d) => d.id === r.document_id)?.code ?? String(r.document_id);
+          openContent("westminster", { docCode: code, sectionId: r.section_id });
           onClose();
         },
       }));
@@ -135,7 +134,7 @@ export function SearchOverlay({
         if (r.book_id != null) {
           onJumpToVerse(r.book_id, r.chapter ?? 1, r.verse);
         } else if (tab === "prayer") {
-          navigate("/prayer");
+          openContent("prayer", {});
           onClose();
         }
       },

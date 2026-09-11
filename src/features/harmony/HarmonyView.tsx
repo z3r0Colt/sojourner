@@ -1,8 +1,7 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Columns3 } from "lucide-react";
 import { useBooks, useHarmonySections } from "../../api/queries";
-import { useNavigationStore } from "../../state/navigationStore";
+import { openPassage, targetFor } from "../../workspace/openContent";
 import { HarmonyParallelPanel } from "./HarmonyParallelPanel";
 import { Page } from "../../components/ui/Page";
 import { Button } from "../../components/ui/Button";
@@ -11,8 +10,6 @@ import { LoadingState } from "../../components/ui/EmptyState";
 export function HarmonyView() {
   const { data: books } = useBooks();
   const { data: sections } = useHarmonySections();
-  const goTo = useNavigationStore((s) => s.goTo);
-  const navigate = useNavigate();
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
   return (
@@ -43,10 +40,7 @@ export function HarmonyView() {
                       <button
                         key={i}
                         type="button"
-                        onClick={() => {
-                          goTo({ bookId: r.book_id, chapter: r.chapter_start, verse: r.verse_start ?? undefined });
-                          navigate("/");
-                        }}
+                        onClick={(e) => openPassage({ bookId: r.book_id, chapter: r.chapter_start, verse: r.verse_start ?? undefined }, { target: targetFor(e) })}
                         className="text-accent hover:underline"
                         title={`Open ${name} ${r.label}`}
                       >

@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { save } from "@tauri-apps/plugin-dialog";
 import { Download, NotebookPen, Pencil } from "lucide-react";
 import { api } from "../../api/client";
@@ -22,7 +21,8 @@ import {
   useRemoveChapterNoteTag,
   useTrashToast,
 } from "../../api/queries";
-import { useNavigationStore } from "../../state/navigationStore";
+import { usePaneNavigate } from "../../workspace/PaneContext";
+import { openPassage, targetFor } from "../../workspace/openContent";
 import { NoteEditorModal } from "./NoteEditorModal";
 import { NoteBody } from "./NoteBody";
 import { TagRow, TagFilterBar } from "../../components/TagRow";
@@ -45,8 +45,7 @@ export function NotesListView() {
   const { data: notes } = useAllNotes();
   const { data: chapterNotes } = useAllChapterNotes();
   const { data: books } = useBooks();
-  const goTo = useNavigationStore((s) => s.goTo);
-  const navigate = useNavigate();
+  const navigate = usePaneNavigate();
   const updateNote = useUpdateNote();
   const deleteNote = useDeleteNote();
   const updateChapterNote = useUpdateChapterNote();
@@ -183,7 +182,7 @@ export function NotesListView() {
           title="No notes yet"
           description="While reading, select some text or right-click a verse and choose “Add a note”. Chapter-wide notes live behind the note icon in the reading toolbar."
           action={
-            <Button variant="primary" onClick={() => navigate("/")}>
+            <Button variant="primary" onClick={(e) => navigate("/", e)}>
               Open the Bible
             </Button>
           }
@@ -201,10 +200,7 @@ export function NotesListView() {
                   <button
                     type="button"
                     className="text-sm font-semibold text-accent hover:underline"
-                    onClick={() => {
-                      goTo({ bookId: n.book_id, chapter: n.chapter });
-                      navigate("/");
-                    }}
+                    onClick={(e) => openPassage({ bookId: n.book_id, chapter: n.chapter }, { target: targetFor(e) })}
                   >
                     {formatChapterRef(books, n.book_id, n.chapter)}
                   </button>
@@ -245,10 +241,7 @@ export function NotesListView() {
                       <button
                         type="button"
                         className="text-sm font-semibold text-accent hover:underline"
-                        onClick={() => {
-                          goTo({ bookId: n.book_id, chapter: n.chapter, verse: n.verse_start });
-                          navigate("/");
-                        }}
+                        onClick={(e) => openPassage({ bookId: n.book_id, chapter: n.chapter, verse: n.verse_start }, { target: targetFor(e) })}
                       >
                         {formatRef(books, toPassageRef(n.book_id, n.chapter, n.verse_start, n.verse_end))}
                       </button>

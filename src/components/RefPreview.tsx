@@ -1,9 +1,8 @@
 import { useEffect, type RefObject } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
 import { create } from "zustand";
 import { ArrowUpRight } from "lucide-react";
 import { useBooks, usePassageText } from "../api/queries";
-import { useNavigationStore } from "../state/navigationStore";
+import { openPassage, targetFor } from "../workspace/openContent";
 import { useReadingTypography } from "../state/uiStore";
 import { useViewportClampedPosition } from "../lib/useViewportClampedPosition";
 import { decodeRef, REF_ATTR } from "../lib/refAttr";
@@ -195,18 +194,14 @@ function RefPreviewCard({ passage, x, y }: { passage: PassageRef; x: number; y: 
   const { data: books } = useBooks();
   const { data, isLoading } = usePassageText(passage);
   const typography = useReadingTypography(0.9);
-  const goTo = useNavigationStore((s) => s.goTo);
-  const navigate = useNavigate();
-  const location = useLocation();
   const close = useRefPreviewStore((s) => s.close);
 
   const heading = formatRef(books, passage);
   const verses = data?.verses ?? [];
   const multi = verses.length > 1;
 
-  function open() {
-    goTo({ bookId: passage.book_id, chapter: passage.chapter, verse: passage.verse_start });
-    if (location.pathname !== "/") navigate("/");
+  function open(e: React.MouseEvent) {
+    openPassage({ bookId: passage.book_id, chapter: passage.chapter, verse: passage.verse_start }, { target: targetFor(e) });
     close();
   }
 
@@ -223,7 +218,7 @@ function RefPreviewCard({ passage, x, y }: { passage: PassageRef; x: number; y: 
     >
       <div className="flex items-center justify-between gap-2 border-b border-line py-1 pl-3 pr-1">
         <span className="truncate font-semibold text-ink">{heading}</span>
-        <Button size="sm" variant="ghost" icon={ArrowUpRight} onClick={open} title={`Open ${heading} in the reading view`}>
+        <Button size="sm" variant="ghost" icon={ArrowUpRight} onClick={open} onAuxClick={(e) => e.button === 1 && open(e)} title={`Open ${heading} (Ctrl+click for a new pane)`}>
           Open
         </Button>
       </div>

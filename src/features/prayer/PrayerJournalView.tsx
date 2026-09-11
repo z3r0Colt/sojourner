@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
 import { save } from "@tauri-apps/plugin-dialog";
 import { BookHeart, Download, Pencil, Plus, Trash2 } from "lucide-react";
 import { api } from "../../api/client";
@@ -16,7 +15,7 @@ import {
   useRemovePrayerEntryTag,
   useTrashToast,
 } from "../../api/queries";
-import { useNavigationStore } from "../../state/navigationStore";
+import { openPassage, targetFor } from "../../workspace/openContent";
 import { PrayerEntryEditorModal } from "./PrayerEntryEditorModal";
 import { TagRow, TagFilterBar } from "../../components/TagRow";
 import { Button } from "../../components/ui/Button";
@@ -46,8 +45,6 @@ export function PrayerJournalView() {
   const updateEntry = useUpdatePrayerEntry();
   const deleteEntry = useDeletePrayerEntry();
   const trashToast = useTrashToast();
-  const goTo = useNavigationStore((s) => s.goTo);
-  const navigate = useNavigate();
 
   const [editing, setEditing] = useState<PrayerEntry | null | "new">(null);
   const [query, setQuery] = useState("");
@@ -122,10 +119,7 @@ export function PrayerJournalView() {
               {e.book_id != null && (
                 <button
                   type="button"
-                  onClick={() => {
-                    goTo({ bookId: e.book_id!, chapter: e.chapter!, verse: e.verse_start ?? undefined });
-                    navigate("/");
-                  }}
+                  onClick={(ev) => openPassage({ bookId: e.book_id!, chapter: e.chapter!, verse: e.verse_start ?? undefined }, { target: targetFor(ev) })}
                   className="text-xs text-accent hover:underline"
                 >
                   {formatChapterRef(books, e.book_id, e.chapter!, e.verse_start)}

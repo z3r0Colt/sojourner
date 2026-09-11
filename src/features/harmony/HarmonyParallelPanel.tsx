@@ -1,6 +1,6 @@
-import { useNavigate } from "react-router-dom";
 import { useBooks, useChapter } from "../../api/queries";
-import { useNavigationStore } from "../../state/navigationStore";
+import { useReaderTranslationId } from "../../state/workspaceStore";
+import { openPassage, targetFor } from "../../workspace/openContent";
 import { useReadingTypography } from "../../state/uiStore";
 import type { HarmonyReading } from "../../api/types";
 import { cx } from "../../components/ui/classes";
@@ -12,9 +12,7 @@ import { bookName, joinVerses } from "../../lib/passage";
  * link rather than stitching two chapters' worth of verses together. */
 function GospelColumn({ reading }: { reading: HarmonyReading }) {
   const { data: books } = useBooks();
-  const primaryTranslationId = useNavigationStore((s) => s.primaryTranslationId);
-  const goTo = useNavigationStore((s) => s.goTo);
-  const navigate = useNavigate();
+  const primaryTranslationId = useReaderTranslationId();
   const typography = useReadingTypography(0.85);
   const spansChapters = reading.chapter_start !== reading.chapter_end;
   const { data: verses } = useChapter(spansChapters ? null : primaryTranslationId, reading.book_id, reading.chapter_start);
@@ -24,10 +22,7 @@ function GospelColumn({ reading }: { reading: HarmonyReading }) {
     <div className="min-w-0 rounded-lg border border-line bg-surface-2 p-3">
       <button
         type="button"
-        onClick={() => {
-          goTo({ bookId: reading.book_id, chapter: reading.chapter_start, verse: reading.verse_start ?? undefined });
-          navigate("/");
-        }}
+        onClick={(e) => openPassage({ bookId: reading.book_id, chapter: reading.chapter_start, verse: reading.verse_start ?? undefined }, { target: targetFor(e) })}
         className="mb-1 block text-xs font-semibold text-accent hover:underline"
       >
         {bookName(books, reading.book_id)} {reading.label}

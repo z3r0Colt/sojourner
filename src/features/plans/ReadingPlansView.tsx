@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { ArrowLeft, CalendarCheck, Flame, Play, RotateCcw } from "lucide-react";
 import {
   useBooks,
@@ -11,7 +10,7 @@ import {
   useMarkReadingPlanDay,
   useUnmarkReadingPlanDay,
 } from "../../api/queries";
-import { useNavigationStore } from "../../state/navigationStore";
+import { openPassage, targetFor } from "../../workspace/openContent";
 import type { ReadingPlanReading } from "../../api/types";
 import { Page } from "../../components/ui/Page";
 import { Button } from "../../components/ui/Button";
@@ -27,7 +26,7 @@ function ReadingRefs({
 }: {
   readings: ReadingPlanReading[];
   books: { id: number; name: string }[] | undefined;
-  onNavigate: (bookId: number, chapter: number, verse: number | undefined) => void;
+  onNavigate: (bookId: number, chapter: number, verse: number | undefined, e: React.MouseEvent) => void;
 }) {
   return (
     <span className="space-x-3">
@@ -37,7 +36,7 @@ function ReadingRefs({
           <button
             key={i}
             type="button"
-            onClick={() => onNavigate(r.book_id, r.chapter_start, r.verse_start ?? undefined)}
+            onClick={(e) => onNavigate(r.book_id, r.chapter_start, r.verse_start ?? undefined, e)}
             className="text-accent hover:underline"
             title={`Open ${name} ${r.label}`}
           >
@@ -58,8 +57,6 @@ function PlanDetail({ planCode, onBack }: { planCode: string; onBack: () => void
   const abandonPlan = useAbandonReadingPlan();
   const markDay = useMarkReadingPlanDay();
   const unmarkDay = useUnmarkReadingPlanDay();
-  const goTo = useNavigationStore((s) => s.goTo);
-  const navigate = useNavigate();
 
   const plan = plans?.find((p) => p.code === planCode);
   const progress = progressList?.find((p) => p.plan_code === planCode);
@@ -143,10 +140,7 @@ function PlanDetail({ planCode, onBack }: { planCode: string; onBack: () => void
                 <ReadingRefs
                   readings={d.readings}
                   books={books}
-                  onNavigate={(bookId, chapter, verse) => {
-                    goTo({ bookId, chapter, verse });
-                    navigate("/");
-                  }}
+                  onNavigate={(bookId, chapter, verse, e) => openPassage({ bookId, chapter, verse }, { target: targetFor(e) })}
                 />
               </span>
             </li>
