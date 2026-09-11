@@ -3,17 +3,13 @@ import { useNavigationStore } from "../../state/navigationStore";
 import type { Book } from "../../api/types";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { refAttrs } from "../../lib/refAttr";
-import { toPassageRef } from "../../lib/passage";
+import { formatRef, toPassageRef } from "../../lib/passage";
 import { Link2 } from "lucide-react";
 
 export function CrossReferencesPanel({ book, chapter, activeVerse }: { book: Book; chapter: number; activeVerse: number | null }) {
   const { data: books } = useBooks();
   const { data: refs } = useCrossReferences(book.id, chapter, activeVerse);
   const goTo = useNavigationStore((s) => s.goTo);
-
-  function bookName(id: number) {
-    return books?.find((b) => b.id === id)?.name ?? `#${id}`;
-  }
 
   return (
     <div className="flex h-full w-full flex-col">
@@ -26,22 +22,22 @@ export function CrossReferencesPanel({ book, chapter, activeVerse }: { book: Boo
         )}
         {activeVerse != null && refs && refs.length === 0 && <EmptyState compact title="No cross references for this verse" />}
         <ul className="space-y-0.5">
-          {refs?.map((r, i) => (
+          {refs?.map((r, i) => {
+            const ref = toPassageRef(r.to_book_id, r.to_chapter, r.to_verse_start, r.to_verse_end);
+            return (
             <li key={i}>
               <button
                 type="button"
                 className="flex w-full items-baseline justify-between rounded-md px-2 py-1.5 text-left hover:bg-hover"
                 onClick={() => goTo({ bookId: r.to_book_id, chapter: r.to_chapter, verse: r.to_verse_start })}
-                {...refAttrs(toPassageRef(r.to_book_id, r.to_chapter, r.to_verse_start, r.to_verse_end))}
+                {...refAttrs(ref)}
               >
-                <span className="text-ink">
-                  {bookName(r.to_book_id)} {r.to_chapter}:{r.to_verse_start}
-                  {r.to_verse_end !== r.to_verse_start ? `-${r.to_verse_end}` : ""}
-                </span>
+                <span className="text-ink">{formatRef(books, ref)}</span>
                 <span className="ml-2 shrink-0 text-xs text-ink-4">{r.votes} votes</span>
               </button>
             </li>
-          ))}
+            );
+          })}
         </ul>
       </div>
     </div>

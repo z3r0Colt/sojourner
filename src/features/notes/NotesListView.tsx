@@ -31,7 +31,7 @@ import { Button } from "../../components/ui/Button";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { toast } from "../../components/ui/toast";
 import { cardClass, cx, inputClass, selectSmClass } from "../../components/ui/classes";
-import { refKey, toPassageRef } from "../../lib/passage";
+import { formatChapterRef, formatRef, refKey, toPassageRef, useBookName } from "../../lib/passage";
 import type { Note, ChapterNote } from "../../api/types";
 
 type SortMode = "newest" | "oldest" | "bible";
@@ -82,9 +82,7 @@ export function NotesListView() {
     [allNoteTags, allChapterNoteTags],
   );
 
-  function bookName(id: number) {
-    return books?.find((b) => b.id === id)?.name ?? `#${id}`;
-  }
+  const bookName = useBookName();
   function bookOrder(id: number) {
     return books?.findIndex((b) => b.id === id) ?? 0;
   }
@@ -208,7 +206,7 @@ export function NotesListView() {
                       navigate("/");
                     }}
                   >
-                    {bookName(n.book_id)} {n.chapter}
+                    {formatChapterRef(books, n.book_id, n.chapter)}
                   </button>
                   <span className="text-xs text-ink-3">{formatDate(n.updated_at)}</span>
                 </div>
@@ -252,8 +250,7 @@ export function NotesListView() {
                           navigate("/");
                         }}
                       >
-                        {bookName(n.book_id)} {n.chapter}:{n.verse_start}
-                        {n.verse_end !== n.verse_start ? `-${n.verse_end}` : ""}
+                        {formatRef(books, toPassageRef(n.book_id, n.chapter, n.verse_start, n.verse_end))}
                       </button>
                       <span className="text-xs text-ink-3">{formatDate(n.updated_at)}</span>
                     </div>
@@ -284,7 +281,7 @@ export function NotesListView() {
 
       {editing && (
         <NoteEditorModal
-          title={`Note on ${bookName(editing.book_id)} ${editing.chapter}:${editing.verse_start}`}
+          title={`Note on ${formatRef(books, toPassageRef(editing.book_id, editing.chapter, editing.verse_start, editing.verse_end))}`}
           initialBody={editing.body}
           onSave={(body) => {
             updateNote.mutate({ id: editing.id, body }, { onSuccess: () => toast.success("Note saved") });
@@ -301,7 +298,7 @@ export function NotesListView() {
 
       {editingChapter && (
         <NoteEditorModal
-          title={`Chapter note on ${bookName(editingChapter.book_id)} ${editingChapter.chapter}`}
+          title={`Chapter note on ${formatChapterRef(books, editingChapter.book_id, editingChapter.chapter)}`}
           initialBody={editingChapter.body}
           onSave={(body) => {
             updateChapterNote.mutate({ id: editingChapter.id, body }, { onSuccess: () => toast.success("Note saved") });

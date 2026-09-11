@@ -80,6 +80,7 @@ import { LoadingState } from "../../components/ui/EmptyState";
 import { toast } from "../../components/ui/toast";
 import { confirmTrash } from "../../components/ui/confirm";
 import { checkboxClass, cx, selectSmClass } from "../../components/ui/classes";
+import { formatRef, joinVerses, toPassageRef } from "../../lib/passage";
 import type { Note, Footnote } from "../../api/types";
 
 interface PendingSelection {
@@ -703,11 +704,8 @@ export function ReadingView() {
             const text =
               pending.charStart != null && pending.charEnd != null
                 ? verseText(pending.verseStart).slice(pending.charStart, pending.charEnd)
-                : (verses ?? [])
-                    .filter((v) => v.verse >= pending.verseStart && v.verse <= pending.verseEnd)
-                    .map((v) => v.text)
-                    .join(" ");
-            const ref = `${book.name} ${chapter}:${pending.verseStart}${pending.verseEnd !== pending.verseStart ? `-${pending.verseEnd}` : ""}`;
+                : joinVerses(verses, pending.verseStart, pending.verseEnd);
+            const ref = formatRef([book], toPassageRef(book.id, chapter, pending.verseStart, pending.verseEnd));
             copyWithReference(text, ref);
             toast.success(`Copied ${ref}`);
             window.getSelection()?.removeAllRanges();

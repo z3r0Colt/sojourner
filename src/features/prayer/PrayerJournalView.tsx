@@ -24,6 +24,7 @@ import { EmptyState } from "../../components/ui/EmptyState";
 import { confirmTrash } from "../../components/ui/confirm";
 import { toast } from "../../components/ui/toast";
 import { cardClass, cx, inputClass } from "../../components/ui/classes";
+import { formatChapterRef } from "../../lib/passage";
 import type { PrayerEntry } from "../../api/types";
 
 const SECTIONS: { key: "adoration" | "confession" | "thanksgiving" | "supplication"; label: string }[] = [
@@ -74,10 +75,6 @@ export function PrayerJournalView() {
 
   const baseList = debounced.trim().length > 1 ? searchResults : entries;
   const list = activeTag ? baseList?.filter((e) => (tagsById.get(e.id) ?? []).includes(activeTag)) : baseList;
-
-  function bookName(id: number) {
-    return books?.find((b) => b.id === id)?.name ?? `#${id}`;
-  }
 
   async function exportEntry(entry: PrayerEntry) {
     const destPath = await save({
@@ -131,8 +128,7 @@ export function PrayerJournalView() {
                   }}
                   className="text-xs text-accent hover:underline"
                 >
-                  {bookName(e.book_id)} {e.chapter}
-                  {e.verse_start ? `:${e.verse_start}` : ""}
+                  {formatChapterRef(books, e.book_id, e.chapter!, e.verse_start)}
                 </button>
               )}
             </div>
