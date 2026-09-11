@@ -28,6 +28,9 @@ const GROUPS: { title: string; rows: { keys: string[]; label: string }[] }[] = [
     title: "Reading",
     rows: [
       { keys: ["Ctrl", "D"], label: "Bookmark the current chapter or selected verse" },
+      { keys: ["Ctrl", "="], label: "Larger text, two pixels at a time (Ctrl+scroll over the text does the same)" },
+      { keys: ["Ctrl", "-"], label: "Smaller text" },
+      { keys: ["Ctrl", "0"], label: "Reset the text size to 18px" },
       { keys: ["Click a verse"], label: "Select it: linked study panes follow the selected verse" },
       { keys: ["Right-click a verse"], label: "Highlight, note, copy, compare, memorize, or bookmark" },
       { keys: ["Select text"], label: "Highlight or annotate just that span" },

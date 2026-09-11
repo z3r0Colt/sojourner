@@ -55,6 +55,7 @@ import { closestWithAttr, textOffsetWithin } from "../../lib/domOffsets";
 import { useCopyPassage } from "../../lib/clipboard";
 import { ReadAloudButton } from "../tts/ReadAloudButton";
 import { useTtsReadingHere, useTtsStore } from "../../state/ttsStore";
+import { zoomText } from "./zoom";
 import { Button, IconButton } from "../../components/ui/Button";
 import { Popover, PopoverItem, PopoverLabel } from "../../components/ui/Popover";
 import { Modal } from "../../components/ui/Modal";
@@ -320,6 +321,28 @@ export function ReadingPane() {
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   });
+
+  // Ctrl+scroll over the text steps the (global) text size, like Ctrl+= and
+  // Ctrl+- (F1.7). A native listener, because React registers wheel as
+  // passive and the WebView's own page zoom must be prevented. One step per
+  // 80 ms so a single flick of the wheel is one step, not five.
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    let last = 0;
+    function onWheel(e: WheelEvent) {
+      if (!e.ctrlKey || e.deltaY === 0) return;
+      e.preventDefault();
+      const now = performance.now();
+      if (now - last < 80) return;
+      last = now;
+      zoomText(e.deltaY < 0 ? 1 : -1);
+    }
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+    // The scroll container only exists once the book is known (see the
+    // loading return below), so attach again when that changes.
+  }, [book]);
 
   // Bring the current match into view. Rows are virtualized, so first ask
   // the virtualizer for the verse, then (once the row has mounted) nudge the
