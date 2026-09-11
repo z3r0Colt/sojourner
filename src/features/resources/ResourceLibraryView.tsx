@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { usePaneNavigate } from "../../workspace/PaneContext";
 import { useQuery } from "@tanstack/react-query";
 import { open } from "@tauri-apps/plugin-dialog";
 import { Book, ChevronDown, FileText, Film, FolderOpen, Headphones, HelpCircle, Library, MoreVertical, Plus, Trash2, type LucideIcon } from "lucide-react";
@@ -44,7 +44,7 @@ export function ResourceLibraryView() {
   const addResource = useAddResource();
   const deleteResource = useDeleteResource();
   const bulkImport = useBulkImportResources();
-  const navigate = useNavigate();
+  const navigate = usePaneNavigate();
   const [query, setQuery] = useState("");
   const [debounced, setDebounced] = useState("");
   const [busy, setBusy] = useState(false);
@@ -196,7 +196,7 @@ export function ResourceLibraryView() {
         <ul className="mb-6 space-y-1">
           {deepResults?.map((r) => (
             <li key={r.resource_id}>
-              <button type="button" onClick={() => navigate(`/resources/${r.resource_id}`)} className={cx(cardClass, "block w-full text-left hover:bg-hover/40")}>
+              <button type="button" onClick={(e) => navigate(`/resources/${r.resource_id}`, e)} className={cx(cardClass, "block w-full text-left hover:bg-hover/40")}>
                 <div className="flex items-center gap-2 font-medium text-ink">
                   <KindIcon kind={r.kind} />
                   {r.title}
@@ -243,7 +243,7 @@ export function ResourceLibraryView() {
                     <li key={r.id} className={cardClass}>
                       <div className="flex items-center gap-2">
                         <KindIcon kind={r.kind} />
-                        <button type="button" onClick={() => navigate(`/resources/${r.id}`)} className="min-w-0 flex-1 truncate text-left text-sm font-medium text-ink hover:text-accent hover:underline">
+                        <button type="button" onClick={(e) => navigate(`/resources/${r.id}`, e)} className="min-w-0 flex-1 truncate text-left text-sm font-medium text-ink hover:text-accent hover:underline">
                           {r.title}
                         </button>
                         {!r.has_text && r.kind !== "video" && r.kind !== "audio" && (

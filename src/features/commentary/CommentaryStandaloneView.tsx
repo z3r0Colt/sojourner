@@ -1,9 +1,10 @@
-import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, MessageSquareText } from "lucide-react";
 import { api } from "../../api/client";
 import { useBooks, useCommentarySources } from "../../api/queries";
-import { useNavigationStore } from "../../state/navigationStore";
+import { usePaneNavigate, usePaneParams } from "../../workspace/PaneContext";
+import { PaneLink as Link } from "../../workspace/PaneLink";
+import { openPassage } from "../../workspace/openContent";
 import { useTtsStore } from "../../state/ttsStore";
 import { useReadingTypography } from "../../state/uiStore";
 import { ReadAloudButton } from "../tts/ReadAloudButton";
@@ -15,12 +16,9 @@ import { cx, selectSmClass } from "../../components/ui/classes";
 const navItemClass = "block rounded-md px-2 py-1 text-sm hover:bg-hover";
 
 export function CommentaryStandaloneView() {
-  const { sourceId: sourceIdParam, bookId: bookIdParam, sectionId: sectionIdParam } = useParams();
-  const sourceId = sourceIdParam ? Number(sourceIdParam) : null;
-  const bookId = bookIdParam ? Number(bookIdParam) : null;
-  const sectionId = sectionIdParam ? Number(sectionIdParam) : null;
-  const navigate = useNavigate();
-  const goTo = useNavigationStore((s) => s.goTo);
+  const [params] = usePaneParams("commentary-book");
+  const { sourceId, bookId, sectionId } = params;
+  const navigate = usePaneNavigate();
   const typography = useReadingTypography(0.95);
 
   const { data: books } = useBooks();
@@ -43,10 +41,7 @@ export function CommentaryStandaloneView() {
 
   function jumpToRef(bookOsisCode: string, chapter: number, verse: number) {
     const target = books?.find((b) => b.osis_code === bookOsisCode);
-    if (target) {
-      goTo({ bookId: target.id, chapter, verse });
-      navigate("/");
-    }
+    if (target) openPassage({ bookId: target.id, chapter, verse });
   }
 
   const sectionIdx = toc?.findIndex((s) => s.id === activeSectionId) ?? -1;

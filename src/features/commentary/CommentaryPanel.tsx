@@ -1,15 +1,14 @@
 import { useRef } from "react";
-import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { BookOpenText, MessageSquareText } from "lucide-react";
 import { api } from "../../api/client";
 import { useCommentaryForPassage, useCommentarySources } from "../../api/queries";
-import { useNavigationStore } from "../../state/navigationStore";
 import { useTtsStore } from "../../state/ttsStore";
 import { useReadingTypography } from "../../state/uiStore";
 import { ReadAloudButton } from "../tts/ReadAloudButton";
 import { ReadAloudWords } from "../tts/ReadAloudWords";
+import { PaneLink } from "../../workspace/PaneLink";
 import type { Book } from "../../api/types";
 import { selectSmClass, cx } from "../../components/ui/classes";
 import { EmptyState, LoadingState } from "../../components/ui/EmptyState";
@@ -18,18 +17,22 @@ export function CommentaryPanel({
   book,
   chapter,
   activeVerse,
+  sourceId: requestedSourceId,
+  onSourceChange,
   onJumpToVerse,
   onJumpToRef,
 }: {
   book: Book;
   chapter: number;
   activeVerse: number | null;
+  /** The chosen source, or null for the first installed one. */
+  sourceId: number | null;
+  onSourceChange: (sourceId: number) => void;
   onJumpToVerse: (chapter: number, verse: number) => void;
   onJumpToRef: (bookOsisCode: string, chapter: number, verse: number) => void;
 }) {
   const { data: sources } = useCommentarySources();
-  const { activeCommentarySourceId, setActiveCommentarySource } = useNavigationStore();
-  const sourceId = activeCommentarySourceId ?? sources?.[0]?.id ?? null;
+  const sourceId = requestedSourceId ?? sources?.[0]?.id ?? null;
   const typography = useReadingTypography(0.85);
 
   const { data: hasCommentary } = useQuery({
@@ -57,12 +60,7 @@ export function CommentaryPanel({
   return (
     <div className="flex h-full w-full flex-col">
       <div className="flex items-center gap-1.5 border-b border-line px-2 py-1.5">
-        <select
-          aria-label="Commentary source"
-          className={cx(selectSmClass, "min-w-0 flex-1")}
-          value={sourceId ?? ""}
-          onChange={(e) => setActiveCommentarySource(Number(e.target.value))}
-        >
+        <select aria-label="Commentary source" className={cx(selectSmClass, "min-w-0 flex-1")} value={sourceId ?? ""} onChange={(e) => onSourceChange(Number(e.target.value))}>
           {sources?.map((s) => (
             <option key={s.id} value={s.id}>
               {s.title}
@@ -70,14 +68,14 @@ export function CommentaryPanel({
           ))}
         </select>
         {sourceId != null && (
-          <Link
+          <PaneLink
             to={`/commentary/${sourceId}/${book.id}`}
             className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-ink-3 hover:bg-hover hover:text-ink"
             title="Read this commentary as a book"
             aria-label="Read this commentary as a book"
           >
             <BookOpenText className="h-4 w-4" aria-hidden="true" />
-          </Link>
+          </PaneLink>
         )}
         <ReadAloudButton
           title={`${sourceTitle}: ${book.name} ${chapter}`}
@@ -98,9 +96,9 @@ export function CommentaryPanel({
             compact
             title={`No commentary on ${book.name} in this source`}
             action={
-              <Link to={`/commentary/${sourceId}`} className="text-sm text-accent hover:underline">
+              <PaneLink to={`/commentary/${sourceId}`} className="text-sm text-accent hover:underline">
                 Browse the books it does cover
-              </Link>
+              </PaneLink>
             }
           />
         )}

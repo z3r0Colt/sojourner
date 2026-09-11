@@ -1,5 +1,4 @@
 import { useRef, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, ChevronDown, Link2, Paperclip } from "lucide-react";
 import {
   useResource,
@@ -10,7 +9,9 @@ import {
 } from "../../api/queries";
 import { useQueryClient } from "@tanstack/react-query";
 import { api } from "../../api/client";
-import { useNavigationStore } from "../../state/navigationStore";
+import { resolveBiblePane, useWorkspaceStore } from "../../state/workspaceStore";
+import { usePaneNavigate, usePaneParams } from "../../workspace/PaneContext";
+import { openPassage, targetFor } from "../../workspace/openContent";
 import { EpubReader } from "./EpubReader";
 import { PdfReader } from "./PdfReader";
 import { MobiTextReader } from "./MobiTextReader";
@@ -23,16 +24,20 @@ import { toast } from "../../components/ui/toast";
 import { cx, selectSmClass } from "../../components/ui/classes";
 
 export function ResourceReaderView() {
-  const { id: idParam } = useParams();
-  const id = idParam ? Number(idParam) : null;
-  const navigate = useNavigate();
+  const [params] = usePaneParams("resource");
+  const id = params.id || null;
+  const navigate = usePaneNavigate();
   const qc = useQueryClient();
   const { data: resource } = useResource(id);
   const { data: allResources } = useResources();
   const { data: books } = useBooks();
   const { data: passageLinks } = useResourcePassageLinksForResource(id);
   const { data: resourceText } = useResourceText(resource?.has_text ? id : null);
-  const { position, goTo } = useNavigationStore();
+  // The passage to link to is whatever the Bible pane beside this one is on.
+  const position = useWorkspaceStore((s) => {
+    const bible = resolveBiblePane(s);
+    return bible ? { bookId: bible.params.bookId, chapter: bible.params.chapter, verse: bible.params.activeVerse ?? undefined } : null;
+  });
   const [showLinkPanel, setShowLinkPanel] = useState(false);
   const [linkToResourceId, setLinkToResourceId] = useState<number | "">("");
   const mediaRef = useRef<HTMLVideoElement | HTMLAudioElement>(null);
@@ -115,10 +120,7 @@ export function ResourceReaderView() {
                 <button
                   type="button"
                   className="text-accent hover:underline"
-                  onClick={() => {
-                    goTo({ bookId: l.book_id, chapter: l.chapter, verse: l.verse_start ?? undefined });
-                    navigate("/");
-                  }}
+                  onClick={(e) => openPassage({ bookId: l.book_id, chapter: l.chapter, verse: l.verse_start ?? undefined }, { target: targetFor(e) })}
                 >
                   {bookName(l.book_id)} {l.chapter}
                   {l.verse_start ? `:${l.verse_start}` : ""}

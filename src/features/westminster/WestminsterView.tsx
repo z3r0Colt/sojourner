@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { BookA, ChevronDown, ChevronLeft, ChevronRight, ListTree, Search } from "lucide-react";
 import { api } from "../../api/client";
@@ -14,7 +13,9 @@ import {
   useSuggestedResourcesForTopic,
   useDictionaryEntryByTerm,
 } from "../../api/queries";
-import { useNavigationStore } from "../../state/navigationStore";
+import { usePaneNavigate, usePaneParams } from "../../workspace/PaneContext";
+import { PaneLink as Link } from "../../workspace/PaneLink";
+import { openPassage, targetFor } from "../../workspace/openContent";
 import { useReadingTypography } from "../../state/uiStore";
 import type { WestminsterProofRef, DoctrineTopic } from "../../api/types";
 import { Tabs } from "../../components/ui/Tabs";
@@ -52,14 +53,15 @@ function parseQuestionHeading(heading: string): { chapter: number; section: numb
 const sidebarItemClass = "block w-full border-b border-line px-3 py-2 text-left text-sm hover:bg-hover";
 
 export function WestminsterView() {
-  const { docCode, sectionId: sectionIdParam } = useParams();
-  const navigate = useNavigate();
-  const goTo = useNavigationStore((s) => s.goTo);
+  const [params] = usePaneParams("westminster");
+  const docCode = params.docCode ?? undefined;
+  const sectionIdParam = params.sectionId;
+  const navigate = usePaneNavigate();
   const { data: documents } = useWestminsterDocuments();
   const { data: books } = useBooks();
   const doc = documents?.find((d) => d.code === docCode) ?? documents?.[0];
   const { data: sections } = useWestminsterSections(doc?.id ?? null);
-  const sectionId = sectionIdParam ? Number(sectionIdParam) : sections?.[0]?.id ?? null;
+  const sectionId = sectionIdParam ?? sections?.[0]?.id ?? null;
   const { data: section } = useWestminsterSection(sectionId);
   const typography = useReadingTypography(0.95);
 
@@ -157,10 +159,7 @@ export function WestminsterView() {
             className="text-accent hover:underline"
             title={refs?.map((r) => `${bookName(r.book_id)} ${r.chapter}:${r.verse_start}`).join("; ")}
             onClick={() => {
-              if (first) {
-                goTo({ bookId: first.book_id, chapter: first.chapter, verse: first.verse_start });
-                navigate("/");
-              }
+              if (first) openPassage({ bookId: first.book_id, chapter: first.chapter, verse: first.verse_start });
             }}
           >
             [{marker}]
@@ -204,9 +203,9 @@ export function WestminsterView() {
                     <button
                       key={r.section_id}
                       type="button"
-                      onClick={() => {
+                      onClick={(e) => {
                         const targetDoc = documents?.find((d) => d.id === r.document_id);
-                        if (targetDoc) navigate(`/westminster/${targetDoc.code}/${r.section_id}`);
+                        if (targetDoc) navigate(`/westminster/${targetDoc.code}/${r.section_id}`, e);
                       }}
                       className={sidebarItemClass}
                     >
@@ -243,7 +242,7 @@ export function WestminsterView() {
                     <li key={t.id}>
                       <button
                         type="button"
-                        onClick={() => navigate(`/westminster/${t.document_code}/${t.westminster_section_id}`)}
+                        onClick={(e) => navigate(`/westminster/${t.document_code}/${t.westminster_section_id}`, e)}
                         className={cx(
                           "flex w-full items-baseline justify-between rounded-md px-2 py-1 text-left text-sm hover:bg-hover",
                           currentTopic?.id === t.id ? "bg-accent-soft font-medium text-accent" : "text-ink-2",
@@ -296,10 +295,7 @@ export function WestminsterView() {
                           key={i}
                           type="button"
                           className="mr-2 text-accent hover:underline"
-                          onClick={() => {
-                            goTo({ bookId: r.book_id, chapter: r.chapter, verse: r.verse_start });
-                            navigate("/");
-                          }}
+                          onClick={(e) => openPassage({ bookId: r.book_id, chapter: r.chapter, verse: r.verse_start }, { target: targetFor(e) })}
                         >
                           {bookName(r.book_id)} {r.chapter}:{r.verse_start}
                           {r.verse_end !== r.verse_start ? `-${r.verse_end}` : ""}

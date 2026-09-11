@@ -1,16 +1,17 @@
 import { useEffect, useState } from "react";
-import { Outlet, Link, useNavigate, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Compass, Keyboard, Search, X } from "lucide-react";
 import { useBooks, useBookmarks, useCreateBookmark, useDeleteBookmark, useTranslations } from "../api/queries";
-import { api } from "../api/client";
-import { useNavigationStore } from "../state/navigationStore";
 import { useUiStore } from "../state/uiStore";
+import { STUDY_KINDS, findPane, resolveBiblePane, useReaderTranslationId, useWorkspaceStore } from "../state/workspaceStore";
 import { GoToCommandPalette } from "../features/navigation/GoToCommandPalette";
 import { SearchOverlay } from "../features/search/SearchOverlay";
 import { TtsPlayerBar } from "../features/tts/TtsPlayerBar";
 import { Sidebar } from "./Sidebar";
 import { ShortcutsModal } from "./ShortcutsModal";
 import { RefPreviewHost } from "../components/RefPreview";
+import { Workspace } from "../workspace/Workspace";
+import { openContent, openPassage } from "../workspace/openContent";
 import { Button, IconButton } from "../components/ui/Button";
 import { Kbd } from "../components/ui/Page";
 import { toast } from "../components/ui/toast";
@@ -26,17 +27,16 @@ function isTypingTarget(el: EventTarget | null): boolean {
 
 export function AppShell() {
   const distractionFreeMode = useUiStore((s) => s.distractionFreeMode);
-  const toggleDistractionFreeMode = useUiStore((s) => s.toggleDistractionFreeMode);
-  const toggleCommentaryPanel = useUiStore((s) => s.toggleCommentaryPanel);
+  const setDistractionFreeMode = useUiStore((s) => s.setDistractionFreeMode);
   const { data: books } = useBooks();
   const { data: translations } = useTranslations();
   const { data: bookmarks } = useBookmarks();
   const createBookmark = useCreateBookmark();
   const deleteBookmark = useDeleteBookmark();
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { primaryTranslationId, position, activeVerse, setPrimaryTranslation, goTo, goBack, goForward, history, future } =
-    useNavigationStore();
+  const readerTranslationId = useReaderTranslationId();
+  const focusedPane = useWorkspaceStore((s) => findPane(s.panes, s.focusedPaneId));
+  const canGoBack = (focusedPane?.history.length ?? 0) > 0;
+  const canGoForward = (focusedPane?.future.length ?? 0) > 0;
 
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -49,41 +49,48 @@ export function AppShell() {
     setShowTutorialBanner(false);
   }
 
-  // Bootstrap: pick a default translation and restore the last reading position.
-  useEffect(() => {
-    if (!translations || translations.length === 0 || !books || books.length === 0) return;
-    if (primaryTranslationId == null) {
-      const preferred = translations.find((t) => t.code === "KJV") ?? translations[0];
-      setPrimaryTranslation(preferred.id);
-    }
-    if (position == null) {
-      api.getReadingPosition().then((pos) => {
-        if (pos && pos.book_id != null && pos.chapter != null) {
-          goTo({ bookId: pos.book_id, chapter: pos.chapter, verse: pos.verse ?? undefined }, { pushHistory: false });
-        } else {
-          goTo({ bookId: 1, chapter: 1 }, { pushHistory: false });
-        }
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [translations, books]);
+  function goBack() {
+    const s = useWorkspaceStore.getState();
+    s.goBack(s.focusedPaneId);
+  }
+  function goForward() {
+    const s = useWorkspaceStore.getState();
+    s.goForward(s.focusedPaneId);
+  }
 
+  /** Ctrl+D: bookmark the chapter (or selected verse) of the Bible pane the
+   * reader is working in. */
   function toggleBookmarkHere() {
-    if (!position || !books) return;
-    const verse = location.pathname === "/" ? (activeVerse ?? undefined) : undefined;
-    const existing = bookmarks?.find(
-      (b) => b.book_id === position.bookId && b.chapter === position.chapter && (b.verse ?? null) === (verse ?? null),
-    );
-    const bookName = books.find((b) => b.id === position.bookId)?.name ?? "";
-    const label = `${bookName} ${position.chapter}${verse ? `:${verse}` : ""}`;
+    const bible = resolveBiblePane(useWorkspaceStore.getState());
+    if (!bible || !books) return;
+    const { bookId, chapter, activeVerse } = bible.params;
+    const verse = activeVerse ?? undefined;
+    const existing = bookmarks?.find((b) => b.book_id === bookId && b.chapter === chapter && (b.verse ?? null) === (verse ?? null));
+    const bookName = books.find((b) => b.id === bookId)?.name ?? "";
+    const label = `${bookName} ${chapter}${verse ? `:${verse}` : ""}`;
     if (existing) {
       deleteBookmark.mutate(existing.id, { onSuccess: () => toast.info(`Bookmark removed: ${label}`) });
     } else {
-      createBookmark.mutate(
-        { bookId: position.bookId, chapter: position.chapter, verse },
-        { onSuccess: () => toast.success(`Bookmarked ${label}`) },
-      );
+      createBookmark.mutate({ bookId, chapter, verse }, { onSuccess: () => toast.success(`Bookmarked ${label}`) });
     }
+  }
+
+  /** Ctrl+B: focus a study pane if one is open, otherwise add a commentary pane. */
+  function addOrFocusStudyPane() {
+    const s = useWorkspaceStore.getState();
+    const study = s.panes.find((p) => STUDY_KINDS.has(p.kind));
+    if (study) s.focusPane(study.id);
+    else openContent("commentary", {}, { target: "new" });
+  }
+
+  function enterFocusMode() {
+    const s = useWorkspaceStore.getState();
+    s.setMaximized(s.focusedPaneId);
+    setDistractionFreeMode(true);
+  }
+  function exitFocusMode() {
+    useWorkspaceStore.getState().setMaximized(null);
+    setDistractionFreeMode(false);
   }
 
   useEffect(() => {
@@ -101,22 +108,29 @@ export function AppShell() {
         setShortcutsOpen((v) => !v);
       } else if (ctrl && key === "b" && !isTypingTarget(e.target)) {
         e.preventDefault();
-        toggleCommentaryPanel();
+        addOrFocusStudyPane();
       } else if (ctrl && key === "d" && !isTypingTarget(e.target)) {
         e.preventDefault();
         toggleBookmarkHere();
       } else if (ctrl && (key === "[" || key === "]") && !isTypingTarget(e.target)) {
         e.preventDefault();
-        if (!books || !position) return;
-        const next = stepChapter(books, position, key === "]" ? 1 : -1);
-        if (next) {
-          goTo(next);
-          if (location.pathname !== "/") navigate("/");
+        const bible = resolveBiblePane(useWorkspaceStore.getState());
+        if (!books || !bible) return;
+        const next = stepChapter(books, { bookId: bible.params.bookId, chapter: bible.params.chapter }, key === "]" ? 1 : -1);
+        if (next) openPassage(next, { target: bible.id });
+      } else if (ctrl && !e.altKey && e.key >= "1" && e.key <= "4" && !isTypingTarget(e.target)) {
+        const s = useWorkspaceStore.getState();
+        const pane = s.panes[Number(e.key) - 1];
+        if (pane) {
+          e.preventDefault();
+          s.focusPane(pane.id);
         }
       } else if (e.key === "F11") {
         e.preventDefault();
-        if (location.pathname !== "/") navigate("/");
-        toggleDistractionFreeMode();
+        if (distractionFreeMode) exitFocusMode();
+        else enterFocusMode();
+      } else if (e.key === "Escape" && distractionFreeMode) {
+        exitFocusMode();
       } else if (e.altKey && e.key === "ArrowLeft") {
         e.preventDefault();
         goBack();
@@ -136,8 +150,8 @@ export function AppShell() {
       <div className="flex min-w-0 flex-1 flex-col">
         {!distractionFreeMode && (
           <header className="flex h-11 shrink-0 items-center gap-1 border-b border-line bg-surface px-2">
-            <IconButton icon={ArrowLeft} label="Back (Alt+Left)" onClick={goBack} disabled={history.length === 0} />
-            <IconButton icon={ArrowRight} label="Forward (Alt+Right)" onClick={goForward} disabled={future.length === 0} />
+            <IconButton icon={ArrowLeft} label="Back (Alt+Left)" onClick={goBack} disabled={!canGoBack} />
+            <IconButton icon={ArrowRight} label="Forward (Alt+Right)" onClick={goForward} disabled={!canGoForward} />
             <div className="min-w-0 flex-1" />
             <Button variant="ghost" icon={Compass} onClick={() => setPaletteOpen(true)} title="Jump to a reference, Strong's number, or term (Ctrl+K)">
               Go to
@@ -162,8 +176,8 @@ export function AppShell() {
           </div>
         )}
 
-        <main className="min-h-0 flex-1 overflow-y-auto">
-          <Outlet />
+        <main className="min-h-0 flex-1">
+          <Workspace />
         </main>
 
         <TtsPlayerBar />
@@ -172,12 +186,11 @@ export function AppShell() {
       {paletteOpen && books && (
         <GoToCommandPalette
           books={books}
-          translationId={primaryTranslationId}
-          translationLabel={translations?.find((t) => t.id === primaryTranslationId)?.name}
+          translationId={readerTranslationId}
+          translationLabel={translations?.find((t) => t.id === readerTranslationId)?.name}
           onClose={() => setPaletteOpen(false)}
           onNavigate={(p) => {
-            goTo(p);
-            navigate("/");
+            openPassage(p);
             setPaletteOpen(false);
           }}
         />
@@ -186,8 +199,7 @@ export function AppShell() {
         <SearchOverlay
           onClose={() => setSearchOpen(false)}
           onJumpToVerse={(bookId, chapter, verse) => {
-            goTo({ bookId, chapter, verse: verse ?? undefined });
-            navigate("/");
+            openPassage({ bookId, chapter, verse: verse ?? undefined });
             setSearchOpen(false);
           }}
         />
