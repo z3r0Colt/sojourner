@@ -15,6 +15,7 @@ import {
   NotebookPen,
   ScrollText,
   Settings,
+  StickyNote,
   type LucideIcon,
 } from "lucide-react";
 import type { Book, CommentarySource, DictionaryEntrySummary, Resource, Translation, WestminsterDocument } from "../api/types";
@@ -124,6 +125,15 @@ export const PANE_KINDS: Registry = {
     acceptsPassage: true,
     listed: true,
   },
+  mine: {
+    kind: "mine",
+    label: "Mine",
+    icon: StickyNote,
+    title: (p, ctx) => passageTitle("Mine", p, ctx),
+    defaultWidth: 420,
+    acceptsPassage: true,
+    listed: true,
+  },
   westminster: {
     kind: "westminster",
     label: "Confessions",
@@ -207,7 +217,7 @@ export function paneTitle(content: PaneContent, ctx: TitleContext): string {
 export const PANE_KIND_LIST_LISTED: readonly PaneKind[] = (Object.keys(PANE_KINDS) as PaneKind[]).filter((k) => PANE_KINDS[k].listed);
 
 /** The study-panel kinds, in the order the Add pane strip shows them. */
-export const STUDY_STRIP_KINDS: readonly PaneKind[] = ["commentary", "crossrefs", "confession-for-passage", "metrical"];
+export const STUDY_STRIP_KINDS: readonly PaneKind[] = ["commentary", "crossrefs", "confession-for-passage", "metrical", "mine"];
 
 export { PASSAGE_KINDS };
 
@@ -232,6 +242,8 @@ export function routeFor(content: PaneContent): string {
       return "/study/confessions";
     case "metrical":
       return "/study/metrical";
+    case "mine":
+      return "/study/mine";
     case "westminster":
       return content.params.docCode
         ? `/westminster/${content.params.docCode}${content.params.sectionId != null ? `/${content.params.sectionId}` : ""}`
@@ -286,6 +298,7 @@ export function parseRoute(pathname: string, search = ""): ContentRequest | null
       if (a === "crossrefs") return { kind: "crossrefs", params: {} };
       if (a === "confessions") return { kind: "confession-for-passage", params: {} };
       if (a === "metrical") return { kind: "metrical", params: {} };
+      if (a === "mine") return { kind: "mine", params: {} };
       return null;
     case "westminster":
       return { kind: "westminster", params: { docCode: a ?? null, sectionId: num(b) } };

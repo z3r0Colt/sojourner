@@ -8,6 +8,7 @@ import { CommentaryPanel } from "../../features/commentary/CommentaryPanel";
 import { CrossReferencesPanel } from "../../features/reading/CrossReferencesPanel";
 import { ConfessionForPassagePanel } from "../../features/reading/ConfessionForPassagePanel";
 import { MetricalPsalmPanel } from "../../features/reading/MetricalPsalmPanel";
+import { MyNotesPane } from "../../features/reading/MyNotesPane";
 import { useUiStore } from "../../state/uiStore";
 import { useWorkspaceStore } from "../../state/workspaceStore";
 import { usePane, usePaneParams } from "../PaneContext";
@@ -91,6 +92,16 @@ export function ConfessionPane() {
   const book = books?.find((b) => b.id === params.bookId);
   if (!book) return <LoadingState className="p-8" />;
   return <ConfessionForPassagePanel book={book} chapter={params.chapter} activeVerse={params.verse} />;
+}
+
+/** "Mine" (F2.4): the linked chapter's notes, chapter notes, highlights,
+ * and the notes elsewhere that mention it. */
+export function MinePane() {
+  const [params] = usePaneParams("mine");
+  const { data: books } = useBooks();
+  const book = books?.find((b) => b.id === params.bookId);
+  if (!book) return <LoadingState className="p-8" />;
+  return <MyNotesPane book={book} chapter={params.chapter} activeVerse={params.verse} />;
 }
 
 export function MetricalPane() {

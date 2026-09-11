@@ -7,7 +7,7 @@ import { DictionaryView } from "../features/dictionary/DictionaryView";
 import { ResourceReaderView } from "../features/resources/ResourceReaderView";
 import { CommentaryStandaloneView } from "../features/commentary/CommentaryStandaloneView";
 import { SettingsView } from "../features/settings/SettingsView";
-import { CommentaryPane, ConfessionPane, CrossRefsPane, InterlinearPane, MetricalPane } from "./panes/StudyPanes";
+import { CommentaryPane, ConfessionPane, CrossRefsPane, InterlinearPane, MetricalPane, MinePane } from "./panes/StudyPanes";
 import { HarmonyPane, HighlightsPane, MemoryPane, NotesPane, PlansPane, PrayerPane, ResourcesPane } from "./panes/PagePanes";
 
 /** Kind → the component that renders it. Each reads its params from the
@@ -21,6 +21,7 @@ export const PANE_COMPONENTS: Record<PaneKind, ComponentType> = {
   crossrefs: CrossRefsPane,
   "confession-for-passage": ConfessionPane,
   metrical: MetricalPane,
+  mine: MinePane,
   westminster: WestminsterView,
   lexicon: LexiconView,
   dictionary: DictionaryView,

@@ -111,6 +111,7 @@ export type PaneContent =
   | { kind: "crossrefs"; params: PassageParams }
   | { kind: "confession-for-passage"; params: PassageParams }
   | { kind: "metrical"; params: PassageParams }
+  | { kind: "mine"; params: PassageParams }
   | { kind: "westminster"; params: WestminsterParams }
   | { kind: "lexicon"; params: LexiconParams }
   | { kind: "dictionary"; params: DictionaryParams }
@@ -135,6 +136,7 @@ export const PANE_KIND_LIST: readonly PaneKind[] = [
   "crossrefs",
   "confession-for-passage",
   "metrical",
+  "mine",
   "westminster",
   "lexicon",
   "dictionary",
@@ -158,10 +160,11 @@ export const PASSAGE_KINDS: ReadonlySet<PaneKind> = new Set<PaneKind>([
   "crossrefs",
   "confession-for-passage",
   "metrical",
+  "mine",
 ]);
 
-/** Kinds the study panel used to hold: what Ctrl+B adds or focuses. */
-export const STUDY_KINDS: ReadonlySet<PaneKind> = new Set<PaneKind>(["commentary", "crossrefs", "confession-for-passage", "metrical"]);
+/** Kinds the study panel used to hold (plus "Mine", F2.4): what Ctrl+B adds or focuses. */
+export const STUDY_KINDS: ReadonlySet<PaneKind> = new Set<PaneKind>(["commentary", "crossrefs", "confession-for-passage", "metrical", "mine"]);
 
 export function isPaneKind(v: unknown): v is PaneKind {
   return typeof v === "string" && (PANE_KIND_LIST as readonly string[]).includes(v);
