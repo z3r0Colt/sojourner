@@ -50,7 +50,7 @@ export interface BibleParams {
   activeVerse: number | null;
   paragraphMode: boolean;
   redLetterMode: boolean;
-  /** Reserved for find-in-chapter (F1.2). */
+  /** Find-in-chapter query; undefined while the pane's find bar is closed. */
   findQuery?: string;
 }
 

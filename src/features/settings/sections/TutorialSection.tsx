@@ -34,6 +34,15 @@ const CATEGORIES: Category[] = [
           </>
         ),
       },
+      {
+        q: "Find a word in the chapter",
+        a: (
+          <>
+            Press <Kbd>Ctrl</Kbd>+<Kbd>G</Kbd> (or the find button in the reading toolbar) and type. Every match is marked in the text and the count shows beside the box; <Kbd>Enter</Kbd> and <Kbd>Shift</Kbd>+<Kbd>Enter</Kbd> step through them, “Whole word” narrows the match, and <Kbd>Esc</Kbd> closes the bar and clears the marks. Each pane has its own find.
+          </>
+        ),
+      },
+      { q: "Read on to the next chapter", a: "A card below the last verse offers the next and previous chapters; click it to keep reading (Ctrl+click opens the chapter in a new pane)." },
       { q: "Change translation", a: "Pick from the translation dropdown in the reading toolbar. “Compare” opens the same chapter in another translation in a pane beside it, linked so both turn pages together; “Interlinear” opens the Hebrew or Greek beneath the English in its own pane." },
       { q: "Text size, spacing, font, and theme", a: "The Aa button in the reading toolbar. These settings apply to commentary, confessions, and dictionary text too, and can also be changed under Settings → Reading." },
       { q: "Paragraph mode, verse numbers, red letters", a: "The sliders button in the reading toolbar holds the view options, including printing the chapter." },

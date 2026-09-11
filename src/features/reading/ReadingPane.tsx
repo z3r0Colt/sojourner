@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { Bookmark, BookmarkCheck, Columns2, Languages, Maximize2, MoreHorizontal, Paperclip, Printer, SlidersHorizontal, Sparkles, Square, StickyNote, Type, Volume2 } from "lucide-react";
+import { Bookmark, BookmarkCheck, Columns2, Languages, Maximize2, MoreHorizontal, Paperclip, Printer, SlidersHorizontal, Sparkles, Square, StickyNote, TextSearch, Type, Volume2 } from "lucide-react";
 import { useReadingTypography, useUiStore } from "../../state/uiStore";
-import { useWorkspaceStore } from "../../state/workspaceStore";
+import { resolveBiblePane, useWorkspaceStore } from "../../state/workspaceStore";
 import {
   useBooks,
   useBookmarks,
@@ -44,6 +44,8 @@ import { ParagraphVerses } from "./ParagraphReadingView";
 import { ChapterNav } from "./ChapterNav";
 import { ChapterEndCard } from "./ChapterEndCard";
 import { BookmarksMenu } from "./BookmarksMenu";
+import { FindBar } from "./FindBar";
+import { findMatches, findRangesByVerse } from "./findMatches";
 import { computeRedLetterSpans } from "./redLetterSpans";
 import { closestWithAttr, textOffsetWithin } from "../../lib/domOffsets";
 import { copyWithReference } from "../../lib/clipboard";
@@ -96,7 +98,7 @@ export function ReadingPane() {
   const compact = paneWidth > 0 && paneWidth < 520;
   const narrow = paneWidth > 0 && paneWidth < 820;
   const [params, setParams] = usePaneParams("bible");
-  const { translationId, bookId, chapter, verse: scrollTarget, activeVerse, paragraphMode, redLetterMode } = params;
+  const { translationId, bookId, chapter, verse: scrollTarget, activeVerse, paragraphMode, redLetterMode, findQuery } = params;
   const paneNavigate = usePaneNavigate();
   const ready = useWorkspaceStore((s) => s.ready);
   const setLastTranslation = useWorkspaceStore((s) => s.setLastTranslation);
@@ -209,6 +211,14 @@ export function ReadingPane() {
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Find in chapter (F1.2). The query is a pane param (per pane, persisted
+  // with the workspace; undefined while the bar is closed); the whole-word
+  // toggle and the current match are this pane's own state.
+  const findOpen = findQuery !== undefined;
+  const [findWholeWord, setFindWholeWord] = useState(false);
+  const [findIndex, setFindIndex] = useState(0);
+  const [findFocusToken, setFindFocusToken] = useState(0);
+
   // Virtualized so long chapters (Psalm 119, 176 verses) don't render every
   // verse row -- with highlights, note markers, and footnotes each row can be
   // non-trivial -- at once. Rows vary in height (wrapped text, highlight
@@ -221,6 +231,65 @@ export function ReadingPane() {
   });
 
   const setActiveVerse = (v: number | null) => setParams({ activeVerse: v });
+
+  const matches = useMemo(() => (findOpen && verses && !printing ? findMatches(verses, findQuery, findWholeWord) : []), [findOpen, verses, findQuery, findWholeWord, printing]);
+  const currentFind = matches.length === 0 ? -1 : Math.min(findIndex, matches.length - 1);
+  const findByVerse = useMemo(() => findRangesByVerse(matches, currentFind), [matches, currentFind]);
+
+  function openFind() {
+    if (!findOpen) setParams({ findQuery: "" });
+    else setFindFocusToken((t) => t + 1);
+  }
+  function closeFind() {
+    setParams({ findQuery: undefined });
+    setFindIndex(0);
+  }
+  function stepFind(direction: 1 | -1) {
+    if (matches.length === 0) return;
+    setFindIndex((currentFind + direction + matches.length) % matches.length);
+  }
+
+  // Ctrl+G opens (or refocuses) the find bar of the Bible pane the reader is
+  // working in: this pane handles it only when it is that pane, so two
+  // Bible panes never both react. Page-scoped, so it lives here rather than
+  // in the shell.
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (!(e.ctrlKey || e.metaKey) || e.altKey || e.key.toLowerCase() !== "g") return;
+      if (resolveBiblePane(useWorkspaceStore.getState())?.id !== paneId) return;
+      e.preventDefault();
+      openFind();
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  });
+
+  // Bring the current match into view. Rows are virtualized, so first ask
+  // the virtualizer for the verse, then (once the row has mounted) nudge the
+  // mark itself into view; paragraph mode renders everything, so the mark
+  // is there at once.
+  useEffect(() => {
+    if (currentFind < 0 || !verses) return;
+    const match = matches[currentFind];
+    if (!paragraphMode) {
+      const index = verses.findIndex((v) => v.verse === match.verse);
+      if (index >= 0) rowVirtualizer.scrollToIndex(index, { align: "auto" });
+    }
+    let tries = 0;
+    let timer: number | null = null;
+    function reveal() {
+      const el = containerRef.current?.querySelector("[data-find-current]");
+      if (el) {
+        el.scrollIntoView({ block: "nearest" });
+        return;
+      }
+      if (tries++ < 8) timer = window.setTimeout(reveal, 40);
+    }
+    timer = window.setTimeout(reveal, 0);
+    return () => {
+      if (timer != null) window.clearTimeout(timer);
+    };
+  }, [currentFind, matches, verses, paragraphMode, rowVirtualizer]);
 
   const ttsHere = useTtsReadingHere(paneId, "scripture");
   const ttsCurrentSegmentId = useTtsStore((s) => (ttsHere ? (s.segments[s.currentSegmentIndex]?.id ?? null) : null));
@@ -471,6 +540,14 @@ export function ReadingPane() {
               <>
                 <PopoverItem
                   onClick={() => {
+                    openFind();
+                    close();
+                  }}
+                >
+                  <TextSearch className="h-4 w-4 text-ink-3" aria-hidden="true" /> Find in this chapter
+                </PopoverItem>
+                <PopoverItem
+                  onClick={() => {
                     openInterlinear();
                     close();
                   }}
@@ -582,6 +659,7 @@ export function ReadingPane() {
             </Button>
           )}
           <div className="min-w-0 flex-1" />
+          <IconButton icon={TextSearch} label="Find in this chapter (Ctrl+G)" active={findOpen} onClick={openFind} />
           <div className="relative">
             <IconButton icon={StickyNote} label={chapterNoteCount > 0 ? `Chapter notes (${chapterNoteCount})` : "Chapter notes"} onClick={() => setChapterNoteOpen(true)} />
             {chapterNoteCount > 0 && (
@@ -627,6 +705,26 @@ export function ReadingPane() {
   return (
     <div className="flex h-full flex-col">
       {toolbar}
+      {findOpen && (
+        <FindBar
+          query={findQuery}
+          onQueryChange={(q) => {
+            setParams({ findQuery: q });
+            setFindIndex(0);
+          }}
+          wholeWord={findWholeWord}
+          onWholeWordChange={(on) => {
+            setFindWholeWord(on);
+            setFindIndex(0);
+          }}
+          count={matches.length}
+          current={currentFind}
+          onNext={() => stepFind(1)}
+          onPrev={() => stepFind(-1)}
+          onClose={closeFind}
+          focusToken={findFocusToken}
+        />
+      )}
       <div className="flex min-h-0 flex-1">
         <div ref={containerRef} onMouseUp={handleMouseUp} className="min-h-0 flex-1 overflow-y-auto px-8 py-6">
           <div className="mx-auto w-full max-w-[70ch]">
@@ -668,6 +766,7 @@ export function ReadingPane() {
                     footnotesByVerse={footnotes}
                     activeVerse={activeVerse}
                     redLetterSpansByVerse={redLetterSpansByVerse}
+                    findRangesByVerse={findByVerse}
                     {...rowProps}
                   />
                 ) : (
@@ -700,6 +799,7 @@ export function ReadingPane() {
                         isActive={activeVerse === v.verse}
                         ttsActive={ttsHere && ttsCurrentSegmentId === v.verse}
                         redLetterSpans={redLetterSpansByVerse?.get(v.verse)}
+                        findRanges={findByVerse?.get(v.verse)}
                         {...rowProps}
                       />
                     </div>

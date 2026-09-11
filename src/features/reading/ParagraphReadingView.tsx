@@ -2,6 +2,8 @@ import { StickyNote } from "lucide-react";
 import type { Highlight, Note, Verse, Footnote } from "../../api/types";
 import { buildTokens } from "./verseTokens";
 import type { RedLetterSpan } from "./redLetterSpans";
+import type { FindRange } from "./findMatches";
+import { SegmentText } from "./VerseRow";
 import { cx } from "../../components/ui/classes";
 
 /** Paragraph mode's per-verse renderer: the same highlight/footnote token
@@ -25,6 +27,7 @@ function ParagraphVerse({
   onFootnoteClick,
   onContextMenu,
   redLetterSpans,
+  findRanges,
 }: {
   verse: Verse;
   highlights: Highlight[];
@@ -39,8 +42,9 @@ function ParagraphVerse({
   onFootnoteClick?: (footnote: Footnote, x: number, y: number) => void;
   onContextMenu?: (verseNum: number, x: number, y: number) => void;
   redLetterSpans?: RedLetterSpan[];
+  findRanges?: FindRange[];
 }) {
-  const tokens = buildTokens(verse.text, highlights, verse.verse, footnotes ?? [], redLetterSpans);
+  const tokens = buildTokens(verse.text, highlights, verse.verse, footnotes ?? [], redLetterSpans, findRanges);
   const notesByHighlight = new Map(notes.filter((n) => n.highlight_id != null).map((n) => [n.highlight_id as number, n]));
   const verseLevelNote = notes.find(
     (n) => n.highlight_id == null && verse.verse >= n.verse_start && verse.verse <= n.verse_end,
@@ -112,7 +116,7 @@ function ParagraphVerse({
           if (!seg.color) {
             return (
               <span key={i} className={seg.isRedLetter ? "text-red-700 dark:text-red-400" : undefined}>
-                {seg.text}
+                <SegmentText segment={seg} />
               </span>
             );
           }
@@ -130,7 +134,7 @@ function ParagraphVerse({
                 }
               }}
             >
-              {seg.text}
+              <SegmentText segment={seg} />
               {showNoteSymbols && linkedNote && (
                 <button
                   type="button"
@@ -163,6 +167,7 @@ export function ParagraphVerses({
   showHighlights,
   showNoteSymbols,
   redLetterSpansByVerse,
+  findRangesByVerse,
   onSelectVerse,
   onHighlightClick,
   onNoteSymbolClick,
@@ -178,6 +183,7 @@ export function ParagraphVerses({
   showHighlights: boolean;
   showNoteSymbols: boolean;
   redLetterSpansByVerse?: Map<number, RedLetterSpan[]> | null;
+  findRangesByVerse?: Map<number, FindRange[]> | null;
   onSelectVerse: (verseNum: number) => void;
   onHighlightClick: (highlightId: number, x: number, y: number) => void;
   onNoteSymbolClick: (note: Note) => void;
@@ -197,6 +203,7 @@ export function ParagraphVerses({
           showVerseNumbers={showVerseNumbers}
           showNoteSymbols={showNoteSymbols}
           redLetterSpans={redLetterSpansByVerse?.get(v.verse)}
+          findRanges={findRangesByVerse?.get(v.verse)}
           onSelectVerse={onSelectVerse}
           onHighlightClick={onHighlightClick}
           onNoteSymbolClick={onNoteSymbolClick}

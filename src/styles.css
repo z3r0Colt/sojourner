@@ -161,6 +161,19 @@ mark.underline-only {
   text-decoration-thickness: 2px;
 }
 
+/* Find in chapter: every match gets a light accent wash, the current one a
+   stronger wash and a hairline ring. Nested inside a highlight `mark` it
+   inherits that mark's text color, so the two never fight. */
+mark.find {
+  background-color: color-mix(in srgb, var(--color-accent) 22%, transparent);
+  color: inherit;
+  border-radius: 2px;
+}
+mark.find-current {
+  background-color: color-mix(in srgb, var(--color-accent) 42%, transparent);
+  box-shadow: 0 0 0 1px var(--color-accent);
+}
+
 .scripref {
   color: var(--color-accent);
   cursor: pointer;
