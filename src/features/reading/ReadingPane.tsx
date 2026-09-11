@@ -54,7 +54,8 @@ import { computeRedLetterSpans } from "./redLetterSpans";
 import { closestWithAttr, textOffsetWithin } from "../../lib/domOffsets";
 import { useCopyPassage } from "../../lib/clipboard";
 import { ReadAloudButton } from "../tts/ReadAloudButton";
-import { useTtsReadingHere, useTtsStore } from "../../state/ttsStore";
+import { registerQueueEndHandler, useTtsReadingHere, useTtsStore } from "../../state/ttsStore";
+import { stepChapter } from "./chapterStep";
 import { zoomText } from "./zoom";
 import { isDialogOpen, isTypingTarget, verseKeyAction } from "../../lib/keyboard";
 import { Button, IconButton } from "../../components/ui/Button";
@@ -439,6 +440,45 @@ export function ReadingPane() {
       setParams({ activeVerse: ttsCurrentSegmentId });
     }
   }, [ttsHere, ttsCurrentSegmentId, setParams]);
+
+  // Auto-continue (F1.9). When the chapter this pane is reading aloud runs
+  // out and "Continue into the next chapter" is on, the store asks this pane
+  // (and only this pane: the handler is keyed by pane id) to turn the page.
+  // The page turns without stealing focus from wherever the reader is
+  // working; once the next chapter's verses are in, reading resumes with
+  // them and the player bar shows the new title. At the end of Revelation
+  // the handler declines and reading simply stops.
+  const autoRead = useRef<{ bookId: number; chapter: number } | null>(null);
+  useEffect(
+    () =>
+      registerQueueEndHandler(paneId, () => {
+        if (!books) return false;
+        const next = stepChapter(books, { bookId, chapter }, 1);
+        if (!next) return false;
+        autoRead.current = next;
+        const s = useWorkspaceStore.getState();
+        s.setPaneContent(paneId, { kind: "bible", params: { ...params, bookId: next.bookId, chapter: next.chapter, verse: undefined, activeVerse: null } });
+        s.publishPassage(paneId, { bookId: next.bookId, chapter: next.chapter, verse: null });
+        return true;
+      }),
+    [paneId, books, bookId, chapter, params],
+  );
+  useEffect(() => {
+    const want = autoRead.current;
+    if (!want || want.bookId !== bookId || want.chapter !== chapter || !verses || !book) return;
+    autoRead.current = null;
+    const tts = useTtsStore.getState();
+    if (verses.length === 0) {
+      tts.stop();
+      return;
+    }
+    tts.start(
+      `${book.name} ${chapter}`,
+      "scripture",
+      verses.map((v) => ({ id: v.verse, text: v.text, label: `Verse ${v.verse}` })),
+      { paneId },
+    );
+  }, [bookId, chapter, verses, book, paneId]);
 
   // Scroll the target verse into view once verses are loaded. Rows are
   // virtualized, so the target row may not be mounted yet -- ask the

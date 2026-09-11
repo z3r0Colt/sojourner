@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { Pause, Play, Settings2, SkipBack, SkipForward, X } from "lucide-react";
-import { useTtsStore } from "../../state/ttsStore";
+import { Moon, Pause, Play, Settings2, SkipBack, SkipForward, X } from "lucide-react";
+import { SLEEP_MINUTE_OPTIONS, useTtsStore } from "../../state/ttsStore";
 import { useWorkspaceStore } from "../../state/workspaceStore";
 import { ttsEngines, type TtsVoice } from "./ttsEngine";
 import { IconButton, Button } from "../../components/ui/Button";
@@ -25,6 +25,11 @@ function TtsSettings() {
   const setHighlightColor = useTtsStore((s) => s.setHighlightColor);
   const setHighlightStyle = useTtsStore((s) => s.setHighlightStyle);
   const setAutoScroll = useTtsStore((s) => s.setAutoScroll);
+  const autoContinue = useTtsStore((s) => s.autoContinue);
+  const setAutoContinue = useTtsStore((s) => s.setAutoContinue);
+  const sleepMinutes = useTtsStore((s) => s.sleepMinutes);
+  const setSleepMinutes = useTtsStore((s) => s.setSleepMinutes);
+  const sourceKind = useTtsStore((s) => s.sourceKind);
 
   const [voices, setVoices] = useState<TtsVoice[]>([]);
   useEffect(() => {
@@ -120,6 +125,27 @@ function TtsSettings() {
         <input type="checkbox" className={checkboxClass} checked={autoScroll} onChange={(e) => setAutoScroll(e.target.checked)} />
         Auto-scroll to the word being read
       </label>
+
+      <label className="mt-3 flex items-start gap-2 text-sm text-ink-2">
+        <input type="checkbox" className={cx(checkboxClass, "mt-0.5")} checked={autoContinue} onChange={(e) => setAutoContinue(e.target.checked)} />
+        <span>
+          Continue into the next chapter
+          <span className="block text-xs text-ink-3">Scripture only: when a chapter ends, turn the page and keep reading{sourceKind && sourceKind !== "scripture" ? " (not for what is playing now)" : ""}.</span>
+        </span>
+      </label>
+
+      <label className="mb-1 mt-3 block text-xs font-medium text-ink-3" htmlFor="tts-sleep">
+        Stop after
+      </label>
+      <select id="tts-sleep" value={sleepMinutes} onChange={(e) => setSleepMinutes(Number(e.target.value))} className={cx(selectClass, "w-full")}>
+        {SLEEP_MINUTE_OPTIONS.map((m) => (
+          <option key={m} value={m}>
+            {m === 0 ? "Off" : `${m} minutes`}
+          </option>
+        ))}
+      </select>
+      <p className="mt-1 text-xs text-ink-3">The voice fades out over the last ten seconds, then reading stops.</p>
+
       <p className="mt-3 text-xs text-ink-3">Uses the Windows voices installed on this device. No audio leaves the computer.</p>
     </div>
   );
@@ -139,16 +165,29 @@ export function TtsPlayerBar() {
   const next = useTtsStore((s) => s.next);
   const prev = useTtsStore((s) => s.prev);
   const paneId = useTtsStore((s) => s.paneId);
+  const sleepUntil = useTtsStore((s) => s.sleepUntil);
+  const continuing = useTtsStore((s) => s.continuing);
   const paneLabel = useWorkspaceStore((s) => {
     if (s.panes.length < 2 || paneId == null) return null;
     const idx = s.panes.findIndex((p) => p.id === paneId);
     return idx >= 0 ? `Pane ${idx + 1}` : null;
   });
 
+  // The sleep countdown ticks once a second while a timer is set.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (sleepUntil == null) return;
+    setNow(Date.now());
+    const t = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(t);
+  }, [sleepUntil]);
+
   if (segments.length === 0) return null;
 
   const currentLabel = segments[currentSegmentIndex]?.label;
   const playing = isPlaying && !isPaused;
+  const sleepRemaining = sleepUntil != null ? Math.max(0, Math.round((sleepUntil - now) / 1000)) : null;
+  const sleepLabel = sleepRemaining != null ? `${Math.floor(sleepRemaining / 60)}:${String(sleepRemaining % 60).padStart(2, "0")}` : null;
 
   return (
     <div className="shrink-0 border-t border-line bg-surface px-4 py-2">
@@ -157,8 +196,20 @@ export function TtsPlayerBar() {
           <div className="truncate text-sm font-medium text-ink">{title}</div>
           <div className="truncate text-xs text-ink-3">
             {paneLabel ? `${paneLabel} · ` : ""}
-            {currentLabel ? `${currentLabel} · ` : ""}
-            {currentSegmentIndex + 1} of {segments.length}
+            {continuing ? (
+              "Continuing into the next chapter…"
+            ) : (
+              <>
+                {currentLabel ? `${currentLabel} · ` : ""}
+                {currentSegmentIndex + 1} of {segments.length}
+              </>
+            )}
+            {sleepLabel && (
+              <span className="ml-2 inline-flex items-center gap-1 text-ink-2" title="Sleep timer: reading stops when this reaches zero">
+                <Moon className="h-3 w-3" aria-hidden="true" />
+                <span aria-label={`Sleep timer, ${sleepLabel} left`}>{sleepLabel}</span>
+              </span>
+            )}
             {error && <span className="text-danger"> · {error}</span>}
           </div>
         </div>
