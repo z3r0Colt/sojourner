@@ -3,33 +3,42 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
-import { Bold, Italic, Link2, Link2Off, List, ListOrdered } from "lucide-react";
+import { Bold, ChevronDown, Italic, LayoutTemplate, Link2, Link2Off, List, ListOrdered } from "lucide-react";
 import { useBooks, useResources } from "../../api/queries";
 import { buildBookLookup, parseReference } from "../../hooks/useReferenceParser";
 import { verseHref, resourceHref } from "../../lib/noteLinks";
 import { IconButton, Button } from "../../components/ui/Button";
+import { Popover, PopoverItem, PopoverLabel } from "../../components/ui/Popover";
 import { cx, inputSmClass, selectSmClass } from "../../components/ui/classes";
+import { applyTemplate, useNoteTemplates } from "./noteTemplates";
 
 export function RichTextEditor({
   content,
   onChange,
   placeholder,
   autoFocus,
+  offerTemplates = true,
 }: {
   content: string;
   onChange: (html: string) => void;
   placeholder?: string;
   autoFocus?: boolean;
+  /** Show "Start from…" (the note templates) while the editor is empty.
+   * Off for the template editor itself. */
+  offerTemplates?: boolean;
 }) {
   const { data: books } = useBooks();
   const { data: resources } = useResources();
+  const [templates] = useNoteTemplates();
   const [linkPopoverOpen, setLinkPopoverOpen] = useState(false);
   const [linkInput, setLinkInput] = useState("");
   const [linkResourceId, setLinkResourceId] = useState("");
 
   const editor = useEditor({
     extensions: [
-      StarterKit.configure({ heading: false, link: false }),
+      // Headings are only reachable through templates (no toolbar button),
+      // and one level keeps a note's structure flat.
+      StarterKit.configure({ heading: { levels: [3] }, link: false }),
       Link.configure({ openOnClick: false, autolink: true }),
       Placeholder.configure({ placeholder: placeholder ?? "Write a note…" }),
     ],
@@ -113,6 +122,35 @@ export function RichTextEditor({
         </div>
         {editor.isActive("link") && (
           <IconButton icon={Link2Off} label="Remove link" size="sm" onClick={() => editor.chain().focus().unsetLink().run()} {...stop} />
+        )}
+        {offerTemplates && templates.length > 0 && editor.isEmpty && (
+          <Popover
+            className="ml-auto"
+            width="w-64"
+            trigger={({ toggle, open }) => (
+              <Button size="sm" variant="ghost" icon={LayoutTemplate} onClick={toggle} aria-haspopup="menu" aria-expanded={open} {...stop}>
+                Start from…
+                <ChevronDown className="h-3.5 w-3.5 text-ink-4" aria-hidden="true" />
+              </Button>
+            )}
+          >
+            {(close) => (
+              <>
+                <PopoverLabel>Note templates</PopoverLabel>
+                {templates.map((t, i) => (
+                  <PopoverItem
+                    key={`${i}-${t.name}`}
+                    onClick={() => {
+                      applyTemplate(editor, t);
+                      close();
+                    }}
+                  >
+                    {t.name}
+                  </PopoverItem>
+                ))}
+              </>
+            )}
+          </Popover>
         )}
       </div>
       <EditorContent editor={editor} className="note-richtext px-3 py-2 text-sm text-ink" />

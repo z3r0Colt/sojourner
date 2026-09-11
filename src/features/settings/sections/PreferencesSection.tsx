@@ -6,6 +6,7 @@ import { toast } from "../../../components/ui/toast";
 import { checkboxClass, cx, inputSmClass, selectClass } from "../../../components/ui/classes";
 import { DEFAULT_HIGHLIGHT_LABELS, HIGHLIGHT_COLORS, useHighlightLabels, type HighlightColorKey } from "../../reading/highlightColors";
 import { COPY_FORMATS, copyReference, formatPassage } from "../../../lib/clipboard";
+import { NoteTemplatesEditor } from "../../notes/NoteTemplatesEditor";
 
 const COPY_EXAMPLE_TEXT = "For God so loved the world, that he gave his only begotten Son…";
 
@@ -227,6 +228,9 @@ export function PreferencesSection() {
         </Row>
         <Row label="When copying verses" hint="Used by every copy action: the selection toolbar and the verse menu.">
           <CopyFormatRow />
+        </Row>
+        <Row label="Note templates" hint="An empty note editor offers these under “Start from…”. Rename, reorder, edit, or add your own.">
+          <NoteTemplatesEditor />
         </Row>
       </div>
     </div>
