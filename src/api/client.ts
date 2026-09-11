@@ -92,6 +92,8 @@ export const api = {
 
   listHighlights: (bookId: number, chapter: number) =>
     invoke<Highlight[]>("list_highlights", { bookId, chapter }),
+  /** Every highlight in Bible order (the Highlights page). */
+  listAllHighlights: () => invoke<Highlight[]>("list_all_highlights"),
   createHighlight: (input: {
     bookId: number;
     chapter: number;

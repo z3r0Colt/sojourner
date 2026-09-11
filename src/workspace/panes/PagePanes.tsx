@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { NotesListView } from "../../features/notes/NotesListView";
+import { HighlightsView } from "../../features/highlights/HighlightsView";
 import { PrayerView } from "../../features/prayer/PrayerView";
 import { MemoryHubView } from "../../features/memory/MemoryHubView";
 import { ReadingPlansView } from "../../features/plans/ReadingPlansView";
@@ -16,6 +17,14 @@ export function NotesPane() {
   return (
     <PageScroll>
       <NotesListView />
+    </PageScroll>
+  );
+}
+
+export function HighlightsPane() {
+  return (
+    <PageScroll>
+      <HighlightsView />
     </PageScroll>
   );
 }

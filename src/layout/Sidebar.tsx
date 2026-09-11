@@ -7,6 +7,7 @@ import {
   Columns3,
   NotebookPen,
   HeartHandshake,
+  Highlighter,
   Brain,
   CalendarCheck,
   Library,
@@ -54,6 +55,7 @@ const GROUPS: { label: string; items: NavItem[] }[] = [
     label: "My study",
     items: [
       { to: "/notes", label: "Notes", icon: NotebookPen },
+      { to: "/highlights", label: "Highlights", icon: Highlighter },
       { to: "/prayer", label: "Prayer", icon: HeartHandshake },
       { to: "/memory", label: "Memory", icon: Brain },
       { to: "/plans", label: "Reading plans", icon: CalendarCheck },

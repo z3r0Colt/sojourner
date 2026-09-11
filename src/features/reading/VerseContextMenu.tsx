@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Bookmark, BookmarkCheck, Brain, Columns2, Copy, StickyNote, Underline } from "lucide-react";
 import { useViewportClampedPosition } from "../../lib/useViewportClampedPosition";
-import { HIGHLIGHT_COLORS, UNDERLINE_COLOR } from "./highlightColors";
+import { HIGHLIGHT_COLORS, UNDERLINE_COLOR, highlightColorLabel, useHighlightLabels } from "./highlightColors";
 import { PopoverItem } from "../../components/ui/Popover";
 
 /** Right-click (or verse-number click) menu: everything you can do to a
@@ -34,6 +34,7 @@ export function VerseContextMenu({
   onClose: () => void;
 }) {
   const { ref, style } = useViewportClampedPosition<HTMLDivElement>(x, y);
+  const [labels] = useHighlightLabels();
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -65,18 +66,21 @@ export function VerseContextMenu({
       >
         <div className="px-2 pb-1.5 pt-1 text-xs font-semibold text-ink-3">{verseLabel}</div>
         <div className="mb-1 flex items-center gap-1.5 px-2 pb-1.5">
-          {HIGHLIGHT_COLORS.map((c) => (
-            <button
-              key={c.color}
-              type="button"
-              role="menuitem"
-              className="h-6 w-6 rounded-full border border-black/10 transition-transform hover:scale-110"
-              style={{ backgroundColor: c.color }}
-              title={`Highlight ${c.name.toLowerCase()}`}
-              aria-label={`Highlight verse ${c.name.toLowerCase()}`}
-              onClick={run(() => onHighlight(c.color))}
-            />
-          ))}
+          {HIGHLIGHT_COLORS.map((c) => {
+            const name = `Highlight verse: ${highlightColorLabel(c, labels)}`;
+            return (
+              <button
+                key={c.color}
+                type="button"
+                role="menuitem"
+                className="h-6 w-6 rounded-full border border-black/10 transition-transform hover:scale-110"
+                style={{ backgroundColor: c.color }}
+                title={name}
+                aria-label={name}
+                onClick={run(() => onHighlight(c.color))}
+              />
+            );
+          })}
         </div>
         <PopoverItem onClick={run(() => onUnderline(UNDERLINE_COLOR))}>
           <Underline className="h-4 w-4 text-ink-3" aria-hidden="true" /> Underline verse

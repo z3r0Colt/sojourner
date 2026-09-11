@@ -104,6 +104,12 @@ export function useHighlights(bookId: number | null, chapter: number | null) {
   });
 }
 
+/** Every highlight, for the Highlights page. Kept fresh by the highlight
+ * mutations below. */
+export function useAllHighlights() {
+  return useQuery({ queryKey: ["allHighlights"], queryFn: api.listAllHighlights });
+}
+
 export function useNotesForChapter(bookId: number | null, chapter: number | null) {
   return useQuery({
     queryKey: ["notes", bookId, chapter],
@@ -126,6 +132,7 @@ export function useCreateHighlight() {
     mutationFn: api.createHighlight,
     onSuccess: (h) => {
       qc.invalidateQueries({ queryKey: ["highlights", h.book_id, h.chapter] });
+      qc.invalidateQueries({ queryKey: ["allHighlights"] });
     },
   });
 }
@@ -134,7 +141,10 @@ export function useDeleteHighlight() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: api.deleteHighlight,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["highlights"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["highlights"] });
+      qc.invalidateQueries({ queryKey: ["allHighlights"] });
+    },
   });
 }
 
@@ -143,7 +153,10 @@ export function useUpdateHighlight() {
   return useMutation({
     mutationFn: (input: { id: number; color: string; style: "highlight" | "underline" }) =>
       api.updateHighlight(input.id, input.color, input.style),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["highlights"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["highlights"] });
+      qc.invalidateQueries({ queryKey: ["allHighlights"] });
+    },
   });
 }
 

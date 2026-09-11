@@ -120,6 +120,7 @@ pub fn run() {
             commands::reading::get_reading_position,
             commands::reading::set_reading_position,
             commands::annotations::list_highlights,
+            commands::annotations::list_all_highlights,
             commands::annotations::create_highlight,
             commands::annotations::update_highlight,
             commands::annotations::delete_highlight,

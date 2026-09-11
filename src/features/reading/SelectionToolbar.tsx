@@ -1,10 +1,11 @@
 import { Copy, StickyNote, Underline, X } from "lucide-react";
 import { useViewportClampedPosition } from "../../lib/useViewportClampedPosition";
-import { HIGHLIGHT_COLORS, UNDERLINE_COLOR } from "./highlightColors";
+import { HIGHLIGHT_COLORS, UNDERLINE_COLOR, highlightColorLabel, useHighlightLabels } from "./highlightColors";
 import { IconButton } from "../../components/ui/Button";
 
 /** Floats above a text selection: pick a highlight color, underline, add a
- * note, or copy with the reference. */
+ * note, or copy with the reference. Each color button is named by the
+ * reader's label for it ("Promise (yellow)"). */
 export function SelectionToolbar({
   x,
   y,
@@ -23,6 +24,7 @@ export function SelectionToolbar({
   onClose: () => void;
 }) {
   const { ref, style } = useViewportClampedPosition<HTMLDivElement>(x, y, { align: "above-center" });
+  const [labels] = useHighlightLabels();
 
   return (
     <div
@@ -33,17 +35,20 @@ export function SelectionToolbar({
       style={style}
       onMouseDown={(e) => e.preventDefault()}
     >
-      {HIGHLIGHT_COLORS.map((c) => (
-        <button
-          key={c.color}
-          type="button"
-          className="h-6 w-6 rounded-full border border-black/10 transition-transform hover:scale-110"
-          style={{ backgroundColor: c.color }}
-          title={`Highlight ${c.name.toLowerCase()}`}
-          aria-label={`Highlight ${c.name.toLowerCase()}`}
-          onClick={() => onPickColor(c.color)}
-        />
-      ))}
+      {HIGHLIGHT_COLORS.map((c) => {
+        const name = `Highlight: ${highlightColorLabel(c, labels)}`;
+        return (
+          <button
+            key={c.color}
+            type="button"
+            className="h-6 w-6 rounded-full border border-black/10 transition-transform hover:scale-110"
+            style={{ backgroundColor: c.color }}
+            title={name}
+            aria-label={name}
+            onClick={() => onPickColor(c.color)}
+          />
+        );
+      })}
       <span className="mx-1 h-5 w-px bg-line" aria-hidden="true" />
       <IconButton icon={Underline} label="Underline" size="sm" onClick={() => onUnderline(UNDERLINE_COLOR)} />
       <IconButton icon={StickyNote} label="Add note" size="sm" onClick={onAddNote} />
