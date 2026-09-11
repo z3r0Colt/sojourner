@@ -25,6 +25,7 @@ import { usePaneNavigate } from "../../workspace/PaneContext";
 import { openPassage, targetFor } from "../../workspace/openContent";
 import { NoteEditorModal } from "./NoteEditorModal";
 import { NoteBody } from "./NoteBody";
+import { TrashLink } from "../settings/sections/TrashSection";
 import { TagRow, TagFilterBar } from "../../components/TagRow";
 import { Page } from "../../components/ui/Page";
 import { Button } from "../../components/ui/Button";
@@ -162,13 +163,16 @@ export function NotesListView() {
       title="Notes"
       lead={hasAny ? `${notes?.length ?? 0} passage notes · ${chapterNotes?.length ?? 0} chapter notes` : undefined}
       actions={
-        hasAny && (
-          <select value={sort} onChange={(e) => setSort(e.target.value as SortMode)} className={selectSmClass} aria-label="Sort notes">
-            <option value="bible">In Bible order</option>
-            <option value="newest">Newest first</option>
-            <option value="oldest">Oldest first</option>
-          </select>
-        )
+        <>
+          <TrashLink kinds={["note", "chapter_note"]} onOpen={(e) => navigate("/settings?section=backups", e)} />
+          {hasAny && (
+            <select value={sort} onChange={(e) => setSort(e.target.value as SortMode)} className={selectSmClass} aria-label="Sort notes">
+              <option value="bible">In Bible order</option>
+              <option value="newest">Newest first</option>
+              <option value="oldest">Oldest first</option>
+            </select>
+          )}
+        </>
       }
     >
       {hasAny && (

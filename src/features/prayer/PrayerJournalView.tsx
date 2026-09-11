@@ -16,7 +16,9 @@ import {
   useTrashToast,
 } from "../../api/queries";
 import { openPassage, targetFor } from "../../workspace/openContent";
+import { usePaneNavigate } from "../../workspace/PaneContext";
 import { PrayerEntryEditorModal } from "./PrayerEntryEditorModal";
+import { TrashLink } from "../settings/sections/TrashSection";
 import { TagRow, TagFilterBar } from "../../components/TagRow";
 import { Button } from "../../components/ui/Button";
 import { EmptyState } from "../../components/ui/EmptyState";
@@ -45,6 +47,7 @@ export function PrayerJournalView() {
   const updateEntry = useUpdatePrayerEntry();
   const deleteEntry = useDeletePrayerEntry();
   const trashToast = useTrashToast();
+  const navigate = usePaneNavigate();
 
   const [editing, setEditing] = useState<PrayerEntry | null | "new">(null);
   const [query, setQuery] = useState("");
@@ -91,6 +94,7 @@ export function PrayerJournalView() {
         {hasAny && (
           <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search your prayer journal…" className={cx(inputClass, "min-w-0 flex-1")} />
         )}
+        <TrashLink kinds={["prayer_entry"]} onOpen={(e) => navigate("/settings?section=backups", e)} />
         <Button variant="primary" icon={Plus} onClick={() => setEditing("new")} className={cx(!hasAny && "ml-auto")}>
           New entry
         </Button>
