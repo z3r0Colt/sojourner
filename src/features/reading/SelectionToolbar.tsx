@@ -52,7 +52,7 @@ export function SelectionToolbar({
       <span className="mx-1 h-5 w-px bg-line" aria-hidden="true" />
       <IconButton icon={Underline} label="Underline" size="sm" onClick={() => onUnderline(UNDERLINE_COLOR)} />
       <IconButton icon={StickyNote} label="Add note" size="sm" onClick={onAddNote} />
-      {onCopy && <IconButton icon={Copy} label="Copy with reference" size="sm" onClick={onCopy} />}
+      {onCopy && <IconButton icon={Copy} label="Copy (in the format chosen in Settings)" size="sm" onClick={onCopy} />}
       <IconButton icon={X} label="Close" size="sm" onClick={onClose} />
     </div>
   );

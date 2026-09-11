@@ -5,6 +5,41 @@ import { Button } from "../../../components/ui/Button";
 import { toast } from "../../../components/ui/toast";
 import { checkboxClass, cx, inputSmClass, selectClass } from "../../../components/ui/classes";
 import { DEFAULT_HIGHLIGHT_LABELS, HIGHLIGHT_COLORS, useHighlightLabels, type HighlightColorKey } from "../../reading/highlightColors";
+import { COPY_FORMATS, copyReference, formatPassage } from "../../../lib/clipboard";
+
+const COPY_EXAMPLE_TEXT = "For God so loved the world, that he gave his only begotten Son…";
+
+/** The four copy layouts as a radio group, each shown as the example it
+ * would produce for John 3:16. */
+function CopyFormatRow() {
+  const copyFormat = useUiStore((s) => s.copyFormat);
+  const setCopyFormat = useUiStore((s) => s.setCopyFormat);
+  const includeTranslation = useUiStore((s) => s.copyIncludeTranslation);
+  const setIncludeTranslation = useUiStore((s) => s.setCopyIncludeTranslation);
+  const ref = copyReference("John 3:16", includeTranslation ? "KJV" : null);
+  return (
+    <div className="space-y-2">
+      <div role="radiogroup" aria-label="Copy format" className="space-y-1">
+        {COPY_FORMATS.map((f) => (
+          <label
+            key={f.value}
+            className={cx(
+              "flex cursor-pointer items-start gap-3 rounded-md border px-3 py-2",
+              copyFormat === f.value ? "border-accent/40 bg-accent-soft" : "border-line hover:bg-hover",
+            )}
+          >
+            <input type="radio" name="copy-format" value={f.value} checked={copyFormat === f.value} onChange={() => setCopyFormat(f.value)} className="mt-1 accent-accent" />
+            <span className="min-w-0">
+              <span className="block text-sm text-ink">{f.label}</span>
+              <span className="mt-0.5 block whitespace-pre-wrap font-mono text-xs text-ink-3">{formatPassage(COPY_EXAMPLE_TEXT, ref, f.value)}</span>
+            </span>
+          </label>
+        ))}
+      </div>
+      <Toggle label="Include translation" hint="Adds the translation code after the reference, e.g. John 3:16 KJV" checked={includeTranslation} onChange={() => setIncludeTranslation(!includeTranslation)} />
+    </div>
+  );
+}
 
 /** One label box per highlight color. Edits commit on blur or Enter (not
  * per keystroke, so the toast fires once per change); Escape restores. */
@@ -189,6 +224,9 @@ export function PreferencesSection() {
         <Toggle label="Show grammar codes in interlinear view" checked={showMorphology} onChange={toggleShowMorphology} />
         <Row label="Highlight colors" hint="Names show as tooltips on the color buttons and as headings on the Highlights page.">
           <HighlightLabelsRow />
+        </Row>
+        <Row label="When copying verses" hint="Used by every copy action: the selection toolbar and the verse menu.">
+          <CopyFormatRow />
         </Row>
       </div>
     </div>

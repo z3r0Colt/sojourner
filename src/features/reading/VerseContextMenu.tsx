@@ -89,7 +89,7 @@ export function VerseContextMenu({
           <StickyNote className="h-4 w-4 text-ink-3" aria-hidden="true" /> Add a note
         </PopoverItem>
         <PopoverItem onClick={run(onCopy)}>
-          <Copy className="h-4 w-4 text-ink-3" aria-hidden="true" /> Copy with reference
+          <Copy className="h-4 w-4 text-ink-3" aria-hidden="true" /> Copy verse
         </PopoverItem>
         <PopoverItem onClick={run(onCompare)}>
           <Columns2 className="h-4 w-4 text-ink-3" aria-hidden="true" /> Compare translations
