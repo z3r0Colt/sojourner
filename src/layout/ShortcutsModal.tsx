@@ -28,6 +28,7 @@ const GROUPS: { title: string; rows: { keys: string[]; label: string }[] }[] = [
       { keys: ["Click a verse"], label: "Select it: the study panel follows the selected verse" },
       { keys: ["Right-click a verse"], label: "Highlight, note, copy, compare, memorize, or bookmark" },
       { keys: ["Select text"], label: "Highlight or annotate just that span" },
+      { keys: ["Hover a reference"], label: "Preview the passage; Tab to a reference does the same. Esc closes it" },
     ],
   },
 ];

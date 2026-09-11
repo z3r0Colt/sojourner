@@ -55,6 +55,7 @@ const CATEGORIES: Category[] = [
     items: [
       { q: "Open it", a: <>Click one of the icons on the right edge of the reading view, or press <Kbd>Ctrl</Kbd>+<Kbd>B</Kbd>. It has tabs for Commentary, Cross references, Confessions, and (in the Psalms) the Metrical Psalter.</> },
       { q: "Follow a verse", a: "Click any verse in the text to select it. Cross references and confession proofs follow the selected verse, and the commentary entry that covers it is highlighted." },
+      { q: "Preview a reference", a: <>Rest the pointer on a cross reference for a moment (or Tab to it) and a small card shows the passage text with an Open link. <Kbd>Esc</Kbd> or moving away closes it.</> },
       { q: "Move, resize, or collapse it", a: "Drag its inner edge to resize, use the arrow button to dock it on the other side, or collapse it back to the icon strip." },
       { q: "Switch commentary source", a: "Use the dropdown at the top of the Commentary tab to pick from every commentary you've installed. The book icon beside it opens that commentary as a book to page through on its own." },
     ],

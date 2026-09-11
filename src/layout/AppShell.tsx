@@ -10,6 +10,7 @@ import { SearchOverlay } from "../features/search/SearchOverlay";
 import { TtsPlayerBar } from "../features/tts/TtsPlayerBar";
 import { Sidebar } from "./Sidebar";
 import { ShortcutsModal } from "./ShortcutsModal";
+import { RefPreviewHost } from "../components/RefPreview";
 import { Button, IconButton } from "../components/ui/Button";
 import { Kbd } from "../components/ui/Page";
 import { toast } from "../components/ui/toast";
@@ -192,6 +193,7 @@ export function AppShell() {
         />
       )}
       {shortcutsOpen && <ShortcutsModal onClose={() => setShortcutsOpen(false)} />}
+      <RefPreviewHost />
     </div>
   );
 }

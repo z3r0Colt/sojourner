@@ -2,6 +2,8 @@ import { useBooks, useCrossReferences } from "../../api/queries";
 import { useNavigationStore } from "../../state/navigationStore";
 import type { Book } from "../../api/types";
 import { EmptyState } from "../../components/ui/EmptyState";
+import { refAttrs } from "../../lib/refAttr";
+import { toPassageRef } from "../../lib/passage";
 import { Link2 } from "lucide-react";
 
 export function CrossReferencesPanel({ book, chapter, activeVerse }: { book: Book; chapter: number; activeVerse: number | null }) {
@@ -30,6 +32,7 @@ export function CrossReferencesPanel({ book, chapter, activeVerse }: { book: Boo
                 type="button"
                 className="flex w-full items-baseline justify-between rounded-md px-2 py-1.5 text-left hover:bg-hover"
                 onClick={() => goTo({ bookId: r.to_book_id, chapter: r.to_chapter, verse: r.to_verse_start })}
+                {...refAttrs(toPassageRef(r.to_book_id, r.to_chapter, r.to_verse_start, r.to_verse_end))}
               >
                 <span className="text-ink">
                   {bookName(r.to_book_id)} {r.to_chapter}:{r.to_verse_start}
