@@ -42,6 +42,7 @@ import { NoteBody } from "../notes/NoteBody";
 import { RichTextEditor } from "../notes/RichTextEditor";
 import { ParagraphVerses } from "./ParagraphReadingView";
 import { ChapterNav } from "./ChapterNav";
+import { ChapterEndCard } from "./ChapterEndCard";
 import { BookmarksMenu } from "./BookmarksMenu";
 import { computeRedLetterSpans } from "./redLetterSpans";
 import { closestWithAttr, textOffsetWithin } from "../../lib/domOffsets";
@@ -57,7 +58,7 @@ import { confirmTrash } from "../../components/ui/confirm";
 import { checkboxClass, cx, selectSmClass } from "../../components/ui/classes";
 import { formatRef, joinVerses, toPassageRef } from "../../lib/passage";
 import { usePane, usePaneNavigate, usePaneParams } from "../../workspace/PaneContext";
-import { openContent, openPassage } from "../../workspace/openContent";
+import { openContent, openPassage, targetFor } from "../../workspace/openContent";
 import type { Note, Footnote } from "../../api/types";
 
 interface PendingSelection {
@@ -237,6 +238,17 @@ export function ReadingPane() {
     const index = verses.findIndex((v) => v.verse === scrollTarget);
     if (index >= 0) rowVirtualizer.scrollToIndex(index, { align: "center" });
   }, [scrollTarget, verses, rowVirtualizer, bookId, chapter]);
+
+  // A new chapter with no verse target starts at the top (the end-of-chapter
+  // card and the chapter pickers both land here), not wherever the previous
+  // chapter was scrolled to. Not on mount, so a restored pane keeps its place.
+  const lastChapter = useRef({ bookId, chapter });
+  useEffect(() => {
+    const last = lastChapter.current;
+    if (last.bookId === bookId && last.chapter === chapter) return;
+    lastChapter.current = { bookId, chapter };
+    if (scrollTarget == null) containerRef.current?.scrollTo({ top: 0 });
+  }, [bookId, chapter, scrollTarget]);
 
   // Persist the reading position (debounced) whenever it changes -- only
   // from the focused Bible pane, and not before the shell has bootstrapped.
@@ -695,7 +707,10 @@ export function ReadingPane() {
                 })}
               </div>
             )}
-            <div className="h-24" />
+            {!printing && verses && verses.length > 0 && books && (
+              <ChapterEndCard books={books} position={{ bookId, chapter }} onNavigate={(p, e) => openPassage(p, { target: targetFor(e, paneId), from: paneId })} />
+            )}
+            {(printing || !verses || verses.length === 0) && <div className="h-24" />}
           </div>
         </div>
       </div>
