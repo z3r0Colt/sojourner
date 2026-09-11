@@ -1,8 +1,29 @@
-use crate::db::queries::{bookmarks, highlights, notes};
+use crate::db::queries::{bookmarks, highlights, notes, trash};
 use crate::db::DbState;
 use crate::error::AppResult;
-use crate::models::{Bookmark, ChapterNote, Highlight, Note};
+use crate::models::{Bookmark, ChapterNote, Highlight, Note, TrashContents, TrashKind};
 use tauri::State;
+
+// Trash: soft-deleted notes, chapter notes, and prayer entries in one
+// listing, with per-item restore and permanent delete.
+
+#[tauri::command]
+pub fn list_trash(db: State<DbState>) -> AppResult<TrashContents> {
+    let conn = db.0.lock().unwrap();
+    Ok(trash::list(&conn)?)
+}
+
+#[tauri::command]
+pub fn restore_trash_item(db: State<DbState>, kind: TrashKind, id: i64) -> AppResult<bool> {
+    let conn = db.0.lock().unwrap();
+    Ok(trash::restore(&conn, kind, id)?)
+}
+
+#[tauri::command]
+pub fn purge_trash_item(db: State<DbState>, kind: TrashKind, id: i64) -> AppResult<bool> {
+    let conn = db.0.lock().unwrap();
+    Ok(trash::purge(&conn, kind, id)?)
+}
 
 #[tauri::command]
 pub fn list_highlights(db: State<DbState>, book_id: i64, chapter: i64) -> AppResult<Vec<Highlight>> {

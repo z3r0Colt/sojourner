@@ -36,6 +36,8 @@ import type {
   MorphologyWord,
   Footnote,
   ChapterNote,
+  TrashContents,
+  TrashKind,
   CrossReference,
   MetricalPsalmVersion,
   WestminsterDocument,
@@ -138,6 +140,12 @@ export const api = {
   removeChapterNoteTag: (chapterNoteId: number, tag: string) => invoke<void>("remove_chapter_note_tag", { chapterNoteId, tag }),
   listAllChapterNoteTags: () => invoke<string[]>("list_all_chapter_note_tags"),
   listAllChapterNoteTagsByNote: () => invoke<[number, string][]>("list_all_chapter_note_tags_by_note"),
+
+  // Trash: deleting a note, chapter note, or prayer entry soft-deletes it
+  // for thirty days; these restore or permanently remove one item.
+  listTrash: () => invoke<TrashContents>("list_trash"),
+  restoreTrashItem: (kind: TrashKind, id: number) => invoke<boolean>("restore_trash_item", { kind, id }),
+  purgeTrashItem: (kind: TrashKind, id: number) => invoke<boolean>("purge_trash_item", { kind, id }),
 
   listBookmarks: () => invoke<Bookmark[]>("list_bookmarks"),
   createBookmark: (bookId: number, chapter: number, verse?: number, label?: string) =>

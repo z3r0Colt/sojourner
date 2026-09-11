@@ -146,6 +146,8 @@ pub struct Note {
     pub highlight_id: Option<i64>,
     pub created_at: String,
     pub updated_at: String,
+    /// Set while the note sits in the Trash; always `None` from list queries.
+    pub deleted_at: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -156,6 +158,25 @@ pub struct ChapterNote {
     pub body: String,
     pub created_at: String,
     pub updated_at: String,
+    pub deleted_at: Option<String>,
+}
+
+/// Which soft-deletable table a Trash operation addresses.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum TrashKind {
+    Note,
+    ChapterNote,
+    PrayerEntry,
+}
+
+/// Everything currently in the Trash, all three kinds in one call, newest
+/// deletion first within each list.
+#[derive(Debug, Clone, Serialize)]
+pub struct TrashContents {
+    pub notes: Vec<Note>,
+    pub chapter_notes: Vec<ChapterNote>,
+    pub prayer_entries: Vec<PrayerEntry>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -400,6 +421,7 @@ pub struct PrayerEntry {
     pub verse_end: Option<i64>,
     pub created_at: String,
     pub updated_at: String,
+    pub deleted_at: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

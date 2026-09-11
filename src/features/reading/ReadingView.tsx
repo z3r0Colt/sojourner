@@ -45,6 +45,7 @@ import {
   useFootnotesForChapter,
   useRedLetterRanges,
   useTranslations,
+  useTrashToast,
 } from "../../api/queries";
 import { api } from "../../api/client";
 import { VerseRow } from "./VerseRow";
@@ -77,7 +78,7 @@ import { Modal } from "../../components/ui/Modal";
 import { Tabs } from "../../components/ui/Tabs";
 import { LoadingState } from "../../components/ui/EmptyState";
 import { toast } from "../../components/ui/toast";
-import { confirmDelete } from "../../components/ui/confirm";
+import { confirmTrash } from "../../components/ui/confirm";
 import { checkboxClass, cx, selectSmClass } from "../../components/ui/classes";
 import type { Note, Footnote } from "../../api/types";
 
@@ -211,6 +212,7 @@ export function ReadingView() {
   const createChapterNote = useCreateChapterNote();
   const updateChapterNote = useUpdateChapterNote();
   const deleteChapterNote = useDeleteChapterNote();
+  const trashToast = useTrashToast();
   const createBookmark = useCreateBookmark();
   const deleteBookmark = useDeleteBookmark();
   const createMemoryVerse = useCreateMemoryVerse();
@@ -829,7 +831,8 @@ export function ReadingView() {
           onDelete={
             noteTarget.existing
               ? () => {
-                  deleteNote.mutate(noteTarget.existing!.id, { onSuccess: () => toast.info("Note deleted") });
+                  const id = noteTarget.existing!.id;
+                  deleteNote.mutate(id, { onSuccess: () => trashToast("note", id) });
                   setNoteTarget(null);
                 }
               : undefined
@@ -847,7 +850,7 @@ export function ReadingView() {
                 body={n.body}
                 onSave={(body) => updateChapterNote.mutate({ id: n.id, body }, { onSuccess: () => toast.success("Note saved") })}
                 onDelete={async () => {
-                  if (await confirmDelete("this chapter note")) deleteChapterNote.mutate(n.id, { onSuccess: () => toast.info("Note deleted") });
+                  if (await confirmTrash("this chapter note")) deleteChapterNote.mutate(n.id, { onSuccess: () => trashToast("chapter_note", n.id) });
                 }}
               />
             ))}
