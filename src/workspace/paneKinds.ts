@@ -203,6 +203,9 @@ export function paneTitle(content: PaneContent, ctx: TitleContext): string {
   return (PANE_KINDS[content.kind].title as (p: unknown, c: TitleContext) => string)(content.params, ctx);
 }
 
+/** The kinds offered wherever the reader picks content for a pane. */
+export const PANE_KIND_LIST_LISTED: readonly PaneKind[] = (Object.keys(PANE_KINDS) as PaneKind[]).filter((k) => PANE_KINDS[k].listed);
+
 /** The study-panel kinds, in the order the Add pane strip shows them. */
 export const STUDY_STRIP_KINDS: readonly PaneKind[] = ["commentary", "crossrefs", "confession-for-passage", "metrical"];
 

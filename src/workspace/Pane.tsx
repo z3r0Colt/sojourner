@@ -1,19 +1,23 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useWorkspaceStore, type Pane as PaneModel } from "../state/workspaceStore";
+import { cx } from "../components/ui/classes";
 import { PaneContext, type PaneContextValue } from "./PaneContext";
-import { PaneHeader, usePaneTitle } from "./PaneHeader";
+import { PANE_DRAG_TYPE, PaneHeader, usePaneTitle } from "./PaneHeader";
 import { PANE_COMPONENTS } from "./paneComponents";
 
 export const PANE_MIN_WIDTH = 280;
 
 /** One pane: an optional header, then the view for its kind. Clicking (or
  * focusing a control) anywhere inside focuses the pane. Width is measured
- * so views can fold their toolbars when narrow. */
-export function Pane({ pane, showHeader, index, count, minWidth = PANE_MIN_WIDTH }: { pane: PaneModel; showHeader: boolean; index: number; count: number; minWidth?: number }) {
+ * so views can fold their toolbars when narrow. The pane fills the slot
+ * the layout gives it; dropping another pane's header on it swaps the two. */
+export function Pane({ pane, showHeader, tabs, maximized }: { pane: PaneModel; showHeader: boolean; tabs?: PaneModel[]; maximized?: boolean }) {
   const ref = useRef<HTMLElement>(null);
   const [width, setWidth] = useState(0);
+  const [dropTarget, setDropTarget] = useState(false);
   const focused = useWorkspaceStore((s) => s.focusedPaneId === pane.id);
   const focusPane = useWorkspaceStore((s) => s.focusPane);
+  const swapPanes = useWorkspaceStore((s) => s.swapPanes);
   const title = usePaneTitle(pane);
 
   useEffect(() => {
@@ -30,6 +34,10 @@ export function Pane({ pane, showHeader, index, count, minWidth = PANE_MIN_WIDTH
   const ctx = useMemo<PaneContextValue>(() => ({ id: pane.id, isFocused: focused, width }), [pane.id, focused, width]);
   const Component = PANE_COMPONENTS[pane.kind];
 
+  function draggedPaneId(e: React.DragEvent): string | null {
+    return e.dataTransfer.types.includes(PANE_DRAG_TYPE) ? e.dataTransfer.getData(PANE_DRAG_TYPE) || "other" : null;
+  }
+
   return (
     <section
       ref={ref}
@@ -38,15 +46,35 @@ export function Pane({ pane, showHeader, index, count, minWidth = PANE_MIN_WIDTH
       aria-label={title}
       onPointerDownCapture={() => focusPane(pane.id)}
       onFocusCapture={() => focusPane(pane.id)}
-      className="flex min-h-0 min-w-0 flex-col overflow-hidden bg-bg"
-      style={{ flex: `${pane.width} 1 0px`, minWidth }}
+      onDragOver={(e) => {
+        if (!draggedPaneId(e)) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+        if (!dropTarget) setDropTarget(true);
+      }}
+      onDragLeave={(e) => {
+        if (!ref.current?.contains(e.relatedTarget as Node)) setDropTarget(false);
+      }}
+      onDrop={(e) => {
+        const fromId = e.dataTransfer.getData(PANE_DRAG_TYPE);
+        setDropTarget(false);
+        if (!fromId || fromId === pane.id) return;
+        e.preventDefault();
+        swapPanes(fromId, pane.id);
+      }}
+      className={cx("relative flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-bg", dropTarget && "ring-2 ring-inset ring-accent")}
     >
-      {showHeader && <PaneHeader pane={pane} focused={focused} index={index} count={count} />}
+      {showHeader && <PaneHeader pane={pane} focused={focused} tabs={tabs} maximized={maximized} />}
       <PaneContext.Provider value={ctx}>
         <div className="relative min-h-0 min-w-0 flex-1">
           <Component key={pane.kind} />
         </div>
       </PaneContext.Provider>
+      {dropTarget && (
+        <div className="pointer-events-none absolute inset-x-0 top-10 z-20 flex justify-center" aria-hidden="true">
+          <span className="rounded-md bg-accent px-2 py-1 text-xs font-medium text-white shadow">Swap panes</span>
+        </div>
+      )}
     </section>
   );
 }

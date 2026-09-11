@@ -65,12 +65,13 @@ export function GoToCommandPalette({
   const panes = useWorkspaceStore((s) => s.panes);
   const focusedPaneId = useWorkspaceStore((s) => s.focusedPaneId);
   const maximizedPaneId = useWorkspaceStore((s) => s.maximizedPaneId);
+  const layout = useWorkspaceStore((s) => s.layout);
   const focusMode = useUiStore((s) => s.distractionFreeMode);
   const titles = useTitleContext();
   const commands = useMemo(
     () => allCommands({ titles }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [titles, panes, focusedPaneId, maximizedPaneId, focusMode],
+    [titles, panes, focusedPaneId, maximizedPaneId, layout, focusMode],
   );
   function commandCandidate(c: Command): Candidate {
     return {

@@ -2,6 +2,7 @@ import {
   ArrowLeftToLine,
   ArrowRightToLine,
   Columns2,
+  LayoutGrid,
   Link2,
   Maximize2,
   Minimize2,
@@ -23,6 +24,7 @@ import {
 import { useUiStore } from "../../state/uiStore";
 import { PANE_KINDS, paneTitle, type TitleContext } from "../../workspace/paneKinds";
 import { openContent } from "../../workspace/openContent";
+import { LAYOUTS } from "../../workspace/layouts";
 
 /**
  * The command registry behind the Go to palette. Type `>` to list every
@@ -198,9 +200,22 @@ export function paneCommands(ctx: CommandContext): Command[] {
   return out;
 }
 
+/** Layout templates (W3). */
+export function layoutCommands(): Command[] {
+  const s = useWorkspaceStore.getState();
+  return LAYOUTS.filter((l) => l.id !== s.layout).map<Command>((l) => ({
+    id: `layout-${l.id}`,
+    group: "Layout",
+    label: `Layout: ${l.label}`,
+    icon: LayoutGrid,
+    keywords: `${l.slots} panes columns grid split ${l.description}`,
+    run: () => useWorkspaceStore.getState().setLayout(l.id),
+  }));
+}
+
 /** Every command the palette can offer right now. */
 export function allCommands(ctx: CommandContext): Command[] {
-  return paneCommands(ctx);
+  return [...paneCommands(ctx), ...layoutCommands()];
 }
 
 /** True when the typed text asks for commands only (`>` prefix). */
@@ -213,12 +228,23 @@ export function commandQueryText(query: string): string {
   return query.trimStart().replace(/^>/, "").trim();
 }
 
-/** Commands whose label, group, or keywords contain every typed word. */
+/** Commands whose label, group, or keywords contain every typed word.
+ * Commands matched by their label alone come first, so "layout two by"
+ * offers "Layout: Two by two" before anything that only mentions "by" in
+ * its keywords. */
 export function filterCommands(commands: Command[], text: string): Command[] {
   const words = text.toLowerCase().split(/\s+/).filter(Boolean);
   if (words.length === 0) return commands;
-  return commands.filter((c) => {
-    const hay = `${c.label} ${c.group} ${c.keywords ?? ""}`.toLowerCase();
-    return words.every((w) => hay.includes(w));
-  });
+  const byLabel: Command[] = [];
+  const byKeywords: Command[] = [];
+  for (const c of commands) {
+    const label = `${c.label} ${c.group}`.toLowerCase();
+    if (words.every((w) => label.includes(w))) {
+      byLabel.push(c);
+      continue;
+    }
+    const hay = `${label} ${c.keywords ?? ""}`.toLowerCase();
+    if (words.every((w) => hay.includes(w))) byKeywords.push(c);
+  }
+  return [...byLabel, ...byKeywords];
 }

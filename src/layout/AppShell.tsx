@@ -11,6 +11,7 @@ import { Sidebar } from "./Sidebar";
 import { ShortcutsModal } from "./ShortcutsModal";
 import { RefPreviewHost } from "../components/RefPreview";
 import { Workspace } from "../workspace/Workspace";
+import { LayoutPicker } from "../workspace/LayoutPicker";
 import { openContent, openPassage } from "../workspace/openContent";
 import { Button, IconButton } from "../components/ui/Button";
 import { Kbd } from "../components/ui/Page";
@@ -134,6 +135,10 @@ export function AppShell() {
         else enterFocusMode();
       } else if (e.key === "Escape" && distractionFreeMode) {
         exitFocusMode();
+      } else if (e.key === "Escape" && useWorkspaceStore.getState().maximizedPaneId && !isTypingTarget(e.target)) {
+        // A pane maximized from its header (double-click) restores on Escape;
+        // dialogs and menus stop the key before it gets here.
+        useWorkspaceStore.getState().setMaximized(null);
       } else if (e.altKey && e.key === "ArrowLeft") {
         e.preventDefault();
         goBack();
@@ -164,6 +169,7 @@ export function AppShell() {
               Search
               <Kbd>Ctrl F</Kbd>
             </Button>
+            <LayoutPicker />
             <IconButton icon={Keyboard} label="Keyboard shortcuts (Ctrl+/)" onClick={() => setShortcutsOpen(true)} />
           </header>
         )}

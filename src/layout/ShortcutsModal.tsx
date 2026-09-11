@@ -22,8 +22,11 @@ const GROUPS: { title: string; rows: { keys: string[]; label: string }[] }[] = [
       { keys: ["Ctrl", "B"], label: "Add a study pane, or focus the one that is open" },
       { keys: ["Ctrl", "click"], label: "Open a link, a sidebar item, or a reference in a new pane (middle-click does the same)" },
       { keys: ["Click the letter"], label: "In a pane header: move the pane to link group A, B, or C, or unlink it. Panes in one group follow each other's passage" },
+      { keys: ["Double-click a header"], label: "Maximize that pane; double-click again (or Esc) to bring the others back" },
+      { keys: ["Drag a header"], label: "Drop it on another pane to swap the two" },
+      { keys: ["Layout button"], label: "Top bar: one, two, two plus one, three, or two-by-two panes. Below 1300px the window shows two columns with tabs" },
       { keys: ["F11"], label: "Focus mode: maximize the focused pane and hide everything else" },
-      { keys: ["Esc"], label: "Leave focus mode; close any panel, menu, or dialog" },
+      { keys: ["Esc"], label: "Leave focus mode or restore a maximized pane; close any panel, menu, or dialog" },
     ],
   },
   {
