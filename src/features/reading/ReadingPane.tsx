@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { Columns2, Languages, Maximize2, Paperclip, Printer, SlidersHorizontal, Sparkles, StickyNote, Type } from "lucide-react";
+import { Bookmark, BookmarkCheck, Columns2, Languages, Maximize2, MoreHorizontal, Paperclip, Printer, SlidersHorizontal, Sparkles, Square, StickyNote, Type, Volume2 } from "lucide-react";
 import { useReadingTypography, useUiStore } from "../../state/uiStore";
 import { useWorkspaceStore } from "../../state/workspaceStore";
 import {
@@ -91,7 +91,9 @@ interface NoteTarget {
  * modes) is the pane's; everything about *how* it is shown (text size,
  * font, theme, highlights, note markers) is global. */
 export function ReadingPane() {
-  const { id: paneId, isFocused } = usePane();
+  const { id: paneId, isFocused, width: paneWidth } = usePane();
+  const compact = paneWidth > 0 && paneWidth < 520;
+  const narrow = paneWidth > 0 && paneWidth < 820;
   const [params, setParams] = usePaneParams("bible");
   const { translationId, bookId, chapter, verse: scrollTarget, activeVerse, paragraphMode, redLetterMode } = params;
   const paneNavigate = usePaneNavigate();
@@ -135,15 +137,15 @@ export function ReadingPane() {
     if (translationId != null) setLastTranslation(translationId);
   }, [translationId, setLastTranslation]);
 
-  // Linked panes follow this one's chapter and selected verse. Not on
-  // mount: a restored workspace must not have its panes overwrite each
-  // other in mount order.
-  const publishedOnce = useRef(false);
+  // Linked panes follow this one's chapter and selected verse. Only actual
+  // changes publish, never the mount itself (a restored workspace must not
+  // have its panes overwrite each other in mount order), and the check is
+  // by value so StrictMode's remount does not slip through either.
+  const lastPublished = useRef({ bookId, chapter, activeVerse });
   useEffect(() => {
-    if (!publishedOnce.current) {
-      publishedOnce.current = true;
-      return;
-    }
+    const last = lastPublished.current;
+    if (last.bookId === bookId && last.chapter === chapter && last.activeVerse === activeVerse) return;
+    lastPublished.current = { bookId, chapter, activeVerse };
     publishPassage(paneId, { bookId, chapter, verse: activeVerse });
   }, [paneId, bookId, chapter, activeVerse, publishPassage]);
 
@@ -202,6 +204,8 @@ export function ReadingPane() {
   const [verseMenu, setVerseMenu] = useState<{ verseNum: number; x: number; y: number } | null>(null);
   const [compareVerse, setCompareVerse] = useState<number | null>(null);
   const [printing, setPrinting] = useState(false);
+  const [textModalOpen, setTextModalOpen] = useState(false);
+  const [viewModalOpen, setViewModalOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Virtualized so long chapters (Psalm 119, 176 verses) don't render every
@@ -336,6 +340,101 @@ export function ReadingPane() {
   const hasRelated = (resourceLinks?.length ?? 0) > 0 || suggested.length > 0;
   const chapterNoteCount = chapterNotes?.length ?? 0;
 
+  const textSettings = (
+    <div className="space-y-3 p-1">
+      <label className="block">
+        <span className="mb-1 flex items-center justify-between text-xs font-medium text-ink-3">
+          <span>Text size</span>
+          <span>{fontSize}px</span>
+        </span>
+        <input type="range" min={14} max={30} value={fontSize} onChange={(e) => setFontSize(Number(e.target.value))} className="w-full accent-accent" />
+      </label>
+      <div>
+        <div className="mb-1 text-xs font-medium text-ink-3">Line spacing</div>
+        <div className="flex gap-1">
+          {(["compact", "normal", "relaxed"] as const).map((s) => (
+            <Button key={s} size="sm" active={lineSpacing === s} onClick={() => setLineSpacing(s)} className="flex-1 capitalize">
+              {s}
+            </Button>
+          ))}
+        </div>
+      </div>
+      <div>
+        <div className="mb-1 text-xs font-medium text-ink-3">Font</div>
+        <div className="flex gap-1">
+          <Button size="sm" active={readingFont === "serif"} onClick={() => setReadingFont("serif")} className="flex-1 font-serif">
+            Serif
+          </Button>
+          <Button size="sm" active={readingFont === "sans"} onClick={() => setReadingFont("sans")} className="flex-1">
+            Sans-serif
+          </Button>
+        </div>
+      </div>
+      <label className="block">
+        <span className="mb-1 block text-xs font-medium text-ink-3">Theme</span>
+        <select value={theme} onChange={(e) => setTheme(e.target.value as typeof theme)} className={cx(selectSmClass, "w-full")}>
+          <option value="system">Match Windows</option>
+          <option value="light">Light</option>
+          <option value="sepia">Sepia</option>
+          <option value="dark">Dark</option>
+          <option value="oled">True black</option>
+        </select>
+      </label>
+    </div>
+  );
+
+  const viewOptions = (
+    <>
+      {[
+        { label: "Paragraph mode", checked: paragraphMode, onChange: () => setParams({ paragraphMode: !paragraphMode }), hint: "Flowing prose instead of one verse per line" },
+        { label: "Verse numbers", checked: showVerseNumbers, onChange: toggleVerseNumbers },
+        { label: "Words of Jesus in red", checked: redLetterMode, onChange: () => setParams({ redLetterMode: !redLetterMode }) },
+        { label: "Show highlights", checked: showHighlights, onChange: toggleShowHighlights },
+        { label: "Show note markers", checked: showNoteSymbols, onChange: toggleShowNoteSymbols },
+      ].map((opt) => (
+        <label key={opt.label} className="flex cursor-pointer items-start gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-hover">
+          <input type="checkbox" className={cx(checkboxClass, "mt-0.5")} checked={opt.checked} onChange={opt.onChange} />
+          <span>
+            <span className="text-ink-2">{opt.label}</span>
+            {opt.hint && <span className="block text-xs text-ink-3">{opt.hint}</span>}
+          </span>
+        </label>
+      ))}
+      <div className="my-1 h-px bg-line" aria-hidden="true" />
+      <PopoverItem onClick={() => setPrinting(true)}>
+        <Printer className="h-4 w-4 text-ink-3" aria-hidden="true" /> Print this chapter
+      </PopoverItem>
+    </>
+  );
+
+  const compareItems = (close: () => void) =>
+    translations
+      ?.filter((t) => t.id !== translationId)
+      .map((t) => (
+        <PopoverItem
+          key={t.id}
+          onClick={() => {
+            openContent("bible", { translationId: t.id, bookId, chapter, activeVerse }, { target: "new", from: paneId, link: true });
+            close();
+          }}
+        >
+          <span className="w-12 shrink-0 font-mono text-xs text-ink-3">{t.code}</span>
+          <span className="truncate">{t.name}</span>
+        </PopoverItem>
+      ));
+
+  const readAloudSegments = (verses ?? []).map((v) => ({ id: v.verse, text: v.text, label: `Verse ${v.verse}` }));
+  const chapterBookmark = bookmarks?.find((b) => b.book_id === book.id && b.chapter === chapter && b.verse == null);
+  const verseBookmark = activeVerse != null ? bookmarks?.find((b) => b.book_id === book.id && b.chapter === chapter && b.verse === activeVerse) : undefined;
+  function toggleBookmark(verse: number | undefined, existing: { id: number } | undefined) {
+    const label = `${book!.name} ${chapter}${verse ? `:${verse}` : ""}`;
+    if (existing) deleteBookmark.mutate(existing.id, { onSuccess: () => toast.info(`Bookmark removed: ${label}`) });
+    else createBookmark.mutate({ bookId: book!.id, chapter, verse }, { onSuccess: () => toast.success(`Bookmarked ${label}`) });
+  }
+
+  // Everything right of the translation picker folds into one overflow menu
+  // below about 520px of pane width; between that and about 820px the two
+  // labelled buttons drop their labels so the row still fits.
   const toolbar = !distractionFreeMode && books && (
     <div className="flex h-11 shrink-0 items-center gap-1 border-b border-line bg-surface px-2">
       <ChapterNav books={books} position={{ bookId, chapter }} translationId={translationId} onNavigate={(p) => openPassage(p, { target: paneId })} />
@@ -349,127 +448,147 @@ export function ReadingPane() {
           ))}
         </select>
       )}
-      {translations && (
-        <Popover
-          width="w-64"
-          align="left"
-          trigger={({ toggle, open }) => (
-            <Button size="sm" variant="ghost" icon={Columns2} active={open} onClick={toggle} title="Open this chapter in another translation beside this one">
-              Compare
-            </Button>
-          )}
-        >
-          {(close) => (
-            <>
-              <PopoverLabel>Compare in a new pane</PopoverLabel>
-              {translations
-                .filter((t) => t.id !== translationId)
-                .map((t) => (
+      {compact ? (
+        <>
+          <div className="min-w-0 flex-1" />
+          <Popover
+            width="w-64"
+            trigger={({ toggle, open }) => <IconButton icon={MoreHorizontal} label="More reading tools" active={open} onClick={toggle} />}
+          >
+            {(close) => (
+              <>
+                <PopoverItem
+                  onClick={() => {
+                    openInterlinear();
+                    close();
+                  }}
+                >
+                  <Languages className="h-4 w-4 text-ink-3" aria-hidden="true" /> Interlinear in a new pane
+                </PopoverItem>
+                <PopoverItem
+                  onClick={() => {
+                    setChapterNoteOpen(true);
+                    close();
+                  }}
+                >
+                  <StickyNote className="h-4 w-4 text-ink-3" aria-hidden="true" /> Chapter notes{chapterNoteCount > 0 ? ` (${chapterNoteCount})` : ""}
+                </PopoverItem>
+                <PopoverItem
+                  onClick={() => {
+                    if (ttsHere) useTtsStore.getState().stop();
+                    else useTtsStore.getState().start(`${book.name} ${chapter}`, "scripture", readAloudSegments, { paneId });
+                    close();
+                  }}
+                >
+                  {ttsHere ? <Square className="h-4 w-4 text-ink-3" aria-hidden="true" /> : <Volume2 className="h-4 w-4 text-ink-3" aria-hidden="true" />}
+                  {ttsHere ? "Stop reading aloud" : "Read aloud"}
+                </PopoverItem>
+                <PopoverItem
+                  onClick={() => {
+                    toggleBookmark(undefined, chapterBookmark);
+                    close();
+                  }}
+                >
+                  {chapterBookmark ? <BookmarkCheck className="h-4 w-4 text-accent" aria-hidden="true" /> : <Bookmark className="h-4 w-4 text-ink-3" aria-hidden="true" />}
+                  {chapterBookmark ? "Remove bookmark for this chapter" : "Bookmark this chapter"}
+                </PopoverItem>
+                {activeVerse != null && (
                   <PopoverItem
-                    key={t.id}
                     onClick={() => {
-                      openContent("bible", { translationId: t.id, bookId, chapter, activeVerse }, { target: "new", from: paneId, link: true });
+                      toggleBookmark(activeVerse, verseBookmark);
                       close();
                     }}
                   >
-                    <span className="w-12 shrink-0 font-mono text-xs text-ink-3">{t.code}</span>
-                    <span className="truncate">{t.name}</span>
+                    {verseBookmark ? <BookmarkCheck className="h-4 w-4 text-accent" aria-hidden="true" /> : <Bookmark className="h-4 w-4 text-ink-3" aria-hidden="true" />}
+                    {verseBookmark ? `Remove bookmark for verse ${activeVerse}` : `Bookmark verse ${activeVerse}`}
                   </PopoverItem>
-                ))}
-            </>
+                )}
+                <PopoverItem
+                  onClick={() => {
+                    setTextModalOpen(true);
+                    close();
+                  }}
+                >
+                  <Type className="h-4 w-4 text-ink-3" aria-hidden="true" /> Text, font, and theme…
+                </PopoverItem>
+                <PopoverItem
+                  onClick={() => {
+                    setViewModalOpen(true);
+                    close();
+                  }}
+                >
+                  <SlidersHorizontal className="h-4 w-4 text-ink-3" aria-hidden="true" /> View options…
+                </PopoverItem>
+                <PopoverItem
+                  onClick={() => {
+                    enterFocusMode();
+                    close();
+                  }}
+                >
+                  <Maximize2 className="h-4 w-4 text-ink-3" aria-hidden="true" /> Focus mode
+                </PopoverItem>
+                {translations && translations.length > 1 && (
+                  <>
+                    <div className="my-1 h-px bg-line" aria-hidden="true" />
+                    <PopoverLabel>Compare in a new pane</PopoverLabel>
+                    <div className="max-h-40 overflow-y-auto">{compareItems(close)}</div>
+                  </>
+                )}
+              </>
+            )}
+          </Popover>
+        </>
+      ) : (
+        <>
+          {translations && (
+            <Popover
+              width="w-64"
+              align="left"
+              trigger={({ toggle, open }) =>
+                narrow ? (
+                  <IconButton icon={Columns2} label="Compare: open this chapter in another translation beside this one" active={open} onClick={toggle} />
+                ) : (
+                  <Button size="sm" variant="ghost" icon={Columns2} active={open} onClick={toggle} title="Open this chapter in another translation beside this one">
+                    Compare
+                  </Button>
+                )
+              }
+            >
+              {(close) => (
+                <>
+                  <PopoverLabel>Compare in a new pane</PopoverLabel>
+                  <div className="max-h-64 overflow-y-auto">{compareItems(close)}</div>
+                </>
+              )}
+            </Popover>
           )}
-        </Popover>
+          {narrow ? (
+            <IconButton icon={Languages} label="Interlinear: Hebrew/Greek with Strong's numbers, in a pane beside this one" onClick={openInterlinear} />
+          ) : (
+            <Button size="sm" variant="ghost" icon={Languages} onClick={openInterlinear} title="Interlinear: Hebrew/Greek with Strong's numbers, in a pane beside this one">
+              Interlinear
+            </Button>
+          )}
+          <div className="min-w-0 flex-1" />
+          <div className="relative">
+            <IconButton icon={StickyNote} label={chapterNoteCount > 0 ? `Chapter notes (${chapterNoteCount})` : "Chapter notes"} onClick={() => setChapterNoteOpen(true)} />
+            {chapterNoteCount > 0 && (
+              <span className="pointer-events-none absolute -right-0.5 -top-0.5 min-w-4 rounded-full bg-accent px-1 text-center text-[10px] font-semibold leading-4 text-white">
+                {chapterNoteCount}
+              </span>
+            )}
+          </div>
+          <ReadAloudButton title={`${book.name} ${chapter}`} sourceKind="scripture" iconOnly size="md" segments={readAloudSegments} />
+          <BookmarksMenu bookId={book.id} chapter={chapter} activeVerse={activeVerse} />
+          <Popover width="w-72" trigger={({ toggle, open }) => <IconButton icon={Type} label="Text size, spacing, font, and theme" active={open} onClick={toggle} />}>
+            {textSettings}
+          </Popover>
+          <Popover width="w-64" trigger={({ toggle, open }) => <IconButton icon={SlidersHorizontal} label="View options" active={open} onClick={toggle} />}>
+            {viewOptions}
+          </Popover>
+          <IconButton icon={Maximize2} label="Focus mode: just the text (F11)" onClick={enterFocusMode} />
+        </>
       )}
-      <Button size="sm" variant="ghost" icon={Languages} onClick={openInterlinear} title="Interlinear: Hebrew/Greek with Strong's numbers, in a pane beside this one">
-        Interlinear
-      </Button>
-      <div className="min-w-0 flex-1" />
-      <div className="relative">
-        <IconButton icon={StickyNote} label={chapterNoteCount > 0 ? `Chapter notes (${chapterNoteCount})` : "Chapter notes"} onClick={() => setChapterNoteOpen(true)} />
-        {chapterNoteCount > 0 && (
-          <span className="pointer-events-none absolute -right-0.5 -top-0.5 min-w-4 rounded-full bg-accent px-1 text-center text-[10px] font-semibold leading-4 text-white">
-            {chapterNoteCount}
-          </span>
-        )}
-      </div>
-      <ReadAloudButton
-        title={`${book.name} ${chapter}`}
-        sourceKind="scripture"
-        iconOnly
-        size="md"
-        segments={(verses ?? []).map((v) => ({ id: v.verse, text: v.text, label: `Verse ${v.verse}` }))}
-      />
-      <BookmarksMenu bookId={book.id} chapter={chapter} activeVerse={activeVerse} />
-      <Popover
-        width="w-72"
-        trigger={({ toggle, open }) => <IconButton icon={Type} label="Text size, spacing, font, and theme" active={open} onClick={toggle} />}
-      >
-        <div className="space-y-3 p-1">
-          <label className="block">
-            <span className="mb-1 flex items-center justify-between text-xs font-medium text-ink-3">
-              <span>Text size</span>
-              <span>{fontSize}px</span>
-            </span>
-            <input type="range" min={14} max={30} value={fontSize} onChange={(e) => setFontSize(Number(e.target.value))} className="w-full accent-accent" />
-          </label>
-          <div>
-            <div className="mb-1 text-xs font-medium text-ink-3">Line spacing</div>
-            <div className="flex gap-1">
-              {(["compact", "normal", "relaxed"] as const).map((s) => (
-                <Button key={s} size="sm" active={lineSpacing === s} onClick={() => setLineSpacing(s)} className="flex-1 capitalize">
-                  {s}
-                </Button>
-              ))}
-            </div>
-          </div>
-          <div>
-            <div className="mb-1 text-xs font-medium text-ink-3">Font</div>
-            <div className="flex gap-1">
-              <Button size="sm" active={readingFont === "serif"} onClick={() => setReadingFont("serif")} className="flex-1 font-serif">
-                Serif
-              </Button>
-              <Button size="sm" active={readingFont === "sans"} onClick={() => setReadingFont("sans")} className="flex-1">
-                Sans-serif
-              </Button>
-            </div>
-          </div>
-          <label className="block">
-            <span className="mb-1 block text-xs font-medium text-ink-3">Theme</span>
-            <select value={theme} onChange={(e) => setTheme(e.target.value as typeof theme)} className={cx(selectSmClass, "w-full")}>
-              <option value="system">Match Windows</option>
-              <option value="light">Light</option>
-              <option value="sepia">Sepia</option>
-              <option value="dark">Dark</option>
-              <option value="oled">True black</option>
-            </select>
-          </label>
-        </div>
-      </Popover>
-      <Popover
-        width="w-64"
-        trigger={({ toggle, open }) => <IconButton icon={SlidersHorizontal} label="View options" active={open} onClick={toggle} />}
-      >
-        {[
-          { label: "Paragraph mode", checked: paragraphMode, onChange: () => setParams({ paragraphMode: !paragraphMode }), hint: "Flowing prose instead of one verse per line" },
-          { label: "Verse numbers", checked: showVerseNumbers, onChange: toggleVerseNumbers },
-          { label: "Words of Jesus in red", checked: redLetterMode, onChange: () => setParams({ redLetterMode: !redLetterMode }) },
-          { label: "Show highlights", checked: showHighlights, onChange: toggleShowHighlights },
-          { label: "Show note markers", checked: showNoteSymbols, onChange: toggleShowNoteSymbols },
-        ].map((opt) => (
-          <label key={opt.label} className="flex cursor-pointer items-start gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-hover">
-            <input type="checkbox" className={cx(checkboxClass, "mt-0.5")} checked={opt.checked} onChange={opt.onChange} />
-            <span>
-              <span className="text-ink-2">{opt.label}</span>
-              {opt.hint && <span className="block text-xs text-ink-3">{opt.hint}</span>}
-            </span>
-          </label>
-        ))}
-        <div className="my-1 h-px bg-line" aria-hidden="true" />
-        <PopoverItem onClick={() => setPrinting(true)}>
-          <Printer className="h-4 w-4 text-ink-3" aria-hidden="true" /> Print this chapter
-        </PopoverItem>
-      </Popover>
-      <IconButton icon={Maximize2} label="Focus mode: just the text (F11)" onClick={enterFocusMode} />
     </div>
   );
 
@@ -653,6 +772,17 @@ export function ReadingPane() {
       )}
 
       {compareVerse != null && <CompareVerseModal book={book} chapter={chapter} verse={compareVerse} onClose={() => setCompareVerse(null)} />}
+
+      {textModalOpen && (
+        <Modal title="Text, font, and theme" onClose={() => setTextModalOpen(false)} size="sm">
+          {textSettings}
+        </Modal>
+      )}
+      {viewModalOpen && (
+        <Modal title="View options" onClose={() => setViewModalOpen(false)} size="sm" bodyClassName="p-2">
+          {viewOptions}
+        </Modal>
+      )}
 
       {activeFootnote && (
         <FootnotePopup
