@@ -4,6 +4,7 @@ import { useNavigationStore } from "../../state/navigationStore";
 import { useReadingTypography } from "../../state/uiStore";
 import type { HarmonyReading } from "../../api/types";
 import { cx } from "../../components/ui/classes";
+import { bookName, joinVerses } from "../../lib/passage";
 
 /** One Gospel's column in the parallel-reading panel. Only renders inline
  * text for a single-chapter reading (the common case) -- a reading that
@@ -17,12 +18,7 @@ function GospelColumn({ reading }: { reading: HarmonyReading }) {
   const typography = useReadingTypography(0.85);
   const spansChapters = reading.chapter_start !== reading.chapter_end;
   const { data: verses } = useChapter(spansChapters ? null : primaryTranslationId, reading.book_id, reading.chapter_start);
-  const bookName = books?.find((b) => b.id === reading.book_id)?.name ?? `#${reading.book_id}`;
-
-  const text = verses
-    ?.filter((v) => v.verse >= (reading.verse_start ?? 1) && v.verse <= (reading.verse_end ?? v.verse))
-    .map((v) => v.text)
-    .join(" ");
+  const text = verses ? joinVerses(verses, reading.verse_start ?? 1, reading.verse_end) : undefined;
 
   return (
     <div className="min-w-0 rounded-lg border border-line bg-surface-2 p-3">
@@ -34,7 +30,7 @@ function GospelColumn({ reading }: { reading: HarmonyReading }) {
         }}
         className="mb-1 block text-xs font-semibold text-accent hover:underline"
       >
-        {bookName} {reading.label}
+        {bookName(books, reading.book_id)} {reading.label}
       </button>
       {spansChapters ? (
         <p className="text-xs text-ink-3">Spans chapters. Open the passage to read it.</p>

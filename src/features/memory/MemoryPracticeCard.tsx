@@ -8,6 +8,7 @@ import type { MemoryVerse } from "../../api/types";
 import { Button } from "../../components/ui/Button";
 import { LoadingState } from "../../components/ui/EmptyState";
 import { cx, textareaClass } from "../../components/ui/classes";
+import { joinVerses } from "../../lib/passage";
 
 /** One spaced-repetition flashcard: shows the verse in first-letter or
  * blank-word hint form, lets the reader reveal the full text once they've
@@ -24,10 +25,7 @@ export function MemoryPracticeCard({ card, onDone }: { card: MemoryVerse; onDone
   const [checked, setChecked] = useState(false);
 
   const book = books?.find((b) => b.id === card.book_id);
-  const text = verses
-    ?.filter((v) => v.verse >= card.verse_start && v.verse <= card.verse_end)
-    .map((v) => v.text)
-    .join(" ");
+  const text = verses ? joinVerses(verses, card.verse_start, card.verse_end) : undefined;
 
   function grade(quality: number) {
     review.mutate({ id: card.id, quality });
