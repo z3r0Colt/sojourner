@@ -12,6 +12,7 @@ import { ShortcutsModal } from "./ShortcutsModal";
 import { RefPreviewHost } from "../components/RefPreview";
 import { Workspace } from "../workspace/Workspace";
 import { LayoutPicker } from "../workspace/LayoutPicker";
+import { WorkspaceDialogs, WorkspacesMenu, useSavedWorkspaces } from "../workspace/WorkspacesMenu";
 import { openContent, openPassage } from "../workspace/openContent";
 import { Button, IconButton } from "../components/ui/Button";
 import { Kbd } from "../components/ui/Page";
@@ -31,6 +32,7 @@ export function AppShell() {
   const createBookmark = useCreateBookmark();
   const deleteBookmark = useDeleteBookmark();
   const readerTranslationId = useReaderTranslationId();
+  const [savedWorkspaces] = useSavedWorkspaces();
   const focusedPane = useWorkspaceStore((s) => findPane(s.panes, s.focusedPaneId));
   const canGoBack = (focusedPane?.history.length ?? 0) > 0;
   const canGoForward = (focusedPane?.future.length ?? 0) > 0;
@@ -169,6 +171,7 @@ export function AppShell() {
               Search
               <Kbd>Ctrl F</Kbd>
             </Button>
+            <WorkspacesMenu />
             <LayoutPicker />
             <IconButton icon={Keyboard} label="Keyboard shortcuts (Ctrl+/)" onClick={() => setShortcutsOpen(true)} />
           </header>
@@ -195,6 +198,7 @@ export function AppShell() {
       {paletteOpen && books && (
         <GoToCommandPalette
           books={books}
+          savedWorkspaces={savedWorkspaces}
           translationId={readerTranslationId}
           translationLabel={translations?.find((t) => t.id === readerTranslationId)?.name}
           onClose={() => setPaletteOpen(false)}
@@ -214,6 +218,7 @@ export function AppShell() {
         />
       )}
       {shortcutsOpen && <ShortcutsModal onClose={() => setShortcutsOpen(false)} />}
+      <WorkspaceDialogs />
       <RefPreviewHost />
     </div>
   );
