@@ -99,6 +99,8 @@ const CATEGORIES: Category[] = [
       { q: "Name your highlight colors", a: "Each of the five colors has a name (Promise, Command, Doctrine, Prayer, and Warning to start) that shows as the tooltip on its color button. Rename them under Settings → Reading → Highlight colors." },
       { q: "See every highlight", a: <>The Highlights page under My study lists every highlight grouped by color, with its verse text and reference. Filter by color or book; click a reference to jump to it (<Kbd>Ctrl</Kbd>+click opens it in a new pane).</> },
       { q: "Find your notes later", a: "The Notes page lists every note with the verse it was written on, sorted by Bible order or date, searchable and filterable by tag." },
+      { q: "Notes that mention a verse", a: "Write “Romans 8:28” in any note and that verse gets a faint dot by its number wherever you read it. A Mine pane (from the Add pane strip) lists those notes under “Mentioned in”." },
+      { q: "Get a deleted note back", a: "Deleting a note, chapter note, or prayer entry moves it to the Trash for thirty days: the toast offers Undo at once, and Settings → Data & backups → Trash lists everything waiting there with Restore and Delete permanently. The Notes and Prayer pages show a small Trash link while it holds something of theirs." },
       { q: "Words of Jesus in red", a: "Turn it on from the view options in the reading toolbar or under Settings → Reading. Only his quoted words turn red, not the surrounding verse." },
     ],
   },

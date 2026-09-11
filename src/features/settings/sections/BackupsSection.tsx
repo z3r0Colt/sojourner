@@ -8,6 +8,7 @@ import { Button } from "../../../components/ui/Button";
 import { confirmDialog } from "../../../components/ui/confirm";
 import { toast } from "../../../components/ui/toast";
 import { EmptyState } from "../../../components/ui/EmptyState";
+import { TrashSection } from "./TrashSection";
 
 export function BackupsSection() {
   const { data: backups } = useBackups();
@@ -142,6 +143,8 @@ export function BackupsSection() {
           </li>
         ))}
       </ul>
+
+      <TrashSection />
     </div>
   );
 }
