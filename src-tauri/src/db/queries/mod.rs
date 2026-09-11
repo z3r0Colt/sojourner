@@ -18,6 +18,13 @@ pub mod resources;
 pub mod scripture_memory;
 pub mod search;
 pub mod settings;
+pub mod trash;
 pub mod verses;
 pub mod versification;
 pub mod westminster;
+
+/// The soft-delete filter every list, search, and count over `notes`,
+/// `chapter_notes`, or `prayer_entries` must include (see
+/// USER_MIGRATION_0011). Prefix with a table alias in joins:
+/// `format!("n.{NOT_DELETED}")`.
+pub const NOT_DELETED: &str = "deleted_at IS NULL";

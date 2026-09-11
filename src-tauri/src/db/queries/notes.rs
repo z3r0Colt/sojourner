@@ -1,3 +1,4 @@
+use super::NOT_DELETED;
 use crate::models::{ChapterNote, Note};
 use rusqlite::{params, Connection};
 
@@ -12,15 +13,20 @@ fn map_row(r: &rusqlite::Row) -> rusqlite::Result<Note> {
         created_at: r.get(6)?,
         updated_at: r.get(7)?,
         highlight_id: r.get(8)?,
+        deleted_at: r.get(9)?,
     })
 }
 
-const SELECT_COLS: &str =
-    "id, book_id, chapter, verse_start, verse_end, body, created_at, updated_at, highlight_id";
+pub(super) const SELECT_COLS: &str =
+    "id, book_id, chapter, verse_start, verse_end, body, created_at, updated_at, highlight_id, deleted_at";
+
+pub(super) fn map_note_row(r: &rusqlite::Row) -> rusqlite::Result<Note> {
+    map_row(r)
+}
 
 pub fn list_for_chapter(conn: &Connection, book_id: i64, chapter: i64) -> anyhow::Result<Vec<Note>> {
     let mut stmt = conn.prepare(&format!(
-        "SELECT {SELECT_COLS} FROM notes WHERE book_id = ?1 AND chapter = ?2 ORDER BY verse_start"
+        "SELECT {SELECT_COLS} FROM notes WHERE book_id = ?1 AND chapter = ?2 AND {NOT_DELETED} ORDER BY verse_start"
     ))?;
     let rows = stmt.query_map(params![book_id, chapter], map_row)?;
     Ok(rows.collect::<Result<Vec<_>, _>>()?)
@@ -28,12 +34,14 @@ pub fn list_for_chapter(conn: &Connection, book_id: i64, chapter: i64) -> anyhow
 
 pub fn list_all(conn: &Connection) -> anyhow::Result<Vec<Note>> {
     let mut stmt = conn.prepare(&format!(
-        "SELECT {SELECT_COLS} FROM notes ORDER BY updated_at DESC"
+        "SELECT {SELECT_COLS} FROM notes WHERE {NOT_DELETED} ORDER BY updated_at DESC"
     ))?;
     let rows = stmt.query_map([], map_row)?;
     Ok(rows.collect::<Result<Vec<_>, _>>()?)
 }
 
+/// By id, deleted or not -- export and the Trash both need to reach a row
+/// the list queries hide.
 pub fn get(conn: &Connection, id: i64) -> anyhow::Result<Option<Note>> {
     use rusqlite::OptionalExtension;
     Ok(conn.query_row(&format!("SELECT {SELECT_COLS} FROM notes WHERE id = ?1"), params![id], map_row).optional()?)
@@ -70,8 +78,11 @@ pub fn update(conn: &Connection, id: i64, body: String) -> anyhow::Result<()> {
     Ok(())
 }
 
+/// Soft delete: the row moves to the Trash (see `queries::trash`) rather
+/// than disappearing, so a slip can be undone for thirty days.
 pub fn delete(conn: &Connection, id: i64) -> anyhow::Result<()> {
-    conn.execute("DELETE FROM notes WHERE id = ?1", params![id])?;
+    let now = chrono::Utc::now().to_rfc3339();
+    conn.execute("UPDATE notes SET deleted_at = ?1 WHERE id = ?2 AND deleted_at IS NULL", params![now, id])?;
     Ok(())
 }
 
@@ -83,20 +94,27 @@ fn map_chapter_row(r: &rusqlite::Row) -> rusqlite::Result<ChapterNote> {
         body: r.get(3)?,
         created_at: r.get(4)?,
         updated_at: r.get(5)?,
+        deleted_at: r.get(6)?,
     })
 }
-const CHAPTER_COLS: &str = "id, book_id, chapter, body, created_at, updated_at";
+pub(super) const CHAPTER_COLS: &str = "id, book_id, chapter, body, created_at, updated_at, deleted_at";
+
+pub(super) fn map_chapter_note_row(r: &rusqlite::Row) -> rusqlite::Result<ChapterNote> {
+    map_chapter_row(r)
+}
 
 pub fn list_chapter_notes(conn: &Connection, book_id: i64, chapter: i64) -> anyhow::Result<Vec<ChapterNote>> {
     let mut stmt = conn.prepare(&format!(
-        "SELECT {CHAPTER_COLS} FROM chapter_notes WHERE book_id = ?1 AND chapter = ?2 ORDER BY created_at"
+        "SELECT {CHAPTER_COLS} FROM chapter_notes WHERE book_id = ?1 AND chapter = ?2 AND {NOT_DELETED} ORDER BY created_at"
     ))?;
     let rows = stmt.query_map(params![book_id, chapter], map_chapter_row)?;
     Ok(rows.collect::<Result<Vec<_>, _>>()?)
 }
 
 pub fn list_all_chapter_notes(conn: &Connection) -> anyhow::Result<Vec<ChapterNote>> {
-    let mut stmt = conn.prepare(&format!("SELECT {CHAPTER_COLS} FROM chapter_notes ORDER BY updated_at DESC"))?;
+    let mut stmt = conn.prepare(&format!(
+        "SELECT {CHAPTER_COLS} FROM chapter_notes WHERE {NOT_DELETED} ORDER BY updated_at DESC"
+    ))?;
     let rows = stmt.query_map([], map_chapter_row)?;
     Ok(rows.collect::<Result<Vec<_>, _>>()?)
 }
@@ -122,15 +140,22 @@ pub fn update_chapter_note(conn: &Connection, id: i64, body: String) -> anyhow::
     Ok(())
 }
 
+/// Soft delete -- see `delete`.
 pub fn delete_chapter_note(conn: &Connection, id: i64) -> anyhow::Result<()> {
-    conn.execute("DELETE FROM chapter_notes WHERE id = ?1", params![id])?;
+    let now = chrono::Utc::now().to_rfc3339();
+    conn.execute(
+        "UPDATE chapter_notes SET deleted_at = ?1 WHERE id = ?2 AND deleted_at IS NULL",
+        params![now, id],
+    )?;
     Ok(())
 }
 
 // Doctrine/use tagging (conviction, comfort, duty, or a doctrine name) for
 // both note kinds -- kept as sibling tables rather than embedded on
 // Note/ChapterNote (see USER_MIGRATION_0009's schema comment), same
-// add/remove/list-all/list-by-tag shape as sermon_note_tags.
+// add/remove/list-all/list-by-tag shape as sermon_note_tags. The "all tags"
+// listings join the parent so a tag that only lives on a deleted note drops
+// out of the filter bar with it (and comes back on restore).
 
 pub fn add_tag(conn: &Connection, note_id: i64, tag: String) -> anyhow::Result<()> {
     conn.execute("INSERT OR IGNORE INTO note_tags (note_id, tag) VALUES (?1, ?2)", params![note_id, tag.trim()])?;
@@ -149,7 +174,9 @@ pub fn list_tags(conn: &Connection, note_id: i64) -> anyhow::Result<Vec<String>>
 }
 
 pub fn list_all_tags(conn: &Connection) -> anyhow::Result<Vec<String>> {
-    let mut stmt = conn.prepare("SELECT DISTINCT tag FROM note_tags ORDER BY tag")?;
+    let mut stmt = conn.prepare(&format!(
+        "SELECT DISTINCT nt.tag FROM note_tags nt JOIN notes n ON n.id = nt.note_id WHERE n.{NOT_DELETED} ORDER BY nt.tag"
+    ))?;
     let rows = stmt.query_map([], |r| r.get::<_, String>(0))?;
     Ok(rows.collect::<Result<Vec<_>, _>>()?)
 }
@@ -157,7 +184,9 @@ pub fn list_all_tags(conn: &Connection) -> anyhow::Result<Vec<String>> {
 /// Every note's tags in one round trip, as (note_id, tag) pairs -- for a
 /// list view that needs every row's tags without an N+1 query per note.
 pub fn list_all_tags_by_note(conn: &Connection) -> anyhow::Result<Vec<(i64, String)>> {
-    let mut stmt = conn.prepare("SELECT note_id, tag FROM note_tags ORDER BY note_id, tag")?;
+    let mut stmt = conn.prepare(&format!(
+        "SELECT nt.note_id, nt.tag FROM note_tags nt JOIN notes n ON n.id = nt.note_id WHERE n.{NOT_DELETED} ORDER BY nt.note_id, nt.tag"
+    ))?;
     let rows = stmt.query_map([], |r| Ok((r.get(0)?, r.get(1)?)))?;
     Ok(rows.collect::<Result<Vec<_>, _>>()?)
 }
@@ -185,13 +214,17 @@ pub fn list_chapter_note_tags(conn: &Connection, chapter_note_id: i64) -> anyhow
 }
 
 pub fn list_all_chapter_note_tags(conn: &Connection) -> anyhow::Result<Vec<String>> {
-    let mut stmt = conn.prepare("SELECT DISTINCT tag FROM chapter_note_tags ORDER BY tag")?;
+    let mut stmt = conn.prepare(&format!(
+        "SELECT DISTINCT t.tag FROM chapter_note_tags t JOIN chapter_notes cn ON cn.id = t.chapter_note_id WHERE cn.{NOT_DELETED} ORDER BY t.tag"
+    ))?;
     let rows = stmt.query_map([], |r| r.get::<_, String>(0))?;
     Ok(rows.collect::<Result<Vec<_>, _>>()?)
 }
 
 pub fn list_all_chapter_note_tags_by_note(conn: &Connection) -> anyhow::Result<Vec<(i64, String)>> {
-    let mut stmt = conn.prepare("SELECT chapter_note_id, tag FROM chapter_note_tags ORDER BY chapter_note_id, tag")?;
+    let mut stmt = conn.prepare(&format!(
+        "SELECT t.chapter_note_id, t.tag FROM chapter_note_tags t JOIN chapter_notes cn ON cn.id = t.chapter_note_id WHERE cn.{NOT_DELETED} ORDER BY t.chapter_note_id, t.tag"
+    ))?;
     let rows = stmt.query_map([], |r| Ok((r.get(0)?, r.get(1)?)))?;
     Ok(rows.collect::<Result<Vec<_>, _>>()?)
 }

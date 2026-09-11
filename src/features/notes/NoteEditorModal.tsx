@@ -3,7 +3,7 @@ import { Trash2 } from "lucide-react";
 import { RichTextEditor } from "./RichTextEditor";
 import { Modal } from "../../components/ui/Modal";
 import { Button } from "../../components/ui/Button";
-import { confirmDelete } from "../../components/ui/confirm";
+import { confirmTrash } from "../../components/ui/confirm";
 
 export function NoteEditorModal({
   title,
@@ -34,7 +34,7 @@ export function NoteEditorModal({
               icon={Trash2}
               className="mr-auto"
               onClick={async () => {
-                if (await confirmDelete("this note")) onDelete();
+                if (await confirmTrash("this note")) onDelete();
               }}
             >
               Delete

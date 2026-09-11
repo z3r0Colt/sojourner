@@ -110,6 +110,8 @@ export interface Note {
   highlight_id: number | null;
   created_at: string;
   updated_at: string;
+  /** Set while the note sits in the Trash; null everywhere else. */
+  deleted_at: string | null;
 }
 
 export interface ChapterNote {
@@ -119,6 +121,16 @@ export interface ChapterNote {
   body: string;
   created_at: string;
   updated_at: string;
+  deleted_at: string | null;
+}
+
+/** Which soft-deletable table a Trash operation addresses. */
+export type TrashKind = "note" | "chapter_note" | "prayer_entry";
+
+export interface TrashContents {
+  notes: Note[];
+  chapter_notes: ChapterNote[];
+  prayer_entries: PrayerEntry[];
 }
 
 export interface Bookmark {
@@ -178,6 +190,7 @@ export interface PrayerEntry {
   verse_end: number | null;
   created_at: string;
   updated_at: string;
+  deleted_at: string | null;
 }
 
 export interface PrayerListPerson {

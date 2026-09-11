@@ -45,3 +45,11 @@ export function confirmDelete(what: string, detail?: string): Promise<boolean> {
     danger: true,
   });
 }
+
+/** Softer copy for anything that goes to the Trash instead of being erased. */
+export const TRASH_DETAIL = "Moves to Trash for 30 days.";
+
+/** `confirmDelete` for soft-deletable items (notes, chapter notes, prayer entries). */
+export function confirmTrash(what: string): Promise<boolean> {
+  return confirmDelete(what, TRASH_DETAIL);
+}

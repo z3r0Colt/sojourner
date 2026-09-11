@@ -87,6 +87,14 @@ pub fn run() {
             backup::apply_pending_import(&app_data_dir).expect("failed to apply a staged import/restore");
 
             let conn = db::open(&app_data_dir, &content_db_path).expect("failed to open database");
+            // Trash retention: anything soft-deleted more than thirty days
+            // ago is gone for good. Best-effort -- a failure here must not
+            // stop the app from opening.
+            match db::queries::trash::sweep_expired(&conn) {
+                Ok(n) if n > 0 => println!("[trash] purged {n} item(s) older than {} days", db::queries::trash::RETENTION_DAYS),
+                Ok(_) => {}
+                Err(e) => eprintln!("[trash] sweep failed: {e:#}"),
+            }
             app.manage(DbState(Mutex::new(conn)));
             app.manage(AppDataDir(app_data_dir));
             Ok(())
@@ -136,6 +144,9 @@ pub fn run() {
             commands::annotations::remove_chapter_note_tag,
             commands::annotations::list_all_chapter_note_tags,
             commands::annotations::list_all_chapter_note_tags_by_note,
+            commands::annotations::list_trash,
+            commands::annotations::restore_trash_item,
+            commands::annotations::purge_trash_item,
             commands::prayer_journal::list_prayer_entries,
             commands::prayer_journal::create_prayer_entry,
             commands::prayer_journal::update_prayer_entry,

@@ -20,6 +20,7 @@ import {
   useAllChapterNoteTagsByNote,
   useAddChapterNoteTag,
   useRemoveChapterNoteTag,
+  useTrashToast,
 } from "../../api/queries";
 import { useNavigationStore } from "../../state/navigationStore";
 import { NoteEditorModal } from "./NoteEditorModal";
@@ -50,6 +51,7 @@ export function NotesListView() {
   const deleteNote = useDeleteNote();
   const updateChapterNote = useUpdateChapterNote();
   const deleteChapterNote = useDeleteChapterNote();
+  const trashToast = useTrashToast();
   const [editing, setEditing] = useState<Note | null>(null);
   const [editingChapter, setEditingChapter] = useState<ChapterNote | null>(null);
   const [query, setQuery] = useState("");
@@ -289,7 +291,8 @@ export function NotesListView() {
             setEditing(null);
           }}
           onDelete={() => {
-            deleteNote.mutate(editing.id, { onSuccess: () => toast.info("Note deleted") });
+            const id = editing.id;
+            deleteNote.mutate(id, { onSuccess: () => trashToast("note", id) });
             setEditing(null);
           }}
           onClose={() => setEditing(null)}
@@ -305,7 +308,8 @@ export function NotesListView() {
             setEditingChapter(null);
           }}
           onDelete={() => {
-            deleteChapterNote.mutate(editingChapter.id, { onSuccess: () => toast.info("Note deleted") });
+            const id = editingChapter.id;
+            deleteChapterNote.mutate(id, { onSuccess: () => trashToast("chapter_note", id) });
             setEditingChapter(null);
           }}
           onClose={() => setEditingChapter(null)}

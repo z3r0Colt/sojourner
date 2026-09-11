@@ -1153,6 +1153,25 @@ DROP TABLE sermon_notes_fts;
 DROP TABLE sermon_notes;
 "#;
 
+// Soft delete for the three kinds of writing a user would most regret
+// losing to a slip: passage notes, chapter notes, and prayer journal
+// entries. Deleting sets `deleted_at` instead of removing the row; a Trash
+// page can restore it, and a startup sweep hard-deletes anything older than
+// thirty days (see db::queries::trash). Every list/search query filters on
+// `deleted_at IS NULL` via the shared NOT_DELETED constant. The partial
+// indexes only cover the (few) deleted rows, so the sweep and the Trash
+// listing never scan live notes. The FTS5 tables are external-content over
+// these rows, so deleted rows stay indexed; search joins the base table and
+// filters there rather than rewriting the triggers.
+pub const USER_MIGRATION_0011: &str = r#"
+ALTER TABLE notes ADD COLUMN deleted_at TEXT;
+ALTER TABLE chapter_notes ADD COLUMN deleted_at TEXT;
+ALTER TABLE prayer_entries ADD COLUMN deleted_at TEXT;
+CREATE INDEX idx_notes_deleted ON notes(deleted_at) WHERE deleted_at IS NOT NULL;
+CREATE INDEX idx_chapter_notes_deleted ON chapter_notes(deleted_at) WHERE deleted_at IS NOT NULL;
+CREATE INDEX idx_prayer_entries_deleted ON prayer_entries(deleted_at) WHERE deleted_at IS NOT NULL;
+"#;
+
 pub const USER_MIGRATIONS: &[&str] = &[
     USER_MIGRATION_0001,
     USER_MIGRATION_0002,
@@ -1164,4 +1183,5 @@ pub const USER_MIGRATIONS: &[&str] = &[
     USER_MIGRATION_0008,
     USER_MIGRATION_0009,
     USER_MIGRATION_0010,
+    USER_MIGRATION_0011,
 ];

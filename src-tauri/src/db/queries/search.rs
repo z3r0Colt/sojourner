@@ -1,3 +1,4 @@
+use super::NOT_DELETED;
 use crate::models::SearchResult;
 use rusqlite::Connection;
 
@@ -296,19 +297,21 @@ pub fn search_commentary(
 
 /// Searches the user's own study notes: passage notes (verse-range) and
 /// chapter notes (whole-chapter), unioned into one result set so both show
-/// up together in the "Notes" search tab.
+/// up together in the "Notes" search tab. The FTS tables still index
+/// soft-deleted rows (external content, unchanged triggers), so each branch
+/// joins its base table and filters on `deleted_at` there.
 pub fn search_notes(conn: &Connection, query: &str, limit: i64) -> anyhow::Result<Vec<SearchResult>> {
     if query.trim().is_empty() {
         return Ok(vec![]);
     }
     let match_expr = build_match_expr(query);
 
-    let mut stmt = conn.prepare(
+    let mut stmt = conn.prepare(&format!(
         "SELECT n.id, n.book_id, n.chapter, n.verse_start, snippet(notes_fts, 0, '[', ']', '…', 12)
          FROM notes_fts JOIN notes n ON n.id = notes_fts.rowid
-         WHERE notes_fts MATCH ?1
-         ORDER BY bm25(notes_fts) LIMIT ?2",
-    )?;
+         WHERE notes_fts MATCH ?1 AND n.{NOT_DELETED}
+         ORDER BY bm25(notes_fts) LIMIT ?2"
+    ))?;
     let mut results = stmt
         .query_map(rusqlite::params![match_expr, limit], |r| {
             Ok(SearchResult {
@@ -323,12 +326,12 @@ pub fn search_notes(conn: &Connection, query: &str, limit: i64) -> anyhow::Resul
         })?
         .collect::<Result<Vec<_>, _>>()?;
 
-    let mut stmt = conn.prepare(
+    let mut stmt = conn.prepare(&format!(
         "SELECT cn.id, cn.book_id, cn.chapter, snippet(chapter_notes_fts, 0, '[', ']', '…', 12)
          FROM chapter_notes_fts JOIN chapter_notes cn ON cn.id = chapter_notes_fts.rowid
-         WHERE chapter_notes_fts MATCH ?1
-         ORDER BY bm25(chapter_notes_fts) LIMIT ?2",
-    )?;
+         WHERE chapter_notes_fts MATCH ?1 AND cn.{NOT_DELETED}
+         ORDER BY bm25(chapter_notes_fts) LIMIT ?2"
+    ))?;
     let chapter_results = stmt
         .query_map(rusqlite::params![match_expr, limit], |r| {
             Ok(SearchResult {
@@ -356,13 +359,13 @@ pub fn search_prayer_entries(conn: &Connection, query: &str, limit: i64) -> anyh
         return Ok(vec![]);
     }
     let match_expr = build_match_expr(query);
-    let mut stmt = conn.prepare(
+    let mut stmt = conn.prepare(&format!(
         "SELECT pe.id, pe.entry_date, pe.book_id, pe.chapter, pe.verse_start,
                 snippet(prayer_entries_fts, -1, '[', ']', '…', 12)
          FROM prayer_entries_fts JOIN prayer_entries pe ON pe.id = prayer_entries_fts.rowid
-         WHERE prayer_entries_fts MATCH ?1
-         ORDER BY bm25(prayer_entries_fts) LIMIT ?2",
-    )?;
+         WHERE prayer_entries_fts MATCH ?1 AND pe.{NOT_DELETED}
+         ORDER BY bm25(prayer_entries_fts) LIMIT ?2"
+    ))?;
     let rows = stmt.query_map(rusqlite::params![match_expr, limit], |r| {
         let entry_date: String = r.get(1)?;
         Ok(SearchResult {

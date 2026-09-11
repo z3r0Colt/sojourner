@@ -14,13 +14,14 @@ import {
   useAllPrayerEntryTagsByEntry,
   useAddPrayerEntryTag,
   useRemovePrayerEntryTag,
+  useTrashToast,
 } from "../../api/queries";
 import { useNavigationStore } from "../../state/navigationStore";
 import { PrayerEntryEditorModal } from "./PrayerEntryEditorModal";
 import { TagRow, TagFilterBar } from "../../components/TagRow";
 import { Button } from "../../components/ui/Button";
 import { EmptyState } from "../../components/ui/EmptyState";
-import { confirmDelete } from "../../components/ui/confirm";
+import { confirmTrash } from "../../components/ui/confirm";
 import { toast } from "../../components/ui/toast";
 import { cardClass, cx, inputClass } from "../../components/ui/classes";
 import type { PrayerEntry } from "../../api/types";
@@ -43,6 +44,7 @@ export function PrayerJournalView() {
   const createEntry = useCreatePrayerEntry();
   const updateEntry = useUpdatePrayerEntry();
   const deleteEntry = useDeletePrayerEntry();
+  const trashToast = useTrashToast();
   const goTo = useNavigationStore((s) => s.goTo);
   const navigate = useNavigate();
 
@@ -163,8 +165,8 @@ export function PrayerJournalView() {
                 variant="danger-ghost"
                 icon={Trash2}
                 onClick={async () => {
-                  if (await confirmDelete(`the entry from ${formatDate(e.entry_date)}`)) {
-                    deleteEntry.mutate(e.id, { onSuccess: () => toast.info("Entry deleted") });
+                  if (await confirmTrash(`the entry from ${formatDate(e.entry_date)}`)) {
+                    deleteEntry.mutate(e.id, { onSuccess: () => trashToast("prayer_entry", e.id) });
                   }
                 }}
               >

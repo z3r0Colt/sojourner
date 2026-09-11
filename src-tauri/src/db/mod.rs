@@ -166,4 +166,123 @@ mod tests {
         drop(conn);
         let _ = std::fs::remove_dir_all(&dir);
     }
+
+    /// Migration check against a real database: set `SOJOURNER_USER_DB_COPY`
+    /// to a *copy* of a live user.db and run with `cargo test -- --ignored
+    /// migrates_real_user_db_copy`. Opens the copy in a scratch app-data
+    /// dir (which migrates it in place) and asserts every note, highlight,
+    /// chapter note, and prayer entry counted before the migration is
+    /// still there after. Never point it at the live file.
+    #[test]
+    #[ignore]
+    fn migrates_real_user_db_copy() {
+        let Ok(src) = std::env::var("SOJOURNER_USER_DB_COPY") else {
+            eprintln!("SOJOURNER_USER_DB_COPY not set; skipping");
+            return;
+        };
+        let src = std::path::PathBuf::from(src);
+        assert!(src.is_file(), "{} is not a file", src.display());
+
+        let dir = std::env::temp_dir().join(format!("sojourner-migrate-test-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::copy(&src, dir.join("user.db")).unwrap();
+        // A WAL sibling holds the newest writes; without it the copy is stale.
+        let wal = std::path::PathBuf::from(format!("{}-wal", src.display()));
+        if wal.is_file() {
+            std::fs::copy(&wal, dir.join("user.db-wal")).unwrap();
+        }
+
+        fn counts(conn: &Connection) -> Vec<(&'static str, i64)> {
+            ["notes", "highlights", "chapter_notes", "prayer_entries", "bookmarks", "memory_verses", "settings"]
+                .into_iter()
+                .map(|t| (t, conn.query_row(&format!("SELECT COUNT(*) FROM {t}"), [], |r| r.get(0)).unwrap_or(-1)))
+                .collect()
+        }
+        let before = {
+            let raw = Connection::open(dir.join("user.db")).unwrap();
+            let version: i64 = raw.query_row("PRAGMA user_version", [], |r| r.get(0)).unwrap();
+            eprintln!("before: user_version={version}");
+            counts(&raw)
+        };
+
+        let content_db_path = dir.join("content.db");
+        open_content_db(&content_db_path).unwrap();
+        let conn = open(&dir, &content_db_path).unwrap();
+        let version: i64 = conn.query_row("PRAGMA user_version", [], |r| r.get(0)).unwrap();
+        assert_eq!(version as usize, schema::USER_MIGRATIONS.len());
+        let after = counts(&conn);
+        eprintln!("after: user_version={version}\n{before:?}\n{after:?}");
+        assert_eq!(before, after, "row counts changed across migration");
+
+        // The new column exists and every surviving row is live.
+        for t in ["notes", "chapter_notes", "prayer_entries"] {
+            let deleted: i64 = conn.query_row(&format!("SELECT COUNT(*) FROM {t} WHERE deleted_at IS NOT NULL"), [], |r| r.get(0)).unwrap();
+            assert_eq!(deleted, 0, "{t} should have no deleted rows right after migrating");
+        }
+        assert!(!queries::notes::list_all(&conn).unwrap().is_empty() || before[0].1 == 0);
+
+        drop(conn);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// Soft delete (USER_MIGRATION_0011): a deleted note must vanish from
+    /// every list, search, count, and tag listing, show up in the Trash,
+    /// come back whole on restore, and be gone for good on purge. Any query
+    /// that forgets the NOT_DELETED filter would fail the first assertions.
+    #[test]
+    fn soft_deleted_note_is_hidden_everywhere_until_restored() {
+        use queries::{notes, search, trash};
+        use crate::models::TrashKind;
+
+        let dir = std::env::temp_dir().join(format!("sojourner-trash-test-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let content_db_path = dir.join("content.db");
+        open_content_db(&content_db_path).unwrap();
+        let conn = open(&dir, &content_db_path).unwrap();
+
+        let note = notes::create(&conn, 43, 3, 16, 16, "God so loved the world".into(), None).unwrap();
+        notes::add_tag(&conn, note.id, "gospel".into()).unwrap();
+        assert_eq!(notes::list_for_chapter(&conn, 43, 3).unwrap().len(), 1);
+        assert_eq!(search::search_notes(&conn, "loved", 10).unwrap().len(), 1);
+
+        notes::delete(&conn, note.id).unwrap();
+
+        assert!(notes::list_for_chapter(&conn, 43, 3).unwrap().is_empty(), "list_for_chapter");
+        assert!(notes::list_all(&conn).unwrap().is_empty(), "list_all (count)");
+        assert!(search::search_notes(&conn, "loved", 10).unwrap().is_empty(), "search");
+        assert!(notes::list_all_tags(&conn).unwrap().is_empty(), "tags of a deleted note");
+        assert!(notes::list_all_tags_by_note(&conn).unwrap().is_empty(), "tags by note");
+
+        let contents = trash::list(&conn).unwrap();
+        assert_eq!(contents.notes.len(), 1);
+        assert!(contents.notes[0].deleted_at.is_some());
+
+        assert!(trash::restore(&conn, TrashKind::Note, note.id).unwrap());
+        let restored = notes::list_all(&conn).unwrap();
+        assert_eq!(restored.len(), 1);
+        assert_eq!(restored[0].body, "God so loved the world");
+        assert!(restored[0].deleted_at.is_none());
+        assert_eq!(notes::list_all_tags(&conn).unwrap(), vec!["gospel".to_string()]);
+        assert!(trash::list(&conn).unwrap().notes.is_empty());
+
+        // Purge only touches rows already in the Trash.
+        assert!(!trash::purge(&conn, TrashKind::Note, note.id).unwrap(), "live note must not be purged");
+        notes::delete(&conn, note.id).unwrap();
+        assert!(trash::purge(&conn, TrashKind::Note, note.id).unwrap());
+        assert!(notes::get(&conn, note.id).unwrap().is_none());
+
+        // The sweep leaves fresh deletions alone and removes stale ones.
+        let stale = notes::create(&conn, 1, 1, 1, 1, "old".into(), None).unwrap();
+        let fresh = notes::create(&conn, 1, 1, 2, 2, "new".into(), None).unwrap();
+        conn.execute("UPDATE notes SET deleted_at = '2000-01-01T00:00:00+00:00' WHERE id = ?1", [stale.id]).unwrap();
+        notes::delete(&conn, fresh.id).unwrap();
+        assert_eq!(trash::sweep_expired(&conn).unwrap(), 1);
+        assert!(notes::get(&conn, stale.id).unwrap().is_none());
+        assert!(notes::get(&conn, fresh.id).unwrap().is_some());
+
+        drop(conn);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
 }

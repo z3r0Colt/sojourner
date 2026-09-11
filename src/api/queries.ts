@@ -1,7 +1,8 @@
 import { useMemo } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { api } from "./client";
-import type { Verse, Passage, PassageRef, PrayerEntryMode, MemoryMode } from "./types";
+import type { Verse, Passage, PassageRef, PrayerEntryMode, MemoryMode, TrashKind } from "./types";
+import { toast } from "../components/ui/toast";
 import { useNavigationStore } from "../state/navigationStore";
 import { refKey } from "../lib/passage";
 
@@ -184,8 +185,54 @@ export function useDeleteNote() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["notes"] });
       qc.invalidateQueries({ queryKey: ["allNotes"] });
+      qc.invalidateQueries({ queryKey: ["allNoteTags"] });
+      qc.invalidateQueries({ queryKey: ["allNoteTagsByNote"] });
+      qc.invalidateQueries({ queryKey: ["trash"] });
     },
   });
+}
+
+export function useTrash() {
+  return useQuery({ queryKey: ["trash"], queryFn: api.listTrash });
+}
+
+const TRASH_KIND_LISTS: Record<TrashKind, string[][]> = {
+  note: [["notes"], ["allNotes"], ["allNoteTags"], ["allNoteTagsByNote"]],
+  chapter_note: [["chapterNotes"], ["allChapterNotes"], ["allChapterNoteTags"], ["allChapterNoteTagsByNote"]],
+  prayer_entry: [["prayerEntries"], ["prayerEntrySearch"], ["allPrayerEntryTags"], ["allPrayerEntryTagsByEntry"]],
+};
+
+/** Brings a soft-deleted item back; refreshes that kind's lists and the Trash. */
+export function useRestoreTrashItem() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { kind: TrashKind; id: number }) => api.restoreTrashItem(input.kind, input.id),
+    onSuccess: (_restored, input) => {
+      for (const key of TRASH_KIND_LISTS[input.kind]) qc.invalidateQueries({ queryKey: key });
+      qc.invalidateQueries({ queryKey: ["trash"] });
+    },
+  });
+}
+
+export function usePurgeTrashItem() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { kind: TrashKind; id: number }) => api.purgeTrashItem(input.kind, input.id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["trash"] }),
+  });
+}
+
+const TRASH_KIND_LABEL: Record<TrashKind, string> = { note: "Note", chapter_note: "Chapter note", prayer_entry: "Entry" };
+
+/** The toast every soft delete shows: "<Kind> moved to Trash" with an Undo
+ * action that restores it in place. Use as a delete mutation's onSuccess. */
+export function useTrashToast() {
+  const restore = useRestoreTrashItem();
+  return (kind: TrashKind, id: number) =>
+    toast.info(`${TRASH_KIND_LABEL[kind]} moved to Trash`, {
+      label: "Undo",
+      onClick: () => restore.mutate({ kind, id }, { onSuccess: () => toast.success(`${TRASH_KIND_LABEL[kind]} restored`) }),
+    });
 }
 
 export function useAllNotes() {
@@ -255,6 +302,9 @@ export function useDeleteChapterNote() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["chapterNotes"] });
       qc.invalidateQueries({ queryKey: ["allChapterNotes"] });
+      qc.invalidateQueries({ queryKey: ["allChapterNoteTags"] });
+      qc.invalidateQueries({ queryKey: ["allChapterNoteTagsByNote"] });
+      qc.invalidateQueries({ queryKey: ["trash"] });
     },
   });
 }
@@ -596,7 +646,13 @@ export function useDeletePrayerEntry() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: api.deletePrayerEntry,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["prayerEntries"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["prayerEntries"] });
+      qc.invalidateQueries({ queryKey: ["prayerEntrySearch"] });
+      qc.invalidateQueries({ queryKey: ["allPrayerEntryTags"] });
+      qc.invalidateQueries({ queryKey: ["allPrayerEntryTagsByEntry"] });
+      qc.invalidateQueries({ queryKey: ["trash"] });
+    },
   });
 }
 
