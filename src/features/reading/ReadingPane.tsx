@@ -957,7 +957,7 @@ export function ReadingPane() {
             )}
 
             {paragraphMode || printing ? (
-              <div id="print-chapter" className="reading-font text-ink" style={typography}>
+              <div className={cx("reading-font text-ink", printing && "print-root")} style={typography}>
                 {paragraphMode ? (
                   <ParagraphVerses
                     verses={verses ?? []}
@@ -983,7 +983,7 @@ export function ReadingPane() {
                 )}
               </div>
             ) : (
-              <div id="print-chapter" className="text-ink" style={{ position: "relative", height: rowVirtualizer.getTotalSize(), ...typography }}>
+              <div className="text-ink" style={{ position: "relative", height: rowVirtualizer.getTotalSize(), ...typography }}>
                 {rowVirtualizer.getVirtualItems().map((item) => {
                   const v = verses![item.index];
                   return (
