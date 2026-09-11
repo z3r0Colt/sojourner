@@ -79,6 +79,8 @@ export interface WestminsterParams {
 
 export interface LexiconParams {
   id: string | null;
+  /** A search to run on open ("Search the lexicon for ‘word’"). */
+  query?: string;
 }
 
 export interface DictionaryParams {

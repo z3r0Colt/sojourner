@@ -85,6 +85,7 @@ const CATEGORIES: Category[] = [
     title: "Interlinear & word study",
     items: [
       { q: "Turn on interlinear", a: "Click “Interlinear” in the reading toolbar to open the original Hebrew or Greek beneath each phrase, aligned word by word, in a pane beside the English." },
+      { q: "Look up a word while reading", a: "Double-click any word in the Bible text to open its Strong's entry in a popup, without switching to interlinear. The tagging follows the KJV's wording, so it matches best there; when a word can't be matched, the popup offers to search the lexicon for it instead." },
       { q: "Look up a Strong's number", a: "Click any tagged word in interlinear view to see its lexicon entry in a popup. “View full entry” opens the Lexicon page with a concordance of every verse using that word." },
       { q: "Lexicon page", a: "Search by English meaning, transliteration, or Strong's number (H1, G25). Thayer's fuller Greek definitions appear when available." },
       { q: "Dictionary", a: "Encyclopedia-style entries for people, places, and topics, browsable by letter and searchable. Scripture references inside an entry are clickable." },

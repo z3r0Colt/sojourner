@@ -13,13 +13,18 @@ import { EmptyState, LoadingState } from "../../components/ui/EmptyState";
 import { cx, inputSmClass } from "../../components/ui/classes";
 
 export function LexiconView() {
-  const [{ id: paneEntryId }] = usePaneParams("lexicon");
+  const [{ id: paneEntryId, query: paneQuery }] = usePaneParams("lexicon");
   const id = paneEntryId ?? undefined;
   const navigate = usePaneNavigate();
-  const [query, setQuery] = useState("");
-  const [debounced, setDebounced] = useState("");
+  const [query, setQuery] = useState(paneQuery ?? "");
+  const [debounced, setDebounced] = useState(paneQuery ?? "");
   const [language, setLanguage] = useState<"hebrew" | "greek" | undefined>(undefined);
   const typography = useReadingTypography(0.95);
+
+  // A search handed to the pane ("Search the lexicon for ‘word’") fills the box.
+  useEffect(() => {
+    if (paneQuery) setQuery(paneQuery);
+  }, [paneQuery]);
 
   useEffect(() => {
     const t = setTimeout(() => setDebounced(query), 250);

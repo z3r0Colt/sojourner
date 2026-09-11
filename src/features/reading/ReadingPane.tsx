@@ -26,10 +26,14 @@ import {
   useSuggestedResourcesForPassage,
   useResources,
   useFootnotesForChapter,
+  useInterlinearForChapter,
   useRedLetterRanges,
   useTranslations,
   useTrashToast,
 } from "../../api/queries";
+import { useSetting } from "../../hooks/useSetting";
+import { StrongsPopup } from "../lexicon/StrongsPopup";
+import { matchStrongs, wordFromSelection, type WordAtPoint } from "./wordLookup";
 import { api } from "../../api/client";
 import { VerseRow } from "./VerseRow";
 import { SelectionToolbar } from "./SelectionToolbar";
@@ -219,6 +223,58 @@ export function ReadingPane() {
   const [findIndex, setFindIndex] = useState(0);
   const [findFocusToken, setFindFocusToken] = useState(0);
 
+  // Double-click word lookup (F1.4). The chapter's interlinear phrases are
+  // fetched only once a word has been asked for, then matched by wording;
+  // outside the KJV a miss shows a one-time hint (a setting, so dismissing
+  // it survives a reinstall).
+  const [wordLookup, setWordLookup] = useState<(WordAtPoint & { x: number; y: number }) | null>(null);
+  const { data: interlinear, isLoading: interlinearLoading } = useInterlinearForChapter(wordLookup ? bookId : null, wordLookup ? chapter : null);
+  const [kjvHintDismissed, setKjvHintDismissed] = useSetting<boolean>("word_lookup_kjv_hint_dismissed", false);
+  const wordStrongs = wordLookup && interlinear ? matchStrongs(wordLookup.word, wordLookup.occurrence, interlinear[wordLookup.verse] ?? []) : null;
+  const translationCode = translations?.find((t) => t.id === translationId)?.code;
+  const showKjvHint = !!wordLookup && !!interlinear && !wordStrongs && translationCode !== "KJV" && !kjvHintDismissed;
+
+  useEffect(() => {
+    if (!wordLookup) return;
+    function onMouseDown() {
+      setWordLookup(null);
+    }
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        setWordLookup(null);
+      }
+    }
+    document.addEventListener("mousedown", onMouseDown);
+    window.addEventListener("keydown", onKeyDown, true);
+    return () => {
+      document.removeEventListener("mousedown", onMouseDown);
+      window.removeEventListener("keydown", onKeyDown, true);
+    };
+  }, [wordLookup]);
+  useEffect(() => {
+    setWordLookup(null);
+  }, [bookId, chapter, translationId]);
+
+  function handleDoubleClick() {
+    const at = wordFromSelection(window.getSelection());
+    if (!at) return;
+    const rect = window.getSelection()!.getRangeAt(0).getBoundingClientRect();
+    window.getSelection()?.removeAllRanges();
+    setPending(null);
+    setWordLookup({ ...at, x: rect.left, y: rect.bottom + 4 });
+  }
+
+  /** "Search the lexicon for ‘word’": in the lexicon pane if one is open,
+   * else a new pane beside this one (as Interlinear does). */
+  function searchLexicon(word: string) {
+    const s = useWorkspaceStore.getState();
+    const existing = s.panes.find((p) => p.kind === "lexicon");
+    if (existing) openContent("lexicon", { id: null, query: word }, { target: existing.id });
+    else openContent("lexicon", { id: null, query: word }, { target: "new", from: paneId });
+    setWordLookup(null);
+  }
+
   // Virtualized so long chapters (Psalm 119, 176 verses) don't render every
   // verse row -- with highlights, note markers, and footnotes each row can be
   // non-trivial -- at once. Rows vary in height (wrapped text, highlight
@@ -340,7 +396,10 @@ export function ReadingPane() {
     return () => cancelAnimationFrame(id);
   }, [printing]);
 
-  function handleMouseUp() {
+  function handleMouseUp(e: React.MouseEvent) {
+    // A double-click (or triple-click) is a word lookup, not a selection to
+    // annotate; the toolbar stays out of its way.
+    if (e.detail >= 2) return;
     const sel = window.getSelection();
     if (!sel || sel.isCollapsed || sel.rangeCount === 0) return;
     const range = sel.getRangeAt(0);
@@ -726,7 +785,7 @@ export function ReadingPane() {
         />
       )}
       <div className="flex min-h-0 flex-1">
-        <div ref={containerRef} onMouseUp={handleMouseUp} className="min-h-0 flex-1 overflow-y-auto px-8 py-6">
+        <div ref={containerRef} onMouseUp={handleMouseUp} onDoubleClick={handleDoubleClick} className="min-h-0 flex-1 overflow-y-auto px-8 py-6">
           <div className="mx-auto w-full max-w-[70ch]">
             <h1 className="reading-font mb-1 text-2xl font-semibold text-ink">
               {book.name} {chapter}
@@ -897,6 +956,26 @@ export function ReadingPane() {
         <Modal title="View options" onClose={() => setViewModalOpen(false)} size="sm" bodyClassName="p-2">
           {viewOptions}
         </Modal>
+      )}
+
+      {wordLookup && (
+        <StrongsPopup
+          id={wordStrongs}
+          word={wordLookup.word}
+          loading={interlinearLoading}
+          x={wordLookup.x}
+          y={wordLookup.y}
+          onClose={() => setWordLookup(null)}
+          onSearchLexicon={searchLexicon}
+          hint={
+            showKjvHint
+              ? {
+                  text: "Word lookup follows the KJV's wording, so it matches best there. In other translations some words will not be found.",
+                  onDismiss: () => setKjvHintDismissed(true),
+                }
+              : null
+          }
+        />
       )}
 
       {activeFootnote && (
