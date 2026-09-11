@@ -15,6 +15,7 @@ export interface Translation {
   source_path: string;
   imported_at: string;
   verse_count: number;
+  license_status: "public_domain" | "licensed";
 }
 
 export interface BookCoverage {
@@ -120,8 +121,8 @@ export interface ReadingPosition {
 }
 
 export interface SearchResult {
-  kind: "verse" | "commentary";
-  book_id: number;
+  kind: "verse" | "commentary" | "note" | "prayer";
+  book_id: number | null;
   chapter: number | null;
   verse: number | null;
   snippet: string;
@@ -133,6 +134,7 @@ export interface SearchResults {
   verses: SearchResult[];
   commentary: SearchResult[];
   notes: SearchResult[];
+  prayers: SearchResult[];
 }
 
 export interface ImportReportItem {
@@ -140,53 +142,6 @@ export interface ImportReportItem {
   format: string;
   status: string;
   detail: string | null;
-}
-
-export interface SermonNotePassageLink {
-  id: number;
-  sermon_note_id: number;
-  book_id: number;
-  chapter: number;
-  verse_start: number | null;
-  verse_end: number | null;
-  created_at: string;
-}
-
-export interface SermonNoteConfessionLink {
-  id: number;
-  sermon_note_id: number;
-  westminster_section_id: number;
-  document_code: string;
-  document_title: string;
-  heading: string;
-  created_at: string;
-}
-
-export interface SermonNoteWordStudy {
-  id: number;
-  sermon_note_id: number;
-  strongs_id: string;
-  original_word: string | null;
-  transliteration: string | null;
-  note: string | null;
-  created_at: string;
-}
-
-export interface SermonNote {
-  id: number;
-  date: string;
-  series: string | null;
-  preacher: string | null;
-  title: string | null;
-  passage_text: string | null;
-  outline: string | null;
-  application: string | null;
-  created_at: string;
-  updated_at: string;
-  passages: SermonNotePassageLink[];
-  tags: string[];
-  confession_links: SermonNoteConfessionLink[];
-  word_studies: SermonNoteWordStudy[];
 }
 
 export type PrayerEntryMode = "acts" | "free";
@@ -217,6 +172,8 @@ export interface PrayerListPerson {
   last_prayed_at: string | null;
   created_at: string;
   updated_at: string;
+  answered_at: string | null;
+  answer_note: string | null;
 }
 
 export type MemoryMode = "first-letter" | "blank-word" | "type-it";
@@ -228,6 +185,20 @@ export interface MemoryVerse {
   verse_start: number;
   verse_end: number;
   translation_id: number | null;
+  mode: MemoryMode;
+  ease_factor: number;
+  interval_days: number;
+  repetitions: number;
+  due_at: string;
+  last_reviewed_at: string | null;
+  created_at: string;
+  westminster_section_id: number | null;
+  doctrinal_note: string | null;
+}
+
+export interface CatechismMemory {
+  id: number;
+  westminster_section_id: number;
   mode: MemoryMode;
   ease_factor: number;
   interval_days: number;
@@ -424,6 +395,25 @@ export interface WestminsterSearchResult {
   heading: string;
   prompt: string | null;
   snippet: string;
+}
+
+export interface DoctrineTopic {
+  id: number;
+  name: string;
+  category: string;
+  westminster_section_id: number;
+  document_code: string;
+  heading: string;
+}
+
+export interface WestminsterPassageMatch {
+  section_id: number;
+  document_id: number;
+  document_code: string;
+  document_title: string;
+  heading: string;
+  prompt: string | null;
+  marker: number;
 }
 
 export interface BulkImportOutcome {

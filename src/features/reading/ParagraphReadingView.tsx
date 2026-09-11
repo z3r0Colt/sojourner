@@ -1,6 +1,8 @@
+import { StickyNote } from "lucide-react";
 import type { Highlight, Note, Verse, Footnote } from "../../api/types";
 import { buildTokens } from "./verseTokens";
 import type { RedLetterSpan } from "./redLetterSpans";
+import { cx } from "../../components/ui/classes";
 
 /** Paragraph mode's per-verse renderer: the same highlight/footnote token
  * splitting VerseRow uses, but flowed inline (a small superscript verse
@@ -46,28 +48,45 @@ function ParagraphVerse({
 
   return (
     <span
+      data-verse-row={verse.verse}
       onClick={() => onSelectVerse(verse.verse)}
       onContextMenu={(e) => {
         if (!onContextMenu) return;
         e.preventDefault();
         onContextMenu(verse.verse, e.clientX, e.clientY);
       }}
-      className={`rounded transition-colors ${isActive ? "bg-blue-50 dark:bg-blue-950/40" : ""}`}
+      className={cx("rounded transition-colors", isActive ? "bg-accent-soft" : "hover:bg-hover/60")}
     >
       {showVerseNumbers && (
-        <sup className="mr-0.5 select-none text-xs font-semibold text-gray-400">{verse.verse}</sup>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onSelectVerse(verse.verse);
+            if (onContextMenu) {
+              const rect = e.currentTarget.getBoundingClientRect();
+              onContextMenu(verse.verse, rect.left, rect.bottom + 2);
+            }
+          }}
+          title={`Verse ${verse.verse}: highlight, note, copy, compare…`}
+          aria-label={`Verse ${verse.verse} actions`}
+          className={cx("mr-0.5 select-none align-super font-sans text-[0.6em] font-semibold leading-none", isActive ? "text-accent" : "text-ink-4")}
+        >
+          {verse.verse}
+        </button>
       )}
       {showNoteSymbols && verseLevelNote && (
         <button
-          className="mr-0.5 align-middle text-amber-500"
-          title="Has a note"
-          aria-label="Has a note"
+          type="button"
+          className="mr-0.5 inline-flex align-middle text-amber-600 dark:text-amber-400"
+          title="Open note"
+          aria-label="Open note"
           onClick={(e) => {
             e.stopPropagation();
             onNoteSymbolClick(verseLevelNote);
           }}
         >
-          📝
+          <StickyNote className="h-[0.8em] w-[0.8em]" aria-hidden="true" />
         </button>
       )}
       <span data-verse-text={verse.verse}>
@@ -77,7 +96,7 @@ function ParagraphVerse({
             return (
               <sup
                 key={`fn-${f.id}`}
-                className="ml-0.5 cursor-pointer text-blue-500 hover:text-blue-700 dark:text-blue-400"
+                className="ml-0.5 cursor-pointer select-none text-accent hover:underline"
                 title="Footnote"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -92,8 +111,8 @@ function ParagraphVerse({
           const seg = tok.segment;
           if (!seg.color) {
             return (
-              <span key={i} className={seg.isRedLetter ? "text-red-600 dark:text-red-400" : undefined}>
-                {seg.text}{" "}
+              <span key={i} className={seg.isRedLetter ? "text-red-700 dark:text-red-400" : undefined}>
+                {seg.text}
               </span>
             );
           }
@@ -113,17 +132,18 @@ function ParagraphVerse({
             >
               {seg.text}
               {showNoteSymbols && linkedNote && (
-                <sup
-                  className="ml-0.5 cursor-pointer text-amber-600"
-                  title="Has a note"
-                  aria-label="Has a note"
+                <button
+                  type="button"
+                  className="ml-0.5 inline-flex align-middle text-amber-700"
+                  title="Open note"
+                  aria-label="Open note"
                   onClick={(e) => {
                     e.stopPropagation();
                     onNoteSymbolClick(linkedNote);
                   }}
                 >
-                  📝
-                </sup>
+                  <StickyNote className="h-[0.8em] w-[0.8em]" aria-hidden="true" />
+                </button>
               )}
             </mark>
           );
@@ -142,7 +162,6 @@ export function ParagraphVerses({
   showVerseNumbers,
   showHighlights,
   showNoteSymbols,
-  fontSize,
   redLetterSpansByVerse,
   onSelectVerse,
   onHighlightClick,
@@ -158,7 +177,6 @@ export function ParagraphVerses({
   showVerseNumbers: boolean;
   showHighlights: boolean;
   showNoteSymbols: boolean;
-  fontSize: number;
   redLetterSpansByVerse?: Map<number, RedLetterSpan[]> | null;
   onSelectVerse: (verseNum: number) => void;
   onHighlightClick: (highlightId: number, x: number, y: number) => void;
@@ -167,7 +185,7 @@ export function ParagraphVerses({
   onContextMenu?: (verseNum: number, x: number, y: number) => void;
 }) {
   return (
-    <p className="reading-font leading-relaxed" style={{ fontSize }}>
+    <p className="reading-font cursor-text">
       {verses.map((v) => (
         <ParagraphVerse
           key={v.id}

@@ -123,6 +123,54 @@ pub fn delete_chapter_note(db: State<DbState>, id: i64) -> AppResult<()> {
 }
 
 #[tauri::command]
+pub fn add_note_tag(db: State<DbState>, note_id: i64, tag: String) -> AppResult<()> {
+    let conn = db.0.lock().unwrap();
+    Ok(notes::add_tag(&conn, note_id, tag)?)
+}
+
+#[tauri::command]
+pub fn remove_note_tag(db: State<DbState>, note_id: i64, tag: String) -> AppResult<()> {
+    let conn = db.0.lock().unwrap();
+    Ok(notes::remove_tag(&conn, note_id, tag)?)
+}
+
+#[tauri::command]
+pub fn list_all_note_tags(db: State<DbState>) -> AppResult<Vec<String>> {
+    let conn = db.0.lock().unwrap();
+    Ok(notes::list_all_tags(&conn)?)
+}
+
+#[tauri::command]
+pub fn list_all_note_tags_by_note(db: State<DbState>) -> AppResult<Vec<(i64, String)>> {
+    let conn = db.0.lock().unwrap();
+    Ok(notes::list_all_tags_by_note(&conn)?)
+}
+
+#[tauri::command]
+pub fn add_chapter_note_tag(db: State<DbState>, chapter_note_id: i64, tag: String) -> AppResult<()> {
+    let conn = db.0.lock().unwrap();
+    Ok(notes::add_chapter_note_tag(&conn, chapter_note_id, tag)?)
+}
+
+#[tauri::command]
+pub fn remove_chapter_note_tag(db: State<DbState>, chapter_note_id: i64, tag: String) -> AppResult<()> {
+    let conn = db.0.lock().unwrap();
+    Ok(notes::remove_chapter_note_tag(&conn, chapter_note_id, tag)?)
+}
+
+#[tauri::command]
+pub fn list_all_chapter_note_tags(db: State<DbState>) -> AppResult<Vec<String>> {
+    let conn = db.0.lock().unwrap();
+    Ok(notes::list_all_chapter_note_tags(&conn)?)
+}
+
+#[tauri::command]
+pub fn list_all_chapter_note_tags_by_note(db: State<DbState>) -> AppResult<Vec<(i64, String)>> {
+    let conn = db.0.lock().unwrap();
+    Ok(notes::list_all_chapter_note_tags_by_note(&conn)?)
+}
+
+#[tauri::command]
 pub fn list_bookmarks(db: State<DbState>) -> AppResult<Vec<Bookmark>> {
     let conn = db.0.lock().unwrap();
     Ok(bookmarks::list_all(&conn)?)

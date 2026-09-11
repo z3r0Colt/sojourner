@@ -1,54 +1,52 @@
 import { useEffect, useState } from "react";
 import { Outlet, Link, useNavigate, useLocation } from "react-router-dom";
-import { useBooks, useTranslations } from "../api/queries";
+import { ArrowLeft, ArrowRight, Compass, Keyboard, Search, X } from "lucide-react";
+import { useBooks, useBookmarks, useCreateBookmark, useDeleteBookmark, useTranslations } from "../api/queries";
 import { api } from "../api/client";
 import { useNavigationStore } from "../state/navigationStore";
-import { ChapterNav } from "../features/reading/ChapterNav";
+import { useUiStore } from "../state/uiStore";
 import { GoToCommandPalette } from "../features/navigation/GoToCommandPalette";
 import { SearchOverlay } from "../features/search/SearchOverlay";
 import { TtsPlayerBar } from "../features/tts/TtsPlayerBar";
-import { useTtsStore } from "../state/ttsStore";
-import { useUiStore } from "../state/uiStore";
+import { Sidebar } from "./Sidebar";
+import { ShortcutsModal } from "./ShortcutsModal";
+import { Button, IconButton } from "../components/ui/Button";
+import { Kbd } from "../components/ui/Page";
+import { toast } from "../components/ui/toast";
+import { stepChapter } from "../features/reading/chapterStep";
 
-const NAV_LINKS: { to: string; label: string; end?: boolean }[] = [
-  { to: "/", label: "Bible", end: true },
-  { to: "/lexicon", label: "Lexicon" },
-  { to: "/dictionary", label: "Dictionary" },
-  { to: "/westminster", label: "Confessions" },
-  { to: "/resources", label: "Resources" },
-  { to: "/notes", label: "Notes" },
-  { to: "/sermons", label: "Sermons" },
-  { to: "/prayer", label: "Prayer" },
-  { to: "/memory", label: "Memory" },
-  { to: "/plans", label: "Plans" },
-  { to: "/harmony", label: "Harmony" },
-  { to: "/settings", label: "Settings" },
-];
+const TUTORIAL_BANNER_DISMISSED_KEY = "bsa-tutorial-banner-dismissed";
+
+function isTypingTarget(el: EventTarget | null): boolean {
+  if (!(el instanceof HTMLElement)) return false;
+  const tag = el.tagName;
+  return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || el.isContentEditable;
+}
 
 export function AppShell() {
-  const isReading = useTtsStore((s) => s.segments.length > 0);
   const distractionFreeMode = useUiStore((s) => s.distractionFreeMode);
+  const toggleDistractionFreeMode = useUiStore((s) => s.toggleDistractionFreeMode);
+  const toggleCommentaryPanel = useUiStore((s) => s.toggleCommentaryPanel);
   const { data: books } = useBooks();
   const { data: translations } = useTranslations();
+  const { data: bookmarks } = useBookmarks();
+  const createBookmark = useCreateBookmark();
+  const deleteBookmark = useDeleteBookmark();
   const navigate = useNavigate();
   const location = useLocation();
-  const {
-    primaryTranslationId,
-    parallelTranslationIds,
-    position,
-    setPrimaryTranslation,
-    toggleParallelTranslation,
-    interlinearMode,
-    toggleInterlinearMode,
-    goTo,
-    goBack,
-    goForward,
-    history,
-    future,
-  } = useNavigationStore();
+  const { primaryTranslationId, position, activeVerse, setPrimaryTranslation, goTo, goBack, goForward, history, future } =
+    useNavigationStore();
 
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [showTutorialBanner, setShowTutorialBanner] = useState(
+    () => localStorage.getItem(TUTORIAL_BANNER_DISMISSED_KEY) == null,
+  );
+  function dismissTutorialBanner() {
+    localStorage.setItem(TUTORIAL_BANNER_DISMISSED_KEY, "1");
+    setShowTutorialBanner(false);
+  }
 
   // Bootstrap: pick a default translation and restore the last reading position.
   useEffect(() => {
@@ -69,14 +67,55 @@ export function AppShell() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [translations, books]);
 
+  function toggleBookmarkHere() {
+    if (!position || !books) return;
+    const verse = location.pathname === "/" ? (activeVerse ?? undefined) : undefined;
+    const existing = bookmarks?.find(
+      (b) => b.book_id === position.bookId && b.chapter === position.chapter && (b.verse ?? null) === (verse ?? null),
+    );
+    const bookName = books.find((b) => b.id === position.bookId)?.name ?? "";
+    const label = `${bookName} ${position.chapter}${verse ? `:${verse}` : ""}`;
+    if (existing) {
+      deleteBookmark.mutate(existing.id, { onSuccess: () => toast.info(`Bookmark removed: ${label}`) });
+    } else {
+      createBookmark.mutate(
+        { bookId: position.bookId, chapter: position.chapter, verse },
+        { onSuccess: () => toast.success(`Bookmarked ${label}`) },
+      );
+    }
+  }
+
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+      const ctrl = e.ctrlKey || e.metaKey;
+      const key = e.key.toLowerCase();
+      if (ctrl && key === "k") {
         e.preventDefault();
         setPaletteOpen(true);
-      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "f") {
+      } else if (ctrl && key === "f") {
         e.preventDefault();
         setSearchOpen(true);
+      } else if (ctrl && key === "/") {
+        e.preventDefault();
+        setShortcutsOpen((v) => !v);
+      } else if (ctrl && key === "b" && !isTypingTarget(e.target)) {
+        e.preventDefault();
+        toggleCommentaryPanel();
+      } else if (ctrl && key === "d" && !isTypingTarget(e.target)) {
+        e.preventDefault();
+        toggleBookmarkHere();
+      } else if (ctrl && (key === "[" || key === "]") && !isTypingTarget(e.target)) {
+        e.preventDefault();
+        if (!books || !position) return;
+        const next = stepChapter(books, position, key === "]" ? 1 : -1);
+        if (next) {
+          goTo(next);
+          if (location.pathname !== "/") navigate("/");
+        }
+      } else if (e.key === "F11") {
+        e.preventDefault();
+        if (location.pathname !== "/") navigate("/");
+        toggleDistractionFreeMode();
       } else if (e.altKey && e.key === "ArrowLeft") {
         e.preventDefault();
         goBack();
@@ -87,132 +126,47 @@ export function AppShell() {
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [goBack, goForward]);
+  });
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-white text-gray-900 dark:bg-gray-950 dark:text-gray-100">
-      {!distractionFreeMode && (
-      <header className="border-b border-gray-200 dark:border-gray-800">
-        {/* Row 1: brand, history, chapter nav, translation controls -- always present, never wraps. */}
-        <div className="flex items-center gap-3 px-3 py-2">
-          <Link to="/" className="text-sm font-semibold tracking-tight shrink-0">
-            Sojourner's Study Companion
-          </Link>
+    <div className="flex h-screen overflow-hidden bg-bg text-ink">
+      {!distractionFreeMode && <Sidebar />}
 
-          <button
-            onClick={goBack}
-            disabled={history.length === 0}
-            className="rounded px-2 py-1 text-sm text-gray-500 hover:bg-gray-100 disabled:opacity-30 dark:hover:bg-gray-800"
-            title="Back (Alt+Left)"
-            aria-label="Back"
-          >
-            ←
-          </button>
-          <button
-            onClick={goForward}
-            disabled={future.length === 0}
-            className="rounded px-2 py-1 text-sm text-gray-500 hover:bg-gray-100 disabled:opacity-30 dark:hover:bg-gray-800"
-            title="Forward (Alt+Right)"
-            aria-label="Forward"
-          >
-            →
-          </button>
+      <div className="flex min-w-0 flex-1 flex-col">
+        {!distractionFreeMode && (
+          <header className="flex h-11 shrink-0 items-center gap-1 border-b border-line bg-surface px-2">
+            <IconButton icon={ArrowLeft} label="Back (Alt+Left)" onClick={goBack} disabled={history.length === 0} />
+            <IconButton icon={ArrowRight} label="Forward (Alt+Right)" onClick={goForward} disabled={future.length === 0} />
+            <div className="min-w-0 flex-1" />
+            <Button variant="ghost" icon={Compass} onClick={() => setPaletteOpen(true)} title="Jump to a reference, Strong's number, or term (Ctrl+K)">
+              Go to
+              <Kbd>Ctrl K</Kbd>
+            </Button>
+            <Button variant="ghost" icon={Search} onClick={() => setSearchOpen(true)} title="Search Scripture, commentary, notes, prayers, resources, and confessions (Ctrl+F)">
+              Search
+              <Kbd>Ctrl F</Kbd>
+            </Button>
+            <IconButton icon={Keyboard} label="Keyboard shortcuts (Ctrl+/)" onClick={() => setShortcutsOpen(true)} />
+          </header>
+        )}
 
-          {books && position && location.pathname === "/" && (
-            <ChapterNav books={books} position={position} translationId={primaryTranslationId} onNavigate={(p) => goTo(p)} />
-          )}
+        {!distractionFreeMode && showTutorialBanner && (
+          <div className="flex shrink-0 items-center gap-3 border-b border-line bg-accent-soft px-4 py-1.5 text-sm text-ink-2">
+            <span>New here? The Tutorial walks through everything this app can do.</span>
+            <Link to="/settings?section=tutorial" className="font-medium text-accent underline underline-offset-2" onClick={dismissTutorialBanner}>
+              Take a look
+            </Link>
+            <div className="flex-1" />
+            <IconButton icon={X} label="Dismiss" size="sm" onClick={dismissTutorialBanner} />
+          </div>
+        )}
 
-          <div className="min-w-0 flex-1" />
+        <main className="min-h-0 flex-1 overflow-y-auto">
+          <Outlet />
+        </main>
 
-          {translations && (
-            <div className="flex shrink-0 items-center gap-1 text-sm">
-              <select
-                className="rounded border border-gray-300 bg-white px-2 py-1 dark:border-gray-700 dark:bg-gray-900"
-                value={primaryTranslationId ?? ""}
-                onChange={(e) => setPrimaryTranslation(Number(e.target.value))}
-              >
-                {translations.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.code}
-                  </option>
-                ))}
-              </select>
-              <details className="relative">
-                <summary className="cursor-pointer list-none rounded border border-gray-300 px-2 py-1 text-gray-600 dark:border-gray-700 dark:text-gray-300">
-                  Parallel
-                </summary>
-                <div className="absolute right-0 z-20 mt-1 w-48 rounded border border-gray-200 bg-white p-2 shadow-lg dark:border-gray-700 dark:bg-gray-900">
-                  {translations.map((t) => (
-                    <label key={t.id} className="flex items-center gap-2 py-0.5 text-xs">
-                      <input
-                        type="checkbox"
-                        checked={parallelTranslationIds.includes(t.id)}
-                        onChange={() => toggleParallelTranslation(t.id)}
-                      />
-                      {t.name}
-                    </label>
-                  ))}
-                </div>
-              </details>
-              <button
-                onClick={toggleInterlinearMode}
-                className={`rounded border px-2 py-1 ${
-                  interlinearMode
-                    ? "border-blue-400 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-950 dark:text-blue-300"
-                    : "border-gray-300 text-gray-600 dark:border-gray-700 dark:text-gray-300"
-                }`}
-                title="Interlinear (Hebrew/Greek with Strong's numbers)"
-              >
-                Interlinear
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Row 2: section links + search/go-to -- fixed, always visible, never depends on row 1's width. */}
-        <div className="flex items-center gap-1 overflow-x-auto border-t border-gray-100 px-3 py-1.5 dark:border-gray-900">
-          {NAV_LINKS.map((link) => {
-            const isActive = link.end
-              ? location.pathname === link.to
-              : location.pathname.startsWith(link.to);
-            return (
-              <Link
-                key={link.to}
-                to={link.to}
-                className={`shrink-0 rounded px-2 py-1 text-sm ${
-                  isActive
-                    ? "bg-blue-50 font-medium text-blue-700 dark:bg-blue-950 dark:text-blue-300"
-                    : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
-                }`}
-              >
-                {link.label}
-              </Link>
-            );
-          })}
-          <div className="flex-1" />
-          <button
-            onClick={() => setSearchOpen(true)}
-            className="shrink-0 rounded border border-gray-300 px-2 py-1 text-sm text-gray-600 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
-            title="Search (Ctrl+F)"
-          >
-            Search
-          </button>
-          <button
-            onClick={() => setPaletteOpen(true)}
-            className="shrink-0 rounded border border-gray-300 px-2 py-1 text-sm text-gray-600 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
-            title="Go to (Ctrl+K)"
-          >
-            Go to…
-          </button>
-        </div>
-      </header>
-      )}
-
-      <main className={`min-h-0 flex-1 overflow-y-auto ${isReading ? "pb-14" : ""}`}>
-        <Outlet />
-      </main>
-
-      <TtsPlayerBar />
+        <TtsPlayerBar />
+      </div>
 
       {paletteOpen && books && (
         <GoToCommandPalette
@@ -237,6 +191,7 @@ export function AppShell() {
           }}
         />
       )}
+      {shortcutsOpen && <ShortcutsModal onClose={() => setShortcutsOpen(false)} />}
     </div>
   );
 }

@@ -1,5 +1,9 @@
 import { useState } from "react";
+import { Trash2 } from "lucide-react";
 import { RichTextEditor } from "./RichTextEditor";
+import { Modal } from "../../components/ui/Modal";
+import { Button } from "../../components/ui/Button";
+import { confirmDelete } from "../../components/ui/confirm";
 
 export function NoteEditorModal({
   title,
@@ -15,46 +19,40 @@ export function NoteEditorModal({
   onDelete?: () => void;
 }) {
   const [body, setBody] = useState(initialBody);
+  const dirty = body !== initialBody;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" onClick={onClose}>
-      <div
-        className="w-full max-w-md rounded-lg bg-white p-4 shadow-xl dark:bg-gray-900"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h3 className="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-200">{title}</h3>
-        <RichTextEditor content={body} onChange={setBody} autoFocus placeholder="Write your note…" />
-        <p className="mt-1 text-xs text-gray-400">
-          Type a reference like "John 3:16" and it becomes clickable automatically. Use the 🔗 button to link to a
-          resource or web page.
-        </p>
-        <div className="mt-3 flex justify-between">
-          <div>
-            {onDelete && (
-              <button
-                onClick={onDelete}
-                className="rounded px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40"
-              >
-                Delete
-              </button>
-            )}
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={onClose}
-              className="rounded px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+    <Modal
+      title={title}
+      onClose={onClose}
+      dirty={dirty}
+      footer={
+        <>
+          {onDelete && (
+            <Button
+              variant="danger-ghost"
+              icon={Trash2}
+              className="mr-auto"
+              onClick={async () => {
+                if (await confirmDelete("this note")) onDelete();
+              }}
             >
-              Cancel
-            </button>
-            <button
-              onClick={() => onSave(body)}
-              className="rounded bg-blue-600 px-3 py-1.5 text-sm text-white hover:bg-blue-700"
-            >
-              Save
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+              Delete
+            </Button>
+          )}
+          <Button variant="ghost" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button variant="primary" onClick={() => onSave(body)}>
+            Save note
+          </Button>
+        </>
+      }
+    >
+      <RichTextEditor content={body} onChange={setBody} autoFocus placeholder="Write your note…" />
+      <p className="mt-2 text-xs text-ink-3">
+        A reference like "John 3:16" becomes a link automatically. Use the link button to point at a resource or web page.
+      </p>
+    </Modal>
   );
 }

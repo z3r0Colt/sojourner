@@ -1,16 +1,27 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MutationCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider } from "react-router-dom";
 import { router } from "./router";
 import { useUiStore, type Theme } from "./state/uiStore";
 import { installCrashLogging } from "./lib/crashLog";
+import { Toaster } from "./components/ui/Toaster";
+import { ConfirmHost } from "./components/ui/ConfirmHost";
+import { toast } from "./components/ui/toast";
 import "./styles.css";
 
 installCrashLogging();
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 30_000, retry: 1 } },
+  // Every save/delete that fails surfaces as a toast -- individual call
+  // sites don't need their own error handling for the user to find out.
+  mutationCache: new MutationCache({
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : String(error);
+      toast.error(`Something went wrong: ${message}`);
+    },
+  }),
 });
 
 function resolveTheme(theme: Theme): Exclude<Theme, "system"> {
@@ -20,6 +31,7 @@ function resolveTheme(theme: Theme): Exclude<Theme, "system"> {
 
 function ThemedRoot() {
   const theme = useUiStore((s) => s.theme);
+  const readingFont = useUiStore((s) => s.readingFont);
   React.useEffect(() => {
     const root = document.documentElement;
     root.setAttribute("data-theme", resolveTheme(theme));
@@ -30,7 +42,16 @@ function ThemedRoot() {
     media.addEventListener("change", onChange);
     return () => media.removeEventListener("change", onChange);
   }, [theme]);
-  return <RouterProvider router={router} />;
+  React.useEffect(() => {
+    document.documentElement.setAttribute("data-reading-font", readingFont);
+  }, [readingFont]);
+  return (
+    <>
+      <RouterProvider router={router} />
+      <Toaster />
+      <ConfirmHost />
+    </>
+  );
 }
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(

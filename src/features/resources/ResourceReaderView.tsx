@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
+import { ArrowLeft, ChevronDown, Link2, Paperclip } from "lucide-react";
 import {
   useResource,
   useResources,
@@ -16,6 +17,10 @@ import { MobiTextReader } from "./MobiTextReader";
 import { MediaPlayer } from "./MediaPlayer";
 import { ReadAloudButton } from "../tts/ReadAloudButton";
 import { splitIntoParagraphs } from "../tts/textUtils";
+import { Button } from "../../components/ui/Button";
+import { LoadingState } from "../../components/ui/EmptyState";
+import { toast } from "../../components/ui/toast";
+import { cx, selectSmClass } from "../../components/ui/classes";
 
 export function ResourceReaderView() {
   const { id: idParam } = useParams();
@@ -50,21 +55,25 @@ export function ResourceReaderView() {
     });
     qc.invalidateQueries({ queryKey: ["resourcePassageLinksForResource", id] });
     qc.invalidateQueries({ queryKey: ["resourcePassageLinks"] });
+    toast.success(`Linked to ${bookName(position.bookId)} ${position.chapter}`);
   }
 
   async function linkToResource() {
     if (!id || linkToResourceId === "") return;
     await api.createResourceLink(id, Number(linkToResourceId));
     setLinkToResourceId("");
+    toast.success("Resources linked");
   }
 
   if (!resource) {
-    return <div className="p-8 text-gray-400">Loading…</div>;
+    return <LoadingState className="p-8" />;
   }
+
+  const currentPassage = position ? `${bookName(position.bookId)} ${position.chapter}${position.verse ? `:${position.verse}` : ""}` : null;
 
   return (
     <div className="flex h-full">
-      <div className="min-h-0 flex-1">
+      <div className="min-h-0 min-w-0 flex-1">
         {resource.kind === "epub" && <EpubReader filePath={resource.file_path} />}
         {resource.kind === "pdf" && <PdfReader filePath={resource.file_path} />}
         {resource.kind === "mobi" && <MobiTextReader resourceId={resource.id} />}
@@ -73,13 +82,13 @@ export function ResourceReaderView() {
         )}
       </div>
 
-      <aside className="flex w-72 shrink-0 flex-col border-l border-gray-200 dark:border-gray-800">
-        <div className="border-b border-gray-200 p-3 dark:border-gray-800">
-          <h2 className="text-sm font-semibold">{resource.title}</h2>
-          {resource.author && <p className="text-xs text-gray-500">{resource.author}</p>}
-          <Link to="/resources" className="mt-1 inline-block text-xs text-blue-600 hover:underline dark:text-blue-400">
-            ← All resources
-          </Link>
+      <aside className="flex w-72 shrink-0 flex-col border-l border-line bg-surface-2/60">
+        <div className="border-b border-line p-3">
+          <Button size="sm" variant="ghost" icon={ArrowLeft} onClick={() => navigate("/resources")} className="-ml-2 mb-2">
+            All resources
+          </Button>
+          <h2 className="text-sm font-semibold text-ink">{resource.title}</h2>
+          {resource.author && <p className="text-xs text-ink-3">{resource.author}</p>}
           {resource.has_text && (
             <div className="mt-2">
               <ReadAloudButton
@@ -91,23 +100,21 @@ export function ResourceReaderView() {
           )}
         </div>
 
-        <div className="border-b border-gray-200 p-3 dark:border-gray-800">
-          <button
-            onClick={linkCurrentPassage}
-            disabled={!position}
-            className="w-full rounded bg-blue-600 px-2 py-1.5 text-xs text-white hover:bg-blue-700 disabled:opacity-50"
-          >
-            Link to current passage{position ? ` (${bookName(position.bookId)} ${position.chapter}${position.verse ? `:${position.verse}` : ""})` : ""}
-          </button>
+        <div className="border-b border-line p-3">
+          <Button variant="primary" size="sm" icon={Paperclip} disabled={!position} onClick={linkCurrentPassage} className="w-full" title={currentPassage ? `Attach to ${currentPassage}` : undefined}>
+            Link to {currentPassage ?? "current passage"}
+          </Button>
+          <p className="mt-1.5 text-xs text-ink-3">Linked resources appear under the chapter title while reading that passage.</p>
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto p-3">
-          <h3 className="mb-1 text-xs font-semibold uppercase text-gray-400">Linked Passages</h3>
+          <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-ink-3">Linked passages</h3>
           <ul className="mb-4 space-y-1 text-sm">
             {passageLinks?.map((l) => (
               <li key={l.id}>
                 <button
-                  className="text-blue-600 hover:underline dark:text-blue-400"
+                  type="button"
+                  className="text-accent hover:underline"
                   onClick={() => {
                     goTo({ bookId: l.book_id, chapter: l.chapter, verse: l.verse_start ?? undefined });
                     navigate("/");
@@ -116,32 +123,36 @@ export function ResourceReaderView() {
                   {bookName(l.book_id)} {l.chapter}
                   {l.verse_start ? `:${l.verse_start}` : ""}
                 </button>
-                {l.location && <span className="ml-1 text-xs text-gray-400">@{l.location}</span>}
+                {l.location && <span className="ml-1 text-xs text-ink-3">at {l.location}s</span>}
               </li>
             ))}
-            {(!passageLinks || passageLinks.length === 0) && <p className="text-xs text-gray-400">No links yet.</p>}
+            {(!passageLinks || passageLinks.length === 0) && <li className="text-xs text-ink-3">None yet.</li>}
           </ul>
 
-          <button onClick={() => setShowLinkPanel((v) => !v)} className="mb-1 text-xs font-semibold uppercase text-gray-400">
-            Linked Resources {showLinkPanel ? "▾" : "▸"}
+          <button
+            type="button"
+            onClick={() => setShowLinkPanel((v) => !v)}
+            className="mb-1.5 flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-ink-3 hover:text-ink"
+            aria-expanded={showLinkPanel}
+          >
+            <ChevronDown className={cx("h-3.5 w-3.5 transition-transform", !showLinkPanel && "-rotate-90")} aria-hidden="true" />
+            Link to another resource
           </button>
           {showLinkPanel && (
-            <div className="mb-2 flex gap-1">
-              <select
-                value={linkToResourceId}
-                onChange={(e) => setLinkToResourceId(e.target.value ? Number(e.target.value) : "")}
-                className="flex-1 rounded border border-gray-300 bg-white px-1 py-1 text-xs dark:border-gray-700 dark:bg-gray-900"
-              >
+            <div className="flex gap-1">
+              <select value={linkToResourceId} onChange={(e) => setLinkToResourceId(e.target.value ? Number(e.target.value) : "")} className={cx(selectSmClass, "min-w-0 flex-1")}>
                 <option value="">Choose a resource…</option>
-                {allResources?.filter((r) => r.id !== id).map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.title}
-                  </option>
-                ))}
+                {allResources
+                  ?.filter((r) => r.id !== id)
+                  .map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.title}
+                    </option>
+                  ))}
               </select>
-              <button onClick={linkToResource} className="rounded bg-blue-600 px-2 text-xs text-white hover:bg-blue-700">
+              <Button size="sm" icon={Link2} onClick={linkToResource} disabled={linkToResourceId === ""}>
                 Link
-              </button>
+              </Button>
             </div>
           )}
         </div>

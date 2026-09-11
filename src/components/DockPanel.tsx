@@ -1,24 +1,21 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
+import { ArrowLeftToLine, ArrowRightToLine, PanelRightClose } from "lucide-react";
+import { IconButton } from "./ui/Button";
+import { cx } from "./ui/classes";
 
 const MIN_WIDTH = 280;
 const MAX_WIDTH = 800;
 
 /** A resizable, collapsible, movable side panel that docks to the left or
  * right edge of whatever it's placed in. Generic on purpose -- the reading
- * view's Commentary/Cross References/Metrical tabs are its first user, but
- * nothing here is specific to them; any feature that wants the same "study
- * panel beside the main content" affordance (sermon notes, resources, etc.)
- * can reuse it directly rather than re-implementing collapse/resize/move
- * each time.
+ * view's study tabs are its first user, but nothing here is specific to
+ * them.
  *
- * Collapsed state renders as a thin always-visible rail (a single button)
- * rather than unmounting entirely, so the panel's open/closed toggle never
- * moves layout further than that rail's width.
+ * Collapsed state renders `rail` (a thin always-visible strip, usually a
+ * column of icon tabs) rather than unmounting entirely, so the panel's
+ * open/closed toggle never moves layout further than that rail's width.
  *
- * "Movable" means docking side (left/right), not free-floating -- a study
- * panel that can land anywhere mid-page would fight the two-column reading
- * layout it's meant to sit beside, so flipping which edge it hugs is the
- * useful degree of freedom here. */
+ * "Movable" means docking side (left/right), not free-floating. */
 export function DockPanel({
   open,
   onToggle,
@@ -26,7 +23,8 @@ export function DockPanel({
   onWidthChange,
   side = "right",
   onSideChange,
-  collapsedLabel = "Study",
+  rail,
+  header,
   children,
 }: {
   open: boolean;
@@ -35,8 +33,11 @@ export function DockPanel({
   onWidthChange: (width: number) => void;
   side?: "left" | "right";
   onSideChange?: (side: "left" | "right") => void;
-  collapsedLabel?: string;
-  children: React.ReactNode;
+  /** Rendered in place of the panel while collapsed. */
+  rail: ReactNode;
+  /** Rendered in the panel's top row, left of the move/close controls. */
+  header?: ReactNode;
+  children: ReactNode;
 }) {
   const draggingRef = useRef(false);
 
@@ -61,24 +62,18 @@ export function DockPanel({
   }, [onWidthChange, side]);
 
   const edgeBorder = side === "right" ? "border-l" : "border-r";
+  const order = side === "left" ? -1 : undefined;
 
   if (!open) {
     return (
-      <button
-        onClick={onToggle}
-        title={`Open ${collapsedLabel}`}
-        className={`shrink-0 ${edgeBorder} border-gray-200 px-1 text-xs text-gray-400 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-900`}
-      >
-        {side === "right" ? "‹" : "›"} {collapsedLabel}
-      </button>
+      <div style={{ order }} className={cx("flex w-11 shrink-0 flex-col items-center gap-1 bg-surface-2/60 py-2", edgeBorder, "border-line")}>
+        {rail}
+      </div>
     );
   }
 
   return (
-    <div
-      style={{ width, order: side === "left" ? -1 : undefined }}
-      className={`relative flex shrink-0 flex-col ${edgeBorder} border-gray-200 dark:border-gray-800`}
-    >
+    <div style={{ width, order }} className={cx("relative flex shrink-0 flex-col bg-surface-2/60", edgeBorder, "border-line")}>
       <div
         onMouseDown={(e) => {
           e.preventDefault();
@@ -87,21 +82,23 @@ export function DockPanel({
           document.body.style.userSelect = "none";
         }}
         title="Drag to resize"
-        className={`absolute top-0 z-10 h-full w-1.5 -translate-x-1/2 cursor-col-resize hover:bg-blue-400/30 ${
-          side === "right" ? "left-0" : "right-0 translate-x-1/2"
-        }`}
+        className={cx(
+          "absolute top-0 z-10 h-full w-1.5 -translate-x-1/2 cursor-col-resize hover:bg-accent/30",
+          side === "right" ? "left-0" : "right-0 translate-x-1/2",
+        )}
       />
-      {onSideChange && (
-        <div className="flex shrink-0 items-center justify-end border-b border-gray-100 px-1 py-0.5 dark:border-gray-800">
-          <button
+      <div className="flex shrink-0 items-center gap-1 border-b border-line pr-1">
+        <div className="min-w-0 flex-1">{header}</div>
+        {onSideChange && (
+          <IconButton
+            icon={side === "right" ? ArrowLeftToLine : ArrowRightToLine}
+            label={side === "right" ? "Move panel to the left" : "Move panel to the right"}
+            size="sm"
             onClick={() => onSideChange(side === "right" ? "left" : "right")}
-            title={side === "right" ? "Move panel to left side" : "Move panel to right side"}
-            className="rounded px-1.5 py-0.5 text-xs text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-300"
-          >
-            {side === "right" ? "⇤ Move left" : "Move right ⇥"}
-          </button>
-        </div>
-      )}
+          />
+        )}
+        <IconButton icon={PanelRightClose} label="Collapse panel (Ctrl+B)" size="sm" onClick={onToggle} />
+      </div>
       <div className="flex min-h-0 flex-1 flex-col">{children}</div>
     </div>
   );

@@ -1,13 +1,20 @@
 import { useMemo, useState } from "react";
+import { Check, HandHeart, Pencil, Plus, RotateCcw, Trash2, Users } from "lucide-react";
 import {
   usePrayerListPeople,
   useCreatePrayerListPerson,
   useUpdatePrayerListPerson,
   useSetPrayerListPersonActive,
   useMarkPrayerListPersonPrayed,
+  useMarkPrayerListPersonAnswered,
   useDeletePrayerListPerson,
 } from "../../api/queries";
 import { PrayerListPersonModal } from "./PrayerListPersonModal";
+import { Button } from "../../components/ui/Button";
+import { EmptyState } from "../../components/ui/EmptyState";
+import { confirmDelete } from "../../components/ui/confirm";
+import { toast } from "../../components/ui/toast";
+import { cardClass, checkboxClass, cx, inputSmClass } from "../../components/ui/classes";
 import type { PrayerListPerson } from "../../api/types";
 
 function timeAgo(iso: string | null): string {
@@ -26,10 +33,13 @@ export function PrayerListView() {
   const updatePerson = useUpdatePrayerListPerson();
   const setActive = useSetPrayerListPersonActive();
   const markPrayed = useMarkPrayerListPersonPrayed();
+  const markAnswered = useMarkPrayerListPersonAnswered();
   const deletePerson = useDeletePrayerListPerson();
 
   const [editing, setEditing] = useState<PrayerListPerson | null | "new">(null);
   const [showArchived, setShowArchived] = useState(false);
+  const [answering, setAnswering] = useState<number | null>(null);
+  const [answerDraft, setAnswerDraft] = useState("");
 
   const groups = useMemo(() => {
     const visible = (people ?? []).filter((p) => p.active || showArchived);
@@ -42,61 +52,129 @@ export function PrayerListView() {
     return [...byCategory.entries()].sort(([a], [b]) => a.localeCompare(b));
   }, [people, showArchived]);
 
+  function confirmAnswered() {
+    if (answering == null) return;
+    markAnswered.mutate({ id: answering, answerNote: answerDraft.trim() || undefined }, { onSuccess: () => toast.success("Marked as answered") });
+    setAnswering(null);
+    setAnswerDraft("");
+  }
+
+  const hasAny = (people?.length ?? 0) > 0;
+
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
-        <label className="flex items-center gap-1.5 text-xs text-gray-500">
-          <input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} />
-          Show answered / archived
-        </label>
-        <button onClick={() => setEditing("new")} className="rounded bg-blue-600 px-3 py-1.5 text-sm text-white hover:bg-blue-700">
-          + Add Person
-        </button>
+      <div className="mb-4 flex items-center justify-between gap-3">
+        {hasAny ? (
+          <label className="flex items-center gap-2 text-sm text-ink-2">
+            <input type="checkbox" className={checkboxClass} checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} />
+            Show answered and archived
+          </label>
+        ) : (
+          <span />
+        )}
+        <Button variant="primary" icon={Plus} onClick={() => setEditing("new")}>
+          Add person
+        </Button>
       </div>
 
-      {groups.length === 0 && <p className="text-gray-400">No one on your prayer list yet.</p>}
-      <div className="space-y-5">
+      {!hasAny && (
+        <EmptyState
+          icon={Users}
+          title="No one on your prayer list yet"
+          description="Keep people and requests here, separate from journal entries. Tap “Prayed today” to log it, and “Answered” to archive it with a note of how God answered."
+          action={
+            <Button variant="primary" icon={Plus} onClick={() => setEditing("new")}>
+              Add the first person
+            </Button>
+          }
+        />
+      )}
+      {hasAny && groups.length === 0 && <EmptyState compact title="Everyone is answered or archived" description="Tick “Show answered and archived” to see them." />}
+
+      <div className="space-y-6">
         {groups.map(([category, list]) => (
-          <div key={category}>
-            <h2 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-gray-400">{category}</h2>
+          <section key={category}>
+            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-3">{category}</h2>
             <ul className="space-y-2">
               {list.map((p) => (
-                <li
-                  key={p.id}
-                  className={`rounded border border-gray-200 px-3 py-2 dark:border-gray-800 ${!p.active ? "opacity-50" : ""}`}
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <div className="text-sm font-medium">{p.name}</div>
-                      {p.notes && <p className="mt-0.5 whitespace-pre-wrap text-xs text-gray-500">{p.notes}</p>}
-                      <div className="mt-1 text-xs text-gray-400">Last prayed for: {timeAgo(p.last_prayed_at)}</div>
-                    </div>
-                    <div className="flex shrink-0 flex-col items-end gap-1 text-xs">
-                      {p.active && (
-                        <button onClick={() => markPrayed.mutate(p.id)} className="text-blue-600 hover:underline dark:text-blue-400">
-                          🙏 Prayed today
-                        </button>
+                <li key={p.id} className={cx(cardClass, !p.active && "opacity-70")}>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-medium text-ink">{p.name}</div>
+                      {p.notes && <p className="mt-0.5 whitespace-pre-wrap text-sm text-ink-2">{p.notes}</p>}
+                      {p.active && <div className="mt-1 text-xs text-ink-3">Last prayed for {timeAgo(p.last_prayed_at)}</div>}
+                      {!p.active && p.answered_at && (
+                        <div className="mt-1 text-xs text-green-700 dark:text-green-400">
+                          Answered {timeAgo(p.answered_at)}
+                          {p.answer_note && <p className="mt-0.5 italic">{p.answer_note}</p>}
+                        </div>
                       )}
-                      <div className="flex gap-2 text-gray-400">
-                        <button onClick={() => setEditing(p)} className="hover:underline">
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => setActive.mutate({ id: p.id, active: !p.active })}
-                          className="hover:underline"
-                        >
-                          {p.active ? "Mark answered" : "Restore"}
-                        </button>
-                        <button onClick={() => deletePerson.mutate(p.id)} className="hover:underline">
-                          Delete
-                        </button>
-                      </div>
+                      {!p.active && !p.answered_at && <div className="mt-1 text-xs text-ink-3">Archived</div>}
                     </div>
+                    {p.active && (
+                      <Button size="sm" variant="secondary" icon={HandHeart} onClick={() => markPrayed.mutate(p.id, { onSuccess: () => toast.success(`Logged a prayer for ${p.name}`) })}>
+                        Prayed today
+                      </Button>
+                    )}
                   </div>
+                  <div className="mt-2 flex flex-wrap justify-end gap-1">
+                    <Button size="sm" variant="ghost" icon={Pencil} onClick={() => setEditing(p)}>
+                      Edit
+                    </Button>
+                    {p.active ? (
+                      <Button size="sm" variant="ghost" icon={Check} onClick={() => setAnswering(p.id)}>
+                        Answered
+                      </Button>
+                    ) : (
+                      <Button size="sm" variant="ghost" icon={RotateCcw} onClick={() => setActive.mutate({ id: p.id, active: true })}>
+                        Restore
+                      </Button>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="danger-ghost"
+                      icon={Trash2}
+                      onClick={async () => {
+                        if (await confirmDelete(p.name, "This removes them from your prayer list along with any answer note.")) {
+                          deletePerson.mutate(p.id, { onSuccess: () => toast.info(`Removed ${p.name}`) });
+                        }
+                      }}
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                  {answering === p.id && (
+                    <div className="mt-2 flex items-center gap-2 border-t border-line pt-2">
+                      <input
+                        autoFocus
+                        value={answerDraft}
+                        onChange={(e) => setAnswerDraft(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") confirmAnswered();
+                          if (e.key === "Escape") setAnswering(null);
+                        }}
+                        placeholder="How did God answer? (optional)"
+                        className={cx(inputSmClass, "min-w-0 flex-1")}
+                      />
+                      <Button size="sm" variant="primary" onClick={confirmAnswered}>
+                        Mark answered
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          setAnswering(null);
+                          setAnswerDraft("");
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  )}
                 </li>
               ))}
             </ul>
-          </div>
+          </section>
         ))}
       </div>
 
@@ -105,9 +183,9 @@ export function PrayerListView() {
           existing={editing === "new" ? null : editing}
           onSave={(input) => {
             if (editing === "new") {
-              createPerson.mutate(input);
+              createPerson.mutate(input, { onSuccess: () => toast.success(`Added ${input.name}`) });
             } else {
-              updatePerson.mutate({ id: editing.id, ...input });
+              updatePerson.mutate({ id: editing.id, ...input }, { onSuccess: () => toast.success("Saved") });
             }
             setEditing(null);
           }}

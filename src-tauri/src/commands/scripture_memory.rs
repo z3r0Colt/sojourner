@@ -37,6 +37,17 @@ pub fn set_memory_verse_mode(db: State<DbState>, id: i64, mode: String) -> AppRe
 }
 
 #[tauri::command]
+pub fn set_memory_verse_doctrinal_link(
+    db: State<DbState>,
+    id: i64,
+    westminster_section_id: Option<i64>,
+    doctrinal_note: Option<String>,
+) -> AppResult<()> {
+    let conn = db.0.lock().unwrap();
+    Ok(queries::set_doctrinal_link(&conn, id, westminster_section_id, doctrinal_note)?)
+}
+
+#[tauri::command]
 pub fn delete_memory_verse(db: State<DbState>, id: i64) -> AppResult<()> {
     let conn = db.0.lock().unwrap();
     Ok(queries::delete(&conn, id)?)

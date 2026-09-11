@@ -1,12 +1,18 @@
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { ChevronLeft, ChevronRight, MessageSquareText } from "lucide-react";
 import { api } from "../../api/client";
 import { useBooks, useCommentarySources } from "../../api/queries";
 import { useNavigationStore } from "../../state/navigationStore";
 import { useTtsStore } from "../../state/ttsStore";
+import { useReadingTypography } from "../../state/uiStore";
 import { ReadAloudButton } from "../tts/ReadAloudButton";
 import { ReadAloudWords } from "../tts/ReadAloudWords";
 import { CommentaryHtml } from "./CommentaryPanel";
+import { EmptyState, LoadingState } from "../../components/ui/EmptyState";
+import { cx, selectSmClass } from "../../components/ui/classes";
+
+const navItemClass = "block rounded-md px-2 py-1 text-sm hover:bg-hover";
 
 export function CommentaryStandaloneView() {
   const { sourceId: sourceIdParam, bookId: bookIdParam, sectionId: sectionIdParam } = useParams();
@@ -15,6 +21,7 @@ export function CommentaryStandaloneView() {
   const sectionId = sectionIdParam ? Number(sectionIdParam) : null;
   const navigate = useNavigate();
   const goTo = useNavigationStore((s) => s.goTo);
+  const typography = useReadingTypography(0.95);
 
   const { data: books } = useBooks();
   const { data: sources } = useCommentarySources();
@@ -52,30 +59,21 @@ export function CommentaryStandaloneView() {
 
   return (
     <div className="flex h-full">
-      <aside className="w-56 shrink-0 overflow-y-auto border-r border-gray-200 p-2 dark:border-gray-800">
-        <select
-          className="mb-2 w-full rounded border border-gray-300 bg-white px-2 py-1 text-xs dark:border-gray-700 dark:bg-gray-900"
-          value={sourceId ?? ""}
-          onChange={(e) => navigate(`/commentary/${e.target.value}`)}
-        >
+      <aside className="w-60 shrink-0 overflow-y-auto border-r border-line bg-surface-2/60 p-2">
+        <select aria-label="Commentary" className={cx(selectSmClass, "mb-3 w-full")} value={sourceId ?? ""} onChange={(e) => navigate(`/commentary/${e.target.value}`)}>
           {sources?.map((s) => (
             <option key={s.id} value={s.id}>
               {s.title}
             </option>
           ))}
         </select>
-        <div className="mb-2 text-xs font-semibold uppercase text-gray-400">Books</div>
-        <ul className="mb-4 space-y-0.5 text-sm">
+        <div className="mb-1 px-2 text-xs font-semibold uppercase tracking-wide text-ink-3">Books</div>
+        <ul className="mb-4 space-y-0.5">
           {books
             ?.filter((b) => source?.covered_book_ids.includes(b.id))
             .map((b) => (
               <li key={b.id}>
-                <Link
-                  to={`/commentary/${sourceId}/${b.id}`}
-                  className={`block rounded px-2 py-0.5 hover:bg-gray-100 dark:hover:bg-gray-800 ${
-                    b.id === bookId ? "bg-blue-50 font-medium text-blue-700 dark:bg-blue-950 dark:text-blue-300" : ""
-                  }`}
-                >
+                <Link to={`/commentary/${sourceId}/${b.id}`} className={cx(navItemClass, b.id === bookId ? "bg-accent-soft font-medium text-accent" : "text-ink-2")}>
                   {b.name}
                 </Link>
               </li>
@@ -83,15 +81,13 @@ export function CommentaryStandaloneView() {
         </ul>
         {book && toc && (
           <>
-            <div className="mb-2 text-xs font-semibold uppercase text-gray-400">{book.name}</div>
-            <ul className="space-y-0.5 text-sm">
+            <div className="mb-1 px-2 text-xs font-semibold uppercase tracking-wide text-ink-3">{book.name}</div>
+            <ul className="space-y-0.5">
               {toc.map((s) => (
                 <li key={s.id}>
                   <Link
                     to={`/commentary/${sourceId}/${bookId}/${s.id}`}
-                    className={`block rounded px-2 py-0.5 hover:bg-gray-100 dark:hover:bg-gray-800 ${
-                      s.id === activeSectionId ? "bg-blue-50 font-medium text-blue-700 dark:bg-blue-950 dark:text-blue-300" : ""
-                    }`}
+                    className={cx(navItemClass, s.id === activeSectionId ? "bg-accent-soft font-medium text-accent" : "text-ink-2")}
                   >
                     {s.title ?? (s.chapter ? `Chapter ${s.chapter}` : "Section")}
                   </Link>
@@ -103,20 +99,22 @@ export function CommentaryStandaloneView() {
       </aside>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-8 py-6">
-        {!source && <p className="text-gray-400">Select a commentary.</p>}
-        {source && !book && <p className="text-gray-400">Select a book to browse {source.title}.</p>}
+        {!source && <EmptyState icon={MessageSquareText} title="Choose a commentary" />}
+        {source && !book && <EmptyState icon={MessageSquareText} title={`Choose a book to read ${source.title}`} />}
         {book && (
-          <>
+          <div className="mx-auto w-full max-w-[70ch]">
+            <div className="mb-0.5 text-xs font-semibold uppercase tracking-wide text-ink-3">{source?.title}</div>
             <div className="mb-1 flex items-center gap-2">
-              <h1 className="text-xl font-semibold">{book.name}</h1>
+              <h1 className="reading-font text-2xl font-semibold text-ink">{book.name}</h1>
               <ReadAloudButton
                 title={`${source?.title ?? "Commentary"}: ${book.name}${sectionTitle ? ` — ${sectionTitle}` : ""}`}
                 sourceKind="commentary"
                 segments={(entries ?? []).map((e) => ({ id: e.id, text: e.plain_text }))}
               />
             </div>
-            <h2 className="mb-4 text-sm text-gray-500">{sectionTitle}</h2>
-            <div className="reading-font commentary-html space-y-3 text-[15px] leading-relaxed">
+            <h2 className="mb-5 text-sm text-ink-3">{sectionTitle}</h2>
+            {!entries && <LoadingState />}
+            <div className="reading-font commentary-html space-y-3 text-ink" style={typography}>
               {entries?.map((e) =>
                 ttsSourceKind === "commentary" && ttsCurrentSegmentId === e.id ? (
                   <ReadAloudWords key={e.id} text={e.plain_text} active />
@@ -125,21 +123,21 @@ export function CommentaryStandaloneView() {
                 ),
               )}
             </div>
-            <div className="mt-8 flex justify-between text-sm">
+            <div className="mt-8 flex justify-between gap-4 border-t border-line pt-4 text-sm">
               {prevSection ? (
-                <Link to={`/commentary/${sourceId}/${bookId}/${prevSection.id}`} className="text-blue-600 hover:underline dark:text-blue-400">
-                  ← {prevSection.title ?? "Previous"}
+                <Link to={`/commentary/${sourceId}/${bookId}/${prevSection.id}`} className="inline-flex items-center gap-1 text-accent hover:underline">
+                  <ChevronLeft className="h-4 w-4" aria-hidden="true" /> {prevSection.title ?? "Previous"}
                 </Link>
               ) : (
                 <span />
               )}
               {nextSection && (
-                <Link to={`/commentary/${sourceId}/${bookId}/${nextSection.id}`} className="text-blue-600 hover:underline dark:text-blue-400">
-                  {nextSection.title ?? "Next"} →
+                <Link to={`/commentary/${sourceId}/${bookId}/${nextSection.id}`} className="inline-flex items-center gap-1 text-accent hover:underline">
+                  {nextSection.title ?? "Next"} <ChevronRight className="h-4 w-4" aria-hidden="true" />
                 </Link>
               )}
             </div>
-          </>
+          </div>
         )}
       </div>
     </div>

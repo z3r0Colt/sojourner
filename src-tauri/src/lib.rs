@@ -3,6 +3,7 @@ mod commands;
 pub mod crash_log;
 pub mod db;
 mod error;
+pub mod export;
 pub mod import;
 pub mod models;
 pub mod paths;
@@ -25,6 +26,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_window_state::Builder::default().build())
         .setup(|app| {
             let handle = app.handle().clone();
             let app_data_dir = handle
@@ -125,33 +127,29 @@ pub fn run() {
             commands::annotations::create_chapter_note,
             commands::annotations::update_chapter_note,
             commands::annotations::delete_chapter_note,
-            commands::sermon_notes::list_sermon_notes,
-            commands::sermon_notes::get_sermon_note,
-            commands::sermon_notes::create_sermon_note,
-            commands::sermon_notes::update_sermon_note,
-            commands::sermon_notes::delete_sermon_note,
-            commands::sermon_notes::add_sermon_note_passage,
-            commands::sermon_notes::delete_sermon_note_passage,
-            commands::sermon_notes::search_sermon_notes,
-            commands::sermon_notes::add_sermon_note_tag,
-            commands::sermon_notes::remove_sermon_note_tag,
-            commands::sermon_notes::list_sermon_note_tags,
-            commands::sermon_notes::list_sermon_note_series,
-            commands::sermon_notes::sermon_notes_by_tag,
-            commands::sermon_notes::add_sermon_note_confession_link,
-            commands::sermon_notes::delete_sermon_note_confession_link,
-            commands::sermon_notes::add_sermon_note_word_study,
-            commands::sermon_notes::delete_sermon_note_word_study,
+            commands::annotations::add_note_tag,
+            commands::annotations::remove_note_tag,
+            commands::annotations::list_all_note_tags,
+            commands::annotations::list_all_note_tags_by_note,
+            commands::annotations::add_chapter_note_tag,
+            commands::annotations::remove_chapter_note_tag,
+            commands::annotations::list_all_chapter_note_tags,
+            commands::annotations::list_all_chapter_note_tags_by_note,
             commands::prayer_journal::list_prayer_entries,
             commands::prayer_journal::create_prayer_entry,
             commands::prayer_journal::update_prayer_entry,
             commands::prayer_journal::delete_prayer_entry,
             commands::prayer_journal::search_prayer_entries,
+            commands::prayer_journal::add_prayer_entry_tag,
+            commands::prayer_journal::remove_prayer_entry_tag,
+            commands::prayer_journal::list_all_prayer_entry_tags,
+            commands::prayer_journal::list_all_prayer_entry_tags_by_entry,
             commands::prayer_list::list_prayer_list_people,
             commands::prayer_list::create_prayer_list_person,
             commands::prayer_list::update_prayer_list_person,
             commands::prayer_list::set_prayer_list_person_active,
             commands::prayer_list::mark_prayer_list_person_prayed,
+            commands::prayer_list::mark_prayer_list_person_answered,
             commands::prayer_list::delete_prayer_list_person,
             commands::scripture_memory::list_memory_verses,
             commands::scripture_memory::list_due_memory_verses,
@@ -159,6 +157,13 @@ pub fn run() {
             commands::scripture_memory::set_memory_verse_mode,
             commands::scripture_memory::delete_memory_verse,
             commands::scripture_memory::review_memory_verse,
+            commands::scripture_memory::set_memory_verse_doctrinal_link,
+            commands::catechism_memory::list_catechism_memory,
+            commands::catechism_memory::list_due_catechism_memory,
+            commands::catechism_memory::create_catechism_memory,
+            commands::catechism_memory::set_catechism_memory_mode,
+            commands::catechism_memory::delete_catechism_memory,
+            commands::catechism_memory::review_catechism_memory,
             commands::reading_plans::list_reading_plans,
             commands::reading_plans::get_reading_plan_days,
             commands::reading_plans::list_reading_plan_progress,
@@ -180,15 +185,19 @@ pub fn run() {
             commands::study::list_westminster_documents,
             commands::study::list_westminster_sections,
             commands::study::get_westminster_section,
+            commands::study::get_confession_for_passage,
             commands::study::search_westminster,
             commands::study::list_westminster_commentary_sources,
             commands::study::get_westminster_commentary,
+            commands::study::list_doctrine_topics,
+            commands::study::get_doctrine_topic,
             commands::reference::get_strongs_entry,
             commands::reference::get_concordance,
             commands::reference::get_strongs_entries,
             commands::reference::search_strongs,
             commands::reference::list_dictionary_index,
             commands::reference::get_dictionary_entry,
+            commands::reference::find_dictionary_entry_by_term,
             commands::reference::search_dictionary,
             commands::reference::get_interlinear_for_chapter,
             commands::reference::get_morphology_for_chapter,
@@ -207,6 +216,13 @@ pub fn run() {
             commands::resources::list_resource_links,
             commands::resources::create_resource_link,
             commands::resources::delete_resource_link,
+            commands::resources::add_resource_tag,
+            commands::resources::remove_resource_tag,
+            commands::resources::list_all_resource_tags,
+            commands::resources::list_all_resource_tags_by_resource,
+            commands::resources::list_resources_by_tag,
+            commands::resources::suggest_resources_for_passage,
+            commands::resources::suggest_resources_for_topic,
             commands::backup::create_backup,
             commands::backup::list_backups,
             commands::backup::export_database,
@@ -217,6 +233,9 @@ pub fn run() {
             commands::backup::set_backup_sync_folder,
             commands::diagnostics::log_frontend_error,
             commands::diagnostics::get_logs_dir,
+            commands::export::export_note,
+            commands::export::export_chapter_note,
+            commands::export::export_prayer_entry,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

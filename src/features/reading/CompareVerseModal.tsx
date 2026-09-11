@@ -1,5 +1,8 @@
 import { useCompareVerse, useTranslations } from "../../api/queries";
+import { useReadingTypography } from "../../state/uiStore";
 import type { Book } from "../../api/types";
+import { Modal } from "../../components/ui/Modal";
+import { EmptyState, LoadingState } from "../../components/ui/EmptyState";
 
 /** Lighter-weight single-verse comparison across every installed translation
  * that covers it, opened from a verse's context menu -- distinct from full
@@ -18,6 +21,7 @@ export function CompareVerseModal({
 }) {
   const { data: translations } = useTranslations();
   const { data: results } = useCompareVerse(book.id, chapter, verse);
+  const typography = useReadingTypography(0.9);
 
   function translationName(id: number) {
     const t = translations?.find((t) => t.id === id);
@@ -25,34 +29,19 @@ export function CompareVerseModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-6" onClick={onClose}>
-      <div
-        className="flex max-h-[80vh] w-full max-w-2xl flex-col rounded-lg bg-white shadow-xl dark:bg-gray-900"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between border-b border-gray-200 p-3 dark:border-gray-800">
-          <h3 className="text-sm font-semibold">
-            {book.name} {chapter}:{verse}
-          </h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600" title="Close" aria-label="Close">
-            ✕
-          </button>
-        </div>
-        <div className="min-h-0 flex-1 overflow-y-auto p-4">
-          {!results && <p className="text-sm text-gray-400">Loading…</p>}
-          {results?.length === 0 && <p className="text-sm text-gray-400">No translation has this verse.</p>}
-          <div className="space-y-3">
-            {results?.map((v) => (
-              <div key={v.translation_id}>
-                <div className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-                  {translationName(v.translation_id)}
-                </div>
-                <p className="reading-font text-[15px] leading-relaxed">{v.text}</p>
-              </div>
-            ))}
+    <Modal title={`${book.name} ${chapter}:${verse} in every translation`} onClose={onClose} size="lg">
+      {!results && <LoadingState />}
+      {results?.length === 0 && <EmptyState compact title="No translation has this verse" />}
+      <div className="space-y-4">
+        {results?.map((v) => (
+          <div key={v.translation_id}>
+            <div className="mb-0.5 text-xs font-semibold uppercase tracking-wide text-ink-3">{translationName(v.translation_id)}</div>
+            <p className="reading-font text-ink" style={typography}>
+              {v.text}
+            </p>
           </div>
-        </div>
+        ))}
       </div>
-    </div>
+    </Modal>
   );
 }

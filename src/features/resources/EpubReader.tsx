@@ -2,6 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import ePub from "epubjs";
 import type Rendition from "epubjs/types/rendition";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "../../components/ui/Button";
+import { LoadingState } from "../../components/ui/EmptyState";
 
 export function EpubReader({ filePath }: { filePath: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -14,12 +17,9 @@ export function EpubReader({ filePath }: { filePath: string }) {
   // etc): the title page would show, then every "page" after it landed on
   // genuinely empty horizontal space because the column track epub.js
   // thought it was paginating across didn't match what actually rendered.
-  // A ResizeObserver-deferred renderTo (tried previously) didn't fix this --
-  // it's not a sizing-timing bug, it's the column-pagination model itself
-  // being unreliable across arbitrary EPUB stylesheets. "scrolled-doc" flow
-  // (one continuously-scrollable vertical column, like a normal web page)
-  // sidesteps that whole class of bug at the cost of Prev/Next paging
-  // between sections instead of columns.
+  // "scrolled-doc" flow (one continuously-scrollable vertical column, like
+  // a normal web page) sidesteps that whole class of bug at the cost of
+  // Prev/Next paging between sections instead of columns.
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -62,29 +62,22 @@ export function EpubReader({ filePath }: { filePath: string }) {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="relative min-h-0 flex-1">
+      <div className="relative min-h-0 flex-1 bg-white">
         <div ref={containerRef} className="absolute inset-0 overflow-y-auto" />
         {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-white text-sm text-gray-400 dark:bg-gray-950">
-            Loading…
+          <div className="absolute inset-0 flex items-center justify-center bg-bg">
+            <LoadingState label="Opening book…" />
           </div>
         )}
       </div>
-      <div className="flex justify-center gap-4 border-t border-gray-200 py-2 dark:border-gray-800">
-        <button
-          onClick={() => renditionRef.current?.prev()}
-          className="rounded border border-gray-300 px-3 py-1 text-sm hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800"
-          title="Previous section"
-        >
-          ← Previous
-        </button>
-        <button
-          onClick={() => renditionRef.current?.next()}
-          className="rounded border border-gray-300 px-3 py-1 text-sm hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800"
-          title="Next section"
-        >
-          Next →
-        </button>
+      <div className="flex justify-center gap-2 border-t border-line bg-surface py-2">
+        <Button size="sm" icon={ChevronLeft} onClick={() => renditionRef.current?.prev()} title="Previous section">
+          Previous
+        </Button>
+        <Button size="sm" onClick={() => renditionRef.current?.next()} title="Next section">
+          Next
+          <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
+        </Button>
       </div>
     </div>
   );

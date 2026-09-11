@@ -1,7 +1,7 @@
 use crate::models::MemoryVerse;
 use rusqlite::{params, Connection};
 
-const SELECT_COLS: &str = "id, book_id, chapter, verse_start, verse_end, translation_id, mode, ease_factor, interval_days, repetitions, due_at, last_reviewed_at, created_at";
+const SELECT_COLS: &str = "id, book_id, chapter, verse_start, verse_end, translation_id, mode, ease_factor, interval_days, repetitions, due_at, last_reviewed_at, created_at, westminster_section_id, doctrinal_note";
 
 fn map_row(r: &rusqlite::Row) -> rusqlite::Result<MemoryVerse> {
     Ok(MemoryVerse {
@@ -18,6 +18,8 @@ fn map_row(r: &rusqlite::Row) -> rusqlite::Result<MemoryVerse> {
         due_at: r.get(10)?,
         last_reviewed_at: r.get(11)?,
         created_at: r.get(12)?,
+        westminster_section_id: r.get(13)?,
+        doctrinal_note: r.get(14)?,
     })
 }
 
@@ -58,23 +60,38 @@ pub fn set_mode(conn: &Connection, id: i64, mode: String) -> anyhow::Result<()> 
     Ok(())
 }
 
+/// Attaches (or clears, by passing `None`) the catechism question or
+/// confession paragraph this verse illustrates, plus an optional personal
+/// note on its doctrinal sense -- see the USER_MIGRATION_0008 schema
+/// comment for why this lives on memory_verses directly rather than a
+/// side table.
+pub fn set_doctrinal_link(
+    conn: &Connection,
+    id: i64,
+    westminster_section_id: Option<i64>,
+    doctrinal_note: Option<String>,
+) -> anyhow::Result<()> {
+    conn.execute(
+        "UPDATE memory_verses SET westminster_section_id = ?1, doctrinal_note = ?2 WHERE id = ?3",
+        params![westminster_section_id, doctrinal_note, id],
+    )?;
+    Ok(())
+}
+
 pub fn delete(conn: &Connection, id: i64) -> anyhow::Result<()> {
     conn.execute("DELETE FROM memory_verses WHERE id = ?1", params![id])?;
     Ok(())
 }
 
-/// Records a review using the SM-2 spaced-repetition algorithm. `quality` is
-/// 0-5 (Anki/SuperMemo convention: below 3 means "failed to recall" and
-/// resets the interval; 3+ means a successful recall, with 5 being
-/// effortless). Ease factor is clamped to a minimum of 1.3 as SM-2
+/// The SM-2 spaced-repetition algorithm's pure math, shared by every
+/// memory-card table in the app (memory_verses here, catechism_memory in
+/// the sibling module) so the scheduling rule lives in exactly one place.
+/// `quality` is 0-5 (Anki/SuperMemo convention: below 3 means "failed to
+/// recall" and resets the interval; 3+ means a successful recall, with 5
+/// being effortless). Ease factor is clamped to a minimum of 1.3 as SM-2
 /// prescribes, so a run of poor recalls can't shrink intervals to nothing.
-pub fn review(conn: &Connection, id: i64, quality: i64) -> anyhow::Result<MemoryVerse> {
-    let (ease_factor, interval_days, repetitions): (f64, i64, i64) = conn.query_row(
-        "SELECT ease_factor, interval_days, repetitions FROM memory_verses WHERE id = ?1",
-        params![id],
-        |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
-    )?;
-
+/// Returns (new_ease_factor, new_interval_days, new_repetitions).
+pub fn compute_sm2(ease_factor: f64, interval_days: i64, repetitions: i64, quality: i64) -> (f64, i64, i64) {
     let (new_repetitions, new_interval) = if quality < 3 {
         (0, 1)
     } else {
@@ -88,6 +105,18 @@ pub fn review(conn: &Connection, id: i64, quality: i64) -> anyhow::Result<Memory
     };
     let q = quality as f64;
     let new_ease = (ease_factor + (0.1 - (5.0 - q) * (0.08 + (5.0 - q) * 0.02))).max(1.3);
+    (new_ease, new_interval, new_repetitions)
+}
+
+/// Records a review using [`compute_sm2`].
+pub fn review(conn: &Connection, id: i64, quality: i64) -> anyhow::Result<MemoryVerse> {
+    let (ease_factor, interval_days, repetitions): (f64, i64, i64) = conn.query_row(
+        "SELECT ease_factor, interval_days, repetitions FROM memory_verses WHERE id = ?1",
+        params![id],
+        |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
+    )?;
+
+    let (new_ease, new_interval, new_repetitions) = compute_sm2(ease_factor, interval_days, repetitions, quality);
 
     let now = chrono::Utc::now();
     let due_at = (now + chrono::Duration::days(new_interval)).to_rfc3339();

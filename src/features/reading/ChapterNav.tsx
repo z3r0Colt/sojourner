@@ -1,6 +1,10 @@
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useTranslationCoverage } from "../../api/queries";
 import type { Book } from "../../api/types";
 import type { Position } from "../../state/navigationStore";
+import { IconButton } from "../../components/ui/Button";
+import { selectSmClass } from "../../components/ui/classes";
+import { stepChapter } from "./chapterStep";
 
 export function ChapterNav({
   books,
@@ -25,30 +29,15 @@ export function ChapterNav({
   const isChapterCovered = (bookId: number, chapter: number) =>
     !coverageByBook || (coverageByBook.get(bookId)?.has(chapter) ?? false);
 
-  function prevChapter() {
-    if (position.chapter > 1) {
-      onNavigate({ bookId: book.id, chapter: position.chapter - 1 });
-      return;
-    }
-    const idx = books.findIndex((b) => b.id === book.id);
-    const prevBook = books[idx - 1];
-    if (prevBook) onNavigate({ bookId: prevBook.id, chapter: prevBook.chapter_count });
-  }
-
-  function nextChapter() {
-    if (position.chapter < book.chapter_count) {
-      onNavigate({ bookId: book.id, chapter: position.chapter + 1 });
-      return;
-    }
-    const idx = books.findIndex((b) => b.id === book.id);
-    const nextBook = books[idx + 1];
-    if (nextBook) onNavigate({ bookId: nextBook.id, chapter: 1 });
-  }
+  const prev = stepChapter(books, position, -1);
+  const next = stepChapter(books, position, 1);
 
   return (
-    <div className="flex items-center gap-1 text-sm">
+    <div className="flex items-center gap-1">
+      <IconButton icon={ChevronLeft} label="Previous chapter (Ctrl+[)" size="sm" disabled={!prev} onClick={() => prev && onNavigate(prev)} />
       <select
-        className="rounded border border-gray-300 bg-white px-2 py-1 dark:border-gray-700 dark:bg-gray-900"
+        aria-label="Book"
+        className={selectSmClass}
         value={book.id}
         onChange={(e) => onNavigate({ bookId: Number(e.target.value), chapter: 1 })}
       >
@@ -60,7 +49,8 @@ export function ChapterNav({
         ))}
       </select>
       <select
-        className="rounded border border-gray-300 bg-white px-2 py-1 dark:border-gray-700 dark:bg-gray-900"
+        aria-label="Chapter"
+        className={selectSmClass}
         value={position.chapter}
         onChange={(e) => onNavigate({ bookId: book.id, chapter: Number(e.target.value) })}
       >
@@ -70,22 +60,7 @@ export function ChapterNav({
           </option>
         ))}
       </select>
-      <button
-        onClick={prevChapter}
-        title="Previous chapter"
-        aria-label="Previous chapter"
-        className="rounded px-1.5 py-1 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"
-      >
-        ‹
-      </button>
-      <button
-        onClick={nextChapter}
-        title="Next chapter"
-        aria-label="Next chapter"
-        className="rounded px-1.5 py-1 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"
-      >
-        ›
-      </button>
+      <IconButton icon={ChevronRight} label="Next chapter (Ctrl+])" size="sm" disabled={!next} onClick={() => next && onNavigate(next)} />
     </div>
   );
 }

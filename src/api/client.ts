@@ -16,15 +16,12 @@ import type {
   ImportReportItem,
   StrongsEntry,
   ConcordanceEntry,
-  SermonNote,
-  SermonNotePassageLink,
-  SermonNoteConfessionLink,
-  SermonNoteWordStudy,
   PrayerEntry,
   PrayerEntryMode,
   PrayerListPerson,
   MemoryVerse,
   MemoryMode,
+  CatechismMemory,
   ReadingPlan,
   ReadingPlanDay,
   ReadingPlanProgress,
@@ -45,6 +42,8 @@ import type {
   WestminsterSearchResult,
   WestminsterCommentarySource,
   WestminsterCommentaryEntry,
+  WestminsterPassageMatch,
+  DoctrineTopic,
   Resource,
   ResourcePassageLink,
   ResourceLink,
@@ -119,6 +118,10 @@ export const api = {
     invoke<Note>("create_note", { bookId, chapter, verseStart, verseEnd, body, highlightId: highlightId ?? null }),
   updateNote: (id: number, body: string) => invoke<void>("update_note", { id, body }),
   deleteNote: (id: number) => invoke<void>("delete_note", { id }),
+  addNoteTag: (noteId: number, tag: string) => invoke<void>("add_note_tag", { noteId, tag }),
+  removeNoteTag: (noteId: number, tag: string) => invoke<void>("remove_note_tag", { noteId, tag }),
+  listAllNoteTags: () => invoke<string[]>("list_all_note_tags"),
+  listAllNoteTagsByNote: () => invoke<[number, string][]>("list_all_note_tags_by_note"),
 
   listChapterNotes: (bookId: number, chapter: number) => invoke<ChapterNote[]>("list_chapter_notes", { bookId, chapter }),
   listAllChapterNotes: () => invoke<ChapterNote[]>("list_all_chapter_notes"),
@@ -126,6 +129,10 @@ export const api = {
     invoke<ChapterNote>("create_chapter_note", { bookId, chapter, body }),
   updateChapterNote: (id: number, body: string) => invoke<void>("update_chapter_note", { id, body }),
   deleteChapterNote: (id: number) => invoke<void>("delete_chapter_note", { id }),
+  addChapterNoteTag: (chapterNoteId: number, tag: string) => invoke<void>("add_chapter_note_tag", { chapterNoteId, tag }),
+  removeChapterNoteTag: (chapterNoteId: number, tag: string) => invoke<void>("remove_chapter_note_tag", { chapterNoteId, tag }),
+  listAllChapterNoteTags: () => invoke<string[]>("list_all_chapter_note_tags"),
+  listAllChapterNoteTagsByNote: () => invoke<[number, string][]>("list_all_chapter_note_tags_by_note"),
 
   listBookmarks: () => invoke<Bookmark[]>("list_bookmarks"),
   createBookmark: (bookId: number, chapter: number, verse?: number, label?: string) =>
@@ -161,6 +168,7 @@ export const api = {
 
   listDictionaryIndex: () => invoke<DictionaryEntrySummary[]>("list_dictionary_index"),
   getDictionaryEntry: (slug: string) => invoke<DictionaryEntry | null>("get_dictionary_entry", { slug }),
+  findDictionaryEntryByTerm: (term: string) => invoke<DictionaryEntrySummary | null>("find_dictionary_entry_by_term", { term }),
   searchDictionary: (query: string, limit = 50) =>
     invoke<DictionaryEntrySummary[]>("search_dictionary", { query, limit }),
 
@@ -179,12 +187,16 @@ export const api = {
   listWestminsterSections: (documentId: number) =>
     invoke<WestminsterSectionSummary[]>("list_westminster_sections", { documentId }),
   getWestminsterSection: (id: number) => invoke<WestminsterSection | null>("get_westminster_section", { id }),
+  getConfessionForPassage: (bookId: number, chapter: number, verse: number) =>
+    invoke<WestminsterPassageMatch[]>("get_confession_for_passage", { bookId, chapter, verse }),
   searchWestminster: (query: string, limit = 50) =>
     invoke<WestminsterSearchResult[]>("search_westminster", { query, limit }),
   listWestminsterCommentarySources: () =>
     invoke<WestminsterCommentarySource[]>("list_westminster_commentary_sources"),
   getWestminsterCommentary: (sourceId: number, chapter: number) =>
     invoke<WestminsterCommentaryEntry[]>("get_westminster_commentary", { sourceId, chapter }),
+  listDoctrineTopics: () => invoke<DoctrineTopic[]>("list_doctrine_topics"),
+  getDoctrineTopic: (id: number) => invoke<DoctrineTopic | null>("get_doctrine_topic", { id }),
 
   listResources: () => invoke<Resource[]>("list_resources"),
   getResource: (id: number) => invoke<Resource | null>("get_resource", { id }),
@@ -223,71 +235,18 @@ export const api = {
   createResourceLink: (fromResourceId: number, toResourceId: number, fromLocation?: string, label?: string) =>
     invoke<ResourceLink>("create_resource_link", { fromResourceId, toResourceId, fromLocation: fromLocation ?? null, label: label ?? null }),
   deleteResourceLink: (id: number) => invoke<void>("delete_resource_link", { id }),
+  addResourceTag: (resourceId: number, tag: string) => invoke<void>("add_resource_tag", { resourceId, tag }),
+  removeResourceTag: (resourceId: number, tag: string) => invoke<void>("remove_resource_tag", { resourceId, tag }),
+  listAllResourceTags: () => invoke<string[]>("list_all_resource_tags"),
+  listAllResourceTagsByResource: () => invoke<[number, string][]>("list_all_resource_tags_by_resource"),
+  listResourcesByTag: (tag: string) => invoke<Resource[]>("list_resources_by_tag", { tag }),
+  suggestResourcesForPassage: (bookId: number, chapter: number) =>
+    invoke<Resource[]>("suggest_resources_for_passage", { bookId, chapter }),
+  suggestResourcesForTopic: (topicId: number) => invoke<Resource[]>("suggest_resources_for_topic", { topicId }),
 
-  listSermonNotes: () => invoke<SermonNote[]>("list_sermon_notes"),
-  getSermonNote: (id: number) => invoke<SermonNote | null>("get_sermon_note", { id }),
-  createSermonNote: (input: {
-    date: string;
-    series?: string;
-    preacher?: string;
-    title?: string;
-    passageText?: string;
-    outline?: string;
-    application?: string;
-  }) =>
-    invoke<SermonNote>("create_sermon_note", {
-      date: input.date,
-      series: input.series ?? null,
-      preacher: input.preacher ?? null,
-      title: input.title ?? null,
-      passageText: input.passageText ?? null,
-      outline: input.outline ?? null,
-      application: input.application ?? null,
-    }),
-  updateSermonNote: (
-    id: number,
-    input: {
-      date: string;
-      series?: string;
-      preacher?: string;
-      title?: string;
-      passageText?: string;
-      outline?: string;
-      application?: string;
-    },
-  ) =>
-    invoke<void>("update_sermon_note", {
-      id,
-      date: input.date,
-      series: input.series ?? null,
-      preacher: input.preacher ?? null,
-      title: input.title ?? null,
-      passageText: input.passageText ?? null,
-      outline: input.outline ?? null,
-      application: input.application ?? null,
-    }),
-  deleteSermonNote: (id: number) => invoke<void>("delete_sermon_note", { id }),
-  addSermonNotePassage: (sermonNoteId: number, bookId: number, chapter: number, verseStart?: number, verseEnd?: number) =>
-    invoke<SermonNotePassageLink>("add_sermon_note_passage", {
-      sermonNoteId,
-      bookId,
-      chapter,
-      verseStart: verseStart ?? null,
-      verseEnd: verseEnd ?? null,
-    }),
-  deleteSermonNotePassage: (id: number) => invoke<void>("delete_sermon_note_passage", { id }),
-  searchSermonNotes: (query: string, limit = 50) => invoke<SermonNote[]>("search_sermon_notes", { query, limit }),
-  addSermonNoteTag: (sermonNoteId: number, tag: string) => invoke<void>("add_sermon_note_tag", { sermonNoteId, tag }),
-  removeSermonNoteTag: (sermonNoteId: number, tag: string) => invoke<void>("remove_sermon_note_tag", { sermonNoteId, tag }),
-  listSermonNoteTags: () => invoke<string[]>("list_sermon_note_tags"),
-  listSermonNoteSeries: () => invoke<string[]>("list_sermon_note_series"),
-  sermonNotesByTag: (tag: string) => invoke<SermonNote[]>("sermon_notes_by_tag", { tag }),
-  addSermonNoteConfessionLink: (sermonNoteId: number, westminsterSectionId: number) =>
-    invoke<SermonNoteConfessionLink>("add_sermon_note_confession_link", { sermonNoteId, westminsterSectionId }),
-  deleteSermonNoteConfessionLink: (id: number) => invoke<void>("delete_sermon_note_confession_link", { id }),
-  addSermonNoteWordStudy: (sermonNoteId: number, strongsId: string, note?: string) =>
-    invoke<SermonNoteWordStudy>("add_sermon_note_word_study", { sermonNoteId, strongsId, note: note ?? null }),
-  deleteSermonNoteWordStudy: (id: number) => invoke<void>("delete_sermon_note_word_study", { id }),
+  exportNote: (noteId: number, destPath: string) => invoke<void>("export_note", { noteId, destPath }),
+  exportChapterNote: (chapterNoteId: number, destPath: string) => invoke<void>("export_chapter_note", { chapterNoteId, destPath }),
+  exportPrayerEntry: (prayerEntryId: number, destPath: string) => invoke<void>("export_prayer_entry", { prayerEntryId, destPath }),
 
   listPrayerEntries: () => invoke<PrayerEntry[]>("list_prayer_entries"),
   createPrayerEntry: (input: {
@@ -348,6 +307,10 @@ export const api = {
     }),
   deletePrayerEntry: (id: number) => invoke<void>("delete_prayer_entry", { id }),
   searchPrayerEntries: (query: string, limit = 50) => invoke<PrayerEntry[]>("search_prayer_entries", { query, limit }),
+  addPrayerEntryTag: (prayerEntryId: number, tag: string) => invoke<void>("add_prayer_entry_tag", { prayerEntryId, tag }),
+  removePrayerEntryTag: (prayerEntryId: number, tag: string) => invoke<void>("remove_prayer_entry_tag", { prayerEntryId, tag }),
+  listAllPrayerEntryTags: () => invoke<string[]>("list_all_prayer_entry_tags"),
+  listAllPrayerEntryTagsByEntry: () => invoke<[number, string][]>("list_all_prayer_entry_tags_by_entry"),
 
   listPrayerListPeople: () => invoke<PrayerListPerson[]>("list_prayer_list_people"),
   createPrayerListPerson: (input: { name: string; category?: string; notes?: string }) =>
@@ -365,6 +328,8 @@ export const api = {
     }),
   setPrayerListPersonActive: (id: number, active: boolean) => invoke<void>("set_prayer_list_person_active", { id, active }),
   markPrayerListPersonPrayed: (id: number) => invoke<void>("mark_prayer_list_person_prayed", { id }),
+  markPrayerListPersonAnswered: (id: number, answerNote?: string) =>
+    invoke<void>("mark_prayer_list_person_answered", { id, answerNote: answerNote ?? null }),
   deletePrayerListPerson: (id: number) => invoke<void>("delete_prayer_list_person", { id }),
 
   listMemoryVerses: () => invoke<MemoryVerse[]>("list_memory_verses"),
@@ -381,6 +346,16 @@ export const api = {
     invoke<void>("set_memory_verse_mode", { id, mode }),
   deleteMemoryVerse: (id: number) => invoke<void>("delete_memory_verse", { id }),
   reviewMemoryVerse: (id: number, quality: number) => invoke<MemoryVerse>("review_memory_verse", { id, quality }),
+  setMemoryVerseDoctrinalLink: (id: number, westminsterSectionId: number | null, doctrinalNote: string | null) =>
+    invoke<void>("set_memory_verse_doctrinal_link", { id, westminsterSectionId, doctrinalNote }),
+
+  listCatechismMemory: () => invoke<CatechismMemory[]>("list_catechism_memory"),
+  listDueCatechismMemory: () => invoke<CatechismMemory[]>("list_due_catechism_memory"),
+  createCatechismMemory: (westminsterSectionId: number, mode: MemoryMode) =>
+    invoke<CatechismMemory>("create_catechism_memory", { westminsterSectionId, mode }),
+  setCatechismMemoryMode: (id: number, mode: MemoryMode) => invoke<void>("set_catechism_memory_mode", { id, mode }),
+  deleteCatechismMemory: (id: number) => invoke<void>("delete_catechism_memory", { id }),
+  reviewCatechismMemory: (id: number, quality: number) => invoke<CatechismMemory>("review_catechism_memory", { id, quality }),
 
   listReadingPlans: () => invoke<ReadingPlan[]>("list_reading_plans"),
   getReadingPlanDays: (planCode: string) => invoke<ReadingPlanDay[]>("get_reading_plan_days", { planCode }),

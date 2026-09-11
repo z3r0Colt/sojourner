@@ -10,14 +10,21 @@ interface NavigationState {
   primaryTranslationId: number | null;
   parallelTranslationIds: number[];
   position: Position | null;
+  /** The verse the reader last clicked in the current chapter -- drives the
+   * study panel and bookmarks. Separate from `position.verse`, which is a
+   * navigation target rather than a selection. */
+  activeVerse: number | null;
   history: Position[];
   future: Position[];
   activeCommentarySourceId: number | null;
   interlinearMode: boolean;
   setPrimaryTranslation: (id: number) => void;
   toggleParallelTranslation: (id: number) => void;
+  clearParallelTranslations: () => void;
   setActiveCommentarySource: (id: number | null) => void;
   toggleInterlinearMode: () => void;
+  setInterlinearMode: (on: boolean) => void;
+  setActiveVerse: (verse: number | null) => void;
   goTo: (pos: Position, opts?: { pushHistory?: boolean }) => void;
   goBack: () => void;
   goForward: () => void;
@@ -27,6 +34,7 @@ export const useNavigationStore = create<NavigationState>((set, get) => ({
   primaryTranslationId: null,
   parallelTranslationIds: [],
   position: null,
+  activeVerse: null,
   history: [],
   future: [],
   activeCommentarySourceId: null,
@@ -35,6 +43,7 @@ export const useNavigationStore = create<NavigationState>((set, get) => ({
   setPrimaryTranslation: (id) => set({ primaryTranslationId: id }),
 
   toggleInterlinearMode: () => set((s) => ({ interlinearMode: !s.interlinearMode })),
+  setInterlinearMode: (interlinearMode) => set({ interlinearMode }),
 
   toggleParallelTranslation: (id) =>
     set((s) => ({
@@ -42,14 +51,18 @@ export const useNavigationStore = create<NavigationState>((set, get) => ({
         ? s.parallelTranslationIds.filter((t) => t !== id)
         : [...s.parallelTranslationIds, id],
     })),
+  clearParallelTranslations: () => set({ parallelTranslationIds: [] }),
 
   setActiveCommentarySource: (id) => set({ activeCommentarySourceId: id }),
+
+  setActiveVerse: (activeVerse) => set({ activeVerse }),
 
   goTo: (pos, opts) => {
     const { position, history } = get();
     const pushHistory = opts?.pushHistory ?? true;
     set({
       position: pos,
+      activeVerse: pos.verse ?? null,
       history: pushHistory && position ? [...history, position] : history,
       future: [],
     });
@@ -61,6 +74,7 @@ export const useNavigationStore = create<NavigationState>((set, get) => ({
     const prev = history[history.length - 1];
     set({
       position: prev,
+      activeVerse: prev.verse ?? null,
       history: history.slice(0, -1),
       future: position ? [position, ...future] : future,
     });
@@ -72,6 +86,7 @@ export const useNavigationStore = create<NavigationState>((set, get) => ({
     const next = future[0];
     set({
       position: next,
+      activeVerse: next.verse ?? null,
       future: future.slice(1),
       history: position ? [...history, position] : history,
     });

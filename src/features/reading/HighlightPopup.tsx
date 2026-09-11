@@ -1,6 +1,7 @@
+import { StickyNote, Trash2, Underline, X } from "lucide-react";
 import { useViewportClampedPosition } from "../../lib/useViewportClampedPosition";
-
-const COLORS = ["#fef08a", "#bbf7d0", "#bfdbfe", "#fbcfe8", "#fed7aa"];
+import { HIGHLIGHT_COLORS, UNDERLINE_COLOR } from "./highlightColors";
+import { Button, IconButton } from "../../components/ui/Button";
 
 export function HighlightPopup({
   x,
@@ -26,48 +27,30 @@ export function HighlightPopup({
   return (
     <div
       ref={ref}
-      className="z-40 flex items-center gap-1 rounded-lg border border-gray-200 bg-white p-1.5 shadow-lg dark:border-gray-700 dark:bg-gray-900"
+      role="toolbar"
+      aria-label="Highlight actions"
+      className="z-40 flex items-center gap-1 rounded-lg border border-line bg-surface p-1.5 shadow-xl"
       style={style}
       onMouseDown={(e) => e.preventDefault()}
     >
-      {COLORS.map((c) => (
+      {HIGHLIGHT_COLORS.map((c) => (
         <button
-          key={c}
-          className="h-6 w-6 rounded-full border border-black/10"
-          style={{ backgroundColor: c }}
-          title="Change color"
-          onClick={() => onPickColor(c)}
+          key={c.color}
+          type="button"
+          className="h-6 w-6 rounded-full border border-black/10 transition-transform hover:scale-110"
+          style={{ backgroundColor: c.color }}
+          title={`Change to ${c.name.toLowerCase()}`}
+          aria-label={`Change to ${c.name.toLowerCase()}`}
+          onClick={() => onPickColor(c.color)}
         />
       ))}
-      <button
-        className="ml-1 rounded px-2 py-1 text-xs text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
-        onClick={() => onUnderline("#f59e0b")}
-        title="Underline"
-      >
-        U
-      </button>
-      <button
-        className="rounded px-2 py-1 text-xs text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
-        onClick={onNote}
-        title={hasNote ? "Edit note" : "Add note"}
-      >
-        {hasNote ? "📝 Note" : "+ Note"}
-      </button>
-      <button
-        className="rounded px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40"
-        onClick={onRemove}
-        title="Remove"
-      >
-        Remove
-      </button>
-      <button
-        className="rounded px-2 py-1 text-xs text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
-        onClick={onClose}
-        title="Close"
-        aria-label="Close"
-      >
-        ✕
-      </button>
+      <span className="mx-1 h-5 w-px bg-line" aria-hidden="true" />
+      <IconButton icon={Underline} label="Change to underline" size="sm" onClick={() => onUnderline(UNDERLINE_COLOR)} />
+      <Button variant="ghost" size="sm" icon={StickyNote} onClick={onNote}>
+        {hasNote ? "Edit note" : "Add note"}
+      </Button>
+      <IconButton icon={Trash2} label="Remove highlight" size="sm" onClick={onRemove} className="text-danger hover:bg-danger-soft hover:text-danger" />
+      <IconButton icon={X} label="Close" size="sm" onClick={onClose} />
     </div>
   );
 }

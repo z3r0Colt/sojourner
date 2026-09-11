@@ -3,6 +3,8 @@ import { convertFileSrc } from "@tauri-apps/api/core";
 import * as pdfjsLib from "pdfjs-dist";
 // eslint-disable-next-line import/no-unresolved
 import workerSrc from "pdfjs-dist/build/pdf.worker.min.mjs?url";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "../../components/ui/Button";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc;
 
@@ -56,27 +58,20 @@ export function PdfReader({
 
   return (
     <div className="flex h-full flex-col">
-      <div className="min-h-0 flex-1 overflow-auto bg-gray-100 p-4 dark:bg-gray-950">
-        <canvas ref={canvasRef} className="mx-auto shadow" />
+      <div className="min-h-0 flex-1 overflow-auto bg-surface-2 p-4">
+        <canvas ref={canvasRef} className="mx-auto shadow-lg" />
       </div>
-      <div className="flex items-center justify-center gap-4 border-t border-gray-200 py-2 dark:border-gray-800">
-        <button
-          onClick={() => setPage((p) => Math.max(1, p - 1))}
-          disabled={page <= 1}
-          className="rounded border border-gray-300 px-3 py-1 text-sm hover:bg-gray-100 disabled:opacity-40 dark:border-gray-700 dark:hover:bg-gray-800"
-        >
-          ← Prev
-        </button>
-        <span className="text-sm text-gray-500">
+      <div className="flex items-center justify-center gap-3 border-t border-line bg-surface py-2">
+        <Button size="sm" icon={ChevronLeft} onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1}>
+          Previous
+        </Button>
+        <span className="text-sm text-ink-3">
           Page {page} of {numPages || "…"}
         </span>
-        <button
-          onClick={() => setPage((p) => Math.min(numPages, p + 1))}
-          disabled={page >= numPages}
-          className="rounded border border-gray-300 px-3 py-1 text-sm hover:bg-gray-100 disabled:opacity-40 dark:border-gray-700 dark:hover:bg-gray-800"
-        >
-          Next →
-        </button>
+        <Button size="sm" onClick={() => setPage((p) => Math.min(numPages, p + 1))} disabled={page >= numPages}>
+          Next
+          <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
+        </Button>
       </div>
     </div>
   );

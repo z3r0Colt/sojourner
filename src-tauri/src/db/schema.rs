@@ -505,6 +505,53 @@ ALTER TABLE thayers_entries RENAME COLUMN definition TO plain_text;
 ALTER TABLE thayers_entries ADD COLUMN html TEXT NOT NULL DEFAULT '';
 "#;
 
+// A confession/catechism proof-text marker already records the exact
+// (book_id, chapter, verse_start, verse_end) it cites -- see
+// westminster_proofs in CONTENT_MIGRATION_0001 -- but the only existing
+// index is section-first, for rendering a section's own proof list. This
+// adds the reverse direction: given a passage the user is reading, find
+// every Standards paragraph that cites it as a proof. No new table, since
+// the data already exists; just an index shaped for that lookup.
+pub const CONTENT_MIGRATION_0008: &str = r#"
+CREATE INDEX idx_westminster_proofs_passage ON westminster_proofs(book_id, chapter, verse_start, verse_end);
+"#;
+
+// Translation-transparency flag: most bundled translations are true public
+// domain, but a couple (NASB, NKJV) are modern copyrighted texts the app
+// bundles under the operator's own license rather than PD status. Default
+// 'public_domain' covers the common case; the importer backfills 'licensed'
+// for the known non-PD codes right after import (see
+// import::mod::backfill_license_status) so this never has to be
+// hand-maintained per translation file.
+pub const CONTENT_MIGRATION_0009: &str = r#"
+ALTER TABLE translations ADD COLUMN license_status TEXT NOT NULL DEFAULT 'public_domain';
+"#;
+
+// A curated topical index drawing on the Standards' own structure -- the 33
+// WCF chapter titles ("Of Justification," "Of the Sabbath," etc.) plus a
+// broader set of WSC-question-derived topics for doctrines the Confession's
+// chapter list alone doesn't surface at that grain (each Ten Commandments
+// entry, the specific offices of Christ, and so on) -- rather than a modern
+// topical-Bible taxonomy of uncertain provenance. `category` groups topics
+// for browsing along traditional systematic-theology lines (Scripture,
+// God, Christ, salvation applied, the law, the church, last things);
+// `sort_order` is insertion order within that grouping, not alphabetical.
+// `westminster_section_id` points at the specific paragraph/question the
+// topic is anchored to (a WCF chapter's first section, or one exact WSC
+// question) as the jump target. Seeded at import time once
+// westminster_sections exists (see import::reference::doctrine_topics),
+// not shipped as static data here, since it needs that table's real ids.
+pub const CONTENT_MIGRATION_0010: &str = r#"
+CREATE TABLE doctrine_topics (
+  id                      INTEGER PRIMARY KEY,
+  name                    TEXT NOT NULL,
+  category                TEXT NOT NULL,
+  sort_order              INTEGER NOT NULL,
+  westminster_section_id  INTEGER NOT NULL REFERENCES westminster_sections(id)
+);
+CREATE INDEX idx_doctrine_topics_category ON doctrine_topics(category, sort_order);
+"#;
+
 pub const CONTENT_MIGRATIONS: &[&str] = &[
     CONTENT_MIGRATION_0001,
     CONTENT_MIGRATION_0002,
@@ -513,6 +560,9 @@ pub const CONTENT_MIGRATIONS: &[&str] = &[
     CONTENT_MIGRATION_0005,
     CONTENT_MIGRATION_0006,
     CONTENT_MIGRATION_0007,
+    CONTENT_MIGRATION_0008,
+    CONTENT_MIGRATION_0009,
+    CONTENT_MIGRATION_0010,
 ];
 
 pub const USER_MIGRATION_0001: &str = r#"
@@ -943,6 +993,166 @@ CREATE TABLE sermon_note_word_studies (
 CREATE INDEX idx_sermon_note_word_studies_note ON sermon_note_word_studies(sermon_note_id);
 "#;
 
+pub const USER_MIGRATION_0008: &str = r#"
+-- A memorized verse can optionally be tied to the catechism question or
+-- confession paragraph it illustrates (Larger Catechism Q.157's "meditate
+-- upon the sense" of a memorized text applies as much to Scripture memory
+-- as to preaching), plus a short personal note on its doctrinal import --
+-- turning rote recall into meditation rather than mere repetition. Both
+-- nullable: most verses will carry neither.
+ALTER TABLE memory_verses ADD COLUMN westminster_section_id INTEGER;
+ALTER TABLE memory_verses ADD COLUMN doctrinal_note TEXT;
+
+-- Catechism Study mode: the same SM-2 spaced-repetition machinery as
+-- memory_verses, but keyed to a Westminster question/paragraph instead of a
+-- Bible passage. Kept as its own table (matching this schema's existing
+-- per-domain-table convention, e.g. sermon_notes vs. notes) rather than
+-- folding into memory_verses, since the two have almost no columns in
+-- common (no book/chapter/verse/translation here) and a shared "memory
+-- item" abstraction would force every verse-only query to filter a type
+-- discriminator for no benefit.
+CREATE TABLE catechism_memory (
+  id                      INTEGER PRIMARY KEY,
+  westminster_section_id  INTEGER NOT NULL,
+  mode                    TEXT NOT NULL DEFAULT 'type-it' CHECK(mode IN ('first-letter','blank-word','type-it')),
+  ease_factor             REAL NOT NULL DEFAULT 2.5,
+  interval_days           INTEGER NOT NULL DEFAULT 0,
+  repetitions             INTEGER NOT NULL DEFAULT 0,
+  due_at                  TEXT NOT NULL,
+  last_reviewed_at        TEXT,
+  created_at              TEXT NOT NULL,
+  UNIQUE(westminster_section_id, mode)
+);
+CREATE INDEX idx_catechism_memory_due ON catechism_memory(due_at);
+"#;
+
+// Structured sermon outlines: a sermon note can hold more than one draft
+// outline (a pastor revising a sermon across the week), each a tree of
+// points/sub-points (self-referencing parent_id; NULL = a main point) plus a
+// "use"/application under any point in the Puritan pattern (kind
+// distinguishes the two so a UI can render them differently without a
+// separate table). sort_order is scoped to siblings (same outline_id +
+// parent_id), not global, so reordering one branch never touches another's
+// numbering. sermon_notes.outline (the old plain-text field) is untouched --
+// existing sermon notes keep rendering exactly as before; this is an
+// additive, opt-in structure for new/revised outlines.
+pub const USER_MIGRATION_0009: &str = r#"
+CREATE TABLE sermon_outlines (
+  id              INTEGER PRIMARY KEY,
+  sermon_note_id  INTEGER NOT NULL REFERENCES sermon_notes(id) ON DELETE CASCADE,
+  title           TEXT,
+  proposition     TEXT,
+  is_active       INTEGER NOT NULL DEFAULT 1,
+  created_at      TEXT NOT NULL,
+  updated_at      TEXT NOT NULL
+);
+CREATE INDEX idx_sermon_outlines_note ON sermon_outlines(sermon_note_id);
+
+CREATE TABLE sermon_outline_points (
+  id            INTEGER PRIMARY KEY,
+  outline_id    INTEGER NOT NULL REFERENCES sermon_outlines(id) ON DELETE CASCADE,
+  parent_id     INTEGER REFERENCES sermon_outline_points(id) ON DELETE CASCADE,
+  sort_order    INTEGER NOT NULL,
+  kind          TEXT NOT NULL DEFAULT 'point' CHECK(kind IN ('point','use')),
+  body          TEXT NOT NULL,
+  doctrine_tag  TEXT,
+  created_at    TEXT NOT NULL
+);
+CREATE INDEX idx_sermon_outline_points_outline ON sermon_outline_points(outline_id, parent_id, sort_order);
+
+-- A point can cite a verse, a Strong's word study, or a Westminster
+-- Confession/Catechism paragraph -- the three exegetical/confessional helps
+-- named in the sermon-workspace request. Like sermon_note_confession_links
+-- and sermon_note_word_studies, these reference content.db rows by plain
+-- integer/text id with no FOREIGN KEY (files can't share one); only the
+-- verse columns are meaningful for link_type='verse', etc.
+CREATE TABLE sermon_outline_point_links (
+  id                      INTEGER PRIMARY KEY,
+  point_id                INTEGER NOT NULL REFERENCES sermon_outline_points(id) ON DELETE CASCADE,
+  link_type               TEXT NOT NULL CHECK(link_type IN ('verse','strongs','confession')),
+  book_id                 INTEGER,
+  chapter                 INTEGER,
+  verse_start             INTEGER,
+  verse_end               INTEGER,
+  strongs_id              TEXT,
+  westminster_section_id  INTEGER,
+  created_at              TEXT NOT NULL
+);
+CREATE INDEX idx_sermon_outline_point_links_point ON sermon_outline_point_links(point_id);
+
+-- Free-tag/doctrine-use tagging for the personal-note and prayer features,
+-- mirroring sermon_note_tags exactly (same UNIQUE-per-parent shape) so
+-- notes/chapter notes/prayer entries can be searched and filtered by
+-- doctrine or use (conviction/comfort/duty) the same way sermon notes
+-- already are.
+CREATE TABLE note_tags (
+  id       INTEGER PRIMARY KEY,
+  note_id  INTEGER NOT NULL REFERENCES notes(id) ON DELETE CASCADE,
+  tag      TEXT NOT NULL,
+  UNIQUE(note_id, tag)
+);
+CREATE INDEX idx_note_tags_tag ON note_tags(tag);
+CREATE INDEX idx_note_tags_note ON note_tags(note_id);
+
+CREATE TABLE chapter_note_tags (
+  id               INTEGER PRIMARY KEY,
+  chapter_note_id  INTEGER NOT NULL REFERENCES chapter_notes(id) ON DELETE CASCADE,
+  tag              TEXT NOT NULL,
+  UNIQUE(chapter_note_id, tag)
+);
+CREATE INDEX idx_chapter_note_tags_tag ON chapter_note_tags(tag);
+CREATE INDEX idx_chapter_note_tags_note ON chapter_note_tags(chapter_note_id);
+
+CREATE TABLE prayer_entry_tags (
+  id                INTEGER PRIMARY KEY,
+  prayer_entry_id   INTEGER NOT NULL REFERENCES prayer_entries(id) ON DELETE CASCADE,
+  tag               TEXT NOT NULL,
+  UNIQUE(prayer_entry_id, tag)
+);
+CREATE INDEX idx_prayer_entry_tags_tag ON prayer_entry_tags(tag);
+CREATE INDEX idx_prayer_entry_tags_entry ON prayer_entry_tags(prayer_entry_id);
+
+CREATE TABLE resource_tags (
+  id           INTEGER PRIMARY KEY,
+  resource_id  INTEGER NOT NULL REFERENCES resources(id) ON DELETE CASCADE,
+  tag          TEXT NOT NULL,
+  UNIQUE(resource_id, tag)
+);
+CREATE INDEX idx_resource_tags_tag ON resource_tags(tag);
+CREATE INDEX idx_resource_tags_resource ON resource_tags(resource_id);
+
+-- Answered-prayer detail: active=0 already marks a request archived (see
+-- USER_MIGRATION_0005), but that alone can't distinguish "God answered
+-- this" from any other reason a request left the active list. answered_at
+-- being non-null is that distinction; answer_note records how, for the
+-- encouragement-to-faith use the prayer journal feature is meant to serve.
+ALTER TABLE prayer_list_people ADD COLUMN answered_at TEXT;
+ALTER TABLE prayer_list_people ADD COLUMN answer_note TEXT;
+"#;
+
+// Sermon Notes and the Sermon Workspace's outline builder were removed --
+// too complicated a tool for what this app is for. This drops every table
+// the feature ever created (sermon_notes from USER_MIGRATION_0002,
+// sermon_note_tags/confession_links/word_studies from USER_MIGRATION_0007,
+// sermon_outlines/points/point_links from USER_MIGRATION_0009), children
+// before parents so FOREIGN KEY constraints (enforced on this connection,
+// see db/mod.rs's `PRAGMA foreign_keys = ON`) don't reject the drop order.
+// DROP TABLE also removes any triggers defined on that table automatically
+// (sermon_notes_ai/au/ad among them), so those don't need a separate
+// DROP TRIGGER; the sermon_notes_fts virtual table is a distinct object
+// and does need its own explicit drop.
+pub const USER_MIGRATION_0010: &str = r#"
+DROP TABLE sermon_note_word_studies;
+DROP TABLE sermon_note_confession_links;
+DROP TABLE sermon_note_tags;
+DROP TABLE sermon_note_passage_links;
+DROP TABLE sermon_outline_point_links;
+DROP TABLE sermon_outline_points;
+DROP TABLE sermon_outlines;
+DROP TABLE sermon_notes_fts;
+DROP TABLE sermon_notes;
+"#;
+
 pub const USER_MIGRATIONS: &[&str] = &[
     USER_MIGRATION_0001,
     USER_MIGRATION_0002,
@@ -951,4 +1161,7 @@ pub const USER_MIGRATIONS: &[&str] = &[
     USER_MIGRATION_0005,
     USER_MIGRATION_0006,
     USER_MIGRATION_0007,
+    USER_MIGRATION_0008,
+    USER_MIGRATION_0009,
+    USER_MIGRATION_0010,
 ];

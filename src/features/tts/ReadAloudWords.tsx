@@ -4,7 +4,7 @@ import { tokenizeWords } from "./textUtils";
 
 /**
  * Renders `text` as plain content, UNLESS this exact segment is the one
- * currently being read aloud (`active`), in which case it renders the text
+ * currently being read aloud ( `active`), in which case it renders the text
  * as word spans with the currently-spoken word highlighted. Fully
  * React-controlled (no imperative DOM surgery), so it's safe to drop into
  * any existing rendering path without fighting React's reconciliation.

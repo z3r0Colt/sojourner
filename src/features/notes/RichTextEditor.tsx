@@ -3,38 +3,12 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
+import { Bold, Italic, Link2, Link2Off, List, ListOrdered } from "lucide-react";
 import { useBooks, useResources } from "../../api/queries";
 import { buildBookLookup, parseReference } from "../../hooks/useReferenceParser";
 import { verseHref, resourceHref } from "../../lib/noteLinks";
-
-function ToolbarButton({
-  active,
-  onClick,
-  title,
-  children,
-}: {
-  active?: boolean;
-  onClick: () => void;
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      title={title}
-      aria-label={title}
-      onMouseDown={(e) => e.preventDefault()}
-      onClick={onClick}
-      className={`rounded px-2 py-1 text-xs font-medium ${
-        active
-          ? "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
-          : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
-      }`}
-    >
-      {children}
-    </button>
-  );
-}
+import { IconButton, Button } from "../../components/ui/Button";
+import { cx, inputSmClass, selectSmClass } from "../../components/ui/classes";
 
 export function RichTextEditor({
   content,
@@ -93,65 +67,55 @@ export function RichTextEditor({
     setLinkResourceId("");
   }
 
+  // Toolbar buttons keep the editor's selection by swallowing mousedown.
+  const stop = { onMouseDown: (e: React.MouseEvent) => e.preventDefault() };
+
   return (
-    <div className="rounded border border-gray-300 dark:border-gray-700">
-      <div className="flex flex-wrap items-center gap-0.5 border-b border-gray-200 p-1 dark:border-gray-800">
-        <ToolbarButton title="Bold (Ctrl+B)" active={editor.isActive("bold")} onClick={() => editor.chain().focus().toggleBold().run()}>
-          <span className="font-bold">B</span>
-        </ToolbarButton>
-        <ToolbarButton title="Italic (Ctrl+I)" active={editor.isActive("italic")} onClick={() => editor.chain().focus().toggleItalic().run()}>
-          <span className="italic">I</span>
-        </ToolbarButton>
-        <ToolbarButton title="Bullet list" active={editor.isActive("bulletList")} onClick={() => editor.chain().focus().toggleBulletList().run()}>
-          •≡
-        </ToolbarButton>
-        <ToolbarButton title="Numbered list" active={editor.isActive("orderedList")} onClick={() => editor.chain().focus().toggleOrderedList().run()}>
-          1≡
-        </ToolbarButton>
+    <div className="rounded-md border border-line-2 bg-surface focus-within:border-accent">
+      <div className="flex flex-wrap items-center gap-0.5 border-b border-line p-1">
+        <IconButton icon={Bold} label="Bold (Ctrl+B)" size="sm" active={editor.isActive("bold")} onClick={() => editor.chain().focus().toggleBold().run()} {...stop} />
+        <IconButton icon={Italic} label="Italic (Ctrl+I)" size="sm" active={editor.isActive("italic")} onClick={() => editor.chain().focus().toggleItalic().run()} {...stop} />
+        <IconButton icon={List} label="Bullet list" size="sm" active={editor.isActive("bulletList")} onClick={() => editor.chain().focus().toggleBulletList().run()} {...stop} />
+        <IconButton icon={ListOrdered} label="Numbered list" size="sm" active={editor.isActive("orderedList")} onClick={() => editor.chain().focus().toggleOrderedList().run()} {...stop} />
         <div className="relative">
-          <ToolbarButton title="Insert link" active={editor.isActive("link")} onClick={() => setLinkPopoverOpen((v) => !v)}>
-            🔗
-          </ToolbarButton>
+          <IconButton icon={Link2} label="Insert link" size="sm" active={editor.isActive("link") || linkPopoverOpen} onClick={() => setLinkPopoverOpen((v) => !v)} {...stop} />
           {linkPopoverOpen && (
-            <div className="absolute left-0 top-full z-30 mt-1 w-64 rounded border border-gray-200 bg-white p-2 shadow-lg dark:border-gray-700 dark:bg-gray-900">
+            <div className="absolute left-0 top-full z-30 mt-1 w-72 rounded-lg border border-line bg-surface p-2 shadow-xl">
               <input
                 autoFocus
                 value={linkInput}
                 onChange={(e) => setLinkInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && applyLink()}
-                placeholder="Verse (John 3:16) or web URL"
-                className="mb-1 w-full rounded border border-gray-300 px-2 py-1 text-xs outline-none focus:border-blue-500 dark:border-gray-700 dark:bg-gray-950"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") applyLink();
+                  if (e.key === "Escape") setLinkPopoverOpen(false);
+                }}
+                placeholder="A verse (John 3:16) or a web address"
+                className={cx(inputSmClass, "mb-1 w-full")}
               />
-              <select
-                value={linkResourceId}
-                onChange={(e) => setLinkResourceId(e.target.value)}
-                className="mb-2 w-full rounded border border-gray-300 bg-white px-2 py-1 text-xs dark:border-gray-700 dark:bg-gray-900"
-              >
-                <option value="">— or link to a resource —</option>
+              <select value={linkResourceId} onChange={(e) => setLinkResourceId(e.target.value)} className={cx(selectSmClass, "mb-2 w-full")}>
+                <option value="">…or link to a resource</option>
                 {resources?.map((r) => (
                   <option key={r.id} value={r.id}>
                     {r.title}
                   </option>
                 ))}
               </select>
-              <div className="flex justify-end gap-2 text-xs">
-                <button onClick={() => setLinkPopoverOpen(false)} className="text-gray-500 hover:underline">
+              <div className="flex justify-end gap-1">
+                <Button size="sm" variant="ghost" onClick={() => setLinkPopoverOpen(false)}>
                   Cancel
-                </button>
-                <button onClick={applyLink} className="text-blue-600 hover:underline dark:text-blue-400">
+                </Button>
+                <Button size="sm" variant="primary" onClick={applyLink}>
                   Add link
-                </button>
+                </Button>
               </div>
             </div>
           )}
         </div>
         {editor.isActive("link") && (
-          <ToolbarButton title="Remove link" onClick={() => editor.chain().focus().unsetLink().run()}>
-            ✕🔗
-          </ToolbarButton>
+          <IconButton icon={Link2Off} label="Remove link" size="sm" onClick={() => editor.chain().focus().unsetLink().run()} {...stop} />
         )}
       </div>
-      <EditorContent editor={editor} className="note-richtext px-2 py-1.5 text-sm" />
+      <EditorContent editor={editor} className="note-richtext px-3 py-2 text-sm text-ink" />
     </div>
   );
 }

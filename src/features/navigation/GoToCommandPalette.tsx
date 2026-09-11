@@ -1,16 +1,30 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { BookA, BookOpen, History, Languages, ScrollText, type LucideIcon } from "lucide-react";
 import type { Book } from "../../api/types";
-import type { Position } from "../../state/navigationStore";
+import { useNavigationStore, type Position } from "../../state/navigationStore";
 import { buildBookLookup, parseReference } from "../../hooks/useReferenceParser";
 import { useBookAliases, useTranslationCoverage, useDictionaryIndex, useWestminsterDocuments } from "../../api/queries";
+import { Modal } from "../../components/ui/Modal";
+import { Kbd } from "../../components/ui/Page";
+import { cx, inputClass } from "../../components/ui/classes";
 
 const STRONGS_RE = /^[GgHh]\d{1,5}$/;
+
+interface Candidate {
+  key: string;
+  icon: LucideIcon;
+  label: string;
+  hint?: string;
+  disabled?: boolean;
+  run: () => void;
+}
 
 /** Beyond a Bible reference, "Go to" also resolves a Strong's number
  * (G26, h430) straight to the Lexicon, and otherwise offers dictionary
  * terms and Westminster Standards documents whose title contains the typed
- * text -- so one shortcut reaches anywhere a study session tends to jump. */
+ * text -- so one shortcut reaches anywhere a study session tends to jump.
+ * With nothing typed it lists recently read passages. */
 export function GoToCommandPalette({
   books,
   translationId,
@@ -25,10 +39,12 @@ export function GoToCommandPalette({
   onNavigate: (p: Position) => void;
 }) {
   const [query, setQuery] = useState("");
+  const [selected, setSelected] = useState(0);
   const { data: aliases } = useBookAliases();
   const { data: coverage } = useTranslationCoverage(translationId ?? null);
   const { data: dictionaryIndex } = useDictionaryIndex();
   const { data: westminsterDocs } = useWestminsterDocuments();
+  const history = useNavigationStore((s) => s.history);
   const navigate = useNavigate();
   const lookup = useMemo(() => buildBookLookup(books, aliases ?? []), [books, aliases]);
   const trimmed = query.trim();
@@ -38,103 +54,149 @@ export function GoToCommandPalette({
   const coveredChapters = parsed && coverage ? coverage.find((c) => c.book_id === parsed.book.id)?.chapters : undefined;
   // Only warn once coverage data has actually loaded for this translation --
   // otherwise every reference would flash "not covered" for a frame.
-  const notCovered = parsed && coverage && (!coveredChapters || !coveredChapters.includes(parsed.chapter));
+  const notCovered = !!(parsed && coverage && (!coveredChapters || !coveredChapters.includes(parsed.chapter)));
 
-  const dictionaryMatches = useMemo(() => {
-    if (parsed || isStrongs || trimmed.length < 2) return [];
+  function bookName(id: number) {
+    return books.find((b) => b.id === id)?.name ?? `#${id}`;
+  }
+
+  const candidates = useMemo<Candidate[]>(() => {
+    if (trimmed === "") {
+      const seen = new Set<string>();
+      const recent: Candidate[] = [];
+      for (let i = history.length - 1; i >= 0 && recent.length < 6; i--) {
+        const p = history[i];
+        const key = `${p.bookId}:${p.chapter}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        recent.push({
+          key: `recent-${key}`,
+          icon: History,
+          label: `${bookName(p.bookId)} ${p.chapter}`,
+          hint: "Recently read",
+          run: () => onNavigate({ bookId: p.bookId, chapter: p.chapter }),
+        });
+      }
+      return recent;
+    }
+    if (parsed) {
+      return [
+        {
+          key: "ref",
+          icon: BookOpen,
+          label: `${parsed.book.name} ${parsed.chapter}${parsed.verse ? `:${parsed.verse}` : ""}`,
+          hint: notCovered ? `Not in ${translationLabel ?? "the selected translation"}` : "Open passage",
+          disabled: notCovered,
+          run: () => onNavigate({ bookId: parsed.book.id, chapter: parsed.chapter, verse: parsed.verse }),
+        },
+      ];
+    }
+    if (isStrongs) {
+      const id = trimmed.toUpperCase();
+      return [
+        {
+          key: "strongs",
+          icon: Languages,
+          label: `Strong's ${id}`,
+          hint: "Open in the Lexicon",
+          run: () => {
+            navigate(`/lexicon/${id}`);
+            onClose();
+          },
+        },
+      ];
+    }
+    if (trimmed.length < 2) return [];
     const q = trimmed.toLowerCase();
-    return (dictionaryIndex ?? []).filter((d) => d.term.toLowerCase().includes(q)).slice(0, 5);
-  }, [dictionaryIndex, trimmed, parsed, isStrongs]);
+    const dict = (dictionaryIndex ?? [])
+      .filter((d) => d.term.toLowerCase().includes(q))
+      .slice(0, 5)
+      .map<Candidate>((d) => ({
+        key: `dict-${d.slug}`,
+        icon: BookA,
+        label: d.term,
+        hint: "Dictionary",
+        run: () => {
+          navigate(`/dictionary/${d.slug}`);
+          onClose();
+        },
+      }));
+    const docs = (westminsterDocs ?? [])
+      .filter((d) => d.title.toLowerCase().includes(q) || d.code.toLowerCase() === q)
+      .slice(0, 5)
+      .map<Candidate>((d) => ({
+        key: `wm-${d.code}`,
+        icon: ScrollText,
+        label: d.title,
+        hint: "Confessions",
+        run: () => {
+          navigate(`/westminster/${d.code}`);
+          onClose();
+        },
+      }));
+    return [...dict, ...docs];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trimmed, parsed, isStrongs, notCovered, dictionaryIndex, westminsterDocs, history, translationLabel]);
 
-  const westminsterMatches = useMemo(() => {
-    if (parsed || isStrongs || trimmed.length < 2) return [];
-    const q = trimmed.toLowerCase();
-    return (westminsterDocs ?? []).filter((d) => d.title.toLowerCase().includes(q) || d.code.toLowerCase() === q).slice(0, 5);
-  }, [westminsterDocs, trimmed, parsed, isStrongs]);
+  useEffect(() => setSelected(0), [trimmed]);
 
-  function submit() {
-    if (parsed && !notCovered) {
-      onNavigate({ bookId: parsed.book.id, chapter: parsed.chapter, verse: parsed.verse });
-    } else if (isStrongs) {
-      navigate(`/lexicon/${trimmed.toUpperCase()}`);
-      onClose();
+  function onKeyDown(e: React.KeyboardEvent) {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setSelected((i) => Math.min(candidates.length - 1, i + 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setSelected((i) => Math.max(0, i - 1));
+    } else if (e.key === "Enter") {
+      const c = candidates[selected];
+      if (c && !c.disabled) c.run();
     }
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/30 pt-24" onClick={onClose}>
-      <div
-        className="w-full max-w-lg rounded-lg bg-white p-3 shadow-xl dark:bg-gray-900"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <input
-          autoFocus
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") submit();
-            if (e.key === "Escape") onClose();
-          }}
-          placeholder="Go to... e.g. John 3:16, G26, mercy, WCF"
-          className="w-full rounded border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 dark:border-gray-700 dark:bg-gray-950"
-        />
-        <div className="mt-2 text-sm text-gray-500">
-          {trimmed === "" ? (
-            "Type a Bible reference, a Strong's number, a dictionary term, or a Westminster document."
-          ) : parsed ? (
-            notCovered ? (
-              <span className="text-amber-600 dark:text-amber-400">
-                {parsed.book.name} {parsed.chapter} isn't in{" "}
-                {translationLabel ?? "the selected translation"}.
-              </span>
-            ) : (
-              <button
-                className="rounded bg-blue-50 px-2 py-1 text-blue-700 hover:bg-blue-100 dark:bg-blue-950 dark:text-blue-300"
-                onClick={submit}
-              >
-                Go to {parsed.book.name} {parsed.chapter}
-                {parsed.verse ? `:${parsed.verse}` : ""}
-              </button>
-            )
-          ) : isStrongs ? (
-            <button
-              className="rounded bg-blue-50 px-2 py-1 text-blue-700 hover:bg-blue-100 dark:bg-blue-950 dark:text-blue-300"
-              onClick={submit}
-            >
-              Go to Strong's {trimmed.toUpperCase()}
-            </button>
-          ) : dictionaryMatches.length > 0 || westminsterMatches.length > 0 ? (
-            <div className="space-y-1">
-              {dictionaryMatches.map((d) => (
+    <Modal onClose={onClose} align="top" size="md" bodyClassName="p-3">
+      <input
+        autoFocus
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        onKeyDown={onKeyDown}
+        placeholder="John 3:16, Rom 8, G26, mercy, WCF…"
+        aria-label="Go to"
+        className={cx(inputClass, "w-full py-2 text-base")}
+      />
+      <div className="mt-2">
+        {trimmed === "" && candidates.length === 0 && (
+          <p className="px-2 py-1 text-sm text-ink-3">Type a Bible reference, a Strong's number, a dictionary term, or a confession name.</p>
+        )}
+        {trimmed !== "" && candidates.length === 0 && <p className="px-2 py-1 text-sm text-ink-3">Nothing matches that yet.</p>}
+        <ul role="listbox" className="space-y-0.5">
+          {candidates.map((c, i) => {
+            const Icon = c.icon;
+            return (
+              <li key={c.key} role="option" aria-selected={i === selected}>
                 <button
-                  key={d.slug}
-                  onClick={() => {
-                    navigate(`/dictionary/${d.slug}`);
-                    onClose();
-                  }}
-                  className="block w-full rounded px-2 py-1 text-left hover:bg-gray-100 dark:hover:bg-gray-800"
+                  type="button"
+                  disabled={c.disabled}
+                  onMouseEnter={() => setSelected(i)}
+                  onClick={c.run}
+                  className={cx(
+                    "flex w-full items-center gap-3 rounded-md px-2 py-2 text-left text-sm",
+                    i === selected ? "bg-accent-soft text-accent" : "text-ink-2 hover:bg-hover",
+                    c.disabled && "opacity-60",
+                  )}
                 >
-                  📖 {d.term}
+                  <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  <span className="min-w-0 flex-1 truncate font-medium">{c.label}</span>
+                  {c.hint && <span className={cx("text-xs", c.disabled ? "text-amber-700 dark:text-amber-400" : "text-ink-3")}>{c.hint}</span>}
                 </button>
-              ))}
-              {westminsterMatches.map((d) => (
-                <button
-                  key={d.code}
-                  onClick={() => {
-                    navigate(`/westminster/${d.code}`);
-                    onClose();
-                  }}
-                  className="block w-full rounded px-2 py-1 text-left hover:bg-gray-100 dark:hover:bg-gray-800"
-                >
-                  📜 {d.title}
-                </button>
-              ))}
-            </div>
-          ) : (
-            <span className="text-red-500">No match</span>
-          )}
-        </div>
+              </li>
+            );
+          })}
+        </ul>
       </div>
-    </div>
+      <div className="mt-2 flex items-center gap-2 border-t border-line px-1 pt-2 text-xs text-ink-3">
+        <Kbd>↑↓</Kbd> choose <Kbd>Enter</Kbd> open <Kbd>Esc</Kbd> close
+      </div>
+    </Modal>
   );
 }

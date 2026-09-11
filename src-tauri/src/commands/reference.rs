@@ -42,6 +42,12 @@ pub fn get_dictionary_entry(db: State<DbState>, slug: String) -> AppResult<Optio
 }
 
 #[tauri::command]
+pub fn find_dictionary_entry_by_term(db: State<DbState>, term: String) -> AppResult<Option<DictionaryEntrySummary>> {
+    let conn = db.0.lock().unwrap();
+    Ok(queries::find_dictionary_entry_by_term(&conn, &term)?)
+}
+
+#[tauri::command]
 pub fn search_dictionary(db: State<DbState>, query: String, limit: i64) -> AppResult<Vec<DictionaryEntrySummary>> {
     let conn = db.0.lock().unwrap();
     Ok(queries::search_dictionary(&conn, &query, limit)?)

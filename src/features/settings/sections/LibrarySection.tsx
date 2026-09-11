@@ -1,9 +1,14 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { open, confirm } from "@tauri-apps/plugin-dialog";
+import { open } from "@tauri-apps/plugin-dialog";
+import { FilePlus, RefreshCw, Trash2 } from "lucide-react";
 import { api } from "../../../api/client";
 import { useTranslations, useCommentarySources } from "../../../api/queries";
 import type { ImportReportItem } from "../../../api/types";
+import { Button } from "../../../components/ui/Button";
+import { confirmDelete } from "../../../components/ui/confirm";
+import { toast } from "../../../components/ui/toast";
+import { cx } from "../../../components/ui/classes";
 
 export function LibrarySection() {
   const { data: translations } = useTranslations();
@@ -28,6 +33,8 @@ export function LibrarySection() {
       const result = await api.addFile(selected);
       setReport([result]);
       refreshLibrary();
+    } catch (e) {
+      toast.error(`Import failed: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
       setBusy(false);
     }
@@ -39,80 +46,97 @@ export function LibrarySection() {
       const result = await api.scanLibrary();
       setReport(result);
       refreshLibrary();
+    } catch (e) {
+      toast.error(`Rescan failed: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
       setBusy(false);
     }
   }
 
+  const rowClass = "flex items-center justify-between gap-3 rounded-lg border border-line bg-surface px-3 py-2 text-sm";
+
   return (
     <div>
-      <h1 className="mb-1 text-xl font-semibold">Library</h1>
-      <p className="mb-4 text-sm text-gray-500">
-        Add more Bible translations or commentaries by dropping XML files in, or picking a file directly.
-        Supported formats are auto-detected (currently Zefania XML for Bibles and ThML for commentaries).
+      <h2 className="mb-1 text-lg font-semibold text-ink">Library</h2>
+      <p className="mb-4 text-sm text-ink-3">
+        Add Bible translations or commentaries from XML files. Formats are detected automatically (Zefania XML for Bibles, ThML for commentaries).
       </p>
-      <div className="mb-4 flex gap-2">
-        <button
-          disabled={busy}
-          onClick={handleAddFile}
-          className="rounded bg-blue-600 px-3 py-1.5 text-sm text-white hover:bg-blue-700 disabled:opacity-50"
-        >
-          Add File…
-        </button>
-        <button
-          disabled={busy}
-          onClick={handleRescan}
-          className="rounded border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
-        >
-          Rescan Import Folders
-        </button>
+      <div className="mb-5 flex gap-2">
+        <Button variant="primary" icon={FilePlus} disabled={busy} onClick={handleAddFile}>
+          Add file
+        </Button>
+        <Button icon={RefreshCw} disabled={busy} onClick={handleRescan} title="Re-read the import folders for new files">
+          Rescan import folders
+        </Button>
       </div>
 
       {report && (
-        <ul className="mb-4 space-y-1 rounded border border-gray-200 p-2 text-xs dark:border-gray-800">
+        <ul className="mb-5 space-y-1 rounded-lg border border-line bg-surface-2 p-3 text-xs">
           {report.map((r, i) => (
-            <li key={i} className={r.status === "Failed" ? "text-red-500" : "text-gray-600 dark:text-gray-300"}>
-              <span className="font-mono">{r.status}</span> — {r.file.split(/[\\/]/).pop()}
-              {r.detail ? ` — ${r.detail}` : ""}
+            <li key={i} className={r.status === "Failed" ? "text-danger" : "text-ink-2"}>
+              <span className="font-mono">{r.status}</span> · {r.file.split(/[\\/]/).pop()}
+              {r.detail ? ` · ${r.detail}` : ""}
             </li>
           ))}
         </ul>
       )}
 
-      <h2 className="mb-2 text-sm font-semibold text-gray-500">Translations</h2>
-      <ul className="mb-4 space-y-1">
+      <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-3">Translations</h3>
+      <ul className="mb-6 space-y-1.5">
         {translations?.map((t) => (
-          <li key={t.id} className="flex items-center justify-between rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-800">
-            <span>
-              {t.name} <span className="text-gray-400">({t.verse_count} verses)</span>
+          <li key={t.id} className={rowClass}>
+            <span className="min-w-0 truncate text-ink">
+              {t.name} <span className="text-ink-3">· {t.verse_count.toLocaleString()} verses</span>
+              {t.license_status === "licensed" && (
+                <span
+                  title="A modern copyrighted translation bundled under a license, not public domain. Verify your own rights to distribute it."
+                  className={cx("ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-950/50 dark:text-amber-300")}
+                >
+                  Licensed
+                </span>
+              )}
             </span>
-            <button
+            <Button
+              size="sm"
+              variant="danger-ghost"
+              icon={Trash2}
               onClick={async () => {
-                if (await confirm(`Remove ${t.name}?`)) api.removeTranslation(t.id).then(refreshLibrary);
+                if (await confirmDelete(t.name, "Highlights made in this translation keep their verse references but lose their exact character spans.")) {
+                  api.removeTranslation(t.id).then(() => {
+                    refreshLibrary();
+                    toast.info(`Removed ${t.name}`);
+                  });
+                }
               }}
-              className="text-red-500 hover:underline"
             >
               Remove
-            </button>
+            </Button>
           </li>
         ))}
       </ul>
 
-      <h2 className="mb-2 text-sm font-semibold text-gray-500">Commentaries</h2>
-      <ul className="space-y-1">
+      <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-3">Commentaries</h3>
+      <ul className="space-y-1.5">
         {sources?.map((s) => (
-          <li key={s.id} className="flex items-center justify-between rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-800">
-            <span>
-              {s.title} <span className="text-gray-400">({s.covered_book_ids.length} books)</span>
+          <li key={s.id} className={rowClass}>
+            <span className="min-w-0 truncate text-ink">
+              {s.title} <span className="text-ink-3">· {s.covered_book_ids.length} books</span>
             </span>
-            <button
+            <Button
+              size="sm"
+              variant="danger-ghost"
+              icon={Trash2}
               onClick={async () => {
-                if (await confirm(`Remove ${s.title}?`)) api.removeCommentarySource(s.id).then(refreshLibrary);
+                if (await confirmDelete(s.title)) {
+                  api.removeCommentarySource(s.id).then(() => {
+                    refreshLibrary();
+                    toast.info(`Removed ${s.title}`);
+                  });
+                }
               }}
-              className="text-red-500 hover:underline"
             >
               Remove
-            </button>
+            </Button>
           </li>
         ))}
       </ul>

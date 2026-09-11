@@ -1,114 +1,130 @@
+import { ChevronDown } from "lucide-react";
+import { Kbd } from "../../../components/ui/Page";
+
 interface Category {
   title: string;
-  items: { q: string; a: string }[];
+  items: { q: string; a: React.ReactNode }[];
 }
 
 const CATEGORIES: Category[] = [
   {
-    title: "Reading & Navigation",
+    title: "Reading & navigation",
     items: [
-      { q: "Jump to a passage", a: 'Press Ctrl+K (⌘K) anywhere, or click "Go to…" in the header, and type a reference like "John 3:16" or "Rom 8".' },
-      { q: "Move a chapter at a time", a: "Use the chapter dropdowns in the header, or the ← / → arrows next to them." },
-      { q: "Go back to where you were", a: "Alt+Left / Alt+Right (or the ← → history buttons in the header) step through your recent reading history, like a browser." },
-      { q: "Change translation", a: "Pick from the translation dropdown in the header. Open \"Parallel\" to show one or more additional translations side by side with the primary one." },
-      { q: "Paragraph mode", a: "Settings → Preferences → \"Paragraph mode\" flows the chapter as continuous prose instead of one verse per line." },
-      { q: "Distraction-free mode", a: "Hides all chrome (header, panels) down to just the text. Toggle it from the reading view's view menu." },
-      { q: "Print a chapter", a: "The Print button in the reading view prints only the chapter text -- no navigation or side panels." },
+      {
+        q: "Jump to a passage",
+        a: (
+          <>
+            Press <Kbd>Ctrl</Kbd>+<Kbd>K</Kbd> anywhere, or click “Go to” at the top, and type a reference like “John 3:16” or “Rom 8”. With nothing typed it lists the passages you read most recently.
+          </>
+        ),
+      },
+      {
+        q: "Move a chapter at a time",
+        a: (
+          <>
+            Use the book and chapter pickers in the reading toolbar, the arrows beside them, or <Kbd>Ctrl</Kbd>+<Kbd>[</Kbd> and <Kbd>Ctrl</Kbd>+<Kbd>]</Kbd>.
+          </>
+        ),
+      },
+      {
+        q: "Go back to where you were",
+        a: (
+          <>
+            <Kbd>Alt</Kbd>+<Kbd>←</Kbd> and <Kbd>Alt</Kbd>+<Kbd>→</Kbd>, or the arrows at the top left, step through your reading history like a browser.
+          </>
+        ),
+      },
+      { q: "Change translation", a: "Pick from the translation dropdown in the reading toolbar. “Parallel” shows the chapter side by side in several translations at once; “Interlinear” shows the Hebrew or Greek beneath the English." },
+      { q: "Text size, spacing, font, and theme", a: "The Aa button in the reading toolbar. These settings apply to commentary, confessions, and dictionary text too, and can also be changed under Settings → Reading." },
+      { q: "Paragraph mode, verse numbers, red letters", a: "The sliders button in the reading toolbar holds the view options, including printing the chapter." },
+      { q: "Focus mode", a: <>Press <Kbd>F11</Kbd> or click the expand button in the reading toolbar to hide everything but the text. <Kbd>Esc</Kbd> brings it back.</> },
+      { q: "Bookmarks", a: <>The bookmark button in the reading toolbar (or <Kbd>Ctrl</Kbd>+<Kbd>D</Kbd>) marks the chapter or selected verse and lists every bookmark for jumping back.</> },
     ],
   },
   {
     title: "Search",
     items: [
-      { q: "Search everything", a: "Ctrl+F (⌘F) or the Search button opens a combined search across Scripture, commentary, your notes, resources, and the Westminster Standards, each in its own tab." },
-      { q: "Search syntax", a: 'Plain words are AND-ed together. Use "quoted phrases" for exact phrases, word1 OR word2 for either, and -word or NOT word to exclude a term.' },
-      { q: "Narrow a Scripture search", a: "While on the Scripture tab, restrict to a testament or a single book with the dropdowns next to the tab." },
-      { q: "Save a search", a: "Click the ☆ Save button next to the search box to pin a query so it's always one click away." },
+      { q: "Search everything", a: <><Kbd>Ctrl</Kbd>+<Kbd>F</Kbd> or the Search button opens one search across Scripture, commentary, your notes and prayers, your resources, and the confessions, each in its own tab. Use the arrow keys and Enter to open a result.</> },
+      { q: "Search syntax", a: "Plain words are all required. Use “quoted phrases” for exact phrases, word1 OR word2 for either, and -word to exclude a term." },
+      { q: "Narrow a Scripture search", a: "On the Scripture tab, limit results to a testament or a single book with the dropdowns under the tabs." },
+      { q: "Save a search", a: "Click Save next to the search box to pin a query so it's always one click away." },
     ],
   },
   {
-    title: "Interlinear & Word Study",
+    title: "Study panel",
     items: [
-      { q: "Turn on interlinear", a: "Click \"Interlinear\" in the header to show the original Hebrew or Greek beneath each verse, aligned word-for-word." },
-      { q: "Look up a Strong's number", a: "Click any underlined word (in interlinear view, or a Strong's-tagged word in the regular text) to open its lexicon entry in a popup." },
-      { q: "Full lexicon entry & concordance", a: 'Click "View full entry →" in the popup, or visit Lexicon in Settings-adjacent navigation, to see every other verse using that same original word.' },
-      { q: "Thayer's definitions", a: "When available for a Greek word, Thayer's fuller definition appears beneath the Strong's gloss in both the popup and the full lexicon entry." },
-      { q: "Dictionary", a: "The Dictionary section has encyclopedia-style entries for people, places, and topics -- searchable and cross-linked from commentary text." },
+      { q: "Open it", a: <>Click one of the icons on the right edge of the reading view, or press <Kbd>Ctrl</Kbd>+<Kbd>B</Kbd>. It has tabs for Commentary, Cross references, Confessions, and (in the Psalms) the Metrical Psalter.</> },
+      { q: "Follow a verse", a: "Click any verse in the text to select it. Cross references and confession proofs follow the selected verse, and the commentary entry that covers it is highlighted." },
+      { q: "Move, resize, or collapse it", a: "Drag its inner edge to resize, use the arrow button to dock it on the other side, or collapse it back to the icon strip." },
+      { q: "Switch commentary source", a: "Use the dropdown at the top of the Commentary tab to pick from every commentary you've installed. The book icon beside it opens that commentary as a book to page through on its own." },
     ],
   },
   {
-    title: "Highlights, Notes & Commentary",
+    title: "Highlights & notes",
     items: [
-      { q: "Highlight text", a: "Select any verse text; a small toolbar appears letting you pick a highlight color or underline style." },
-      { q: "Add a note", a: "From the same selection toolbar, choose the note icon to attach a note to that verse range. Chapter-level notes (not tied to a specific verse) are available from the chapter menu." },
-      { q: "Open the study panel", a: 'Click "Study" (or the ‹ tab on the right edge) to open the side panel with Commentary and Cross References tabs.' },
-      { q: "Move, resize, or collapse the study panel", a: "Drag its left edge to resize, click the ⇤/⇥ button to dock it to the other side of the screen, or click ‹/› to collapse it to a thin rail." },
-      { q: "Switch commentary source", a: "Use the dropdown at the top of the Commentary tab to pick from every commentary you've installed (Matthew Henry, JFB, Spurgeon's Treasury of David, etc.)." },
-      { q: "Read a commentary straight through", a: '"Read as book" in the Commentary tab opens that source as its own book you can page through independent of your current chapter.' },
-      { q: "Red-letter mode", a: "Settings → Preferences → \"Red-letter\" highlights only Jesus's own quoted words in red, not the surrounding verse." },
+      { q: "Highlight text", a: "Select any text and a small toolbar appears with highlight colors, underline, note, and copy. A selection across several verses highlights those verses whole." },
+      { q: "Act on a whole verse", a: "Right-click a verse, or click its verse number, for a menu: highlight, underline, add a note, copy with the reference, compare translations, add it to Scripture memory, or bookmark it." },
+      { q: "Add a note", a: "From the selection toolbar or the verse menu. Notes attached to a highlight show a small note icon next to the highlighted text. Chapter-wide notes live behind the note icon in the reading toolbar." },
+      { q: "Find your notes later", a: "The Notes page lists every note with the verse it was written on, sorted by Bible order or date, searchable and filterable by tag." },
+      { q: "Words of Jesus in red", a: "Turn it on from the view options in the reading toolbar or under Settings → Reading. Only his quoted words turn red, not the surrounding verse." },
+    ],
+  },
+  {
+    title: "Interlinear & word study",
+    items: [
+      { q: "Turn on interlinear", a: "Click “Interlinear” in the reading toolbar to show the original Hebrew or Greek beneath each phrase, aligned word by word." },
+      { q: "Look up a Strong's number", a: "Click any tagged word in interlinear view to see its lexicon entry in a popup. “View full entry” opens the Lexicon page with a concordance of every verse using that word." },
+      { q: "Lexicon page", a: "Search by English meaning, transliteration, or Strong's number (H1, G25). Thayer's fuller Greek definitions appear when available." },
+      { q: "Dictionary", a: "Encyclopedia-style entries for people, places, and topics, browsable by letter and searchable. Scripture references inside an entry are clickable." },
+    ],
+  },
+  {
+    title: "Confessions",
+    items: [
+      { q: "Browse the Westminster Standards", a: "The Confessions page holds the Westminster Confession and the Larger and Shorter Catechisms. Pick a document, then a chapter or question, or browse by doctrinal topic." },
+      { q: "Proof texts", a: "Each section's Scripture proofs are numbered in the text and listed beneath it; each one jumps to the passage." },
+      { q: "From the Bible side", a: "The Confessions tab in the study panel shows where the Standards cite the verse you've selected." },
     ],
   },
   {
     title: "Resources (books, audio & video)",
     items: [
-      { q: "Add a resource", a: '"Add Resource…" on the Resources page for one file at a time, or "Import Folder…" to recursively add every recognized file under a folder at once.' },
-      { q: "Organize by author", a: 'Resources are grouped by author automatically -- for bulk imports, put files in an "Author/Book.epub" folder layout so the author is picked up from the folder name.' },
-      { q: "Search inside a book", a: "Text-bearing resources (EPUB, PDF, MOBI) are deep-indexed -- use the search box at the top of Resources, or the Resources tab in the main search, to search their full text." },
-      { q: "Remove a resource", a: "Click the ⋮ menu next to a resource and choose Remove." },
-      { q: "Link a resource to a passage", a: "Open a resource and use its link option to attach it to a specific chapter -- linked resources then show up while reading that chapter." },
+      { q: "Add a resource", a: "“Add resource” on the Resources page for one file, or “Import folder” to add every recognized file under a folder at once." },
+      { q: "Organize by author", a: "Resources are grouped by author. For a folder import, an Author/Book.epub layout picks the author up from the folder name." },
+      { q: "Search inside a book", a: "EPUB, PDF, and MOBI text is indexed. Use the search box at the top of Resources, or the Resources tab in the main search." },
+      { q: "Link a resource to a passage", a: "Open a resource and click “Link to current passage”. Linked resources then appear under that chapter's title while reading it." },
     ],
   },
   {
-    title: "Sermon Notes",
+    title: "Prayer",
     items: [
-      { q: "Create a sermon note", a: '"+ New Sermon Note" on the Sermons page. Record the preacher, date, and outline, and attach one or more Scripture passages.' },
-      { q: "Group notes into a series", a: "Set a series name on a note (e.g. \"Romans: Justified by Faith\") to group it with other notes in that series; notes are also automatically grouped by the book(s) they're linked to." },
-      { q: "Tag doctrine/topics", a: "Add free-text doctrine tags to a note (e.g. \"justification\", \"covenant\") -- click a tag anywhere to see every note sharing it, and tags are searchable from the Sermons search box." },
-      { q: "Link a confession section", a: "Attach a Westminster Standards (or other confession) section to a note to tie the sermon back to its doctrinal statement." },
-      { q: "Link a word study", a: "Attach a Strong's-tagged word to a note with your own observation -- it links straight back into the interlinear for that word." },
-      { q: "Jump to the passage from a note", a: "Click any passage chip on a sermon note to open that passage in the reading view." },
-      { q: "Search your sermon notes", a: "The search box at the top of the Sermons page searches title, preacher, passage, outline, tags, and application text together." },
+      { q: "Journal entries", a: "“New entry” on the Prayer page. Write in the ACTS pattern (Adoration, Confession, Thanksgiving, Supplication) or as free writing, and attach a passage to keep a promise beside the prayer." },
+      { q: "Prayer list", a: "The Prayer list tab keeps people and requests separate from journal entries. “Prayed today” logs it; “Answered” archives it with a note of how God answered." },
+      { q: "Tags", a: "Add tags to entries and click a tag to filter the list to it." },
     ],
   },
   {
-    title: "Prayer Journal & Prayer List",
+    title: "Memory",
     items: [
-      { q: "Add an entry", a: '"+ New Entry" on the Prayer page. Fill in whichever sections apply -- entries only show the sections you actually wrote.' },
-      { q: "ACTS or free writing", a: "Toggle an entry between the ACTS format (Adoration, Confession, Thanksgiving, Supplication) and a single free-writing box, whichever suits that entry." },
-      { q: "Link a verse", a: "Attach a passage to a prayer entry to keep a Scripture prompt or promise alongside it -- click the reference chip later to jump back to it." },
-      { q: "Keep a prayer list", a: "The Prayer List tab tracks people (or requests) to pray for separately from your journal entries -- add a person with a category and notes, tap \"Prayed today\" to log it, and \"Mark answered\" to archive it once God answers." },
-      { q: "Search prayers", a: "The search box searches across all of an entry's written content." },
+      { q: "Add a verse", a: "Type a reference on the Memory page, or right-click any verse while reading and choose “Add to Scripture memory”." },
+      { q: "Practice modes", a: "“First letter” shows only the first letter of each word, “Blank word” hides random words, and “Type it” has you type the verse and checks it word for word. Change the mode any time from the verse's row." },
+      { q: "Catechism", a: "The Catechism tab memorizes Shorter or Larger Catechism answers with the same tools." },
+      { q: "Spaced repetition", a: "Verses come due on a schedule that spaces out as you get them right. “Practice what's due” works through today's cards." },
     ],
   },
   {
-    title: "Scripture Memory",
+    title: "Reading plans & Harmony",
     items: [
-      { q: "Add a verse to memorize", a: 'Type a reference (e.g. "Philippians 4:6-7") on the Memory page and pick a practice mode.' },
-      { q: "Practice modes", a: '"First letter" shows only the first letter of each word as a hint; "Blank word" hides random whole words; "Type it" has you type the verse from memory and checks it word-for-word. Change a verse\'s mode any time from its row.' },
-      { q: "Streaks & stats", a: "Each verse tracks a practice streak, and the Memory page shows overall stats so you can see progress at a glance." },
-      { q: "Spaced repetition", a: 'Verses come "due" for review on a schedule that spaces out as you get them right. Click "Practice" to work through everything due today.' },
-    ],
-  },
-  {
-    title: "Reading Plans & Harmony",
-    items: [
-      { q: "Start a reading plan", a: "Browse available plans on the Plans page and start one -- it tracks your daily reading and completion automatically." },
-      { q: "Harmony of the Gospels", a: "The Harmony page lines up parallel Gospel accounts of the same events side by side." },
-    ],
-  },
-  {
-    title: "Confessions & Creeds",
-    items: [
-      { q: "Browse the Westminster Standards", a: "The Confessions page holds the Westminster Confession, Catechisms, and other Reformed confessions and creeds, organized by section." },
-      { q: "Proof texts", a: "Each section's supporting Scripture proofs are listed alongside it and link back to the reading view." },
-      { q: "Search confessions", a: "The Westminster tab in the main search (Ctrl+F) searches across every confession installed." },
+      { q: "Start a reading plan", a: "Open a plan on the Reading plans page and start it. Tick each day as you read; today's day is highlighted." },
+      { q: "Harmony of the Gospels", a: "The Harmony page lists the events of Christ's life in order. “Compare” shows the parallel Gospel accounts side by side." },
     ],
   },
   {
     title: "Settings",
     items: [
-      { q: "Manage your library", a: "Settings → Library adds or removes Bible translations and commentaries (drop in XML files, or use Rescan Import Folders)." },
-      { q: "Reading preferences", a: "Settings → Preferences controls theme (including a true-black OLED option), font size, verse numbers, highlights, note symbols, morphology codes, red-letter mode, and paragraph mode." },
-      { q: "Back up your data", a: "Settings → Data & Backups makes on-demand backups, exports/imports the full database, and can mirror backups to a synced folder (Dropbox, OneDrive, iCloud Drive) to carry your data to another install." },
+      { q: "Library", a: "Settings → Library adds or removes Bible translations and commentaries from XML files." },
+      { q: "Back up your data", a: "Settings → Data & backups makes backups on demand, exports or imports the whole database, and can mirror backups to a folder synced by OneDrive or Dropbox." },
+      { q: "Keyboard shortcuts", a: <>Press <Kbd>Ctrl</Kbd>+<Kbd>/</Kbd> at any time for the full list.</> },
     ],
   },
 ];
@@ -116,20 +132,20 @@ const CATEGORIES: Category[] = [
 export function TutorialSection() {
   return (
     <div>
-      <h1 className="mb-1 text-xl font-semibold">Tutorial</h1>
-      <p className="mb-4 text-sm text-gray-500">Everything this app can do, organized by area. Expand a section to see how.</p>
+      <h2 className="mb-1 text-lg font-semibold text-ink">Tutorial</h2>
+      <p className="mb-4 text-sm text-ink-3">Everything this app can do, organized by area. Expand a section to see how.</p>
       <div className="space-y-2">
         {CATEGORIES.map((cat) => (
-          <details key={cat.title} className="group rounded border border-gray-200 dark:border-gray-800">
-            <summary className="cursor-pointer list-none rounded px-3 py-2 text-sm font-semibold hover:bg-gray-50 dark:hover:bg-gray-900">
-              <span className="mr-1.5 inline-block transition-transform group-open:rotate-90">›</span>
+          <details key={cat.title} className="group rounded-lg border border-line bg-surface">
+            <summary className="flex cursor-pointer list-none items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold text-ink hover:bg-hover">
+              <ChevronDown className="h-4 w-4 -rotate-90 text-ink-3 transition-transform group-open:rotate-0" aria-hidden="true" />
               {cat.title}
             </summary>
-            <dl className="space-y-3 border-t border-gray-200 px-3 py-3 dark:border-gray-800">
+            <dl className="space-y-3 border-t border-line px-4 py-3">
               {cat.items.map((item) => (
                 <div key={item.q}>
-                  <dt className="text-sm font-medium">{item.q}</dt>
-                  <dd className="mt-0.5 text-sm text-gray-600 dark:text-gray-300">{item.a}</dd>
+                  <dt className="text-sm font-medium text-ink">{item.q}</dt>
+                  <dd className="mt-0.5 text-sm text-ink-2">{item.a}</dd>
                 </div>
               ))}
             </dl>

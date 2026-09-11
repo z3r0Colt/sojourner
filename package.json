@@ -23,6 +23,7 @@
     "@tiptap/starter-kit": "^3.31.3",
     "epubjs": "^0.3.93",
     "jszip": "^3.10.1",
+    "lucide-react": "^1.44.0",
     "pdfjs-dist": "^6.3.289",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
