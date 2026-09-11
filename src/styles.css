@@ -39,6 +39,12 @@
   --color-danger: #b3261e;
   --color-danger-soft: #fbeae9;
 
+  /* Link groups (workspace panes that follow each other's passage): one
+     hue per group so the letter in a pane header reads at a glance. */
+  --color-group-a: #2f5f8f;
+  --color-group-b: #3f6b3a;
+  --color-group-c: #8a5a12;
+
   /* 13px metadata instead of 12px: the smallest size in the app, used for
      timestamps, counts, and section labels. Everything interactive is sm+. */
   --text-xs: 0.8125rem;
@@ -76,6 +82,9 @@ html[data-theme="dark"] {
   --color-accent-soft-2: #27394f;
   --color-danger: #f28b82;
   --color-danger-soft: #3a1f1d;
+  --color-group-a: #8fb4de;
+  --color-group-b: #9fcb96;
+  --color-group-c: #e0b56a;
 }
 html[data-theme="oled"] {
   color-scheme: dark;
@@ -95,6 +104,9 @@ html[data-theme="oled"] {
   --color-accent-soft-2: #1e2e48;
   --color-danger: #f28b82;
   --color-danger-soft: #3a1f1d;
+  --color-group-a: #8fb4de;
+  --color-group-b: #9fcb96;
+  --color-group-c: #e0b56a;
 }
 html[data-theme="sepia"] {
   color-scheme: light;
@@ -114,7 +126,21 @@ html[data-theme="sepia"] {
   --color-accent-soft-2: #dfcda9;
   --color-danger: #a13a2e;
   --color-danger-soft: #f1dcd5;
+  --color-group-a: #4a5f8a;
+  --color-group-b: #4f6b3a;
+  --color-group-c: #8a5a12;
 }
+
+/* The link-group letter in a pane header: a soft wash of the group's hue
+   with the hue itself as the text. Unlinked panes show a muted dash. */
+.link-group {
+  background-color: color-mix(in srgb, var(--group-color) 18%, transparent);
+  color: var(--group-color);
+}
+.link-group-a { --group-color: var(--color-group-a); }
+.link-group-b { --group-color: var(--color-group-b); }
+.link-group-c { --group-color: var(--color-group-c); }
+.link-group-none { --group-color: var(--color-ink-3); }
 
 body {
   margin: 0;

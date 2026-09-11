@@ -2,9 +2,11 @@ import {
   PASSAGE_KINDS,
   currentPassage,
   findPane,
+  freeLinkGroup,
   resolveBiblePane,
   useWorkspaceStore,
   type BibleParams,
+  type LinkGroup,
   type Pane,
   type PaneContent,
   type PaneKind,
@@ -133,10 +135,25 @@ function applyToPane(paneId: string, content: PaneContent) {
   if (passage) useWorkspaceStore.getState().publishPassage(paneId, passage);
 }
 
+/** The group a new pane joins: the origin's, so it follows the pane it was
+ * opened from. A plain Bible pane stays unlinked. When the origin is itself
+ * unlinked and the new pane follows passages, both are put in a free group
+ * (else A) so the new pane follows its origin rather than group A. */
+function groupForNewPane(content: PaneContent, origin: Pane | undefined, opts: OpenOptions): LinkGroup {
+  if (content.kind === "bible" && !opts.link) return null;
+  if (!origin) return "A";
+  if (origin.linkGroup != null) return origin.linkGroup;
+  if (!PASSAGE_KINDS.has(origin.kind) || !PASSAGE_KINDS.has(content.kind)) return "A";
+  const free = freeLinkGroup(useWorkspaceStore.getState().panes);
+  if (!free) return "A";
+  useWorkspaceStore.getState().setLinkGroup(origin.id, free);
+  return free;
+}
+
 function openInNewPane(content: PaneContent, opts: OpenOptions) {
   const store = useWorkspaceStore.getState();
   const origin = findPane(store.panes, opts.from ?? store.focusedPaneId);
-  const linkGroup = content.kind === "bible" && !opts.link ? null : (origin?.linkGroup ?? "A");
+  const linkGroup = groupForNewPane(content, origin, opts);
   const id = store.addPane(content, { width: PANE_KINDS[content.kind].defaultWidth, after: origin?.id, linkGroup });
   if (!id) return;
   const passage = passageOf(content);
