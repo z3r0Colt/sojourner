@@ -81,21 +81,22 @@ export function MemoryView() {
     setPracticing(true);
   }
 
+  // Both step the queue from the current render's state rather than from
+  // inside a setState updater: React runs updaters twice in development
+  // (StrictMode), which duplicated the card when one setState was nested
+  // in another's updater.
   function nextCard() {
-    setQueue((q) => {
-      const [done, ...rest] = q;
-      if (done) setHistory((h) => [...h, done]);
-      return rest;
-    });
+    const [done, ...rest] = queue;
+    if (!done) return;
+    setHistory((h) => [...h, done]);
+    setQueue(rest);
   }
 
   function previousCard() {
-    setHistory((h) => {
-      if (h.length === 0) return h;
-      const last = h[h.length - 1];
-      setQueue((q) => [last, ...q]);
-      return h.slice(0, -1);
-    });
+    const last = history[history.length - 1];
+    if (!last) return;
+    setHistory((h) => h.slice(0, -1));
+    setQueue((q) => [last, ...q]);
   }
 
   function replaySession() {
