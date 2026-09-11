@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { useTtsStore } from "./ttsStore";
 
 /**
  * The workspace: one to four panes side by side, each showing any content
@@ -371,6 +372,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     if (idx < 0) return;
     const next = panes.filter((p) => p.id !== id);
     const focused = focusedPaneId === id ? next[Math.min(idx, next.length - 1)].id : focusedPaneId;
+    if (useTtsStore.getState().paneId === id) useTtsStore.getState().stop();
     set({ panes: next, focusedPaneId: focused, maximizedPaneId: maximizedPaneId === id ? null : maximizedPaneId });
   },
 

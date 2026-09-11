@@ -1,5 +1,6 @@
 import { useResourceText } from "../../api/queries";
-import { useTtsStore } from "../../state/ttsStore";
+import { useTtsReadingHere, useTtsStore } from "../../state/ttsStore";
+import { usePaneOptional } from "../../workspace/PaneContext";
 import { useReadingTypography } from "../../state/uiStore";
 import { ReadAloudWords } from "../tts/ReadAloudWords";
 import { splitIntoParagraphs } from "../tts/textUtils";
@@ -7,8 +8,8 @@ import { EmptyState, LoadingState } from "../../components/ui/EmptyState";
 
 export function MobiTextReader({ resourceId }: { resourceId: number }) {
   const { data: text } = useResourceText(resourceId);
-  const ttsSourceKind = useTtsStore((s) => s.sourceKind);
-  const ttsCurrentSegmentId = useTtsStore((s) => s.segments[s.currentSegmentIndex]?.id ?? null);
+  const ttsHere = useTtsReadingHere(usePaneOptional()?.id ?? null, "resource");
+  const ttsCurrentSegmentId = useTtsStore((s) => (ttsHere ? (s.segments[s.currentSegmentIndex]?.id ?? null) : null));
   const typography = useReadingTypography();
   const paragraphs = text ? splitIntoParagraphs(text) : [];
 
@@ -21,7 +22,7 @@ export function MobiTextReader({ resourceId }: { resourceId: number }) {
         <div className="reading-font space-y-4 text-ink" style={typography}>
           {paragraphs.map((p, i) => (
             <p key={i}>
-              <ReadAloudWords text={p} active={ttsSourceKind === "resource" && ttsCurrentSegmentId === i} />
+              <ReadAloudWords text={p} active={ttsHere && ttsCurrentSegmentId === i} />
             </p>
           ))}
         </div>

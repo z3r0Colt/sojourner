@@ -2,10 +2,10 @@ import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, MessageSquareText } from "lucide-react";
 import { api } from "../../api/client";
 import { useBooks, useCommentarySources } from "../../api/queries";
-import { usePaneNavigate, usePaneParams } from "../../workspace/PaneContext";
+import { usePane, usePaneNavigate, usePaneParams } from "../../workspace/PaneContext";
 import { PaneLink as Link } from "../../workspace/PaneLink";
 import { openPassage } from "../../workspace/openContent";
-import { useTtsStore } from "../../state/ttsStore";
+import { useTtsReadingHere, useTtsStore } from "../../state/ttsStore";
 import { useReadingTypography } from "../../state/uiStore";
 import { ReadAloudButton } from "../tts/ReadAloudButton";
 import { ReadAloudWords } from "../tts/ReadAloudWords";
@@ -48,8 +48,8 @@ export function CommentaryStandaloneView() {
   const prevSection = sectionIdx > 0 ? toc?.[sectionIdx - 1] : null;
   const nextSection = toc && sectionIdx >= 0 && sectionIdx < toc.length - 1 ? toc[sectionIdx + 1] : null;
 
-  const ttsSourceKind = useTtsStore((s) => s.sourceKind);
-  const ttsCurrentSegmentId = useTtsStore((s) => s.segments[s.currentSegmentIndex]?.id ?? null);
+  const ttsHere = useTtsReadingHere(usePane().id, "commentary");
+  const ttsCurrentSegmentId = useTtsStore((s) => (ttsHere ? (s.segments[s.currentSegmentIndex]?.id ?? null) : null));
   const sectionTitle = toc?.find((s) => s.id === activeSectionId)?.title;
 
   return (
@@ -111,7 +111,7 @@ export function CommentaryStandaloneView() {
             {!entries && <LoadingState />}
             <div className="reading-font commentary-html space-y-3 text-ink" style={typography}>
               {entries?.map((e) =>
-                ttsSourceKind === "commentary" && ttsCurrentSegmentId === e.id ? (
+                ttsHere && ttsCurrentSegmentId === e.id ? (
                   <ReadAloudWords key={e.id} text={e.plain_text} active />
                 ) : (
                   <CommentaryHtml key={e.id} html={e.html} onJumpToRef={jumpToRef} />
