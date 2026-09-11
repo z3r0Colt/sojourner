@@ -1,9 +1,22 @@
 import { StickyNote } from "lucide-react";
 import type { Highlight, Note, Verse, Footnote } from "../../api/types";
 import { ReadAloudWords } from "../tts/ReadAloudWords";
-import { buildTokens } from "./verseTokens";
+import { buildTokens, type Segment } from "./verseTokens";
 import type { RedLetterSpan } from "./redLetterSpans";
+import type { FindRange } from "./findMatches";
 import { cx } from "../../components/ui/classes";
+
+/** A segment's text, wrapped in a find mark when it is inside a match. The
+ * current match carries `data-find-current` so the pane can scroll to it. */
+export function SegmentText({ segment }: { segment: Segment }) {
+  if (!segment.find) return <>{segment.text}</>;
+  const current = segment.find === "current";
+  return (
+    <mark className={cx("find", current && "find-current")} {...(current ? { "data-find-current": "" } : {})}>
+      {segment.text}
+    </mark>
+  );
+}
 
 export function VerseRow({
   verse,
@@ -21,6 +34,7 @@ export function VerseRow({
   onContextMenu,
   ttsActive,
   redLetterSpans,
+  findRanges,
 }: {
   verse: Verse;
   highlights: Highlight[];
@@ -41,8 +55,10 @@ export function VerseRow({
    * words (red-letter mode) -- only those ranges render in red, not the
    * whole verse. */
   redLetterSpans?: RedLetterSpan[];
+  /** Find-in-chapter matches within this verse. */
+  findRanges?: FindRange[];
 }) {
-  const tokens = buildTokens(verse.text, showHighlights ? highlights : [], verse.verse, footnotes ?? [], redLetterSpans);
+  const tokens = buildTokens(verse.text, showHighlights ? highlights : [], verse.verse, footnotes ?? [], redLetterSpans, findRanges);
   const notesByHighlight = new Map(notes.filter((n) => n.highlight_id != null).map((n) => [n.highlight_id as number, n]));
   const verseLevelNote = notes.find(
     (n) => n.highlight_id == null && verse.verse >= n.verse_start && verse.verse <= n.verse_end,
@@ -125,7 +141,7 @@ export function VerseRow({
               if (!seg.color) {
                 return (
                   <span key={i} className={seg.isRedLetter ? "text-red-700 dark:text-red-400" : undefined}>
-                    {seg.text}
+                    <SegmentText segment={seg} />
                   </span>
                 );
               }
@@ -143,7 +159,7 @@ export function VerseRow({
                     }
                   }}
                 >
-                  {seg.text}
+                  <SegmentText segment={seg} />
                   {showNoteSymbols && linkedNote && (
                     <button
                       type="button"

@@ -1,5 +1,6 @@
 import type { Highlight, Footnote } from "../../api/types";
 import type { RedLetterSpan } from "./redLetterSpans";
+import type { FindRange } from "./findMatches";
 
 export interface Segment {
   text: string;
@@ -7,6 +8,9 @@ export interface Segment {
   style: string | null;
   highlightId: number | null;
   isRedLetter: boolean;
+  /** Find-in-chapter: this segment is inside a match ("current" for the
+   * one stepped to). Marks nest inside highlights like red letters do. */
+  find: "match" | "current" | null;
 }
 
 export type Token = { kind: "text"; segment: Segment } | { kind: "footnote"; footnote: Footnote };
@@ -17,6 +21,7 @@ export function buildTokens(
   verseNum: number,
   footnotes: Footnote[],
   redLetterSpans: RedLetterSpan[] = [],
+  findRanges: FindRange[] = [],
 ): Token[] {
   const relevant = highlights.filter((h) => verseNum >= h.verse_start && verseNum <= h.verse_end);
 
@@ -30,6 +35,10 @@ export function buildTokens(
   for (const s of redLetterSpans) {
     boundaries.add(Math.max(0, Math.min(text.length, s.start)));
     boundaries.add(Math.max(0, Math.min(text.length, s.end)));
+  }
+  for (const r of findRanges) {
+    boundaries.add(Math.max(0, Math.min(text.length, r.start)));
+    boundaries.add(Math.max(0, Math.min(text.length, r.end)));
   }
   const notesByOffset = new Map<number, Footnote[]>();
   for (const f of footnotes) {
@@ -57,6 +66,7 @@ export function buildTokens(
           (h) => h.char_start != null && h.char_end != null && h.verse_start === h.verse_end && start >= h.char_start && end <= h.char_end,
         ) ?? relevant.find((h) => h.char_start == null);
       const isRedLetter = redLetterSpans.some((s) => start >= s.start && end <= s.end);
+      const found = findRanges.find((r) => start >= r.start && end <= r.end);
       tokens.push({
         kind: "text",
         segment: {
@@ -65,6 +75,7 @@ export function buildTokens(
           style: covering?.style ?? null,
           highlightId: covering?.id ?? null,
           isRedLetter,
+          find: found ? (found.current ? "current" : "match") : null,
         },
       });
     }

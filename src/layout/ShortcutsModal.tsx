@@ -7,6 +7,7 @@ const GROUPS: { title: string; rows: { keys: string[]; label: string }[] }[] = [
     rows: [
       { keys: ["Ctrl", "K"], label: "Go to a reference, Strong's number, or term" },
       { keys: ["Ctrl", "F"], label: "Search everything" },
+      { keys: ["Ctrl", "G"], label: "Find in the chapter you are reading (Enter next match, Shift+Enter previous, Esc closes)" },
       { keys: ["Ctrl", "["], label: "Previous chapter in the pane you are reading" },
       { keys: ["Ctrl", "]"], label: "Next chapter in the pane you are reading" },
       { keys: ["Alt", "←"], label: "Back in the focused pane's history" },
