@@ -75,7 +75,8 @@ const CATEGORIES: Category[] = [
     title: "Highlights & notes",
     items: [
       { q: "Highlight text", a: "Select any text and a small toolbar appears with highlight colors, underline, note, and copy. A selection across several verses highlights those verses whole." },
-      { q: "Act on a whole verse", a: "Right-click a verse, or click its verse number, for a menu: highlight, underline, add a note, copy with the reference, compare translations, add it to Scripture memory, or bookmark it." },
+      { q: "Act on a whole verse", a: "Right-click a verse, or click its verse number, for a menu: highlight, underline, add a note, copy, compare translations, add it to Scripture memory, or bookmark it." },
+      { q: "Copy verses", a: "Copy from the selection toolbar or the verse menu. Settings → Reading → “When copying verses” picks the layout (text only, text then reference, reference then text, or a Markdown quote) and whether the translation code is included." },
       { q: "Add a note", a: "From the selection toolbar or the verse menu. Notes attached to a highlight show a small note icon next to the highlighted text. Chapter-wide notes live behind the note icon in the reading toolbar." },
       { q: "Name your highlight colors", a: "Each of the five colors has a name (Promise, Command, Doctrine, Prayer, and Warning to start) that shows as the tooltip on its color button. Rename them under Settings → Reading → Highlight colors." },
       { q: "See every highlight", a: <>The Highlights page under My study lists every highlight grouped by color, with its verse text and reference. Filter by color or book; click a reference to jump to it (<Kbd>Ctrl</Kbd>+click opens it in a new pane).</> },

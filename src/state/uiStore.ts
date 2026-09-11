@@ -3,6 +3,10 @@ import { create } from "zustand";
 export type Theme = "light" | "dark" | "oled" | "sepia" | "system";
 export type LineSpacing = "compact" | "normal" | "relaxed";
 export type ReadingFont = "serif" | "sans";
+/** How a copied passage is laid out: text alone, "text (John 3:16)",
+ * "John 3:16 — text", or a Markdown blockquote with the reference on its
+ * own line. See `lib/clipboard.ts`. */
+export type CopyFormat = "text" | "text-ref" | "ref-text" | "markdown";
 
 /**
  * Global, window-level preferences (local storage). Anything about *what*
@@ -19,6 +23,9 @@ interface UiState {
   showHighlights: boolean;
   showNoteSymbols: boolean;
   showMorphology: boolean;
+  copyFormat: CopyFormat;
+  /** Append the translation code to the reference when copying ("John 3:16 KJV"). */
+  copyIncludeTranslation: boolean;
   /** F11: chrome hidden, the focused pane maximized (see workspaceStore). */
   distractionFreeMode: boolean;
   sidebarCollapsed: boolean;
@@ -26,6 +33,8 @@ interface UiState {
   setFontSize: (n: number) => void;
   setLineSpacing: (s: LineSpacing) => void;
   setReadingFont: (f: ReadingFont) => void;
+  setCopyFormat: (f: CopyFormat) => void;
+  setCopyIncludeTranslation: (on: boolean) => void;
   toggleVerseNumbers: () => void;
   toggleShowHighlights: () => void;
   toggleShowNoteSymbols: () => void;
@@ -63,6 +72,8 @@ export const useUiStore = create<UiState>((set) => ({
   showHighlights: stored.showHighlights ?? true,
   showNoteSymbols: stored.showNoteSymbols ?? true,
   showMorphology: stored.showMorphology ?? true,
+  copyFormat: stored.copyFormat ?? "text-ref",
+  copyIncludeTranslation: stored.copyIncludeTranslation ?? false,
   distractionFreeMode: false,
   sidebarCollapsed: stored.sidebarCollapsed ?? false,
 
@@ -81,6 +92,14 @@ export const useUiStore = create<UiState>((set) => ({
   setReadingFont: (readingFont) => {
     persist({ readingFont });
     set({ readingFont });
+  },
+  setCopyFormat: (copyFormat) => {
+    persist({ copyFormat });
+    set({ copyFormat });
+  },
+  setCopyIncludeTranslation: (copyIncludeTranslation) => {
+    persist({ copyIncludeTranslation });
+    set({ copyIncludeTranslation });
   },
   toggleVerseNumbers: () =>
     set((s) => {

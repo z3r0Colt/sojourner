@@ -52,7 +52,7 @@ import { FindBar } from "./FindBar";
 import { findMatches, findRangesByVerse } from "./findMatches";
 import { computeRedLetterSpans } from "./redLetterSpans";
 import { closestWithAttr, textOffsetWithin } from "../../lib/domOffsets";
-import { copyWithReference } from "../../lib/clipboard";
+import { useCopyPassage } from "../../lib/clipboard";
 import { ReadAloudButton } from "../tts/ReadAloudButton";
 import { useTtsReadingHere, useTtsStore } from "../../state/ttsStore";
 import { Button, IconButton } from "../../components/ui/Button";
@@ -198,6 +198,7 @@ export function ReadingPane() {
   const updateChapterNote = useUpdateChapterNote();
   const deleteChapterNote = useDeleteChapterNote();
   const trashToast = useTrashToast();
+  const copyPassage = useCopyPassage();
   const createBookmark = useCreateBookmark();
   const deleteBookmark = useDeleteBookmark();
   const createMemoryVerse = useCreateMemoryVerse();
@@ -890,7 +891,7 @@ export function ReadingPane() {
                 ? verseText(pending.verseStart).slice(pending.charStart, pending.charEnd)
                 : joinVerses(verses, pending.verseStart, pending.verseEnd);
             const ref = formatRef([book], toPassageRef(book.id, chapter, pending.verseStart, pending.verseEnd));
-            copyWithReference(text, ref);
+            copyPassage(text, ref, translationCode);
             toast.success(`Copied ${ref}`);
             window.getSelection()?.removeAllRanges();
             setPending(null);
@@ -911,7 +912,7 @@ export function ReadingPane() {
           onCompare={() => setCompareVerse(verseMenu.verseNum)}
           onCopy={() => {
             const ref = `${book.name} ${chapter}:${verseMenu.verseNum}`;
-            copyWithReference(verseText(verseMenu.verseNum), ref);
+            copyPassage(verseText(verseMenu.verseNum), ref, translationCode);
             toast.success(`Copied ${ref}`);
           }}
           onMemorize={() => {
