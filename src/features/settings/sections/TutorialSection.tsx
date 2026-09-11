@@ -137,6 +137,8 @@ const CATEGORIES: Category[] = [
     items: [
       { q: "Journal entries", a: "“New entry” on the Prayer page. Write in the ACTS pattern (Adoration, Confession, Thanksgiving, Supplication) or as free writing, and attach a passage to keep a promise beside the prayer." },
       { q: "Prayer list", a: "The Prayer list tab keeps people and requests separate from journal entries. “Prayed today” logs it; “Answered” archives it with a note of how God answered." },
+      { q: "Who needs prayer most", a: "Anyone not prayed for in fourteen days gets an amber marker with the count; change the number in “Nudge after … days” above the list. The sort “Longest since prayed” puts the most neglected people at the top." },
+      { q: "Print the prayer list", a: "The Print button on the Prayer list tab prints the active list grouped by category, with a box beside each name to tick off in a paper journal." },
       { q: "Tags", a: "Add tags to entries and click a tag to filter the list to it." },
     ],
   },

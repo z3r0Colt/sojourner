@@ -38,6 +38,9 @@
   --color-accent-soft-2: #d5e2f0;
   --color-danger: #b3261e;
   --color-danger-soft: #fbeae9;
+  /* Attention without alarm: overdue prayer nudges, "due" counts. */
+  --color-warn: #8a5a12;
+  --color-warn-soft: #f6ecd8;
 
   /* Link groups (workspace panes that follow each other's passage): one
      hue per group so the letter in a pane header reads at a glance. */
@@ -82,6 +85,8 @@ html[data-theme="dark"] {
   --color-accent-soft-2: #27394f;
   --color-danger: #f28b82;
   --color-danger-soft: #3a1f1d;
+  --color-warn: #e0b56a;
+  --color-warn-soft: #34290f;
   --color-group-a: #8fb4de;
   --color-group-b: #9fcb96;
   --color-group-c: #e0b56a;
@@ -104,6 +109,8 @@ html[data-theme="oled"] {
   --color-accent-soft-2: #1e2e48;
   --color-danger: #f28b82;
   --color-danger-soft: #3a1f1d;
+  --color-warn: #e0b56a;
+  --color-warn-soft: #2a2008;
   --color-group-a: #8fb4de;
   --color-group-b: #9fcb96;
   --color-group-c: #e0b56a;
@@ -126,6 +133,8 @@ html[data-theme="sepia"] {
   --color-accent-soft-2: #dfcda9;
   --color-danger: #a13a2e;
   --color-danger-soft: #f1dcd5;
+  --color-warn: #7d4e0c;
+  --color-warn-soft: #ecd9ad;
   --color-group-a: #4a5f8a;
   --color-group-b: #4f6b3a;
   --color-group-c: #8a5a12;
@@ -317,21 +326,35 @@ mark.find-current {
   animation: toast-in 160ms ease-out;
 }
 
-/* Printing (ReadingView's "Print" button) shows only the chapter text --
+/* Printing: any page marks its printable region with `.print-root` (the
+   Bible pane's chapter text, the prayer list) and calls window.print();
    everything else (nav, side panels, popups, the app's own chrome) is
-   irrelevant on paper. */
+   hidden on paper. Only one region should carry the class at a time --
+   views add it while their print pass is running and drop it after. */
 @media print {
   body * {
     visibility: hidden;
   }
-  #print-chapter,
-  #print-chapter * {
+  .print-root,
+  .print-root * {
     visibility: visible;
   }
-  #print-chapter {
+  .print-root {
     position: absolute;
     left: 0;
     top: 0;
     width: 100%;
+    color: #000;
+    background: #fff;
   }
+  .print-hide {
+    display: none !important;
+  }
+  .print-only {
+    display: block;
+  }
+}
+/* A region that exists for paper only (the prayer list's printable copy). */
+.print-only {
+  display: none;
 }
