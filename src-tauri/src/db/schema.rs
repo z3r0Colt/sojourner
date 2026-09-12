@@ -1438,6 +1438,100 @@ CREATE TRIGGER illustrations_search_ad AFTER DELETE ON illustrations BEGIN
 END;
 "#;
 
+// The four search indexes over rich text held the markup itself. Everything
+// a reader writes in the editor is stored as HTML, and these tables indexed
+// that HTML, so "strong" matched every note with a bold word in it, "href"
+// matched every one with a link, and a word broken by formatting
+// (`sw<em>orn</em>`) was indexed as two halves and could not be found at all.
+//
+// Each index is now built from `html_text(body)` -- the words, with the tags
+// left out (see `crate::text`, registered on the connection by
+// `db::register_functions`). That means they can no longer be
+// external-content tables: fts5 reads a snippet back from the content table,
+// so an index whose text differs from the column it points at returns
+// nonsense. They store their own text instead, which is also what makes a
+// search result readable: `snippet()` now returns words rather than tags.
+//
+// Only the rich-text columns go through it. A sermon's title and an
+// illustration's source line are typed into plain inputs and are indexed as
+// they are. The indexes still hold soft-deleted rows, exactly as before --
+// every search filters those out by joining the base table.
+pub const USER_MIGRATION_0016: &str = r#"
+DROP TRIGGER notes_search_ai;
+DROP TRIGGER notes_search_au;
+DROP TRIGGER notes_search_ad;
+DROP TABLE notes_fts;
+CREATE VIRTUAL TABLE notes_fts USING fts5(body);
+INSERT INTO notes_fts(rowid, body) SELECT id, html_text(body) FROM notes;
+CREATE TRIGGER notes_search_ai AFTER INSERT ON notes BEGIN
+  INSERT INTO notes_fts(rowid, body) VALUES (new.id, html_text(new.body));
+END;
+CREATE TRIGGER notes_search_au AFTER UPDATE ON notes BEGIN
+  DELETE FROM notes_fts WHERE rowid = old.id;
+  INSERT INTO notes_fts(rowid, body) VALUES (new.id, html_text(new.body));
+END;
+CREATE TRIGGER notes_search_ad AFTER DELETE ON notes BEGIN
+  DELETE FROM notes_fts WHERE rowid = old.id;
+END;
+
+DROP TRIGGER chapter_notes_search_ai;
+DROP TRIGGER chapter_notes_search_au;
+DROP TRIGGER chapter_notes_search_ad;
+DROP TABLE chapter_notes_fts;
+CREATE VIRTUAL TABLE chapter_notes_fts USING fts5(body);
+INSERT INTO chapter_notes_fts(rowid, body) SELECT id, html_text(body) FROM chapter_notes;
+CREATE TRIGGER chapter_notes_search_ai AFTER INSERT ON chapter_notes BEGIN
+  INSERT INTO chapter_notes_fts(rowid, body) VALUES (new.id, html_text(new.body));
+END;
+CREATE TRIGGER chapter_notes_search_au AFTER UPDATE ON chapter_notes BEGIN
+  DELETE FROM chapter_notes_fts WHERE rowid = old.id;
+  INSERT INTO chapter_notes_fts(rowid, body) VALUES (new.id, html_text(new.body));
+END;
+CREATE TRIGGER chapter_notes_search_ad AFTER DELETE ON chapter_notes BEGIN
+  DELETE FROM chapter_notes_fts WHERE rowid = old.id;
+END;
+
+DROP TRIGGER sermons_search_ai;
+DROP TRIGGER sermons_search_au;
+DROP TRIGGER sermons_search_ad;
+DROP TABLE sermons_fts;
+CREATE VIRTUAL TABLE sermons_fts USING fts5(title, big_idea, body, reflection);
+INSERT INTO sermons_fts(rowid, title, big_idea, body, reflection)
+  SELECT id, title, big_idea, html_text(body), reflection FROM sermons;
+CREATE TRIGGER sermons_search_ai AFTER INSERT ON sermons BEGIN
+  INSERT INTO sermons_fts(rowid, title, big_idea, body, reflection)
+  VALUES (new.id, new.title, new.big_idea, html_text(new.body), new.reflection);
+END;
+CREATE TRIGGER sermons_search_au AFTER UPDATE ON sermons BEGIN
+  DELETE FROM sermons_fts WHERE rowid = old.id;
+  INSERT INTO sermons_fts(rowid, title, big_idea, body, reflection)
+  VALUES (new.id, new.title, new.big_idea, html_text(new.body), new.reflection);
+END;
+CREATE TRIGGER sermons_search_ad AFTER DELETE ON sermons BEGIN
+  DELETE FROM sermons_fts WHERE rowid = old.id;
+END;
+
+DROP TRIGGER illustrations_search_ai;
+DROP TRIGGER illustrations_search_au;
+DROP TRIGGER illustrations_search_ad;
+DROP TABLE illustrations_fts;
+CREATE VIRTUAL TABLE illustrations_fts USING fts5(title, body, source_label);
+INSERT INTO illustrations_fts(rowid, title, body, source_label)
+  SELECT id, title, html_text(body), source_label FROM illustrations;
+CREATE TRIGGER illustrations_search_ai AFTER INSERT ON illustrations BEGIN
+  INSERT INTO illustrations_fts(rowid, title, body, source_label)
+  VALUES (new.id, new.title, html_text(new.body), new.source_label);
+END;
+CREATE TRIGGER illustrations_search_au AFTER UPDATE ON illustrations BEGIN
+  DELETE FROM illustrations_fts WHERE rowid = old.id;
+  INSERT INTO illustrations_fts(rowid, title, body, source_label)
+  VALUES (new.id, new.title, html_text(new.body), new.source_label);
+END;
+CREATE TRIGGER illustrations_search_ad AFTER DELETE ON illustrations BEGIN
+  DELETE FROM illustrations_fts WHERE rowid = old.id;
+END;
+"#;
+
 pub const USER_MIGRATIONS: &[&str] = &[
     USER_MIGRATION_0001,
     USER_MIGRATION_0002,
@@ -1454,4 +1548,5 @@ pub const USER_MIGRATIONS: &[&str] = &[
     USER_MIGRATION_0013,
     USER_MIGRATION_0014,
     USER_MIGRATION_0015,
+    USER_MIGRATION_0016,
 ];

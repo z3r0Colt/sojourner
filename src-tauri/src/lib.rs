@@ -8,6 +8,7 @@ pub mod import;
 pub mod models;
 pub mod paths;
 pub mod resources;
+pub mod text;
 
 use db::DbState;
 use std::path::PathBuf;
