@@ -10,6 +10,7 @@ import { useAddSermonEvent, useSetSermonStage } from "../../api/queries";
 import { toast } from "../../components/ui/toast";
 import { useSermonWordCount, useSpeakingRateInfo } from "../sermons/sermonStats";
 import { daysUntil, localToday, relativeDay, sermonTextLabel, STAGE_LABEL } from "../sermons/sermonFormat";
+import { startRun } from "../sermons/preachingMode";
 import type { Sermon } from "../../api/types";
 
 /** How far ahead a sermon counts as "this Sunday". */
@@ -97,6 +98,17 @@ function SermonCard({ sermon, today }: { sermon: Sermon; today: string }) {
       <div className="mt-2 flex flex-wrap gap-2">
         <Button size="sm" variant="primary" onClick={open} title="Open this sermon (Ctrl+click for a new pane)">
           Open
+        </Button>
+        <Button
+          size="sm"
+          variant="secondary"
+          title="Open it and run it with the clock going"
+          onClick={(e) => {
+            openContent("sermon", { id: sermon.id }, { target: targetFor(e), from: paneId });
+            startRun(sermon.id, { kind: "rehearsal", fullScreen: false });
+          }}
+        >
+          Rehearse
         </Button>
         <Button
           size="sm"

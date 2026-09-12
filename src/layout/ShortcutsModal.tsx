@@ -55,6 +55,7 @@ const GROUPS: { title: string; rows: { keys: string[]; label: string }[] }[] = [
       { keys: ["Ctrl", "Shift", "P"], label: "Insert a passage: type a reference and the block renders it live in the sermon's translation" },
       { keys: ["Ctrl", "Shift", "B"], label: "Mark the selected words as a blank for the fill-in handout" },
       { keys: ["Ctrl", "U"], label: "Underline (bold and italic are Ctrl+B and Ctrl+I, as everywhere)" },
+      { keys: ["Rehearse"], label: "Runs the manuscript with the clock going; finishing offers to log the run with its minutes and a note" },
     ],
   },
   {
