@@ -30,11 +30,13 @@ import { ReadingRefs } from "../plans/ReadingPlansView";
 import { CatchUpBanner } from "../plans/CatchUpBanner";
 import { isFinished, todaysDays } from "../plans/planSchedule";
 import { longestUnprayed, timeAgo } from "../prayer/prayerListTime";
+import { ThisSunday } from "./ThisSunday";
 
 /**
- * The Today page (F3.1): one place to start the day from. Six blocks in a
- * fixed order -- Continue reading, Today's plan, Due for review, Pray for,
- * Bookmarks, Recent chapters -- and every block but the first hides when
+ * The Today page (F3.1): one place to start the day from. Seven blocks in a
+ * fixed order -- Continue reading, Today's plan, This Sunday, Due for
+ * review, Pray for, Bookmarks, Recent chapters -- and every block but the
+ * first hides when
  * it has nothing to show, so a fresh install sees only Continue reading.
  * A pane kind, so it can sit beside the text; every jump lands in the
  * pane the reader is working in (Ctrl+click for a new pane).
@@ -313,6 +315,7 @@ export function TodayView() {
     <Page title="Today" lead={lead}>
       <ContinueReading />
       <TodaysPlan />
+      <ThisSunday />
       <DueForReview />
       <PrayFor />
       <Bookmarks />
