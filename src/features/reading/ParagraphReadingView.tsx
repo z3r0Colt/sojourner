@@ -76,6 +76,7 @@ function ParagraphVerse({
           }}
           title={`Verse ${verse.verse}: highlight, note, copy, compare…${hasBacklinks ? " (mentioned in your notes)" : ""}`}
           aria-label={`Verse ${verse.verse} actions${hasBacklinks ? ", mentioned in your notes" : ""}`}
+          data-tour="verse"
           className={cx("relative mr-0.5 select-none align-super font-sans text-[0.6em] font-semibold leading-none", isActive ? "text-accent" : "text-ink-4")}
         >
           {verse.verse}

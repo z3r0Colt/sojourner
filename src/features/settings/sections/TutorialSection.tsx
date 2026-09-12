@@ -1,5 +1,8 @@
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Footprints } from "lucide-react";
+import { Button } from "../../../components/ui/Button";
 import { Kbd } from "../../../components/ui/Page";
+import { openContent } from "../../../workspace/openContent";
+import { startTour } from "../../onboarding/tourStore";
 
 interface Category {
   title: string;
@@ -184,6 +187,7 @@ const CATEGORIES: Category[] = [
       { q: "Back up your data", a: "Settings → Data & backups makes backups on demand, exports or imports the whole database, and can mirror backups to a folder synced by OneDrive or Dropbox. When your newest backup is more than thirty days old (or you have study data and no backup at all), a reminder appears at launch with “Back up now” and “Remind me next week”." },
       { q: "See your study stats", a: "Settings → Data & backups → Stats counts your notes and highlights by book, shows a heatmap of the days you read over the past year (darker squares mean more chapters), and totals the chapters read, prayers logged, and verses and catechism answers memorized." },
       { q: "Keyboard shortcuts", a: <>Press <Kbd>Ctrl</Kbd>+<Kbd>/</Kbd> at any time for the full list.</> },
+      { q: "Take the tour again", a: <>The first launch walks through three things in place: the Go to button, a verse number, and the Add pane strip. “Show the tour again” at the top of this page replays it; inside it, <Kbd>→</Kbd> and <Kbd>←</Kbd> step and <Kbd>Esc</Kbd> skips.</> },
     ],
   },
 ];
@@ -193,6 +197,23 @@ export function TutorialSection() {
     <div>
       <h2 className="mb-1 text-lg font-semibold text-ink">Tutorial</h2>
       <p className="mb-4 text-sm text-ink-3">Everything this app can do, organized by area. Expand a section to see how.</p>
+      <div className="mb-5 flex flex-wrap items-center gap-3 rounded-lg border border-line bg-surface px-3 py-2.5">
+        <div className="min-w-0 flex-1 text-sm">
+          <div className="font-medium text-ink">The three-step tour</div>
+          <div className="text-xs text-ink-3">Opens the Bible and points out the Go to button, a verse number, and the Add pane strip.</div>
+        </div>
+        <Button
+          icon={Footprints}
+          onClick={() => {
+            // The tour spotlights the Bible page, so this pane shows it
+            // first (Back returns to Settings).
+            openContent("bible", {}, { target: "focused" });
+            window.setTimeout(startTour, 350);
+          }}
+        >
+          Show the tour again
+        </Button>
+      </div>
       <div className="space-y-2">
         {CATEGORIES.map((cat) => (
           <details key={cat.title} className="group rounded-lg border border-line bg-surface">
