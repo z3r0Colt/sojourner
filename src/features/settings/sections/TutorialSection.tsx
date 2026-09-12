@@ -233,6 +233,10 @@ const CATEGORIES: Category[] = [
         ),
       },
       {
+        q: "A series, and a reading plan for the congregation",
+        a: "The Series section at the foot of the Sermons page keeps a preaching calendar: its sermons in order with their texts, dates, and stages, and “6 of 10 preached”. “Make a reading plan” turns the series' texts into a custom reading plan — one reading the day before each sermon, or the text spread over the six days before it — named after the series and dated from the first sermon, so a family can read next Sunday's text during the week. It then behaves like any plan: it shows on Today, it can be started, caught up, and exported. Rebuilding it replaces its days and keeps the ticks that still fit.",
+      },
+      {
         q: "Print, hand out, export",
         a: "The Print & export menu on a sermon prints the manuscript, the outline, or the fill-in handout (with or without the answer key), and exports the whole sermon as Markdown with every passage's words rendered into the file. Printing to PDF is the print dialog's own choice.",
       },

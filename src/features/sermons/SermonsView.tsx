@@ -20,6 +20,7 @@ import { cx, inputSmClass, selectSmClass } from "../../components/ui/classes";
 import { usePane } from "../../workspace/PaneContext";
 import { openContent, targetFor } from "../../workspace/openContent";
 import { PrepTrack } from "./PrepTrack";
+import { SeriesSection } from "./SeriesView";
 import { startRun } from "./preachingSession";
 import {
   formatPreachDate,
@@ -247,6 +248,8 @@ export function SermonsView() {
               ))}
             </ul>
           )}
+
+      <SeriesSection paneId={paneId} />
     </Page>
   );
 }
