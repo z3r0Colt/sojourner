@@ -26,6 +26,7 @@ import { isTypingTarget } from "../lib/keyboard";
 import { useNoteRefsBackfill } from "../features/notes/useNoteRefsBackfill";
 import { useLandingPageOnLaunch } from "../features/today/landing";
 import { useBackupReminder } from "../features/settings/backupReminder";
+import { useAutomaticBackup } from "../features/settings/automaticBackup";
 import { TourOverlay } from "../features/onboarding/TourOverlay";
 import { useFirstRunTour, useTourDone } from "../features/onboarding/firstRun";
 
@@ -44,6 +45,7 @@ export function AppShell() {
   const canGoForward = (focusedPane?.future.length ?? 0) > 0;
   useNoteRefsBackfill();
   useLandingPageOnLaunch();
+  useAutomaticBackup();
   useBackupReminder();
   useFirstRunTour();
   const [, setTourDone] = useTourDone();
