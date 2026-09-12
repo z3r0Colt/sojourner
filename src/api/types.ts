@@ -311,6 +311,40 @@ export interface BackupInfo {
   size_bytes: number;
 }
 
+/** Study statistics for the Stats block (F3.5), gathered in one call. */
+export interface BookStat {
+  book_id: number;
+  /** Passage notes plus chapter notes on the book. */
+  notes: number;
+  highlights: number;
+}
+
+export interface ReadingDay {
+  /** Local calendar date, YYYY-MM-DD. */
+  date: string;
+  /** Distinct chapters opened that day. */
+  chapters: number;
+}
+
+export interface Stats {
+  /** Only books with at least one note or highlight, in Bible order. */
+  books: BookStat[];
+  notes_total: number;
+  highlights_total: number;
+  /** Days with reading in the past 371 days (the heatmap window). */
+  reading_days: ReadingDay[];
+  reading_days_total: number;
+  chapters_read_total: number;
+  prayer_entries: number;
+  prayer_people: number;
+  memory_verses_total: number;
+  /** Cards whose review interval has reached three weeks. */
+  memory_verses_learned: number;
+  catechism_total: number;
+  catechism_learned: number;
+  bookmarks: number;
+}
+
 export interface RedLetterRange {
   verse_start: number;
   verse_end: number;

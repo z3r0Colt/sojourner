@@ -998,6 +998,12 @@ export function useCreateBackup() {
   });
 }
 
+/** Study statistics (F3.5). Fetched when the Stats block or the launch
+ * backup reminder asks; refetched whenever it is shown again. */
+export function useStats() {
+  return useQuery({ queryKey: ["stats"], queryFn: api.getStats, staleTime: 0 });
+}
+
 export function useBackupSyncFolder() {
   return useQuery({ queryKey: ["backupSyncFolder"], queryFn: api.getBackupSyncFolder });
 }

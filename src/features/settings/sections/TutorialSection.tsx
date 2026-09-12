@@ -180,7 +180,8 @@ const CATEGORIES: Category[] = [
     title: "Settings",
     items: [
       { q: "Library", a: "Settings → Library adds or removes Bible translations and commentaries from XML files." },
-      { q: "Back up your data", a: "Settings → Data & backups makes backups on demand, exports or imports the whole database, and can mirror backups to a folder synced by OneDrive or Dropbox." },
+      { q: "Back up your data", a: "Settings → Data & backups makes backups on demand, exports or imports the whole database, and can mirror backups to a folder synced by OneDrive or Dropbox. When your newest backup is more than thirty days old (or you have study data and no backup at all), a reminder appears at launch with “Back up now” and “Remind me next week”." },
+      { q: "See your study stats", a: "Settings → Data & backups → Stats counts your notes and highlights by book, shows a heatmap of the days you read over the past year (darker squares mean more chapters), and totals the chapters read, prayers logged, and verses and catechism answers memorized." },
       { q: "Keyboard shortcuts", a: <>Press <Kbd>Ctrl</Kbd>+<Kbd>/</Kbd> at any time for the full list.</> },
     ],
   },
