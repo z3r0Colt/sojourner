@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Pause, Play, Square, Timer, Volume2 } from "lucide-react";
+import { Pause, Play, Presentation, Square, Timer, Volume2 } from "lucide-react";
 import { useAddSermonEvent } from "../../api/queries";
 import { Button, IconButton } from "../../components/ui/Button";
 import { Modal } from "../../components/ui/Modal";
@@ -7,7 +7,7 @@ import { toast } from "../../components/ui/toast";
 import { cx, inputSmClass } from "../../components/ui/classes";
 import { useTtsStore } from "../../state/ttsStore";
 import { sectionsOf } from "./editor/documentModel";
-import { elapsedMs, formatClock, startRun, usePreachingStore } from "./preachingMode";
+import { elapsedMs, formatClock, startRun, usePreachingStore } from "./preachingSession";
 import { localToday } from "./sermonFormat";
 import type { Sermon } from "../../api/types";
 
@@ -216,6 +216,20 @@ export function RehearsalButtons({ sermon }: { sermon: Sermon }) {
         onClick={() => startRun(sermon.id, { kind: "rehearsal", fullScreen: false })}
       >
         Rehearse
+      </Button>
+      <Button
+        size="sm"
+        variant="ghost"
+        icon={Presentation}
+        title="The manuscript alone, at a pulpit size, with the clock"
+        onClick={() =>
+          startRun(sermon.id, {
+            kind: sermon.preach_date === localToday() ? "preaching" : "rehearsal",
+            fullScreen: true,
+          })
+        }
+      >
+        Preach
       </Button>
       <Button
         size="sm"

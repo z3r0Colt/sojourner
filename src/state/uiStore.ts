@@ -59,6 +59,9 @@ interface UiState {
    * (SB1.1), so the Bible and commentary beside it turn to the text being
    * written about. Off for a writer who wants the study panes to stay put. */
   sermonFollowsCursor: boolean;
+  /** Preaching mode's text size in pixels (SB4.1); the pulpit wants a much
+   * larger face than the study does, so it is its own setting. */
+  pulpitFontSize: number;
   setTheme: (t: Theme) => void;
   setReduceMotion: (on: boolean) => void;
   setAccentSource: (s: AccentSource) => void;
@@ -75,6 +78,7 @@ interface UiState {
   setDistractionFreeMode: (on: boolean) => void;
   toggleSidebar: () => void;
   setSermonFollowsCursor: (on: boolean) => void;
+  setPulpitFontSize: (px: number) => void;
 }
 
 const stored = (() => {
@@ -112,6 +116,13 @@ export const useUiStore = create<UiState>((set) => ({
   distractionFreeMode: false,
   sidebarCollapsed: stored.sidebarCollapsed ?? false,
   sermonFollowsCursor: stored.sermonFollowsCursor ?? true,
+  pulpitFontSize: stored.pulpitFontSize ?? 28,
+
+  setPulpitFontSize: (px) => {
+    const pulpitFontSize = Math.max(16, Math.min(72, Math.round(px)));
+    persist({ pulpitFontSize });
+    set({ pulpitFontSize });
+  },
 
   setSermonFollowsCursor: (sermonFollowsCursor) => {
     persist({ sermonFollowsCursor });

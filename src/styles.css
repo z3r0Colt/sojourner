@@ -668,3 +668,42 @@ mark.find-current {
   border-bottom: 2px dotted var(--color-accent);
   padding-bottom: 1px;
 }
+
+/* Preaching mode (SB4.1): the manuscript alone, at a pulpit size. Passages
+   stay set apart, source lines recede, and everything inherits the size the
+   preacher set, so one control changes the whole page. */
+.sermon-html.pulpit h2 {
+  font-size: 1.05em;
+  margin: 1.2em 0 0.4em;
+}
+.sermon-html.pulpit h3 {
+  font-size: 1em;
+  margin: 0.9em 0 0.3em;
+}
+.sermon-html.pulpit p {
+  margin: 0.6em 0;
+}
+.sermon-html.pulpit .sermon-passage {
+  margin: 0.8em 0;
+  padding: 0.5em 0.8em;
+}
+.sermon-html.pulpit .sermon-source-line,
+.sermon-html.pulpit .sermon-passage-caption {
+  font-size: 0.6em;
+  color: var(--color-ink-4);
+}
+.sermon-html .sermon-source {
+  margin: 0.8em 0;
+}
+/* A blank on the handout: a rule the congregation writes on. The answer
+   key prints the word itself in the accent color. */
+.handout-blank {
+  display: inline-block;
+  min-width: 6ch;
+  border-bottom: 1px solid currentColor;
+  white-space: pre;
+}
+.handout-blank-key {
+  color: var(--color-accent);
+  border-bottom: 1px dotted var(--color-accent);
+}

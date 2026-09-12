@@ -1,8 +1,8 @@
 import { create } from "zustand";
 
 /**
- * The clock a sermon is run against, and the session preaching mode shows
- * (SB2.3, SB4.1).
+ * The clock a sermon is run against, and the session PreachingMode.tsx
+ * shows (SB2.3, SB4.1).
  *
  * The clock is wall-time based: `startedAt` plus whatever has accumulated
  * while it was paused, never a tick counter -- so a stray key, a slow
