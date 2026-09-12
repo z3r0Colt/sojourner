@@ -4,6 +4,27 @@ import { SERMON_STAGES, STAGE_LABEL } from "./sermonFormat";
 import { stageIndex } from "./prepStages";
 import type { SermonStage } from "../../api/types";
 
+/** One stage: a button where it can be set, plain text where it cannot. */
+function Marker({
+  readOnly,
+  children,
+  ...rest
+}: { readOnly?: boolean; children: React.ReactNode } & React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  if (readOnly) {
+    const { className, title, "aria-current": ariaCurrent } = rest;
+    return (
+      <span className={className} title={title} aria-current={ariaCurrent}>
+        {children}
+      </span>
+    );
+  }
+  return (
+    <button type="button" {...rest}>
+      {children}
+    </button>
+  );
+}
+
 /** The six stages across the top of a sermon (SB2.1). Each advances itself
  * from evidence; clicking one sets it by hand, which sticks until new
  * evidence appears. */
@@ -12,12 +33,15 @@ export function PrepTrack({
   onSetStage,
   hint,
   compact,
+  readOnly,
 }: {
   stage: SermonStage;
-  onSetStage: (stage: SermonStage) => void;
+  onSetStage?: (stage: SermonStage) => void;
   /** What the next stage is waiting for; hidden when there is none. */
   hint?: string | null;
   compact?: boolean;
+  /** A card shows the track without offering to change it. */
+  readOnly?: boolean;
 }) {
   const current = stageIndex(stage);
 
@@ -30,14 +54,16 @@ export function PrepTrack({
           return (
             <li key={s} className="flex items-center gap-1">
               {i > 0 && <span className={cx("h-px w-3", done || isCurrent ? "bg-accent" : "bg-line")} aria-hidden="true" />}
-              <button
-                type="button"
-                onClick={() => onSetStage(s)}
+              <Marker
+                readOnly={readOnly}
+                onClick={() => onSetStage?.(s)}
                 aria-current={isCurrent ? "step" : undefined}
                 title={
-                  isCurrent
-                    ? `${STAGE_LABEL[s]} — where this sermon is now`
-                    : `Set this sermon to ${STAGE_LABEL[s]}`
+                  readOnly
+                    ? `${STAGE_LABEL[s]}${isCurrent ? " — where this sermon is now" : ""}`
+                    : isCurrent
+                      ? `${STAGE_LABEL[s]} — where this sermon is now`
+                      : `Set this sermon to ${STAGE_LABEL[s]}`
                 }
                 className={cx(
                   "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs",
@@ -51,7 +77,7 @@ export function PrepTrack({
               >
                 {done && <Check className="h-3 w-3" aria-hidden="true" />}
                 {STAGE_LABEL[s]}
-              </button>
+              </Marker>
             </li>
           );
         })}
