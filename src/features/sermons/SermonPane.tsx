@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef } from "react";
 import type { Editor } from "@tiptap/react";
 import { Link2, Mic } from "lucide-react";
 import { usePassagesIn } from "../../api/queries";
@@ -9,6 +9,7 @@ import { EmptyState, LoadingState } from "../../components/ui/EmptyState";
 import { cx } from "../../components/ui/classes";
 import { RichTextEditor, type RichTextEditorHandle } from "../notes/RichTextEditor";
 import { SermonEditorProvider } from "./editor/context";
+import { SermonHeader } from "./SermonHeader";
 import { useSermonDraft } from "./sermonDraft";
 import { passageAtCursor } from "./cursorPassage";
 import { refKey } from "../../lib/passage";
@@ -28,7 +29,7 @@ function savedLabel(at: Date | null, saving: boolean): string {
  * the Bible must not scroll the manuscript out from under the writer. */
 export function SermonPane() {
   const [params] = usePaneParams("sermon");
-  const { id: paneId } = usePane();
+  const { id: paneId, width: paneWidth } = usePane();
   const { sermon, draft, isLoading, patch, savedAt, isSaving, passageRefs } = useSermonDraft(params.id);
   const readerTranslationId = useReaderTranslationId();
   const publishPassage = useWorkspaceStore((s) => s.publishPassage);
@@ -37,18 +38,11 @@ export function SermonPane() {
   const setFollowsCursor = useUiStore((s) => s.setSermonFollowsCursor);
   const editorRef = useRef<RichTextEditorHandle>(null);
   const lastPublishedRef = useRef<string | null>(null);
-  const [title, setTitle] = useState("");
 
   const translationId = draft?.translationId ?? readerTranslationId;
   // One query for every passage block in the document, whatever their number
   // (see the context's own comment): the node views read the map.
   const { byKey, isLoading: passagesLoading } = usePassagesIn(translationId, passageRefs);
-
-  useEffect(() => {
-    if (draft) setTitle(draft.title);
-    // Only when the sermon changes: the input owns the text while typing.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sermon?.id]);
 
   /** Leading the group: publish only on a cursor move, only when the
    * passage differs from the last one published, and never in response to
@@ -88,16 +82,7 @@ export function SermonPane() {
       <div className="flex h-full min-h-0 flex-col">
         <div className="min-h-0 flex-1 overflow-y-auto">
           <div className="mx-auto w-full max-w-3xl px-6 py-5">
-            <input
-              value={title}
-              onChange={(e) => {
-                setTitle(e.target.value);
-                patch({ title: e.target.value });
-              }}
-              placeholder="Untitled sermon"
-              aria-label="Sermon title"
-              className="mb-3 w-full border-0 bg-transparent text-2xl font-semibold text-ink outline-none placeholder:text-ink-4 focus:ring-0"
-            />
+            <SermonHeader key={sermon.id} draft={draft} patch={patch} paneWidth={paneWidth} />
             <RichTextEditor
               ref={editorRef}
               mode="document"
