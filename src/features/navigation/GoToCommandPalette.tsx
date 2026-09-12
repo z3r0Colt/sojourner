@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { BookA, BookOpen, History, Languages, ScrollText, type LucideIcon } from "lucide-react";
 import type { Book } from "../../api/types";
 import { findPane, recentPositions, useWorkspaceStore, type Position } from "../../state/workspaceStore";
@@ -6,11 +7,11 @@ import { useUiStore } from "../../state/uiStore";
 import { openContent } from "../../workspace/openContent";
 import { useTitleContext } from "../../workspace/PaneHeader";
 import { buildBookLookup, parseReference } from "../../hooks/useReferenceParser";
-import { useBookAliases, useTranslationCoverage, useDictionaryIndex, useWestminsterDocuments } from "../../api/queries";
+import { useBookAliases, useTranslationCoverage, useDictionaryIndex, useReadingPlanProgressList, useReadingPlans, useWestminsterDocuments } from "../../api/queries";
 import { Modal } from "../../components/ui/Modal";
 import { Kbd } from "../../components/ui/Page";
 import { cx, inputClass } from "../../components/ui/classes";
-import { allCommands, commandQueryText, filterCommands, isCommandQuery, type Command } from "./commands";
+import { allCommands, commandQueryText, filterCommands, isCommandQuery, type Command, type CommandContext } from "./commands";
 import type { SavedWorkspace } from "../../workspace/presets";
 
 const STRONGS_RE = /^[GgHh]\d{1,5}$/;
@@ -37,6 +38,7 @@ interface Candidate {
 export function GoToCommandPalette({
   books,
   savedWorkspaces,
+  shell,
   translationId,
   translationLabel,
   onClose,
@@ -44,6 +46,8 @@ export function GoToCommandPalette({
 }: {
   books: Book[];
   savedWorkspaces?: SavedWorkspace[];
+  /** The shell's overlays and its bookmark toggle, for the app actions (F3.2). */
+  shell?: CommandContext["shell"];
   translationId?: number | null;
   translationLabel?: string;
   onClose: () => void;
@@ -70,11 +74,22 @@ export function GoToCommandPalette({
   const maximizedPaneId = useWorkspaceStore((s) => s.maximizedPaneId);
   const layout = useWorkspaceStore((s) => s.layout);
   const focusMode = useUiStore((s) => s.distractionFreeMode);
+  // The view commands name the current state ("Hide verse numbers"), so
+  // they follow these preferences too.
+  const theme = useUiStore((s) => s.theme);
+  const readingFont = useUiStore((s) => s.readingFont);
+  const lineSpacing = useUiStore((s) => s.lineSpacing);
+  const showVerseNumbers = useUiStore((s) => s.showVerseNumbers);
+  const showHighlights = useUiStore((s) => s.showHighlights);
+  const showNoteSymbols = useUiStore((s) => s.showNoteSymbols);
+  const { data: plans } = useReadingPlans();
+  const { data: planProgress } = useReadingPlanProgressList();
+  const queryClient = useQueryClient();
   const titles = useTitleContext();
   const commands = useMemo(
-    () => allCommands({ titles, savedWorkspaces, commentarySources: titles.commentarySources }),
+    () => allCommands({ titles, savedWorkspaces, commentarySources: titles.commentarySources, shell, plans, planProgress, queryClient }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [titles, savedWorkspaces, panes, focusedPaneId, maximizedPaneId, layout, focusMode],
+    [titles, savedWorkspaces, shell, plans, planProgress, panes, focusedPaneId, maximizedPaneId, layout, focusMode, theme, readingFont, lineSpacing, showVerseNumbers, showHighlights, showNoteSymbols],
   );
   function commandCandidate(c: Command): Candidate {
     return {

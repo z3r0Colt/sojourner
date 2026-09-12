@@ -203,6 +203,7 @@ export function AppShell() {
         <GoToCommandPalette
           books={books}
           savedWorkspaces={savedWorkspaces}
+          shell={{ openSearch: () => setSearchOpen(true), openShortcuts: () => setShortcutsOpen(true), bookmarkHere: toggleBookmarkHere }}
           translationId={readerTranslationId}
           translationLabel={translations?.find((t) => t.id === readerTranslationId)?.name}
           onClose={() => setPaletteOpen(false)}
