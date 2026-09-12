@@ -530,6 +530,31 @@ pub struct ReadingPlan {
     pub title: String,
     pub description: Option<String>,
     pub length_days: i64,
+    /// True for a plan the reader built (F4.2); its code starts with `user:`.
+    #[serde(default)]
+    pub custom: bool,
+    /// ISO weekdays (1 = Monday ... 7 = Sunday) the plan is read on; None
+    /// means every day. Only custom plans can restrict this.
+    #[serde(default)]
+    pub weekdays: Option<Vec<i64>>,
+}
+
+/// One reading of a custom plan as the builder sends it (F4.2).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PlanReadingInput {
+    pub book_id: i64,
+    pub chapter_start: i64,
+    pub verse_start: Option<i64>,
+    pub chapter_end: i64,
+    pub verse_end: Option<i64>,
+    pub label: String,
+}
+
+/// A day of a plan pinned to a calendar date (reading_plan_schedule).
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ScheduleEntry {
+    pub day_number: i64,
+    pub date: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -556,6 +581,11 @@ pub struct ReadingPlanProgress {
     pub streak: i64,
     pub completed_days: Vec<i64>,
     pub created_at: String,
+    /// Days pinned to a date (F4.2): a weekday plan's whole calendar, or
+    /// the days a "spread over seven days" catch-up re-dated. A day not
+    /// listed falls on start_date + (day_number - 1).
+    #[serde(default)]
+    pub schedule: Vec<ScheduleEntry>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

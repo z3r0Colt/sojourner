@@ -280,6 +280,26 @@ export interface ReadingPlan {
   title: string;
   description: string | null;
   length_days: number;
+  /** A plan the reader built (F4.2); its code starts with "user:". */
+  custom: boolean;
+  /** ISO weekdays (1 = Monday … 7 = Sunday) the plan is read on; null means every day. */
+  weekdays: number[] | null;
+}
+
+/** One reading of a custom plan as the builder sends it (F4.2). */
+export interface PlanReadingInput {
+  book_id: number;
+  chapter_start: number;
+  verse_start: number | null;
+  chapter_end: number;
+  verse_end: number | null;
+  label: string;
+}
+
+/** A day of a plan pinned to a calendar date (F4.2). */
+export interface ScheduleEntry {
+  day_number: number;
+  date: string;
 }
 
 export interface ReadingPlanReading {
@@ -303,6 +323,9 @@ export interface ReadingPlanProgress {
   streak: number;
   completed_days: number[];
   created_at: string;
+  /** Days pinned to a date: a weekday plan's calendar or a spread's
+   * re-dated days. A day not listed falls on start_date + (day - 1). */
+  schedule: ScheduleEntry[];
 }
 
 export interface BackupInfo {

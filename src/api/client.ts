@@ -28,6 +28,8 @@ import type {
   ReadingPlan,
   ReadingPlanDay,
   ReadingPlanProgress,
+  PlanReadingInput,
+  ScheduleEntry,
   HarmonySection,
   RedLetterRange,
   BackupInfo,
@@ -400,6 +402,21 @@ export const api = {
   /** Catch-up (F3.3): mark or unmark several days in one call. */
   setReadingPlanDays: (planCode: string, dayNumbers: number[], done: boolean) =>
     invoke<ReadingPlanProgress>("set_reading_plan_days", { planCode, dayNumbers, done }),
+  // Custom plans (F4.2). `days[i]` holds day i + 1's readings.
+  createUserReadingPlan: (input: { title: string; description?: string; weekdays: number[] | null; days: PlanReadingInput[][] }) =>
+    invoke<ReadingPlan>("create_user_reading_plan", { title: input.title, description: input.description ?? null, weekdays: input.weekdays, days: input.days }),
+  updateUserReadingPlan: (planCode: string, input: { title: string; description?: string; weekdays: number[] | null; days: PlanReadingInput[][] }) =>
+    invoke<ReadingPlan>("update_user_reading_plan", { planCode, title: input.title, description: input.description ?? null, weekdays: input.weekdays, days: input.days }),
+  deleteUserReadingPlan: (planCode: string) => invoke<boolean>("delete_user_reading_plan", { planCode }),
+  /** Catch-up (F4.2): put `dayNumber` on `date` (or the next reading day) and move the start to match. */
+  reanchorReadingPlan: (planCode: string, dayNumber: number, date: string) =>
+    invoke<ReadingPlanProgress>("reanchor_reading_plan", { planCode, dayNumber, date }),
+  /** Catch-up (F4.2): spread the overdue and coming week's days over the next `window` days. */
+  spreadReadingPlan: (planCode: string, today: string, window = 7) =>
+    invoke<ReadingPlanProgress>("spread_reading_plan", { planCode, today, window }),
+  /** Replaces a plan's schedule rows (the undo of a spread). */
+  setReadingPlanSchedule: (planCode: string, entries: ScheduleEntry[]) =>
+    invoke<ReadingPlanProgress>("set_reading_plan_schedule", { planCode, entries }),
 
   listHarmonySections: () => invoke<HarmonySection[]>("list_harmony_sections"),
 
