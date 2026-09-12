@@ -27,6 +27,7 @@ import { useReadingTypography } from "../../state/uiStore";
 import { formatChapterRef, toPassageRef } from "../../lib/passage";
 import { refAttrs } from "../../lib/refAttr";
 import { ReadingRefs } from "../plans/ReadingPlansView";
+import { CatchUpBanner } from "../plans/CatchUpBanner";
 import { calendarDay, isFinished } from "../plans/planSchedule";
 import { longestUnprayed, timeAgo } from "../prayer/prayerListTime";
 
@@ -128,6 +129,9 @@ function PlanToday({ progress }: { progress: ReadingPlanProgress }) {
         </div>
         <div className={cx("mt-0.5 text-sm", done && "text-ink-3 line-through decoration-line-2")}>
           <ReadingRefs readings={day.readings} books={books} onNavigate={(bookId, chapter, verse, e) => openPassage({ bookId, chapter, verse }, { target: targetFor(e) })} />
+        </div>
+        <div className="mt-2 empty:hidden">
+          <CatchUpBanner plan={plan} progress={progress} compact />
         </div>
       </div>
     </li>

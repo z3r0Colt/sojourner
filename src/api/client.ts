@@ -393,6 +393,12 @@ export const api = {
     invoke<ReadingPlanProgress>("mark_reading_plan_day", { planCode, dayNumber }),
   unmarkReadingPlanDay: (planCode: string, dayNumber: number) =>
     invoke<ReadingPlanProgress>("unmark_reading_plan_day", { planCode, dayNumber }),
+  /** Catch-up (F3.3): move the start date forward by `days` (negative moves it back). */
+  shiftReadingPlanStart: (planCode: string, days: number) =>
+    invoke<ReadingPlanProgress>("shift_reading_plan_start", { planCode, days }),
+  /** Catch-up (F3.3): mark or unmark several days in one call. */
+  setReadingPlanDays: (planCode: string, dayNumbers: number[], done: boolean) =>
+    invoke<ReadingPlanProgress>("set_reading_plan_days", { planCode, dayNumbers, done }),
 
   listHarmonySections: () => invoke<HarmonySection[]>("list_harmony_sections"),
 

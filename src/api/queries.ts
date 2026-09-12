@@ -938,6 +938,24 @@ export function useUnmarkReadingPlanDay() {
   });
 }
 
+/** Catch-up (F3.3): "Shift my schedule". */
+export function useShiftReadingPlanStart() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { planCode: string; days: number }) => api.shiftReadingPlanStart(input.planCode, input.days),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["readingPlanProgress"] }),
+  });
+}
+
+/** Catch-up (F3.3): "Skip to today" and its undo. */
+export function useSetReadingPlanDays() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { planCode: string; dayNumbers: number[]; done: boolean }) => api.setReadingPlanDays(input.planCode, input.dayNumbers, input.done),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["readingPlanProgress"] }),
+  });
+}
+
 export function useRecentSearches() {
   return useQuery({ queryKey: ["recentSearches"], queryFn: () => api.listRecentSearches() });
 }

@@ -188,6 +188,8 @@ pub fn run() {
             commands::reading_plans::abandon_reading_plan,
             commands::reading_plans::mark_reading_plan_day,
             commands::reading_plans::unmark_reading_plan_day,
+            commands::reading_plans::shift_reading_plan_start,
+            commands::reading_plans::set_reading_plan_days,
             commands::harmony::list_harmony_sections,
             commands::red_letter::get_red_letter_ranges,
             commands::search::search,

@@ -51,3 +51,17 @@ pub fn unmark_reading_plan_day(db: State<DbState>, plan_code: String, day_number
     let conn = db.0.lock().unwrap();
     Ok(queries::unmark_day(&conn, &plan_code, day_number)?)
 }
+
+/// Catch-up (F3.3): move the start date forward by `days`.
+#[tauri::command]
+pub fn shift_reading_plan_start(db: State<DbState>, plan_code: String, days: i64) -> AppResult<ReadingPlanProgress> {
+    let conn = db.0.lock().unwrap();
+    Ok(queries::shift_start(&conn, &plan_code, days)?)
+}
+
+/// Catch-up (F3.3): mark or unmark several days at once.
+#[tauri::command]
+pub fn set_reading_plan_days(db: State<DbState>, plan_code: String, day_numbers: Vec<i64>, done: bool) -> AppResult<ReadingPlanProgress> {
+    let conn = db.0.lock().unwrap();
+    Ok(queries::set_days(&conn, &plan_code, &day_numbers, done)?)
+}
