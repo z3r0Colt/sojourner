@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { Bookmark, BookmarkCheck, Columns2, Languages, Maximize2, MoreHorizontal, Paperclip, Printer, SlidersHorizontal, Sparkles, Square, StickyNote, TextSearch, Type, Volume2 } from "lucide-react";
-import { useReadingTypography, useUiStore } from "../../state/uiStore";
+import { THEME_OPTIONS, useReadingTypography, useUiStore } from "../../state/uiStore";
 import { resolveBiblePane, useWorkspaceStore } from "../../state/workspaceStore";
 import {
   useBooks,
@@ -654,16 +654,19 @@ export function ReadingPane() {
           <Button size="sm" active={readingFont === "sans"} onClick={() => setReadingFont("sans")} className="flex-1">
             Sans-serif
           </Button>
+          <Button size="sm" active={readingFont === "dyslexic"} onClick={() => setReadingFont("dyslexic")} className="flex-1" title="OpenDyslexic, a font shaped to keep letters from flipping or swapping">
+            Dyslexia-friendly
+          </Button>
         </div>
       </div>
       <label className="block">
         <span className="mb-1 block text-xs font-medium text-ink-3">Theme</span>
         <select value={theme} onChange={(e) => setTheme(e.target.value as typeof theme)} className={cx(selectSmClass, "w-full")}>
-          <option value="system">Match Windows</option>
-          <option value="light">Light</option>
-          <option value="sepia">Sepia</option>
-          <option value="dark">Dark</option>
-          <option value="oled">True black</option>
+          {THEME_OPTIONS.map((t) => (
+            <option key={t.value} value={t.value}>
+              {t.label}
+            </option>
+          ))}
         </select>
       </label>
     </div>

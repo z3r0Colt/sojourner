@@ -54,7 +54,7 @@ import {
   type LinkGroup,
   type Pane,
 } from "../../state/workspaceStore";
-import { useUiStore, type LineSpacing, type ReadingFont, type Theme } from "../../state/uiStore";
+import { READING_FONT_OPTIONS, THEME_OPTIONS, useUiStore, type LineSpacing } from "../../state/uiStore";
 import { PANE_KINDS, paneTitle, type TitleContext } from "../../workspace/paneKinds";
 import { openContent, openPassage } from "../../workspace/openContent";
 import { LAYOUTS } from "../../workspace/layouts";
@@ -294,18 +294,8 @@ export function workspaceCommands(ctx: CommandContext): Command[] {
 // ---------------------------------------------------------------------------
 // App actions (F3.2): everything that is not about panes.
 
-const THEMES: { value: Theme; label: string }[] = [
-  { value: "system", label: "Match Windows" },
-  { value: "light", label: "Light" },
-  { value: "sepia", label: "Sepia" },
-  { value: "dark", label: "Dark" },
-  { value: "oled", label: "True black (OLED)" },
-];
-
-const FONTS: { value: ReadingFont; label: string }[] = [
-  { value: "serif", label: "Serif" },
-  { value: "sans", label: "Sans-serif" },
-];
+const THEMES = THEME_OPTIONS;
+const FONTS = READING_FONT_OPTIONS;
 
 const SPACINGS: { value: LineSpacing; label: string }[] = [
   { value: "compact", label: "Compact" },
@@ -486,13 +476,24 @@ export function viewCommands(): Command[] {
       group: "Theme",
       label: `Theme: ${t.label}`,
       icon: Palette,
-      keywords: "appearance colors light dark mode",
+      keywords: `appearance colors light dark mode ${t.value.startsWith("contrast") ? "accessibility high contrast" : ""}`,
       run: () => {
         useUiStore.getState().setTheme(t.value);
         toast.info(`Theme: ${t.label}`);
       },
     });
   }
+  out.push({
+    id: "toggle-reduce-motion",
+    group,
+    label: ui.reduceMotion ? "Reduce motion: off (allow transitions)" : "Reduce motion: on (no transitions)",
+    icon: ui.reduceMotion ? Eye : EyeOff,
+    keywords: "accessibility animation transitions motion",
+    run: () => {
+      useUiStore.getState().setReduceMotion(!ui.reduceMotion);
+      toast.info(ui.reduceMotion ? "Motion restored" : "Reduced motion");
+    },
+  });
   return out;
 }
 

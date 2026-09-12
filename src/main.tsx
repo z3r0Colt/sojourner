@@ -32,6 +32,11 @@ function resolveTheme(theme: Theme): Exclude<Theme, "system"> {
 function ThemedRoot() {
   const theme = useUiStore((s) => s.theme);
   const readingFont = useUiStore((s) => s.readingFont);
+  const reduceMotion = useUiStore((s) => s.reduceMotion);
+  React.useEffect(() => {
+    // The OS setting works through its media query; the switch forces it.
+    document.documentElement.setAttribute("data-reduce-motion", reduceMotion ? "on" : "off");
+  }, [reduceMotion]);
   React.useEffect(() => {
     const root = document.documentElement;
     root.setAttribute("data-theme", resolveTheme(theme));

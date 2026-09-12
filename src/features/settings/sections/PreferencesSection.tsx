@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useReadingTypography, useUiStore } from "../../../state/uiStore";
+import { READING_FONT_OPTIONS, THEME_OPTIONS, useReadingTypography, useUiStore } from "../../../state/uiStore";
 import { resolveBiblePane, useWorkspaceStore } from "../../../state/workspaceStore";
 import { Button } from "../../../components/ui/Button";
 import { toast } from "../../../components/ui/toast";
@@ -164,6 +164,8 @@ export function PreferencesSection() {
     toggleShowNoteSymbols,
     showMorphology,
     toggleShowMorphology,
+    reduceMotion,
+    setReduceMotion,
   } = useUiStore();
   const typography = useReadingTypography();
 
@@ -184,13 +186,13 @@ export function PreferencesSection() {
         <Row label="Open on" hint="What the app shows when it starts. Today gathers where you left off, today's plan, and what is due.">
           <LandingRow />
         </Row>
-        <Row label="Theme">
-          <select value={theme} onChange={(e) => setTheme(e.target.value as typeof theme)} className={selectClass}>
-            <option value="system">Match Windows</option>
-            <option value="light">Light</option>
-            <option value="sepia">Sepia</option>
-            <option value="dark">Dark</option>
-            <option value="oled">True black (OLED)</option>
+        <Row label="Theme" hint="The two high-contrast themes use pure black and white with strong borders.">
+          <select value={theme} onChange={(e) => setTheme(e.target.value as typeof theme)} className={selectClass} aria-label="Theme">
+            {THEME_OPTIONS.map((t) => (
+              <option key={t.value} value={t.value}>
+                {t.label}
+              </option>
+            ))}
           </select>
         </Row>
         <Row label="Text size" hint={`${fontSize}px`}>
@@ -205,14 +207,13 @@ export function PreferencesSection() {
             ))}
           </div>
         </Row>
-        <Row label="Font">
-          <div className="flex w-64 gap-1">
-            <Button size="sm" active={readingFont === "serif"} onClick={() => setReadingFont("serif")} className="flex-1 font-serif">
-              Serif
-            </Button>
-            <Button size="sm" active={readingFont === "sans"} onClick={() => setReadingFont("sans")} className="flex-1">
-              Sans-serif
-            </Button>
+        <Row label="Font" hint="Dyslexia-friendly is OpenDyslexic, weighted at the bottom so letters are harder to flip or swap.">
+          <div className="flex w-80 gap-1" role="group" aria-label="Reading font">
+            {READING_FONT_OPTIONS.map((f) => (
+              <Button key={f.value} size="sm" active={readingFont === f.value} onClick={() => setReadingFont(f.value)} className={cx("flex-1", f.value === "serif" && "font-serif")}>
+                {f.label}
+              </Button>
+            ))}
           </div>
         </Row>
         <Row label="Preview">
@@ -221,6 +222,20 @@ export function PreferencesSection() {
             For God so loved the world, that he gave his only begotten Son, that whosoever believeth in him should not perish, but have everlasting life.
           </p>
         </Row>
+      </div>
+
+      <h2 className="mb-1 mt-8 text-lg font-semibold text-ink">Accessibility</h2>
+      <p className="mb-2 text-sm text-ink-3">The high-contrast themes and the dyslexia-friendly font are in the lists above. Windows' own "Reduce motion" setting is honored automatically; this switch forces it.</p>
+      <div className="divide-y divide-line">
+        <Toggle
+          label="Reduce motion"
+          hint="No transitions or sliding toasts; scrolling jumps instead of gliding"
+          checked={reduceMotion}
+          onChange={() => {
+            setReduceMotion(!reduceMotion);
+            toast.success(reduceMotion ? "Motion restored" : "Reduced motion");
+          }}
+        />
       </div>
 
       <h2 className="mb-1 mt-8 text-lg font-semibold text-ink">Bible text</h2>

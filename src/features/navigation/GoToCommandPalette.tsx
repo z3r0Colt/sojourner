@@ -82,6 +82,7 @@ export function GoToCommandPalette({
   const showVerseNumbers = useUiStore((s) => s.showVerseNumbers);
   const showHighlights = useUiStore((s) => s.showHighlights);
   const showNoteSymbols = useUiStore((s) => s.showNoteSymbols);
+  const reduceMotion = useUiStore((s) => s.reduceMotion);
   const { data: plans } = useReadingPlans();
   const { data: planProgress } = useReadingPlanProgressList();
   const queryClient = useQueryClient();
@@ -89,7 +90,7 @@ export function GoToCommandPalette({
   const commands = useMemo(
     () => allCommands({ titles, savedWorkspaces, commentarySources: titles.commentarySources, shell, plans, planProgress, queryClient }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [titles, savedWorkspaces, shell, plans, planProgress, panes, focusedPaneId, maximizedPaneId, layout, focusMode, theme, readingFont, lineSpacing, showVerseNumbers, showHighlights, showNoteSymbols],
+    [titles, savedWorkspaces, shell, plans, planProgress, panes, focusedPaneId, maximizedPaneId, layout, focusMode, theme, readingFont, lineSpacing, showVerseNumbers, showHighlights, showNoteSymbols, reduceMotion],
   );
   function commandCandidate(c: Command): Candidate {
     return {
