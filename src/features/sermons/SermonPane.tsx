@@ -1,15 +1,19 @@
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 import type { Editor } from "@tiptap/react";
-import { Link2, Mic } from "lucide-react";
+import { Link2, Mic, PanelRight } from "lucide-react";
 import { usePassagesIn } from "../../api/queries";
 import { useReaderTranslationId, useWorkspaceStore } from "../../state/workspaceStore";
 import { useUiStore } from "../../state/uiStore";
 import { usePane, usePaneParams } from "../../workspace/PaneContext";
 import { EmptyState, LoadingState } from "../../components/ui/EmptyState";
+import { IconButton } from "../../components/ui/Button";
+import { Popover } from "../../components/ui/Popover";
 import { cx } from "../../components/ui/classes";
 import { RichTextEditor, type RichTextEditorHandle } from "../notes/RichTextEditor";
 import { SermonEditorProvider } from "./editor/context";
 import { SermonHeader } from "./SermonHeader";
+import { SermonSidePanel, type SidePanelTab } from "./SermonSidePanel";
+import { useSpeakingRateInfo } from "./sermonStats";
 import { useSendToSermonRequest } from "./sendToSermon";
 import { openSourceRef } from "./sourceIdentity";
 import { useSermonDraft } from "./sermonDraft";
@@ -39,7 +43,14 @@ export function SermonPane() {
   const followsCursor = useUiStore((s) => s.sermonFollowsCursor);
   const setFollowsCursor = useUiStore((s) => s.setSermonFollowsCursor);
   const editorRef = useRef<RichTextEditorHandle>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const lastPublishedRef = useRef<string | null>(null);
+  const [panelTab, setPanelTab] = useState<SidePanelTab>("outline");
+  const [activeSection, setActiveSection] = useState<number | null>(null);
+  const rate = useSpeakingRateInfo();
+  // Above 720 px the panel sits beside the manuscript; below, it is a
+  // popover behind a header button, so a narrow column keeps its text.
+  const panelBeside = paneWidth >= 720;
 
   const translationId = draft?.translationId ?? readerTranslationId;
   // One query for every passage block in the document, whatever their number
@@ -72,6 +83,19 @@ export function SermonPane() {
    * an incoming passage -- the pane does not follow, so there is no loop. */
   const onSelectionChange = useCallback(
     (editor: Editor) => {
+      // Which section the cursor is in, for the Outline panel's mark: the
+      // number of headings at or before it.
+      let headings = 0;
+      const cursor = editor.state.selection.from;
+      let sectionIndex = 0;
+      editor.state.doc.descendants((node, pos) => {
+        if (node.type.name !== "heading") return true;
+        headings += 1;
+        if (pos <= cursor) sectionIndex = headings;
+        return false;
+      });
+      setActiveSection(sectionIndex);
+
       if (!followsCursor || linkGroup == null) return;
       const ref: PassageRef | null = passageAtCursor(editor);
       const key = ref ? refKey(ref) : null;
@@ -100,10 +124,42 @@ export function SermonPane() {
     );
   }
 
+  /** Scrolls the manuscript to a heading, by its index among all headings. */
+  function goToSection(index: number) {
+    const root = scrollRef.current?.querySelector(".ProseMirror");
+    const heading = root?.querySelectorAll("h2, h3")[index];
+    heading?.scrollIntoView({ block: "start", behavior: "smooth" });
+  }
+
+  const panel = (
+    <SermonSidePanel
+      body={draft.body}
+      tab={panelTab}
+      onTabChange={setPanelTab}
+      activeSectionIndex={activeSection}
+      onGoToSection={goToSection}
+      rate={rate}
+      paneId={paneId}
+    />
+  );
+
   return (
     <SermonEditorProvider value={{ translationId, passages: byKey, passagesLoading, openSource }}>
       <div className="flex h-full min-h-0 flex-col">
-        <div className="min-h-0 flex-1 overflow-y-auto">
+        {!panelBeside && (
+          <div className="flex shrink-0 items-center justify-end border-b border-line px-2 py-1">
+            <Popover
+              width="w-72"
+              trigger={({ toggle, open }) => (
+                <IconButton icon={PanelRight} label="Outline and sources" size="sm" active={open} onClick={toggle} />
+              )}
+            >
+              <div className="-m-2 h-[60vh]">{panel}</div>
+            </Popover>
+          </div>
+        )}
+        <div className="flex min-h-0 flex-1">
+        <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto">
           <div className="mx-auto w-full max-w-3xl px-6 py-5">
             <SermonHeader key={sermon.id} draft={draft} patch={patch} paneWidth={paneWidth} />
             <RichTextEditor
@@ -117,6 +173,12 @@ export function SermonPane() {
               className="border-0 bg-transparent focus-within:border-0"
             />
           </div>
+        </div>
+        {panelBeside && (
+          <aside className="w-64 shrink-0 border-l border-line bg-surface-2/40" aria-label="Outline and sources">
+            {panel}
+          </aside>
+        )}
         </div>
 
         <div className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-1 border-t border-line px-4 py-1.5 text-xs text-ink-3">
