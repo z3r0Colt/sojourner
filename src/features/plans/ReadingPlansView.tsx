@@ -22,7 +22,15 @@ import { confirmDialog } from "../../components/ui/confirm";
 import { toast } from "../../components/ui/toast";
 import { cardClass, checkboxClass, cx } from "../../components/ui/classes";
 import { CatchUpBanner } from "./CatchUpBanner";
-import { calendarDay } from "./planSchedule";
+import { effectiveDate, todaysDays } from "./planSchedule";
+
+/** "Thu, Sep 11" for a plan day's date. */
+function formatPlanDate(iso: string | null): string | null {
+  if (!iso) return null;
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
+  if (!m) return null;
+  return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+}
 
 export function ReadingRefs({
   readings,
@@ -69,9 +77,10 @@ function PlanDetail({ planCode, onBack }: { planCode: string; onBack: () => void
   const progress = progressList?.find((p) => p.plan_code === planCode);
   const completedSet = useMemo(() => new Set(progress?.completed_days ?? []), [progress]);
   const currentDay = progress ? Math.min(progress.current_day, plan?.length_days ?? progress.current_day) : null;
-  // The calendar's day (day 1 on the start date) is marked beside the
-  // checklist's; the two differ only while the reader is behind or ahead.
-  const todayDay = progress && plan ? calendarDay(progress, plan.length_days) : null;
+  // The days the calendar puts today (several after a spread) are marked
+  // beside the checklist's; they differ only while the reader is behind or
+  // ahead.
+  const todayDays = useMemo(() => (progress && plan ? todaysDays(progress, plan.length_days) : []), [progress, plan]);
 
   function toggleDay(dayNumber: number) {
     if (completedSet.has(dayNumber)) {
@@ -140,7 +149,8 @@ function PlanDetail({ planCode, onBack }: { planCode: string; onBack: () => void
         {days?.map((d) => {
           const done = completedSet.has(d.day_number);
           const isToday = currentDay === d.day_number;
-          const isCalendarToday = todayDay === d.day_number && todayDay !== currentDay;
+          const isCalendarToday = todayDays.includes(d.day_number) && d.day_number !== currentDay;
+          const date = progress ? formatPlanDate(effectiveDate(progress, d.day_number)) : null;
           return (
             <li key={d.day_number} className={cx("flex items-center gap-3 px-3 py-2 text-sm", isToday && "bg-accent-soft/60")}>
               <input
@@ -149,9 +159,9 @@ function PlanDetail({ planCode, onBack }: { planCode: string; onBack: () => void
                 checked={done}
                 onChange={() => toggleDay(d.day_number)}
                 disabled={!progress}
-                aria-label={`Day ${d.day_number} complete${isCalendarToday ? ", today's date" : ""}`}
+                aria-label={`Day ${d.day_number} complete${isCalendarToday ? ", today's date" : ""}${date ? `, ${date}` : ""}`}
               />
-              <span className={cx("w-14 shrink-0 text-xs", isToday ? "font-semibold text-accent" : "text-ink-3")} title={isCalendarToday ? "Where the calendar puts today" : undefined}>
+              <span className={cx("w-14 shrink-0 text-xs", isToday ? "font-semibold text-accent" : "text-ink-3")} title={[date, isCalendarToday ? "where the calendar puts today" : null].filter(Boolean).join(" · ") || undefined}>
                 Day {d.day_number}
                 {isCalendarToday && <span className="ml-1 text-warn" aria-hidden="true">●</span>}
               </span>

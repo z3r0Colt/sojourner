@@ -176,7 +176,11 @@ const CATEGORIES: Category[] = [
       { q: "Start a reading plan", a: "Open a plan on the Reading plans page and start it (or type “start reading plan” in the Go to box). Tick each day as you read; the next unread day is highlighted, and today's reading shows on the Today page with its checkbox." },
       {
         q: "Catch up when you fall behind",
-        a: "When the calendar has run ahead of your ticks, the plan page and the Today page say “You're N days behind” with two choices. “Shift my schedule” moves the plan's start date forward so today becomes the next unread day and nothing is skipped. “Skip to today” marks the missed days as read (confirmed first, with Undo on the toast). An amber dot on the plan page marks where the calendar puts today.",
+        a: "When the calendar has run ahead of your ticks, the plan page and the Today page say “You're N days behind” with three choices. “Shift my schedule” moves the plan so today becomes the next unread day and nothing is skipped. “Spread over 7 days” keeps your dates but re-spaces the missed days and this week's readings evenly across the coming week, so you are caught up by its end; the Today page then lists every reading due that day. “Skip to today” marks the missed days as read (confirmed first). Every choice offers Undo on its toast. An amber dot on the plan page marks the days the calendar puts today, and each day's date shows as a tooltip.",
+      },
+      {
+        q: "Build your own plan",
+        a: "“New plan” on the Reading plans page. “A book in N days” picks books (or a whole testament) and a length and divides the chapters evenly. “From a list” takes one line per day: a book, a chapter, a chapter range like Psalms 1-5, verses like John 3:16-21, or several readings separated by semicolons. Choose the days of the week you read on and the plan's dates skip the others. Your plans sit beside the built-in ones with a Custom mark, track progress and catch up the same way, and can be edited or deleted from their page (deleting asks first).",
       },
       { q: "Harmony of the Gospels", a: "The Harmony page lists the events of Christ's life in order. “Compare” shows the parallel Gospel accounts side by side." },
     ],

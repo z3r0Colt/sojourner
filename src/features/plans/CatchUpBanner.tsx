@@ -1,39 +1,61 @@
-import { CalendarClock, FastForward } from "lucide-react";
+import { CalendarClock, CalendarRange, FastForward } from "lucide-react";
 import type { ReadingPlan, ReadingPlanProgress } from "../../api/types";
-import { useSetReadingPlanDays, useShiftReadingPlanStart } from "../../api/queries";
+import { useReanchorReadingPlan, useSetReadingPlanDays, useSetReadingPlanSchedule, useSpreadReadingPlan } from "../../api/queries";
 import { Button } from "../../components/ui/Button";
 import { confirmDialog } from "../../components/ui/confirm";
 import { toast } from "../../components/ui/toast";
 import { cx } from "../../components/ui/classes";
-import { daysBehind } from "./planSchedule";
+import { localToday, overdueDays } from "./planSchedule";
+
+const SPREAD_DAYS = 7;
 
 /**
- * Reading plan catch-up (F3.3). Shown on the plan page and on Today when
- * the calendar has run ahead of the checklist: "You're 5 days behind" with
- * two ways out. Shift my schedule moves the start date forward so today
- * becomes the next unread day (nothing is skipped); Skip to today marks
- * the missed days done (confirmed, with Undo on the toast). Renders
- * nothing when the reader is caught up or ahead.
+ * Reading plan catch-up (F3.3, F4.2). Shown on the plan page and on Today
+ * when the calendar has run ahead of the checklist: "You're 5 days behind"
+ * with three ways out. Shift my schedule re-anchors the plan so the next
+ * unread day is today (nothing is skipped); Spread over 7 days re-dates
+ * the missed days plus this week's evenly across the coming week; Skip to
+ * today marks the missed days done (confirmed). Every choice offers Undo
+ * on its toast. Renders nothing when the reader is caught up or ahead.
  */
 export function CatchUpBanner({ plan, progress, compact }: { plan: ReadingPlan; progress: ReadingPlanProgress; compact?: boolean }) {
-  const shift = useShiftReadingPlanStart();
+  const reanchor = useReanchorReadingPlan();
+  const spread = useSpreadReadingPlan();
+  const setSchedule = useSetReadingPlanSchedule();
   const setDays = useSetReadingPlanDays();
-  const behind = daysBehind(progress, plan.length_days);
+  const missed = overdueDays(progress, plan.length_days);
+  const behind = missed.length;
   if (behind <= 0) return null;
   const planCode = progress.plan_code;
-  const missed = Array.from({ length: behind }, (_, i) => progress.current_day + i);
   const dayWord = behind === 1 ? "day" : "days";
-  const busy = shift.isPending || setDays.isPending;
+  const busy = reanchor.isPending || spread.isPending || setSchedule.isPending || setDays.isPending;
 
   function shiftSchedule() {
-    shift.mutate(
-      { planCode, days: behind },
+    const previousStart = progress.start_date;
+    reanchor.mutate(
+      { planCode, dayNumber: progress.current_day, date: localToday() },
       {
         onSuccess: () =>
           toast.success(`Schedule shifted ${behind} ${dayWord}: today is day ${progress.current_day}`, {
             label: "Undo",
-            onClick: () => shift.mutate({ planCode, days: -behind }, { onSuccess: () => toast.info("Schedule restored") }),
+            onClick: () => reanchor.mutate({ planCode, dayNumber: 1, date: previousStart }, { onSuccess: () => toast.info("Schedule restored") }),
           }),
+      },
+    );
+  }
+
+  function spreadOut() {
+    const previous = progress.schedule ?? [];
+    spread.mutate(
+      { planCode, today: localToday(), window: SPREAD_DAYS },
+      {
+        onSuccess: (next) => {
+          const redated = next.schedule.length - previous.length;
+          toast.success(`${behind} missed ${dayWord} spread over the next ${SPREAD_DAYS} days${redated > behind ? " with this week's readings" : ""}`, {
+            label: "Undo",
+            onClick: () => setSchedule.mutate({ planCode, entries: previous }, { onSuccess: () => toast.info("Schedule restored") }),
+          });
+        },
       },
     );
   }
@@ -70,10 +92,13 @@ export function CatchUpBanner({ plan, progress, compact }: { plan: ReadingPlan; 
         </span>
         {!compact && <span className="text-ink-3"> · next unread is day {progress.current_day}</span>}
       </span>
-      {/* The two choices wrap onto their own line in a narrow pane rather than clipping. */}
+      {/* The choices wrap onto their own line in a narrow pane rather than clipping. */}
       <span className="flex flex-wrap items-center gap-1.5">
-        <Button size="sm" icon={CalendarClock} disabled={busy} onClick={shiftSchedule} title="Move the start date forward so today becomes the next unread day; nothing is skipped">
+        <Button size="sm" icon={CalendarClock} disabled={busy} onClick={shiftSchedule} title="Move the schedule so today becomes the next unread day; nothing is skipped">
           Shift my schedule
+        </Button>
+        <Button size="sm" icon={CalendarRange} disabled={busy} onClick={spreadOut} title={`Spread the missed days and this week's readings evenly over the next ${SPREAD_DAYS} days`}>
+          Spread over {SPREAD_DAYS} days
         </Button>
         <Button size="sm" variant="ghost" icon={FastForward} disabled={busy} onClick={skipToToday} title="Mark the missed days as read and carry on from today's reading">
           Skip to today
