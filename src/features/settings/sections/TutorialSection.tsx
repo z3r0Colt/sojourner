@@ -186,6 +186,35 @@ const CATEGORIES: Category[] = [
     ],
   },
   {
+    title: "Sermons",
+    items: [
+      {
+        q: "Write the manuscript",
+        a: (
+          <>
+            A sermon is a document, not a note: <Kbd>Ctrl</Kbd>+<Kbd>Alt</Kbd>+<Kbd>1</Kbd> makes a line a point and <Kbd>Ctrl</Kbd>+<Kbd>Alt</Kbd>+<Kbd>2</Kbd> a sub-point, and the toolbar adds quotations, a rule, and underline alongside the usual bold and italic. The points you write are the outline — there is no second place to keep one.
+          </>
+        ),
+      },
+      {
+        q: "Passages are live, not pasted",
+        a: (
+          <>
+            <Kbd>Ctrl</Kbd>+<Kbd>Shift</Kbd>+<Kbd>P</Kbd> (or the book button) asks for a reference and drops a block that holds it. The words are fetched in the sermon's own translation every time it renders, so changing that translation rewrites every passage in the manuscript at once; red letters, footnotes, and hover previews all work inside a block, and one block's menu can pin it to another translation for a comparison.
+          </>
+        ),
+      },
+      {
+        q: "Blanks for the handout",
+        a: (
+          <>
+            Select a word or phrase and press <Kbd>Ctrl</Kbd>+<Kbd>Shift</Kbd>+<Kbd>B</Kbd>: it gets a dotted underline in the manuscript and prints as a rule on the fill-in handout, with an answer key available for the preacher's own copy.
+          </>
+        ),
+      },
+    ],
+  },
+  {
     title: "Settings",
     items: [
       { q: "Library", a: "Settings → Library adds or removes Bible translations and commentaries from XML files." },

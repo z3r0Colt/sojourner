@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { Check } from "lucide-react";
 import { cx } from "./classes";
 
 /** Small anchored dropdown. Closes on outside click, Escape, or when the
@@ -59,28 +60,37 @@ export function Popover({
   );
 }
 
-/** A row inside a Popover: full-width, left-aligned, hover wash. */
+/** A row inside a Popover: full-width, left-aligned, hover wash. `selected`
+ * marks the current choice in a menu that picks one of several. */
 export function PopoverItem({
   onClick,
   children,
   className,
   danger,
+  selected,
 }: {
   onClick: () => void;
   children: ReactNode;
   className?: string;
   danger?: boolean;
+  selected?: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
+      aria-checked={selected}
+      role={selected === undefined ? undefined : "menuitemradio"}
       className={cx(
         "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm",
         danger ? "text-danger hover:bg-danger-soft" : "text-ink-2 hover:bg-hover hover:text-ink",
+        selected && !danger && "font-medium text-ink",
         className,
       )}
     >
+      {selected !== undefined && (
+        <Check className={cx("h-3.5 w-3.5 shrink-0", selected ? "text-accent" : "opacity-0")} aria-hidden="true" />
+      )}
       {children}
     </button>
   );
