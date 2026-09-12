@@ -28,4 +28,15 @@ npm run tauri build
 
 Already in place: per-user install and an offline-capable WebView2 bootstrap (`tauri.conf.json`'s `bundle.windows`), `PRAGMA user_version`-based schema migrations (`src-tauri/src/db/mod.rs`), and crash logs for both backend panics and uncaught frontend errors, written to `<app data dir>/logs/` (see "Open Logs Folder" in Library settings) with no data ever leaving the device.
 
-**Portable build.** Tauri's bundler targets (`msi`, `nsis`) are both installers; there's no first-class "extract and run" target. A portable folder can still be assembled by hand from a release build: copy `src-tauri/target/release/tauri-app.exe` alongside `content/content.db` (matching the path `bundle.resources` maps it to, `content.db` next to the executable) into one folder. This hasn't been scripted or tested end-to-end on a clean Windows machine, so treat it as a starting point, not a verified release artifact.
+**Portable build.** Tauri's bundler targets (`msi`, `nsis`) are both installers; there's no first-class "extract and run" target. A portable folder is assembled by hand from a release build:
+
+```
+npm run build                                                  # the frontend into dist/
+cargo build --release --features custom-protocol --manifest-path src-tauri/Cargo.toml
+```
+
+then copy `src-tauri/target/release/tauri-app.exe` (rename it to taste) and `content/content.db` into one folder. The executable looks for `content.db` beside itself, which is where `bundle.resources` maps it in an installed copy, so the same lookup serves both.
+
+**`--features custom-protocol` is not optional.** It is what makes a built app serve the frontend from inside itself; without it the window opens on "localhost refused to connect", since the binary still expects the dev server. `tauri build` passes it for you — but only if the feature is declared in `src-tauri/Cargo.toml`, which it now is.
+
+Two things to know before handing the folder to someone else. The executable is not code-signed, so Windows SmartScreen warns on first run on each new machine ("More info" → "Run anyway"). And the app draws its window with the Microsoft Edge WebView2 runtime: Windows 11 always has it and most Windows 10 machines do, but where it is missing the app will not start, and the free Evergreen Bootstrapper (https://go.microsoft.com/fwlink/p/?LinkId=2124703) installs it. Anything written while it runs lands in `%APPDATA%\com.shadesinc.biblestudy` on *that* machine, not on the stick.
