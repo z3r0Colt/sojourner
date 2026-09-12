@@ -18,6 +18,7 @@ import {
 import { openPassage, targetFor } from "../../workspace/openContent";
 import { usePaneNavigate } from "../../workspace/PaneContext";
 import { PrayerEntryEditorModal } from "./PrayerEntryEditorModal";
+import { useNewPrayerEntryRequest } from "./prayerActions";
 import { TrashLink } from "../settings/sections/TrashSection";
 import { TagRow, TagFilterBar } from "../../components/TagRow";
 import { Button } from "../../components/ui/Button";
@@ -50,6 +51,8 @@ export function PrayerJournalView() {
   const navigate = usePaneNavigate();
 
   const [editing, setEditing] = useState<PrayerEntry | null | "new">(null);
+  // "New prayer entry" from the Go to palette (F3.2).
+  useNewPrayerEntryRequest(() => setEditing("new"));
   const [query, setQuery] = useState("");
   const [debounced, setDebounced] = useState("");
   const [activeTag, setActiveTag] = useState<string | null>(null);

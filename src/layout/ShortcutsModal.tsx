@@ -6,7 +6,7 @@ const GROUPS: { title: string; rows: { keys: string[]; label: string }[] }[] = [
     title: "Navigate",
     rows: [
       { keys: ["Ctrl", "K"], label: "Go to a reference, Strong's number, or term" },
-      { keys: ["Ctrl", "K", ">"], label: "List commands in the Go to box: open in a new pane, change a pane, link groups, layouts, workspaces" },
+      { keys: ["Ctrl", "K", ">"], label: "List every command in the Go to box: panes, layouts, workspaces, paragraph mode, theme, text size, start a reading plan, new prayer entry, back up now, Settings sections" },
       { keys: ["Ctrl", "F"], label: "Search everything" },
       { keys: ["Ctrl", "G"], label: "Find in the chapter you are reading (Enter next match, Shift+Enter previous, Esc closes)" },
       { keys: ["Ctrl", "["], label: "Previous chapter in the pane you are reading" },
