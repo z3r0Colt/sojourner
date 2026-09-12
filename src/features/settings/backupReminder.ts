@@ -17,6 +17,16 @@ export const BACKUP_SNOOZE_SETTING = "backup_snooze_until";
 export const BACKUP_REMINDER_DAYS = 30;
 const SNOOZE_DAYS = 7;
 
+// Every backup preference's key lives here, so the automatic backup
+// (automaticBackup.ts, which reads this module's own helpers) and the
+// reminder agree about them without importing each other in a circle.
+export const AUTO_BACKUP_SETTING = "auto_backup_enabled";
+export const AUTO_BACKUP_DAYS_SETTING = "auto_backup_days";
+/** On by default: the reader who most needs this is the one who would never
+ * go and turn it on. */
+export const AUTO_BACKUP_DEFAULT = true;
+export const AUTO_BACKUP_DAYS_DEFAULT = 7;
+
 /** True when `stats` holds anything a reader would miss -- a preacher's
  * sermons and illustrations included, since a pastor whose work is all
  * manuscripts was otherwise never told he had no backup. */
@@ -77,10 +87,14 @@ export function useBackupReminder() {
   const { data: backups } = useBackups();
   const { data: stats } = useStats();
   const [snoozeUntil, setSnoozeUntil, { isLoaded }] = useSetting<string | null>(BACKUP_SNOOZE_SETTING, null);
+  // With automatic backups on, there is nothing to prompt for: one is either
+  // recent or about to be taken. The nag is for when nothing else will.
+  const [autoBackup, , autoMeta] = useSetting<boolean>(AUTO_BACKUP_SETTING, AUTO_BACKUP_DEFAULT);
   const qc = useQueryClient();
 
   useEffect(() => {
-    if (shownThisLaunch || !backups || !stats || !isLoaded) return;
+    if (shownThisLaunch || !backups || !stats || !isLoaded || !autoMeta.isLoaded) return;
+    if (autoBackup) return;
     shownThisLaunch = true;
     const newest = backups[0]?.created_at ?? null;
     const message = backupReminderMessage(newest, stats, snoozeUntil);

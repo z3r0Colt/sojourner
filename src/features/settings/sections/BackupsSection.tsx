@@ -7,7 +7,15 @@ import { useBackups, useCreateBackup, useBackupSyncFolder, useSetBackupSyncFolde
 import { Button } from "../../../components/ui/Button";
 import { confirmDialog } from "../../../components/ui/confirm";
 import { toast } from "../../../components/ui/toast";
+import { cx, inputSmClass } from "../../../components/ui/classes";
 import { EmptyState } from "../../../components/ui/EmptyState";
+import { useSetting } from "../../../hooks/useSetting";
+import {
+  AUTO_BACKUP_DAYS_DEFAULT,
+  AUTO_BACKUP_DAYS_SETTING,
+  AUTO_BACKUP_DEFAULT,
+  AUTO_BACKUP_SETTING,
+} from "../backupReminder";
 import { TrashSection } from "./TrashSection";
 import { StatsSection } from "./StatsSection";
 
@@ -18,6 +26,8 @@ export function BackupsSection() {
   const setBackupSyncFolder = useSetBackupSyncFolder();
   const [checkResult, setCheckResult] = useState<string[] | null>(null);
   const [checking, setChecking] = useState(false);
+  const [autoBackup, setAutoBackup] = useSetting<boolean>(AUTO_BACKUP_SETTING, AUTO_BACKUP_DEFAULT);
+  const [autoBackupDays, setAutoBackupDays] = useSetting<number>(AUTO_BACKUP_DAYS_SETTING, AUTO_BACKUP_DAYS_DEFAULT);
 
   async function handleExport() {
     const destPath = await save({
@@ -105,6 +115,35 @@ export function BackupsSection() {
         </p>
       )}
 
+      <div className="mb-3 rounded-lg border border-line bg-surface p-3">
+        <label className="flex flex-wrap items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={autoBackup}
+            onChange={(e) => setAutoBackup(e.target.checked)}
+            className="accent-accent"
+          />
+          <span className="font-medium text-ink">Back up automatically</span>
+          <span className="text-ink-3">every</span>
+          <input
+            type="number"
+            min={1}
+            max={90}
+            value={autoBackupDays}
+            onChange={(e) => setAutoBackupDays(Math.min(90, Math.max(1, Number(e.target.value) || 1)))}
+            disabled={!autoBackup}
+            aria-label="Days between automatic backups"
+            className={cx(inputSmClass, "w-16")}
+          />
+          <span className="text-ink-3">{autoBackupDays === 1 ? "day" : "days"}</span>
+        </label>
+        <p className="mt-2 text-xs text-ink-3">
+          {autoBackup
+            ? "A few seconds after the app opens, if the newest backup is older than that, one is taken quietly. Turn this off and you will be reminded every thirty days instead."
+            : "Nothing is backed up unless you press the button. A reminder appears once a month."}
+        </p>
+      </div>
+
       <div className="mb-6 rounded-lg border border-line bg-surface p-3">
         <div className="flex flex-wrap items-center gap-2 text-sm">
           <span className="font-medium text-ink">Also copy backups to</span>
@@ -131,7 +170,17 @@ export function BackupsSection() {
       </div>
 
       <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-3">Recent backups</h3>
-      {(!backups || backups.length === 0) && <EmptyState compact title="No backups yet" description="Backups are also made automatically before an import or restore." />}
+      {(!backups || backups.length === 0) && (
+        <EmptyState
+          compact
+          title="No backups yet"
+          description={
+            autoBackup
+              ? "One is taken shortly after the app opens, and always before an import or restore."
+              : "Backups are made automatically before an import or restore, and otherwise only when you ask."
+          }
+        />
+      )}
       <ul className="space-y-1.5">
         {backups?.map((b) => (
           <li key={b.file_name} className="flex items-center justify-between gap-3 rounded-lg border border-line bg-surface px-3 py-2 text-sm">
