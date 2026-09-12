@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useSermon, useUpdateSermon } from "../../api/queries";
 import { useNoteRefExtractor } from "../../lib/noteLinks";
 import { derivePassages, passageBlocks, sourceBlocks } from "./editor/documentModel";
-import type { PassageRef, Sermon, SermonInput } from "../../api/types";
+import type { PassageRef, Sermon, SermonInput, SermonStatus } from "../../api/types";
 
 /**
  * The sermon a pane is editing, and the autosave behind it.
@@ -24,6 +24,7 @@ export interface SermonDraft {
   title: string;
   bigIdea: string;
   body: string;
+  status: SermonStatus;
   preachDate: string | null;
   seriesId: number | null;
   seriesOrder: number | null;
@@ -42,6 +43,7 @@ function draftOf(sermon: Sermon): SermonDraft {
     title: sermon.title,
     bigIdea: sermon.big_idea ?? "",
     body: sermon.body,
+    status: sermon.status,
     preachDate: sermon.preach_date,
     seriesId: sermon.series_id,
     seriesOrder: sermon.series_order,
@@ -122,6 +124,7 @@ export function useSermonDraft(sermonId: number): SermonDraftHandle {
       title: current.title.trim() || "Untitled sermon",
       big_idea: current.bigIdea.trim() || null,
       body: current.body,
+      status: current.status,
       preach_date: current.preachDate,
       series_id: current.seriesId,
       series_order: current.seriesOrder,
