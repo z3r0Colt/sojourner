@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { api } from "./client";
-import type { Verse, Passage, PassageRef, PrayerEntryMode, MemoryMode, TrashKind, NoteRefInput } from "./types";
+import type { Verse, Passage, PassageRef, PrayerEntryMode, MemoryMode, TrashKind, NoteRefInput, PlanReadingInput, ScheduleEntry } from "./types";
 import { toast } from "../components/ui/toast";
 import { useReaderTranslationId } from "../state/workspaceStore";
 import { refKey } from "../lib/passage";
@@ -952,6 +952,73 @@ export function useSetReadingPlanDays() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: { planCode: string; dayNumbers: number[]; done: boolean }) => api.setReadingPlanDays(input.planCode, input.dayNumbers, input.done),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["readingPlanProgress"] }),
+  });
+}
+
+// Custom plans (F4.2)
+
+export interface UserPlanInput {
+  title: string;
+  description?: string;
+  weekdays: number[] | null;
+  days: PlanReadingInput[][];
+}
+
+export function useCreateUserReadingPlan() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: UserPlanInput) => api.createUserReadingPlan(input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["readingPlans"] }),
+  });
+}
+
+export function useUpdateUserReadingPlan() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { planCode: string } & UserPlanInput) => api.updateUserReadingPlan(input.planCode, input),
+    onSuccess: (_plan, input) => {
+      qc.invalidateQueries({ queryKey: ["readingPlans"] });
+      qc.invalidateQueries({ queryKey: ["readingPlanDays", input.planCode] });
+      qc.invalidateQueries({ queryKey: ["readingPlanProgress"] });
+    },
+  });
+}
+
+export function useDeleteUserReadingPlan() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: api.deleteUserReadingPlan,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["readingPlans"] });
+      qc.invalidateQueries({ queryKey: ["readingPlanProgress"] });
+    },
+  });
+}
+
+/** Catch-up (F4.2): "Shift my schedule" for every kind of plan. */
+export function useReanchorReadingPlan() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { planCode: string; dayNumber: number; date: string }) => api.reanchorReadingPlan(input.planCode, input.dayNumber, input.date),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["readingPlanProgress"] }),
+  });
+}
+
+/** Catch-up (F4.2): "Spread over seven days". */
+export function useSpreadReadingPlan() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { planCode: string; today: string; window?: number }) => api.spreadReadingPlan(input.planCode, input.today, input.window),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["readingPlanProgress"] }),
+  });
+}
+
+/** The undo of a spread: puts the captured schedule rows back. */
+export function useSetReadingPlanSchedule() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { planCode: string; entries: ScheduleEntry[] }) => api.setReadingPlanSchedule(input.planCode, input.entries),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["readingPlanProgress"] }),
   });
 }
