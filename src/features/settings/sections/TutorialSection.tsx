@@ -253,6 +253,18 @@ const CATEGORIES: Category[] = [
         a: "From two timed runs on, the app works out your words a minute over the last ten (preachings counted twice) and quotes every sermon's length at that rate, saying so: “about 31 min at your measured 122 wpm”. Settings → Reading → Speaking rate shows what it has measured and the rate it assumes until then.",
       },
       {
+        q: "Send the study into the sermon",
+        a: "Everywhere you read — a verse, a commentary entry, a confession section, a cross reference, a Strong's or dictionary entry, a selection in a book — there is a microphone button. It drops what you are reading into the open sermon: Scripture as a live passage block, everything else as a citation with its source line. The citation remembers where it came from, so “Open source” on it reopens that entry in a pane beside the manuscript, and the side panel's Sources tab is the sermon's bibliography, written without you.",
+      },
+      {
+        q: "The manuscript drives the panes beside it",
+        a: "Put the sermon pane in a link group (the letter in its header) and it leads that group: the passage under your cursor turns the Bible, the commentary, and the cross references beside it, while a verse clicked there never moves the manuscript. “Follow the cursor” in the footer turns it off. The Sermon prep workspace sets this up for you: Bible, Matthew Henry, Sermons, and Mine in a two-by-two, all in group A.",
+      },
+      {
+        q: "The prep track",
+        a: "Six stages across the top of every sermon — Text, Study, Outline, Manuscript, Rehearsed, Preached — that move themselves as the evidence appears: a text set, two sources sent, two points written, the words reaching 60% of your target, a rehearsal timed, a preaching logged. A line under the track says what the next stage is waiting for. Clicking a stage sets it by hand, including backwards, and that sticks until something new happens.",
+      },
+      {
         q: "Blanks for the handout",
         a: (
           <>

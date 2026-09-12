@@ -62,12 +62,15 @@ export const PRESET_WORKSPACES: readonly SavedWorkspace[] = [
   },
   {
     name: "Sermon prep",
-    description: "Bible, Matthew Henry, Confessions, and Mine (your notes on the chapter).",
+    description: "Bible, Matthew Henry, the manuscript, and Mine -- all in group A, so the sermon leads the study panes.",
     layout: "two-by-two",
     panes: [
       { kind: "bible", params: {}, linkGroup: A, width: 1000 },
       { kind: "commentary", params: {}, linkGroup: A, width: 700, sourceCode: "mhc" },
-      { kind: "confession-for-passage", params: {}, linkGroup: A, width: 420 },
+      // The sermon pane leads this group: the passage under the writer's
+      // cursor turns the Bible and the commentary (SB1.1, Q9). Confessions
+      // stay one click away on the Add pane strip.
+      { kind: "sermons", params: {}, linkGroup: A, width: 700 },
       { kind: "mine", params: {}, linkGroup: A, width: 420 },
     ],
   },
