@@ -16,6 +16,10 @@ export const THEME_OPTIONS: { value: Theme; label: string }[] = [
   { value: "contrast-dark", label: "High contrast, dark" },
 ];
 
+/** "app" keeps each theme's own accent (the default, decided); "windows"
+ * follows the system accent color, contrast-corrected (F3.8). */
+export type AccentSource = "app" | "windows";
+
 export const READING_FONT_OPTIONS: { value: ReadingFont; label: string }[] = [
   { value: "serif", label: "Serif" },
   { value: "sans", label: "Sans-serif" },
@@ -47,11 +51,13 @@ interface UiState {
   /** Forces reduced motion (no transitions, no toast slide) regardless of
    * the OS setting, which applies on its own (F3.6). */
   reduceMotion: boolean;
+  accentSource: AccentSource;
   /** F11: chrome hidden, the focused pane maximized (see workspaceStore). */
   distractionFreeMode: boolean;
   sidebarCollapsed: boolean;
   setTheme: (t: Theme) => void;
   setReduceMotion: (on: boolean) => void;
+  setAccentSource: (s: AccentSource) => void;
   setFontSize: (n: number) => void;
   setLineSpacing: (s: LineSpacing) => void;
   setReadingFont: (f: ReadingFont) => void;
@@ -97,6 +103,7 @@ export const useUiStore = create<UiState>((set) => ({
   copyFormat: stored.copyFormat ?? "text-ref",
   copyIncludeTranslation: stored.copyIncludeTranslation ?? false,
   reduceMotion: stored.reduceMotion ?? false,
+  accentSource: stored.accentSource ?? "app",
   distractionFreeMode: false,
   sidebarCollapsed: stored.sidebarCollapsed ?? false,
 
@@ -107,6 +114,10 @@ export const useUiStore = create<UiState>((set) => ({
   setReduceMotion: (reduceMotion) => {
     persist({ reduceMotion });
     set({ reduceMotion });
+  },
+  setAccentSource: (accentSource) => {
+    persist({ accentSource });
+    set({ accentSource });
   },
   setFontSize: (fontSize) => {
     persist({ fontSize });

@@ -8,6 +8,8 @@ import { installCrashLogging } from "./lib/crashLog";
 import { Toaster } from "./components/ui/Toaster";
 import { ConfirmHost } from "./components/ui/ConfirmHost";
 import { toast } from "./components/ui/toast";
+import { api } from "./api/client";
+import { applyAccent } from "./lib/accent";
 import "./styles.css";
 
 installCrashLogging();
@@ -50,6 +52,28 @@ function ThemedRoot() {
   React.useEffect(() => {
     document.documentElement.setAttribute("data-reading-font", readingFont);
   }, [readingFont]);
+  // Accent (F3.8): re-applied whenever the theme changes, because the
+  // contrast correction depends on the theme's ground; refreshed on focus
+  // so a change made in Windows Settings shows up on returning to the app.
+  const accentSource = useUiStore((s) => s.accentSource);
+  React.useEffect(() => {
+    if (accentSource !== "windows") {
+      applyAccent(null);
+      return;
+    }
+    let cancelled = false;
+    const refresh = () => {
+      api.getSystemAccent().then((hex) => {
+        if (!cancelled) applyAccent(hex);
+      }).catch(() => {});
+    };
+    refresh();
+    window.addEventListener("focus", refresh);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("focus", refresh);
+    };
+  }, [accentSource, theme]);
   return (
     <>
       <RouterProvider router={router} />

@@ -256,6 +256,7 @@ pub fn run() {
             commands::diagnostics::log_frontend_error,
             commands::diagnostics::get_logs_dir,
             commands::diagnostics::get_stats,
+            commands::diagnostics::get_system_accent,
             commands::export::export_note,
             commands::export::export_chapter_note,
             commands::export::export_prayer_entry,

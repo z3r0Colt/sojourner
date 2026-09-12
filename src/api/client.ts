@@ -417,6 +417,8 @@ export const api = {
   getLogsDir: () => invoke<string>("get_logs_dir"),
   /** Every count the Stats block shows (F3.5), in one round trip. */
   getStats: () => invoke<Stats>("get_stats"),
+  /** The Windows accent color as "#rrggbb", or null off Windows (F3.8). */
+  getSystemAccent: () => invoke<string | null>("get_system_accent"),
 
   // Key/value preferences stored in user.db (survive reinstall, travel with
   // backups). Values are raw strings; `useSetting` layers JSON on top.
