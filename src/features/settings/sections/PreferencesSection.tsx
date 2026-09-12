@@ -8,6 +8,7 @@ import { DEFAULT_HIGHLIGHT_LABELS, HIGHLIGHT_COLORS, useHighlightLabels, type Hi
 import { COPY_FORMATS, copyReference, formatPassage } from "../../../lib/clipboard";
 import { NoteTemplatesEditor } from "../../notes/NoteTemplatesEditor";
 import { SermonTemplatesEditor } from "../../sermons/SermonTemplatesEditor";
+import { SpeakingRateSetting } from "../../sermons/SpeakingRateSetting";
 import { useLandingPage, type LandingPage } from "../../today/landing";
 
 const COPY_EXAMPLE_TEXT = "For God so loved the world, that he gave his only begotten Son…";
@@ -288,6 +289,9 @@ export function PreferencesSection() {
         </Row>
         <Row label="Note templates" hint="An empty note editor offers these under “Start from…”. Rename, reorder, edit, or add your own.">
           <NoteTemplatesEditor />
+        </Row>
+        <Row label="Speaking rate" hint="How long a sermon will take, measured from your own timed runs.">
+          <SpeakingRateSetting />
         </Row>
         <Row label="Sermon templates" hint="An empty manuscript offers these under “Start from…”. They hold points and sub-points, so a shape can go deeper than a note's.">
           <SermonTemplatesEditor />
