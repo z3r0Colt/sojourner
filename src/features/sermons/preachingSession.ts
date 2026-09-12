@@ -26,16 +26,31 @@ export interface RunSession {
   fullScreen: boolean;
 }
 
+/** A finished run waiting to be written down. It lives in the store rather
+ * than in preaching mode's own state because the overlay unmounts the
+ * moment the session ends -- the offer to log the run has to outlive it. */
+export interface PendingLog {
+  sermonId: number;
+  kind: "rehearsal" | "preaching";
+  seconds: number;
+}
+
 interface PreachingState {
   session: RunSession | null;
+  pendingLog: PendingLog | null;
   /** Starts a run and, unless `paused`, the clock with it. */
   start: (sermonId: number, opts?: { kind?: "rehearsal" | "preaching"; fullScreen?: boolean; paused?: boolean }) => void;
   toggleClock: () => void;
   setSection: (index: number) => void;
   stepSection: (delta: 1 | -1, sectionCount: number) => void;
-  /** Leaves the run and hands back what it measured, for logging. */
-  end: () => { sermonId: number; kind: "rehearsal" | "preaching"; seconds: number } | null;
+  /** Leaves the run. A run of any length worth logging is left in
+   * `pendingLog` for the dialog to pick up. */
+  end: () => PendingLog | null;
+  clearPendingLog: () => void;
 }
+
+/** Shorter than this and there is nothing worth writing down. */
+const MIN_LOGGABLE_SECONDS = 30;
 
 export function elapsedMs(session: RunSession | null): number {
   if (!session) return 0;
@@ -44,6 +59,7 @@ export function elapsedMs(session: RunSession | null): number {
 
 export const usePreachingStore = create<PreachingState>((set, get) => ({
   session: null,
+  pendingLog: null,
 
   start: (sermonId, opts = {}) =>
     set({
@@ -81,10 +97,20 @@ export const usePreachingStore = create<PreachingState>((set, get) => ({
 
   end: () => {
     const session = get().session;
-    set({ session: null });
-    if (!session) return null;
-    return { sermonId: session.sermonId, kind: session.kind, seconds: Math.round(elapsedMs(session) / 1000) };
+    if (!session) {
+      set({ session: null });
+      return null;
+    }
+    const result: PendingLog = {
+      sermonId: session.sermonId,
+      kind: session.kind,
+      seconds: Math.round(elapsedMs(session) / 1000),
+    };
+    set({ session: null, pendingLog: result.seconds >= MIN_LOGGABLE_SECONDS ? result : null });
+    return result;
   },
+
+  clearPendingLog: () => set({ pendingLog: null }),
 }));
 
 /** Starts a run of `sermonId`. Preaching mode (SB4.1) shows it full screen;

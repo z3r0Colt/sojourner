@@ -194,7 +194,7 @@ export function SermonPane() {
   return (
     <SermonEditorProvider value={{ translationId, passages: byKey, passagesLoading, openSource }}>
       <div className="flex h-full min-h-0 flex-col">
-        <RehearsalBar sermon={sermon} wordCount={words.total} />
+        <RehearsalBar sermon={sermon} />
         <div className="flex shrink-0 flex-wrap items-center gap-1 border-b border-line px-2 py-1">
           <RehearsalButtons sermon={sermon} />
           <MarkPreachedButton sermon={sermon} wordCount={words.total} />

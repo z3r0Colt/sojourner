@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Pause, Play, Presentation, Square, Timer, Volume2 } from "lucide-react";
-import { useAddSermonEvent } from "../../api/queries";
+import { useAddSermonEvent, useSermon } from "../../api/queries";
 import { Button, IconButton } from "../../components/ui/Button";
 import { Modal } from "../../components/ui/Modal";
 import { toast } from "../../components/ui/toast";
@@ -9,6 +9,7 @@ import { useTtsStore } from "../../state/ttsStore";
 import { sectionsOf } from "./editor/documentModel";
 import { elapsedMs, formatClock, startRun, usePreachingStore } from "./preachingSession";
 import { localToday } from "./sermonFormat";
+import { useSermonWordCount, useSpeakingRateInfo } from "./sermonStats";
 import type { Sermon } from "../../api/types";
 
 /**
@@ -36,12 +37,26 @@ export function rehearsalSegments(body: string): { id: number; text: string; lab
     .filter((s) => s.text.length > 0);
 }
 
-/** The clock bar a run shows in the sermon pane, plus the log dialog. */
-export function RehearsalBar({ sermon, wordCount }: { sermon: Sermon; wordCount: number }) {
+/** The dialog a finished run offers, wherever it finished. Mounted once in
+ * the shell, because preaching mode's overlay unmounts the instant the run
+ * ends -- the offer has to outlive it. */
+export function RunLogHost() {
+  const pending = usePreachingStore((s) => s.pendingLog);
+  const clear = usePreachingStore((s) => s.clearPendingLog);
+  const { data: sermon } = useSermon(pending?.sermonId ?? null);
+  const rate = useSpeakingRateInfo();
+  const words = useSermonWordCount(sermon?.body ?? "", sermon?.translation_id ?? null, rate);
+  if (!pending || !sermon) return null;
+  return (
+    <LogRunModal sermon={sermon} kind={pending.kind} seconds={pending.seconds} wordCount={words.total} onClose={clear} />
+  );
+}
+
+/** The clock bar a run shows in the sermon pane. */
+export function RehearsalBar({ sermon }: { sermon: Sermon }) {
   const session = usePreachingStore((s) => s.session);
   const toggleClock = usePreachingStore((s) => s.toggleClock);
   const endRun = usePreachingStore((s) => s.end);
-  const [pending, setPending] = useState<{ kind: "rehearsal" | "preaching"; seconds: number } | null>(null);
   const [, forceTick] = useState(0);
 
   const mine = session?.sermonId === sermon.id && !session.fullScreen;
@@ -84,23 +99,11 @@ export function RehearsalBar({ sermon, wordCount }: { sermon: Sermon; wordCount:
           variant="ghost"
           icon={Square}
           className="ml-auto"
-          onClick={() => {
-            const result = endRun();
-            if (result) setPending({ kind: result.kind, seconds: result.seconds });
-          }}
+          onClick={() => endRun()}
         >
           Finish
         </Button>
       </div>
-      {pending && (
-        <LogRunModal
-          sermon={sermon}
-          kind={pending.kind}
-          seconds={pending.seconds}
-          wordCount={wordCount}
-          onClose={() => setPending(null)}
-        />
-      )}
     </>
   );
 }
