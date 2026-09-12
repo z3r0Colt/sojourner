@@ -194,7 +194,7 @@ mod tests {
         }
 
         fn counts(conn: &Connection) -> Vec<(&'static str, i64)> {
-            ["notes", "highlights", "chapter_notes", "prayer_entries", "bookmarks", "memory_verses", "settings"]
+            ["notes", "highlights", "chapter_notes", "prayer_entries", "bookmarks", "memory_verses", "settings", "reading_plan_progress", "reading_plan_completions"]
                 .into_iter()
                 .map(|t| (t, conn.query_row(&format!("SELECT COUNT(*) FROM {t}"), [], |r| r.get(0)).unwrap_or(-1)))
                 .collect()
@@ -226,6 +226,15 @@ mod tests {
         queries::reading_position::set(&conn, 1, 1, 1, None).unwrap();
         queries::reading_log::record(&conn, &queries::reading_log::today(), 1, 1, 1).unwrap();
         assert_eq!(queries::reading_log::list_recent(&conn, 5).unwrap().first().map(|e| (e.book_id, e.chapter)), Some((1, 1)));
+        // USER_MIGRATION_0014: custom plans and the schedule map exist and are
+        // empty, and progress on bundled plans still lists after migrating.
+        for t in ["user_reading_plans", "user_reading_plan_readings", "reading_plan_schedule"] {
+            let n: i64 = conn.query_row(&format!("SELECT COUNT(*) FROM {t}"), [], |r| r.get(0)).unwrap();
+            assert_eq!(n, 0, "{t} should start empty");
+        }
+        let progress = queries::reading_plans::list_progress(&conn).unwrap();
+        let progress_rows = before.iter().find(|(t, _)| *t == "reading_plan_progress").map(|(_, n)| *n).unwrap_or(0);
+        assert_eq!(progress.len() as i64, progress_rows, "every plan in progress still lists");
 
         drop(conn);
         let _ = std::fs::remove_dir_all(&dir);
