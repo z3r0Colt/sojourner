@@ -1,5 +1,5 @@
-import { useRef, useState, type RefObject } from "react";
-import { ArrowLeft, ChevronDown, Info, Link2, Paperclip } from "lucide-react";
+import { useEffect, useRef, useState, type RefObject } from "react";
+import { ArrowLeft, ChevronDown, Info, Link2, ListTree, Paperclip } from "lucide-react";
 import {
   useResource,
   useResources,
@@ -12,8 +12,9 @@ import { api } from "../../api/client";
 import { resolveBiblePane, useWorkspaceStore } from "../../state/workspaceStore";
 import { usePane, usePaneNavigate, usePaneParams } from "../../workspace/PaneContext";
 import { openPassage, targetFor } from "../../workspace/openContent";
-import { EpubReader } from "./EpubReader";
+import { EpubReader, type EpubController, type EpubTocItem } from "./EpubReader";
 import { PdfReader } from "./PdfReader";
+import { useResourcePosition } from "./resourcePosition";
 import { MobiTextReader } from "./MobiTextReader";
 import { MediaPlayer } from "./MediaPlayer";
 import { ReadAloudButton } from "../tts/ReadAloudButton";
@@ -28,6 +29,14 @@ import type { Resource } from "../../api/types";
 /** Below this pane width the reader's sidebar folds into a header menu. */
 const SIDEBAR_FOLD_WIDTH = 480;
 
+/** An EPUB's table of contents as the sidebar shows it (F3.4). */
+interface Contents {
+  items: EpubTocItem[];
+  /** The section on screen, matched by href without its fragment. */
+  currentHref: string | null;
+  onOpen: (href: string) => void;
+}
+
 export function ResourceReaderView() {
   const [params] = usePaneParams("resource");
   const { width } = usePane();
@@ -35,6 +44,16 @@ export function ResourceReaderView() {
   const navigate = usePaneNavigate();
   const { data: resource } = useResource(id);
   const mediaRef = useRef<HTMLVideoElement | HTMLAudioElement>(null);
+  // Remembered position (F3.4): the reader opens only once it is known,
+  // so an EPUB restores its CFI on first display rather than jumping.
+  const { pos, savePos, isLoaded: posLoaded } = useResourcePosition(id);
+  const [toc, setToc] = useState<EpubTocItem[]>([]);
+  const [currentHref, setCurrentHref] = useState<string | null>(null);
+  const epubRef = useRef<EpubController | null>(null);
+  useEffect(() => {
+    setToc([]);
+    setCurrentHref(null);
+  }, [id]);
 
   if (!resource) {
     return <LoadingState className="p-8" />;
@@ -43,12 +62,26 @@ export function ResourceReaderView() {
   const folded = width > 0 && width < SIDEBAR_FOLD_WIDTH;
   const reader = (
     <div className="min-h-0 min-w-0 flex-1">
-      {resource.kind === "epub" && <EpubReader filePath={resource.file_path} />}
-      {resource.kind === "pdf" && <PdfReader filePath={resource.file_path} />}
+      {resource.kind === "epub" && posLoaded && (
+        <EpubReader
+          key={resource.id}
+          filePath={resource.file_path}
+          initialCfi={pos.cfi}
+          onLocation={(loc) => {
+            setCurrentHref(loc.href);
+            savePos({ cfi: loc.cfi });
+          }}
+          onToc={setToc}
+          controllerRef={epubRef}
+        />
+      )}
+      {resource.kind === "pdf" && posLoaded && <PdfReader key={resource.id} filePath={resource.file_path} initialPage={pos.page} onPageChange={(page) => savePos({ page })} />}
+      {(resource.kind === "epub" || resource.kind === "pdf") && !posLoaded && <LoadingState className="p-8" label="Opening…" />}
       {resource.kind === "mobi" && <MobiTextReader resourceId={resource.id} />}
       {(resource.kind === "video" || resource.kind === "audio") && <MediaPlayer ref={mediaRef} filePath={resource.file_path} kind={resource.kind} />}
     </div>
   );
+  const contents: Contents | undefined = toc.length > 0 ? { items: toc, currentHref, onOpen: (href) => epubRef.current?.display(href) } : undefined;
 
   if (folded) {
     return (
@@ -58,6 +91,13 @@ export function ResourceReaderView() {
           <span className="min-w-0 flex-1 truncate text-xs font-medium text-ink" title={resource.title}>
             {resource.title}
           </span>
+          {contents && (
+            <Popover width="w-72" trigger={({ toggle, open }) => <IconButton icon={ListTree} label="Contents" size="sm" active={open} onClick={toggle} />}>
+              <div className="-m-2 max-h-[70vh] overflow-y-auto p-3">
+                <ContentsList contents={contents} />
+              </div>
+            </Popover>
+          )}
           <Popover width="w-72" trigger={({ toggle, open }) => <IconButton icon={Info} label="Details, read aloud, and links" size="sm" active={open} onClick={toggle} />}>
             <div className="-m-2 max-h-[70vh] overflow-y-auto">
               <ReaderSidebar resource={resource} mediaRef={mediaRef} folded />
@@ -73,15 +113,57 @@ export function ResourceReaderView() {
     <div className="flex h-full">
       {reader}
       <aside className="flex w-72 shrink-0 flex-col border-l border-line bg-surface-2/60">
-        <ReaderSidebar resource={resource} mediaRef={mediaRef} />
+        <ReaderSidebar resource={resource} mediaRef={mediaRef} contents={contents} />
       </aside>
     </div>
   );
 }
 
-/** The reader's sidebar: title, read aloud, passage linking, and links to
- * other resources. In a narrow pane the same content sits in a menu. */
-function ReaderSidebar({ resource, mediaRef, folded }: { resource: Resource; mediaRef: RefObject<HTMLVideoElement | HTMLAudioElement | null>; folded?: boolean }) {
+/** An EPUB's chapters, indented by depth, with the one on screen marked. */
+function ContentsList({ contents }: { contents: Contents }) {
+  const current = contents.currentHref?.split("#")[0] ?? null;
+  return (
+    <nav aria-label="Contents">
+      <ul className="space-y-0.5 text-sm">
+        {contents.items.map((item, i) => {
+          const active = current != null && item.href.split("#")[0] === current;
+          return (
+            <li key={`${item.id}-${i}`}>
+              <button
+                type="button"
+                onClick={() => contents.onOpen(item.href)}
+                aria-current={active ? "location" : undefined}
+                title={item.label}
+                style={{ paddingLeft: `${0.5 + item.depth * 0.75}rem` }}
+                className={cx(
+                  "block w-full truncate rounded-md py-1 pr-2 text-left",
+                  active ? "bg-accent-soft font-medium text-accent" : "text-ink-2 hover:bg-hover hover:text-ink",
+                )}
+              >
+                {item.label}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
+  );
+}
+
+/** The reader's sidebar: title, read aloud, contents (EPUB), passage
+ * linking, and links to other resources. In a narrow pane the same
+ * content sits in a menu. */
+function ReaderSidebar({
+  resource,
+  mediaRef,
+  folded,
+  contents,
+}: {
+  resource: Resource;
+  mediaRef: RefObject<HTMLVideoElement | HTMLAudioElement | null>;
+  folded?: boolean;
+  contents?: Contents;
+}) {
   const id = resource.id;
   const navigate = usePaneNavigate();
   const qc = useQueryClient();
@@ -150,6 +232,16 @@ function ReaderSidebar({ resource, mediaRef, folded }: { resource: Resource; med
       </div>
 
       <div className={cx("p-3", !folded && "min-h-0 flex-1 overflow-y-auto")}>
+        {contents && (
+          <details open className="group mb-4">
+            <summary className="mb-1.5 flex cursor-pointer list-none items-center gap-1 text-xs font-semibold uppercase tracking-wide text-ink-3 hover:text-ink">
+              <ChevronDown className="h-3.5 w-3.5 transition-transform group-open:rotate-0 -rotate-90" aria-hidden="true" />
+              Contents
+              <span className="font-normal normal-case text-ink-4">· {contents.items.length}</span>
+            </summary>
+            <ContentsList contents={contents} />
+          </details>
+        )}
         <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-ink-3">Linked passages</h3>
         <ul className="mb-4 space-y-1 text-sm">
           {passageLinks?.map((l) => (
