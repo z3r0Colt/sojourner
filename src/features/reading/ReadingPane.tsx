@@ -25,6 +25,7 @@ import {
   useCreateMemoryVerse,
   useResourcePassageLinksForChapter,
   useSuggestedResourcesForPassage,
+  useSermonsForChapter,
   useResources,
   useFootnotesForChapter,
   useInterlinearForChapter,
@@ -57,6 +58,7 @@ import { computeRedLetterSpans } from "./redLetterSpans";
 import { sendToSermon } from "../sermons/sendToSermon";
 import { captureIllustration } from "../sermons/illustrationCapture";
 import { crossrefRef } from "../sermons/sourceIdentity";
+import { SermonChipsForChapter } from "../sermons/SermonsForChapter";
 import { closestWithAttr, textOffsetWithin } from "../../lib/domOffsets";
 import { useCopyPassage } from "../../lib/clipboard";
 import { ReadAloudButton } from "../tts/ReadAloudButton";
@@ -185,6 +187,7 @@ export function ReadingPane() {
   const { data: resourceLinks } = useResourcePassageLinksForChapter(bookId, chapter);
   const { data: allResources } = useResources();
   const { data: suggestedResources } = useSuggestedResourcesForPassage(bookId, chapter);
+  const { data: sermonsHere } = useSermonsForChapter(bookId, chapter);
   const { data: footnotes } = useFootnotesForChapter(translationId, bookId, chapter);
   const { data: redLetterRanges } = useRedLetterRanges(redLetterMode ? bookId : null, chapter);
   const { data: bookmarks } = useBookmarks();
@@ -626,7 +629,8 @@ export function ReadingPane() {
   const suggested = suggestedResources?.filter((r) => !resourceLinks?.some((l) => l.resource_id === r.id)) ?? [];
   const shownSuggested = showAllSuggested ? suggested : suggested.slice(0, 3);
   const hiddenSuggested = suggested.length - shownSuggested.length;
-  const hasRelated = (resourceLinks?.length ?? 0) > 0 || suggested.length > 0;
+  // A sermon preached from this chapter belongs in Related too (SB5.4).
+  const hasRelated = (resourceLinks?.length ?? 0) > 0 || suggested.length > 0 || (sermonsHere?.some((s) => s.role === "text") ?? false);
   const chapterNoteCount = chapterNotes?.length ?? 0;
 
   const textSettings = (
@@ -960,6 +964,7 @@ export function ReadingPane() {
                     +{hiddenSuggested} more
                   </Button>
                 )}
+                <SermonChipsForChapter bookId={bookId} chapter={chapter} />
               </div>
             )}
             {!hasRelated && <div className="mb-4" />}

@@ -10,7 +10,10 @@ import { toast } from "../../components/ui/toast";
 import { confirmDelete } from "../../components/ui/confirm";
 import { cardClass, cx, selectSmClass } from "../../components/ui/classes";
 import { useReadingTypography } from "../../state/uiStore";
+import { Mic } from "lucide-react";
 import { formatRef, refKey, toPassageRef, useBookName } from "../../lib/passage";
+import { useSermons } from "../../api/queries";
+import type { Sermon } from "../../api/types";
 import { HIGHLIGHT_COLORS, UNDERLINE_COLOR, highlightColorFor, useHighlightLabels, type HighlightColorKey, type HighlightLabels } from "../reading/highlightColors";
 import type { Highlight, Passage } from "../../api/types";
 
@@ -72,7 +75,23 @@ function HighlightedText({ h, passage }: { h: Highlight; passage: Passage | unde
   );
 }
 
+/** The title of a sermon whose *text* covers this highlight, if there is
+ * one -- a verse a preacher marked and then preached from (SB5.4). */
+function sermonTextAt(sermons: Sermon[] | undefined, h: Highlight): string | null {
+  const hit = (sermons ?? []).find((s) =>
+    s.passages.some(
+      (p) =>
+        p.role === "text" &&
+        p.book_id === h.book_id &&
+        p.chapter === h.chapter &&
+        (p.verse_start == null || (h.verse_end >= p.verse_start && h.verse_start <= (p.verse_end ?? p.verse_start))),
+    ),
+  );
+  return hit?.title ?? null;
+}
+
 export function HighlightsView() {
+  const { data: sermonTexts } = useSermons({ status: null });
   const { data: highlights, isLoading } = useAllHighlights();
   const { data: books } = useBooks();
   const [labels] = useHighlightLabels();
@@ -214,7 +233,15 @@ export function HighlightsView() {
                       >
                         {label}
                       </button>
-                      <span className="shrink-0 text-xs text-ink-3">{formatDate(h.created_at)}</span>
+                      <span className="shrink-0 text-xs text-ink-3">
+                        {sermonTextAt(sermonTexts, h) && (
+                          <span className="mr-2 inline-flex items-center gap-1 text-accent" title={`The text of “${sermonTextAt(sermonTexts, h)}”`}>
+                            <Mic className="h-3 w-3" aria-hidden="true" />
+                            in a sermon
+                          </span>
+                        )}
+                        {formatDate(h.created_at)}
+                      </span>
                     </div>
                     <p className="reading-font text-ink-2" style={typography}>
                       <HighlightedText h={h} passage={passagesByKey.get(refKey(ref))} />

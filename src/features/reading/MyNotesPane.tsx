@@ -20,6 +20,7 @@ import { Button } from "../../components/ui/Button";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { toast } from "../../components/ui/toast";
 import { cx, sectionLabelClass } from "../../components/ui/classes";
+import { SermonsForChapterSection } from "../sermons/SermonsForChapter";
 import { NoteBody } from "../notes/NoteBody";
 import { NoteEditorModal } from "../notes/NoteEditorModal";
 import { formatChapterRef, formatRef, refKey, toPassageRef } from "../../lib/passage";
@@ -210,6 +211,8 @@ export function MyNotesPane({ book, chapter, activeVerse }: { book: Book; chapte
             <ul className="space-y-1.5">{rest.map(renderEntry)}</ul>
           </section>
         )}
+
+        <SermonsForChapterSection bookId={book.id} chapter={chapter} />
 
         {(backlinks?.length ?? 0) > 0 && (
           <section className="mb-2">
