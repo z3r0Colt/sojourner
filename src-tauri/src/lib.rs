@@ -292,6 +292,7 @@ pub fn run() {
             commands::sermons::record_illustration_use,
             commands::sermons::list_illustration_uses,
             commands::sermons::export_sermon,
+            commands::sermons::export_sermon_slides,
             commands::export::export_note,
             commands::export::export_chapter_note,
             commands::export::export_prayer_entry,

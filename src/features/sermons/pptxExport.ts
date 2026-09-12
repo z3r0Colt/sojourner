@@ -1,4 +1,4 @@
-import { writeFile } from "@tauri-apps/plugin-fs";
+import { api } from "../../api/client";
 import type { Slide } from "./slides";
 
 /**
@@ -65,8 +65,9 @@ export async function exportSlidesToPptx(slides: Slide[], title: string, destPat
     }
   }
 
-  // pptxgenjs can hand back an ArrayBuffer; the file itself is written
-  // through the fs plugin, since the save dialog already chose the path.
+  // pptxgenjs hands back an ArrayBuffer; the file is written by a command,
+  // because the fs plugin's scope deliberately allows no arbitrary path --
+  // the same reason every other export goes through Rust.
   const data = (await pptx.write({ outputType: "arraybuffer" })) as ArrayBuffer;
-  await writeFile(destPath, new Uint8Array(data));
+  await api.exportSermonSlides(destPath, new Uint8Array(data));
 }

@@ -218,6 +218,19 @@ pub fn list_illustration_uses(db: State<DbState>, illustration_id: Option<i64>) 
 
 // Export --------------------------------------------------------------------
 
+/// Writes a generated .pptx to the path the save dialog already chose.
+///
+/// The deck is built by pptxgenjs, which only runs in the webview, so
+/// unlike every other export the bytes come *from* the frontend rather than
+/// being rendered here. The write still goes through a command because the
+/// fs plugin's scope deliberately allows no arbitrary path (see
+/// capabilities/default.json), which is the same reason export_note exists.
+#[tauri::command]
+pub fn export_sermon_slides(dest_path: String, data: Vec<u8>) -> AppResult<()> {
+    std::fs::write(&dest_path, data)?;
+    Ok(())
+}
+
 /// Writes the manuscript as Markdown to a path the frontend's save dialog
 /// already chose. The passage blocks are rendered here, at export time, so
 /// the file holds the words rather than a pointer to them.
