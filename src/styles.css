@@ -707,3 +707,100 @@ mark.find-current {
   color: var(--color-accent);
   border-bottom: 1px dotted var(--color-accent);
 }
+
+/* What a sermon prints (SB4.2, SB4.3). Black on white through the print
+   stylesheet; these rules only shape it. */
+.sermon-print {
+  font-size: 11pt;
+  line-height: 1.45;
+}
+.sermon-print-header {
+  margin-bottom: 1.2em;
+  padding-bottom: 0.6em;
+  border-bottom: 1px solid #999;
+}
+.sermon-print-header h1 {
+  margin: 0;
+  font-size: 1.5em;
+  font-weight: 600;
+}
+.sermon-print-idea {
+  margin: 0.2em 0 0;
+  font-style: italic;
+}
+.sermon-print-text,
+.sermon-print-line {
+  margin: 0.15em 0 0;
+  font-size: 0.9em;
+}
+.sermon-print-outline {
+  margin: 0;
+  padding-left: 1.2em;
+}
+.sermon-print-outline li {
+  margin: 0.5em 0;
+}
+.sermon-print-outline li.sub {
+  margin-left: 1.2em;
+}
+.sermon-print-outline .heading {
+  display: block;
+  font-weight: 600;
+}
+.sermon-print-outline .refs {
+  display: block;
+  font-size: 0.9em;
+}
+.sermon-print-outline .first-line {
+  display: block;
+  font-size: 0.9em;
+}
+.sermon-handout .handout-section {
+  margin-bottom: 1em;
+  break-inside: avoid;
+}
+.sermon-handout h2 {
+  margin: 0.8em 0 0.2em;
+  font-size: 1.1em;
+}
+.sermon-handout h2.sub {
+  margin-left: 1em;
+  font-size: 1em;
+}
+.sermon-handout .handout-refs {
+  margin: 0 0 0.3em;
+  font-size: 0.9em;
+  font-style: italic;
+}
+.sermon-handout .handout-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1em;
+  margin: 0.6em 0 0;
+}
+.sermon-handout .handout-lines span {
+  display: block;
+  border-bottom: 1px solid #bbb;
+}
+@media print {
+  /* Page numbers on every sheet after the first, so a dropped manuscript
+     can be put back in order. */
+  .sermon-print {
+    counter-reset: page;
+  }
+  .sermon-print-header {
+    break-after: avoid;
+  }
+  .sermon-print .sermon-passage {
+    background: transparent;
+    border-left: 2px solid #666;
+    break-inside: avoid;
+  }
+  .sermon-print .sermon-source {
+    background: transparent;
+    break-inside: avoid;
+  }
+  @page {
+    margin: 18mm 16mm;
+  }
+}
