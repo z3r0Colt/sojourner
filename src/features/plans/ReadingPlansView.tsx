@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { ArrowLeft, CalendarCheck, Flame, Play, RotateCcw } from "lucide-react";
+import { ArrowLeft, CalendarCheck, Flame, Play, Plus, RotateCcw } from "lucide-react";
+import { PlanBuilderModal } from "./PlanBuilderModal";
 import {
   useBooks,
   useReadingPlans,
@@ -173,14 +174,30 @@ export function ReadingPlansView() {
   const { data: plans } = useReadingPlans();
   const { data: progressList } = useReadingPlanProgressList();
   const [selected, setSelected] = useState<string | null>(null);
+  const [building, setBuilding] = useState(false);
 
   if (selected) {
     return <PlanDetail planCode={selected} onBack={() => setSelected(null)} />;
   }
 
+  const newPlanButton = (
+    <Button variant="primary" icon={Plus} onClick={() => setBuilding(true)}>
+      New plan
+    </Button>
+  );
+
   return (
-    <Page title="Reading plans" lead="Pick a plan and it tracks each day's reading as you go.">
-      {plans && plans.length === 0 && <EmptyState icon={CalendarCheck} title="No reading plans installed" />}
+    <Page title="Reading plans" lead="Pick a plan and it tracks each day's reading as you go, or build your own." actions={newPlanButton}>
+      {plans && plans.length === 0 && <EmptyState icon={CalendarCheck} title="No reading plans yet" description="Build one: a book in N days, or a list of readings." action={newPlanButton} />}
+      {building && (
+        <PlanBuilderModal
+          onClose={() => setBuilding(false)}
+          onSaved={(plan) => {
+            setBuilding(false);
+            setSelected(plan.code);
+          }}
+        />
+      )}
       <ul className="space-y-3">
         {plans?.map((p) => {
           const progress = progressList?.find((pr) => pr.plan_code === p.code);
