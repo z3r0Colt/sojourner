@@ -16,6 +16,7 @@ import { SermonSidePanel, type SidePanelTab } from "./SermonSidePanel";
 import { rateLabel, useSermonWordCount, useSpeakingRateInfo } from "./sermonStats";
 import { PrepTrack } from "./PrepTrack";
 import { RehearsalBar, RehearsalButtons } from "./Rehearsal";
+import { SermonActionsMenu } from "./SermonActionsMenu";
 import { SermonHistory } from "./SermonHistory";
 import { evidenceFor, nextStepHint, stageFromEvidence, stageIndex } from "./prepStages";
 import { useSermonTemplates } from "./sermonTemplates";
@@ -188,6 +189,7 @@ export function SermonPane() {
         <div className="flex shrink-0 flex-wrap items-center gap-1 border-b border-line px-2 py-1">
           <RehearsalButtons sermon={sermon} />
           <span className="ml-auto" />
+          <SermonActionsMenu sermon={sermon} />
           {!panelBeside && (
             <Popover
               width="w-72"
