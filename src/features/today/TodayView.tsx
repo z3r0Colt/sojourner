@@ -28,7 +28,7 @@ import { formatChapterRef, toPassageRef } from "../../lib/passage";
 import { refAttrs } from "../../lib/refAttr";
 import { ReadingRefs } from "../plans/ReadingPlansView";
 import { CatchUpBanner } from "../plans/CatchUpBanner";
-import { calendarDay, isFinished } from "../plans/planSchedule";
+import { isFinished, todaysDays } from "../plans/planSchedule";
 import { longestUnprayed, timeAgo } from "../prayer/prayerListTime";
 
 /**
@@ -100,7 +100,8 @@ function ContinueReading() {
   );
 }
 
-/** One in-progress plan's reading for the calendar day, with its checkbox. */
+/** One in-progress plan's readings dated today (one day, or several after
+ * a spread), each with its checkbox. */
 function PlanToday({ progress }: { progress: ReadingPlanProgress }) {
   const { data: plans } = useReadingPlans();
   const { data: days } = useReadingPlanDays(progress.plan_code);
@@ -109,31 +110,46 @@ function PlanToday({ progress }: { progress: ReadingPlanProgress }) {
   const unmarkDay = useUnmarkReadingPlanDay();
   const plan = plans?.find((p) => p.code === progress.plan_code);
   if (!plan || !days || isFinished(progress, plan.length_days)) return null;
-  const dayNumber = calendarDay(progress, plan.length_days);
-  const day = days.find((d) => d.day_number === dayNumber);
-  if (!day) return null;
-  const done = progress.completed_days.includes(dayNumber);
+  const dueDays = todaysDays(progress, plan.length_days)
+    .map((n) => days.find((d) => d.day_number === n))
+    .filter((d): d is NonNullable<typeof d> => d != null);
+  if (dueDays.length === 0) return null;
   const planCode = progress.plan_code;
-  function toggle() {
+  const allDone = dueDays.every((d) => progress.completed_days.includes(d.day_number));
+  function toggle(dayNumber: number, done: boolean) {
     if (done) unmarkDay.mutate({ planCode, dayNumber }, { onSuccess: () => toast.info(`Day ${dayNumber} unmarked`) });
     else markDay.mutate({ planCode, dayNumber }, { onSuccess: () => toast.success(`Day ${dayNumber} of ${plan!.title} done`) });
   }
+  const dayLabel = dueDays.length === 1 ? `Day ${dueDays[0].day_number} of ${plan.length_days}` : `Days ${dueDays.map((d) => d.day_number).join(", ")} of ${plan.length_days}`;
   return (
-    <li className={cx(cardClass, "flex items-start gap-3")}>
-      <input type="checkbox" className={cx(checkboxClass, "mt-1")} checked={done} onChange={toggle} aria-label={`${plan.title}, day ${dayNumber} complete`} />
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-baseline gap-x-2 text-xs text-ink-3">
-          <span className="font-medium text-ink">{plan.title}</span>
-          <span>
-            Day {dayNumber} of {plan.length_days}
-          </span>
-        </div>
-        <div className={cx("mt-0.5 text-sm", done && "text-ink-3 line-through decoration-line-2")}>
-          <ReadingRefs readings={day.readings} books={books} onNavigate={(bookId, chapter, verse, e) => openPassage({ bookId, chapter, verse }, { target: targetFor(e) })} />
-        </div>
-        <div className="mt-2 empty:hidden">
-          <CatchUpBanner plan={plan} progress={progress} compact />
-        </div>
+    <li className={cardClass}>
+      <div className="flex flex-wrap items-baseline gap-x-2 text-xs text-ink-3">
+        <span className="font-medium text-ink">{plan.title}</span>
+        <span>{dayLabel}</span>
+        {allDone && <span className="text-accent">done</span>}
+      </div>
+      <ul className="mt-1 space-y-1">
+        {dueDays.map((day) => {
+          const done = progress.completed_days.includes(day.day_number);
+          return (
+            <li key={day.day_number} className="flex items-start gap-3">
+              <input
+                type="checkbox"
+                className={cx(checkboxClass, "mt-0.5")}
+                checked={done}
+                onChange={() => toggle(day.day_number, done)}
+                aria-label={`${plan.title}, day ${day.day_number} complete`}
+              />
+              <div className={cx("min-w-0 flex-1 text-sm", done && "text-ink-3 line-through decoration-line-2")}>
+                {dueDays.length > 1 && <span className="mr-2 text-xs text-ink-3">Day {day.day_number}</span>}
+                <ReadingRefs readings={day.readings} books={books} onNavigate={(bookId, chapter, verse, e) => openPassage({ bookId, chapter, verse }, { target: targetFor(e) })} />
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+      <div className="mt-2 empty:hidden">
+        <CatchUpBanner plan={plan} progress={progress} compact />
       </div>
     </li>
   );
