@@ -43,6 +43,11 @@ pdf-extract = "0.12.0"
 mobi = "0.8.0"
 regex = "1"
 
+# Reads the Windows accent color from the registry (Settings → Reading →
+# "Accent color: Windows accent", F3.8).
+[target.'cfg(windows)'.dependencies]
+winreg = "0.55"
+
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration
 [profile.release]

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { READING_FONT_OPTIONS, THEME_OPTIONS, useReadingTypography, useUiStore } from "../../../state/uiStore";
+import { READING_FONT_OPTIONS, THEME_OPTIONS, useReadingTypography, useUiStore, type AccentSource } from "../../../state/uiStore";
 import { resolveBiblePane, useWorkspaceStore } from "../../../state/workspaceStore";
 import { Button } from "../../../components/ui/Button";
 import { toast } from "../../../components/ui/toast";
@@ -166,6 +166,8 @@ export function PreferencesSection() {
     toggleShowMorphology,
     reduceMotion,
     setReduceMotion,
+    accentSource,
+    setAccentSource,
   } = useUiStore();
   const typography = useReadingTypography();
 
@@ -193,6 +195,21 @@ export function PreferencesSection() {
                 {t.label}
               </option>
             ))}
+          </select>
+        </Row>
+        <Row label="Accent color" hint="Links, active tabs, and primary buttons. The Windows accent is darkened or lightened per theme until it reads clearly.">
+          <select
+            value={accentSource}
+            onChange={(e) => {
+              const next = e.target.value as AccentSource;
+              setAccentSource(next);
+              toast.success(next === "windows" ? "Following the Windows accent color" : "Using the app's accent color");
+            }}
+            className={selectClass}
+            aria-label="Accent color"
+          >
+            <option value="app">App default</option>
+            <option value="windows">Windows accent</option>
           </select>
         </Row>
         <Row label="Text size" hint={`${fontSize}px`}>
