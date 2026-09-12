@@ -41,14 +41,21 @@ export function rehearsalSegments(body: string): { id: number; text: string; lab
  * the shell, because preaching mode's overlay unmounts the instant the run
  * ends -- the offer has to outlive it. */
 export function RunLogHost() {
-  const pending = usePreachingStore((s) => s.pendingLog);
+  const pending = usePreachingStore((s) => s.pendingLogs[0] ?? null);
   const clear = usePreachingStore((s) => s.clearPendingLog);
   const { data: sermon } = useSermon(pending?.sermonId ?? null);
   const rate = useSpeakingRateInfo();
   const words = useSermonWordCount(sermon?.body ?? "", sermon?.translation_id ?? null, rate);
   if (!pending || !sermon) return null;
   return (
-    <LogRunModal sermon={sermon} kind={pending.kind} seconds={pending.seconds} wordCount={words.total} onClose={clear} />
+    <LogRunModal
+      key={`${pending.sermonId}-${pending.kind}-${pending.seconds}`}
+      sermon={sermon}
+      kind={pending.kind}
+      seconds={pending.seconds}
+      wordCount={words.total}
+      onClose={clear}
+    />
   );
 }
 
