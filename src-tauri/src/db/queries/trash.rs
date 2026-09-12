@@ -1,8 +1,8 @@
-// The Trash: soft-deleted passage notes, chapter notes, and prayer journal
-// entries (see USER_MIGRATION_0011). Rows sit here with `deleted_at` set
-// until they are restored, purged by hand, or swept at startup once older
-// than `RETENTION_DAYS`.
-use super::{notes, prayer_journal};
+// The Trash: soft-deleted passage notes, chapter notes, prayer journal
+// entries (USER_MIGRATION_0011), sermons, and illustrations (0015). Rows sit
+// here with `deleted_at` set until they are restored, purged by hand, or
+// swept at startup once older than `RETENTION_DAYS`.
+use super::{illustrations, notes, prayer_journal, sermons};
 use crate::models::{TrashContents, TrashKind};
 use rusqlite::{params, Connection};
 
@@ -13,6 +13,8 @@ fn table(kind: TrashKind) -> &'static str {
         TrashKind::Note => "notes",
         TrashKind::ChapterNote => "chapter_notes",
         TrashKind::PrayerEntry => "prayer_entries",
+        TrashKind::Sermon => "sermons",
+        TrashKind::Illustration => "illustrations",
     }
 }
 
@@ -35,7 +37,25 @@ pub fn list(conn: &Connection) -> anyhow::Result<TrashContents> {
     ))?;
     let prayer_entries = stmt.query_map([], prayer_journal::map_row)?.collect::<Result<Vec<_>, _>>()?;
 
-    Ok(TrashContents { notes: notes_list, chapter_notes, prayer_entries })
+    let mut stmt = conn.prepare(&format!(
+        "SELECT {} FROM sermons WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC",
+        sermons::SELECT_COLS
+    ))?;
+    let sermons_list = stmt.query_map([], sermons::map_row)?.collect::<Result<Vec<_>, _>>()?;
+
+    let mut stmt = conn.prepare(&format!(
+        "SELECT {} FROM illustrations WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC",
+        illustrations::SELECT_COLS
+    ))?;
+    let illustrations_list = stmt.query_map([], illustrations::map_row)?.collect::<Result<Vec<_>, _>>()?;
+
+    Ok(TrashContents {
+        notes: notes_list,
+        chapter_notes,
+        prayer_entries,
+        sermons: sermons_list,
+        illustrations: illustrations_list,
+    })
 }
 
 /// Clears `deleted_at` so the row reappears everywhere. Returns whether a
@@ -64,7 +84,13 @@ pub fn purge(conn: &Connection, kind: TrashKind, id: i64) -> anyhow::Result<bool
 pub fn sweep_expired(conn: &Connection) -> anyhow::Result<usize> {
     let cutoff = (chrono::Utc::now() - chrono::Duration::days(RETENTION_DAYS)).to_rfc3339();
     let mut removed = 0;
-    for kind in [TrashKind::Note, TrashKind::ChapterNote, TrashKind::PrayerEntry] {
+    for kind in [
+        TrashKind::Note,
+        TrashKind::ChapterNote,
+        TrashKind::PrayerEntry,
+        TrashKind::Sermon,
+        TrashKind::Illustration,
+    ] {
         removed += conn.execute(
             &format!("DELETE FROM {} WHERE deleted_at IS NOT NULL AND deleted_at < ?1", table(kind)),
             params![cutoff],

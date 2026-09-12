@@ -65,9 +65,29 @@ export function TrashSection() {
         body: text ? <p className="whitespace-pre-wrap text-sm text-ink-2">{text}</p> : null,
       };
     }),
+    ...(trash?.sermons ?? []).map<TrashRow>((s) => ({
+      kind: "sermon",
+      id: s.id,
+      title: s.title,
+      deletedAt: s.deleted_at ?? s.updated_at,
+      body: s.big_idea ? <p className="text-sm text-ink-2">{s.big_idea}</p> : null,
+    })),
+    ...(trash?.illustrations ?? []).map<TrashRow>((i) => ({
+      kind: "illustration",
+      id: i.id,
+      title: i.title,
+      deletedAt: i.deleted_at ?? i.updated_at,
+      body: <NoteBody body={i.body} className="block text-sm text-ink-2" />,
+    })),
   ].sort((a, b) => b.deletedAt.localeCompare(a.deletedAt));
 
-  const label: Record<TrashKind, string> = { note: "Note", chapter_note: "Chapter note", prayer_entry: "Prayer entry" };
+  const label: Record<TrashKind, string> = {
+    note: "Note",
+    chapter_note: "Chapter note",
+    prayer_entry: "Prayer entry",
+    sermon: "Sermon",
+    illustration: "Illustration",
+  };
 
   function handleRestore(row: TrashRow) {
     restore.mutate({ kind: row.kind, id: row.id }, { onSuccess: () => toast.success(`${label[row.kind]} restored`) });
@@ -91,7 +111,7 @@ export function TrashSection() {
       </h3>
       {isLoading && <LoadingState className="py-2" />}
       {!isLoading && rows.length === 0 && (
-        <EmptyState compact icon={Trash2} title="The Trash is empty" description="Deleted notes, chapter notes, and prayer entries wait here for thirty days." />
+        <EmptyState compact icon={Trash2} title="The Trash is empty" description="Deleted notes, prayer entries, sermons, and illustrations wait here for thirty days." />
       )}
       {rows.length > 0 && (
         <ul className="space-y-2">
@@ -131,7 +151,9 @@ export function TrashLink({ kinds, onOpen }: { kinds: TrashKind[]; onOpen: (e: R
   const count =
     (kinds.includes("note") ? (trash?.notes.length ?? 0) : 0) +
     (kinds.includes("chapter_note") ? (trash?.chapter_notes.length ?? 0) : 0) +
-    (kinds.includes("prayer_entry") ? (trash?.prayer_entries.length ?? 0) : 0);
+    (kinds.includes("prayer_entry") ? (trash?.prayer_entries.length ?? 0) : 0) +
+    (kinds.includes("sermon") ? (trash?.sermons.length ?? 0) : 0) +
+    (kinds.includes("illustration") ? (trash?.illustrations.length ?? 0) : 0);
   if (count === 0) return null;
   return (
     <Button size="sm" variant="ghost" icon={Trash2} onClick={onOpen} title={`${count} deleted item${count === 1 ? "" : "s"} waiting in the Trash (Settings → Data & backups)`}>

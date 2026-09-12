@@ -152,12 +152,14 @@ export interface Backlink {
 }
 
 /** Which soft-deletable table a Trash operation addresses. */
-export type TrashKind = "note" | "chapter_note" | "prayer_entry";
+export type TrashKind = "note" | "chapter_note" | "prayer_entry" | "sermon" | "illustration";
 
 export interface TrashContents {
   notes: Note[];
   chapter_notes: ChapterNote[];
   prayer_entries: PrayerEntry[];
+  sermons: Sermon[];
+  illustrations: Illustration[];
 }
 
 export interface Bookmark {
@@ -585,4 +587,203 @@ export interface ResourceSearchResult {
   title: string;
   kind: ResourceKind;
   snippet: string;
+}
+
+// --- Sermon Builder (USER_MIGRATION_0015) ---------------------------------
+
+export type SermonStatus = "draft" | "ready" | "preached" | "archived";
+/** The prep track's six steps, in order. */
+export type SermonStage = "text" | "study" | "outline" | "manuscript" | "rehearsed" | "preached";
+/** Where a passage came from: the sermon's own text, a block in the
+ *  manuscript, or a reference typed in prose. */
+export type SermonPassageRole = "text" | "supporting" | "mentioned";
+export type SermonSourceKind =
+  | "commentary"
+  | "confession"
+  | "strongs"
+  | "dictionary"
+  | "resource"
+  | "crossref"
+  | "illustration";
+export type SermonEventKind = "rehearsal" | "preaching";
+export type IllustrationKind = "illustration" | "quote";
+
+export interface SermonPassage {
+  id: number;
+  sermon_id: number;
+  role: SermonPassageRole;
+  book_id: number;
+  chapter: number;
+  verse_start: number | null;
+  verse_end: number | null;
+  sort_order: number;
+}
+
+export interface SermonPassageInput {
+  role: SermonPassageRole;
+  book_id: number;
+  chapter: number;
+  verse_start: number | null;
+  verse_end: number | null;
+}
+
+export interface SermonSource {
+  id: number;
+  sermon_id: number;
+  kind: SermonSourceKind;
+  /** The reopenable source identity, e.g. `commentary:42`, `strongs:G1343`. */
+  ref_id: string | null;
+  label: string;
+  excerpt: string | null;
+  sort_order: number;
+  created_at: string;
+}
+
+export interface SermonSourceInput {
+  kind: SermonSourceKind;
+  ref_id: string | null;
+  label: string;
+  excerpt: string | null;
+}
+
+export interface SermonEvent {
+  id: number;
+  sermon_id: number;
+  kind: SermonEventKind;
+  date: string;
+  venue: string | null;
+  duration_seconds: number | null;
+  word_count: number | null;
+  notes: string | null;
+  created_at: string;
+}
+
+export interface Sermon {
+  id: number;
+  title: string;
+  big_idea: string | null;
+  /** tiptap HTML; its passage blocks hold references, never verse text. */
+  body: string;
+  status: SermonStatus;
+  stage: SermonStage;
+  preach_date: string | null;
+  series_id: number | null;
+  series_order: number | null;
+  venue: string | null;
+  preacher: string | null;
+  translation_id: number | null;
+  target_minutes: number | null;
+  reflection: string | null;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+  passages: SermonPassage[];
+  sources: SermonSource[];
+  tags: string[];
+  events: SermonEvent[];
+  series_title: string | null;
+}
+
+export interface SermonSeries {
+  id: number;
+  title: string;
+  description: string | null;
+  /** The congregation's reading plan, once one has been built (SB5.2). */
+  plan_code: string | null;
+  created_at: string;
+  sermon_count: number;
+  preached_count: number;
+}
+
+export interface SermonFilter {
+  status?: SermonStatus | null;
+  stage?: SermonStage | null;
+  series_id?: number | null;
+  book_id?: number | null;
+  tag?: string | null;
+  year?: number | null;
+  query?: string | null;
+  sort?: "date" | "title" | "updated" | null;
+  limit?: number | null;
+}
+
+/** Every editable field. A missing collection is left alone; a null scalar
+ *  is written as null, since the pane sends the whole sermon back. */
+export interface SermonInput {
+  title?: string | null;
+  big_idea?: string | null;
+  body?: string | null;
+  status?: SermonStatus | null;
+  stage?: SermonStage | null;
+  preach_date?: string | null;
+  series_id?: number | null;
+  series_order?: number | null;
+  venue?: string | null;
+  preacher?: string | null;
+  translation_id?: number | null;
+  target_minutes?: number | null;
+  reflection?: string | null;
+  passages?: SermonPassageInput[];
+  sources?: SermonSourceInput[];
+  tags?: string[];
+}
+
+export interface SermonForChapter {
+  sermon_id: number;
+  title: string;
+  preach_date: string | null;
+  stage: SermonStage;
+  status: SermonStatus;
+  role: SermonPassageRole;
+  book_id: number;
+  chapter: number;
+  verse_start: number | null;
+  verse_end: number | null;
+}
+
+/** The preacher's own rate, measured from timed runs (SB2.4). */
+export interface SpeakingRate {
+  wpm: number;
+  rehearsals: number;
+  preachings: number;
+}
+
+export interface Illustration {
+  id: number;
+  title: string;
+  body: string;
+  source_label: string | null;
+  source_ref: string | null;
+  kind: IllustrationKind;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+  tags: string[];
+  use_count: number;
+  last_used_at: string | null;
+}
+
+export interface IllustrationFilter {
+  kind?: IllustrationKind | null;
+  tag?: string | null;
+  query?: string | null;
+  sort?: "newest" | "most_used" | null;
+}
+
+export interface IllustrationInput {
+  title?: string | null;
+  body?: string | null;
+  source_label?: string | null;
+  source_ref?: string | null;
+  kind?: IllustrationKind | null;
+  tags?: string[];
+}
+
+export interface IllustrationUse {
+  illustration_id: number;
+  sermon_id: number;
+  sermon_title: string;
+  series_id: number | null;
+  preach_date: string | null;
+  used_at: string;
 }

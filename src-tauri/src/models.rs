@@ -206,15 +206,19 @@ pub enum TrashKind {
     Note,
     ChapterNote,
     PrayerEntry,
+    Sermon,
+    Illustration,
 }
 
-/// Everything currently in the Trash, all three kinds in one call, newest
+/// Everything currently in the Trash, every kind in one call, newest
 /// deletion first within each list.
 #[derive(Debug, Clone, Serialize)]
 pub struct TrashContents {
     pub notes: Vec<Note>,
     pub chapter_notes: Vec<ChapterNote>,
     pub prayer_entries: Vec<PrayerEntry>,
+    pub sermons: Vec<Sermon>,
+    pub illustrations: Vec<Illustration>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -630,4 +634,245 @@ pub struct Footnote {
     pub marker: String,
     pub text: String,
     pub char_offset: Option<i64>,
+}
+
+// ---------------------------------------------------------------------------
+// Sermon Builder (USER_MIGRATION_0015)
+
+/// One sermon. `body` is the tiptap document; its passage blocks hold
+/// references, never verse text, so `translation_id` decides what the reader
+/// sees. The collections are filled by `get_sermon` and `list_sermons` and
+/// are empty on the rows the Trash hands back.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Sermon {
+    pub id: i64,
+    pub title: String,
+    pub big_idea: Option<String>,
+    pub body: String,
+    pub status: String,
+    pub stage: String,
+    pub preach_date: Option<String>,
+    pub series_id: Option<i64>,
+    pub series_order: Option<i64>,
+    pub venue: Option<String>,
+    pub preacher: Option<String>,
+    pub translation_id: Option<i64>,
+    pub target_minutes: Option<i64>,
+    pub reflection: Option<String>,
+    pub created_at: String,
+    pub updated_at: String,
+    /// Set while the sermon sits in the Trash; always `None` from list queries.
+    pub deleted_at: Option<String>,
+    #[serde(default)]
+    pub passages: Vec<SermonPassage>,
+    #[serde(default)]
+    pub sources: Vec<SermonSource>,
+    #[serde(default)]
+    pub tags: Vec<String>,
+    #[serde(default)]
+    pub events: Vec<SermonEvent>,
+    /// The series' title, for a list that shows it without a second lookup.
+    #[serde(default)]
+    pub series_title: Option<String>,
+}
+
+/// A Scripture reference the sermon holds. `text` is the sermon's own
+/// passage (set in the header), `supporting` a passage block in the
+/// manuscript, `mentioned` a reference typed in prose -- all three are
+/// re-derived from the document on every save.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SermonPassage {
+    pub id: i64,
+    pub sermon_id: i64,
+    pub role: String,
+    pub book_id: i64,
+    pub chapter: i64,
+    pub verse_start: Option<i64>,
+    pub verse_end: Option<i64>,
+    pub sort_order: i64,
+}
+
+/// The input half of `SermonPassage` -- what the pane sends on save.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SermonPassageInput {
+    pub role: String,
+    pub book_id: i64,
+    pub chapter: i64,
+    pub verse_start: Option<i64>,
+    pub verse_end: Option<i64>,
+}
+
+/// One citation in the manuscript. `ref_id` is the source identity the app
+/// can reopen: `commentary:<entryId>`, `westminster:<sectionId>`,
+/// `strongs:G1343`, `dictionary:<slug>`, `resource:<id>:<page>`,
+/// `crossref:<book>:<chapter>:<verse>`, `illustration:<id>`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SermonSource {
+    pub id: i64,
+    pub sermon_id: i64,
+    pub kind: String,
+    pub ref_id: Option<String>,
+    pub label: String,
+    pub excerpt: Option<String>,
+    pub sort_order: i64,
+    pub created_at: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SermonSourceInput {
+    pub kind: String,
+    pub ref_id: Option<String>,
+    pub label: String,
+    pub excerpt: Option<String>,
+}
+
+/// A timed run of the manuscript: a rehearsal or the preaching itself.
+/// Both feed the measured speaking rate.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SermonEvent {
+    pub id: i64,
+    pub sermon_id: i64,
+    pub kind: String,
+    pub date: String,
+    pub venue: Option<String>,
+    pub duration_seconds: Option<i64>,
+    pub word_count: Option<i64>,
+    pub notes: Option<String>,
+    pub created_at: String,
+}
+
+/// A preaching series, with how many of its sermons are written and preached.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SermonSeries {
+    pub id: i64,
+    pub title: String,
+    pub description: Option<String>,
+    /// The congregation's reading plan once one has been built (SB5.2).
+    pub plan_code: Option<String>,
+    pub created_at: String,
+    #[serde(default)]
+    pub sermon_count: i64,
+    #[serde(default)]
+    pub preached_count: i64,
+}
+
+/// Everything the Sermons page can narrow a listing by. Every field is
+/// optional; an empty filter lists every live sermon.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(default)]
+pub struct SermonFilter {
+    pub status: Option<String>,
+    pub stage: Option<String>,
+    pub series_id: Option<i64>,
+    pub book_id: Option<i64>,
+    pub tag: Option<String>,
+    pub year: Option<i64>,
+    pub query: Option<String>,
+    /// `date` (default), `title`, or `updated`.
+    pub sort: Option<String>,
+    pub limit: Option<i64>,
+}
+
+/// The whole editable surface of a sermon. The pane holds the document, so
+/// it sends every field back on each save and `None` means null, not
+/// "leave alone"; `passages`, `sources`, and `tags` are replaced when
+/// present and left untouched when absent.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(default)]
+pub struct SermonInput {
+    pub title: Option<String>,
+    pub big_idea: Option<String>,
+    pub body: Option<String>,
+    pub status: Option<String>,
+    pub stage: Option<String>,
+    pub preach_date: Option<String>,
+    pub series_id: Option<i64>,
+    pub series_order: Option<i64>,
+    pub venue: Option<String>,
+    pub preacher: Option<String>,
+    pub translation_id: Option<i64>,
+    pub target_minutes: Option<i64>,
+    pub reflection: Option<String>,
+    pub passages: Option<Vec<SermonPassageInput>>,
+    pub sources: Option<Vec<SermonSourceInput>>,
+    pub tags: Option<Vec<String>>,
+}
+
+/// A sermon that touches the chapter being read (SB5.4), with the role that
+/// puts it there -- `text` first, then `supporting`, then `mentioned`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SermonForChapter {
+    pub sermon_id: i64,
+    pub title: String,
+    pub preach_date: Option<String>,
+    pub stage: String,
+    pub status: String,
+    pub role: String,
+    pub book_id: i64,
+    pub chapter: i64,
+    pub verse_start: Option<i64>,
+    pub verse_end: Option<i64>,
+}
+
+/// The preacher's measured rate (SB2.4): words a minute over the last ten
+/// timed events, preachings counted twice.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SpeakingRate {
+    pub wpm: i64,
+    pub rehearsals: i64,
+    pub preachings: i64,
+}
+
+/// One story or quotation in the library, with where it came from and how
+/// often it has been used.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Illustration {
+    pub id: i64,
+    pub title: String,
+    pub body: String,
+    pub source_label: Option<String>,
+    /// The reopenable source identity, in the same shape as `SermonSource.ref_id`.
+    pub source_ref: Option<String>,
+    pub kind: String,
+    pub created_at: String,
+    pub updated_at: String,
+    pub deleted_at: Option<String>,
+    #[serde(default)]
+    pub tags: Vec<String>,
+    #[serde(default)]
+    pub use_count: i64,
+    #[serde(default)]
+    pub last_used_at: Option<String>,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(default)]
+pub struct IllustrationFilter {
+    pub kind: Option<String>,
+    pub tag: Option<String>,
+    pub query: Option<String>,
+    /// `newest` (default) or `most_used`.
+    pub sort: Option<String>,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(default)]
+pub struct IllustrationInput {
+    pub title: Option<String>,
+    pub body: Option<String>,
+    pub source_label: Option<String>,
+    pub source_ref: Option<String>,
+    pub kind: Option<String>,
+    pub tags: Option<Vec<String>>,
+}
+
+/// Where one illustration has been used (SB3.1's "used in 2 sermons").
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct IllustrationUse {
+    pub illustration_id: i64,
+    pub sermon_id: i64,
+    pub sermon_title: String,
+    pub series_id: Option<i64>,
+    pub preach_date: Option<String>,
+    pub used_at: String,
 }
