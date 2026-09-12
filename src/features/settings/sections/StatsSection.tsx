@@ -204,6 +204,20 @@ export function StatsSection() {
             <Total value={stats.prayer_entries} label="Prayers logged" hint={`${stats.prayer_people} on the prayer list`} />
             <Total value={stats.memory_verses_learned} label="Verses memorized" hint={`of ${stats.memory_verses_total} being learned`} />
             <Total value={stats.catechism_learned} label="Catechism answers memorized" hint={`of ${stats.catechism_total} being learned`} />
+            {(stats.sermons_total > 0 || stats.sermons_preached_total > 0) && (
+              <>
+                <Total
+                  value={stats.sermons_preached_year}
+                  label="Sermons preached this year"
+                  hint={`${stats.sermons_preached_total} in all`}
+                />
+                <Total
+                  value={stats.sermon_words_total}
+                  label="Words written"
+                  hint={`across ${stats.sermons_total} ${stats.sermons_total === 1 ? "sermon" : "sermons"}`}
+                />
+              </>
+            )}
           </div>
         </div>
       )}

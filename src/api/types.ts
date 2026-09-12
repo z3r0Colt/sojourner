@@ -368,6 +368,11 @@ export interface Stats {
   catechism_total: number;
   catechism_learned: number;
   bookmarks: number;
+  /** Preachings logged this year and ever (SB5.6). */
+  sermons_preached_year: number;
+  sermons_preached_total: number;
+  sermons_total: number;
+  sermon_words_total: number;
 }
 
 export interface RedLetterRange {

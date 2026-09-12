@@ -48,6 +48,14 @@ pub struct Stats {
     pub catechism_total: i64,
     pub catechism_learned: i64,
     pub bookmarks: i64,
+    /// Preachings logged this calendar year, and ever (SB5.6). A sermon
+    /// preached twice counts twice: both times were real Sundays.
+    pub sermons_preached_year: i64,
+    pub sermons_preached_total: i64,
+    /// Sermons written, and the words in them -- the body's markup stripped
+    /// here rather than in the frontend, so the tile costs one query.
+    pub sermons_total: i64,
+    pub sermon_words_total: i64,
 }
 
 /// A card counts as learned once its interval is this long (days).
@@ -112,7 +120,51 @@ pub fn get_stats(conn: &Connection, today: &str) -> anyhow::Result<Stats> {
         catechism_total: count(conn, "SELECT COUNT(*) FROM catechism_memory")?,
         catechism_learned: count(conn, &format!("SELECT COUNT(*) FROM catechism_memory WHERE interval_days >= {LEARNED_INTERVAL_DAYS}"))?,
         bookmarks: count(conn, "SELECT COUNT(*) FROM bookmarks")?,
+        sermons_preached_year: count(
+            conn,
+            &format!(
+                "SELECT COUNT(*) FROM sermon_events e JOIN sermons s ON s.id = e.sermon_id
+                 WHERE e.kind = 'preaching' AND substr(e.date, 1, 4) = '{}' AND s.{NOT_DELETED}",
+                &today[..4.min(today.len())]
+            ),
+        )?,
+        sermons_preached_total: count(
+            conn,
+            &format!(
+                "SELECT COUNT(*) FROM sermon_events e JOIN sermons s ON s.id = e.sermon_id
+                 WHERE e.kind = 'preaching' AND s.{NOT_DELETED}"
+            ),
+        )?,
+        sermons_total: count(conn, &format!("SELECT COUNT(*) FROM sermons WHERE {NOT_DELETED}"))?,
+        sermon_words_total: sermon_words(conn)?,
     })
+}
+
+/// Words written across every live sermon. The bodies are tiptap HTML, so
+/// the tags are stripped and what is left is counted on whitespace -- the
+/// same rule the manuscript's own footer uses, near enough for a tile.
+fn sermon_words(conn: &Connection) -> anyhow::Result<i64> {
+    let mut stmt = conn.prepare(&format!("SELECT body FROM sermons WHERE {NOT_DELETED}"))?;
+    let bodies = stmt.query_map([], |r| r.get::<_, String>(0))?;
+    let mut total = 0i64;
+    for body in bodies {
+        let body = body?;
+        let mut text = String::with_capacity(body.len());
+        let mut in_tag = false;
+        for c in body.chars() {
+            match c {
+                '<' => in_tag = true,
+                '>' => {
+                    in_tag = false;
+                    text.push(' ');
+                }
+                _ if !in_tag => text.push(c),
+                _ => {}
+            }
+        }
+        total += text.split_whitespace().filter(|w| w.chars().any(char::is_alphanumeric)).count() as i64;
+    }
+    Ok(total)
 }
 
 #[cfg(test)]
@@ -154,6 +206,25 @@ mod tests {
         assert_eq!(s.reading_days[1].chapters, 2);
         assert_eq!(s.reading_days_total, 3);
         assert_eq!(s.chapters_read_total, 4);
+
+        // Sermons (SB5.6): words written, and preachings this year and ever.
+        conn.execute(
+            "INSERT INTO sermons (id, title, body, created_at, updated_at) VALUES (1, 'A sermon', '<h2>One</h2><p>three more words</p>', 'x', 'x')",
+            [],
+        )
+        .unwrap();
+        for date in ["2026-03-01", "2026-09-06", "2025-11-02"] {
+            conn.execute(
+                "INSERT INTO sermon_events (sermon_id, kind, date, created_at) VALUES (1, 'preaching', ?1, 'x')",
+                params![date],
+            )
+            .unwrap();
+        }
+        let s = get_stats(&conn, "2026-09-11").unwrap();
+        assert_eq!(s.sermons_total, 1);
+        assert_eq!(s.sermon_words_total, 4, "One + three more words");
+        assert_eq!(s.sermons_preached_year, 2);
+        assert_eq!(s.sermons_preached_total, 3);
 
         drop(conn);
         let _ = std::fs::remove_dir_all(&dir);
