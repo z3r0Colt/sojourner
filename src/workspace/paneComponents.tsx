@@ -7,6 +7,8 @@ import { DictionaryView } from "../features/dictionary/DictionaryView";
 import { ResourceReaderView } from "../features/resources/ResourceReaderView";
 import { CommentaryStandaloneView } from "../features/commentary/CommentaryStandaloneView";
 import { SettingsView } from "../features/settings/SettingsView";
+import { SermonsView } from "../features/sermons/SermonsView";
+import { SermonPane } from "../features/sermons/SermonPane";
 import { CommentaryPane, ConfessionPane, CrossRefsPane, InterlinearPane, MetricalPane, MinePane } from "./panes/StudyPanes";
 import { HarmonyPane, HighlightsPane, MemoryPane, NotesPane, PlansPane, PrayerPane, ResourcesPane, TodayPane } from "./panes/PagePanes";
 
@@ -35,5 +37,7 @@ export const PANE_COMPONENTS: Record<PaneKind, ComponentType> = {
   memory: MemoryPane,
   plans: PlansPane,
   harmony: HarmonyPane,
+  sermons: SermonsView,
+  sermon: SermonPane,
   settings: SettingsView,
 };

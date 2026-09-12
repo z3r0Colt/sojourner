@@ -55,6 +55,10 @@ interface UiState {
   /** F11: chrome hidden, the focused pane maximized (see workspaceStore). */
   distractionFreeMode: boolean;
   sidebarCollapsed: boolean;
+  /** A sermon pane publishes the passage under the cursor to its link group
+   * (SB1.1), so the Bible and commentary beside it turn to the text being
+   * written about. Off for a writer who wants the study panes to stay put. */
+  sermonFollowsCursor: boolean;
   setTheme: (t: Theme) => void;
   setReduceMotion: (on: boolean) => void;
   setAccentSource: (s: AccentSource) => void;
@@ -70,6 +74,7 @@ interface UiState {
   toggleDistractionFreeMode: () => void;
   setDistractionFreeMode: (on: boolean) => void;
   toggleSidebar: () => void;
+  setSermonFollowsCursor: (on: boolean) => void;
 }
 
 const stored = (() => {
@@ -106,6 +111,12 @@ export const useUiStore = create<UiState>((set) => ({
   accentSource: stored.accentSource ?? "app",
   distractionFreeMode: false,
   sidebarCollapsed: stored.sidebarCollapsed ?? false,
+  sermonFollowsCursor: stored.sermonFollowsCursor ?? true,
+
+  setSermonFollowsCursor: (sermonFollowsCursor) => {
+    persist({ sermonFollowsCursor });
+    set({ sermonFollowsCursor });
+  },
 
   setTheme: (theme) => {
     persist({ theme });
