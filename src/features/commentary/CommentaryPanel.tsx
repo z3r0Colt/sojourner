@@ -15,7 +15,7 @@ import { usePane } from "../../workspace/PaneContext";
 import type { Book } from "../../api/types";
 import { selectSmClass, cx } from "../../components/ui/classes";
 import { EmptyState, LoadingState } from "../../components/ui/EmptyState";
-import { SendToSermonButton } from "../sermons/StudyActions";
+import { StudyActions } from "../sermons/StudyActions";
 import { commentaryRef } from "../sermons/sourceIdentity";
 import { firstParagraph } from "../sermons/excerpt";
 
@@ -136,8 +136,8 @@ export function CommentaryPanel({
                       </button>
                     )}
                     <span className="ml-auto flex shrink-0 items-center">
-                      <SendToSermonButton
-                        label={`Send ${sourceTitle} on ${book.name} ${chapter}${e.verse_start != null ? `:${e.verse_start}` : ""} to the sermon`}
+                      <StudyActions
+                        what={`${sourceTitle} on ${book.name} ${chapter}${e.verse_start != null ? `:${e.verse_start}` : ""}`}
                         item={() =>
                           sourceId == null
                             ? null

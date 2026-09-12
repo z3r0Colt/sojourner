@@ -11,7 +11,7 @@ import { refAttrs } from "../../lib/refAttr";
 import { toPassageRef } from "../../lib/passage";
 import { EmptyState, LoadingState } from "../../components/ui/EmptyState";
 import { cx, inputSmClass } from "../../components/ui/classes";
-import { SendToSermonButton } from "../sermons/StudyActions";
+import { StudyActions } from "../sermons/StudyActions";
 import { dictionaryRef } from "../sermons/sourceIdentity";
 import { firstParagraph, selectionWithin } from "../sermons/excerpt";
 
@@ -123,9 +123,8 @@ export function DictionaryView() {
           <div className="mx-auto w-full max-w-[70ch]">
             <div className="mb-4 flex items-start gap-2">
               <h1 className="reading-font min-w-0 flex-1 text-3xl font-semibold text-ink">{entry.term}</h1>
-              <SendToSermonButton
-                className="mt-1.5"
-                label={`Send ${entry.term} to the sermon`}
+              <StudyActions
+                what={entry.term}
                 item={() => ({
                   kind: "dictionary",
                   refId: dictionaryRef(entry.slug),

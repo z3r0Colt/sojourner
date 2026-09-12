@@ -23,7 +23,7 @@ import type { WestminsterProofRef, DoctrineTopic } from "../../api/types";
 import { Tabs } from "../../components/ui/Tabs";
 import { EmptyState, LoadingState } from "../../components/ui/EmptyState";
 import { cx, inputSmClass, selectSmClass } from "../../components/ui/classes";
-import { SendToSermonButton } from "../sermons/StudyActions";
+import { StudyActions } from "../sermons/StudyActions";
 import { westminsterRef } from "../sermons/sourceIdentity";
 import { htmlToText, selectionWithin } from "../sermons/excerpt";
 
@@ -279,9 +279,8 @@ export function WestminsterView() {
             <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-ink-3">{doc?.title}</div>
             <div className="mb-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
               <h1 className="reading-font text-2xl font-semibold text-ink">{section.heading}</h1>
-              <SendToSermonButton
-                className="self-center"
-                label={`Send ${section.heading} to the sermon`}
+              <StudyActions
+                what={section.heading}
                 item={() => ({
                   kind: "confession",
                   refId: westminsterRef(doc?.code ?? docCode ?? "wcf", section.id),

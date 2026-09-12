@@ -55,6 +55,8 @@ import { FindBar } from "./FindBar";
 import { findMatches, findRangesByVerse } from "./findMatches";
 import { computeRedLetterSpans } from "./redLetterSpans";
 import { sendToSermon } from "../sermons/sendToSermon";
+import { captureIllustration } from "../sermons/illustrationCapture";
+import { crossrefRef } from "../sermons/sourceIdentity";
 import { closestWithAttr, textOffsetWithin } from "../../lib/domOffsets";
 import { useCopyPassage } from "../../lib/clipboard";
 import { ReadAloudButton } from "../tts/ReadAloudButton";
@@ -1059,6 +1061,22 @@ export function ReadingPane() {
               },
               { from: paneId },
             );
+            window.getSelection()?.removeAllRanges();
+            setPending(null);
+          }}
+          onSaveAsIllustration={() => {
+            const text =
+              pending.charStart != null && pending.charEnd != null
+                ? verseText(pending.verseStart).slice(pending.charStart, pending.charEnd)
+                : joinVerses(verses, pending.verseStart, pending.verseEnd);
+            const reference = formatRef([book], toPassageRef(book.id, chapter, pending.verseStart, pending.verseEnd));
+            captureIllustration({
+              title: reference,
+              body: `<p>${text}</p>`,
+              sourceLabel: `${reference}${translationCode ? ` (${translationCode})` : ""}`,
+              sourceRef: crossrefRef(book.id, chapter, pending.verseStart, pending.verseEnd),
+              kind: "quote",
+            });
             window.getSelection()?.removeAllRanges();
             setPending(null);
           }}

@@ -6,7 +6,7 @@ import { PaneLink as Link } from "../../workspace/PaneLink";
 import { openPassage, targetFor } from "../../workspace/openContent";
 import { Button, IconButton } from "../../components/ui/Button";
 import { LoadingState } from "../../components/ui/EmptyState";
-import { SendToSermonButton } from "../sermons/StudyActions";
+import { StudyActions } from "../sermons/StudyActions";
 import { strongsRef } from "../sermons/sourceIdentity";
 
 /** The Strong's entry card, opened from an interlinear word or from a
@@ -61,8 +61,8 @@ export function StrongsPopup({
         <span className="text-xs font-semibold uppercase tracking-wide text-ink-3">{heading}</span>
         <span className="flex items-center">
           {entry && (
-            <SendToSermonButton
-              label={`Send ${entry.id} to the sermon`}
+            <StudyActions
+              what={entry.id}
               item={() => ({
                 kind: "strongs",
                 refId: strongsRef(entry.id),
