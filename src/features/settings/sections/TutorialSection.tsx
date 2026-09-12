@@ -233,6 +233,10 @@ const CATEGORIES: Category[] = [
         ),
       },
       {
+        q: "What you have already preached here",
+        a: "The Mine pane gains a Sermons section on every chapter: the sermons preached from it first, then those that quote it, then those that merely mention it, each opening with a click. The Bible pane's Related row carries the ones preached from the chapter, and a highlight on a verse you later preached from is marked “in a sermon” on the Highlights page.",
+      },
+      {
         q: "After the sermon",
         a: "“Mark as preached” writes the preaching down — the date, the church, and, if you timed it, how long it took — and the prep track and the status follow it to Preached. The History list holds every rehearsal and preaching with its minutes, and under it a Reflection box waits for what landed, what to cut, and what to say next time. A preached sermon opens with that box ready; the reflection is searchable with the rest of the sermon.",
       },
