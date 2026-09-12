@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Editor } from "@tiptap/react";
 import { Link2, Mic, PanelRight } from "lucide-react";
-import { usePassagesIn } from "../../api/queries";
+import { useBooks, usePassagesIn } from "../../api/queries";
 import { useReaderTranslationId, useWorkspaceStore } from "../../state/workspaceStore";
 import { useUiStore } from "../../state/uiStore";
 import { usePane, usePaneParams } from "../../workspace/PaneContext";
@@ -23,6 +23,8 @@ import { useSermonTemplates } from "./sermonTemplates";
 import { useSendToSermonRequest } from "./sendToSermon";
 import { illustrationRef, openSourceRef } from "./sourceIdentity";
 import { IllustrationPicker } from "./IllustrationPicker";
+import { SlideShow } from "./SlideShow";
+import { buildSlides } from "./slides";
 import { useSermonDraft } from "./sermonDraft";
 import { useRecordIllustrationUse, useSetSermonStage } from "../../api/queries";
 import { passageAtCursor } from "./cursorPassage";
@@ -46,6 +48,7 @@ export function SermonPane() {
   const { id: paneId, width: paneWidth } = usePane();
   const { sermon, draft, isLoading, patch, savedAt, isSaving, passageRefs } = useSermonDraft(params.id);
   const readerTranslationId = useReaderTranslationId();
+  const { data: books } = useBooks();
   const publishPassage = useWorkspaceStore((s) => s.publishPassage);
   const linkGroup = useWorkspaceStore((s) => s.panes.find((p) => p.id === paneId)?.linkGroup ?? null);
   const followsCursor = useUiStore((s) => s.sermonFollowsCursor);
@@ -58,6 +61,7 @@ export function SermonPane() {
   const rate = useSpeakingRateInfo();
   const [sermonTemplates] = useSermonTemplates();
   const [pickingIllustration, setPickingIllustration] = useState(false);
+  const [presenting, setPresenting] = useState(false);
   const recordUse = useRecordIllustrationUse();
   // Above 720 px the panel sits beside the manuscript; below, it is a
   // popover behind a header button, so a narrow column keeps its text.
@@ -179,6 +183,8 @@ export function SermonPane() {
       onGoToSection={goToSection}
       rate={rate}
       paneId={paneId}
+      sermon={sermon}
+      onPresent={() => setPresenting(true)}
     />
   );
 
@@ -189,7 +195,7 @@ export function SermonPane() {
         <div className="flex shrink-0 flex-wrap items-center gap-1 border-b border-line px-2 py-1">
           <RehearsalButtons sermon={sermon} />
           <span className="ml-auto" />
-          <SermonActionsMenu sermon={sermon} />
+          <SermonActionsMenu sermon={sermon} passages={byKey} onPresent={() => setPresenting(true)} />
           {!panelBeside && (
             <Popover
               width="w-72"
@@ -269,6 +275,13 @@ export function SermonPane() {
             {savedLabel(savedAt, isSaving)}
           </span>
         </div>
+        {presenting && (
+          <SlideShow
+            slides={buildSlides(sermon, { books, passages: byKey })}
+            title={sermon.title}
+            onClose={() => setPresenting(false)}
+          />
+        )}
         {pickingIllustration && (
           <IllustrationPicker
             seriesId={draft.seriesId}

@@ -70,6 +70,15 @@ const GROUPS: { title: string; rows: { keys: string[]; label: string }[] }[] = [
     ],
   },
   {
+    title: "Slides",
+    rows: [
+      { keys: ["→"], label: "Next slide (Space and PageDown do the same; the screen's right third is a tap zone)" },
+      { keys: ["←"], label: "Previous slide (PageUp does the same)" },
+      { keys: ["Home"], label: "First slide (End goes to the last)" },
+      { keys: ["Esc"], label: "Leave the slides" },
+    ],
+  },
+  {
     title: "Memory practice",
     rows: [
       { keys: ["Space"], label: "Reveal the hidden verse or answer (first-letter and blank-word modes)" },
