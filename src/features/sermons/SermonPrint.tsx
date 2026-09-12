@@ -2,6 +2,8 @@ import { useMemo } from "react";
 import { useBooks, usePassagesIn } from "../../api/queries";
 import { ManuscriptView } from "./ManuscriptView";
 import { outlineOf, passageBlocks, sectionsOf } from "./editor/documentModel";
+import { buildHandout } from "./handout";
+import { cx } from "../../components/ui/classes";
 import { formatPreachDate, passageLabel, sermonTextLabel } from "./sermonFormat";
 import type { Passage, Sermon } from "../../api/types";
 
@@ -77,62 +79,36 @@ function OutlinePrint({ sermon, books }: { sermon: Sermon; books: ReturnType<typ
   );
 }
 
-/** The fill-in handout (SB4.3): the points with every blanked word replaced
- * by a rule, passages by reference, the discussion questions if the sermon
- * has any, and lines to write on. */
+/** The fill-in handout (SB4.3). The sheet itself is a pure function of the
+ * saved manuscript (handout.ts); this only lays out what comes back. */
 function HandoutPrint({ sermon, passages, answerKey }: { sermon: Sermon; passages: Map<string, Passage>; answerKey: boolean }) {
   const { data: books } = useBooks();
-  const sections = useMemo(() => sectionsOf(sermon.body), [sermon.body]);
-  const discussion = sections.find((s) => /discussion/i.test(s.heading?.text ?? ""));
+  const passageText = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const [key, passage] of passages) map.set(key, passage.text);
+    return map;
+  }, [passages]);
+  const handout = useMemo(
+    () => buildHandout(sermon, { answerKey, books, passageText }),
+    [sermon, answerKey, books, passageText],
+  );
 
   return (
     <div className="sermon-handout">
-      {sections.map((section, i) => {
-        if (section === discussion) return null;
-        const refs = passageBlocks(section.html);
-        return (
-          <section key={i} className="handout-section">
-            {section.heading && (
-              <h2 className={section.heading.level === 3 ? "sub" : undefined}>{section.heading.text}</h2>
-            )}
-            {refs.length > 0 && (
-              <p className="handout-refs">
-                {refs.map((r) => passageLabel(books, { book_id: r.book_id, chapter: r.chapter, verse_start: r.verse_start, verse_end: r.verse_end })).join("; ")}
-              </p>
-            )}
-            <HandoutBody html={section.html} passages={passages} answerKey={answerKey} />
-            <div className="handout-lines" aria-hidden="true">
-              <span />
-              <span />
-            </div>
-          </section>
-        );
-      })}
-
-      {discussion && (
-        <section className="handout-section handout-discussion">
-          <h2>{discussion.heading?.text}</h2>
-          <HandoutBody html={discussion.html} passages={passages} answerKey={answerKey} />
+      {handout.sections.map((section, i) => (
+        <section key={i} className={cx("handout-section", section.isDiscussion && "handout-discussion")}>
+          {section.heading && (
+            <h2 className={section.level === 3 ? "sub" : undefined}>{section.heading}</h2>
+          )}
+          {section.references.length > 0 && <p className="handout-refs">{section.references.join("; ")}</p>}
+          <div className="sermon-html" dangerouslySetInnerHTML={{ __html: section.html }} />
           <div className="handout-lines" aria-hidden="true">
-            <span />
-            <span />
-            <span />
-            <span />
+            {Array.from({ length: section.noteLines }, (_, n) => (
+              <span key={n} />
+            ))}
           </div>
         </section>
-      )}
+      ))}
     </div>
   );
-}
-
-/** A section's prose with its blanks drawn as rules (or, for the preacher's
- * own copy, as the answer key) and its passage blocks left to their
- * reference, which the header above already names. */
-function HandoutBody({ html, passages, answerKey }: { html: string; passages: Map<string, Passage>; answerKey: boolean }) {
-  const withoutHeading = useMemo(() => html.replace(/^<h[23][^>]*>.*?<\/h[23]>/i, ""), [html]);
-  const withoutPassages = useMemo(
-    () => withoutHeading.replace(/<div data-type="passage"[^>]*><\/div>/g, ""),
-    [withoutHeading],
-  );
-  return <ManuscriptView html={withoutPassages} passages={passages} blanksAs={answerKey ? "key" : "rule"} />;
 }
