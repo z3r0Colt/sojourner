@@ -225,7 +225,14 @@ mod tests {
         assert!(queries::reading_log::list_recent(&conn, 5).unwrap().len() <= 5);
         queries::reading_position::set(&conn, 1, 1, 1, None).unwrap();
         queries::reading_log::record(&conn, &queries::reading_log::today(), 1, 1, 1).unwrap();
-        assert_eq!(queries::reading_log::list_recent(&conn, 5).unwrap().first().map(|e| (e.book_id, e.chapter)), Some((1, 1)));
+        // It has to be *in* the log, not at the top of it: a real database may
+        // already hold chapters read today, and re-recording one keeps the row
+        // it already had, so the newest id is not necessarily this one.
+        let recent = queries::reading_log::list_recent(&conn, 50).unwrap();
+        assert!(
+            recent.iter().any(|e| (e.book_id, e.chapter) == (1, 1)),
+            "the chapter just recorded should be in the recent list",
+        );
         // USER_MIGRATION_0014: custom plans and the schedule map exist and are
         // empty, and progress on bundled plans still lists after migrating.
         for t in ["user_reading_plans", "user_reading_plan_readings", "reading_plan_schedule"] {
