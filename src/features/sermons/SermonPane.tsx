@@ -13,7 +13,7 @@ import { RichTextEditor, type RichTextEditorHandle } from "../notes/RichTextEdit
 import { SermonEditorProvider } from "./editor/context";
 import { SermonHeader } from "./SermonHeader";
 import { SermonSidePanel, type SidePanelTab } from "./SermonSidePanel";
-import { useSpeakingRateInfo } from "./sermonStats";
+import { rateLabel, useSermonWordCount, useSpeakingRateInfo } from "./sermonStats";
 import { useSermonTemplates } from "./sermonTemplates";
 import { useSendToSermonRequest } from "./sendToSermon";
 import { openSourceRef } from "./sourceIdentity";
@@ -58,6 +58,10 @@ export function SermonPane() {
   // One query for every passage block in the document, whatever their number
   // (see the context's own comment): the node views read the map.
   const { byKey, isLoading: passagesLoading } = usePassagesIn(translationId, passageRefs);
+  const words = useSermonWordCount(draft?.body ?? "", translationId, rate);
+  // Past the target, the footer turns amber -- the one number a preacher
+  // most needs to see going the wrong way.
+  const overTarget = draft?.targetMinutes != null && words.minutes > draft.targetMinutes;
 
   // Material sent from a study pane lands at the cursor (SB1.4).
   useSendToSermonRequest(params.id, (item) => {
@@ -133,6 +137,8 @@ export function SermonPane() {
     heading?.scrollIntoView({ block: "start", behavior: "smooth" });
   }
 
+  // Words and minutes (SB1.7): passage blocks count at their rendered
+  // length, since the preacher reads them aloud, but their captions do not.
   const panel = (
     <SermonSidePanel
       body={draft.body}
@@ -201,6 +207,17 @@ export function SermonPane() {
           {linkGroup == null && followsCursor && (
             <span className="text-ink-4">Put this pane in a link group to lead it.</span>
           )}
+          <span
+            className={cx("tabular-nums", overTarget && "font-medium text-warn")}
+            title={
+              draft.targetMinutes
+                ? `Target ${draft.targetMinutes} min · ${words.written.toLocaleString()} written and ${words.passages.toLocaleString()} in passage blocks, ${rateLabel(rate)}`
+                : `${words.written.toLocaleString()} written and ${words.passages.toLocaleString()} in passage blocks, ${rateLabel(rate)}`
+            }
+          >
+            {words.total.toLocaleString()} words · about {words.minutes} min {rateLabel(rate)}
+            {draft.targetMinutes ? ` of ${draft.targetMinutes}` : ""}
+          </span>
           <span className="ml-auto tabular-nums" aria-live="polite">
             {savedLabel(savedAt, isSaving)}
           </span>
