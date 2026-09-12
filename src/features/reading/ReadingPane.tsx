@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { Bookmark, BookmarkCheck, Columns2, Languages, Maximize2, MoreHorizontal, Paperclip, Printer, SlidersHorizontal, Sparkles, Square, StickyNote, TextSearch, Type, Volume2 } from "lucide-react";
 import { useReadingTypography, useUiStore } from "../../state/uiStore";
@@ -104,6 +105,7 @@ interface NoteTarget {
  * font, theme, highlights, note markers) is global. */
 export function ReadingPane() {
   const { id: paneId, isFocused, width: paneWidth } = usePane();
+  const queryClient = useQueryClient();
   const compact = paneWidth > 0 && paneWidth < 520;
   const narrow = paneWidth > 0 && paneWidth < 820;
   const [params, setParams] = usePaneParams("bible");
@@ -516,13 +518,18 @@ export function ReadingPane() {
 
   // Persist the reading position (debounced) whenever it changes -- only
   // from the focused Bible pane, and not before the shell has bootstrapped.
+  // The save also logs the chapter for the day (F3.1), so a Today pane
+  // open beside the text is told to refresh.
   useEffect(() => {
     if (!isFocused || !ready || translationId == null) return;
     const t = setTimeout(() => {
-      api.setReadingPosition(translationId, bookId, chapter, activeVerse ?? undefined);
+      api.setReadingPosition(translationId, bookId, chapter, activeVerse ?? undefined).then(() => {
+        queryClient.invalidateQueries({ queryKey: ["readingPosition"] });
+        queryClient.invalidateQueries({ queryKey: ["readingLog"] });
+      });
     }, 400);
     return () => clearTimeout(t);
-  }, [isFocused, ready, translationId, bookId, chapter, activeVerse]);
+  }, [isFocused, ready, translationId, bookId, chapter, activeVerse, queryClient]);
 
   // Printing: the virtualizer only mounts the rows on screen, so render the
   // whole chapter statically for the print pass, then go back.

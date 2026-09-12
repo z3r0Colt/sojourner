@@ -1196,6 +1196,26 @@ CREATE INDEX idx_note_refs_note ON note_refs(note_id);
 CREATE INDEX idx_note_refs_chapter_note ON note_refs(chapter_note_id);
 "#;
 
+// Reading log (F3.1): one row per chapter opened per local calendar day,
+// written alongside the reading position (see reading_position::set). It
+// gives the Today page a durable "Recent chapters" list -- a pane's history
+// lives only in local storage -- and feeds the reading-day heatmap in
+// F3.5. `date` is the local day as YYYY-MM-DD; `translation_id` is the
+// translation that was open, updated in place when the same chapter is
+// reopened in another one. Scrolling through a chapter re-saves the
+// position many times, hence the unique key rather than a plain log.
+pub const USER_MIGRATION_0013: &str = r#"
+CREATE TABLE reading_log (
+  id              INTEGER PRIMARY KEY,
+  date            TEXT NOT NULL,
+  book_id         INTEGER NOT NULL,
+  chapter         INTEGER NOT NULL,
+  translation_id  INTEGER,
+  UNIQUE(date, book_id, chapter)
+);
+CREATE INDEX idx_reading_log_date ON reading_log(date);
+"#;
+
 pub const USER_MIGRATIONS: &[&str] = &[
     USER_MIGRATION_0001,
     USER_MIGRATION_0002,
@@ -1209,4 +1229,5 @@ pub const USER_MIGRATIONS: &[&str] = &[
     USER_MIGRATION_0010,
     USER_MIGRATION_0011,
     USER_MIGRATION_0012,
+    USER_MIGRATION_0013,
 ];

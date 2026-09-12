@@ -6,11 +6,20 @@ import { MemoryHubView } from "../../features/memory/MemoryHubView";
 import { ReadingPlansView } from "../../features/plans/ReadingPlansView";
 import { HarmonyView } from "../../features/harmony/HarmonyView";
 import { ResourceLibraryView } from "../../features/resources/ResourceLibraryView";
+import { TodayView } from "../../features/today/TodayView";
 
 /** List-style pages scroll inside their pane; the shell's main area no
  * longer scrolls for them. */
 function PageScroll({ children }: { children: ReactNode }) {
   return <div className="h-full overflow-y-auto">{children}</div>;
+}
+
+export function TodayPane() {
+  return (
+    <PageScroll>
+      <TodayView />
+    </PageScroll>
+  );
 }
 
 export function NotesPane() {

@@ -16,6 +16,7 @@ import {
   ScrollText,
   Settings,
   StickyNote,
+  Sunrise,
   type LucideIcon,
 } from "lucide-react";
 import type { Book, CommentarySource, DictionaryEntrySummary, Resource, Translation, WestminsterDocument } from "../api/types";
@@ -195,6 +196,7 @@ export const PANE_KINDS: Registry = {
     acceptsPassage: false,
     listed: false,
   },
+  today: { kind: "today", label: "Today", icon: Sunrise, title: () => "Today", defaultWidth: 900, acceptsPassage: false, listed: true },
   notes: { kind: "notes", label: "Notes", icon: NotebookPen, title: () => "Notes", defaultWidth: 900, acceptsPassage: false, listed: true },
   highlights: { kind: "highlights", label: "Highlights", icon: Highlighter, title: () => "Highlights", defaultWidth: 900, acceptsPassage: false, listed: true },
   prayer: { kind: "prayer", label: "Prayer", icon: HeartHandshake, title: () => "Prayer", defaultWidth: 900, acceptsPassage: false, listed: true },
@@ -261,6 +263,8 @@ export function routeFor(content: PaneContent): string {
       if (sourceId == null) return "/commentary";
       return `/commentary/${sourceId}${bookId != null ? `/${bookId}${sectionId != null ? `/${sectionId}` : ""}` : ""}`;
     }
+    case "today":
+      return "/today";
     case "notes":
       return "/notes";
     case "highlights":
@@ -312,6 +316,8 @@ export function parseRoute(pathname: string, search = ""): ContentRequest | null
     }
     case "commentary":
       return { kind: "commentary-book", params: { sourceId: num(a), bookId: num(b), sectionId: num(c) } };
+    case "today":
+      return { kind: "today", params: {} };
     case "notes":
       return { kind: "notes", params: {} };
     case "highlights":

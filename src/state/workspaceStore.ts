@@ -25,8 +25,8 @@ import { ROW_SPLIT_DEFAULT, clampRowSplit, defaultLayoutFor, isLayoutId, layoutA
  *   zoom shortcuts (F1.7)       link group
  *   focus mode (chrome hidden)  history and future
  *
- * The reading position (and the reading log, once F3.1 adds it) is written
- * only by the focused Bible pane -- see ReadingPane.
+ * The reading position and the reading log (F3.1) are written only by the
+ * focused Bible pane -- see ReadingPane.
  *
  * The whole workspace is persisted to local storage under a version number;
  * `migrateWorkspace` upgrades older shapes instead of dropping them.
@@ -118,6 +118,7 @@ export type PaneContent =
   | { kind: "resource"; params: ResourceParams }
   | { kind: "resources"; params: EmptyParams }
   | { kind: "commentary-book"; params: CommentaryBookParams }
+  | { kind: "today"; params: EmptyParams }
   | { kind: "notes"; params: EmptyParams }
   | { kind: "highlights"; params: EmptyParams }
   | { kind: "prayer"; params: EmptyParams }
@@ -143,6 +144,7 @@ export const PANE_KIND_LIST: readonly PaneKind[] = [
   "resource",
   "resources",
   "commentary-book",
+  "today",
   "notes",
   "highlights",
   "prayer",
