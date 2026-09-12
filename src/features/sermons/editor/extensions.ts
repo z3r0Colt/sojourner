@@ -77,6 +77,10 @@ export const SourceNode = Node.create({
   content: "block+",
   defining: true,
   draggable: true,
+  // StarterKit's blockquote matches every <blockquote>, so a citation has
+  // to be tried first or it is parsed as an ordinary quotation and loses
+  // the source identity that makes "Open source" possible.
+  priority: 200,
 
   addAttributes() {
     return {

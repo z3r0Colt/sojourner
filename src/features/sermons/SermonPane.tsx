@@ -84,12 +84,14 @@ export function SermonPane() {
     [sermon, draft?.body, rate.wpm],
   );
   const evidenceStage = evidence ? stageFromEvidence(evidence) : null;
-  const seenEvidenceRef = useRef<string | null>(null);
+  // A stage set by hand sticks until new evidence appears, so a manual move
+  // is remembered with the evidence it was made against; anything else --
+  // including a sermon opened already ahead of its stored stage -- catches
+  // up at once.
+  const manualStageRef = useRef<string | null>(null);
   useEffect(() => {
     if (!sermon || !evidenceStage) return;
-    const previous = seenEvidenceRef.current;
-    seenEvidenceRef.current = evidenceStage;
-    if (previous === null || previous === evidenceStage) return;
+    if (manualStageRef.current === evidenceStage) return;
     if (stageIndex(evidenceStage) > stageIndex(sermon.stage)) {
       setStage.mutate({ sermonId: sermon.id, stage: evidenceStage });
     }
@@ -215,7 +217,7 @@ export function SermonPane() {
             <PrepTrack
               stage={sermon.stage}
               onSetStage={(stage) => {
-                seenEvidenceRef.current = evidenceStage;
+                manualStageRef.current = evidenceStage;
                 setStage.mutate({ sermonId: sermon.id, stage });
               }}
               hint={evidence ? nextStepHint(sermon.stage, evidence) : null}
