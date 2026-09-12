@@ -54,6 +54,7 @@ import { BookmarksMenu } from "./BookmarksMenu";
 import { FindBar } from "./FindBar";
 import { findMatches, findRangesByVerse } from "./findMatches";
 import { computeRedLetterSpans } from "./redLetterSpans";
+import { sendToSermon } from "../sermons/sendToSermon";
 import { closestWithAttr, textOffsetWithin } from "../../lib/domOffsets";
 import { useCopyPassage } from "../../lib/clipboard";
 import { ReadAloudButton } from "../tts/ReadAloudButton";
@@ -1047,6 +1048,20 @@ export function ReadingPane() {
             window.getSelection()?.removeAllRanges();
             setPending(null);
           }}
+          onSendToSermon={() => {
+            sendToSermon(
+              {
+                kind: "passage",
+                refId: null,
+                label: formatRef([book], toPassageRef(book.id, chapter, pending.verseStart, pending.verseEnd)),
+                excerpt: null,
+                passage: toPassageRef(book.id, chapter, pending.verseStart, pending.verseEnd),
+              },
+              { from: paneId },
+            );
+            window.getSelection()?.removeAllRanges();
+            setPending(null);
+          }}
           onClose={() => setPending(null)}
         />
       )}
@@ -1061,6 +1076,18 @@ export function ReadingPane() {
           onUnderline={(color) => commitHighlight("underline", color, { verseStart: verseMenu.verseNum, verseEnd: verseMenu.verseNum })}
           onNote={() => setNoteTarget({ verseStart: verseMenu.verseNum, verseEnd: verseMenu.verseNum })}
           onCompare={() => setCompareVerse(verseMenu.verseNum)}
+          onSendToSermon={() =>
+            sendToSermon(
+              {
+                kind: "passage",
+                refId: null,
+                label: `${book.name} ${chapter}:${verseMenu.verseNum}`,
+                excerpt: null,
+                passage: toPassageRef(book.id, chapter, verseMenu.verseNum),
+              },
+              { from: paneId },
+            )
+          }
           onCopy={() => {
             const ref = `${book.name} ${chapter}:${verseMenu.verseNum}`;
             copyPassage(verseText(verseMenu.verseNum), ref, translationCode);

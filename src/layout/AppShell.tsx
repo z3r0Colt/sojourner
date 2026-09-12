@@ -9,6 +9,7 @@ import { TtsPlayerBar } from "../features/tts/TtsPlayerBar";
 import { Sidebar } from "./Sidebar";
 import { ShortcutsModal } from "./ShortcutsModal";
 import { RefPreviewHost } from "../components/RefPreview";
+import { SendToSermonHost } from "../features/sermons/SendToSermonHost";
 import { Workspace } from "../workspace/Workspace";
 import { LayoutPicker } from "../workspace/LayoutPicker";
 import { WorkspaceDialogs, WorkspacesMenu, useSavedWorkspaces } from "../workspace/WorkspacesMenu";
@@ -209,6 +210,7 @@ export function AppShell() {
       )}
       {shortcutsOpen && <ShortcutsModal onClose={() => setShortcutsOpen(false)} />}
       <WorkspaceDialogs />
+      <SendToSermonHost />
       <RefPreviewHost />
       <TourOverlay onFinish={() => setTourDone(true)} />
     </div>

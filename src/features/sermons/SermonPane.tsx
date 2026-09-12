@@ -10,6 +10,8 @@ import { cx } from "../../components/ui/classes";
 import { RichTextEditor, type RichTextEditorHandle } from "../notes/RichTextEditor";
 import { SermonEditorProvider } from "./editor/context";
 import { SermonHeader } from "./SermonHeader";
+import { useSendToSermonRequest } from "./sendToSermon";
+import { openSourceRef } from "./sourceIdentity";
 import { useSermonDraft } from "./sermonDraft";
 import { passageAtCursor } from "./cursorPassage";
 import { refKey } from "../../lib/passage";
@@ -43,6 +45,27 @@ export function SermonPane() {
   // One query for every passage block in the document, whatever their number
   // (see the context's own comment): the node views read the map.
   const { byKey, isLoading: passagesLoading } = usePassagesIn(translationId, passageRefs);
+
+  // Material sent from a study pane lands at the cursor (SB1.4).
+  useSendToSermonRequest(params.id, (item) => {
+    const handle = editorRef.current;
+    if (!handle) return;
+    if (item.kind === "passage" && item.passage) {
+      handle.insertPassage(item.passage);
+      return;
+    }
+    handle.insertSource({
+      kind: item.kind === "passage" ? "resource" : item.kind,
+      ref_id: item.refId,
+      label: item.label,
+      excerpt: item.excerpt,
+    });
+  });
+
+  const openSource = useCallback(
+    (kind: string, refId: string | null, event?: React.MouseEvent) => openSourceRef(kind, refId, event, paneId),
+    [paneId],
+  );
 
   /** Leading the group: publish only on a cursor move, only when the
    * passage differs from the last one published, and never in response to
@@ -78,7 +101,7 @@ export function SermonPane() {
   }
 
   return (
-    <SermonEditorProvider value={{ translationId, passages: byKey, passagesLoading }}>
+    <SermonEditorProvider value={{ translationId, passages: byKey, passagesLoading, openSource }}>
       <div className="flex h-full min-h-0 flex-col">
         <div className="min-h-0 flex-1 overflow-y-auto">
           <div className="mx-auto w-full max-w-3xl px-6 py-5">

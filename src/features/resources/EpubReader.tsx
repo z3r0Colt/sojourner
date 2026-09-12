@@ -40,6 +40,7 @@ export function EpubReader({
   initialCfi,
   onLocation,
   onToc,
+  onSelect,
   controllerRef,
 }: {
   filePath: string;
@@ -49,6 +50,10 @@ export function EpubReader({
   onLocation?: (loc: EpubLocation) => void;
   /** The book's table of contents, once it has loaded. */
   onToc?: (toc: EpubTocItem[]) => void;
+  /** The words the reader has selected inside the book, with the CFI range
+   * they sit at -- what "Send to sermon" quotes (SB1.4). Cleared with an
+   * empty string when the selection goes away. */
+  onSelect?: (text: string, cfi: string | null) => void;
   controllerRef?: MutableRefObject<EpubController | null>;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -60,6 +65,8 @@ export function EpubReader({
   onLocationRef.current = onLocation;
   const onTocRef = useRef(onToc);
   onTocRef.current = onToc;
+  const onSelectRef = useRef(onSelect);
+  onSelectRef.current = onSelect;
   const initialCfiRef = useRef(initialCfi);
 
   useEffect(() => {
@@ -109,6 +116,13 @@ export function EpubReader({
           "*": { "box-sizing": "border-box" },
         });
         rendition.on("rendered", () => setIsLoading(false));
+        // epubjs renders each section in its own iframe, so a selection
+        // there never reaches window.getSelection(); the rendition reports
+        // it instead.
+        rendition.on("selected", (cfiRange: string, contents: { window: Window }) => {
+          const text = (contents.window.getSelection()?.toString() ?? "").replace(/\s+/g, " ").trim();
+          onSelectRef.current?.(text, text ? cfiRange : null);
+        });
         rendition.on("relocated", (loc: { start?: { cfi?: string; href?: string } }) => {
           const cfi = loc?.start?.cfi;
           const href = loc?.start?.href;

@@ -3,6 +3,8 @@ import { useConfessionForPassage } from "../../api/queries";
 import type { Book } from "../../api/types";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { usePaneNavigate } from "../../workspace/PaneContext";
+import { SendToSermonButton } from "../sermons/StudyActions";
+import { westminsterRef } from "../sermons/sourceIdentity";
 
 const DOC_ORDER: Record<string, number> = { wcf: 0, wsc: 1, wlc: 2 };
 
@@ -31,10 +33,10 @@ export function ConfessionForPassagePanel({ book, chapter, activeVerse }: { book
         {activeVerse != null && matches && sorted.length === 0 && <EmptyState compact title="No Confession or Catechism proofs cite this verse" />}
         <ul className="space-y-0.5">
           {sorted.map((m) => (
-            <li key={`${m.section_id}-${m.marker}`}>
+            <li key={`${m.section_id}-${m.marker}`} className="flex items-start gap-1">
               <button
                 type="button"
-                className="w-full rounded-md px-2 py-1.5 text-left hover:bg-hover"
+                className="min-w-0 flex-1 rounded-md px-2 py-1.5 text-left hover:bg-hover"
                 onClick={(e) => navigate(`/westminster/${m.document_code}/${m.section_id}`, e)}
                 onAuxClick={(e) => e.button === 1 && navigate(`/westminster/${m.document_code}/${m.section_id}`, e)}
               >
@@ -46,6 +48,15 @@ export function ConfessionForPassagePanel({ book, chapter, activeVerse }: { book
                 </div>
                 {m.prompt && <div className="text-xs text-ink-3">{m.prompt}</div>}
               </button>
+              <SendToSermonButton
+                label={`Send ${m.document_code.toUpperCase()} ${m.heading} to the sermon`}
+                item={() => ({
+                  kind: "confession",
+                  refId: westminsterRef(m.document_code, m.section_id),
+                  label: `${m.document_code.toUpperCase()} ${m.heading}`,
+                  excerpt: m.prompt ?? null,
+                })}
+              />
             </li>
           ))}
         </ul>

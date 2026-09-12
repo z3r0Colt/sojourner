@@ -1,4 +1,4 @@
-import { Copy, StickyNote, Underline, X } from "lucide-react";
+import { Copy, Mic, StickyNote, Underline, X } from "lucide-react";
 import { useViewportClampedPosition } from "../../lib/useViewportClampedPosition";
 import { HIGHLIGHT_COLORS, UNDERLINE_COLOR, highlightColorLabel, useHighlightLabels } from "./highlightColors";
 import { IconButton } from "../../components/ui/Button";
@@ -13,6 +13,7 @@ export function SelectionToolbar({
   onUnderline,
   onAddNote,
   onCopy,
+  onSendToSermon,
   onClose,
 }: {
   x: number;
@@ -21,6 +22,8 @@ export function SelectionToolbar({
   onUnderline: (color: string) => void;
   onAddNote: () => void;
   onCopy?: () => void;
+  /** Drops the selected verses into the open sermon as a live passage block. */
+  onSendToSermon?: () => void;
   onClose: () => void;
 }) {
   const { ref, style } = useViewportClampedPosition<HTMLDivElement>(x, y, { align: "above-center" });
@@ -53,6 +56,7 @@ export function SelectionToolbar({
       <IconButton icon={Underline} label="Underline" size="sm" onClick={() => onUnderline(UNDERLINE_COLOR)} />
       <IconButton icon={StickyNote} label="Add note" size="sm" onClick={onAddNote} />
       {onCopy && <IconButton icon={Copy} label="Copy (in the format chosen in Settings)" size="sm" onClick={onCopy} />}
+      {onSendToSermon && <IconButton icon={Mic} label="Send to sermon" size="sm" onClick={onSendToSermon} />}
       <IconButton icon={X} label="Close" size="sm" onClick={onClose} />
     </div>
   );

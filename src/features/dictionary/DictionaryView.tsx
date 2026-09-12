@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, Fragment, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, Fragment, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { BookA, Search } from "lucide-react";
 import { api } from "../../api/client";
@@ -11,6 +11,9 @@ import { refAttrs } from "../../lib/refAttr";
 import { toPassageRef } from "../../lib/passage";
 import { EmptyState, LoadingState } from "../../components/ui/EmptyState";
 import { cx, inputSmClass } from "../../components/ui/classes";
+import { SendToSermonButton } from "../sermons/StudyActions";
+import { dictionaryRef } from "../sermons/sourceIdentity";
+import { firstParagraph, selectionWithin } from "../sermons/excerpt";
 
 const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
@@ -25,6 +28,8 @@ export function DictionaryView() {
   const [query, setQuery] = useState("");
   const [debounced, setDebounced] = useState("");
   const [activeLetter, setActiveLetter] = useState("A");
+  // "Send to sermon" quotes the reader's selection when there is one.
+  const bodyRef = useRef<HTMLDivElement>(null);
   const bookLookup = useMemo(() => buildBookLookup(books ?? []), [books]);
 
   useEffect(() => {
@@ -116,8 +121,20 @@ export function DictionaryView() {
         {!entry && <EmptyState icon={BookA} title="Bible dictionary" description="Browse by letter or search on the left. Scripture references inside an entry are clickable." />}
         {entry && (
           <div className="mx-auto w-full max-w-[70ch]">
-            <h1 className="reading-font mb-4 text-3xl font-semibold text-ink">{entry.term}</h1>
-            <div className="reading-font whitespace-pre-wrap text-ink" style={typography}>
+            <div className="mb-4 flex items-start gap-2">
+              <h1 className="reading-font min-w-0 flex-1 text-3xl font-semibold text-ink">{entry.term}</h1>
+              <SendToSermonButton
+                className="mt-1.5"
+                label={`Send ${entry.term} to the sermon`}
+                item={() => ({
+                  kind: "dictionary",
+                  refId: dictionaryRef(entry.slug),
+                  label: `${entry.term}, Bible dictionary`,
+                  excerpt: selectionWithin(bodyRef.current) ?? firstParagraph(entry.body),
+                })}
+              />
+            </div>
+            <div ref={bodyRef} className="reading-font whitespace-pre-wrap text-ink" style={typography}>
               {renderLinkedBody(entry.body)}
             </div>
           </div>
