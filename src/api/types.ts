@@ -373,6 +373,8 @@ export interface Stats {
   sermons_preached_total: number;
   sermons_total: number;
   sermon_words_total: number;
+  /** Stories in the illustrations library. */
+  illustrations_total: number;
 }
 
 export interface RedLetterRange {
