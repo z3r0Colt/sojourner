@@ -74,6 +74,8 @@ export interface SermonDraftHandle {
   flush: () => void;
   savedAt: Date | null;
   isSaving: boolean;
+  /** True when the last save failed and the edit is still only on screen. */
+  isUnsaved: boolean;
   /** Every passage block in the manuscript, for the shared passage query. */
   passageRefs: PassageRef[];
 }
@@ -85,20 +87,28 @@ export function useSermonDraft(sermonId: number): SermonDraftHandle {
 
   const [draft, setDraft] = useState<SermonDraft | null>(null);
   const [savedAt, setSavedAt] = useState<Date | null>(null);
+  const [isUnsaved, setIsUnsaved] = useState(false);
   const draftRef = useRef<SermonDraft | null>(null);
   const dirtyRef = useRef(false);
+  const savingRef = useRef(false);
   const timerRef = useRef<number | null>(null);
   const loadedIdRef = useRef<number | null>(null);
+  const seenUpdatedAtRef = useRef<string | null>(null);
   const saveRef = useRef<() => void>(() => {});
 
-  // The server copy seeds the draft once per sermon. A later refetch (a
-  // logged event, an invalidation from the Sermons page) must not overwrite
-  // what is being typed, so it is only adopted when nothing is pending.
+  // The server copy seeds the draft, and seeds it again whenever the stored
+  // sermon has moved on -- another pane saved it, a series was deleted out
+  // from under it, an event was logged -- so a pane never writes back a
+  // sermon that no longer exists as it remembers it. What is being typed
+  // still wins: a dirty draft, or one with a save in flight, is left alone,
+  // and `updated_at` keeps an unchanged refetch from touching the editor.
   useEffect(() => {
     if (!sermon) return;
-    if (loadedIdRef.current === sermon.id && dirtyRef.current) return;
-    if (loadedIdRef.current === sermon.id && draftRef.current) return;
+    const sameSermon = loadedIdRef.current === sermon.id;
+    if (sameSermon && (dirtyRef.current || savingRef.current)) return;
+    if (sameSermon && seenUpdatedAtRef.current === sermon.updated_at) return;
     loadedIdRef.current = sermon.id;
+    seenUpdatedAtRef.current = sermon.updated_at;
     const next = draftOf(sermon);
     draftRef.current = next;
     setDraft(next);
@@ -137,9 +147,27 @@ export function useSermonDraft(sermonId: number): SermonDraftHandle {
       passages: derivePassages(current.body, current.textRefs, mentioned),
       sources: sourceBlocks(current.body),
     };
+    savingRef.current = true;
     update.mutate(
       { sermonId: loadedIdRef.current, input },
-      { onSuccess: () => setSavedAt(new Date()) },
+      {
+        onSuccess: (saved) => {
+          // The sermon we just wrote is the one to adopt next, so our own
+          // write never comes back as a change to be re-seeded.
+          seenUpdatedAtRef.current = saved.updated_at;
+          setSavedAt(new Date());
+          setIsUnsaved(false);
+        },
+        // A failed save must not swallow the edit: it stays dirty, so the
+        // next keystroke or flush writes it again, and the footer says so.
+        onError: () => {
+          dirtyRef.current = true;
+          setIsUnsaved(true);
+        },
+        onSettled: () => {
+          savingRef.current = false;
+        },
+      },
     );
   }, [extractRefs, update]);
 
@@ -191,6 +219,7 @@ export function useSermonDraft(sermonId: number): SermonDraftHandle {
     flush,
     savedAt,
     isSaving: update.isPending,
+    isUnsaved,
     passageRefs,
   };
 }

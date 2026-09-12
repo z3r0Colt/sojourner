@@ -247,7 +247,7 @@ pub fn create(conn: &Connection, input: &SermonInput) -> anyhow::Result<Sermon> 
     let title = input.title.clone().unwrap_or_else(|| "Untitled sermon".into());
     tx.execute(
         "INSERT INTO sermons (title, big_idea, body, status, stage, preach_date, series_id, series_order, venue, preacher, translation_id, target_minutes, reflection, created_at, updated_at)
-         VALUES (?1,?2,?3,COALESCE(?4,'draft'),COALESCE(?5,'text'),?6,?7,?8,?9,?10,?11,?12,?13,?14,?14)",
+         VALUES (?1,?2,?3,COALESCE(?4,'draft'),COALESCE(?5,'text'),?6,(SELECT id FROM sermon_series WHERE id = ?7),?8,?9,?10,?11,?12,?13,?14,?14)",
         params![
             title,
             input.big_idea,
@@ -287,6 +287,9 @@ pub fn update(conn: &Connection, id: i64, input: &SermonInput) -> anyhow::Result
     let tx = conn.unchecked_transaction()?;
     // COALESCE keeps title and body from being nulled by a caller that only
     // means to change the details row; every other column takes the value given.
+    // The series is looked up rather than written straight through: a pane
+    // that still remembers a series someone has since deleted would otherwise
+    // fail on the foreign key and take the manuscript down with it.
     tx.execute(
         "UPDATE sermons SET
            title = COALESCE(?2, title),
@@ -295,7 +298,7 @@ pub fn update(conn: &Connection, id: i64, input: &SermonInput) -> anyhow::Result
            status = COALESCE(?5, status),
            stage = COALESCE(?6, stage),
            preach_date = ?7,
-           series_id = ?8,
+           series_id = (SELECT id FROM sermon_series WHERE id = ?8),
            series_order = ?9,
            venue = ?10,
            preacher = ?11,
@@ -799,6 +802,23 @@ mod tests {
         let orphan = get(&conn, sermon.id).unwrap().unwrap();
         assert_eq!(orphan.series_id, None, "the sermon keeps its row");
         assert_eq!(orphan.title, "Romans 8");
+
+        // An open pane still remembers the series it was opened with. Saving
+        // must not fail on the foreign key -- that would wedge the manuscript
+        // until the pane was closed -- so the vanished series reads as none.
+        let saved = update(
+            &conn,
+            sermon.id,
+            &SermonInput {
+                title: Some("Romans 8".into()),
+                body: Some("<p>Still writing.</p>".into()),
+                series_id: Some(series.id),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+        assert_eq!(saved.series_id, None, "a deleted series saves as none");
+        assert_eq!(saved.body, "<p>Still writing.</p>", "the manuscript still saves");
 
         drop(conn);
         let _ = std::fs::remove_dir_all(&dir);

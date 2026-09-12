@@ -33,9 +33,11 @@ import { passageAtCursor } from "./cursorPassage";
 import { refKey } from "../../lib/passage";
 import type { PassageRef } from "../../api/types";
 
-/** "Saved 10:42" -- short and local, the way a word processor says it. */
-function savedLabel(at: Date | null, saving: boolean): string {
+/** "Saved 10:42" -- short and local, the way a word processor says it. A
+ * save that failed says so instead: silence would read as "saved". */
+function savedLabel(at: Date | null, saving: boolean, unsaved: boolean): string {
   if (saving) return "Saving…";
+  if (unsaved) return "Not saved";
   if (!at) return "";
   return `Saved ${at.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}`;
 }
@@ -48,7 +50,7 @@ function savedLabel(at: Date | null, saving: boolean): string {
 export function SermonPane() {
   const [params] = usePaneParams("sermon");
   const { id: paneId, width: paneWidth } = usePane();
-  const { sermon, draft, isLoading, patch, savedAt, isSaving, passageRefs } = useSermonDraft(params.id);
+  const { sermon, draft, isLoading, patch, savedAt, isSaving, isUnsaved, passageRefs } = useSermonDraft(params.id);
   const readerTranslationId = useReaderTranslationId();
   const { data: books } = useBooks();
   const publishPassage = useWorkspaceStore((s) => s.publishPassage);
@@ -277,8 +279,8 @@ export function SermonPane() {
             {words.total.toLocaleString()} words · about {words.minutes} min {rateLabel(rate)}
             {draft.targetMinutes ? ` of ${draft.targetMinutes}` : ""}
           </span>
-          <span className="ml-auto tabular-nums" aria-live="polite">
-            {savedLabel(savedAt, isSaving)}
+          <span className={cx("ml-auto tabular-nums", isUnsaved && "font-medium text-danger")} aria-live="polite">
+            {savedLabel(savedAt, isSaving, isUnsaved)}
           </span>
         </div>
         {presenting && (
