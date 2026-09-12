@@ -10,6 +10,7 @@ import {
   useSermons,
   useStartReadingPlan,
   useUpdateSermonSeries,
+  useSetReadingPlanSchedule,
   useUpdateUserReadingPlan,
 } from "../../api/queries";
 import { Button, IconButton } from "../../components/ui/Button";
@@ -243,6 +244,7 @@ function SeriesPlanModal({ series, onClose }: { series: SermonSeries; onClose: (
   const updatePlan = useUpdateUserReadingPlan();
   const updateSeries = useUpdateSermonSeries();
   const startPlan = useStartReadingPlan();
+  const setSchedule = useSetReadingPlanSchedule();
   const [shape, setShape] = useState<SeriesPlanShape>("before");
 
   const draft = buildSeriesPlan(series.title, sermons ?? [], books, shape);
@@ -251,18 +253,22 @@ function SeriesPlanModal({ series, onClose }: { series: SermonSeries; onClose: (
   function build() {
     if (!draft) return;
     const input = { title: draft.title, description: draft.description, weekdays: null, days: draft.days };
-    const done = (planCode: string) => {
+    const done = async (planCode: string) => {
       // The series remembers its plan, so rebuilding replaces that plan's
       // days rather than leaving a second one behind.
       updateSeries.mutate({ seriesId: series.id, title: series.title, description: series.description, planCode });
-      startPlan.mutate({ planCode, startDate: draft.startDate });
+      await startPlan.mutateAsync({ planCode, startDate: draft.startDate });
+      // The sermons are a week apart, so the reading days are not
+      // consecutive: each one is pinned to the date it belongs on.
+      await setSchedule.mutateAsync({ planCode, entries: draft.schedule });
       toast.success(rebuilding ? "Reading plan rebuilt" : "Reading plan created");
       onClose();
     };
+    const onError = (error: unknown) => toast.error(`Could not build the plan: ${String(error)}`);
     if (rebuilding && series.plan_code) {
-      updatePlan.mutate({ planCode: series.plan_code, ...input }, { onSuccess: () => done(series.plan_code as string) });
+      updatePlan.mutate({ planCode: series.plan_code, ...input }, { onSuccess: () => void done(series.plan_code as string), onError });
     } else {
-      createPlan.mutate(input, { onSuccess: (plan) => done(plan.code) });
+      createPlan.mutate(input, { onSuccess: (plan) => void done(plan.code), onError });
     }
   }
 

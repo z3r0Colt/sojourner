@@ -26,7 +26,12 @@ export interface SeriesPlanDraft {
   description: string;
   /** Day 1's date: the first reading day before the first sermon. */
   startDate: string;
+  /** Only days that actually have a reading -- a custom plan has no empty
+   * days (see validate_days) -- in calendar order. */
   days: PlanDay[];
+  /** Each day pinned to its real date, so a gap between sermons does not
+   * slide the calendar. This is what reading_plan_schedule is for. */
+  schedule: { day_number: number; date: string }[];
 }
 
 /** A sermon's text passages as plan readings. A sermon with no text of its
@@ -68,8 +73,9 @@ function addDays(date: string, days: number): string {
  * week -- the Saturday before it for "before", six days before it for
  * "spread" -- and every sermon's text lands on the days before it is
  * preached, so the calendar of the plan and the calendar of the series
- * agree. A dated gap between sermons becomes empty days, which a custom
- * plan holds happily: nothing is read on them.
+ * agree. A custom plan cannot hold an empty day, so the gaps between
+ * sermons are dropped from the list and every reading day is pinned to its
+ * real date through reading_plan_schedule instead.
  */
 export function buildSeriesPlan(
   seriesTitle: string,
@@ -108,16 +114,30 @@ export function buildSeriesPlan(
     }
   }
 
+  // A custom plan holds no empty days, so the gaps between sermons are
+  // dropped from the day list and every remaining day is pinned to the date
+  // it belongs on.
+  const kept: PlanDay[] = [];
+  const schedule: { day_number: number; date: string }[] = [];
+  days.forEach((readings, index) => {
+    if (readings.length === 0) return;
+    kept.push(readings);
+    schedule.push({ day_number: kept.length, date: addDays(startDate, index) });
+  });
+  if (kept.length === 0) return null;
+
   return {
     title: `${seriesTitle}: read along`,
     description: `The texts of the ${seriesTitle} series, to read before each Sunday.`,
-    startDate,
-    days,
+    startDate: schedule[0].date,
+    days: kept,
+    schedule,
   };
 }
 
 /** What the plan will look like, for the dialog that offers to build it. */
 export function describeSeriesPlan(draft: SeriesPlanDraft): string {
-  const readingDays = draft.days.filter((d) => d.length > 0).length;
-  return `${draft.days.length} days from ${draft.startDate}, with readings on ${readingDays} of them.`;
+  const last = draft.schedule[draft.schedule.length - 1]?.date ?? draft.startDate;
+  const readings = draft.days.reduce((n, day) => n + day.length, 0);
+  return `${draft.days.length} reading ${draft.days.length === 1 ? "day" : "days"} from ${draft.startDate} to ${last}, ${readings} ${readings === 1 ? "reading" : "readings"} in all.`;
 }
