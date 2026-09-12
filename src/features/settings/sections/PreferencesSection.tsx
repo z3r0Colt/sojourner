@@ -225,7 +225,7 @@ export function PreferencesSection() {
           </div>
         </Row>
         <Row label="Font" hint="Dyslexia-friendly is OpenDyslexic, weighted at the bottom so letters are harder to flip or swap.">
-          <div className="flex w-80 gap-1" role="group" aria-label="Reading font">
+          <div className="flex w-full max-w-md flex-wrap gap-1" role="group" aria-label="Reading font">
             {READING_FONT_OPTIONS.map((f) => (
               <Button key={f.value} size="sm" active={readingFont === f.value} onClick={() => setReadingFont(f.value)} className={cx("flex-1", f.value === "serif" && "font-serif")}>
                 {f.label}
