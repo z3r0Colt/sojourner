@@ -137,6 +137,11 @@ const CATEGORIES: Category[] = [
       { q: "Add a resource", a: "“Add resource” on the Resources page for one file, or “Import folder” to add every recognized file under a folder at once." },
       { q: "Organize by author", a: "Resources are grouped by author. For a folder import, an Author/Book.epub layout picks the author up from the folder name." },
       { q: "Search inside a book", a: "EPUB, PDF, and MOBI text is indexed. Use the search box at the top of Resources, or the Resources tab in the main search." },
+      { q: "Pick up where you left off", a: "EPUBs and PDFs reopen at the place you last read; the position is stored with your data, so it survives a reinstall. An EPUB's chapters are listed under Contents in the reader sidebar (the list icon when the pane is narrow), with the chapter on screen marked." },
+      {
+        q: "PDF zoom and find",
+        a: <>The bar above a PDF page zooms in and out, shows the zoom level (click it to fit the page to the pane's width, the default), and has a Find box for the page you are on: every match is marked on the page, <Kbd>Enter</Kbd> and <Kbd>Shift</Kbd>+<Kbd>Enter</Kbd> step through them, and <Kbd>Esc</Kbd> clears. To search a whole book, use the main search instead.</>,
+      },
       { q: "Link a resource to a passage", a: "Open a resource and click “Link to current passage”. Linked resources then appear under that chapter's title while reading it." },
     ],
   },

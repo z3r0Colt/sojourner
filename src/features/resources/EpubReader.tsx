@@ -1,15 +1,74 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type MutableRefObject } from "react";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import ePub from "epubjs";
 import type Rendition from "epubjs/types/rendition";
+import type { NavItem } from "epubjs/types/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "../../components/ui/Button";
 import { LoadingState } from "../../components/ui/EmptyState";
 
-export function EpubReader({ filePath }: { filePath: string }) {
+/** One entry of a book's table of contents, flattened with its depth. */
+export interface EpubTocItem {
+  id: string;
+  href: string;
+  label: string;
+  depth: number;
+}
+
+/** What the reader sidebar can ask the book to do. */
+export interface EpubController {
+  /** Show a section by its contents href. */
+  display: (href: string) => void;
+}
+
+export interface EpubLocation {
+  cfi: string;
+  href: string;
+}
+
+function flattenToc(items: NavItem[] | undefined, depth = 0, out: EpubTocItem[] = []): EpubTocItem[] {
+  for (const item of items ?? []) {
+    const label = (item.label ?? "").trim();
+    if (label) out.push({ id: item.id ?? item.href, href: item.href, label, depth });
+    flattenToc(item.subitems, depth + 1, out);
+  }
+  return out;
+}
+
+export function EpubReader({
+  filePath,
+  initialCfi,
+  onLocation,
+  onToc,
+  controllerRef,
+}: {
+  filePath: string;
+  /** Where to open: the CFI saved last time (F3.4). Read once, on open. */
+  initialCfi?: string;
+  /** Reported whenever the visible location settles (after each scroll or jump). */
+  onLocation?: (loc: EpubLocation) => void;
+  /** The book's table of contents, once it has loaded. */
+  onToc?: (toc: EpubTocItem[]) => void;
+  controllerRef?: MutableRefObject<EpubController | null>;
+}) {
   const containerRef = useRef<HTMLDivElement>(null);
   const renditionRef = useRef<Rendition | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  // Callbacks and the opening CFI are read through refs so the book is
+  // opened once per file, not once per parent render.
+  const onLocationRef = useRef(onLocation);
+  onLocationRef.current = onLocation;
+  const onTocRef = useRef(onToc);
+  onTocRef.current = onToc;
+  const initialCfiRef = useRef(initialCfi);
+
+  useEffect(() => {
+    if (!controllerRef) return;
+    controllerRef.current = { display: (href) => void renditionRef.current?.display(href) };
+    return () => {
+      controllerRef.current = null;
+    };
+  }, [controllerRef]);
 
   // epubjs's paginated flow (CSS multi-column) computes its column track
   // width from the container's pixel size at renderTo time, and is fragile
@@ -28,6 +87,11 @@ export function EpubReader({ filePath }: { filePath: string }) {
     const url = convertFileSrc(filePath);
     const book = ePub(url);
     let rendition: Rendition | null = null;
+    let disposed = false;
+
+    book.loaded.navigation.then((nav) => {
+      if (!disposed) onTocRef.current?.(flattenToc(nav.toc));
+    });
 
     const observer = new ResizeObserver((entries) => {
       const { width, height } = entries[0].contentRect;
@@ -45,7 +109,23 @@ export function EpubReader({ filePath }: { filePath: string }) {
           "*": { "box-sizing": "border-box" },
         });
         rendition.on("rendered", () => setIsLoading(false));
-        rendition.display();
+        rendition.on("relocated", (loc: { start?: { cfi?: string; href?: string } }) => {
+          const cfi = loc?.start?.cfi;
+          const href = loc?.start?.href;
+          if (cfi && href) onLocationRef.current?.({ cfi, href });
+        });
+        // Restoring a CFI before the spine has loaded silently fails, so
+        // the first display waits for the book to be ready.
+        const target = initialCfiRef.current;
+        book.ready.then(() => {
+          if (disposed || !rendition) return;
+          const shown = target ? rendition.display(target) : rendition.display();
+          // A CFI from another edition (or a book that changed on disk)
+          // falls back to the beginning rather than an empty view.
+          shown?.catch?.(() => {
+            if (!disposed && rendition) rendition.display();
+          });
+        });
         renditionRef.current = rendition;
       } else {
         rendition.resize(width, height);
@@ -54,6 +134,7 @@ export function EpubReader({ filePath }: { filePath: string }) {
     observer.observe(container);
 
     return () => {
+      disposed = true;
       observer.disconnect();
       book.destroy();
       renditionRef.current = null;
