@@ -75,6 +75,17 @@ export function usePassageText(ref: PassageRef | null) {
   });
 }
 
+/** The saved reading position (the Today page's "Continue reading"). The
+ * focused Bible pane invalidates this after each save. */
+export function useReadingPosition() {
+  return useQuery({ queryKey: ["readingPosition"], queryFn: api.getReadingPosition });
+}
+
+/** Recently read chapters from the reading log (F3.1), newest first. */
+export function useReadingLog(limit = 12) {
+  return useQuery({ queryKey: ["readingLog", limit], queryFn: () => api.listReadingLog(limit) });
+}
+
 export function useCompareVerse(bookId: number | null, chapter: number | null, verse: number | null) {
   return useQuery({
     queryKey: ["compareVerse", bookId, chapter, verse],

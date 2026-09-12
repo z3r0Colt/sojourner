@@ -21,7 +21,7 @@ import { confirmDialog } from "../../components/ui/confirm";
 import { toast } from "../../components/ui/toast";
 import { cardClass, checkboxClass, cx } from "../../components/ui/classes";
 
-function ReadingRefs({
+export function ReadingRefs({
   readings,
   books,
   onNavigate,

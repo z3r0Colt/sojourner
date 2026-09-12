@@ -7,6 +7,7 @@ import { checkboxClass, cx, inputSmClass, selectClass } from "../../../component
 import { DEFAULT_HIGHLIGHT_LABELS, HIGHLIGHT_COLORS, useHighlightLabels, type HighlightColorKey } from "../../reading/highlightColors";
 import { COPY_FORMATS, copyReference, formatPassage } from "../../../lib/clipboard";
 import { NoteTemplatesEditor } from "../../notes/NoteTemplatesEditor";
+import { useLandingPage, type LandingPage } from "../../today/landing";
 
 const COPY_EXAMPLE_TEXT = "For God so loved the world, that he gave his only begotten Son…";
 
@@ -101,6 +102,26 @@ function HighlightLabelsRow() {
   );
 }
 
+/** "Open on": the Bible (default) or the Today page at launch (F3.1). */
+function LandingRow() {
+  const [landing, setLanding] = useLandingPage();
+  return (
+    <select
+      value={landing}
+      onChange={(e) => {
+        const next = e.target.value as LandingPage;
+        setLanding(next);
+        toast.success(next === "today" ? "The app will open on Today" : "The app will open on the Bible");
+      }}
+      className={selectClass}
+      aria-label="Open on"
+    >
+      <option value="bible">Bible</option>
+      <option value="today">Today</option>
+    </select>
+  );
+}
+
 function Row({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
     <div className="flex items-start gap-4 py-3">
@@ -160,6 +181,9 @@ export function PreferencesSection() {
       <p className="mb-4 text-sm text-ink-3">These apply to the Bible, commentary, confessions, and dictionary text alike. The same controls sit behind the Aa button while reading.</p>
 
       <div className="divide-y divide-line">
+        <Row label="Open on" hint="What the app shows when it starts. Today gathers where you left off, today's plan, and what is due.">
+          <LandingRow />
+        </Row>
         <Row label="Theme">
           <select value={theme} onChange={(e) => setTheme(e.target.value as typeof theme)} className={selectClass}>
             <option value="system">Match Windows</option>

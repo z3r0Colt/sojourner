@@ -221,6 +221,11 @@ mod tests {
             assert_eq!(deleted, 0, "{t} should have no deleted rows right after migrating");
         }
         assert!(!queries::notes::list_all(&conn).unwrap().is_empty() || before[0].1 == 0);
+        // USER_MIGRATION_0013: the reading log exists and is usable at once.
+        assert!(queries::reading_log::list_recent(&conn, 5).unwrap().len() <= 5);
+        queries::reading_position::set(&conn, 1, 1, 1, None).unwrap();
+        queries::reading_log::record(&conn, &queries::reading_log::today(), 1, 1, 1).unwrap();
+        assert_eq!(queries::reading_log::list_recent(&conn, 5).unwrap().first().map(|e| (e.book_id, e.chapter)), Some((1, 1)));
 
         drop(conn);
         let _ = std::fs::remove_dir_all(&dir);
@@ -281,6 +286,43 @@ mod tests {
         assert_eq!(trash::sweep_expired(&conn).unwrap(), 1);
         assert!(notes::get(&conn, stale.id).unwrap().is_none());
         assert!(notes::get(&conn, fresh.id).unwrap().is_some());
+
+        drop(conn);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// Reading log (USER_MIGRATION_0013): a chapter counts once per day no
+    /// matter how often the position is saved, the newest chapter comes
+    /// first, and a chapter read again moves to the top with its last day.
+    #[test]
+    fn reading_log_keeps_one_row_per_chapter_per_day() {
+        use queries::reading_log;
+
+        let dir = std::env::temp_dir().join(format!("sojourner-reading-log-test-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let content_db_path = dir.join("content.db");
+        open_content_db(&content_db_path).unwrap();
+        let conn = open(&dir, &content_db_path).unwrap();
+
+        assert!(reading_log::list_recent(&conn, 10).unwrap().is_empty());
+        for _ in 0..3 {
+            reading_log::record(&conn, "2026-09-10", 1, 1, 1).unwrap();
+        }
+        reading_log::record(&conn, "2026-09-10", 45, 8, 1).unwrap();
+        reading_log::record(&conn, "2026-09-11", 43, 3, 2).unwrap();
+        // Genesis 1 again on the 11th, in another translation.
+        reading_log::record(&conn, "2026-09-11", 1, 1, 2).unwrap();
+
+        let rows: i64 = conn.query_row("SELECT COUNT(*) FROM reading_log", [], |r| r.get(0)).unwrap();
+        assert_eq!(rows, 4, "one row per chapter per day");
+
+        let recent = reading_log::list_recent(&conn, 10).unwrap();
+        let chapters: Vec<(i64, i64)> = recent.iter().map(|e| (e.book_id, e.chapter)).collect();
+        assert_eq!(chapters, vec![(1, 1), (43, 3), (45, 8)]);
+        assert_eq!(recent[0].date, "2026-09-11");
+        assert_eq!(recent[0].translation_id, Some(2));
+        assert_eq!(reading_log::list_recent(&conn, 2).unwrap().len(), 2);
 
         drop(conn);
         let _ = std::fs::remove_dir_all(&dir);

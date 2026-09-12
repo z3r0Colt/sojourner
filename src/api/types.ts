@@ -176,6 +176,15 @@ export interface ReadingPosition {
   verse: number | null;
 }
 
+/** A chapter read on a local calendar day (F3.1 reading log); the recent
+ * list carries each chapter once with the last day it was read. */
+export interface ReadingLogEntry {
+  date: string;
+  book_id: number;
+  chapter: number;
+  translation_id: number | null;
+}
+
 export interface SearchResult {
   kind: "verse" | "commentary" | "note" | "prayer";
   book_id: number | null;

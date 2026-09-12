@@ -119,6 +119,7 @@ pub fn run() {
             commands::reading::get_section_entries,
             commands::reading::get_reading_position,
             commands::reading::set_reading_position,
+            commands::reading::list_reading_log,
             commands::annotations::list_highlights,
             commands::annotations::list_all_highlights,
             commands::annotations::create_highlight,

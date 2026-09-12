@@ -11,6 +11,14 @@ const CATEGORIES: Category[] = [
     title: "Reading & navigation",
     items: [
       {
+        q: "Start the day from Today",
+        a: (
+          <>
+            Today, the first item in the sidebar, gathers where you left off (with the first verse as a teaser), today's reading-plan day with its checkbox, how many memory cards are due, the three people longest unprayed for with a Prayed button, your bookmarks, and the chapters you read most recently. Blocks with nothing in them stay hidden. Settings → Reading → “Open on” makes the app start on Today instead of the Bible; <Kbd>Ctrl</Kbd>+click the sidebar item to keep it open beside the text.
+          </>
+        ),
+      },
+      {
         q: "Jump to a passage",
         a: (
           <>

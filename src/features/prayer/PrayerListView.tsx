@@ -17,34 +17,13 @@ import { confirmDelete } from "../../components/ui/confirm";
 import { toast } from "../../components/ui/toast";
 import { cardClass, checkboxClass, cx, inputSmClass, selectSmClass } from "../../components/ui/classes";
 import type { PrayerListPerson } from "../../api/types";
+import { daysUnprayed, timeAgo } from "./prayerListTime";
 
 /** Setting: days without a prayer before a person gets the nudge marker. */
 export const PRAYER_NUDGE_DAYS_SETTING = "prayer_nudge_days";
 export const DEFAULT_PRAYER_NUDGE_DAYS = 14;
 
 type SortMode = "category" | "longest";
-
-function daysSince(iso: string | null): number | null {
-  if (!iso) return null;
-  const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
-  return isNaN(days) ? null : Math.max(0, days);
-}
-
-function timeAgo(iso: string | null): string {
-  const days = daysSince(iso);
-  if (days == null) return "never";
-  if (days <= 0) return "today";
-  if (days === 1) return "yesterday";
-  if (days < 30) return `${days} days ago`;
-  const months = Math.floor(days / 30);
-  return `${months} month${months === 1 ? "" : "s"} ago`;
-}
-
-/** Days since this person was last prayed for -- since they were added,
- * when never. Drives the nudge and the "longest since prayed" sort. */
-function daysUnprayed(p: PrayerListPerson): number {
-  return daysSince(p.last_prayed_at) ?? daysSince(p.created_at) ?? 0;
-}
 
 function categoryOf(p: PrayerListPerson): string {
   return p.category?.trim() || "Uncategorized";

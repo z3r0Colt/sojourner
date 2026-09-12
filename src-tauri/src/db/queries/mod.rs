@@ -9,6 +9,7 @@ pub mod highlights;
 pub mod notes;
 pub mod prayer_journal;
 pub mod prayer_list;
+pub mod reading_log;
 pub mod reading_position;
 pub mod psalter;
 pub mod reading_plans;

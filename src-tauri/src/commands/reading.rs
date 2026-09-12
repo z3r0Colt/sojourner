@@ -1,7 +1,7 @@
-use crate::db::queries::{commentary, reading_position, verses};
+use crate::db::queries::{commentary, reading_log, reading_position, verses};
 use crate::db::DbState;
 use crate::error::AppResult;
-use crate::models::{CommentaryEntry, CommentarySection, Passage, PassageRef, ReadingPosition, Verse};
+use crate::models::{CommentaryEntry, CommentarySection, Passage, PassageRef, ReadingLogEntry, ReadingPosition, Verse};
 use std::collections::HashMap;
 use tauri::State;
 
@@ -101,5 +101,17 @@ pub fn set_reading_position(
     verse: Option<i64>,
 ) -> AppResult<()> {
     let conn = db.0.lock().unwrap();
-    Ok(reading_position::set(&conn, translation_id, book_id, chapter, verse)?)
+    reading_position::set(&conn, translation_id, book_id, chapter, verse)?;
+    // The reading log (F3.1) rides along with every position save: one row
+    // per chapter per local day, so Today's "Recent chapters" survives a
+    // cleared workspace and F3.5's heatmap has something to draw.
+    reading_log::record(&conn, &reading_log::today(), book_id, chapter, translation_id)?;
+    Ok(())
+}
+
+/// The most recently read chapters, newest first, each once (F3.1).
+#[tauri::command]
+pub fn list_reading_log(db: State<DbState>, limit: Option<i64>) -> AppResult<Vec<ReadingLogEntry>> {
+    let conn = db.0.lock().unwrap();
+    Ok(reading_log::list_recent(&conn, limit.unwrap_or(12).clamp(1, 200))?)
 }

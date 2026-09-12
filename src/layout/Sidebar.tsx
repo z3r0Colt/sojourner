@@ -14,6 +14,7 @@ import {
   Settings,
   PanelLeftClose,
   PanelLeftOpen,
+  Sunrise,
   type LucideIcon,
 } from "lucide-react";
 import { useDueCatechismMemory, useDueMemoryVerses } from "../api/queries";
@@ -46,7 +47,13 @@ interface NavItem {
 /** Three groups, ordered by how a study session usually flows: read the
  * text, consult the study tools, then work in your own material. */
 const GROUPS: { label: string; items: NavItem[] }[] = [
-  { label: "Read", items: [{ to: "/", label: "Bible", icon: BookOpen, end: true }] },
+  {
+    label: "Read",
+    items: [
+      { to: "/today", label: "Today", icon: Sunrise },
+      { to: "/", label: "Bible", icon: BookOpen, end: true },
+    ],
+  },
   {
     label: "Study",
     items: [

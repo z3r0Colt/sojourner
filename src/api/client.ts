@@ -14,6 +14,7 @@ import type {
   Note,
   Bookmark,
   ReadingPosition,
+  ReadingLogEntry,
   SearchResults,
   ImportReportItem,
   StrongsEntry,
@@ -92,6 +93,8 @@ export const api = {
   getReadingPosition: () => invoke<ReadingPosition | null>("get_reading_position"),
   setReadingPosition: (translationId: number, bookId: number, chapter: number, verse?: number) =>
     invoke<void>("set_reading_position", { translationId, bookId, chapter, verse: verse ?? null }),
+  /** Recently read chapters, newest first, each once (the reading log). */
+  listReadingLog: (limit = 12) => invoke<ReadingLogEntry[]>("list_reading_log", { limit }),
 
   listHighlights: (bookId: number, chapter: number) =>
     invoke<Highlight[]>("list_highlights", { bookId, chapter }),

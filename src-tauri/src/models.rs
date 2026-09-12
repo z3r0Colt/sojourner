@@ -235,6 +235,17 @@ pub struct ReadingPosition {
     pub verse: Option<i64>,
 }
 
+/// A chapter read on a given local day (see `reading_log`, F3.1). The
+/// recent-chapters query returns each chapter once with the last day it
+/// was read.
+#[derive(Debug, Clone, Serialize)]
+pub struct ReadingLogEntry {
+    pub date: String,
+    pub book_id: i64,
+    pub chapter: i64,
+    pub translation_id: Option<i64>,
+}
+
 #[derive(Debug, Clone, Serialize)]
 pub struct SearchResult {
     pub kind: String, // "verse" | "commentary" | "note" | "prayer"
