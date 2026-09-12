@@ -49,6 +49,15 @@ const GROUPS: { title: string; rows: { keys: string[]; label: string }[] }[] = [
     ],
   },
   {
+    title: "Sermon",
+    rows: [
+      { keys: ["Ctrl", "Alt", "1"], label: "Make the line a point (Ctrl+Alt+2 makes it a sub-point)" },
+      { keys: ["Ctrl", "Shift", "P"], label: "Insert a passage: type a reference and the block renders it live in the sermon's translation" },
+      { keys: ["Ctrl", "Shift", "B"], label: "Mark the selected words as a blank for the fill-in handout" },
+      { keys: ["Ctrl", "U"], label: "Underline (bold and italic are Ctrl+B and Ctrl+I, as everywhere)" },
+    ],
+  },
+  {
     title: "Memory practice",
     rows: [
       { keys: ["Space"], label: "Reveal the hidden verse or answer (first-letter and blank-word modes)" },

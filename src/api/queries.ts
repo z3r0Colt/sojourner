@@ -78,6 +78,25 @@ export function usePassages(refs: PassageRef[]) {
   return { ...query, byKey };
 }
 
+/** Like `usePassages`, but in a translation the caller names rather than the
+ * reader's own -- a sermon's passage blocks all render in the sermon's
+ * translation, whichever Bible pane happens to be open beside them. */
+export function usePassagesIn(translationId: number | null, refs: PassageRef[]) {
+  const keys = refs.map(refKey).join(",");
+  const query = useQuery({
+    queryKey: ["passages", translationId, keys],
+    queryFn: () => api.getPassages(translationId as number, refs),
+    enabled: translationId != null && refs.length > 0,
+    staleTime: PASSAGE_STALE_MS,
+  });
+  const byKey = useMemo(() => {
+    const m = new Map<string, Passage>();
+    for (const p of query.data ?? []) m.set(refKey(p.ref), p);
+    return m;
+  }, [query.data]);
+  return { ...query, byKey };
+}
+
 /** Text for a single verse range in the reader's primary translation.
  * Each reference is cached on its own key, so repeated hovers over the
  * same reference never refetch. `null` disables the query. */
