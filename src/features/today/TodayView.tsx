@@ -73,7 +73,8 @@ function ContinueReading() {
   return (
     <Block id="today-continue" title="Continue reading">
       <div className={cx(cardClass, "flex flex-wrap items-start justify-between gap-3")}>
-        <div className="min-w-0 flex-1">
+        {/* The teaser keeps a readable column; in a narrow pane the button wraps below it. */}
+        <div className="min-w-[14rem] flex-1">
           <button
             type="button"
             className="text-base font-semibold text-accent hover:underline"
@@ -255,13 +256,18 @@ function Bookmarks() {
 }
 
 function RecentChapters() {
-  const { data: log } = useReadingLog(RECENT_LIMIT);
+  const { data: log } = useReadingLog(RECENT_LIMIT + 1);
+  const { data: pos } = useReadingPosition();
   const { data: books } = useBooks();
-  if (!log || log.length === 0) return null;
+  // The chapter Continue reading already offers is left out, so a fresh
+  // install (whose Bible pane logs Genesis 1 the moment it opens) shows
+  // only Continue reading, and no chapter is listed twice.
+  const recent = (log ?? []).filter((e) => !(pos && e.book_id === pos.book_id && e.chapter === pos.chapter)).slice(0, RECENT_LIMIT);
+  if (recent.length === 0) return null;
   return (
     <Block id="today-recent" title="Recent chapters">
       <ul className="flex flex-wrap gap-2">
-        {log.map((e) => {
+        {recent.map((e) => {
           const label = formatChapterRef(books, e.book_id, e.chapter);
           const open = (ev: React.MouseEvent) => openPassage({ bookId: e.book_id, chapter: e.chapter }, { target: targetFor(ev) });
           return (

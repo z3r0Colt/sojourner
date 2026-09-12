@@ -70,7 +70,8 @@ export function CatchUpBanner({ plan, progress, compact }: { plan: ReadingPlan; 
         </span>
         {!compact && <span className="text-ink-3"> · next unread is day {progress.current_day}</span>}
       </span>
-      <span className="flex shrink-0 items-center gap-1.5">
+      {/* The two choices wrap onto their own line in a narrow pane rather than clipping. */}
+      <span className="flex flex-wrap items-center gap-1.5">
         <Button size="sm" icon={CalendarClock} disabled={busy} onClick={shiftSchedule} title="Move the start date forward so today becomes the next unread day; nothing is skipped">
           Shift my schedule
         </Button>
