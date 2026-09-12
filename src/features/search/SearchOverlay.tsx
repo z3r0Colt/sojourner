@@ -19,8 +19,9 @@ import { Button } from "../../components/ui/Button";
 import { Kbd } from "../../components/ui/Page";
 import { LoadingState } from "../../components/ui/EmptyState";
 import { cx, inputClass, selectSmClass } from "../../components/ui/classes";
+import { htmlToText } from "../sermons/excerpt";
 
-type Tab = "verses" | "commentary" | "notes" | "prayer" | "resources" | "westminster";
+type Tab = "verses" | "commentary" | "notes" | "prayer" | "resources" | "westminster" | "sermons" | "illustrations";
 
 interface Row {
   key: string;
@@ -87,6 +88,17 @@ export function SearchOverlay({
     queryFn: () => api.searchWestminster(debounced, 50),
     enabled: active,
   });
+  // A preacher looks for his own work the same way he looks for a verse.
+  const { data: sermonResults, isFetching: sermonsFetching } = useQuery({
+    queryKey: ["sermonSearch", debounced],
+    queryFn: () => api.searchSermons(debounced, 30),
+    enabled: active,
+  });
+  const { data: illustrationResults, isFetching: illustrationsFetching } = useQuery({
+    queryKey: ["illustrationSearch", debounced],
+    queryFn: () => api.listIllustrations({ query: debounced }),
+    enabled: active,
+  });
 
   function bookName(id: number) {
     return books?.find((b) => b.id === id)?.name ?? `#${id}`;
@@ -98,7 +110,7 @@ export function SearchOverlay({
     if (q.trim().length > 1) api.recordSearchQuery(q.trim());
   }
 
-  const anyFetching = isFetching || resourcesFetching || westminsterFetching;
+  const anyFetching = isFetching || resourcesFetching || westminsterFetching || sermonsFetching || illustrationsFetching;
 
   const rows = useMemo<Row[]>(() => {
     if (!active) return [];
@@ -125,6 +137,28 @@ export function SearchOverlay({
         },
       }));
     }
+    if (tab === "sermons") {
+      return (sermonResults ?? []).map((sermon) => ({
+        key: `s-${sermon.id}`,
+        heading: [sermon.title, sermon.preach_date ?? "", sermon.series_title ?? ""].filter(Boolean).join(" · "),
+        snippet: sermon.big_idea ?? htmlToText(sermon.body).slice(0, 160),
+        run: () => {
+          openContent("sermon", { id: sermon.id });
+          onClose();
+        },
+      }));
+    }
+    if (tab === "illustrations") {
+      return (illustrationResults ?? []).map((illustration) => ({
+        key: `i-${illustration.id}`,
+        heading: [illustration.title, illustration.source_label ?? ""].filter(Boolean).join(" · "),
+        snippet: htmlToText(illustration.body).slice(0, 160),
+        run: () => {
+          openContent("illustrations", {});
+          onClose();
+        },
+      }));
+    }
     const list = tab === "verses" ? results?.verses : tab === "commentary" ? results?.commentary : tab === "notes" ? results?.notes : results?.prayers;
     return (list ?? []).map((r, i) => ({
       key: `${tab}-${i}`,
@@ -140,7 +174,7 @@ export function SearchOverlay({
       },
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active, tab, results, resourceResults, westminsterResults, westminsterDocs, books]);
+  }, [active, tab, results, resourceResults, westminsterResults, westminsterDocs, sermonResults, illustrationResults, books]);
 
   useEffect(() => setSelected(0), [tab, debounced]);
 
@@ -165,6 +199,8 @@ export function SearchOverlay({
     { key: "prayer" as const, label: "Prayer", count: count(results?.prayers.length) },
     { key: "resources" as const, label: "Resources", count: count(resourceResults?.length) },
     { key: "westminster" as const, label: "Confessions", count: count(westminsterResults?.length) },
+    { key: "sermons" as const, label: "Sermons", count: count(sermonResults?.length) },
+    { key: "illustrations" as const, label: "Illustrations", count: count(illustrationResults?.length) },
   ];
 
   return (
@@ -261,7 +297,7 @@ export function SearchOverlay({
         </div>
       )}
       <div className="min-h-0 flex-1 overflow-y-auto p-2">
-        {isError && tab !== "resources" && tab !== "westminster" && (
+        {isError && tab !== "resources" && tab !== "westminster" && tab !== "sermons" && tab !== "illustrations" && (
           <p className="p-3 text-sm text-danger">Search failed: {error instanceof Error ? error.message : "unknown error"}</p>
         )}
         {!active && <p className="p-3 text-sm text-ink-3">Type at least two characters to search.</p>}

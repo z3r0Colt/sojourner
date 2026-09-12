@@ -7,7 +7,7 @@ import { useUiStore } from "../../state/uiStore";
 import { openContent } from "../../workspace/openContent";
 import { useTitleContext } from "../../workspace/PaneHeader";
 import { buildBookLookup, parseReference } from "../../hooks/useReferenceParser";
-import { useBookAliases, useTranslationCoverage, useDictionaryIndex, useReadingPlanProgressList, useReadingPlans, useWestminsterDocuments } from "../../api/queries";
+import { useBookAliases, useTranslationCoverage, useDictionaryIndex, useReadingPlanProgressList, useReadingPlans, useSermons, useWestminsterDocuments } from "../../api/queries";
 import { Modal } from "../../components/ui/Modal";
 import { Kbd } from "../../components/ui/Page";
 import { cx, inputClass } from "../../components/ui/classes";
@@ -85,12 +85,14 @@ export function GoToCommandPalette({
   const reduceMotion = useUiStore((s) => s.reduceMotion);
   const { data: plans } = useReadingPlans();
   const { data: planProgress } = useReadingPlanProgressList();
+  // The ten most recently edited sermons, for "Open sermon: …" (SB5.5).
+  const { data: sermons } = useSermons({ sort: "updated", limit: 10 });
   const queryClient = useQueryClient();
   const titles = useTitleContext();
   const commands = useMemo(
-    () => allCommands({ titles, savedWorkspaces, commentarySources: titles.commentarySources, shell, plans, planProgress, queryClient }),
+    () => allCommands({ titles, savedWorkspaces, commentarySources: titles.commentarySources, shell, plans, planProgress, sermons, queryClient }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [titles, savedWorkspaces, shell, plans, planProgress, panes, focusedPaneId, maximizedPaneId, layout, focusMode, theme, readingFont, lineSpacing, showVerseNumbers, showHighlights, showNoteSymbols, reduceMotion],
+    [titles, savedWorkspaces, shell, plans, planProgress, sermons, panes, focusedPaneId, maximizedPaneId, layout, focusMode, theme, readingFont, lineSpacing, showVerseNumbers, showHighlights, showNoteSymbols, reduceMotion],
   );
   function commandCandidate(c: Command): Candidate {
     return {

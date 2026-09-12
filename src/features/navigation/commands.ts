@@ -37,9 +37,13 @@ import {
   ZoomIn,
   ZoomOut,
   type LucideIcon,
+  Lightbulb,
+  Mic,
+  Presentation,
+  Timer,
 } from "lucide-react";
 import type { QueryClient } from "@tanstack/react-query";
-import type { CommentarySource, ReadingPlan, ReadingPlanProgress } from "../../api/types";
+import type { CommentarySource, ReadingPlan, ReadingPlanProgress, Sermon } from "../../api/types";
 import { api } from "../../api/client";
 import { toast } from "../../components/ui/toast";
 import { PRESET_WORKSPACES, applyWorkspace, type SavedWorkspace } from "../../workspace/presets";
@@ -61,6 +65,8 @@ import { LAYOUTS } from "../../workspace/layouts";
 import { stepChapter } from "../reading/chapterStep";
 import { resetZoom, zoomText } from "../reading/zoom";
 import { requestNewPrayerEntry } from "../prayer/prayerActions";
+import { startRun } from "../sermons/preachingSession";
+import { nextSunday } from "../sermons/sermonFormat";
 import { localToday } from "../plans/planSchedule";
 
 /**
@@ -104,6 +110,8 @@ export interface CommandContext {
   planProgress?: ReadingPlanProgress[];
   /** For commands that write through the API directly (back up, start a plan). */
   queryClient?: QueryClient;
+  /** The ten most recently edited sermons, for "Open sermon: …" (SB5.5). */
+  sermons?: Sermon[];
 }
 
 const PANES = "Panes";
@@ -523,6 +531,84 @@ export function appCommands(ctx: CommandContext): Command[] {
       },
     });
   }
+
+  // Sermons (SB5.5). "New sermon" writes the row first and opens it, the
+  // same path the Sermons page takes, so nothing is ever left unsaved.
+  out.push({
+    id: "new-sermon",
+    group: "Sermons",
+    label: "New sermon",
+    icon: Mic,
+    keywords: "preach manuscript write sunday",
+    run: async () => {
+      try {
+        const sermon = await api.createSermon({ title: "Untitled sermon", preach_date: nextSunday() });
+        qc?.invalidateQueries({ queryKey: ["sermons"] });
+        openContent("sermon", { id: sermon.id });
+        toast.success("Sermon created");
+      } catch (e) {
+        toast.error(`Could not create the sermon: ${String(e)}`);
+      }
+    },
+  });
+
+  for (const sermon of (ctx.sermons ?? []).slice(0, 10)) {
+    out.push({
+      id: `open-sermon-${sermon.id}`,
+      group: "Sermons",
+      label: `Open sermon: ${sermon.title}`,
+      icon: Mic,
+      keywords: `manuscript ${sermon.big_idea ?? ""} ${sermon.series_title ?? ""} ${sermon.preach_date ?? ""}`,
+      run: () => openContent("sermon", { id: sermon.id }),
+    });
+  }
+
+  const focusedSermon = (() => {
+    const state = useWorkspaceStore.getState();
+    const pane = findPane(state.panes, state.focusedPaneId);
+    if (pane?.kind === "sermon") return pane.params.id;
+    return state.panes.find((p) => p.kind === "sermon")?.params.id ?? (ctx.sermons ?? [])[0]?.id ?? null;
+  })();
+
+  if (focusedSermon != null) {
+    out.push({
+      id: "preach-sermon",
+      group: "Sermons",
+      label: "Preach this sermon",
+      icon: Presentation,
+      keywords: "pulpit full screen present clock",
+      run: () => startRun(focusedSermon, { kind: "preaching", fullScreen: true }),
+    });
+    out.push({
+      id: "rehearse-sermon",
+      group: "Sermons",
+      label: "Rehearse this sermon",
+      icon: Timer,
+      keywords: "practice clock time run through",
+      run: () => {
+        openContent("sermon", { id: focusedSermon });
+        startRun(focusedSermon, { kind: "rehearsal", fullScreen: false });
+      },
+    });
+  }
+
+  out.push({
+    id: "open-sermons",
+    group: "Sermons",
+    label: "Open Sermons",
+    icon: Mic,
+    keywords: "list page every sermon series",
+    run: () => openContent("sermons", {}),
+  });
+
+  out.push({
+    id: "open-illustrations",
+    group: "Sermons",
+    label: "Open Illustrations",
+    icon: Lightbulb,
+    keywords: "library stories quotations",
+    run: () => openContent("illustrations", {}),
+  });
 
   out.push({
     id: "new-prayer-entry",
