@@ -213,6 +213,10 @@ const CATEGORIES: Category[] = [
         a: "“Rehearse” runs the clock beside the manuscript and, when you finish, offers to log the run with its minutes, its word count, and a note of what it taught (“cut point II”). “Rehearse aloud” reads the manuscript section by section instead, with the same clock going. Every logged run feeds the speaking rate the app quotes your minutes at, and the History list under the manuscript holds them all.",
       },
       {
+        q: "Minutes in your own voice",
+        a: "From two timed runs on, the app works out your words a minute over the last ten (preachings counted twice) and quotes every sermon's length at that rate, saying so: “about 31 min at your measured 122 wpm”. Settings → Reading → Speaking rate shows what it has measured and the rate it assumes until then.",
+      },
+      {
         q: "Blanks for the handout",
         a: (
           <>
