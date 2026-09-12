@@ -54,9 +54,13 @@ export interface OutlineEntry {
 }
 
 /** The h2 points and h3 sub-points, in order -- the sermon's outline, which
- * is the manuscript's own headings and nothing else (Q3). */
+ * is the manuscript's own headings and nothing else (Q3). Only the
+ * document's own top-level headings count, which is what `sectionsOf` splits
+ * on: a heading written inside a quotation is part of the quotation, not a
+ * point of the sermon, and counting it here would put this list, the prep
+ * track's points, and the printed outline out of step with the sections. */
 export function outlineOf(html: string): OutlineEntry[] {
-  return Array.from(rootOf(html).querySelectorAll("h2, h3")).map((el, index) => ({
+  return Array.from(rootOf(html).querySelectorAll(":scope > h2, :scope > h3")).map((el, index) => ({
     level: el.tagName === "H2" ? 2 : 3,
     text: (el.textContent ?? "").trim(),
     index,
