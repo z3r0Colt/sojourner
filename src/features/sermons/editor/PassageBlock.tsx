@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { NodeViewWrapper, type NodeViewProps } from "@tiptap/react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Trash2 } from "lucide-react";
 import {
   useBooks,
   useFootnotesForChapter,
@@ -13,6 +13,7 @@ import { buildTokens } from "../../reading/verseTokens";
 import { computeRedLetterSpans } from "../../reading/redLetterSpans";
 import { FootnotePopup } from "../../reading/FootnotePopup";
 import { formatRef, refKey } from "../../../lib/passage";
+import { REF_ATTR } from "../../../lib/refAttr";
 import { Popover, PopoverItem, PopoverLabel } from "../../../components/ui/Popover";
 import { cx } from "../../../components/ui/classes";
 import { useSermonEditorContext } from "./context";
@@ -33,7 +34,7 @@ export function passageRefOf(attrs: Record<string, unknown>): PassageRef | null 
  * the sermon's translation every time it renders, so switching the sermon's
  * translation rewrites every block at once and nothing in the document goes
  * stale when a translation is added or removed. */
-export function PassageBlock({ node, updateAttributes, editor }: NodeViewProps) {
+export function PassageBlock({ node, updateAttributes, deleteNode, editor }: NodeViewProps) {
   const {
     translationId: sermonTranslationId,
     passages: shared,
@@ -71,12 +72,7 @@ export function PassageBlock({ node, updateAttributes, editor }: NodeViewProps) 
   const label = ref ? formatRef(books, ref) : "A passage";
 
   return (
-    <NodeViewWrapper
-      as="div"
-      className="sermon-passage"
-      data-ref={ref ? refKey(ref) : undefined}
-      contentEditable={false}
-    >
+    <NodeViewWrapper as="div" className="sermon-passage" contentEditable={false}>
       <p className="sermon-passage-text">
         {isLoading && <span className="text-ink-3">Loading {label}…</span>}
         {!isLoading && !passage?.verses.length && (
@@ -117,7 +113,10 @@ export function PassageBlock({ node, updateAttributes, editor }: NodeViewProps) 
         ))}
       </p>
       <div className="sermon-passage-caption">
-        <span>
+        {/* The caption carries data-ref, so hovering it previews the passage
+            the way any reference in the app does -- and the block's own text
+            stays free of a card that would only repeat it. */}
+        <span {...(ref ? { [REF_ATTR]: refKey(ref) } : {})} tabIndex={0}>
           {label}
           {code && ` · ${code}`}
         </span>
@@ -131,7 +130,7 @@ export function PassageBlock({ node, updateAttributes, editor }: NodeViewProps) 
                 onClick={toggle}
                 aria-haspopup="menu"
                 aria-expanded={open}
-                aria-label={`Translation for ${label}`}
+                aria-label={`Options for ${label}`}
               >
                 {pinned ? "Pinned" : "Translation"}
                 <ChevronDown className="h-3 w-3" aria-hidden="true" />
@@ -162,6 +161,17 @@ export function PassageBlock({ node, updateAttributes, editor }: NodeViewProps) 
                     {t.code} — {t.name}
                   </PopoverItem>
                 ))}
+                <div className="my-1 h-px bg-line" aria-hidden="true" />
+                <PopoverItem
+                  danger
+                  onClick={() => {
+                    close();
+                    deleteNode();
+                  }}
+                >
+                  <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                  Remove this passage
+                </PopoverItem>
               </>
             )}
           </Popover>
