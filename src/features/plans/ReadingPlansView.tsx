@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
-import { ArrowLeft, CalendarCheck, Flame, Play, Plus, RotateCcw } from "lucide-react";
+import { ArrowLeft, CalendarCheck, Flame, Pencil, Play, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { PlanBuilderModal } from "./PlanBuilderModal";
+import { formatWeekdays, readingsToLine } from "./planBuilder";
 import {
   useBooks,
   useReadingPlans,
@@ -8,6 +9,7 @@ import {
   useReadingPlanProgressList,
   useStartReadingPlan,
   useAbandonReadingPlan,
+  useDeleteUserReadingPlan,
   useMarkReadingPlanDay,
   useUnmarkReadingPlanDay,
 } from "../../api/queries";
@@ -18,11 +20,11 @@ import type { ReadingPlanReading } from "../../api/types";
 import { Page } from "../../components/ui/Page";
 import { Button } from "../../components/ui/Button";
 import { EmptyState } from "../../components/ui/EmptyState";
-import { confirmDialog } from "../../components/ui/confirm";
+import { confirmDelete, confirmDialog } from "../../components/ui/confirm";
 import { toast } from "../../components/ui/toast";
 import { cardClass, checkboxClass, cx } from "../../components/ui/classes";
 import { CatchUpBanner } from "./CatchUpBanner";
-import { effectiveDate, todaysDays } from "./planSchedule";
+import { effectiveDate, localToday, todaysDays } from "./planSchedule";
 
 /** "Thu, Sep 11" for a plan day's date. */
 function formatPlanDate(iso: string | null): string | null {
@@ -70,10 +72,24 @@ function PlanDetail({ planCode, onBack }: { planCode: string; onBack: () => void
   const { data: progressList } = useReadingPlanProgressList();
   const startPlan = useStartReadingPlan();
   const abandonPlan = useAbandonReadingPlan();
+  const deletePlan = useDeleteUserReadingPlan();
   const markDay = useMarkReadingPlanDay();
   const unmarkDay = useUnmarkReadingPlanDay();
+  const [editing, setEditing] = useState(false);
 
   const plan = plans?.find((p) => p.code === planCode);
+
+  async function removePlan() {
+    if (!plan) return;
+    const ok = await confirmDelete(`the plan “${plan.title}”`, "Its readings and your progress on it are removed.");
+    if (!ok) return;
+    deletePlan.mutate(plan.code, {
+      onSuccess: () => {
+        toast.info(`Deleted ${plan.title}`);
+        onBack();
+      },
+    });
+  }
   const progress = progressList?.find((p) => p.plan_code === planCode);
   const completedSet = useMemo(() => new Set(progress?.completed_days ?? []), [progress]);
   const currentDay = progress ? Math.min(progress.current_day, plan?.length_days ?? progress.current_day) : null;
@@ -90,10 +106,24 @@ function PlanDetail({ planCode, onBack }: { planCode: string; onBack: () => void
     }
   }
 
+  const customActions = plan?.custom && (
+    <>
+      <Button size="sm" variant="ghost" icon={Pencil} onClick={() => setEditing(true)} disabled={!days}>
+        Edit
+      </Button>
+      <Button size="sm" variant="danger-ghost" icon={Trash2} onClick={removePlan} disabled={deletePlan.isPending}>
+        Delete
+      </Button>
+    </>
+  );
+  const lead = plan
+    ? [plan.description, plan.custom ? `Custom plan · ${plan.length_days} ${plan.length_days === 1 ? "day" : "days"}, ${formatWeekdays(plan.weekdays)}` : null].filter(Boolean).join(" · ")
+    : undefined;
+
   return (
     <Page
       title={plan?.title ?? planCode}
-      lead={plan?.description}
+      lead={lead || undefined}
       actions={
         progress ? (
           <div className="flex items-center gap-3">
@@ -125,21 +155,32 @@ function PlanDetail({ planCode, onBack }: { planCode: string; onBack: () => void
             >
               Reset
             </Button>
+            {customActions}
           </div>
         ) : (
-          <Button
-            variant="primary"
-            icon={Play}
-            onClick={() => startPlan.mutate({ planCode, startDate: new Date().toISOString().slice(0, 10) }, { onSuccess: () => toast.success("Plan started") })}
-          >
-            Start plan
-          </Button>
+          <div className="flex items-center gap-1">
+            {customActions}
+            <Button
+              variant="primary"
+              icon={Play}
+              onClick={() => startPlan.mutate({ planCode, startDate: localToday() }, { onSuccess: () => toast.success("Plan started") })}
+            >
+              Start plan
+            </Button>
+          </div>
         )
       }
     >
       <Button size="sm" variant="ghost" icon={ArrowLeft} onClick={onBack} className="-mt-3 mb-3">
         All plans
       </Button>
+      {editing && plan && days && (
+        <PlanBuilderModal
+          initial={{ plan, lines: days.map((d) => readingsToLine(d.readings)) }}
+          onClose={() => setEditing(false)}
+          onSaved={() => setEditing(false)}
+        />
+      )}
       {plan && progress && (
         <div className="mb-3">
           <CatchUpBanner plan={plan} progress={progress} />
@@ -212,12 +253,16 @@ export function ReadingPlansView() {
         {plans?.map((p) => {
           const progress = progressList?.find((pr) => pr.plan_code === p.code);
           return (
-            <li key={p.id}>
+            <li key={p.code}>
               <button type="button" onClick={() => setSelected(p.code)} className={cx(cardClass, "block w-full text-left transition-colors hover:border-line-2 hover:bg-hover/40")}>
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <div className="font-medium text-ink">{p.title}</div>
+                    <div className="flex flex-wrap items-center gap-2 font-medium text-ink">
+                      {p.title}
+                      {p.custom && <span className="rounded-full border border-line bg-surface-2 px-1.5 text-xs font-medium text-ink-3">Custom</span>}
+                    </div>
                     {p.description && <p className="mt-0.5 text-sm text-ink-3">{p.description}</p>}
+                    {p.custom && p.weekdays && <p className="mt-0.5 text-xs text-ink-3">Read {formatWeekdays(p.weekdays)}</p>}
                   </div>
                   {progress ? (
                     <span className="shrink-0 rounded-full bg-accent-soft px-2 py-0.5 text-xs font-medium text-accent">In progress</span>
