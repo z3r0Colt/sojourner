@@ -17,11 +17,21 @@ export const BACKUP_SNOOZE_SETTING = "backup_snooze_until";
 export const BACKUP_REMINDER_DAYS = 30;
 const SNOOZE_DAYS = 7;
 
-/** True when `stats` holds anything a reader would miss. */
+/** True when `stats` holds anything a reader would miss -- a preacher's
+ * sermons and illustrations included, since a pastor whose work is all
+ * manuscripts was otherwise never told he had no backup. */
 export function hasStudyData(s: Stats): boolean {
   return (
-    s.notes_total + s.highlights_total + s.bookmarks + s.prayer_entries + s.prayer_people + s.memory_verses_total + s.catechism_total > 0 ||
-    s.reading_days_total > 1
+    s.notes_total +
+      s.highlights_total +
+      s.bookmarks +
+      s.prayer_entries +
+      s.prayer_people +
+      s.memory_verses_total +
+      s.catechism_total +
+      s.sermons_total +
+      s.illustrations_total >
+      0 || s.reading_days_total > 1
   );
 }
 
@@ -32,6 +42,21 @@ export function daysSince(iso: string, now = new Date()): number | null {
   return Math.floor((now.getTime() - t) / 86_400_000);
 }
 
+/** What is in the app, named the way the reader would name it, for a
+ * reminder that says what is actually at stake. */
+export function whatIsHere(s: Stats): string {
+  const parts: string[] = [];
+  if (s.sermons_total > 0) parts.push("sermons");
+  if (s.notes_total > 0) parts.push("notes");
+  if (s.highlights_total > 0) parts.push("highlights");
+  if (s.illustrations_total > 0) parts.push("illustrations");
+  if (s.prayer_entries + s.prayer_people > 0) parts.push("a prayer journal");
+  if (s.memory_verses_total + s.catechism_total > 0) parts.push("memory work");
+  if (parts.length === 0) return "work in the app";
+  if (parts.length === 1) return parts[0];
+  return `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}`;
+}
+
 /** What the reminder should say, or null when no reminder is due. */
 export function backupReminderMessage(newestBackupAt: string | null, stats: Stats, snoozeUntil: string | null, now = new Date()): string | null {
   if (snoozeUntil) {
@@ -39,7 +64,7 @@ export function backupReminderMessage(newestBackupAt: string | null, stats: Stat
     if (!Number.isNaN(until) && until > now.getTime()) return null;
   }
   if (newestBackupAt == null) {
-    return hasStudyData(stats) ? "You have notes and highlights but no backup yet." : null;
+    return hasStudyData(stats) ? `You have ${whatIsHere(stats)} but no backup yet.` : null;
   }
   const days = daysSince(newestBackupAt, now);
   if (days == null || days < BACKUP_REMINDER_DAYS) return null;

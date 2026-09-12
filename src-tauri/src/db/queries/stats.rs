@@ -56,6 +56,9 @@ pub struct Stats {
     /// here rather than in the frontend, so the tile costs one query.
     pub sermons_total: i64,
     pub sermon_words_total: i64,
+    /// Stories in the library. Nothing displays this yet; the backup
+    /// reminder asks whether there is anything here worth losing.
+    pub illustrations_total: i64,
 }
 
 /// A card counts as learned once its interval is this long (days).
@@ -137,6 +140,7 @@ pub fn get_stats(conn: &Connection, today: &str) -> anyhow::Result<Stats> {
         )?,
         sermons_total: count(conn, &format!("SELECT COUNT(*) FROM sermons WHERE {NOT_DELETED}"))?,
         sermon_words_total: sermon_words(conn)?,
+        illustrations_total: count(conn, &format!("SELECT COUNT(*) FROM illustrations WHERE {NOT_DELETED}"))?,
     })
 }
 
@@ -220,11 +224,23 @@ mod tests {
             )
             .unwrap();
         }
+        conn.execute(
+            "INSERT INTO illustrations (id, title, body, created_at, updated_at) VALUES (1, 'The keeper', '<p>a story</p>', 'x', 'x')",
+            [],
+        )
+        .unwrap();
         let s = get_stats(&conn, "2026-09-11").unwrap();
         assert_eq!(s.sermons_total, 1);
         assert_eq!(s.sermon_words_total, 4, "One + three more words");
         assert_eq!(s.sermons_preached_year, 2);
         assert_eq!(s.sermons_preached_total, 3);
+        assert_eq!(s.illustrations_total, 1);
+
+        // Both follow the Trash, like everything else counted here.
+        conn.execute("UPDATE sermons SET deleted_at = 'x' WHERE id = 1", []).unwrap();
+        conn.execute("UPDATE illustrations SET deleted_at = 'x' WHERE id = 1", []).unwrap();
+        let s = get_stats(&conn, "2026-09-11").unwrap();
+        assert_eq!((s.sermons_total, s.illustrations_total), (0, 0));
 
         drop(conn);
         let _ = std::fs::remove_dir_all(&dir);
