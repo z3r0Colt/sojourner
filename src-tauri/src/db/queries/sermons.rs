@@ -386,12 +386,6 @@ pub fn set_stage(conn: &Connection, id: i64, stage: &str) -> anyhow::Result<()> 
     Ok(())
 }
 
-pub fn set_status(conn: &Connection, id: i64, status: &str) -> anyhow::Result<()> {
-    let now = chrono::Utc::now().to_rfc3339();
-    conn.execute("UPDATE sermons SET status = ?2, updated_at = ?3 WHERE id = ?1", params![id, status, now])?;
-    Ok(())
-}
-
 /// Soft delete: the sermon moves to the Trash rather than disappearing.
 pub fn delete(conn: &Connection, id: i64) -> anyhow::Result<()> {
     let now = chrono::Utc::now().to_rfc3339();
@@ -672,19 +666,6 @@ pub fn update_series(
 /// NULL, so they simply stop belonging to one.
 pub fn delete_series(conn: &Connection, id: i64) -> anyhow::Result<bool> {
     Ok(conn.execute("DELETE FROM sermon_series WHERE id = ?1", params![id])? > 0)
-}
-
-/// Rewrites the order of a series' sermons from the list given.
-pub fn set_series_order(conn: &Connection, series_id: i64, sermon_ids: &[i64]) -> anyhow::Result<()> {
-    let tx = conn.unchecked_transaction()?;
-    for (i, sermon_id) in sermon_ids.iter().enumerate() {
-        tx.execute(
-            "UPDATE sermons SET series_id = ?2, series_order = ?3 WHERE id = ?1",
-            params![sermon_id, series_id, i as i64],
-        )?;
-    }
-    tx.commit()?;
-    Ok(())
 }
 
 #[cfg(test)]

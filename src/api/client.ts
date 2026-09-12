@@ -463,7 +463,6 @@ export const api = {
   /** One save for the fields, the passages, and the sources together. */
   updateSermon: (sermonId: number, input: SermonInput) => invoke<Sermon>("update_sermon", { sermonId, input }),
   setSermonStage: (sermonId: number, stage: string) => invoke<void>("set_sermon_stage", { sermonId, stage }),
-  setSermonStatus: (sermonId: number, status: string) => invoke<void>("set_sermon_status", { sermonId, status }),
   /** Soft delete: to the Trash, restorable for thirty days. */
   deleteSermon: (sermonId: number) => invoke<void>("delete_sermon", { sermonId }),
   duplicateSermon: (sermonId: number) => invoke<Sermon>("duplicate_sermon", { sermonId }),
@@ -501,8 +500,6 @@ export const api = {
   updateSermonSeries: (seriesId: number, title: string, description: string | null, planCode: string | null) =>
     invoke<SermonSeries>("update_sermon_series", { seriesId, title, description, planCode }),
   deleteSermonSeries: (seriesId: number) => invoke<boolean>("delete_sermon_series", { seriesId }),
-  setSermonSeriesOrder: (seriesId: number, sermonIds: number[]) =>
-    invoke<void>("set_sermon_series_order", { seriesId, sermonIds }),
 
   listIllustrations: (filter: IllustrationFilter = {}) => invoke<Illustration[]>("list_illustrations", { filter }),
   getIllustration: (illustrationId: number) => invoke<Illustration | null>("get_illustration", { illustrationId }),
