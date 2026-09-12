@@ -15,6 +15,8 @@ import { SermonHeader } from "./SermonHeader";
 import { SermonSidePanel, type SidePanelTab } from "./SermonSidePanel";
 import { rateLabel, useSermonWordCount, useSpeakingRateInfo } from "./sermonStats";
 import { PrepTrack } from "./PrepTrack";
+import { RehearsalBar, RehearsalButtons } from "./Rehearsal";
+import { SermonHistory } from "./SermonHistory";
 import { evidenceFor, nextStepHint, stageFromEvidence, stageIndex } from "./prepStages";
 import { useSermonTemplates } from "./sermonTemplates";
 import { useSendToSermonRequest } from "./sendToSermon";
@@ -179,8 +181,11 @@ export function SermonPane() {
   return (
     <SermonEditorProvider value={{ translationId, passages: byKey, passagesLoading, openSource }}>
       <div className="flex h-full min-h-0 flex-col">
-        {!panelBeside && (
-          <div className="flex shrink-0 items-center justify-end border-b border-line px-2 py-1">
+        <RehearsalBar sermon={sermon} wordCount={words.total} />
+        <div className="flex shrink-0 flex-wrap items-center gap-1 border-b border-line px-2 py-1">
+          <RehearsalButtons sermon={sermon} />
+          <span className="ml-auto" />
+          {!panelBeside && (
             <Popover
               width="w-72"
               trigger={({ toggle, open }) => (
@@ -189,8 +194,8 @@ export function SermonPane() {
             >
               <div className="-m-2 h-[60vh]">{panel}</div>
             </Popover>
-          </div>
-        )}
+          )}
+        </div>
         <div className="flex min-h-0 flex-1">
         <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto">
           <div className="mx-auto w-full max-w-3xl px-6 py-5">
@@ -216,6 +221,7 @@ export function SermonPane() {
               placeholder="Write the sermon…"
               className="border-0 bg-transparent focus-within:border-0"
             />
+            <SermonHistory sermon={sermon} />
           </div>
         </div>
         {panelBeside && (

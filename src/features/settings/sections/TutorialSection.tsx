@@ -209,6 +209,10 @@ const CATEGORIES: Category[] = [
         a: "An empty manuscript offers “Start from…”: Expository, Textual, Topical, Evangelistic, Funeral, Wedding, and Bible study, each laid out as points and sub-points. Rename, reorder, edit, or add your own under Settings → Reading → Sermon templates.",
       },
       {
+        q: "Rehearse it",
+        a: "“Rehearse” runs the clock beside the manuscript and, when you finish, offers to log the run with its minutes, its word count, and a note of what it taught (“cut point II”). “Rehearse aloud” reads the manuscript section by section instead, with the same clock going. Every logged run feeds the speaking rate the app quotes your minutes at, and the History list under the manuscript holds them all.",
+      },
+      {
         q: "Blanks for the handout",
         a: (
           <>
