@@ -27,6 +27,11 @@ export function SermonActionsMenu({
   const { data: books } = useBooks();
   const [exporting, setExporting] = useState(false);
 
+  /** The sermon's title as a file name Windows will accept. */
+  function fileName(extension: string) {
+    return `${sermon.title || "sermon"}.${extension}`.replace(/[\\/:*?"<>|]+/g, "-");
+  }
+
   function print(next: PrintShape) {
     setShape(next);
     // One frame for the region to render before the print dialog reads it.
@@ -37,18 +42,24 @@ export function SermonActionsMenu({
   }
 
   async function exportMarkdown() {
-    const destPath = await save({
-      defaultPath: `${sermon.title || "sermon"}.md`.replace(/[\/:*?"<>|]+/g, "-"),
-      filters: [{ name: "Markdown", extensions: ["md"] }],
-    });
-    if (!destPath) return;
-    await api.exportSermon(sermon.id, destPath);
-    toast.success("Sermon exported");
+    try {
+      const destPath = await save({
+        defaultPath: fileName("md"),
+        filters: [{ name: "Markdown", extensions: ["md"] }],
+      });
+      if (!destPath) return;
+      await api.exportSermon(sermon.id, destPath);
+      toast.success("Sermon exported");
+    } catch (error) {
+      // A path that cannot be written, a file held open by Word: the reader
+      // has to be told, or the export looks as though it worked.
+      toast.error(`Could not export the sermon: ${String(error)}`);
+    }
   }
 
   async function exportSlides() {
     const destPath = await save({
-      defaultPath: `${sermon.title || "sermon"}.pptx`.replace(/[\/:*?"<>|]+/g, "-"),
+      defaultPath: fileName("pptx"),
       filters: [{ name: "PowerPoint", extensions: ["pptx"] }],
     });
     if (!destPath) return;
