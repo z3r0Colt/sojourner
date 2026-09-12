@@ -10,7 +10,7 @@ import { useAddSermonEvent, useSetSermonStage } from "../../api/queries";
 import { toast } from "../../components/ui/toast";
 import { useSermonWordCount, useSpeakingRateInfo } from "../sermons/sermonStats";
 import { daysUntil, localToday, relativeDay, sermonTextLabel, STAGE_LABEL } from "../sermons/sermonFormat";
-import { startRun } from "../sermons/preachingMode";
+import { startRun } from "../sermons/preachingSession";
 import type { Sermon } from "../../api/types";
 
 /** How far ahead a sermon counts as "this Sunday". */
@@ -109,6 +109,14 @@ function SermonCard({ sermon, today }: { sermon: Sermon; today: string }) {
           }}
         >
           Rehearse
+        </Button>
+        <Button
+          size="sm"
+          variant="secondary"
+          title="The manuscript alone, at a pulpit size, with the clock"
+          onClick={() => startRun(sermon.id, { kind: overdue || sermon.preach_date === today ? "preaching" : "rehearsal", fullScreen: true })}
+        >
+          Preach
         </Button>
         <Button
           size="sm"

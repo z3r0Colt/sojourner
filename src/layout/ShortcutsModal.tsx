@@ -59,6 +59,17 @@ const GROUPS: { title: string; rows: { keys: string[]; label: string }[] }[] = [
     ],
   },
   {
+    title: "Preaching mode",
+    rows: [
+      { keys: ["Space"], label: "Next section (PageDown, → and ↓ do the same; the screen's right third is a tap zone)" },
+      { keys: ["←"], label: "Previous section (PageUp and ↑ do the same; the left third is a tap zone)" },
+      { keys: ["Home"], label: "First section (End goes to the last)" },
+      { keys: ["T"], label: "Start or pause the clock" },
+      { keys: ["Ctrl", "="], label: "Larger text at the pulpit (Ctrl+- smaller); the size is remembered" },
+      { keys: ["Esc"], label: "Leave (confirmed while the clock is running) and offer to log the run" },
+    ],
+  },
+  {
     title: "Memory practice",
     rows: [
       { keys: ["Space"], label: "Reveal the hidden verse or answer (first-letter and blank-word modes)" },

@@ -217,6 +217,14 @@ const CATEGORIES: Category[] = [
         a: "The Illustrations page keeps stories and quotations apart from any one sermon, with the source each came from and where it has been used. “Save as illustration” beside any selection puts one there; the manuscript toolbar's bulb inserts one as a citation and records the use, warning you when a story has already been told in this series.",
       },
       {
+        q: "Preaching mode",
+        a: (
+          <>
+            “Preach” hides everything but the manuscript, at a pulpit size you can change with <Kbd>Ctrl</Kbd>+<Kbd>=</Kbd>. The sermon is paged at its points: <Kbd>Space</Kbd>, <Kbd>PageDown</Kbd>, or <Kbd>→</Kbd> to advance, <Kbd>←</Kbd> to go back, and the screen's left and right thirds work as tap zones. A thin bar shows the time elapsed and what is left against your target, the point you are in, and the one coming. <Kbd>T</Kbd> starts and pauses the clock; <Kbd>Esc</Kbd> leaves and offers to log the run.
+          </>
+        ),
+      },
+      {
         q: "Minutes in your own voice",
         a: "From two timed runs on, the app works out your words a minute over the last ten (preachings counted twice) and quotes every sermon's length at that rate, saying so: “about 31 min at your measured 122 wpm”. Settings → Reading → Speaking rate shows what it has measured and the rate it assumes until then.",
       },
