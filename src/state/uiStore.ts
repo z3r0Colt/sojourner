@@ -1,8 +1,26 @@
 import { create } from "zustand";
 
-export type Theme = "light" | "dark" | "oled" | "sepia" | "system";
+/** "contrast" and "contrast-dark" are the high-contrast pair (F3.6). */
+export type Theme = "light" | "dark" | "oled" | "sepia" | "contrast" | "contrast-dark" | "system";
 export type LineSpacing = "compact" | "normal" | "relaxed";
-export type ReadingFont = "serif" | "sans";
+/** "dyslexic" is the bundled OpenDyslexic face (F3.6). */
+export type ReadingFont = "serif" | "sans" | "dyslexic";
+
+export const THEME_OPTIONS: { value: Theme; label: string }[] = [
+  { value: "system", label: "Match Windows" },
+  { value: "light", label: "Light" },
+  { value: "sepia", label: "Sepia" },
+  { value: "dark", label: "Dark" },
+  { value: "oled", label: "True black (OLED)" },
+  { value: "contrast", label: "High contrast" },
+  { value: "contrast-dark", label: "High contrast, dark" },
+];
+
+export const READING_FONT_OPTIONS: { value: ReadingFont; label: string }[] = [
+  { value: "serif", label: "Serif" },
+  { value: "sans", label: "Sans-serif" },
+  { value: "dyslexic", label: "Dyslexia-friendly" },
+];
 /** How a copied passage is laid out: text alone, "text (John 3:16)",
  * "John 3:16 — text", or a Markdown blockquote with the reference on its
  * own line. See `lib/clipboard.ts`. */
@@ -26,10 +44,14 @@ interface UiState {
   copyFormat: CopyFormat;
   /** Append the translation code to the reference when copying ("John 3:16 KJV"). */
   copyIncludeTranslation: boolean;
+  /** Forces reduced motion (no transitions, no toast slide) regardless of
+   * the OS setting, which applies on its own (F3.6). */
+  reduceMotion: boolean;
   /** F11: chrome hidden, the focused pane maximized (see workspaceStore). */
   distractionFreeMode: boolean;
   sidebarCollapsed: boolean;
   setTheme: (t: Theme) => void;
+  setReduceMotion: (on: boolean) => void;
   setFontSize: (n: number) => void;
   setLineSpacing: (s: LineSpacing) => void;
   setReadingFont: (f: ReadingFont) => void;
@@ -74,12 +96,17 @@ export const useUiStore = create<UiState>((set) => ({
   showMorphology: stored.showMorphology ?? true,
   copyFormat: stored.copyFormat ?? "text-ref",
   copyIncludeTranslation: stored.copyIncludeTranslation ?? false,
+  reduceMotion: stored.reduceMotion ?? false,
   distractionFreeMode: false,
   sidebarCollapsed: stored.sidebarCollapsed ?? false,
 
   setTheme: (theme) => {
     persist({ theme });
     set({ theme });
+  },
+  setReduceMotion: (reduceMotion) => {
+    persist({ reduceMotion });
+    set({ reduceMotion });
   },
   setFontSize: (fontSize) => {
     persist({ fontSize });
