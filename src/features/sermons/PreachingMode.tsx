@@ -118,7 +118,21 @@ function PreachingOverlay() {
   const elapsed = elapsedMs(session);
   const target = sermon.target_minutes;
   const remaining = target != null ? target * 60_000 - elapsed : null;
-  const fraction = target != null ? Math.min(1, elapsed / (target * 60_000)) : words.total > 0 ? countWords(manuscriptText(current?.html ?? "")) / words.total : 0;
+  // With a target the bar is the clock against it; without one it is how far
+  // through the manuscript this section leaves the preacher -- everything up
+  // to and including it, not the section's own share, which used to shrink
+  // the bar on every short point.
+  const wordsThroughHere = sections
+    .slice(0, index + 1)
+    .reduce((total, section) => total + countWords(manuscriptText(section.html)), 0);
+  const fraction =
+    target != null
+      ? Math.min(1, elapsed / (target * 60_000))
+      : // `written` is the same count as the sections': the manuscript's own
+        // words, with the passage blocks left out.
+        words.written > 0
+        ? Math.min(1, wordsThroughHere / words.written)
+        : 0;
   const over = target != null && elapsed > target * 60_000;
   const nearly = target != null && !over && elapsed > target * 60_000 * 0.9;
   const text = sermonTextLabel(books, sermon);
