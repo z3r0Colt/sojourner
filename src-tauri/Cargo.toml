@@ -51,6 +51,14 @@ regex = "1"
 winreg = "0.55"
 
 
+# What tells a built app to serve the frontend from inside itself rather than
+# from the dev server. `tauri build` passes it; without the feature declared
+# here, that command fails outright and a plain `cargo build --release`
+# quietly produces a binary whose window opens on "localhost refused to
+# connect" -- which is what every release build of this app did until now.
+[features]
+custom-protocol = ["tauri/custom-protocol"]
+
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration
 [profile.release]
 codegen-units = 1
