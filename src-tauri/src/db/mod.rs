@@ -78,6 +78,10 @@ pub fn open(app_data_dir: &Path, content_db_path: &Path) -> anyhow::Result<Conne
     let mut conn = Connection::open(&user_db_path)?;
     conn.execute_batch(PERFORMANCE_PRAGMAS)?;
     conn.pragma_update(None, "foreign_keys", "ON")?;
+    // Before the migrations: USER_MIGRATION_0016 builds the search indexes
+    // with `html_text()`, and every write to a note, a sermon, or an
+    // illustration goes through a trigger that calls it from then on.
+    register_functions(&conn)?;
     run_migrations(&mut conn, "main", schema::USER_MIGRATIONS)?;
 
     conn.execute(
@@ -97,6 +101,27 @@ pub fn open(app_data_dir: &Path, content_db_path: &Path) -> anyhow::Result<Conne
     );
 
     Ok(conn)
+}
+
+/// Puts `html_text(x)` on the connection: the words of a rich-text body,
+/// with its markup left out (see `crate::text`).
+///
+/// The search triggers on notes, chapter notes, sermons, and illustrations
+/// call it, so a connection to `user.db` without it cannot write to those
+/// tables at all -- which is why this is done here, in the one place the app
+/// opens that file, and why the failure is loud rather than an index that
+/// quietly drifts out of step with the text.
+pub fn register_functions(conn: &Connection) -> rusqlite::Result<()> {
+    use rusqlite::functions::FunctionFlags;
+    conn.create_scalar_function(
+        "html_text",
+        1,
+        FunctionFlags::SQLITE_UTF8 | FunctionFlags::SQLITE_DETERMINISTIC | FunctionFlags::SQLITE_INNOCUOUS,
+        |ctx| {
+            let html: Option<String> = ctx.get(0)?;
+            Ok(html.map(|h| crate::text::html_to_text(&h)))
+        },
+    )
 }
 
 fn run_migrations(conn: &mut Connection, schema_name: &str, migrations: &[&str]) -> anyhow::Result<()> {
@@ -243,14 +268,16 @@ mod tests {
         let progress_rows = before.iter().find(|(t, _)| *t == "reading_plan_progress").map(|(_, n)| *n).unwrap_or(0);
         assert_eq!(progress.len() as i64, progress_rows, "every plan in progress still lists");
 
-        // USER_MIGRATION_0015: every sermon table exists and starts empty, and
-        // a sermon written by hand is found through sermons_fts.
+        // USER_MIGRATION_0015: every sermon table exists and is queryable, and
+        // a sermon written by hand is found through sermons_fts. What they
+        // hold is the reader's own business -- this runs against a real
+        // database, which by now may have sermons in it.
         for t in [
             "sermons", "sermon_series", "sermon_passages", "sermon_sources", "sermon_tags",
             "sermon_events", "illustrations", "illustration_tags", "illustration_uses",
         ] {
-            let n: i64 = conn.query_row(&format!("SELECT COUNT(*) FROM {t}"), [], |r| r.get(0)).unwrap();
-            assert_eq!(n, 0, "{t} should start empty");
+            conn.query_row::<i64, _, _>(&format!("SELECT COUNT(*) FROM {t}"), [], |r| r.get(0))
+                .unwrap_or_else(|e| panic!("{t} should exist and be queryable: {e}"));
         }
         // The old Sermon Notes tables were dropped in USER_MIGRATION_0010, so
         // the new names can never collide with a table still holding data.
@@ -262,15 +289,182 @@ mod tests {
         }
         conn.execute(
             "INSERT INTO sermons (title, big_idea, body, created_at, updated_at)
-             VALUES ('Test', 'A big idea', '<h2>The steadfastness of God</h2>', '2026-01-01', '2026-01-01')",
+             VALUES ('Test', 'A big idea', '<h2>The <em>steadfastness</em> of God</h2>', '2026-01-01', '2026-01-01')",
             [],
         )
         .unwrap();
+        let id = conn.last_insert_rowid();
         let hit: i64 = conn
             .query_row("SELECT COUNT(*) FROM sermons_fts WHERE sermons_fts MATCH 'steadfastness'", [], |r| r.get(0))
             .unwrap();
         assert_eq!(hit, 1, "sermons_fts indexes the body");
-        conn.execute("DELETE FROM sermons", []).unwrap();
+        // USER_MIGRATION_0016: it indexes the words, not the markup they came in.
+        let by_tag: i64 = conn
+            .query_row("SELECT COUNT(*) FROM sermons_fts WHERE sermons_fts MATCH 'em'", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(by_tag, 0, "a tag name is not a word of the sermon");
+        conn.execute("DELETE FROM sermons WHERE id = ?1", [id]).unwrap();
+
+        drop(conn);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// The upgrade path for a database that already holds writing:
+    /// USER_MIGRATION_0016 rebuilds four search indexes, and what was in them
+    /// has to come back as words. Built at version 15 from the schema itself,
+    /// seeded the way the app of that version would have, then opened.
+    #[test]
+    fn migrating_an_older_database_rebuilds_its_search_indexes_from_the_text() {
+        use queries::{illustrations, search, sermons};
+        use crate::models::IllustrationFilter;
+
+        let dir = std::env::temp_dir().join(format!("sojourner-fts-migrate-test-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let content_db_path = dir.join("content.db");
+        open_content_db(&content_db_path).unwrap();
+
+        // A user.db as it stood before this migration.
+        {
+            let mut conn = Connection::open(dir.join("user.db")).unwrap();
+            conn.execute_batch(PERFORMANCE_PRAGMAS).unwrap();
+            run_migrations(&mut conn, "main", &schema::USER_MIGRATIONS[..15]).unwrap();
+            let now = "2026-09-12T12:00:00+00:00";
+            conn.execute(
+                "INSERT INTO notes (book_id, chapter, verse_start, verse_end, body, created_at, updated_at)
+                 VALUES (58, 6, 13, 20, '<p>The <strong>oath</strong> of God is <em>sworn</em>, and <a href=\"#\">bound</a>.</p>', ?1, ?1)",
+                [now],
+            )
+            .unwrap();
+            conn.execute(
+                "INSERT INTO notes (book_id, chapter, verse_start, verse_end, body, created_at, updated_at)
+                 VALUES (45, 3, 21, 21, '<p>a righteousness <em>with</em>out the law</p>', ?1, ?1)",
+                [now],
+            )
+            .unwrap();
+            conn.execute(
+                "INSERT INTO chapter_notes (book_id, chapter, body, created_at, updated_at)
+                 VALUES (43, 3, '<p>Nicodemus came <strong>by night</strong>.</p>', ?1, ?1)",
+                [now],
+            )
+            .unwrap();
+            conn.execute(
+                "INSERT INTO sermons (title, big_idea, body, created_at, updated_at)
+                 VALUES ('The oath of God', 'God swore by himself.', '<h2>Bound</h2><p>by two <strong>unchangeable</strong> things.</p>', ?1, ?1)",
+                [now],
+            )
+            .unwrap();
+            conn.execute(
+                "INSERT INTO illustrations (title, body, source_label, created_at, updated_at)
+                 VALUES ('The keeper', '<p>A <strong>lighthouse</strong> keeper who never slept.</p>', 'Told by a friend', ?1, ?1)",
+                [now],
+            )
+            .unwrap();
+
+            // The old index held the markup. That is what is being migrated away from.
+            let by_tag: i64 = conn
+                .query_row("SELECT COUNT(*) FROM notes_fts WHERE notes_fts MATCH 'strong'", [], |r| r.get(0))
+                .unwrap();
+            assert_eq!(by_tag, 1, "before: a tag name matched");
+            let split: i64 = conn
+                .query_row("SELECT COUNT(*) FROM notes_fts WHERE notes_fts MATCH 'without'", [], |r| r.get(0))
+                .unwrap();
+            assert_eq!(split, 0, "before: a word broken by formatting did not");
+        }
+
+        let conn = open(&dir, &content_db_path).unwrap();
+        let version: i64 = conn.query_row("PRAGMA user_version", [], |r| r.get(0)).unwrap();
+        assert_eq!(version as usize, schema::USER_MIGRATIONS.len());
+
+        // Every row is still there.
+        for (table, expected) in [("notes", 2), ("chapter_notes", 1), ("sermons", 1), ("illustrations", 1)] {
+            let n: i64 = conn.query_row(&format!("SELECT COUNT(*) FROM {table}"), [], |r| r.get(0)).unwrap();
+            assert_eq!(n, expected, "{table} survived the migration");
+        }
+
+        // And each index now answers for the words rather than the markup.
+        assert_eq!(search::search_notes(&conn, "oath", 10).unwrap().len(), 1);
+        assert_eq!(search::search_notes(&conn, "without", 10).unwrap().len(), 1, "a word formatting had split");
+        assert_eq!(search::search_notes(&conn, "Nicodemus", 10).unwrap().len(), 1, "chapter notes too");
+        assert!(search::search_notes(&conn, "strong", 10).unwrap().is_empty(), "no longer by a tag name");
+        assert!(search::search_notes(&conn, "href", 10).unwrap().is_empty(), "nor by an attribute");
+        let hit = &search::search_notes(&conn, "sworn", 10).unwrap()[0];
+        assert!(!hit.snippet.contains('<'), "the snippet reads as prose: {}", hit.snippet);
+
+        assert_eq!(sermons::search(&conn, "unchangeable", 10).unwrap().len(), 1);
+        assert!(sermons::search(&conn, "strong", 10).unwrap().is_empty());
+        let found = illustrations::list(
+            &conn,
+            &IllustrationFilter { query: Some("lighthouse".into()), ..Default::default() },
+        )
+        .unwrap();
+        assert_eq!(found.len(), 1);
+        let by_tag = illustrations::list(
+            &conn,
+            &IllustrationFilter { query: Some("strong".into()), ..Default::default() },
+        )
+        .unwrap();
+        assert!(by_tag.is_empty());
+
+        drop(conn);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// USER_MIGRATION_0016: the search indexes hold what was written, not the
+    /// markup it was written in. A note is found by its words -- including a
+    /// word formatting had broken in half -- and never by the name of a tag;
+    /// its snippet comes back as prose; and an update still reindexes it.
+    #[test]
+    fn search_indexes_hold_the_words_and_not_the_markup() {
+        use queries::{notes, search, sermons};
+        use crate::models::SermonInput;
+
+        let dir = std::env::temp_dir().join(format!("sojourner-fts-text-test-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let content_db_path = dir.join("content.db");
+        open_content_db(&content_db_path).unwrap();
+        let conn = open(&dir, &content_db_path).unwrap();
+
+        let note = notes::create(
+            &conn,
+            58,
+            6,
+            13,
+            20,
+            "<p>The <strong>oath</strong> of God is <em>sworn</em>, and <a href=\"#\">bound</a> by two things.</p>".into(),
+            None,
+            None,
+        )
+        .unwrap();
+
+        assert_eq!(search::search_notes(&conn, "oath", 10).unwrap().len(), 1, "found by its words");
+        assert!(search::search_notes(&conn, "strong", 10).unwrap().is_empty(), "not by a tag name");
+        assert!(search::search_notes(&conn, "href", 10).unwrap().is_empty(), "not by an attribute");
+        let hit = &search::search_notes(&conn, "sworn", 10).unwrap()[0];
+        assert!(!hit.snippet.contains('<'), "the snippet is prose, not markup: {}", hit.snippet);
+        assert!(hit.snippet.contains("[sworn]"), "the match is still marked: {}", hit.snippet);
+
+        // A word split by formatting is one word.
+        notes::update(&conn, note.id, "<p>a righteousness <em>with</em>out the law</p>".into(), None).unwrap();
+        assert_eq!(search::search_notes(&conn, "without", 10).unwrap().len(), 1, "reindexed, and the word is whole");
+        assert!(search::search_notes(&conn, "oath", 10).unwrap().is_empty(), "the old text is gone");
+
+        // The same holds for a manuscript, whose title is plain text already.
+        let sermon = sermons::create(
+            &conn,
+            &SermonInput {
+                title: Some("The oath of God".into()),
+                body: Some("<h2>Bound</h2><p>by two <strong>unchangeable</strong> things.</p>".into()),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+        assert_eq!(sermons::search(&conn, "unchangeable", 10).unwrap().len(), 1);
+        assert_eq!(sermons::search(&conn, "oath", 10).unwrap().len(), 1, "the title is indexed too");
+        assert!(sermons::search(&conn, "strong", 10).unwrap().is_empty(), "not by a tag name");
+        sermons::delete(&conn, sermon.id).unwrap();
+        assert!(sermons::search(&conn, "unchangeable", 10).unwrap().is_empty(), "the Trash is filtered out");
 
         drop(conn);
         let _ = std::fs::remove_dir_all(&dir);

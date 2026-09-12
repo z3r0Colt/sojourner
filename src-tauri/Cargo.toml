@@ -30,7 +30,9 @@ tauri-plugin-fs = "2"
 tauri-plugin-window-state = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-rusqlite = { version = "0.31", features = ["bundled"] }
+# "functions" registers `html_text()` on the connection: the search triggers
+# call it so the indexes hold a note's words rather than its markup.
+rusqlite = { version = "0.31", features = ["bundled", "functions"] }
 quick-xml = "0.36"
 roxmltree = "0.20"
 sha2 = "0.10"
