@@ -65,7 +65,8 @@ export function SermonPane() {
   const rate = useSpeakingRateInfo();
   const [sermonTemplates] = useSermonTemplates();
   const [pickingIllustration, setPickingIllustration] = useState(false);
-  const [presenting, setPresenting] = useState(false);
+  /** The slide the deck opens on, or null when it is closed. */
+  const [presenting, setPresenting] = useState<number | null>(null);
   const recordUse = useRecordIllustrationUse();
   // Above 720 px the panel sits beside the manuscript; below, it is a
   // popover behind a header button, so a narrow column keeps its text.
@@ -130,18 +131,20 @@ export function SermonPane() {
    * an incoming passage -- the pane does not follow, so there is no loop. */
   const onSelectionChange = useCallback(
     (editor: Editor) => {
-      // Which section the cursor is in, for the Outline panel's mark: the
-      // number of headings at or before it.
-      let headings = 0;
+      // Which point the cursor is in, for the Outline panel's mark: the index
+      // of the last heading at or before it, counted over the document's own
+      // top-level blocks so it means the same thing as the panel's list
+      // (documentModel's sectionsOf) -- null while the cursor is still in the
+      // prose above the first point.
       const cursor = editor.state.selection.from;
-      let sectionIndex = 0;
-      editor.state.doc.descendants((node, pos) => {
-        if (node.type.name !== "heading") return true;
-        headings += 1;
-        if (pos <= cursor) sectionIndex = headings;
-        return false;
+      let headingIndex = 0;
+      let activeHeading: number | null = null;
+      editor.state.doc.forEach((node, offset) => {
+        if (node.type.name !== "heading") return;
+        if (offset <= cursor) activeHeading = headingIndex;
+        headingIndex += 1;
       });
-      setActiveSection(sectionIndex);
+      setActiveSection(activeHeading);
 
       if (!followsCursor || linkGroup == null) return;
       const ref: PassageRef | null = passageAtCursor(editor);
@@ -171,10 +174,11 @@ export function SermonPane() {
     );
   }
 
-  /** Scrolls the manuscript to a heading, by its index among all headings. */
+  /** Scrolls the manuscript to a heading, by its index among the document's
+   * own top-level headings -- the same count the Outline panel uses. */
   function goToSection(index: number) {
     const root = scrollRef.current?.querySelector(".ProseMirror");
-    const heading = root?.querySelectorAll("h2, h3")[index];
+    const heading = root?.querySelectorAll(":scope > h2, :scope > h3")[index];
     heading?.scrollIntoView({ block: "start", behavior: "smooth" });
   }
 
@@ -190,7 +194,7 @@ export function SermonPane() {
       rate={rate}
       paneId={paneId}
       sermon={sermon}
-      onPresent={() => setPresenting(true)}
+      onPresent={(startIndex) => setPresenting(startIndex)}
     />
   );
 
@@ -202,7 +206,7 @@ export function SermonPane() {
           <RehearsalButtons sermon={sermon} />
           <MarkPreachedButton sermon={sermon} wordCount={words.total} />
           <span className="ml-auto" />
-          <SermonActionsMenu sermon={sermon} passages={byKey} onPresent={() => setPresenting(true)} />
+          <SermonActionsMenu sermon={sermon} passages={byKey} onPresent={() => setPresenting(0)} />
           {!panelBeside && (
             <Popover
               width="w-72"
@@ -283,11 +287,12 @@ export function SermonPane() {
             {savedLabel(savedAt, isSaving, isUnsaved)}
           </span>
         </div>
-        {presenting && (
+        {presenting != null && (
           <SlideShow
             slides={buildSlides(sermon, { books, passages: byKey })}
             title={sermon.title}
-            onClose={() => setPresenting(false)}
+            startIndex={presenting}
+            onClose={() => setPresenting(null)}
           />
         )}
         {pickingIllustration && (

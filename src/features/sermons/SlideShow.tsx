@@ -12,8 +12,19 @@ import type { Slide } from "./slides";
  * default -- a bright screen in a dark room is what a congregation
  * complains about -- with a switch to the reader's own theme.
  */
-export function SlideShow({ slides, title, onClose }: { slides: Slide[]; title: string; onClose: () => void }) {
-  const [index, setIndex] = useState(0);
+export function SlideShow({
+  slides,
+  title,
+  onClose,
+  startIndex = 0,
+}: {
+  slides: Slide[];
+  title: string;
+  onClose: () => void;
+  /** Which slide to open on -- the deck is presented from the one clicked. */
+  startIndex?: number;
+}) {
+  const [index, setIndex] = useState(() => Math.min(Math.max(0, startIndex), Math.max(0, slides.length - 1)));
   const [dark, setDark] = useState(true);
   const slide = slides[Math.min(index, slides.length - 1)];
 
