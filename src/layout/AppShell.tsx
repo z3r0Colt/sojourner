@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Compass, Keyboard, Search, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Compass, Keyboard, Search } from "lucide-react";
 import { useBooks, useBookmarks, useCreateBookmark, useDeleteBookmark, useTranslations } from "../api/queries";
 import { useUiStore } from "../state/uiStore";
 import { STUDY_KINDS, findPane, resolveBiblePane, useReaderTranslationId, useWorkspaceStore } from "../state/workspaceStore";
@@ -23,8 +22,8 @@ import { isTypingTarget } from "../lib/keyboard";
 import { useNoteRefsBackfill } from "../features/notes/useNoteRefsBackfill";
 import { useLandingPageOnLaunch } from "../features/today/landing";
 import { useBackupReminder } from "../features/settings/backupReminder";
-
-const TUTORIAL_BANNER_DISMISSED_KEY = "bsa-tutorial-banner-dismissed";
+import { TourOverlay } from "../features/onboarding/TourOverlay";
+import { useFirstRunTour, useTourDone } from "../features/onboarding/firstRun";
 
 export function AppShell() {
   const distractionFreeMode = useUiStore((s) => s.distractionFreeMode);
@@ -42,17 +41,12 @@ export function AppShell() {
   useNoteRefsBackfill();
   useLandingPageOnLaunch();
   useBackupReminder();
+  useFirstRunTour();
+  const [, setTourDone] = useTourDone();
 
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
-  const [showTutorialBanner, setShowTutorialBanner] = useState(
-    () => localStorage.getItem(TUTORIAL_BANNER_DISMISSED_KEY) == null,
-  );
-  function dismissTutorialBanner() {
-    localStorage.setItem(TUTORIAL_BANNER_DISMISSED_KEY, "1");
-    setShowTutorialBanner(false);
-  }
 
   function goBack() {
     const s = useWorkspaceStore.getState();
@@ -169,7 +163,7 @@ export function AppShell() {
             <IconButton icon={ArrowLeft} label="Back (Alt+Left)" onClick={goBack} disabled={!canGoBack} />
             <IconButton icon={ArrowRight} label="Forward (Alt+Right)" onClick={goForward} disabled={!canGoForward} />
             <div className="min-w-0 flex-1" />
-            <Button variant="ghost" icon={Compass} onClick={() => setPaletteOpen(true)} title="Jump to a reference, Strong's number, or term (Ctrl+K)">
+            <Button variant="ghost" icon={Compass} onClick={() => setPaletteOpen(true)} title="Jump to a reference, Strong's number, or term (Ctrl+K)" data-tour="goto">
               Go to
               <Kbd>Ctrl K</Kbd>
             </Button>
@@ -181,17 +175,6 @@ export function AppShell() {
             <LayoutPicker />
             <IconButton icon={Keyboard} label="Keyboard shortcuts (Ctrl+/)" onClick={() => setShortcutsOpen(true)} />
           </header>
-        )}
-
-        {!distractionFreeMode && showTutorialBanner && (
-          <div className="flex shrink-0 items-center gap-3 border-b border-line bg-accent-soft px-4 py-1.5 text-sm text-ink-2">
-            <span>New here? The Tutorial walks through everything this app can do.</span>
-            <Link to="/settings?section=tutorial" className="font-medium text-accent underline underline-offset-2" onClick={dismissTutorialBanner}>
-              Take a look
-            </Link>
-            <div className="flex-1" />
-            <IconButton icon={X} label="Dismiss" size="sm" onClick={dismissTutorialBanner} />
-          </div>
         )}
 
         <main className="min-h-0 flex-1">
@@ -227,6 +210,7 @@ export function AppShell() {
       {shortcutsOpen && <ShortcutsModal onClose={() => setShortcutsOpen(false)} />}
       <WorkspaceDialogs />
       <RefPreviewHost />
+      <TourOverlay onFinish={() => setTourDone(true)} />
     </div>
   );
 }

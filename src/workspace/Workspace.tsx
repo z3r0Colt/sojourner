@@ -198,7 +198,7 @@ function AddPaneStrip() {
   }
 
   return (
-    <div className="flex w-11 shrink-0 flex-col items-center gap-1 border-l border-line bg-surface-2/60 py-2" role="toolbar" aria-label="Add pane">
+    <div className="flex w-11 shrink-0 flex-col items-center gap-1 border-l border-line bg-surface-2/60 py-2" role="toolbar" aria-label="Add pane" data-tour="add-pane">
       {STUDY_STRIP_KINDS.filter((k) => k !== "metrical" || inPsalms).map((kind) => {
         const meta = PANE_KINDS[kind];
         const exists = panes.some((p) => p.kind === kind);
