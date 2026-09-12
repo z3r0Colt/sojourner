@@ -60,6 +60,17 @@ import type {
   ResourceLink,
   ResourceSearchResult,
   BulkImportOutcome,
+  Sermon,
+  SermonEvent,
+  SermonFilter,
+  SermonForChapter,
+  SermonInput,
+  SermonSeries,
+  SpeakingRate,
+  Illustration,
+  IllustrationFilter,
+  IllustrationInput,
+  IllustrationUse,
 } from "./types";
 
 export const api = {
@@ -443,4 +454,68 @@ export const api = {
   setSetting: (key: string, value: string) => invoke<void>("set_setting", { key, value }),
   deleteSetting: (key: string) => invoke<void>("delete_setting", { key }),
   listSettings: (prefix: string) => invoke<[string, string][]>("list_settings", { prefix }),
+
+  // --- Sermon Builder ------------------------------------------------------
+
+  listSermons: (filter: SermonFilter = {}) => invoke<Sermon[]>("list_sermons", { filter }),
+  getSermon: (sermonId: number) => invoke<Sermon | null>("get_sermon", { sermonId }),
+  createSermon: (input: SermonInput = {}) => invoke<Sermon>("create_sermon", { input }),
+  /** One save for the fields, the passages, and the sources together. */
+  updateSermon: (sermonId: number, input: SermonInput) => invoke<Sermon>("update_sermon", { sermonId, input }),
+  setSermonStage: (sermonId: number, stage: string) => invoke<void>("set_sermon_stage", { sermonId, stage }),
+  setSermonStatus: (sermonId: number, status: string) => invoke<void>("set_sermon_status", { sermonId, status }),
+  /** Soft delete: to the Trash, restorable for thirty days. */
+  deleteSermon: (sermonId: number) => invoke<void>("delete_sermon", { sermonId }),
+  duplicateSermon: (sermonId: number) => invoke<Sermon>("duplicate_sermon", { sermonId }),
+  listAllSermonTags: () => invoke<string[]>("list_all_sermon_tags"),
+  searchSermons: (query: string, limit = 30) => invoke<Sermon[]>("search_sermons", { query, limit }),
+  listSermonsForChapter: (bookId: number, chapter: number) =>
+    invoke<SermonForChapter[]>("list_sermons_for_chapter", { bookId, chapter }),
+
+  addSermonEvent: (input: {
+    sermonId: number;
+    kind: "rehearsal" | "preaching";
+    date: string;
+    venue?: string | null;
+    durationSeconds?: number | null;
+    wordCount?: number | null;
+    notes?: string | null;
+  }) =>
+    invoke<SermonEvent>("add_sermon_event", {
+      sermonId: input.sermonId,
+      kind: input.kind,
+      date: input.date,
+      venue: input.venue ?? null,
+      durationSeconds: input.durationSeconds ?? null,
+      wordCount: input.wordCount ?? null,
+      notes: input.notes ?? null,
+    }),
+  deleteSermonEvent: (eventId: number) => invoke<boolean>("delete_sermon_event", { eventId }),
+  listSermonEvents: (sermonId: number) => invoke<SermonEvent[]>("list_sermon_events", { sermonId }),
+  /** Null until two timed runs exist; the setting stands until then. */
+  getSpeakingRate: () => invoke<SpeakingRate | null>("get_speaking_rate"),
+
+  listSermonSeries: () => invoke<SermonSeries[]>("list_sermon_series"),
+  createSermonSeries: (title: string, description?: string | null) =>
+    invoke<SermonSeries>("create_sermon_series", { title, description: description ?? null }),
+  updateSermonSeries: (seriesId: number, title: string, description: string | null, planCode: string | null) =>
+    invoke<SermonSeries>("update_sermon_series", { seriesId, title, description, planCode }),
+  deleteSermonSeries: (seriesId: number) => invoke<boolean>("delete_sermon_series", { seriesId }),
+  setSermonSeriesOrder: (seriesId: number, sermonIds: number[]) =>
+    invoke<void>("set_sermon_series_order", { seriesId, sermonIds }),
+
+  listIllustrations: (filter: IllustrationFilter = {}) => invoke<Illustration[]>("list_illustrations", { filter }),
+  getIllustration: (illustrationId: number) => invoke<Illustration | null>("get_illustration", { illustrationId }),
+  createIllustration: (input: IllustrationInput) => invoke<Illustration>("create_illustration", { input }),
+  updateIllustration: (illustrationId: number, input: IllustrationInput) =>
+    invoke<Illustration>("update_illustration", { illustrationId, input }),
+  deleteIllustration: (illustrationId: number) => invoke<void>("delete_illustration", { illustrationId }),
+  listAllIllustrationTags: () => invoke<string[]>("list_all_illustration_tags"),
+  recordIllustrationUse: (illustrationId: number, sermonId: number) =>
+    invoke<void>("record_illustration_use", { illustrationId, sermonId }),
+  listIllustrationUses: (illustrationId?: number) =>
+    invoke<IllustrationUse[]>("list_illustration_uses", { illustrationId: illustrationId ?? null }),
+
+  /** Markdown, with every passage block rendered at export time. */
+  exportSermon: (sermonId: number, destPath: string) => invoke<void>("export_sermon", { sermonId, destPath }),
 };

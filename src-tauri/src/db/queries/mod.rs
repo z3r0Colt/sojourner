@@ -6,6 +6,7 @@ pub mod crossrefs;
 pub mod doctrine_topics;
 pub mod harmony;
 pub mod highlights;
+pub mod illustrations;
 pub mod notes;
 pub mod prayer_journal;
 pub mod prayer_list;
@@ -18,6 +19,7 @@ pub mod reference;
 pub mod resources;
 pub mod scripture_memory;
 pub mod search;
+pub mod sermons;
 pub mod settings;
 pub mod stats;
 pub mod trash;
@@ -26,7 +28,7 @@ pub mod versification;
 pub mod westminster;
 
 /// The soft-delete filter every list, search, and count over `notes`,
-/// `chapter_notes`, or `prayer_entries` must include (see
-/// USER_MIGRATION_0011). Prefix with a table alias in joins:
-/// `format!("n.{NOT_DELETED}")`.
+/// `chapter_notes`, `prayer_entries`, `sermons`, or `illustrations` must
+/// include (see USER_MIGRATION_0011 and 0015). Prefix with a table alias in
+/// joins: `format!("n.{NOT_DELETED}")`.
 pub const NOT_DELETED: &str = "deleted_at IS NULL";
