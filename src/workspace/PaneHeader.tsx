@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { ArrowLeftToLine, ArrowRightToLine, Check, Maximize2, Minimize2, MoreHorizontal, X } from "lucide-react";
-import { useBooks, useCommentarySources, useDictionaryIndex, useResources, useTranslations, useWestminsterDocuments } from "../api/queries";
-import { useWorkspaceStore, LINK_GROUPS, PANE_KIND_LIST, PASSAGE_KINDS, type LinkGroup, type Pane } from "../state/workspaceStore";
+import { useBooks, useCommentarySources, useDictionaryIndex, useResources, useSermons, useTranslations, useWestminsterDocuments } from "../api/queries";
+import { useWorkspaceStore, LEADING_KINDS, LINK_GROUPS, PANE_KIND_LIST, PASSAGE_KINDS, type LinkGroup, type Pane } from "../state/workspaceStore";
 import { IconButton } from "../components/ui/Button";
 import { Popover, PopoverItem, PopoverLabel } from "../components/ui/Popover";
 import { cx } from "../components/ui/classes";
@@ -22,6 +22,7 @@ export function linkGroupLabel(group: LinkGroup): string {
 function LinkGroupToggle({ pane }: { pane: Pane }) {
   const setLinkGroup = useWorkspaceStore((s) => s.setLinkGroup);
   const follows = PASSAGE_KINDS.has(pane.kind);
+  const leads = LEADING_KINDS.has(pane.kind);
   const choices: LinkGroup[] = [...LINK_GROUPS, null];
   return (
     <Popover
@@ -60,7 +61,11 @@ function LinkGroupToggle({ pane }: { pane: Pane }) {
             </PopoverItem>
           ))}
           <p className="px-2 pb-1 pt-1.5 text-xs text-ink-3">
-            {follows ? "Panes in one group follow each other's passage. An unlinked pane stays where it is." : "This pane shows no passage; its group only decides where links opened from it go."}
+            {leads
+              ? "A sermon leads its group without following it: the passage under your cursor turns the panes beside it, and a verse clicked there never moves the manuscript."
+              : follows
+                ? "Panes in one group follow each other's passage. An unlinked pane stays where it is."
+                : "This pane shows no passage; its group only decides where links opened from it go."}
           </p>
         </>
       )}
@@ -77,9 +82,11 @@ export function useTitleContext(): TitleContext {
   const { data: resources } = useResources();
   const { data: westminsterDocs } = useWestminsterDocuments();
   const { data: dictionaryIndex } = useDictionaryIndex();
+  // A sermon pane's title is the sermon's own, so it follows a rename.
+  const { data: sermons } = useSermons();
   return useMemo(
-    () => ({ books, translations, commentarySources, resources, westminsterDocs, dictionaryIndex }),
-    [books, translations, commentarySources, resources, westminsterDocs, dictionaryIndex],
+    () => ({ books, translations, commentarySources, resources, westminsterDocs, dictionaryIndex, sermons }),
+    [books, translations, commentarySources, resources, westminsterDocs, dictionaryIndex, sermons],
   );
 }
 

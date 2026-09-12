@@ -11,6 +11,7 @@ import {
   Library,
   Link2,
   MessageSquareText,
+  Mic,
   Music,
   NotebookPen,
   ScrollText,
@@ -19,7 +20,7 @@ import {
   Sunrise,
   type LucideIcon,
 } from "lucide-react";
-import type { Book, CommentarySource, DictionaryEntrySummary, Resource, Translation, WestminsterDocument } from "../api/types";
+import type { Book, CommentarySource, DictionaryEntrySummary, Resource, Sermon, Translation, WestminsterDocument } from "../api/types";
 import { bookName } from "../lib/passage";
 import { PASSAGE_KINDS, type PaneContent, type PaneKind, type ParamsOf } from "../state/workspaceStore";
 
@@ -42,6 +43,7 @@ export interface TitleContext {
   resources?: Resource[];
   westminsterDocs?: WestminsterDocument[];
   dictionaryIndex?: DictionaryEntrySummary[];
+  sermons?: Sermon[];
 }
 
 export interface PaneKindMeta<K extends PaneKind = PaneKind> {
@@ -203,6 +205,18 @@ export const PANE_KINDS: Registry = {
   memory: { kind: "memory", label: "Memory", icon: Brain, title: () => "Memory", defaultWidth: 900, acceptsPassage: false, listed: true },
   plans: { kind: "plans", label: "Reading plans", icon: CalendarCheck, title: () => "Reading plans", defaultWidth: 900, acceptsPassage: false, listed: true },
   harmony: { kind: "harmony", label: "Harmony", icon: Columns3, title: () => "Harmony of the Gospels", defaultWidth: 900, acceptsPassage: false, listed: true },
+  sermons: { kind: "sermons", label: "Sermons", icon: Mic, title: () => "Sermons", defaultWidth: 900, acceptsPassage: false, listed: true },
+  // The title is the sermon's own; the pane fills it in through the title
+  // context, which the manager keeps up to date as sermons are renamed.
+  sermon: {
+    kind: "sermon",
+    label: "Sermon",
+    icon: Mic,
+    title: (p, ctx) => ctx.sermons?.find((s) => s.id === p.id)?.title || "Sermon",
+    defaultWidth: 1000,
+    acceptsPassage: false,
+    listed: false,
+  },
   settings: { kind: "settings", label: "Settings", icon: Settings, title: () => "Settings", defaultWidth: 900, acceptsPassage: false, listed: true },
 };
 
@@ -277,6 +291,10 @@ export function routeFor(content: PaneContent): string {
       return "/plans";
     case "harmony":
       return "/harmony";
+    case "sermons":
+      return "/sermons";
+    case "sermon":
+      return `/sermons/${content.params.id}`;
     case "settings":
       return content.params.section ? `/settings?section=${encodeURIComponent(content.params.section)}` : "/settings";
   }
@@ -330,6 +348,10 @@ export function parseRoute(pathname: string, search = ""): ContentRequest | null
       return { kind: "plans", params: {} };
     case "harmony":
       return { kind: "harmony", params: {} };
+    case "sermons": {
+      const id = num(a);
+      return id != null ? { kind: "sermon", params: { id } } : { kind: "sermons", params: {} };
+    }
     case "settings": {
       const section = new URLSearchParams(search).get("section");
       return { kind: "settings", params: { section } };

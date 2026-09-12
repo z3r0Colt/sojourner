@@ -98,6 +98,12 @@ export interface ResourceParams {
   id: number;
 }
 
+/** One sermon's manuscript. The pane holds only the id; the document itself
+ * lives in user.db and is loaded and autosaved by the pane. */
+export interface SermonParams {
+  id: number;
+}
+
 export interface SettingsParams {
   section: string | null;
 }
@@ -125,6 +131,8 @@ export type PaneContent =
   | { kind: "memory"; params: EmptyParams }
   | { kind: "plans"; params: EmptyParams }
   | { kind: "harmony"; params: EmptyParams }
+  | { kind: "sermons"; params: EmptyParams }
+  | { kind: "sermon"; params: SermonParams }
   | { kind: "settings"; params: SettingsParams };
 
 export type PaneKind = PaneContent["kind"];
@@ -151,6 +159,8 @@ export const PANE_KIND_LIST: readonly PaneKind[] = [
   "memory",
   "plans",
   "harmony",
+  "sermons",
+  "sermon",
   "settings",
 ];
 
@@ -164,6 +174,13 @@ export const PASSAGE_KINDS: ReadonlySet<PaneKind> = new Set<PaneKind>([
   "metrical",
   "mine",
 ]);
+
+/** Kinds that lead a link group without following it. A sermon pane
+ * publishes the passage under the writer's cursor, so the Bible and
+ * commentary beside it turn to the text being written about -- but it never
+ * follows, because the manuscript must not scroll out from under the writer
+ * when a verse is clicked (Q4). */
+export const LEADING_KINDS: ReadonlySet<PaneKind> = new Set<PaneKind>(["sermon"]);
 
 /** Kinds the study panel used to hold (plus "Mine", F2.4): what Ctrl+B adds or focuses. */
 export const STUDY_KINDS: ReadonlySet<PaneKind> = new Set<PaneKind>(["commentary", "crossrefs", "confession-for-passage", "metrical", "mine"]);
