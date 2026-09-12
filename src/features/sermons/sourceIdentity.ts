@@ -98,8 +98,7 @@ export function openSourceRef(_kind: SermonSourceKind | string, refId: string | 
       return;
     }
     case "illustration":
-      // The library is a pane kind of its own from SB3.1; until then there
-      // is nothing to open, and the citation's label carries the title.
+      openContent("illustrations", {}, opts);
       return;
     default:
       // An identity from a newer version of the app, or a hand-edited one:
