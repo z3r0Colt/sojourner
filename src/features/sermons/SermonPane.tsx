@@ -24,6 +24,7 @@ import { useSermonTemplates } from "./sermonTemplates";
 import { useSendToSermonRequest } from "./sendToSermon";
 import { illustrationRef, openSourceRef } from "./sourceIdentity";
 import { IllustrationPicker } from "./IllustrationPicker";
+import { htmlToText } from "./excerpt";
 import { SlideShow } from "./SlideShow";
 import { buildSlides } from "./slides";
 import { useSermonDraft } from "./sermonDraft";
@@ -297,7 +298,9 @@ export function SermonPane() {
                 kind: "illustration",
                 ref_id: illustrationRef(illustration.id),
                 label: [illustration.title, illustration.source_label].filter(Boolean).join(" — "),
-                excerpt: illustration.body,
+                // The library stores prose as HTML; a citation's excerpt is
+                // plain text, so it is flattened rather than escaped twice.
+                excerpt: htmlToText(illustration.body),
               });
               // The library shows where each story has gone, so a use is
               // recorded the moment one is dropped in a manuscript.
