@@ -37,20 +37,29 @@ export interface PendingLog {
 
 interface PreachingState {
   session: RunSession | null;
-  pendingLog: PendingLog | null;
+  /** Finished runs waiting to be written down, oldest first. A queue rather
+   * than a slot because a second run can end before the first one's offer
+   * has been answered. */
+  pendingLogs: PendingLog[];
   /** Starts a run and, unless `paused`, the clock with it. */
   start: (sermonId: number, opts?: { kind?: "rehearsal" | "preaching"; fullScreen?: boolean; paused?: boolean }) => void;
   toggleClock: () => void;
   setSection: (index: number) => void;
   stepSection: (delta: 1 | -1, sectionCount: number) => void;
-  /** Leaves the run. A run of any length worth logging is left in
-   * `pendingLog` for the dialog to pick up. */
+  /** Leaves the run. A run of any length worth logging is queued for the
+   * dialog to pick up. */
   end: () => PendingLog | null;
   clearPendingLog: () => void;
 }
 
 /** Shorter than this and there is nothing worth writing down. */
 const MIN_LOGGABLE_SECONDS = 30;
+
+/** What a finished run is worth writing down, or null if it was too short. */
+function logOf(session: RunSession): PendingLog | null {
+  const seconds = Math.round(elapsedMs(session) / 1000);
+  return seconds >= MIN_LOGGABLE_SECONDS ? { sermonId: session.sermonId, kind: session.kind, seconds } : null;
+}
 
 export function elapsedMs(session: RunSession | null): number {
   if (!session) return 0;
@@ -59,19 +68,38 @@ export function elapsedMs(session: RunSession | null): number {
 
 export const usePreachingStore = create<PreachingState>((set, get) => ({
   session: null,
-  pendingLog: null,
+  pendingLogs: [],
 
+  // Starting a run must never throw away one already going. The same sermon
+  // carries its clock over -- "Preach" during a rehearsal moves the same run
+  // to the pulpit rather than restarting it -- and a different sermon's run
+  // is finished properly, so what it measured is still offered for the log.
   start: (sermonId, opts = {}) =>
-    set({
-      session: {
-        sermonId,
-        kind: opts.kind ?? "rehearsal",
-        startedAt: opts.paused ? null : Date.now(),
-        bankedMs: 0,
-        everStarted: !opts.paused,
-        sectionIndex: 0,
-        fullScreen: opts.fullScreen ?? true,
-      },
+    set((s) => {
+      const running = s.session;
+      const carryOver = running != null && running.sermonId === sermonId;
+      const banked = running && !carryOver ? logOf(running) : null;
+      return {
+        session: carryOver
+          ? {
+              ...running,
+              kind: opts.kind ?? running.kind,
+              fullScreen: opts.fullScreen ?? running.fullScreen,
+              ...(opts.paused && running.startedAt != null
+                ? { bankedMs: elapsedMs(running), startedAt: null }
+                : {}),
+            }
+          : {
+              sermonId,
+              kind: opts.kind ?? "rehearsal",
+              startedAt: opts.paused ? null : Date.now(),
+              bankedMs: 0,
+              everStarted: !opts.paused,
+              sectionIndex: 0,
+              fullScreen: opts.fullScreen ?? true,
+            },
+        pendingLogs: banked ? [...s.pendingLogs, banked] : s.pendingLogs,
+      };
     }),
 
   toggleClock: () =>
@@ -106,11 +134,12 @@ export const usePreachingStore = create<PreachingState>((set, get) => ({
       kind: session.kind,
       seconds: Math.round(elapsedMs(session) / 1000),
     };
-    set({ session: null, pendingLog: result.seconds >= MIN_LOGGABLE_SECONDS ? result : null });
+    const worth = logOf(session);
+    set((s) => ({ session: null, pendingLogs: worth ? [...s.pendingLogs, worth] : s.pendingLogs }));
     return result;
   },
 
-  clearPendingLog: () => set({ pendingLog: null }),
+  clearPendingLog: () => set((s) => ({ pendingLogs: s.pendingLogs.slice(1) })),
 }));
 
 /** Starts a run of `sermonId`. Preaching mode (SB4.1) shows it full screen;
