@@ -8,14 +8,23 @@ pub fn today() -> String {
     chrono::Local::now().format("%Y-%m-%d").to_string()
 }
 
-/// Records that `book_id`/`chapter` was open on `date`. Idempotent per day:
-/// re-saving the position while scrolling only updates the translation.
+/// Records that `book_id`/`chapter` was open on `date`. Still one row per
+/// chapter per day, but the row is written afresh rather than updated in
+/// place: `list_recent` reads recency from the row's id, so a chapter
+/// returned to after lunch would otherwise stay behind everything read in
+/// between -- "Recent chapters" would not have the chapter being read at
+/// the top of it.
 pub fn record(conn: &Connection, date: &str, book_id: i64, chapter: i64, translation_id: i64) -> anyhow::Result<()> {
-    conn.execute(
-        "INSERT INTO reading_log (date, book_id, chapter, translation_id) VALUES (?1, ?2, ?3, ?4)
-         ON CONFLICT(date, book_id, chapter) DO UPDATE SET translation_id = excluded.translation_id",
+    let tx = conn.unchecked_transaction()?;
+    tx.execute(
+        "DELETE FROM reading_log WHERE date = ?1 AND book_id = ?2 AND chapter = ?3",
+        params![date, book_id, chapter],
+    )?;
+    tx.execute(
+        "INSERT INTO reading_log (date, book_id, chapter, translation_id) VALUES (?1, ?2, ?3, ?4)",
         params![date, book_id, chapter, translation_id],
     )?;
+    tx.commit()?;
     Ok(())
 }
 
