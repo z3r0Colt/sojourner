@@ -23,7 +23,7 @@ import { Button, IconButton } from "../../components/ui/Button";
 import { Popover } from "../../components/ui/Popover";
 import { LoadingState } from "../../components/ui/EmptyState";
 import { toast } from "../../components/ui/toast";
-import { SendToSermonButton } from "../sermons/StudyActions";
+import { StudyActions } from "../sermons/StudyActions";
 import { resourceRef } from "../sermons/sourceIdentity";
 import { cx, selectSmClass } from "../../components/ui/classes";
 import type { Resource } from "../../api/types";
@@ -236,8 +236,8 @@ function ReaderSidebar({
             <h2 className="text-sm font-semibold text-ink">{resource.title}</h2>
             {resource.author && <p className="text-xs text-ink-3">{resource.author}</p>}
           </div>
-          <SendToSermonButton
-            label={selection?.text ? "Send the selected passage to the sermon" : "Send this book to the sermon (select text first to quote it)"}
+          <StudyActions
+            what={selection?.text ? "the selection" : "this book"}
             item={() => ({
               kind: "resource",
               refId: resourceRef(resource.id, selection?.location ?? null),

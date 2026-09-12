@@ -3,7 +3,7 @@ import { useConfessionForPassage } from "../../api/queries";
 import type { Book } from "../../api/types";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { usePaneNavigate } from "../../workspace/PaneContext";
-import { SendToSermonButton } from "../sermons/StudyActions";
+import { StudyActions } from "../sermons/StudyActions";
 import { westminsterRef } from "../sermons/sourceIdentity";
 
 const DOC_ORDER: Record<string, number> = { wcf: 0, wsc: 1, wlc: 2 };
@@ -48,8 +48,8 @@ export function ConfessionForPassagePanel({ book, chapter, activeVerse }: { book
                 </div>
                 {m.prompt && <div className="text-xs text-ink-3">{m.prompt}</div>}
               </button>
-              <SendToSermonButton
-                label={`Send ${m.document_code.toUpperCase()} ${m.heading} to the sermon`}
+              <StudyActions
+                what={`${m.document_code.toUpperCase()} ${m.heading}`}
                 item={() => ({
                   kind: "confession",
                   refId: westminsterRef(m.document_code, m.section_id),

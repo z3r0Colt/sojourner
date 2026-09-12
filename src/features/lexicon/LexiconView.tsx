@@ -10,7 +10,7 @@ import { openPassage, targetFor } from "../../workspace/openContent";
 import { useReadingTypography } from "../../state/uiStore";
 import { Button } from "../../components/ui/Button";
 import { EmptyState, LoadingState } from "../../components/ui/EmptyState";
-import { SendToSermonButton } from "../sermons/StudyActions";
+import { StudyActions } from "../sermons/StudyActions";
 import { strongsRef } from "../sermons/sourceIdentity";
 import { cx, inputSmClass } from "../../components/ui/classes";
 
@@ -110,9 +110,8 @@ export function LexiconView() {
               <span>
                 {entry.id} · {entry.language}
               </span>
-              <SendToSermonButton
-                className="ml-auto"
-                label={`Send ${entry.id} to the sermon`}
+              <StudyActions
+                what={entry.id}
                 item={() => ({
                   kind: "strongs",
                   refId: strongsRef(entry.id),
