@@ -31,6 +31,7 @@ import type {
   HarmonySection,
   RedLetterRange,
   BackupInfo,
+  Stats,
   DictionaryEntry,
   DictionaryEntrySummary,
   InterlinearWord,
@@ -414,6 +415,8 @@ export const api = {
   getBackupSyncFolder: () => invoke<string | null>("get_backup_sync_folder"),
   setBackupSyncFolder: (folder: string | null) => invoke<void>("set_backup_sync_folder", { folder }),
   getLogsDir: () => invoke<string>("get_logs_dir"),
+  /** Every count the Stats block shows (F3.5), in one round trip. */
+  getStats: () => invoke<Stats>("get_stats"),
 
   // Key/value preferences stored in user.db (survive reinstall, travel with
   // backups). Values are raw strings; `useSetting` layers JSON on top.

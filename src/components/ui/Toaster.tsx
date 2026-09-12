@@ -6,6 +6,7 @@ import { cx } from "./classes";
 function ToastRow({ item }: { item: ToastItem }) {
   const dismiss = useToastStore((s) => s.dismiss);
   useEffect(() => {
+    if (!Number.isFinite(item.durationMs)) return;
     const t = setTimeout(() => dismiss(item.id), item.durationMs);
     return () => clearTimeout(t);
   }, [item.id, item.durationMs, dismiss]);
@@ -31,6 +32,18 @@ function ToastRow({ item }: { item: ToastItem }) {
           className="shrink-0 rounded px-2 py-0.5 text-sm font-medium text-accent hover:bg-accent-soft"
         >
           {item.action.label}
+        </button>
+      )}
+      {item.secondary && (
+        <button
+          type="button"
+          onClick={() => {
+            item.secondary?.onClick();
+            dismiss(item.id);
+          }}
+          className="shrink-0 rounded px-2 py-0.5 text-sm text-ink-2 hover:bg-hover hover:text-ink"
+        >
+          {item.secondary.label}
         </button>
       )}
       <button type="button" onClick={() => dismiss(item.id)} aria-label="Dismiss" className="shrink-0 rounded p-0.5 text-ink-3 hover:text-ink">

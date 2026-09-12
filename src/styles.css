@@ -311,6 +311,24 @@ mark.find-current {
   scrollbar-color: var(--color-line-2) transparent;
 }
 
+/* The reading heatmap (Stats, F3.5): five steps of the accent over the
+   well color, so it reads in every theme without its own palette. */
+.heat-cell {
+  background-color: var(--color-surface-2);
+}
+.heat-cell[data-level="1"] {
+  background-color: color-mix(in srgb, var(--color-accent) 30%, var(--color-surface-2));
+}
+.heat-cell[data-level="2"] {
+  background-color: color-mix(in srgb, var(--color-accent) 55%, var(--color-surface-2));
+}
+.heat-cell[data-level="3"] {
+  background-color: color-mix(in srgb, var(--color-accent) 80%, var(--color-surface-2));
+}
+.heat-cell[data-level="4"] {
+  background-color: var(--color-accent);
+}
+
 /* Toast enter animation. */
 @keyframes toast-in {
   from {

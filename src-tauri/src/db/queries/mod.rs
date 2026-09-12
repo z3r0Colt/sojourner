@@ -19,6 +19,7 @@ pub mod resources;
 pub mod scripture_memory;
 pub mod search;
 pub mod settings;
+pub mod stats;
 pub mod trash;
 pub mod verses;
 pub mod versification;

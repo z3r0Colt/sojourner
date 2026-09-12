@@ -22,6 +22,7 @@ import { resetZoom, zoomActionFor, zoomText } from "../features/reading/zoom";
 import { isTypingTarget } from "../lib/keyboard";
 import { useNoteRefsBackfill } from "../features/notes/useNoteRefsBackfill";
 import { useLandingPageOnLaunch } from "../features/today/landing";
+import { useBackupReminder } from "../features/settings/backupReminder";
 
 const TUTORIAL_BANNER_DISMISSED_KEY = "bsa-tutorial-banner-dismissed";
 
@@ -40,6 +41,7 @@ export function AppShell() {
   const canGoForward = (focusedPane?.future.length ?? 0) > 0;
   useNoteRefsBackfill();
   useLandingPageOnLaunch();
+  useBackupReminder();
 
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
