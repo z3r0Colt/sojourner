@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Editor } from "@tiptap/react";
 import { Link2, Mic, PanelRight } from "lucide-react";
 import { usePassagesIn } from "../../api/queries";
@@ -14,10 +14,13 @@ import { SermonEditorProvider } from "./editor/context";
 import { SermonHeader } from "./SermonHeader";
 import { SermonSidePanel, type SidePanelTab } from "./SermonSidePanel";
 import { rateLabel, useSermonWordCount, useSpeakingRateInfo } from "./sermonStats";
+import { PrepTrack } from "./PrepTrack";
+import { evidenceFor, nextStepHint, stageFromEvidence, stageIndex } from "./prepStages";
 import { useSermonTemplates } from "./sermonTemplates";
 import { useSendToSermonRequest } from "./sendToSermon";
 import { openSourceRef } from "./sourceIdentity";
 import { useSermonDraft } from "./sermonDraft";
+import { useSetSermonStage } from "../../api/queries";
 import { passageAtCursor } from "./cursorPassage";
 import { refKey } from "../../lib/passage";
 import type { PassageRef } from "../../api/types";
@@ -59,6 +62,28 @@ export function SermonPane() {
   // (see the context's own comment): the node views read the map.
   const { byKey, isLoading: passagesLoading } = usePassagesIn(translationId, passageRefs);
   const words = useSermonWordCount(draft?.body ?? "", translationId, rate);
+
+  // The prep track (SB2.1). The evidence is recomputed from the sermon and
+  // its document; the stored stage only moves when the evidence is ahead of
+  // it *and* has changed since this pane opened -- so a stage set back by
+  // hand sticks until something new actually happens.
+  const setStage = useSetSermonStage();
+  const evidence = useMemo(
+    () => (sermon && draft ? evidenceFor(sermon, draft.body, rate.wpm) : null),
+    [sermon, draft?.body, rate.wpm],
+  );
+  const evidenceStage = evidence ? stageFromEvidence(evidence) : null;
+  const seenEvidenceRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!sermon || !evidenceStage) return;
+    const previous = seenEvidenceRef.current;
+    seenEvidenceRef.current = evidenceStage;
+    if (previous === null || previous === evidenceStage) return;
+    if (stageIndex(evidenceStage) > stageIndex(sermon.stage)) {
+      setStage.mutate({ sermonId: sermon.id, stage: evidenceStage });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [evidenceStage, sermon?.id, sermon?.stage]);
   // Past the target, the footer turns amber -- the one number a preacher
   // most needs to see going the wrong way.
   const overTarget = draft?.targetMinutes != null && words.minutes > draft.targetMinutes;
@@ -169,6 +194,16 @@ export function SermonPane() {
         <div className="flex min-h-0 flex-1">
         <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto">
           <div className="mx-auto w-full max-w-3xl px-6 py-5">
+            <PrepTrack
+              stage={sermon.stage}
+              onSetStage={(stage) => {
+                seenEvidenceRef.current = evidenceStage;
+                setStage.mutate({ sermonId: sermon.id, stage });
+              }}
+              hint={evidence ? nextStepHint(sermon.stage, evidence) : null}
+              compact={paneWidth < 640}
+            />
+            <div className="mt-3" />
             <SermonHeader key={sermon.id} draft={draft} patch={patch} paneWidth={paneWidth} />
             <RichTextEditor
               ref={editorRef}
