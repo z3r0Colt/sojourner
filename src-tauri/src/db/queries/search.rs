@@ -109,7 +109,25 @@ fn build_match_expr(query: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::build_match_expr;
+    use super::{build_match_expr, snippet_text};
+
+    /// A note's snippet is a window into stored HTML: whole tags, a tag cut
+    /// off at the end, and a tag the window opened inside all have to come
+    /// back as words, with the match markers kept and entities left escaped.
+    #[test]
+    fn a_notes_snippet_keeps_its_words_and_markers_and_loses_its_markup() {
+        assert_eq!(
+            snippet_text("<p>The <strong>[oath]</strong> of God is <em>sworn</em>, and…"),
+            "The [oath] of God is sworn, and…"
+        );
+        // A block boundary is a gap between words; an inline one is not.
+        assert_eq!(snippet_text("<p>one</p><p>[two]</p>"), "one [two]");
+        assert_eq!(snippet_text("strong>The [oath] of God"), "The [oath] of God");
+        assert_eq!(snippet_text("bound by two things, and <a hr"), "bound by two things, and");
+        // Escaped angle brackets in someone's prose are words, not markup.
+        assert_eq!(snippet_text("a &lt;div&gt; in [prose]"), "a &lt;div&gt; in [prose]");
+        assert_eq!(snippet_text("nothing to strip"), "nothing to strip");
+    }
 
     #[test]
     fn plain_words_become_anded_prefix_terms() {
@@ -295,6 +313,56 @@ pub fn search_commentary(
     Ok(rows.collect::<Result<Vec<_>, _>>()?)
 }
 
+/// The words of a snippet taken over a note's body.
+///
+/// A note is written in the rich-text editor and stored as HTML, so a window
+/// into it can hold tags -- whole ones, and half of one at either end where
+/// the window happened to cut. The search result is written into the page as
+/// HTML (that is how the `[`/`]` match markers become `<mark>`), so anything
+/// left here is rendered as markup rather than read as text. This keeps the
+/// words and the markers and drops the rest. Entities are left escaped on
+/// purpose: `&lt;` in the result is what puts a literal `<` on the screen.
+fn snippet_text(snippet: &str) -> String {
+    /// Only these leave a gap where they close: an inline tag sits inside a
+    /// sentence, so putting a space at `</em>,` would strand the comma.
+    const BLOCK: [&str; 16] = [
+        "p", "div", "br", "hr", "li", "ul", "ol", "blockquote", "pre", "section", "h1", "h2", "h3", "h4", "h5", "h6",
+    ];
+
+    let mut out = String::with_capacity(snippet.len());
+    let mut tag = String::new();
+    let mut in_tag = false;
+    let mut seen_open = false;
+    for c in snippet.chars() {
+        match c {
+            '<' => {
+                in_tag = true;
+                seen_open = true;
+                tag.clear();
+            }
+            '>' if in_tag => {
+                in_tag = false;
+                let name = tag.trim_start_matches('/').split(|c: char| !c.is_ascii_alphanumeric()).next().unwrap_or("");
+                if BLOCK.contains(&name.to_ascii_lowercase().as_str()) {
+                    out.push(' ');
+                }
+            }
+            // A '>' with nothing but a bare word before it and no '<' at all
+            // closes a tag the window opened inside, so that word was the
+            // tag's own name. An escaped `&gt;` in someone's prose is not
+            // that: it carries an '&', and real prose carries spaces.
+            '>' if !seen_open && !out.is_empty() && !out.contains(['&', ' ']) => {
+                out.clear();
+                out.push(' ');
+                seen_open = true;
+            }
+            _ if in_tag => tag.push(c),
+            _ => out.push(c),
+        }
+    }
+    out.split_whitespace().collect::<Vec<_>>().join(" ")
+}
+
 /// Searches the user's own study notes: passage notes (verse-range) and
 /// chapter notes (whole-chapter), unioned into one result set so both show
 /// up together in the "Notes" search tab. The FTS tables still index
@@ -321,7 +389,7 @@ pub fn search_notes(conn: &Connection, query: &str, limit: i64) -> anyhow::Resul
                 chapter: r.get::<_, i64>(2)?.into(),
                 verse: r.get::<_, i64>(3)?.into(),
                 source_label: "Note".to_string(),
-                snippet: r.get(4)?,
+                snippet: snippet_text(&r.get::<_, String>(4)?),
             })
         })?
         .collect::<Result<Vec<_>, _>>()?;
@@ -341,7 +409,7 @@ pub fn search_notes(conn: &Connection, query: &str, limit: i64) -> anyhow::Resul
                 chapter: r.get::<_, i64>(2)?.into(),
                 verse: None,
                 source_label: "Chapter Note".to_string(),
-                snippet: r.get(3)?,
+                snippet: snippet_text(&r.get::<_, String>(3)?),
             })
         })?
         .collect::<Result<Vec<_>, _>>()?;
