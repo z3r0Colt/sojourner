@@ -18,6 +18,7 @@ import { PrepTrack } from "./PrepTrack";
 import { RehearsalBar, RehearsalButtons } from "./Rehearsal";
 import { SermonActionsMenu } from "./SermonActionsMenu";
 import { SermonHistory } from "./SermonHistory";
+import { MarkPreachedButton, SermonReflection } from "./MarkPreached";
 import { evidenceFor, nextStepHint, stageFromEvidence, stageIndex } from "./prepStages";
 import { useSermonTemplates } from "./sermonTemplates";
 import { useSendToSermonRequest } from "./sendToSermon";
@@ -194,6 +195,7 @@ export function SermonPane() {
         <RehearsalBar sermon={sermon} wordCount={words.total} />
         <div className="flex shrink-0 flex-wrap items-center gap-1 border-b border-line px-2 py-1">
           <RehearsalButtons sermon={sermon} />
+          <MarkPreachedButton sermon={sermon} wordCount={words.total} />
           <span className="ml-auto" />
           <SermonActionsMenu sermon={sermon} passages={byKey} onPresent={() => setPresenting(true)} />
           {!panelBeside && (
@@ -234,6 +236,7 @@ export function SermonPane() {
               className="border-0 bg-transparent focus-within:border-0"
             />
             <SermonHistory sermon={sermon} />
+            <SermonReflection sermon={sermon} value={draft.reflection} onChange={(reflection) => patch({ reflection })} />
           </div>
         </div>
         {panelBeside && (

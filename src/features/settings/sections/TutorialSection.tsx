@@ -233,6 +233,10 @@ const CATEGORIES: Category[] = [
         ),
       },
       {
+        q: "After the sermon",
+        a: "“Mark as preached” writes the preaching down — the date, the church, and, if you timed it, how long it took — and the prep track and the status follow it to Preached. The History list holds every rehearsal and preaching with its minutes, and under it a Reflection box waits for what landed, what to cut, and what to say next time. A preached sermon opens with that box ready; the reflection is searchable with the rest of the sermon.",
+      },
+      {
         q: "A series, and a reading plan for the congregation",
         a: "The Series section at the foot of the Sermons page keeps a preaching calendar: its sermons in order with their texts, dates, and stages, and “6 of 10 preached”. “Make a reading plan” turns the series' texts into a custom reading plan — one reading the day before each sermon, or the text spread over the six days before it — named after the series and dated from the first sermon, so a family can read next Sunday's text during the week. It then behaves like any plan: it shows on Today, it can be started, caught up, and exported. Rebuilding it replaces its days and keeps the ticks that still fit.",
       },
