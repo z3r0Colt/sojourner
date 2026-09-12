@@ -6,6 +6,8 @@ import { PaneLink as Link } from "../../workspace/PaneLink";
 import { openPassage, targetFor } from "../../workspace/openContent";
 import { Button, IconButton } from "../../components/ui/Button";
 import { LoadingState } from "../../components/ui/EmptyState";
+import { SendToSermonButton } from "../sermons/StudyActions";
+import { strongsRef } from "../sermons/sourceIdentity";
 
 /** The Strong's entry card, opened from an interlinear word or from a
  * double-clicked word in the text. With no `id` (the word could not be
@@ -57,7 +59,20 @@ export function StrongsPopup({
     >
       <div className="mb-1 flex items-start justify-between">
         <span className="text-xs font-semibold uppercase tracking-wide text-ink-3">{heading}</span>
-        <IconButton icon={X} label="Close" size="sm" onClick={onClose} />
+        <span className="flex items-center">
+          {entry && (
+            <SendToSermonButton
+              label={`Send ${entry.id} to the sermon`}
+              item={() => ({
+                kind: "strongs",
+                refId: strongsRef(entry.id),
+                label: `${entry.original_word}${entry.transliteration ? ` (${entry.transliteration})` : ""}, ${entry.id}`,
+                excerpt: entry.definition ?? null,
+              })}
+            />
+          )}
+          <IconButton icon={X} label="Close" size="sm" onClick={onClose} />
+        </span>
       </div>
       {(loading || (id != null && isLoading)) && <LoadingState className="py-2" />}
       {!loading && id != null && !isLoading && !entry && <p className="text-sm text-ink-3">No lexicon entry found.</p>}

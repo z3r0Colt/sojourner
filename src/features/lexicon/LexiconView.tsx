@@ -10,6 +10,8 @@ import { openPassage, targetFor } from "../../workspace/openContent";
 import { useReadingTypography } from "../../state/uiStore";
 import { Button } from "../../components/ui/Button";
 import { EmptyState, LoadingState } from "../../components/ui/EmptyState";
+import { SendToSermonButton } from "../sermons/StudyActions";
+import { strongsRef } from "../sermons/sourceIdentity";
 import { cx, inputSmClass } from "../../components/ui/classes";
 
 export function LexiconView() {
@@ -104,8 +106,20 @@ export function LexiconView() {
         {!entry && <EmptyState icon={Languages} title="Hebrew and Greek lexicon" description="Search on the left, or pick an entry, to see its definition, Thayer's notes, and every verse that uses it." />}
         {entry && (
           <div className="mx-auto w-full max-w-[70ch]">
-            <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-ink-3">
-              {entry.id} · {entry.language}
+            <div className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-ink-3">
+              <span>
+                {entry.id} · {entry.language}
+              </span>
+              <SendToSermonButton
+                className="ml-auto"
+                label={`Send ${entry.id} to the sermon`}
+                item={() => ({
+                  kind: "strongs",
+                  refId: strongsRef(entry.id),
+                  label: `${entry.original_word}${entry.transliteration ? ` (${entry.transliteration})` : ""}, ${entry.id}`,
+                  excerpt: entry.definition ?? null,
+                })}
+              />
             </div>
             <div className="mb-2 flex items-baseline gap-3">
               <span className="text-4xl text-ink" lang={entry.language === "hebrew" ? "he" : "el"}>

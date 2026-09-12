@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { BookA, ChevronDown, ChevronLeft, ChevronRight, ListTree, Search } from "lucide-react";
 import { api } from "../../api/client";
@@ -23,6 +23,9 @@ import type { WestminsterProofRef, DoctrineTopic } from "../../api/types";
 import { Tabs } from "../../components/ui/Tabs";
 import { EmptyState, LoadingState } from "../../components/ui/EmptyState";
 import { cx, inputSmClass, selectSmClass } from "../../components/ui/classes";
+import { SendToSermonButton } from "../sermons/StudyActions";
+import { westminsterRef } from "../sermons/sourceIdentity";
+import { htmlToText, selectionWithin } from "../sermons/excerpt";
 
 /** The order these categories are presented in the Topics sidebar tab --
  * traditional systematic-theology order, matching the sequence
@@ -66,6 +69,8 @@ export function WestminsterView() {
   const sectionId = sectionIdParam ?? sections?.[0]?.id ?? null;
   const { data: section } = useWestminsterSection(sectionId);
   const typography = useReadingTypography(0.95);
+  // "Send to sermon" quotes the reader's selection when there is one.
+  const bodyRef = useRef<HTMLDivElement>(null);
 
   const [query, setQuery] = useState("");
   const [debounced, setDebounced] = useState("");
@@ -274,6 +279,16 @@ export function WestminsterView() {
             <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-ink-3">{doc?.title}</div>
             <div className="mb-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
               <h1 className="reading-font text-2xl font-semibold text-ink">{section.heading}</h1>
+              <SendToSermonButton
+                className="self-center"
+                label={`Send ${section.heading} to the sermon`}
+                item={() => ({
+                  kind: "confession",
+                  refId: westminsterRef(doc?.code ?? docCode ?? "wcf", section.id),
+                  label: `${(doc?.code ?? docCode ?? "").toUpperCase()} ${section.heading}`.trim(),
+                  excerpt: selectionWithin(bodyRef.current) ?? ([section.prompt, htmlToText(section.body ?? "")].filter(Boolean).join(" — ") || null),
+                })}
+              />
               {glossaryEntry && (
                 <Link to={`/dictionary/${glossaryEntry.slug}`} className="text-sm text-accent hover:underline" title={`Dictionary definition of "${glossaryEntry.term}"`}>
                   What does “{glossaryEntry.term}” mean?
@@ -285,7 +300,7 @@ export function WestminsterView() {
                 {section.prompt}
               </p>
             )}
-            <div className="reading-font mb-6 text-ink" style={typography}>
+            <div ref={bodyRef} className="reading-font mb-6 text-ink" style={typography}>
               {renderBody(section.body_with_proofs)}
             </div>
 

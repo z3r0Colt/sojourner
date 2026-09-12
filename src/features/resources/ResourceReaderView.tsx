@@ -23,6 +23,8 @@ import { Button, IconButton } from "../../components/ui/Button";
 import { Popover } from "../../components/ui/Popover";
 import { LoadingState } from "../../components/ui/EmptyState";
 import { toast } from "../../components/ui/toast";
+import { SendToSermonButton } from "../sermons/StudyActions";
+import { resourceRef } from "../sermons/sourceIdentity";
 import { cx, selectSmClass } from "../../components/ui/classes";
 import type { Resource } from "../../api/types";
 
@@ -49,6 +51,8 @@ export function ResourceReaderView() {
   const { pos, savePos, isLoaded: posLoaded } = useResourcePosition(id);
   const [toc, setToc] = useState<EpubTocItem[]>([]);
   const [currentHref, setCurrentHref] = useState<string | null>(null);
+  /** What the reader has selected in the book, for "Send to sermon". */
+  const [selection, setSelection] = useState<{ text: string; location: string | null } | null>(null);
   const epubRef = useRef<EpubController | null>(null);
   useEffect(() => {
     setToc([]);
@@ -61,7 +65,16 @@ export function ResourceReaderView() {
 
   const folded = width > 0 && width < SIDEBAR_FOLD_WIDTH;
   const reader = (
-    <div className="min-h-0 min-w-0 flex-1">
+    <div
+      className="min-h-0 min-w-0 flex-1"
+      // A text or PDF reader renders in this document, so its selection is
+      // read here; an EPUB reports its own (see EpubReader's onSelect).
+      onMouseUp={() => {
+        if (resource.kind === "epub") return;
+        const text = (window.getSelection()?.toString() ?? "").replace(/\s+/g, " ").trim();
+        setSelection(text ? { text, location: null } : null);
+      }}
+    >
       {resource.kind === "epub" && posLoaded && (
         <EpubReader
           key={resource.id}
@@ -72,6 +85,7 @@ export function ResourceReaderView() {
             savePos({ cfi: loc.cfi });
           }}
           onToc={setToc}
+          onSelect={(text, cfi) => setSelection(text ? { text, location: cfi } : null)}
           controllerRef={epubRef}
         />
       )}
@@ -100,7 +114,7 @@ export function ResourceReaderView() {
           )}
           <Popover width="w-72" trigger={({ toggle, open }) => <IconButton icon={Info} label="Details, read aloud, and links" size="sm" active={open} onClick={toggle} />}>
             <div className="-m-2 max-h-[70vh] overflow-y-auto">
-              <ReaderSidebar resource={resource} mediaRef={mediaRef} folded />
+              <ReaderSidebar resource={resource} mediaRef={mediaRef} folded selection={selection} />
             </div>
           </Popover>
         </div>
@@ -113,7 +127,7 @@ export function ResourceReaderView() {
     <div className="flex h-full">
       {reader}
       <aside className="flex w-72 shrink-0 flex-col border-l border-line bg-surface-2/60">
-        <ReaderSidebar resource={resource} mediaRef={mediaRef} contents={contents} />
+        <ReaderSidebar resource={resource} mediaRef={mediaRef} contents={contents} selection={selection} />
       </aside>
     </div>
   );
@@ -158,11 +172,13 @@ function ReaderSidebar({
   mediaRef,
   folded,
   contents,
+  selection,
 }: {
   resource: Resource;
   mediaRef: RefObject<HTMLVideoElement | HTMLAudioElement | null>;
   folded?: boolean;
   contents?: Contents;
+  selection?: { text: string; location: string | null } | null;
 }) {
   const id = resource.id;
   const navigate = usePaneNavigate();
@@ -215,8 +231,21 @@ function ReaderSidebar({
             All resources
           </Button>
         )}
-        <h2 className="text-sm font-semibold text-ink">{resource.title}</h2>
-        {resource.author && <p className="text-xs text-ink-3">{resource.author}</p>}
+        <div className="flex items-start gap-1">
+          <div className="min-w-0 flex-1">
+            <h2 className="text-sm font-semibold text-ink">{resource.title}</h2>
+            {resource.author && <p className="text-xs text-ink-3">{resource.author}</p>}
+          </div>
+          <SendToSermonButton
+            label={selection?.text ? "Send the selected passage to the sermon" : "Send this book to the sermon (select text first to quote it)"}
+            item={() => ({
+              kind: "resource",
+              refId: resourceRef(resource.id, selection?.location ?? null),
+              label: [resource.title, resource.author].filter(Boolean).join(", "),
+              excerpt: selection?.text ?? null,
+            })}
+          />
+        </div>
         {resource.has_text && (
           <div className="mt-2">
             <ReadAloudButton title={resource.title} sourceKind="resource" segments={splitIntoParagraphs(resourceText ?? "").map((p, i) => ({ id: i, text: p }))} />

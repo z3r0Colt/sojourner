@@ -15,6 +15,9 @@ import { usePane } from "../../workspace/PaneContext";
 import type { Book } from "../../api/types";
 import { selectSmClass, cx } from "../../components/ui/classes";
 import { EmptyState, LoadingState } from "../../components/ui/EmptyState";
+import { SendToSermonButton } from "../sermons/StudyActions";
+import { commentaryRef } from "../sermons/sourceIdentity";
+import { firstParagraph } from "../sermons/excerpt";
 
 export function CommentaryPanel({
   book,
@@ -47,7 +50,10 @@ export function CommentaryPanel({
   const { data: entries, isLoading } = useCommentaryForPassage(sourceId, book.id, chapter);
   const ttsHere = useTtsReadingHere(usePane().id, "commentary");
   const ttsCurrentSegmentId = useTtsStore((s) => (ttsHere ? (s.segments[s.currentSegmentIndex]?.id ?? null) : null));
-  const sourceTitle = sources?.find((s) => s.id === sourceId)?.title ?? "Commentary";
+  const source = sources?.find((s) => s.id === sourceId);
+  const sourceTitle = source?.title ?? "Commentary";
+  // A source line reads better with the author's name than the volume title.
+  const sourceAuthor = source?.author ?? sourceTitle;
 
   const listRef = useRef<HTMLDivElement>(null);
   // Virtualized so a long commentary entry list (e.g. Henry or Barnes on a
@@ -119,15 +125,32 @@ export function CommentaryPanel({
                   style={{ position: "absolute", top: 0, left: 0, right: 0, transform: `translateY(${item.start}px)` }}
                   className={cx("mb-3 rounded-md p-2 -mx-1", isCurrent && "bg-amber-50 ring-1 ring-amber-200 dark:bg-amber-950/30 dark:ring-amber-900")}
                 >
-                  {e.verse_start != null && (
-                    <button
-                      type="button"
-                      className="mb-1 block text-xs font-semibold text-accent hover:underline"
-                      onClick={() => onJumpToVerse(chapter, e.verse_start as number)}
-                    >
-                      {e.verse_start === e.verse_end ? `Verse ${e.verse_start}` : `Verses ${e.verse_start}-${e.verse_end}`}
-                    </button>
-                  )}
+                  <div className="mb-1 flex items-start gap-1">
+                    {e.verse_start != null && (
+                      <button
+                        type="button"
+                        className="block text-xs font-semibold text-accent hover:underline"
+                        onClick={() => onJumpToVerse(chapter, e.verse_start as number)}
+                      >
+                        {e.verse_start === e.verse_end ? `Verse ${e.verse_start}` : `Verses ${e.verse_start}-${e.verse_end}`}
+                      </button>
+                    )}
+                    <span className="ml-auto flex shrink-0 items-center">
+                      <SendToSermonButton
+                        label={`Send ${sourceTitle} on ${book.name} ${chapter}${e.verse_start != null ? `:${e.verse_start}` : ""} to the sermon`}
+                        item={() =>
+                          sourceId == null
+                            ? null
+                            : {
+                                kind: "commentary",
+                                refId: commentaryRef(sourceId, book.id, chapter, e.verse_start),
+                                label: `${sourceAuthor} on ${book.name} ${chapter}${e.verse_start != null ? `:${e.verse_start}${e.verse_end !== e.verse_start ? `-${e.verse_end}` : ""}` : ""}`,
+                                excerpt: firstParagraph(e.plain_text),
+                              }
+                        }
+                      />
+                    </span>
+                  </div>
                   <div className="reading-font text-ink-2" style={typography}>
                     {ttsHere && ttsCurrentSegmentId === e.id ? (
                       <ReadAloudWords text={e.plain_text} active />
