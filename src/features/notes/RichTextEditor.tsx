@@ -27,6 +27,7 @@ import { verseHref, resourceHref } from "../../lib/noteLinks";
 import { IconButton, Button } from "../../components/ui/Button";
 import { Popover, PopoverItem, PopoverLabel } from "../../components/ui/Popover";
 import { cx, inputSmClass, selectSmClass } from "../../components/ui/classes";
+import { NodeSelection, TextSelection, type EditorState, type Transaction } from "@tiptap/pm/state";
 import { applyTemplate, useNoteTemplates, type NoteTemplate } from "./noteTemplates";
 import { SERMON_EXTENSIONS } from "../sermons/editor/extensions";
 import { passageBlockHtml } from "../sermons/editor/documentModel";
@@ -116,12 +117,12 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
         // WebView2 drops the insert at the document start; focusing the view
         // first is what the note templates learned to do.
         editor.view.focus();
-        editor.chain().focus().insertContent(passageBlockHtml(passageRef)).run();
+        editor.chain().focus().command(insertAfterNodeSelection).insertContent(passageBlockHtml(passageRef)).run();
       },
       insertSource: (item) => {
         if (!editor) return;
         editor.view.focus();
-        editor.chain().focus().insertContent(sourceBlockHtml(item)).run();
+        editor.chain().focus().command(insertAfterNodeSelection).insertContent(sourceBlockHtml(item)).run();
       },
     }),
     [editor],
@@ -413,6 +414,16 @@ interface RichTextEditorProps {
   /** Fires as the cursor moves, so a sermon pane can lead its link group. */
   onSelectionChange?: (editor: Editor) => void;
   className?: string;
+}
+
+/** Material sent from a study pane must never eat what is selected. With a
+ * whole block selected -- which is what clicking a passage does -- inserting
+ * would replace it, so the caret is moved just past it first. */
+function insertAfterNodeSelection({ tr, state, dispatch }: { tr: Transaction; state: EditorState; dispatch?: (tr: Transaction) => void }): boolean {
+  const { selection } = state;
+  if (!(selection instanceof NodeSelection)) return true;
+  if (dispatch) dispatch(tr.setSelection(TextSelection.near(tr.doc.resolve(selection.to), 1)));
+  return true;
 }
 
 /** The markup one citation saves as. Written here rather than through a

@@ -62,7 +62,11 @@ function OutlinePrint({ sermon, books }: { sermon: Sermon; books: ReturnType<typ
       {sections.map((section, i) => {
         if (!section.heading) return null;
         const refs = passageBlocks(section.html);
-        const firstLine = section.text.split(/(?<=[.?!])\s/)[0] ?? "";
+        // `section.text` opens with the heading's own words, which the row
+        // already prints; the first line is what comes after it.
+        const heading = section.heading.text;
+        const prose = section.text.startsWith(heading) ? section.text.slice(heading.length).trim() : section.text;
+        const firstLine = prose.split(/(?<=[.?!])\s/)[0] ?? "";
         return (
           <li key={i} className={section.heading.level === 3 ? "sub" : undefined}>
             <span className="heading">{section.heading.text || "Untitled point"}</span>
