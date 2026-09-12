@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ExternalLink, ListTree, Quote } from "lucide-react";
+import { ExternalLink, ListTree, Presentation, Quote } from "lucide-react";
 import { useBooks } from "../../api/queries";
 import { Tabs } from "../../components/ui/Tabs";
 import { cx } from "../../components/ui/classes";
@@ -7,9 +7,11 @@ import { formatRef } from "../../lib/passage";
 import { countWords, passageBlocks, sectionsOf, sourceBlocks } from "./editor/documentModel";
 import { canOpenSource, openSourceRef, SOURCE_KIND_LABEL } from "./sourceIdentity";
 import { minutesFor, type SpeakingRateInfo } from "./sermonStats";
-import type { SermonSourceKind } from "../../api/types";
+import { buildSlides } from "./slides";
+import { useSermonEditorContext } from "./editor/context";
+import type { Sermon, SermonSourceKind } from "../../api/types";
 
-export type SidePanelTab = "outline" | "sources";
+export type SidePanelTab = "outline" | "sources" | "slides";
 
 /**
  * The sermon's own two views of itself (SB1.5).
@@ -31,6 +33,8 @@ export function SermonSidePanel({
   onGoToSection,
   rate,
   paneId,
+  sermon,
+  onPresent,
 }: {
   body: string;
   tab: SidePanelTab;
@@ -40,11 +44,17 @@ export function SermonSidePanel({
   onGoToSection: (index: number) => void;
   rate: SpeakingRateInfo;
   paneId?: string;
+  /** The sermon itself, for the generated slide list. */
+  sermon: Sermon;
+  onPresent: (startIndex: number) => void;
 }) {
   const { data: books } = useBooks();
   const [groupByKind, setGroupByKind] = useState(false);
+  // The slide list needs the rendered passages, which the pane already has.
+  const { passages: slidePassages } = useSermonEditorContext();
 
   const sections = useMemo(() => sectionsOf(body), [body]);
+  const slides = useMemo(() => buildSlides(sermon, { books, passages: slidePassages }), [sermon, books, slidePassages]);
   const passages = useMemo(() => passageBlocks(body), [body]);
   const sources = useMemo(() => sourceBlocks(body), [body]);
 
@@ -63,6 +73,7 @@ export function SermonSidePanel({
         items={[
           { key: "outline", label: "Outline", icon: ListTree, count: sections.filter((s) => s.heading).length },
           { key: "sources", label: "Sources", icon: Quote, count: rows.length },
+          { key: "slides", label: "Slides", icon: Presentation, count: slides.length },
         ]}
         value={tab}
         onChange={onTabChange}
@@ -142,6 +153,33 @@ export function SermonSidePanel({
                       </button>
                     )}
                   </div>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+        {tab === "slides" && (
+          <>
+            <p className="mb-1 px-1 text-xs text-ink-3">
+              Generated from the manuscript: a title slide, one per point, one per passage, and one for each short
+              quotation. Click any of them to present from there.
+            </p>
+            <ul className="space-y-0.5">
+              {slides.map((slide, i) => (
+                <li key={i}>
+                  <button
+                    type="button"
+                    onClick={() => onPresent(i)}
+                    className="flex w-full items-baseline gap-2 rounded-md px-2 py-1 text-left hover:bg-hover"
+                  >
+                    <span className="w-14 shrink-0 text-xs uppercase tracking-wide text-ink-4">{slide.kind}</span>
+                    <span className="min-w-0 flex-1 truncate text-ink-2">{slide.heading || "—"}</span>
+                    {slide.part && (
+                      <span className="shrink-0 text-xs tabular-nums text-ink-4">
+                        {slide.part.index}/{slide.part.total}
+                      </span>
+                    )}
+                  </button>
                 </li>
               ))}
             </ul>

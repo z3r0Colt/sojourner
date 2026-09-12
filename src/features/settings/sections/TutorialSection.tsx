@@ -225,6 +225,18 @@ const CATEGORIES: Category[] = [
         ),
       },
       {
+        q: "Slides, without building any",
+        a: (
+          <>
+            Slides are generated from the manuscript: a title slide, one per point with its sub-points as bullets, one per passage (split when it runs long, so the words never shrink past reading size), and one for each short quotation or illustration. The side panel's Slides tab previews them and starts the show from any of them. “Present the slides” shows them full screen on a dark ground for projection -- <Kbd>→</Kbd>, <Kbd>←</Kbd>, and <Kbd>Esc</Kbd>, with a counter -- and “Export slides as .pptx” writes the same deck for PowerPoint.
+          </>
+        ),
+      },
+      {
+        q: "Print, hand out, export",
+        a: "The Print & export menu on a sermon prints the manuscript, the outline, or the fill-in handout (with or without the answer key), and exports the whole sermon as Markdown with every passage's words rendered into the file. Printing to PDF is the print dialog's own choice.",
+      },
+      {
         q: "Minutes in your own voice",
         a: "From two timed runs on, the app works out your words a minute over the last ten (preachings counted twice) and quotes every sermon's length at that rate, saying so: “about 31 min at your measured 122 wpm”. Settings → Reading → Speaking rate shows what it has measured and the rate it assumes until then.",
       },
