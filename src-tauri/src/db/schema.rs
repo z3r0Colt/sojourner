@@ -1264,6 +1264,180 @@ CREATE TABLE reading_plan_schedule (
 CREATE INDEX idx_reading_plan_schedule_date ON reading_plan_schedule(plan_code, date);
 "#;
 
+// Sermon Builder (SB0.1). All new tables; nothing here touches the tables
+// the old Sermon Notes feature used -- USER_MIGRATION_0010 already dropped
+// every one of them, so those names are simply free again.
+//
+// A sermon is one tiptap document (`body`) whose passage blocks are
+// *references*, not copied verse text: `translation_id` is the translation
+// every block renders in, so switching it re-renders the whole manuscript.
+// `stage` is the prep track's six steps, stored so the Sermons page and the
+// Today block can read a sermon's progress without parsing its body.
+//
+// sermon_passages is the body's references made queryable: role `text` is
+// the sermon's own passage (set in the header), `supporting` a passage block
+// in the manuscript, `mentioned` a reference typed in prose. All three are
+// re-derived from the body on every save, the way note_refs are, so the
+// table can never drift from the document.
+//
+// sermon_sources is one row per citation block, keyed by a source identity
+// the app can reopen (`commentary:<entryId>`, `westminster:<sectionId>`,
+// `strongs:G1343`, `dictionary:<slug>`, `resource:<id>:<page>`,
+// `illustration:<id>`) -- that string is what "Open source" hands back to
+// openContent. This doubles as the sermon's bibliography.
+//
+// sermon_events logs rehearsals and preachings in one table because both
+// are timed runs of the same manuscript, and both feed the measured
+// speaking rate (SB2.4): words spoken over seconds elapsed.
+//
+// Illustrations are a library of their own (a story is reused across
+// sermons and outlives any one of them); illustration_uses records where
+// each went. Sermons and illustrations both soft-delete into the Trash, so
+// they carry `deleted_at` with the usual partial index.
+pub const USER_MIGRATION_0015: &str = r#"
+CREATE TABLE sermon_series (
+  id           INTEGER PRIMARY KEY,
+  title        TEXT NOT NULL,
+  description  TEXT,
+  plan_code    TEXT,
+  created_at   TEXT NOT NULL
+);
+
+CREATE TABLE sermons (
+  id              INTEGER PRIMARY KEY,
+  title           TEXT NOT NULL,
+  big_idea        TEXT,
+  body            TEXT NOT NULL DEFAULT '',
+  status          TEXT NOT NULL DEFAULT 'draft' CHECK(status IN ('draft','ready','preached','archived')),
+  stage           TEXT NOT NULL DEFAULT 'text' CHECK(stage IN ('text','study','outline','manuscript','rehearsed','preached')),
+  preach_date     TEXT,
+  series_id       INTEGER REFERENCES sermon_series(id) ON DELETE SET NULL,
+  series_order    INTEGER,
+  venue           TEXT,
+  preacher        TEXT,
+  translation_id  INTEGER,
+  target_minutes  INTEGER,
+  reflection      TEXT,
+  created_at      TEXT NOT NULL,
+  updated_at      TEXT NOT NULL,
+  deleted_at      TEXT
+);
+CREATE INDEX idx_sermons_deleted ON sermons(deleted_at) WHERE deleted_at IS NOT NULL;
+CREATE INDEX idx_sermons_preach_date ON sermons(preach_date);
+CREATE INDEX idx_sermons_series ON sermons(series_id, series_order);
+
+CREATE TABLE sermon_passages (
+  id           INTEGER PRIMARY KEY,
+  sermon_id    INTEGER NOT NULL REFERENCES sermons(id) ON DELETE CASCADE,
+  role         TEXT NOT NULL CHECK(role IN ('text','supporting','mentioned')),
+  book_id      INTEGER NOT NULL,
+  chapter      INTEGER NOT NULL,
+  verse_start  INTEGER,
+  verse_end    INTEGER,
+  sort_order   INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX idx_sermon_passages_passage ON sermon_passages(book_id, chapter);
+CREATE INDEX idx_sermon_passages_sermon ON sermon_passages(sermon_id, role, sort_order);
+
+CREATE TABLE sermon_sources (
+  id          INTEGER PRIMARY KEY,
+  sermon_id   INTEGER NOT NULL REFERENCES sermons(id) ON DELETE CASCADE,
+  kind        TEXT NOT NULL CHECK(kind IN ('commentary','confession','strongs','dictionary','resource','crossref','illustration')),
+  ref_id      TEXT,
+  label       TEXT NOT NULL,
+  excerpt     TEXT,
+  sort_order  INTEGER NOT NULL DEFAULT 0,
+  created_at  TEXT NOT NULL
+);
+CREATE INDEX idx_sermon_sources_sermon ON sermon_sources(sermon_id, sort_order);
+
+CREATE TABLE sermon_tags (
+  sermon_id  INTEGER NOT NULL REFERENCES sermons(id) ON DELETE CASCADE,
+  tag        TEXT NOT NULL,
+  UNIQUE(sermon_id, tag)
+);
+CREATE INDEX idx_sermon_tags_tag ON sermon_tags(tag);
+
+CREATE TABLE sermon_events (
+  id                INTEGER PRIMARY KEY,
+  sermon_id         INTEGER NOT NULL REFERENCES sermons(id) ON DELETE CASCADE,
+  kind              TEXT NOT NULL CHECK(kind IN ('rehearsal','preaching')),
+  date              TEXT NOT NULL,
+  venue             TEXT,
+  duration_seconds  INTEGER,
+  word_count        INTEGER,
+  notes             TEXT,
+  created_at        TEXT NOT NULL
+);
+CREATE INDEX idx_sermon_events_sermon ON sermon_events(sermon_id, date);
+CREATE INDEX idx_sermon_events_date ON sermon_events(date);
+
+CREATE TABLE illustrations (
+  id            INTEGER PRIMARY KEY,
+  title         TEXT NOT NULL,
+  body          TEXT NOT NULL DEFAULT '',
+  source_label  TEXT,
+  source_ref    TEXT,
+  kind          TEXT NOT NULL DEFAULT 'illustration' CHECK(kind IN ('illustration','quote')),
+  created_at    TEXT NOT NULL,
+  updated_at    TEXT NOT NULL,
+  deleted_at    TEXT
+);
+CREATE INDEX idx_illustrations_deleted ON illustrations(deleted_at) WHERE deleted_at IS NOT NULL;
+
+CREATE TABLE illustration_tags (
+  illustration_id  INTEGER NOT NULL REFERENCES illustrations(id) ON DELETE CASCADE,
+  tag              TEXT NOT NULL,
+  UNIQUE(illustration_id, tag)
+);
+CREATE INDEX idx_illustration_tags_tag ON illustration_tags(tag);
+
+CREATE TABLE illustration_uses (
+  id               INTEGER PRIMARY KEY,
+  illustration_id  INTEGER NOT NULL REFERENCES illustrations(id) ON DELETE CASCADE,
+  sermon_id        INTEGER NOT NULL REFERENCES sermons(id) ON DELETE CASCADE,
+  used_at          TEXT NOT NULL,
+  UNIQUE(illustration_id, sermon_id)
+);
+CREATE INDEX idx_illustration_uses_sermon ON illustration_uses(sermon_id);
+
+CREATE VIRTUAL TABLE sermons_fts USING fts5(
+  title, big_idea, body, reflection, content='sermons', content_rowid='id'
+);
+CREATE TRIGGER sermons_search_ai AFTER INSERT ON sermons BEGIN
+  INSERT INTO sermons_fts(rowid, title, big_idea, body, reflection)
+  VALUES (new.id, new.title, new.big_idea, new.body, new.reflection);
+END;
+CREATE TRIGGER sermons_search_au AFTER UPDATE ON sermons BEGIN
+  INSERT INTO sermons_fts(sermons_fts, rowid, title, big_idea, body, reflection)
+  VALUES('delete', old.id, old.title, old.big_idea, old.body, old.reflection);
+  INSERT INTO sermons_fts(rowid, title, big_idea, body, reflection)
+  VALUES (new.id, new.title, new.big_idea, new.body, new.reflection);
+END;
+CREATE TRIGGER sermons_search_ad AFTER DELETE ON sermons BEGIN
+  INSERT INTO sermons_fts(sermons_fts, rowid, title, big_idea, body, reflection)
+  VALUES('delete', old.id, old.title, old.big_idea, old.body, old.reflection);
+END;
+
+CREATE VIRTUAL TABLE illustrations_fts USING fts5(
+  title, body, source_label, content='illustrations', content_rowid='id'
+);
+CREATE TRIGGER illustrations_search_ai AFTER INSERT ON illustrations BEGIN
+  INSERT INTO illustrations_fts(rowid, title, body, source_label)
+  VALUES (new.id, new.title, new.body, new.source_label);
+END;
+CREATE TRIGGER illustrations_search_au AFTER UPDATE ON illustrations BEGIN
+  INSERT INTO illustrations_fts(illustrations_fts, rowid, title, body, source_label)
+  VALUES('delete', old.id, old.title, old.body, old.source_label);
+  INSERT INTO illustrations_fts(rowid, title, body, source_label)
+  VALUES (new.id, new.title, new.body, new.source_label);
+END;
+CREATE TRIGGER illustrations_search_ad AFTER DELETE ON illustrations BEGIN
+  INSERT INTO illustrations_fts(illustrations_fts, rowid, title, body, source_label)
+  VALUES('delete', old.id, old.title, old.body, old.source_label);
+END;
+"#;
+
 pub const USER_MIGRATIONS: &[&str] = &[
     USER_MIGRATION_0001,
     USER_MIGRATION_0002,
@@ -1279,4 +1453,5 @@ pub const USER_MIGRATIONS: &[&str] = &[
     USER_MIGRATION_0012,
     USER_MIGRATION_0013,
     USER_MIGRATION_0014,
+    USER_MIGRATION_0015,
 ];

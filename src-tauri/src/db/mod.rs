@@ -236,6 +236,35 @@ mod tests {
         let progress_rows = before.iter().find(|(t, _)| *t == "reading_plan_progress").map(|(_, n)| *n).unwrap_or(0);
         assert_eq!(progress.len() as i64, progress_rows, "every plan in progress still lists");
 
+        // USER_MIGRATION_0015: every sermon table exists and starts empty, and
+        // a sermon written by hand is found through sermons_fts.
+        for t in [
+            "sermons", "sermon_series", "sermon_passages", "sermon_sources", "sermon_tags",
+            "sermon_events", "illustrations", "illustration_tags", "illustration_uses",
+        ] {
+            let n: i64 = conn.query_row(&format!("SELECT COUNT(*) FROM {t}"), [], |r| r.get(0)).unwrap();
+            assert_eq!(n, 0, "{t} should start empty");
+        }
+        // The old Sermon Notes tables were dropped in USER_MIGRATION_0010, so
+        // the new names can never collide with a table still holding data.
+        for t in ["sermon_notes", "sermon_outlines", "sermon_note_tags"] {
+            let n: i64 = conn
+                .query_row("SELECT COUNT(*) FROM sqlite_master WHERE name = ?1", [t], |r| r.get(0))
+                .unwrap();
+            assert_eq!(n, 0, "{t} was dropped in 0010 and must not come back");
+        }
+        conn.execute(
+            "INSERT INTO sermons (title, big_idea, body, created_at, updated_at)
+             VALUES ('Test', 'A big idea', '<h2>The steadfastness of God</h2>', '2026-01-01', '2026-01-01')",
+            [],
+        )
+        .unwrap();
+        let hit: i64 = conn
+            .query_row("SELECT COUNT(*) FROM sermons_fts WHERE sermons_fts MATCH 'steadfastness'", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(hit, 1, "sermons_fts indexes the body");
+        conn.execute("DELETE FROM sermons", []).unwrap();
+
         drop(conn);
         let _ = std::fs::remove_dir_all(&dir);
     }
