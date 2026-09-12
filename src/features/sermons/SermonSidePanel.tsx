@@ -39,7 +39,8 @@ export function SermonSidePanel({
   body: string;
   tab: SidePanelTab;
   onTabChange: (tab: SidePanelTab) => void;
-  /** Which section the cursor is in, or null when the editor is not focused. */
+  /** Which point the cursor is in, by its index among the manuscript's
+   * headings, or null when the cursor is above the first one. */
   activeSectionIndex: number | null;
   onGoToSection: (index: number) => void;
   rate: SpeakingRateInfo;
@@ -100,7 +101,7 @@ export function SermonSidePanel({
                       className={cx(
                         "flex w-full items-baseline gap-2 rounded-md px-2 py-1 text-left hover:bg-hover",
                         section.heading.level === 3 && "pl-5",
-                        activeSectionIndex === index ? "bg-accent-soft text-accent" : "text-ink-2",
+                        activeSectionIndex === section.heading.index ? "bg-accent-soft text-accent" : "text-ink-2",
                       )}
                     >
                       <span className="min-w-0 flex-1 truncate">{section.heading.text || "Untitled point"}</span>
