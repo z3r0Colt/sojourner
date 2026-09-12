@@ -1216,6 +1216,54 @@ CREATE TABLE reading_log (
 CREATE INDEX idx_reading_log_date ON reading_log(date);
 "#;
 
+// Custom reading plans (F4.2). A plan the reader built lives in user.db
+// and mirrors the content-db shape (reading_plans / reading_plan_readings
+// in CONTENT_MIGRATION_0002) so one query path serves both; its `code` is
+// stored with the `user:` prefix the app exposes, so reading_plan_progress
+// and reading_plan_completions key it exactly as they key a bundled plan.
+// `reading_weekdays` is an optional comma list of ISO weekdays (1 = Monday
+// ... 7 = Sunday) the plan is read on; null means every day.
+//
+// reading_plan_schedule is the per-day date map deferred from F3.3: a row
+// pins `day_number` of any plan (bundled or custom) to a calendar date. A
+// day without a row falls on start_date + (day_number - 1), as before. The
+// map carries a weekday plan's whole calendar and the "spread over seven
+// days" catch-up mode's re-dated days.
+pub const USER_MIGRATION_0014: &str = r#"
+CREATE TABLE user_reading_plans (
+  id                INTEGER PRIMARY KEY,
+  code              TEXT NOT NULL UNIQUE,
+  title             TEXT NOT NULL,
+  description       TEXT,
+  length_days       INTEGER NOT NULL,
+  reading_weekdays  TEXT,
+  created_at        TEXT NOT NULL,
+  updated_at        TEXT NOT NULL
+);
+
+CREATE TABLE user_reading_plan_readings (
+  id             INTEGER PRIMARY KEY,
+  plan_id        INTEGER NOT NULL REFERENCES user_reading_plans(id) ON DELETE CASCADE,
+  day_number     INTEGER NOT NULL,
+  sort_order     INTEGER NOT NULL,
+  book_id        INTEGER NOT NULL,
+  chapter_start  INTEGER NOT NULL,
+  verse_start    INTEGER,
+  chapter_end    INTEGER NOT NULL,
+  verse_end      INTEGER,
+  label          TEXT NOT NULL
+);
+CREATE INDEX idx_user_reading_plan_readings_day ON user_reading_plan_readings(plan_id, day_number, sort_order);
+
+CREATE TABLE reading_plan_schedule (
+  plan_code   TEXT NOT NULL,
+  day_number  INTEGER NOT NULL,
+  date        TEXT NOT NULL,
+  PRIMARY KEY (plan_code, day_number)
+);
+CREATE INDEX idx_reading_plan_schedule_date ON reading_plan_schedule(plan_code, date);
+"#;
+
 pub const USER_MIGRATIONS: &[&str] = &[
     USER_MIGRATION_0001,
     USER_MIGRATION_0002,
@@ -1230,4 +1278,5 @@ pub const USER_MIGRATIONS: &[&str] = &[
     USER_MIGRATION_0011,
     USER_MIGRATION_0012,
     USER_MIGRATION_0013,
+    USER_MIGRATION_0014,
 ];
