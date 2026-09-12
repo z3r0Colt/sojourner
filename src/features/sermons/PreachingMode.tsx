@@ -8,7 +8,6 @@ import { IconButton } from "../../components/ui/Button";
 import { confirmDialog } from "../../components/ui/confirm";
 import { cx } from "../../components/ui/classes";
 import { ManuscriptView } from "./ManuscriptView";
-import { LogRunModal } from "./Rehearsal";
 import { elapsedMs, formatClock, usePreachingStore } from "./preachingSession";
 import { countWords, manuscriptText, passageBlocks, sectionsOf } from "./editor/documentModel";
 import { sermonTextLabel } from "./sermonFormat";
@@ -43,7 +42,6 @@ function PreachingOverlay() {
   const { data: books } = useBooks();
   const readerTranslationId = useReaderTranslationId();
   const rate = useSpeakingRateInfo();
-  const [pending, setPending] = useState<{ kind: "rehearsal" | "preaching"; seconds: number } | null>(null);
   const [, tick] = useState(0);
 
   const body = sermon?.body ?? "";
@@ -110,8 +108,9 @@ function PreachingOverlay() {
       });
       if (!ok) return;
     }
-    const result = endRun();
-    if (result && result.seconds >= 30) setPending({ kind: result.kind, seconds: result.seconds });
+    // The store keeps what the run measured; RunLogHost offers to write it
+    // down, since this overlay is about to unmount.
+    endRun();
   }
 
   if (!session || !sermon) return null;
@@ -204,15 +203,6 @@ function PreachingOverlay() {
         </div>
       </div>
 
-      {pending && (
-        <LogRunModal
-          sermon={sermon}
-          kind={pending.kind}
-          seconds={pending.seconds}
-          wordCount={words.total}
-          onClose={() => setPending(null)}
-        />
-      )}
     </div>,
     document.body,
   );
