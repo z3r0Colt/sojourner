@@ -20,9 +20,10 @@ import { SermonHistory } from "./SermonHistory";
 import { evidenceFor, nextStepHint, stageFromEvidence, stageIndex } from "./prepStages";
 import { useSermonTemplates } from "./sermonTemplates";
 import { useSendToSermonRequest } from "./sendToSermon";
-import { openSourceRef } from "./sourceIdentity";
+import { illustrationRef, openSourceRef } from "./sourceIdentity";
+import { IllustrationPicker } from "./IllustrationPicker";
 import { useSermonDraft } from "./sermonDraft";
-import { useSetSermonStage } from "../../api/queries";
+import { useRecordIllustrationUse, useSetSermonStage } from "../../api/queries";
 import { passageAtCursor } from "./cursorPassage";
 import { refKey } from "../../lib/passage";
 import type { PassageRef } from "../../api/types";
@@ -55,6 +56,8 @@ export function SermonPane() {
   const [activeSection, setActiveSection] = useState<number | null>(null);
   const rate = useSpeakingRateInfo();
   const [sermonTemplates] = useSermonTemplates();
+  const [pickingIllustration, setPickingIllustration] = useState(false);
+  const recordUse = useRecordIllustrationUse();
   // Above 720 px the panel sits beside the manuscript; below, it is a
   // popover behind a header button, so a narrow column keeps its text.
   const panelBeside = paneWidth >= 720;
@@ -216,6 +219,7 @@ export function SermonPane() {
               content={draft.body}
               onChange={(body) => patch({ body })}
               onSelectionChange={onSelectionChange}
+              onPickIllustration={() => setPickingIllustration(true)}
               templates={sermonTemplates}
               templatesLabel="Sermon templates"
               placeholder="Write the sermon…"
@@ -263,6 +267,24 @@ export function SermonPane() {
             {savedLabel(savedAt, isSaving)}
           </span>
         </div>
+        {pickingIllustration && (
+          <IllustrationPicker
+            seriesId={draft.seriesId}
+            onClose={() => setPickingIllustration(false)}
+            onChoose={(illustration) => {
+              setPickingIllustration(false);
+              editorRef.current?.insertSource({
+                kind: "illustration",
+                ref_id: illustrationRef(illustration.id),
+                label: [illustration.title, illustration.source_label].filter(Boolean).join(" — "),
+                excerpt: illustration.body,
+              });
+              // The library shows where each story has gone, so a use is
+              // recorded the moment one is dropped in a manuscript.
+              recordUse.mutate({ illustrationId: illustration.id, sermonId: sermon.id });
+            }}
+          />
+        )}
       </div>
     </SermonEditorProvider>
   );
