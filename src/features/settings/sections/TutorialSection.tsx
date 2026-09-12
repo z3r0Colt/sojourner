@@ -205,6 +205,10 @@ const CATEGORIES: Category[] = [
         ),
       },
       {
+        q: "Start from a shape",
+        a: "An empty manuscript offers “Start from…”: Expository, Textual, Topical, Evangelistic, Funeral, Wedding, and Bible study, each laid out as points and sub-points. Rename, reorder, edit, or add your own under Settings → Reading → Sermon templates.",
+      },
+      {
         q: "Blanks for the handout",
         a: (
           <>

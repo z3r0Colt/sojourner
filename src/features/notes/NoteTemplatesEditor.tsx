@@ -6,16 +6,42 @@ import { confirmDelete } from "../../components/ui/confirm";
 import { toast } from "../../components/ui/toast";
 import { cx, inputSmClass } from "../../components/ui/classes";
 import { RichTextEditor } from "./RichTextEditor";
-import { DEFAULT_NOTE_TEMPLATES, isEmptyNoteHtml, templatesAreDefault, useNoteTemplates, type NoteTemplate } from "./noteTemplates";
+import { DEFAULT_NOTE_TEMPLATES, isEmptyNoteHtml, useNoteTemplates, type NoteTemplate } from "./noteTemplates";
 
 /** Settings → Reading → Note templates: rename inline, reorder with the
  * arrows, edit a template's sections in the note editor, add or delete
  * one, and reset to the shipped set. Every change is saved at once. */
 export function NoteTemplatesEditor() {
   const [templates, setTemplates] = useNoteTemplates();
-  const [editing, setEditing] = useState<{ index: number | null; template: NoteTemplate } | null>(null);
+  return <TemplatesEditor templates={templates} setTemplates={setTemplates} defaults={DEFAULT_NOTE_TEMPLATES} noun="Note template" />;
+}
 
-  function save(next: NoteTemplate[], message = "Note templates saved") {
+/** The same editor over any template list. Sermon templates (SB1.6) pass
+ * the document-mode editor, so their sections can hold points and
+ * sub-points rather than one flat heading level. */
+export function TemplatesEditor({
+  templates,
+  setTemplates,
+  defaults,
+  noun,
+  mode = "note",
+  newTemplateHtml = "<h3>Heading</h3><p></p>",
+  hint = "Type a heading as “### Heading” on its own line. Everything here is copied into a new note when the template is chosen.",
+}: {
+  templates: NoteTemplate[];
+  setTemplates: (next: NoteTemplate[]) => void;
+  defaults: readonly NoteTemplate[];
+  /** "Note template" / "Sermon template", for the toasts and dialogs. */
+  noun: string;
+  mode?: "note" | "document";
+  newTemplateHtml?: string;
+  hint?: string;
+}) {
+  const [editing, setEditing] = useState<{ index: number | null; template: NoteTemplate } | null>(null);
+  const isDefault =
+    templates.length === defaults.length && templates.every((t, i) => t.name === defaults[i].name && t.html === defaults[i].html);
+
+  function save(next: NoteTemplate[], message = `${noun}s saved`) {
     setTemplates(next);
     toast.success(message);
   }
@@ -57,15 +83,11 @@ export function NoteTemplatesEditor() {
         ))}
       </ul>
       <div className="flex flex-wrap gap-2">
-        <Button size="sm" icon={Plus} onClick={() => setEditing({ index: null, template: { name: "", html: "<h3>Heading</h3><p></p>" } })}>
+        <Button size="sm" icon={Plus} onClick={() => setEditing({ index: null, template: { name: "", html: newTemplateHtml } })}>
           Add template
         </Button>
-        {!templatesAreDefault(templates) && (
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => save([...DEFAULT_NOTE_TEMPLATES], "Note templates reset")}
-          >
+        {!isDefault && (
+          <Button size="sm" variant="ghost" onClick={() => save([...defaults], `${noun}s reset`)}>
             Reset to defaults
           </Button>
         )}
@@ -75,6 +97,9 @@ export function NoteTemplatesEditor() {
         <TemplateModal
           template={editing.template}
           isNew={editing.index === null}
+          noun={noun}
+          mode={mode}
+          hint={hint}
           onSave={(t) => {
             const next = editing.index === null ? [...templates, t] : templates.map((x, i) => (i === editing.index ? t : x));
             save(next, editing.index === null ? "Template added" : "Template saved");
@@ -113,7 +138,23 @@ function TemplateNameInput({ name, onCommit }: { name: string; onCommit: (name: 
   );
 }
 
-function TemplateModal({ template, isNew, onSave, onClose }: { template: NoteTemplate; isNew: boolean; onSave: (t: NoteTemplate) => void; onClose: () => void }) {
+function TemplateModal({
+  template,
+  isNew,
+  noun,
+  mode,
+  hint,
+  onSave,
+  onClose,
+}: {
+  template: NoteTemplate;
+  isNew: boolean;
+  noun: string;
+  mode: "note" | "document";
+  hint: string;
+  onSave: (t: NoteTemplate) => void;
+  onClose: () => void;
+}) {
   const [name, setName] = useState(template.name);
   const [html, setHtml] = useState(template.html);
   const dirty = name !== template.name || html !== template.html;
@@ -121,7 +162,7 @@ function TemplateModal({ template, isNew, onSave, onClose }: { template: NoteTem
 
   return (
     <Modal
-      title={isNew ? "New note template" : `Edit “${template.name}”`}
+      title={isNew ? `New ${noun.toLowerCase()}` : `Edit “${template.name}”`}
       onClose={onClose}
       dirty={dirty}
       footer={
@@ -140,8 +181,8 @@ function TemplateModal({ template, isNew, onSave, onClose }: { template: NoteTem
         <input autoFocus={isNew} type="text" value={name} maxLength={60} onChange={(e) => setName(e.target.value)} placeholder="e.g. Word study" className={cx(inputSmClass, "w-full")} />
       </label>
       <span className="mb-1 block text-xs font-medium text-ink-3">Sections</span>
-      <RichTextEditor content={html} onChange={setHtml} offerTemplates={false} placeholder="The headings and text a new note starts with…" />
-      <p className="mt-2 text-xs text-ink-3">Type a heading as “### Heading” on its own line. Everything here is copied into a new note when the template is chosen.</p>
+      <RichTextEditor mode={mode} content={html} onChange={setHtml} offerTemplates={false} placeholder="The headings and text it starts with…" />
+      <p className="mt-2 text-xs text-ink-3">{hint}</p>
     </Modal>
   );
 }

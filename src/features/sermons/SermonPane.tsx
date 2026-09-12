@@ -14,6 +14,7 @@ import { SermonEditorProvider } from "./editor/context";
 import { SermonHeader } from "./SermonHeader";
 import { SermonSidePanel, type SidePanelTab } from "./SermonSidePanel";
 import { useSpeakingRateInfo } from "./sermonStats";
+import { useSermonTemplates } from "./sermonTemplates";
 import { useSendToSermonRequest } from "./sendToSermon";
 import { openSourceRef } from "./sourceIdentity";
 import { useSermonDraft } from "./sermonDraft";
@@ -48,6 +49,7 @@ export function SermonPane() {
   const [panelTab, setPanelTab] = useState<SidePanelTab>("outline");
   const [activeSection, setActiveSection] = useState<number | null>(null);
   const rate = useSpeakingRateInfo();
+  const [sermonTemplates] = useSermonTemplates();
   // Above 720 px the panel sits beside the manuscript; below, it is a
   // popover behind a header button, so a narrow column keeps its text.
   const panelBeside = paneWidth >= 720;
@@ -168,7 +170,8 @@ export function SermonPane() {
               content={draft.body}
               onChange={(body) => patch({ body })}
               onSelectionChange={onSelectionChange}
-              offerTemplates={false}
+              templates={sermonTemplates}
+              templatesLabel="Sermon templates"
               placeholder="Write the sermon…"
               className="border-0 bg-transparent focus-within:border-0"
             />

@@ -27,7 +27,7 @@ import { verseHref, resourceHref } from "../../lib/noteLinks";
 import { IconButton, Button } from "../../components/ui/Button";
 import { Popover, PopoverItem, PopoverLabel } from "../../components/ui/Popover";
 import { cx, inputSmClass, selectSmClass } from "../../components/ui/classes";
-import { applyTemplate, useNoteTemplates } from "./noteTemplates";
+import { applyTemplate, useNoteTemplates, type NoteTemplate } from "./noteTemplates";
 import { SERMON_EXTENSIONS } from "../sermons/editor/extensions";
 import { passageBlockHtml } from "../sermons/editor/documentModel";
 import type { PassageRef, SermonSourceInput } from "../../api/types";
@@ -54,6 +54,8 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
     placeholder,
     autoFocus,
     offerTemplates = true,
+    templates: templatesProp,
+    templatesLabel,
     mode = "note",
     onPickIllustration,
     onSelectionChange,
@@ -63,7 +65,10 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
 ) {
   const { data: books } = useBooks();
   const { data: resources } = useResources();
-  const [templates] = useNoteTemplates();
+  const [noteTemplates] = useNoteTemplates();
+  // A sermon starts from a sermon template, a note from a note template;
+  // the caller decides, and the note editor keeps the list it always had.
+  const templates = templatesProp ?? noteTemplates;
   const [linkPopoverOpen, setLinkPopoverOpen] = useState(false);
   const [linkInput, setLinkInput] = useState("");
   const [linkResourceId, setLinkResourceId] = useState("");
@@ -363,7 +368,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
           >
             {(close) => (
               <>
-                <PopoverLabel>Note templates</PopoverLabel>
+                <PopoverLabel>{templatesLabel ?? "Note templates"}</PopoverLabel>
                 {templates.map((t, i) => (
                   <PopoverItem
                     key={`${i}-${t.name}`}
@@ -393,9 +398,13 @@ interface RichTextEditorProps {
   onChange: (html: string) => void;
   placeholder?: string;
   autoFocus?: boolean;
-  /** Show "Start from…" (the note templates) while the editor is empty.
-   * Off for the template editor itself. */
+  /** Show "Start from…" while the editor is empty. Off for the template
+   * editor itself. */
   offerTemplates?: boolean;
+  /** The list to offer; defaults to the reader's note templates. */
+  templates?: NoteTemplate[];
+  /** The heading over that list ("Sermon templates"). */
+  templatesLabel?: string;
   /** `document` adds points, sub-points, rules, and the sermon builder's
    * live passage and citation blocks. Notes stay exactly as they were. */
   mode?: "note" | "document";
