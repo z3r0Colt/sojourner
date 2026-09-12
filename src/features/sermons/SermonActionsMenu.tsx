@@ -3,12 +3,19 @@ import { save } from "@tauri-apps/plugin-dialog";
 import { ChevronDown, Download, FileText, MoreHorizontal, Presentation, Printer } from "lucide-react";
 import { api } from "../../api/client";
 import { useBooks } from "../../api/queries";
+import { useSetting } from "../../hooks/useSetting";
 import { buildSlides } from "./slides";
 import { Button } from "../../components/ui/Button";
 import { Popover, PopoverItem, PopoverLabel } from "../../components/ui/Popover";
 import { toast } from "../../components/ui/toast";
-import { SermonPrintRegion, type PrintShape } from "./SermonPrint";
+import { cx, inputSmClass } from "../../components/ui/classes";
+import { SermonPrintRegion, type HandoutPrintOptions, type PrintShape } from "./SermonPrint";
 import type { Passage, Sermon } from "../../api/types";
+
+/** How the handout prints. Kept with the data rather than the window, since
+ * a preacher who wants the text on the sheet wants it every week. */
+export const HANDOUT_LINES_SETTING = "handout_note_lines";
+export const HANDOUT_PASSAGE_TEXT_SETTING = "handout_passage_text";
 
 /** Print, handout, and export, from the manuscript's toolbar (SB4.2, SB4.3).
  * Each print renders its shape into the hidden `.print-root` region and
@@ -26,6 +33,9 @@ export function SermonActionsMenu({
   const [shape, setShape] = useState<PrintShape | null>(null);
   const { data: books } = useBooks();
   const [exporting, setExporting] = useState(false);
+  const [noteLines, setNoteLines] = useSetting<number>(HANDOUT_LINES_SETTING, 2);
+  const [passageText, setPassageText] = useSetting<boolean>(HANDOUT_PASSAGE_TEXT_SETTING, false);
+  const handout: HandoutPrintOptions = { noteLines, includePassageText: passageText };
 
   /** The sermon's title as a file name Windows will accept. */
   function fileName(extension: string) {
@@ -123,6 +133,29 @@ export function SermonActionsMenu({
             >
               <FileText className="h-4 w-4 text-ink-3" aria-hidden="true" /> Handout with the answer key
             </PopoverItem>
+            <div className="mt-1 space-y-1.5 rounded-md bg-surface-2/70 px-2 py-1.5 text-xs text-ink-3">
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={passageText}
+                  onChange={(e) => setPassageText(e.target.checked)}
+                  className="accent-accent"
+                />
+                Print each passage in full
+              </label>
+              <label className="flex items-center gap-2">
+                <span>Lines to write on</span>
+                <input
+                  type="number"
+                  min={0}
+                  max={12}
+                  value={noteLines}
+                  onChange={(e) => setNoteLines(Math.min(12, Math.max(0, Number(e.target.value) || 0)))}
+                  aria-label="Lines to write on after each point"
+                  className={cx(inputSmClass, "w-14")}
+                />
+              </label>
+            </div>
             <div className="my-1 h-px bg-line" aria-hidden="true" />
             <PopoverLabel>On the screen</PopoverLabel>
             <PopoverItem
@@ -155,7 +188,7 @@ export function SermonActionsMenu({
           </>
         )}
       </Popover>
-      {shape && <SermonPrintRegion sermon={sermon} shape={shape} />}
+      {shape && <SermonPrintRegion sermon={sermon} shape={shape} handout={handout} />}
     </>
   );
 }

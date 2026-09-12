@@ -19,7 +19,26 @@ import type { Passage, Sermon } from "../../api/types";
 
 export type PrintShape = "manuscript" | "outline" | "handout" | "handout-key";
 
-export function SermonPrintRegion({ sermon, shape }: { sermon: Sermon; shape: PrintShape }) {
+/** What the reader has chosen for the sheet (SermonActionsMenu holds these,
+ * stored with the data). */
+export interface HandoutPrintOptions {
+  /** Ruled lines after each point; the discussion section gets two more. */
+  noteLines: number;
+  /** Print the verses themselves under each reference, not the reference alone. */
+  includePassageText: boolean;
+}
+
+const HANDOUT_DEFAULTS: HandoutPrintOptions = { noteLines: 2, includePassageText: false };
+
+export function SermonPrintRegion({
+  sermon,
+  shape,
+  handout = HANDOUT_DEFAULTS,
+}: {
+  sermon: Sermon;
+  shape: PrintShape;
+  handout?: HandoutPrintOptions;
+}) {
   const { data: books } = useBooks();
   const refs = useMemo(() => passageBlocks(sermon.body), [sermon.body]);
   const { byKey } = usePassagesIn(sermon.translation_id, refs);
@@ -30,7 +49,7 @@ export function SermonPrintRegion({ sermon, shape }: { sermon: Sermon; shape: Pr
       {shape === "manuscript" && <ManuscriptView html={sermon.body} passages={byKey} />}
       {shape === "outline" && <OutlinePrint sermon={sermon} books={books} />}
       {(shape === "handout" || shape === "handout-key") && (
-        <HandoutPrint sermon={sermon} passages={byKey} answerKey={shape === "handout-key"} />
+        <HandoutPrint sermon={sermon} passages={byKey} answerKey={shape === "handout-key"} options={handout} />
       )}
     </div>
   );
@@ -85,7 +104,17 @@ function OutlinePrint({ sermon, books }: { sermon: Sermon; books: ReturnType<typ
 
 /** The fill-in handout (SB4.3). The sheet itself is a pure function of the
  * saved manuscript (handout.ts); this only lays out what comes back. */
-function HandoutPrint({ sermon, passages, answerKey }: { sermon: Sermon; passages: Map<string, Passage>; answerKey: boolean }) {
+function HandoutPrint({
+  sermon,
+  passages,
+  answerKey,
+  options,
+}: {
+  sermon: Sermon;
+  passages: Map<string, Passage>;
+  answerKey: boolean;
+  options: HandoutPrintOptions;
+}) {
   const { data: books } = useBooks();
   const passageText = useMemo(() => {
     const map = new Map<string, string>();
@@ -93,8 +122,15 @@ function HandoutPrint({ sermon, passages, answerKey }: { sermon: Sermon; passage
     return map;
   }, [passages]);
   const handout = useMemo(
-    () => buildHandout(sermon, { answerKey, books, passageText }),
-    [sermon, answerKey, books, passageText],
+    () =>
+      buildHandout(sermon, {
+        answerKey,
+        books,
+        passageText,
+        noteLines: options.noteLines,
+        includePassageText: options.includePassageText,
+      }),
+    [sermon, answerKey, books, passageText, options.noteLines, options.includePassageText],
   );
 
   return (
