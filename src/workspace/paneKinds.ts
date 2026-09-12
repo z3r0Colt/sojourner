@@ -9,6 +9,7 @@ import {
   Highlighter,
   Languages,
   Library,
+  Lightbulb,
   Link2,
   MessageSquareText,
   Mic,
@@ -217,6 +218,7 @@ export const PANE_KINDS: Registry = {
     acceptsPassage: false,
     listed: false,
   },
+  illustrations: { kind: "illustrations", label: "Illustrations", icon: Lightbulb, title: () => "Illustrations", defaultWidth: 900, acceptsPassage: false, listed: true },
   settings: { kind: "settings", label: "Settings", icon: Settings, title: () => "Settings", defaultWidth: 900, acceptsPassage: false, listed: true },
 };
 
@@ -295,6 +297,10 @@ export function routeFor(content: PaneContent): string {
       return "/sermons";
     case "sermon":
       return `/sermons/${content.params.id}`;
+    case "illustrations":
+      return "/illustrations";
+    case "illustrations":
+      return "/illustrations";
     case "settings":
       return content.params.section ? `/settings?section=${encodeURIComponent(content.params.section)}` : "/settings";
   }
@@ -352,6 +358,8 @@ export function parseRoute(pathname: string, search = ""): ContentRequest | null
       const id = num(a);
       return id != null ? { kind: "sermon", params: { id } } : { kind: "sermons", params: {} };
     }
+    case "illustrations":
+      return { kind: "illustrations", params: {} };
     case "settings": {
       const section = new URLSearchParams(search).get("section");
       return { kind: "settings", params: { section } };
