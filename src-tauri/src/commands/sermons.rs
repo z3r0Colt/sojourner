@@ -43,12 +43,6 @@ pub fn set_sermon_stage(db: State<DbState>, sermon_id: i64, stage: String) -> Ap
     Ok(sermons::set_stage(&conn, sermon_id, &stage)?)
 }
 
-#[tauri::command]
-pub fn set_sermon_status(db: State<DbState>, sermon_id: i64, status: String) -> AppResult<()> {
-    let conn = db.0.lock().unwrap();
-    Ok(sermons::set_status(&conn, sermon_id, &status)?)
-}
-
 /// Soft delete -- the sermon goes to the Trash and can be restored.
 #[tauri::command]
 pub fn delete_sermon(db: State<DbState>, sermon_id: i64) -> AppResult<()> {
@@ -158,12 +152,6 @@ pub fn update_sermon_series(
 pub fn delete_sermon_series(db: State<DbState>, series_id: i64) -> AppResult<bool> {
     let conn = db.0.lock().unwrap();
     Ok(sermons::delete_series(&conn, series_id)?)
-}
-
-#[tauri::command]
-pub fn set_sermon_series_order(db: State<DbState>, series_id: i64, sermon_ids: Vec<i64>) -> AppResult<()> {
-    let conn = db.0.lock().unwrap();
-    Ok(sermons::set_series_order(&conn, series_id, &sermon_ids)?)
 }
 
 // Illustrations -------------------------------------------------------------

@@ -14,7 +14,6 @@ import type {
   SermonFilter,
   SermonInput,
   SermonStage,
-  SermonStatus,
   IllustrationFilter,
   IllustrationInput,
 } from "./types";
@@ -1200,14 +1199,6 @@ export function useSetSermonStage() {
   });
 }
 
-export function useSetSermonStatus() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (input: { sermonId: number; status: SermonStatus }) => api.setSermonStatus(input.sermonId, input.status),
-    onSuccess: (_data, input) => invalidateSermons(qc, input.sermonId),
-  });
-}
-
 export function useDeleteSermon() {
   const qc = useQueryClient();
   return useMutation({
@@ -1292,15 +1283,6 @@ export function useDeleteSermonSeries() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (seriesId: number) => api.deleteSermonSeries(seriesId),
-    onSuccess: () => invalidateSermons(qc),
-  });
-}
-
-export function useSetSermonSeriesOrder() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (input: { seriesId: number; sermonIds: number[] }) =>
-      api.setSermonSeriesOrder(input.seriesId, input.sermonIds),
     onSuccess: () => invalidateSermons(qc),
   });
 }
