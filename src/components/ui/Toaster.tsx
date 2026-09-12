@@ -54,12 +54,14 @@ function ToastRow({ item }: { item: ToastItem }) {
 }
 
 /** Mount once at the app root. Bottom-center so it never covers the study
- * panel, above the read-aloud bar. */
+ * panel, above the read-aloud bar but beneath modals (z-50), so a toast
+ * that stays up, such as the backup reminder, never sits over a dialog's
+ * buttons. */
 export function Toaster() {
   const toasts = useToastStore((s) => s.toasts);
   if (toasts.length === 0) return null;
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-20 z-[60] flex flex-col items-center gap-2 px-4">
+    <div className="pointer-events-none fixed inset-x-0 bottom-20 z-40 flex flex-col items-center gap-2 px-4">
       {toasts.map((t) => (
         <ToastRow key={t.id} item={t} />
       ))}
