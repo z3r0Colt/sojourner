@@ -6,8 +6,8 @@ const GROUPS: { title: string; rows: { keys: string[]; label: string }[] }[] = [
     title: "Navigate",
     rows: [
       { keys: ["Ctrl", "K"], label: "Go to a reference, Strong's number, or term" },
-      { keys: ["Ctrl", "K", ">"], label: "List every command in the Go to box: panes, layouts, workspaces, paragraph mode, theme, text size, start a reading plan, new prayer entry, back up now, Settings sections" },
-      { keys: ["Ctrl", "F"], label: "Search everything" },
+      { keys: ["Ctrl", "K", ">"], label: "List every command in the Go to box: panes, layouts, workspaces, paragraph mode, theme, text size, start a reading plan, new prayer entry, new sermon, open a sermon, preach or rehearse one, back up now, Settings sections" },
+      { keys: ["Ctrl", "F"], label: "Search everything: Scripture, commentary, notes, prayers, resources, confessions, sermons, and illustrations, each in its own tab" },
       { keys: ["Ctrl", "G"], label: "Find in the chapter you are reading (Enter next match, Shift+Enter previous, Esc closes)" },
       { keys: ["Ctrl", "["], label: "Previous chapter in the pane you are reading" },
       { keys: ["Ctrl", "]"], label: "Next chapter in the pane you are reading" },

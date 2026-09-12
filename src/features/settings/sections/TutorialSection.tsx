@@ -78,7 +78,7 @@ const CATEGORIES: Category[] = [
   {
     title: "Search",
     items: [
-      { q: "Search everything", a: <><Kbd>Ctrl</Kbd>+<Kbd>F</Kbd> or the Search button opens one search across Scripture, commentary, your notes and prayers, your resources, and the confessions, each in its own tab. Use the arrow keys and Enter to open a result.</> },
+      { q: "Search everything", a: <><Kbd>Ctrl</Kbd>+<Kbd>F</Kbd> or the Search button opens one search across Scripture, commentary, your notes and prayers, your resources, the confessions, your sermons, and your illustrations, each in its own tab. Use the arrow keys and Enter to open a result.</> },
       { q: "Search syntax", a: "Plain words are all required. Use “quoted phrases” for exact phrases, word1 OR word2 for either, and -word to exclude a term." },
       { q: "Narrow a Scripture search", a: "On the Scripture tab, limit results to a testament or a single book with the dropdowns under the tabs." },
       { q: "Save a search", a: "Click Save next to the search box to pin a query so it's always one click away." },
