@@ -163,7 +163,11 @@ const CATEGORIES: Category[] = [
   {
     title: "Reading plans & Harmony",
     items: [
-      { q: "Start a reading plan", a: "Open a plan on the Reading plans page and start it. Tick each day as you read; today's day is highlighted." },
+      { q: "Start a reading plan", a: "Open a plan on the Reading plans page and start it (or type “start reading plan” in the Go to box). Tick each day as you read; the next unread day is highlighted, and today's reading shows on the Today page with its checkbox." },
+      {
+        q: "Catch up when you fall behind",
+        a: "When the calendar has run ahead of your ticks, the plan page and the Today page say “You're N days behind” with two choices. “Shift my schedule” moves the plan's start date forward so today becomes the next unread day and nothing is skipped. “Skip to today” marks the missed days as read (confirmed first, with Undo on the toast). An amber dot on the plan page marks where the calendar puts today.",
+      },
       { q: "Harmony of the Gospels", a: "The Harmony page lists the events of Christ's life in order. “Compare” shows the parallel Gospel accounts side by side." },
     ],
   },

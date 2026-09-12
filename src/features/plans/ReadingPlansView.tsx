@@ -20,6 +20,8 @@ import { EmptyState } from "../../components/ui/EmptyState";
 import { confirmDialog } from "../../components/ui/confirm";
 import { toast } from "../../components/ui/toast";
 import { cardClass, checkboxClass, cx } from "../../components/ui/classes";
+import { CatchUpBanner } from "./CatchUpBanner";
+import { calendarDay } from "./planSchedule";
 
 export function ReadingRefs({
   readings,
@@ -66,6 +68,9 @@ function PlanDetail({ planCode, onBack }: { planCode: string; onBack: () => void
   const progress = progressList?.find((p) => p.plan_code === planCode);
   const completedSet = useMemo(() => new Set(progress?.completed_days ?? []), [progress]);
   const currentDay = progress ? Math.min(progress.current_day, plan?.length_days ?? progress.current_day) : null;
+  // The calendar's day (day 1 on the start date) is marked beside the
+  // checklist's; the two differ only while the reader is behind or ahead.
+  const todayDay = progress && plan ? calendarDay(progress, plan.length_days) : null;
 
   function toggleDay(dayNumber: number) {
     if (completedSet.has(dayNumber)) {
@@ -125,10 +130,16 @@ function PlanDetail({ planCode, onBack }: { planCode: string; onBack: () => void
       <Button size="sm" variant="ghost" icon={ArrowLeft} onClick={onBack} className="-mt-3 mb-3">
         All plans
       </Button>
+      {plan && progress && (
+        <div className="mb-3">
+          <CatchUpBanner plan={plan} progress={progress} />
+        </div>
+      )}
       <ul className="divide-y divide-line rounded-lg border border-line bg-surface">
         {days?.map((d) => {
           const done = completedSet.has(d.day_number);
           const isToday = currentDay === d.day_number;
+          const isCalendarToday = todayDay === d.day_number && todayDay !== currentDay;
           return (
             <li key={d.day_number} className={cx("flex items-center gap-3 px-3 py-2 text-sm", isToday && "bg-accent-soft/60")}>
               <input
@@ -137,9 +148,12 @@ function PlanDetail({ planCode, onBack }: { planCode: string; onBack: () => void
                 checked={done}
                 onChange={() => toggleDay(d.day_number)}
                 disabled={!progress}
-                aria-label={`Day ${d.day_number} complete`}
+                aria-label={`Day ${d.day_number} complete${isCalendarToday ? ", today's date" : ""}`}
               />
-              <span className={cx("w-14 shrink-0 text-xs", isToday ? "font-semibold text-accent" : "text-ink-3")}>Day {d.day_number}</span>
+              <span className={cx("w-14 shrink-0 text-xs", isToday ? "font-semibold text-accent" : "text-ink-3")} title={isCalendarToday ? "Where the calendar puts today" : undefined}>
+                Day {d.day_number}
+                {isCalendarToday && <span className="ml-1 text-warn" aria-hidden="true">●</span>}
+              </span>
               <span className={cx(done && "text-ink-3 line-through decoration-line-2")}>
                 <ReadingRefs
                   readings={d.readings}

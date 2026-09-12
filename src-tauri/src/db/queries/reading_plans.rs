@@ -144,3 +144,38 @@ pub fn unmark_day(conn: &Connection, plan_code: &str, day_number: i64) -> anyhow
     )?;
     Ok(get_progress(conn, plan_code)?.expect("unmark_day requires an in-progress plan"))
 }
+
+/// Catch-up, "Shift my schedule" (F3.3): moves the plan's start date
+/// forward by `days` so the calendar day lines up with the next unread
+/// day. Nothing is marked or unmarked. A negative `days` moves it back.
+pub fn shift_start(conn: &Connection, plan_code: &str, days: i64) -> anyhow::Result<ReadingPlanProgress> {
+    let modifier = format!("{days:+} days");
+    conn.execute(
+        "UPDATE reading_plan_progress SET start_date = date(start_date, ?2) WHERE plan_code = ?1",
+        params![plan_code, modifier],
+    )?;
+    Ok(get_progress(conn, plan_code)?.ok_or_else(|| anyhow::anyhow!("no progress for plan {plan_code}"))?)
+}
+
+/// Catch-up, "Skip to today" (F3.3), and its undo: marks (or unmarks)
+/// several days in one transaction.
+pub fn set_days(conn: &Connection, plan_code: &str, day_numbers: &[i64], done: bool) -> anyhow::Result<ReadingPlanProgress> {
+    let now = chrono::Utc::now().to_rfc3339();
+    let tx = conn.unchecked_transaction()?;
+    {
+        let mut stmt = if done {
+            tx.prepare("INSERT OR IGNORE INTO reading_plan_completions (plan_code, day_number, completed_at) VALUES (?1,?2,?3)")?
+        } else {
+            tx.prepare("DELETE FROM reading_plan_completions WHERE plan_code = ?1 AND day_number = ?2")?
+        };
+        for day in day_numbers {
+            if done {
+                stmt.execute(params![plan_code, day, now])?;
+            } else {
+                stmt.execute(params![plan_code, day])?;
+            }
+        }
+    }
+    tx.commit()?;
+    Ok(get_progress(conn, plan_code)?.ok_or_else(|| anyhow::anyhow!("no progress for plan {plan_code}"))?)
+}

@@ -328,6 +328,43 @@ mod tests {
         let _ = std::fs::remove_dir_all(&dir);
     }
 
+    /// Reading plan catch-up (F3.3): shifting moves the start date by whole
+    /// days and touches no completions; skipping marks a run of days in one
+    /// go and its undo removes exactly those.
+    #[test]
+    fn reading_plan_catch_up_shifts_and_marks() {
+        use queries::reading_plans as plans;
+
+        let dir = std::env::temp_dir().join(format!("sojourner-catchup-test-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let content_db_path = dir.join("content.db");
+        open_content_db(&content_db_path).unwrap();
+        let conn = open(&dir, &content_db_path).unwrap();
+
+        let p = plans::start_plan(&conn, "test-plan", "2026-09-01".into()).unwrap();
+        assert_eq!(p.current_day, 1);
+        plans::mark_day(&conn, "test-plan", 1).unwrap();
+
+        let shifted = plans::shift_start(&conn, "test-plan", 5).unwrap();
+        assert_eq!(shifted.start_date, "2026-09-06");
+        assert_eq!(shifted.completed_days, vec![1]);
+        let back = plans::shift_start(&conn, "test-plan", -2).unwrap();
+        assert_eq!(back.start_date, "2026-09-04");
+
+        let skipped = plans::set_days(&conn, "test-plan", &[2, 3, 4], true).unwrap();
+        assert_eq!(skipped.completed_days, vec![1, 2, 3, 4]);
+        assert_eq!(skipped.current_day, 5);
+        let undone = plans::set_days(&conn, "test-plan", &[2, 3, 4], false).unwrap();
+        assert_eq!(undone.completed_days, vec![1]);
+        assert_eq!(undone.current_day, 2);
+
+        assert!(plans::shift_start(&conn, "no-such-plan", 1).is_err());
+
+        drop(conn);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
     /// Backlinks (USER_MIGRATION_0012): a note's references are replaced on
     /// each save, a chapter lists the notes elsewhere that mention it (not
     /// its own notes), Trash hides them, and a purge cascades the rows away.
