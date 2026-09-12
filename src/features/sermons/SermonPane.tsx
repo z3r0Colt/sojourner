@@ -162,7 +162,10 @@ export function SermonPane() {
   );
 
   if (isLoading && !draft) return <LoadingState className="py-10" />;
-  if (!sermon || !draft) {
+  // A sermon is still reachable by id once it is in the Trash -- that is how
+  // Restore brings it back whole -- so the pane has to check for itself, or a
+  // deleted sermon goes on looking open and taking what is typed into it.
+  if (!sermon || !draft || sermon.deleted_at != null) {
     return (
       <div className="p-6">
         <EmptyState
