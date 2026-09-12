@@ -365,6 +365,15 @@ mod tests {
         let recent = reading_log::list_recent(&conn, 10).unwrap();
         let chapters: Vec<(i64, i64)> = recent.iter().map(|e| (e.book_id, e.chapter)).collect();
         assert_eq!(chapters, vec![(1, 1), (43, 3), (45, 8)]);
+
+        // Going back to a chapter later the same day puts it at the top
+        // again: "Recent chapters" is what was read last, not what was read
+        // first, and the row count still holds.
+        reading_log::record(&conn, "2026-09-11", 43, 3, 2).unwrap();
+        let chapters: Vec<(i64, i64)> = reading_log::list_recent(&conn, 10).unwrap().iter().map(|e| (e.book_id, e.chapter)).collect();
+        assert_eq!(chapters, vec![(43, 3), (1, 1), (45, 8)]);
+        let rows: i64 = conn.query_row("SELECT COUNT(*) FROM reading_log", [], |r| r.get(0)).unwrap();
+        assert_eq!(rows, 4, "still one row per chapter per day");
         assert_eq!(recent[0].date, "2026-09-11");
         assert_eq!(recent[0].translation_id, Some(2));
         assert_eq!(reading_log::list_recent(&conn, 2).unwrap().len(), 2);
