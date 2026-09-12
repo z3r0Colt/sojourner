@@ -518,4 +518,9 @@ export const api = {
 
   /** Markdown, with every passage block rendered at export time. */
   exportSermon: (sermonId: number, destPath: string) => invoke<void>("export_sermon", { sermonId, destPath }),
+  /** The generated .pptx. The bytes come from pptxgenjs in the webview, but
+   * the write goes through a command, since the fs plugin's scope allows no
+   * arbitrary path. */
+  exportSermonSlides: (destPath: string, data: Uint8Array) =>
+    invoke<void>("export_sermon_slides", { destPath, data: Array.from(data) }),
 };
