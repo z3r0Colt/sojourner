@@ -16,6 +16,12 @@ dist-ssr
 # built from bibles/, commentaries/, reference/ at package time, not committed.
 /content/
 
+# The books that ship with the app, gathered by `npm run library:collect` from
+# whatever is in the reader's own library. Hundreds of megabytes of epub, so
+# they live beside the repo rather than in it -- keep a copy elsewhere, since
+# nothing here can rebuild them.
+/library/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

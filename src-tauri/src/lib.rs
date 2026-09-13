@@ -5,6 +5,7 @@ pub mod db;
 mod error;
 pub mod export;
 pub mod import;
+pub mod library;
 pub mod models;
 pub mod paths;
 pub mod resources;
@@ -88,6 +89,43 @@ pub fn run() {
             backup::apply_pending_import(&app_data_dir).expect("failed to apply a staged import/restore");
 
             let conn = db::open(&app_data_dir, &content_db_path).expect("failed to open database");
+
+            // The shipped library (see `crate::library`): content.db carries
+            // the books' text, the files sit beside the executable, and
+            // user.db needs a row per book so each one can be tagged, linked
+            // and bookmarked like any other. Repointing them here is what
+            // makes the library survive an install somewhere else -- or a
+            // copy of the whole folder onto a USB stick. Best-effort: a
+            // library that cannot be synced must not stop the app opening.
+            let library_dir = handle
+                .path()
+                .resource_dir()
+                .map(|d| d.join(library::LIBRARY_DIR))
+                .ok()
+                .filter(|d| d.is_dir())
+                .or_else(|| {
+                    #[cfg(debug_assertions)]
+                    {
+                        let repo_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+                            .parent()
+                            .expect("src-tauri has a parent directory");
+                        let dir = repo_root.join(library::LIBRARY_DIR);
+                        return dir.is_dir().then_some(dir);
+                    }
+                    #[cfg(not(debug_assertions))]
+                    None
+                });
+            if let Some(dir) = library_dir {
+                match library::sync(&conn, &dir) {
+                    Ok(o) if o.added + o.adopted + o.repointed + o.retired > 0 => println!(
+                        "[library] {} added, {} adopted, {} repointed, {} retired",
+                        o.added, o.adopted, o.repointed, o.retired
+                    ),
+                    Ok(_) => {}
+                    Err(e) => eprintln!("[library] sync failed: {e:#}"),
+                }
+            }
+
             // Trash retention: anything soft-deleted more than thirty days
             // ago is gone for good. Best-effort -- a failure here must not
             // stop the app from opening.

@@ -314,7 +314,7 @@ pub fn search_commentary(
 /// ampersand in it. Those characters have to arrive escaped or the browser
 /// reads them as markup. The markers themselves are left alone, since the
 /// page turns them into the highlight.
-fn escape_snippet(snippet: &str) -> String {
+pub(crate) fn escape_snippet(snippet: &str) -> String {
     let mut out = String::with_capacity(snippet.len() + 16);
     for c in snippet.chars() {
         match c {

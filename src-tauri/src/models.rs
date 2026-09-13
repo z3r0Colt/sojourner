@@ -416,6 +416,10 @@ pub struct Resource {
     pub file_path: String,
     pub has_text: bool,
     pub added_at: String,
+    /// True for a book that ships with the app (see `crate::library`): its
+    /// text lives in content.db and its file beside the executable, so it
+    /// cannot be deleted the way a reader's own resource can.
+    pub bundled: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

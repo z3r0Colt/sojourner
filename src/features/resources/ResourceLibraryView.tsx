@@ -251,24 +251,33 @@ export function ResourceLibraryView() {
                             not searchable
                           </span>
                         )}
-                        <Popover
-                          width="w-44"
-                          trigger={({ toggle, open: isOpen }) => <IconButton icon={MoreVertical} label="More" size="sm" active={isOpen} onClick={toggle} />}
-                        >
-                          {(close) => (
-                            <PopoverItem
-                              danger
-                              onClick={async () => {
-                                close();
-                                if (await confirmDelete(`“${r.title}”`, "The file itself stays where it is; only the library entry, its links, and tags are removed.")) {
-                                  deleteResource.mutate(r.id, { onSuccess: () => toast.info(`Removed “${r.title}”`) });
-                                }
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4" aria-hidden="true" /> Remove from library
-                            </PopoverItem>
-                          )}
-                        </Popover>
+                        {r.bundled ? (
+                          <span
+                            className="shrink-0 rounded-full border border-line px-1.5 py-0.5 text-[0.65rem] uppercase tracking-wide text-ink-4"
+                            title="Ships with the app. Read it, search it, tag it — it just can't be removed."
+                          >
+                            Shipped
+                          </span>
+                        ) : (
+                          <Popover
+                            width="w-44"
+                            trigger={({ toggle, open: isOpen }) => <IconButton icon={MoreVertical} label="More" size="sm" active={isOpen} onClick={toggle} />}
+                          >
+                            {(close) => (
+                              <PopoverItem
+                                danger
+                                onClick={async () => {
+                                  close();
+                                  if (await confirmDelete(`“${r.title}”`, "The file itself stays where it is; only the library entry, its links, and tags are removed.")) {
+                                    deleteResource.mutate(r.id, { onSuccess: () => toast.info(`Removed “${r.title}”`) });
+                                  }
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4" aria-hidden="true" /> Remove from library
+                              </PopoverItem>
+                            )}
+                          </Popover>
+                        )}
                       </div>
                       <TagRow
                         tags={tagsById.get(r.id) ?? []}

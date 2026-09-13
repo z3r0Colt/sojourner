@@ -50,11 +50,23 @@ fn main() -> anyhow::Result<()> {
         }
     }
 
+    // The shipped library: whatever `collect_library` has put in library/,
+    // with its text extracted once here so a fresh install can search it.
+    let library_dir = repo_root.join(tauri_app_lib::library::LIBRARY_DIR);
+    let library_count = if library_dir.is_dir() {
+        let n = tauri_app_lib::library::import(&conn, &library_dir)?;
+        println!("  [library] {n} book(s) from {}", library_dir.display());
+        n
+    } else {
+        println!("  [library] none ({} does not exist)", library_dir.display());
+        0
+    };
+
     let translation_count: i64 = conn.query_row("SELECT COUNT(*) FROM translations", [], |r| r.get(0))?;
     let commentary_count: i64 = conn.query_row("SELECT COUNT(*) FROM commentary_sources", [], |r| r.get(0))?;
     let strongs_count: i64 = conn.query_row("SELECT COUNT(*) FROM strongs_entries", [], |r| r.get(0))?;
     println!(
-        "done: {translation_count} translation(s), {commentary_count} commentary source(s), {strongs_count} strongs entries, {failed} failure(s)"
+        "done: {translation_count} translation(s), {commentary_count} commentary source(s), {strongs_count} strongs entries, {library_count} shipped book(s), {failed} failure(s)"
     );
 
     if failed > 0 {

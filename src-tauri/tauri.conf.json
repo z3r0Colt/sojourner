@@ -23,7 +23,7 @@
       "csp": null,
       "assetProtocol": {
         "enable": true,
-        "scope": ["$APPDATA/resources/**"]
+        "scope": ["$APPDATA/resources/**", "$RESOURCE/library/**"]
       }
     }
   },
@@ -38,7 +38,8 @@
       "icons/icon.ico"
     ],
     "resources": {
-      "../content/content.db": "content.db"
+      "../content/content.db": "content.db",
+      "../library/": "library/"
     },
     "windows": {
       "webviewInstallMode": {

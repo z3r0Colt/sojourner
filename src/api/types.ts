@@ -566,6 +566,9 @@ export interface Resource {
   file_path: string;
   has_text: boolean;
   added_at: string;
+  /** True for a book that ships with the app: it can be read, searched,
+   * tagged and linked like any other, but not removed. */
+  bundled: boolean;
 }
 
 export interface ResourcePassageLink {
