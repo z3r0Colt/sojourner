@@ -294,15 +294,27 @@ pub fn sync(conn: &Connection, library_dir: &Path) -> anyhow::Result<SyncOutcome
 
     // Adopting a book hands its text over to content.db, and on a library
     // imported by hand that is hundreds of megabytes of user.db suddenly
-    // standing empty -- pages SQLite keeps until it is asked not to. Worth
-    // the few seconds once, since every backup from here on carries it
-    // otherwise.
-    if outcome.adopted > 0 {
+    // standing empty -- pages SQLite keeps until it is asked not to, and
+    // which every backup would otherwise carry for good. The test is the
+    // free space itself rather than what this particular run did, so a
+    // database left holding it by an earlier version still gets it back.
+    if worth_vacuuming(conn) {
+        println!("[library] reclaiming the space the adopted text left behind");
         if let Err(e) = conn.execute_batch("VACUUM") {
-            eprintln!("[library] could not reclaim the adopted text's space: {e}");
+            eprintln!("[library] could not reclaim it: {e}");
         }
     }
     Ok(outcome)
+}
+
+/// Whether user.db is carrying enough dead weight to be worth the seconds a
+/// VACUUM costs: more than 64 MB of it, and more than a quarter of the file.
+fn worth_vacuuming(conn: &Connection) -> bool {
+    let pragma = |name: &str| conn.query_row(&format!("PRAGMA {name}"), [], |r| r.get::<_, i64>(0)).unwrap_or(0);
+    let free = pragma("freelist_count");
+    let pages = pragma("page_count");
+    let page_size = pragma("page_size").max(1);
+    free * page_size > 64 * 1024 * 1024 && free * 4 > pages
 }
 
 #[cfg(test)]
