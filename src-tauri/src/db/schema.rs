@@ -552,6 +552,45 @@ CREATE TABLE doctrine_topics (
 CREATE INDEX idx_doctrine_topics_category ON doctrine_topics(category, sort_order);
 "#;
 
+// The shipped library: the books that travel with the app itself (see
+// `crate::library`), as against the ones a reader adds afterwards, which stay
+// in user.db. Only what is *read* lives here -- a title, an author, and the
+// words, extracted at package time so a fresh install can search a hundred
+// volumes the moment it opens. The files themselves are bundled beside the
+// executable and never copied into the reader's own folder; `file_name` is
+// how a row finds its file there.
+//
+// user.db keeps a small row per book all the same (`resources.library_key`),
+// because tags, passage links, and reading positions all reference
+// `resources(id)` and a shipped book must be taggable like any other.
+pub const CONTENT_MIGRATION_0011: &str = r#"
+CREATE TABLE library_resources (
+  id              INTEGER PRIMARY KEY,
+  file_name       TEXT NOT NULL UNIQUE,
+  kind            TEXT NOT NULL,
+  title           TEXT NOT NULL,
+  author          TEXT,
+  extracted_text  TEXT
+);
+CREATE VIRTUAL TABLE library_fts USING fts5(
+  title, author, extracted_text, content='library_resources', content_rowid='id'
+);
+CREATE TRIGGER library_ai AFTER INSERT ON library_resources BEGIN
+  INSERT INTO library_fts(rowid, title, author, extracted_text)
+  VALUES (new.id, new.title, new.author, new.extracted_text);
+END;
+CREATE TRIGGER library_au AFTER UPDATE ON library_resources BEGIN
+  INSERT INTO library_fts(library_fts, rowid, title, author, extracted_text)
+  VALUES('delete', old.id, old.title, old.author, old.extracted_text);
+  INSERT INTO library_fts(rowid, title, author, extracted_text)
+  VALUES (new.id, new.title, new.author, new.extracted_text);
+END;
+CREATE TRIGGER library_ad AFTER DELETE ON library_resources BEGIN
+  INSERT INTO library_fts(library_fts, rowid, title, author, extracted_text)
+  VALUES('delete', old.id, old.title, old.author, old.extracted_text);
+END;
+"#;
+
 pub const CONTENT_MIGRATIONS: &[&str] = &[
     CONTENT_MIGRATION_0001,
     CONTENT_MIGRATION_0002,
@@ -563,6 +602,7 @@ pub const CONTENT_MIGRATIONS: &[&str] = &[
     CONTENT_MIGRATION_0008,
     CONTENT_MIGRATION_0009,
     CONTENT_MIGRATION_0010,
+    CONTENT_MIGRATION_0011,
 ];
 
 pub const USER_MIGRATION_0001: &str = r#"
@@ -1532,6 +1572,20 @@ CREATE TRIGGER illustrations_search_ad AFTER DELETE ON illustrations BEGIN
 END;
 "#;
 
+// A resource row that stands for a book shipped with the app rather than one
+// the reader added. `library_key` is the bundled file's name, which is what
+// ties the row to its text in content.db's `library_resources` and to the
+// file itself beside the executable; it is null for everything a reader adds,
+// and those keep working exactly as before.
+//
+// The row exists at all because tags, passage links, resource links and
+// reading positions all hang off `resources(id)`: without it, a shipped book
+// would be the one kind of book nobody could tag.
+pub const USER_MIGRATION_0017: &str = r#"
+ALTER TABLE resources ADD COLUMN library_key TEXT;
+CREATE UNIQUE INDEX idx_resources_library_key ON resources(library_key) WHERE library_key IS NOT NULL;
+"#;
+
 pub const USER_MIGRATIONS: &[&str] = &[
     USER_MIGRATION_0001,
     USER_MIGRATION_0002,
@@ -1549,4 +1603,5 @@ pub const USER_MIGRATIONS: &[&str] = &[
     USER_MIGRATION_0014,
     USER_MIGRATION_0015,
     USER_MIGRATION_0016,
+    USER_MIGRATION_0017,
 ];

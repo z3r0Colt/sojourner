@@ -79,6 +79,13 @@ pub fn bulk_import_resources(app: AppHandle, db: State<DbState>, folder_path: St
 pub fn delete_resource(db: State<DbState>, id: i64) -> AppResult<()> {
     let conn = db.0.lock().unwrap();
     if let Some(res) = queries::get(&conn, id)? {
+        // A book that ships with the app is not the reader's to delete: the
+        // file belongs to the installation, and the next launch would put the
+        // row back anyway. The library UI hides the button; this is the
+        // backstop.
+        if res.bundled {
+            return Err(anyhow::anyhow!("“{}” ships with the app and cannot be removed", res.title).into());
+        }
         let _ = std::fs::remove_file(&res.file_path);
     }
     Ok(queries::delete(&conn, id)?)

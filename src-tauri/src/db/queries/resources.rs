@@ -3,17 +3,21 @@ use rusqlite::{params, Connection, OptionalExtension};
 
 fn map_resource(r: &rusqlite::Row) -> rusqlite::Result<Resource> {
     let text: Option<String> = r.get(4)?;
+    let library_key: Option<String> = r.get(7)?;
     Ok(Resource {
         id: r.get(0)?,
         kind: r.get(1)?,
         title: r.get(2)?,
         author: r.get(3)?,
-        has_text: text.is_some(),
+        // A shipped book carries no text in user.db -- content.db holds it for
+        // every install -- but it is every bit as searchable.
+        has_text: text.is_some() || library_key.is_some(),
         file_path: r.get(5)?,
         added_at: r.get(6)?,
+        bundled: library_key.is_some(),
     })
 }
-const RESOURCE_COLS: &str = "id, kind, title, author, extracted_text, file_path, added_at";
+const RESOURCE_COLS: &str = "id, kind, title, author, extracted_text, file_path, added_at, library_key";
 
 pub fn list_all(conn: &Connection) -> anyhow::Result<Vec<Resource>> {
     let mut stmt = conn.prepare(&format!("SELECT {RESOURCE_COLS} FROM resources ORDER BY title COLLATE NOCASE"))?;
@@ -27,10 +31,21 @@ pub fn get(conn: &Connection, id: i64) -> anyhow::Result<Option<Resource>> {
         .optional()?)
 }
 
+/// The words of a resource. A shipped book's text is in content.db rather
+/// than in the reader's own file, so the lookup follows `library_key` there.
 pub fn get_extracted_text(conn: &Connection, id: i64) -> anyhow::Result<Option<String>> {
-    Ok(conn
-        .query_row("SELECT extracted_text FROM resources WHERE id = ?1", params![id], |r| r.get(0))
-        .optional()?)
+    let row: Option<(Option<String>, Option<String>)> = conn
+        .query_row(
+            "SELECT extracted_text, library_key FROM resources WHERE id = ?1",
+            params![id],
+            |r| Ok((r.get(0)?, r.get(1)?)),
+        )
+        .optional()?;
+    match row {
+        Some((text, None)) => Ok(text),
+        Some((_, Some(key))) => crate::library::extracted_text(conn, &key),
+        None => Ok(None),
+    }
 }
 
 pub fn create(conn: &Connection, kind: &str, title: &str, author: Option<&str>, file_path: &str, extracted_text: Option<&str>) -> anyhow::Result<Resource> {
@@ -57,20 +72,61 @@ pub fn search(conn: &Connection, query: &str, limit: i64) -> anyhow::Result<Vec<
         .map(|t| format!("\"{}\"*", t.replace('"', "\"\"")))
         .collect::<Vec<_>>()
         .join(" ");
-    let mut stmt = conn.prepare(
-        "SELECT res.id, res.title, res.kind, snippet(resources_fts, 2, '[', ']', '…', 12)
+    // Two indexes hold the library now: the reader's own books in user.db,
+    // and the shipped ones in content.db (their text is the same on every
+    // install, so it is not copied into anybody's own file). Each is asked
+    // separately -- fts5's snippet() and bm25() want their table in the FROM
+    // of the query they are called in -- and the two are merged by rank.
+    let mut hits = Vec::new();
+    // A shipped book is excluded here even though user.db still indexes its
+    // title: its text lives in content.db, so the second query is the one
+    // that can quote it, and without this the same book comes back twice --
+    // once with nothing to show for itself.
+    let mut own = conn.prepare(
+        "SELECT res.id, res.title, res.kind, snippet(resources_fts, 2, '[', ']', '…', 12), bm25(resources_fts)
          FROM resources_fts JOIN resources res ON res.id = resources_fts.rowid
-         WHERE resources_fts MATCH ?1 ORDER BY bm25(resources_fts) LIMIT ?2",
+         WHERE resources_fts MATCH ?1 AND res.library_key IS NULL
+         ORDER BY bm25(resources_fts) LIMIT ?2",
     )?;
-    let rows = stmt.query_map(params![match_expr, limit], |r| {
-        Ok(ResourceSearchResult {
-            resource_id: r.get(0)?,
-            title: r.get(1)?,
-            kind: r.get(2)?,
-            snippet: r.get(3)?,
+    // Only where the attached content.db is new enough to have one: an older
+    // one has no such table, and a reader's own books must still be findable.
+    let mut shipped = crate::library::is_available(conn)
+        .then(|| {
+            conn.prepare(
+                "SELECT res.id, res.title, res.kind, snippet(library_fts, 2, '[', ']', '…', 12), bm25(library_fts)
+                 FROM library_fts
+                 JOIN library_resources lib ON lib.id = library_fts.rowid
+                 JOIN resources res ON res.library_key = lib.file_name
+                 WHERE library_fts MATCH ?1 ORDER BY bm25(library_fts) LIMIT ?2",
+            )
         })
-    })?;
-    Ok(rows.collect::<Result<Vec<_>, _>>()?)
+        .transpose()?;
+    for stmt in [Some(&mut own), shipped.as_mut()].into_iter().flatten() {
+        let rows = stmt.query_map(params![match_expr, limit], |r| {
+            Ok((
+                ResourceSearchResult {
+                    resource_id: r.get(0)?,
+                    title: r.get(1)?,
+                    kind: r.get(2)?,
+                    // The snippet is written into the page as HTML, so a book
+                    // with an angle bracket in it must not arrive as markup.
+                    // It can be null outright -- a match on a title in a row
+                    // whose text column is empty -- which is not an error.
+                    snippet: crate::db::queries::search::escape_snippet(
+                        &r.get::<_, Option<String>>(3)?.unwrap_or_default(),
+                    ),
+                },
+                r.get::<_, f64>(4)?,
+            ))
+        })?;
+        for row in rows {
+            hits.push(row?);
+        }
+    }
+    // bm25 is negative, most relevant first.
+    hits.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
+    hits.truncate(limit as usize);
+    Ok(hits.into_iter().map(|(hit, _)| hit).collect())
 }
 
 fn map_passage_link(r: &rusqlite::Row) -> rusqlite::Result<ResourcePassageLink> {
