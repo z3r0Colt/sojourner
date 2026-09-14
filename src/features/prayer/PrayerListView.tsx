@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { Check, HandHeart, Pencil, Plus, Printer, RotateCcw, Trash2, Users } from "lucide-react";
 import {
   usePrayerListPeople,
@@ -289,7 +290,9 @@ export function PrayerListView() {
         </div>
       )}
 
-      {printing && (
+      {printing && createPortal(
+        // On <body>, out of the pane: a pane is `relative overflow-hidden`,
+        // which crops an absolutely positioned print root to one page.
         <div className="print-root print-only" aria-hidden="true">
           <div style={{ fontFamily: "Georgia, serif", padding: "0.5in", color: "#000" }}>
             <h1 style={{ fontSize: "20pt", margin: "0 0 4pt" }}>Prayer list</h1>
@@ -316,7 +319,8 @@ export function PrayerListView() {
               </section>
             ))}
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
 
       {editing && (
