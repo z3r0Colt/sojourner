@@ -15,11 +15,16 @@ export function ReadAloudWords({ text, active, className }: { text: string; acti
   const highlightStyle = useTtsStore((s) => s.highlightStyle);
   const autoScroll = useTtsStore((s) => s.autoScroll);
   const activeRef = useRef<HTMLSpanElement | null>(null);
+  const containerRef = useRef<HTMLSpanElement | null>(null);
 
   useEffect(() => {
-    if (active && autoScroll && activeRef.current) {
-      activeRef.current.scrollIntoView({ block: "center", behavior: "smooth" });
-    }
+    if (!active || !autoScroll) return;
+    // A voice that reports word boundaries gets followed word by word. The
+    // neural voice reports none -- it returns finished audio and nothing else
+    // -- so there is no word to scroll to and the verse itself is the target.
+    // Without this fallback the page simply stops following along.
+    const target = activeRef.current ?? containerRef.current;
+    target?.scrollIntoView({ block: "center", behavior: "smooth" });
   }, [active, currentWordIndex, autoScroll]);
 
   if (!active) return <>{text}</>;
@@ -46,5 +51,9 @@ export function ReadAloudWords({ text, active, className }: { text: string; acti
   });
   if (cursor < text.length) parts.push(text.slice(cursor));
 
-  return <span className={className}>{parts}</span>;
+  return (
+    <span ref={containerRef} className={className}>
+      {parts}
+    </span>
+  );
 }

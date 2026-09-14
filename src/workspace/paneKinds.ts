@@ -134,6 +134,15 @@ export const PANE_KINDS: Registry = {
     acceptsPassage: true,
     listed: true,
   },
+  tunes: {
+    kind: "tunes",
+    label: "Psalm tunes",
+    icon: Music,
+    title: () => "Psalm tunes",
+    defaultWidth: 420,
+    acceptsPassage: false,
+    listed: true,
+  },
   metrical: {
     kind: "metrical",
     label: "Metrical Psalter",
@@ -309,6 +318,8 @@ export function routeFor(content: PaneContent): string {
       return "/study/encyclopedia";
     case "metrical":
       return "/study/metrical";
+    case "tunes":
+      return "/study/tunes";
     case "mine":
       return "/study/mine";
     case "westminster":
@@ -381,6 +392,7 @@ export function parseRoute(pathname: string, search = ""): ContentRequest | null
       if (a === "confessions") return { kind: "confession-for-passage", params: {} };
       if (a === "encyclopedia") return { kind: "encyclopedia-for-passage", params: {} };
       if (a === "metrical") return { kind: "metrical", params: {} };
+      if (a === "tunes") return { kind: "tunes", params: {} };
       if (a === "mine") return { kind: "mine", params: {} };
       return null;
     case "westminster":

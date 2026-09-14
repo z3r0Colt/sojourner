@@ -1,0 +1,9471 @@
+[
+ {
+  "id": "darwall-s-148th",
+  "name": "Darwall's 148th",
+  "metre": "6.6.6.6.8.8.",
+  "pattern": [
+   6,
+   6,
+   6,
+   6,
+   8,
+   8
+  ],
+  "composer": "Darwall, John (1731-1789)",
+  "key": "D",
+  "tempo": 140,
+  "lines": [
+   [
+    [
+     {
+      "midi": 62,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 3
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 73,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 3
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 68,
+      "beats": 1
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 76,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 73,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 3
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 73,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 3
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 73,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 76,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 73,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 3
+     }
+    ]
+   ]
+  ],
+  "source": "openhymnal"
+ },
+ {
+  "id": "azmon",
+  "name": "Azmon",
+  "metre": "C.M.",
+  "pattern": [
+   8,
+   6,
+   8,
+   6
+  ],
+  "composer": "Gläser, Carl Gotthelf (1784-1829)",
+  "key": "Ab",
+  "tempo": 200,
+  "lines": [
+   [
+    [
+     {
+      "midi": 63,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 68,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 68,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 68,
+      "beats": 2
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 70,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 73,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 4
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 75,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 75,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 68,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 68,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 2
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 68,
+      "beats": 1
+     },
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 63,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 68,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 68,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 68,
+      "beats": 4
+     }
+    ]
+   ]
+  ],
+  "source": "openhymnal"
+ },
+ {
+  "id": "chesterfield",
+  "name": "Chesterfield",
+  "metre": "C.M.",
+  "pattern": [
+   8,
+   6,
+   8,
+   6
+  ],
+  "composer": "Haweis, Thomas (1734-1820)",
+  "key": "G",
+  "tempo": 130,
+  "lines": [
+   [
+    [
+     {
+      "midi": 62,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     },
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 2
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     },
+     {
+      "midi": 74,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     },
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 2
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     },
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     },
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 1
+     },
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 76,
+      "beats": 2
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     },
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     },
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 3
+     }
+    ]
+   ]
+  ],
+  "source": "openhymnal"
+ },
+ {
+  "id": "evan",
+  "name": "Evan",
+  "metre": "C.M.",
+  "pattern": [
+   8,
+   6,
+   8,
+   6
+  ],
+  "composer": "Havergal, William Henry (1793-1870)",
+  "key": "Ab",
+  "tempo": 130,
+  "lines": [
+   [
+    [
+     {
+      "midi": 63,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 63,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 68,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 68,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 63,
+      "beats": 2
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 63,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 63,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 68,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 68,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 4
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 73,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 68,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 68,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 2
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 63,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 63,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 68,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 68,
+      "beats": 4
+     }
+    ]
+   ]
+  ],
+  "source": "openhymnal"
+ },
+ {
+  "id": "ich-singe-dir-mit-herz",
+  "name": "Ich Singe dir mit Herz",
+  "metre": "C.M.",
+  "pattern": [
+   8,
+   6,
+   8,
+   6
+  ],
+  "composer": "König, Johann Balthasar (1691-1758)",
+  "key": "Bb",
+  "tempo": 110,
+  "lines": [
+   [
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 1
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 3
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 75,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 70,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 3
+     }
+    ]
+   ]
+  ],
+  "source": "openhymnal"
+ },
+ {
+  "id": "st-agnes",
+  "name": "St. Agnes",
+  "metre": "C.M.",
+  "pattern": [
+   8,
+   6,
+   8,
+   6
+  ],
+  "composer": "Dykes, John Bacchus (1823-1876)",
+  "key": "G",
+  "tempo": 140,
+  "lines": [
+   [
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 3
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 62,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 3
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 3
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 62,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 3
+     }
+    ]
+   ]
+  ],
+  "source": "openhymnal"
+ },
+ {
+  "id": "st-anne",
+  "name": "St. Anne",
+  "metre": "C.M.",
+  "pattern": [
+   8,
+   6,
+   8,
+   6
+  ],
+  "composer": "Croft, William (1678-1727)",
+  "key": "C",
+  "tempo": 100,
+  "lines": [
+   [
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 3
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 3
+     }
+    ]
+   ]
+  ],
+  "source": "openhymnal"
+ },
+ {
+  "id": "st-flavian",
+  "name": "St. Flavian",
+  "metre": "C.M.",
+  "pattern": [
+   8,
+   6,
+   8,
+   6
+  ],
+  "composer": "from Day's Psalter, 1563",
+  "key": "F",
+  "tempo": 100,
+  "lines": [
+   [
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 3
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 3
+     }
+    ]
+   ]
+  ],
+  "source": "openhymnal"
+ },
+ {
+  "id": "marosa",
+  "name": "Marosa",
+  "metre": "C.M.D.",
+  "pattern": [
+   8,
+   6,
+   8,
+   6,
+   8,
+   6,
+   8,
+   6
+  ],
+  "composer": "Bain, James Leith Macbeth (1860-1925)",
+  "key": "D",
+  "tempo": 140,
+  "lines": [
+   [
+    [
+     {
+      "midi": 62,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 2
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 67,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 61,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 4
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 62,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 2
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 67,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 61,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 4
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 64,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 2
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 64,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 4
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 62,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 2
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 67,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 61,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 6
+     }
+    ]
+   ]
+  ],
+  "source": "openhymnal"
+ },
+ {
+  "id": "old-137th",
+  "name": "Old 137th",
+  "metre": "C.M.D.",
+  "pattern": [
+   8,
+   6,
+   8,
+   6,
+   8,
+   6,
+   8,
+   6
+  ],
+  "composer": "from Day's Psalter, 1563",
+  "key": "G",
+  "tempo": 120,
+  "lines": [
+   [
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 3
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 1
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 62,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 3
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 62,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 3
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 76,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 76,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 1
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 3
+     }
+    ]
+   ]
+  ],
+  "source": "openhymnal"
+ },
+ {
+  "id": "third-mode-melody",
+  "name": "Third Mode Melody",
+  "metre": "C.M.D.",
+  "pattern": [
+   8,
+   6,
+   8,
+   6,
+   8,
+   6,
+   8,
+   6
+  ],
+  "composer": "Tallis, Thomas (1505-1585)",
+  "key": "Bb",
+  "tempo": 100,
+  "lines": [
+   [
+    [
+     {
+      "midi": 62,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 3
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 2
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 3
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 62,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 3
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 2
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 3
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1.5
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 0.5
+     },
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 2
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 63,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 63,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 3
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 1.5
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 0.5
+     },
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1.5
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 0.5
+     },
+     {
+      "midi": 63,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 2
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 63,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 60,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 3
+     }
+    ]
+   ]
+  ],
+  "source": "openhymnal"
+ },
+ {
+  "id": "christum-wir-sollen-loben-schon",
+  "name": "Christum Wir Sollen Loben Schon",
+  "metre": "L.M.",
+  "pattern": [
+   8,
+   8,
+   8,
+   8
+  ],
+  "composer": "Latin;from Erfurt Enchiridion, 1524",
+  "key": "C",
+  "tempo": 130,
+  "lines": [
+   [
+    [
+     {
+      "midi": 62,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 2
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 2
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 68,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 2
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 62,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 0.5
+     },
+     {
+      "midi": 69,
+      "beats": 0.5
+     },
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 4
+     }
+    ]
+   ]
+  ],
+  "source": "openhymnal"
+ },
+ {
+  "id": "duke-street",
+  "name": "Duke Street",
+  "metre": "L.M.",
+  "pattern": [
+   8,
+   8,
+   8,
+   8
+  ],
+  "composer": "Hatton, John (1710-1793)",
+  "key": "D",
+  "tempo": 140,
+  "lines": [
+   [
+    [
+     {
+      "midi": 62,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     },
+     {
+      "midi": 73,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 73,
+      "beats": 1
+     },
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 4
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 69,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 4
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 66,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 1
+     },
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     },
+     {
+      "midi": 74,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     },
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     },
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 4
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 69,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 73,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 3
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 4
+     }
+    ]
+   ]
+  ],
+  "source": "openhymnal"
+ },
+ {
+  "id": "erhalt-uns-herr-bei-deinem-wort",
+  "name": "Erhalt Uns, Herr, bei deinem Wort",
+  "metre": "L.M.",
+  "pattern": [
+   8,
+   8,
+   8,
+   8
+  ],
+  "composer": "from Klug's Geistliche Lieder auffs new gebessert, Wittenberg, 1543",
+  "key": "G",
+  "tempo": 120,
+  "lines": [
+   [
+    [
+     {
+      "midi": 64,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 2
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 67,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 2
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 71,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 2
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 71,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 63,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 2
+     }
+    ]
+   ]
+  ],
+  "source": "openhymnal"
+ },
+ {
+  "id": "federal-street",
+  "name": "Federal Street",
+  "metre": "L.M.",
+  "pattern": [
+   8,
+   8,
+   8,
+   8
+  ],
+  "composer": "Oliver, Henry Kemble (1800-1885)",
+  "key": "F",
+  "tempo": 130,
+  "lines": [
+   [
+    [
+     {
+      "midi": 69,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     },
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 4
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 70,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 3
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 4
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 72,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     },
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     },
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 4
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 69,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 4
+     }
+    ]
+   ]
+  ],
+  "source": "openhymnal"
+ },
+ {
+  "id": "hamburg",
+  "name": "Hamburg",
+  "metre": "L.M.",
+  "pattern": [
+   8,
+   8,
+   8,
+   8
+  ],
+  "composer": "Mason, Lowell (1792-1872)",
+  "key": "F",
+  "tempo": 130,
+  "lines": [
+   [
+    [
+     {
+      "midi": 65,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     },
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     },
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 4
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 69,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     },
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     },
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 4
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 65,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     },
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     },
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 4
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 69,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     },
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 4
+     }
+    ]
+   ]
+  ],
+  "source": "openhymnal"
+ },
+ {
+  "id": "herr-jesu-christ-dict-zu-uns-wend",
+  "name": "Herr Jesu Christ, Dict Zu Uns Wend",
+  "metre": "L.M.",
+  "pattern": [
+   8,
+   8,
+   8,
+   8
+  ],
+  "composer": "from Cantionale Germanicum, Dresden, 1628",
+  "key": "F",
+  "tempo": 140,
+  "lines": [
+   [
+    [
+     {
+      "midi": 65,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 2
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 74,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 2
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 67,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 2
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 69,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 2
+     }
+    ]
+   ]
+  ],
+  "source": "openhymnal"
+ },
+ {
+  "id": "nun-lasst-uns-den-leib-begraben",
+  "name": "Nun Lasst Uns Den Leib Begraben",
+  "metre": "L.M.",
+  "pattern": [
+   8,
+   8,
+   8,
+   8
+  ],
+  "composer": "Rhau, George (1488-1548)",
+  "key": "G",
+  "tempo": 120,
+  "lines": [
+   [
+    [
+     {
+      "midi": 67,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 3
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 2
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 67,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 3
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 2
+     }
+    ]
+   ]
+  ],
+  "source": "openhymnal"
+ },
+ {
+  "id": "o-heilige-dreifaltigkeit",
+  "name": "O Heilige Dreifaltigkeit",
+  "metre": "L.M.",
+  "pattern": [
+   8,
+   8,
+   8,
+   8
+  ],
+  "composer": "Hermann, Nikolaus (1500-1561)",
+  "key": "D",
+  "tempo": 120,
+  "lines": [
+   [
+    [
+     {
+      "midi": 62,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 2
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 73,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 3
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 73,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 2
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 3
+     }
+    ]
+   ]
+  ],
+  "source": "openhymnal"
+ },
+ {
+  "id": "old-100th",
+  "name": "Old 100th",
+  "metre": "L.M.",
+  "pattern": [
+   8,
+   8,
+   8,
+   8
+  ],
+  "composer": "Genevan Psalter;Bourgeois, Louis (1510-1561)",
+  "key": "G",
+  "tempo": 120,
+  "lines": [
+   [
+    [
+     {
+      "midi": 67,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 3
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 71,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 3
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 67,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 3
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 74,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 3
+     }
+    ]
+   ]
+  ],
+  "source": "openhymnal"
+ },
+ {
+  "id": "puer-nobis-nascitur",
+  "name": "Puer Nobis Nascitur",
+  "metre": "L.M.",
+  "pattern": [
+   8,
+   8,
+   8,
+   8
+  ],
+  "composer": "Praetorius, Michael (1571-1621)",
+  "key": "D",
+  "tempo": 120,
+  "lines": [
+   [
+    [
+     {
+      "midi": 62,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 2
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 62,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     },
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 73,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 2
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 73,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 2
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 61,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 2
+     }
+    ]
+   ]
+  ],
+  "source": "openhymnal"
+ },
+ {
+  "id": "rockingham-old",
+  "name": "Rockingham Old",
+  "metre": "L.M.",
+  "pattern": [
+   8,
+   8,
+   8,
+   8
+  ],
+  "composer": "Miller, Edward (1735-1807)",
+  "key": "D",
+  "tempo": 130,
+  "lines": [
+   [
+    [
+     {
+      "midi": 62,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     },
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 2
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 73,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     },
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     },
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 73,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 1
+     },
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 68,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 2
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 62,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 0.5
+     },
+     {
+      "midi": 64,
+      "beats": 0.5
+     },
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 2
+     }
+    ]
+   ]
+  ],
+  "source": "openhymnal"
+ },
+ {
+  "id": "st-cross",
+  "name": "St. Cross",
+  "metre": "L.M.",
+  "pattern": [
+   8,
+   8,
+   8,
+   8
+  ],
+  "composer": "Dykes, John Bacchus (1823-1876)",
+  "key": "F",
+  "tempo": 140,
+  "lines": [
+   [
+    [
+     {
+      "midi": 65,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 3
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 4
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 69,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 3
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 3
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 4
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 62,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 3
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 4
+     }
+    ]
+   ]
+  ],
+  "source": "openhymnal"
+ },
+ {
+  "id": "tallis-canon",
+  "name": "Tallis' Canon",
+  "metre": "L.M.",
+  "pattern": [
+   8,
+   8,
+   8,
+   8
+  ],
+  "composer": "Tallis, Thomas (1505-1585)",
+  "key": "G",
+  "tempo": 100,
+  "lines": [
+   [
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 74,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 62,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ]
+   ]
+  ],
+  "source": "openhymnal"
+ },
+ {
+  "id": "waltham-calkin",
+  "name": "Waltham (Calkin)",
+  "metre": "L.M.",
+  "pattern": [
+   8,
+   8,
+   8,
+   8
+  ],
+  "composer": "Calkin, John Baptiste (1827-1905)",
+  "key": "Eb",
+  "tempo": 100,
+  "lines": [
+   [
+    [
+     {
+      "midi": 63,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1.5
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 0.5
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 68,
+      "beats": 1.5
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 0.5
+     }
+    ],
+    [
+     {
+      "midi": 68,
+      "beats": 1
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 75,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1.5
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 0.5
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 1
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 70,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 1.5
+     }
+    ],
+    [
+     {
+      "midi": 68,
+      "beats": 0.5
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 68,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1.5
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 0.5
+     }
+    ],
+    [
+     {
+      "midi": 63,
+      "beats": 1
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 68,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 1.5
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 0.5
+     }
+    ],
+    [
+     {
+      "midi": 63,
+      "beats": 1
+     }
+    ]
+   ]
+  ],
+  "source": "openhymnal"
+ },
+ {
+  "id": "winchester-new",
+  "name": "Winchester New",
+  "metre": "L.M.",
+  "pattern": [
+   8,
+   8,
+   8,
+   8
+  ],
+  "composer": "from \"Musikalisches Handbuch\", Hamburg, 1690",
+  "key": "C",
+  "tempo": 100,
+  "lines": [
+   [
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 76,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 77,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 76,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 1
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 76,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ]
+   ]
+  ],
+  "source": "openhymnal"
+ },
+ {
+  "id": "dies-irae-dykes",
+  "name": "Dies Irae (Dykes)",
+  "metre": "L.M.6",
+  "pattern": [
+   8,
+   8,
+   8,
+   8,
+   8,
+   8
+  ],
+  "composer": "Dykes, John Bacchus (1823-1876)",
+  "key": "F",
+  "tempo": 100,
+  "lines": [
+   [
+    [
+     {
+      "midi": 65,
+      "beats": 1.5
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 0.5
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 1
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 70,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 1
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 65,
+      "beats": 1.5
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 0.5
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 1.5
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 0.5
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 1.5
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 0.5
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 74,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 1.5
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 0.5
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 2
+     },
+     {
+      "midi": 65,
+      "beats": 1
+     },
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 2
+     }
+    ]
+   ]
+  ],
+  "source": "openhymnal"
+ },
+ {
+  "id": "fillmore",
+  "name": "Fillmore",
+  "metre": "L.M.6",
+  "pattern": [
+   8,
+   8,
+   8,
+   8,
+   8,
+   8
+  ],
+  "composer": "Ingalls, Jeremiah (1764-1828)",
+  "key": "F",
+  "tempo": 100,
+  "lines": [
+   [
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1.5
+     },
+     {
+      "midi": 67,
+      "beats": 0.5
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 2
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     },
+     {
+      "midi": 74,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 2
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 1.5
+     },
+     {
+      "midi": 76,
+      "beats": 0.5
+     }
+    ],
+    [
+     {
+      "midi": 77,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 2
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 1.5
+     },
+     {
+      "midi": 76,
+      "beats": 0.5
+     }
+    ],
+    [
+     {
+      "midi": 77,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     },
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1.5
+     },
+     {
+      "midi": 67,
+      "beats": 0.5
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 2
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     },
+     {
+      "midi": 74,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 2
+     }
+    ]
+   ]
+  ],
+  "source": "openhymnal"
+ },
+ {
+  "id": "melita",
+  "name": "Melita",
+  "metre": "L.M.6",
+  "pattern": [
+   8,
+   8,
+   8,
+   8,
+   8,
+   8
+  ],
+  "composer": "Dykes, John Bacchus (1823-1876)",
+  "key": "C",
+  "tempo": 100,
+  "lines": [
+   [
+    [
+     {
+      "midi": 60,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 1.5
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 0.5
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 62,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 1.5
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 0.5
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1.5
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 0.5
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 1.5
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 0.5
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1.5
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 0.5
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 1.5
+     }
+    ],
+    [
+     {
+      "midi": 60,
+      "beats": 0.5
+     }
+    ],
+    [
+     {
+      "midi": 60,
+      "beats": 1
+     }
+    ]
+   ]
+  ],
+  "source": "openhymnal"
+ },
+ {
+  "id": "st-catherine",
+  "name": "St. Catherine",
+  "metre": "L.M.6",
+  "pattern": [
+   8,
+   8,
+   8,
+   8,
+   8,
+   8
+  ],
+  "composer": "Hemy, Henri Frederick (1818-1888)",
+  "key": "G",
+  "tempo": 120,
+  "lines": [
+   [
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     },
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     },
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 3
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     },
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 3
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     },
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     },
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 3
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     },
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 3
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 3
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 3
+     }
+    ]
+   ]
+  ],
+  "source": "openhymnal"
+ },
+ {
+  "id": "vater-unser-im-himmelreich",
+  "name": "Vater Unser im Himmelreich",
+  "metre": "L.M.6",
+  "pattern": [
+   8,
+   8,
+   8,
+   8,
+   8,
+   8
+  ],
+  "composer": "Luther, Martin (1483-1546)",
+  "key": "Bb",
+  "tempo": 140,
+  "lines": [
+   [
+    [
+     {
+      "midi": 67,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 63,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 63,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 60,
+      "beats": 2
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 67,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 63,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 2
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 67,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 75,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 2
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 72,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 2
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 72,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 63,
+      "beats": 2
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 67,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 68,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 63,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 63,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 60,
+      "beats": 2
+     }
+    ]
+   ]
+  ],
+  "source": "openhymnal"
+ },
+ {
+  "id": "veni-emmanuel",
+  "name": "Veni Emmanuel",
+  "metre": "L.M.6",
+  "pattern": [
+   8,
+   8,
+   8,
+   8,
+   8,
+   8
+  ],
+  "composer": "French",
+  "key": "G",
+  "tempo": 130,
+  "lines": [
+   [
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     },
+     {
+      "midi": 72,
+      "beats": 1
+     },
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 3
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     },
+     {
+      "midi": 66,
+      "beats": 1
+     },
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 3
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 2
+     },
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 3
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     },
+     {
+      "midi": 72,
+      "beats": 1
+     },
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 3
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 74,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 3
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 3
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     },
+     {
+      "midi": 72,
+      "beats": 1
+     },
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 3
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     },
+     {
+      "midi": 66,
+      "beats": 1
+     },
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 3
+     }
+    ]
+   ]
+  ],
+  "source": "openhymnal"
+ },
+ {
+  "id": "aylesbury",
+  "name": "Aylesbury",
+  "metre": "S.M.",
+  "pattern": [
+   6,
+   6,
+   8,
+   6
+  ],
+  "composer": "from John Chetham's Psalmody, 1718",
+  "key": "Ab",
+  "tempo": 110,
+  "lines": [
+   [
+    [
+     {
+      "midi": 65,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 68,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 2
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 72,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 75,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 73,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 2
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 68,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 68,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 68,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 68,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 2
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 4
+     }
+    ]
+   ]
+  ],
+  "source": "openhymnal"
+ },
+ {
+  "id": "boylston",
+  "name": "Boylston",
+  "metre": "S.M.",
+  "pattern": [
+   6,
+   6,
+   8,
+   6
+  ],
+  "composer": "Mason, Lowell (1792-1872)",
+  "key": "C",
+  "tempo": 90,
+  "lines": [
+   [
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 0.5
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 0.5
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 2
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 0.5
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 0.5
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 2
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 0.5
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 0.5
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 0.5
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 0.5
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 0.5
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 0.5
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 2
+     }
+    ]
+   ]
+  ],
+  "source": "openhymnal"
+ },
+ {
+  "id": "dennis",
+  "name": "Dennis",
+  "metre": "S.M.",
+  "pattern": [
+   6,
+   6,
+   8,
+   6
+  ],
+  "composer": "Nägeli, Hans Georg (1773-1836)",
+  "key": "G",
+  "tempo": 110,
+  "lines": [
+   [
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     },
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     },
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 2
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     },
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     },
+     {
+      "midi": 62,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 2
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     },
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     },
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 1
+     },
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     },
+     {
+      "midi": 74,
+      "beats": 1
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 76,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 1
+     },
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     },
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 2
+     }
+    ]
+   ]
+  ],
+  "source": "openhymnal"
+ },
+ {
+  "id": "franconia",
+  "name": "Franconia",
+  "metre": "S.M.",
+  "pattern": [
+   6,
+   6,
+   8,
+   6
+  ],
+  "composer": "König, Johann Balthasar (1691-1758)",
+  "key": "Eb",
+  "tempo": 120,
+  "lines": [
+   [
+    [
+     {
+      "midi": 63,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 68,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 3
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 70,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 75,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 68,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 3
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 70,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 75,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 1
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 70,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 63,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 63,
+      "beats": 3
+     }
+    ]
+   ]
+  ],
+  "source": "openhymnal"
+ },
+ {
+  "id": "potsdam",
+  "name": "Potsdam",
+  "metre": "S.M.",
+  "pattern": [
+   6,
+   6,
+   8,
+   6
+  ],
+  "composer": "Bach, Johann Sebastian (1685-1750)",
+  "key": "E",
+  "tempo": 100,
+  "lines": [
+   [
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 68,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 73,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 76,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 75,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 73,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 68,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 73,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 68,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 68,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ]
+   ]
+  ],
+  "source": "openhymnal"
+ },
+ {
+  "id": "sellinge",
+  "name": "Sellinge",
+  "metre": "S.M.",
+  "pattern": [
+   6,
+   6,
+   8,
+   6
+  ],
+  "composer": "Hullah, John Pyke (1812-1884)",
+  "key": "D",
+  "tempo": 120,
+  "lines": [
+   [
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 73,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 3
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 3
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 74,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 73,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 71,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 69,
+      "beats": 1
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 62,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 66,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 64,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 62,
+      "beats": 3
+     }
+    ]
+   ]
+  ],
+  "source": "openhymnal"
+ },
+ {
+  "id": "southwell",
+  "name": "Southwell",
+  "metre": "S.M.",
+  "pattern": [
+   6,
+   6,
+   8,
+   6
+  ],
+  "composer": "from William Daman's Psalter, 1579",
+  "key": "Ab",
+  "tempo": 110,
+  "lines": [
+   [
+    [
+     {
+      "midi": 65,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 68,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 68,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 3
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 68,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 68,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 68,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 3
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 75,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 75,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 73,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 73,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 1
+     }
+    ]
+   ],
+   [
+    [
+     {
+      "midi": 72,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 70,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 68,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 67,
+      "beats": 1
+     }
+    ],
+    [
+     {
+      "midi": 65,
+      "beats": 3
+     }
+    ]
+   ]
+  ],
+  "source": "openhymnal"
+ }
+]

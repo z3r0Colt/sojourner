@@ -468,6 +468,26 @@ export function useMetricalPsalm(psalm: number | null) {
   });
 }
 
+/** Every tune the app carries, for the tune index. */
+export function useAllPsalmTunes() {
+  return useQuery({
+    queryKey: ["psalmTunes", "all"],
+    queryFn: () => api.listPsalmTunes(),
+    staleTime: Infinity,
+  });
+}
+
+/** The tunes a psalm in this metre can be sung to. Metre is the whole of the
+ *  match: any Common Metre tune carries any Common Metre psalm. */
+export function usePsalmTunes(metre: string | null) {
+  return useQuery({
+    queryKey: ["psalmTunes", metre],
+    queryFn: () => api.listPsalmTunes(metre ?? undefined),
+    enabled: metre != null,
+    staleTime: Infinity,
+  });
+}
+
 export function useWestminsterDocuments() {
   return useQuery({ queryKey: ["westminsterDocuments"], queryFn: api.listWestminsterDocuments, staleTime: Infinity });
 }

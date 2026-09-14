@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { ttsEngines } from "../features/tts/ttsEngine";
 import { tokenizeWords, findWordIndexAtChar, type TtsWordToken } from "../features/tts/textUtils";
+import { buildSpoken, loadPronunciationLexicon, toSourceIndex, type SpokenChunk } from "../features/tts/pronunciation";
 import { toast } from "../components/ui/toast";
 
 export interface TtsSegment {
@@ -29,6 +30,8 @@ interface TtsState {
   autoScroll: boolean;
   /** When a Scripture chapter finishes, turn the page and keep reading. */
   autoContinue: boolean;
+  /** Say biblical names the way ISBE gives them rather than as spelled. */
+  usePronunciations: boolean;
 
   // Playback session (not persisted)
   title: string;
@@ -53,6 +56,7 @@ interface TtsState {
   /** True between a chapter finishing and its pane starting the next one. */
   continuing: boolean;
 
+  setEngineId: (id: string) => void;
   setVoiceId: (id: string | null) => void;
   setRate: (n: number) => void;
   setPitch: (n: number) => void;
@@ -61,6 +65,7 @@ interface TtsState {
   setHighlightStyle: (s: TtsHighlightStyle) => void;
   setAutoScroll: (b: boolean) => void;
   setAutoContinue: (b: boolean) => void;
+  setUsePronunciations: (b: boolean) => void;
   setSleepMinutes: (minutes: number) => void;
 
   start: (title: string, sourceKind: TtsSourceKind, segments: TtsSegment[], opts?: { startIndex?: number; paneId?: string | null }) => void;
@@ -94,6 +99,9 @@ function persist(partial: Record<string, unknown>) {
 }
 
 let currentTokens: TtsWordToken[] = [];
+/** How the text handed to the engine lines up with the text on screen; null
+ * when nothing was rewritten and the two are the same string. */
+let currentChunks: SpokenChunk[] | null = null;
 
 function engine() {
   return ttsEngines[useTtsStore.getState().engineId] ?? ttsEngines.webspeech;
@@ -136,15 +144,24 @@ function speakCurrentSegment(get: () => TtsState, set: (partial: Partial<TtsStat
     set({ isPlaying: false, isPaused: false });
     return;
   }
+  // The tokens stay those of the displayed verse. What the engine is given may
+  // be a rewritten one -- "me-fib-o-sheth" for Mephibosheth -- so the boundary
+  // events it reports are mapped back before they move the highlight.
   currentTokens = tokenizeWords(segment.text);
+  const rendered = s.usePronunciations ? buildSpoken(segment.text) : null;
+  currentChunks = rendered && rendered.changed > 0 ? rendered.chunks : null;
   set({ currentWordIndex: -1, isPlaying: true, isPaused: false, error: null });
 
-  engine().speak(
-    segment.text,
-    { voiceId: s.voiceId, rate: s.rate, pitch: s.pitch, volume: s.volume * s.fadeLevel },
+  const current = engine();
+  const opts = { voiceId: s.voiceId, rate: s.rate, pitch: s.pitch, volume: s.volume * s.fadeLevel };
+
+  current.speak(
+    rendered ? rendered.spoken : segment.text,
+    opts,
     {
       onWordBoundary: (charIndex) => {
-        const idx = findWordIndexAtChar(currentTokens, charIndex);
+        const sourceIndex = currentChunks ? toSourceIndex(currentChunks, charIndex) : charIndex;
+        const idx = findWordIndexAtChar(currentTokens, sourceIndex);
         set({ currentWordIndex: idx });
       },
       onEnd: () => {
@@ -162,6 +179,17 @@ function speakCurrentSegment(get: () => TtsState, set: (partial: Partial<TtsStat
       },
     },
   );
+
+  // Start the next verse rendering while this one plays. An engine that has to
+  // synthesize a whole verse before it can play a note of it would otherwise
+  // leave a few seconds of silence at every verse break; the neural voice
+  // renders in well under the time a verse takes to say, so given this head
+  // start it is ready by the time it is wanted.
+  const next = s.segments[s.currentSegmentIndex + 1];
+  if (next && current.prefetch) {
+    const nextRendered = s.usePronunciations ? buildSpoken(next.text) : null;
+    current.prefetch(nextRendered ? nextRendered.spoken : next.text, opts);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -212,6 +240,7 @@ export const useTtsStore = create<TtsState>((set, get) => ({
   highlightStyle: stored.highlightStyle ?? "background",
   autoScroll: stored.autoScroll ?? true,
   autoContinue: stored.autoContinue ?? true,
+  usePronunciations: stored.usePronunciations ?? true,
 
   title: "",
   sourceKind: null,
@@ -227,6 +256,13 @@ export const useTtsStore = create<TtsState>((set, get) => ({
   fadeLevel: 1,
   continuing: false,
 
+  setEngineId: (engineId) => {
+    engine().cancel();
+    // Voice ids belong to the engine that issued them, so carrying one across
+    // a switch would name a voice the new engine has never heard of.
+    persist({ engineId, voiceId: null });
+    set({ engineId, voiceId: null, isPlaying: false, isPaused: false });
+  },
   setVoiceId: (voiceId) => {
     persist({ voiceId });
     set({ voiceId });
@@ -234,6 +270,13 @@ export const useTtsStore = create<TtsState>((set, get) => ({
   setRate: (rate) => {
     persist({ rate });
     set({ rate });
+    const current = engine();
+    if (current.setRate) {
+      // An engine playing rendered audio can just play it faster. Restarting
+      // would mean waiting seconds for the verse to be spoken again.
+      current.setRate(rate);
+      return;
+    }
     // Web Speech can't change rate mid-utterance; restart current segment at the new rate.
     const s = get();
     if (s.isPlaying) speakCurrentSegment(get, set);
@@ -264,6 +307,14 @@ export const useTtsStore = create<TtsState>((set, get) => ({
     persist({ autoContinue });
     set({ autoContinue });
   },
+  setUsePronunciations: (usePronunciations) => {
+    persist({ usePronunciations });
+    set({ usePronunciations });
+    // Takes effect at the next verse rather than restarting this one: the
+    // reader is listening, and a sentence starting over is more jarring than
+    // one name said the old way.
+    if (usePronunciations) void loadPronunciationLexicon();
+  },
   setSleepMinutes: (sleepMinutes) => {
     if (sleepMinutes <= 0) {
       stopSleepTicker();
@@ -287,7 +338,14 @@ export const useTtsStore = create<TtsState>((set, get) => ({
       error: null,
       continuing: false,
     });
-    speakCurrentSegment(get, set);
+    if (get().usePronunciations) {
+      // One query, once a session. The first chapter waits a few milliseconds
+      // for it rather than mispronouncing its way through verse one. If Stop
+      // lands first the queue is empty by then and nothing is spoken.
+      void loadPronunciationLexicon().then(() => speakCurrentSegment(get, set));
+    } else {
+      speakCurrentSegment(get, set);
+    }
   },
   pause: () => {
     engine().pause();

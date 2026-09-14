@@ -41,6 +41,7 @@ import type {
   DictionaryEntrySummary,
   IsbeEntry,
   IsbeEntrySummary,
+  Pronunciation,
   IsbePassageEntry,
   IsbeSearchResult,
   InterlinearWord,
@@ -54,6 +55,7 @@ import type {
   TrashKind,
   CrossReference,
   MetricalPsalmVersion,
+  PsalmTune,
   WestminsterDocument,
   WestminsterSectionSummary,
   WestminsterSection,
@@ -219,6 +221,7 @@ export const api = {
     invoke<DictionaryEntrySummary[]>("search_dictionary", { query, limit }),
 
   listIsbeIndex: () => invoke<IsbeEntrySummary[]>("list_isbe_index"),
+  listPronunciations: () => invoke<Pronunciation[]>("list_pronunciations"),
   getIsbeEntry: (slug: string) => invoke<IsbeEntry | null>("get_isbe_entry", { slug }),
   findIsbeEntryByTerm: (term: string) => invoke<IsbeEntrySummary | null>("find_isbe_entry_by_term", { term }),
   findDictionaryEntryForIsbe: (slug: string) =>
@@ -246,6 +249,7 @@ export const api = {
   getCrossReferences: (bookId: number, chapter: number, verse: number) =>
     invoke<CrossReference[]>("get_cross_references", { bookId, chapter, verse }),
   getMetricalPsalm: (psalm: number) => invoke<MetricalPsalmVersion[]>("get_metrical_psalm", { psalm }),
+  listPsalmTunes: (metre?: string) => invoke<PsalmTune[]>("list_psalm_tunes", { metre: metre ?? null }),
 
   listWestminsterDocuments: () => invoke<WestminsterDocument[]>("list_westminster_documents"),
   listWestminsterSections: (documentId: number) =>

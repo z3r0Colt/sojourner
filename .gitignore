@@ -16,6 +16,11 @@ dist-ssr
 # built from bibles/, commentaries/, reference/ at package time, not committed.
 /content/
 
+# The neural voice model, fetched by `npm run fetch:voices` (see
+# tools/fetch-voice-model.mjs). ~170 MB of Apache-2.0 weights, bundled into the
+# installer at build time so the app never needs the network to speak.
+/models/
+
 # The books that ship with the app, gathered by `npm run library:collect` from
 # whatever is in the reader's own library. Hundreds of megabytes of epub, so
 # they live beside the repo rather than in it -- keep a copy elsewhere, since
@@ -32,3 +37,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Build-time downloads (psalm tune scores); regenerate with npm run fetch:tunes
+.cache/

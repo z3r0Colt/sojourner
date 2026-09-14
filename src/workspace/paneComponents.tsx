@@ -1,5 +1,6 @@
 import type { ComponentType } from "react";
 import type { PaneKind } from "../state/workspaceStore";
+import { TuneIndexPanel } from "../features/psalter/TuneIndexPanel";
 import { ReadingPane } from "../features/reading/ReadingPane";
 import { WestminsterView } from "../features/westminster/WestminsterView";
 import { LexiconView } from "../features/lexicon/LexiconView";
@@ -27,6 +28,7 @@ export const PANE_COMPONENTS: Record<PaneKind, ComponentType> = {
   "confession-for-passage": ConfessionPane,
   "encyclopedia-for-passage": EncyclopediaForPassagePane,
   metrical: MetricalPane,
+  tunes: TuneIndexPanel,
   mine: MinePane,
   westminster: WestminsterView,
   lexicon: LexiconView,

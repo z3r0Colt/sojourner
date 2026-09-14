@@ -39,7 +39,8 @@
     ],
     "resources": {
       "../content/content.db": "content.db",
-      "../library/": "library/"
+      "../library/": "library/",
+      "../models/": "models/"
     },
     "windows": {
       "webviewInstallMode": {

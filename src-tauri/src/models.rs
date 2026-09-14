@@ -38,10 +38,57 @@ pub struct MetricalPsalmVerse {
     pub text: String,
 }
 
+/// One metrical line, with the Bible verses that begin inside it -- which in
+/// metrical psalmody is regularly part-way along, not at the start.
+#[derive(Debug, Clone, Serialize)]
+pub struct MetricalPsalmLine {
+    pub text: String,
+    pub marks: Vec<MetricalPsalmMark>,
+    /// One entry per note the line is sung on, longer words already divided.
+    pub syllables: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, serde::Deserialize)]
+pub struct MetricalPsalmMark {
+    pub verse: i64,
+    pub word: i64,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct MetricalPsalmStanza {
+    pub number: i64,
+    pub lines: Vec<MetricalPsalmLine>,
+}
+
+/// One setting of a psalm: its metre, its verses, and -- where the text
+/// divided exactly -- its stanzas broken into singable lines.
 #[derive(Debug, Clone, Serialize)]
 pub struct MetricalPsalmVersion {
     pub label: Option<String>,
+    pub metre: String,
+    pub pattern: Vec<i64>,
     pub verses: Vec<MetricalPsalmVerse>,
+    pub stanzas: Vec<MetricalPsalmStanza>,
+}
+
+/// A tune, melody only. `lines` is one entry per line of the metre, each a
+/// list of syllables, each syllable the note or notes it is sung to.
+#[derive(Debug, Clone, Serialize)]
+pub struct PsalmTune {
+    pub id: String,
+    pub name: String,
+    pub metre: String,
+    pub pattern: Vec<i64>,
+    pub composer: Option<String>,
+    pub key: Option<String>,
+    pub tempo: i64,
+    pub lines: Vec<Vec<Vec<TuneNote>>>,
+}
+
+#[derive(Debug, Clone, Serialize, serde::Deserialize)]
+pub struct TuneNote {
+    pub midi: i64,
+    pub beats: f64,
 }
 
 /// An alternate book name a bundled translation's own source uses (e.g. a
@@ -327,6 +374,14 @@ pub struct IsbeEntrySummary {
     pub id: i64,
     pub term: String,
     pub slug: String,
+}
+
+/// How to say a name, in ISBE's own notation: "me-fib'-o-sheth". Read aloud
+/// turns these into something a given voice pronounces correctly.
+#[derive(Debug, Clone, Serialize)]
+pub struct Pronunciation {
+    pub word: String,
+    pub respelling: String,
 }
 
 /// An encyclopedia article that discusses the passage being read.

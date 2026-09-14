@@ -772,6 +772,85 @@ CREATE INDEX idx_isbe_refs_passage ON isbe_refs(book_id, chapter, verse);
 CREATE INDEX idx_isbe_refs_entry ON isbe_refs(entry_id);
 "#;
 
+// How to say the names.
+//
+// Read aloud has always had a second problem behind the voice: no synthesizer
+// knows what to do with Mephibosheth, and a genealogy chapter read by one is
+// unlistenable. The fix was already sitting in the encyclopedia. ISBE opens
+// almost every article with the 1915 edition's pronunciation respelling --
+// "me-fib'-o-sheth", "ze-rub'-a-bel", "ar-e-op'-a-gus" -- roughly seven
+// thousand of them, covering the proper nouns of Scripture far better than
+// any list that could be written by hand. They were imported as part of the
+// article body and never read as data.
+//
+// The respelling is stored raw, exactly as ISBE gives it. Turning one into
+// something a particular voice says correctly is a matter of taste that will
+// be adjusted by ear, and that belongs in the frontend where it costs nothing
+// to change -- not baked in here, where every adjustment would mean rebuilding
+// content.db.
+pub const CONTENT_MIGRATION_0015: &str = r#"
+CREATE TABLE pronunciations (
+  word       TEXT PRIMARY KEY,   -- the headword, uppercased: "MEPHIBOSHETH"
+  respelling TEXT NOT NULL,      -- ISBE's own form: "me-fib'-o-sheth"
+  source     TEXT NOT NULL       -- 'isbe'; room for a curated second source
+);
+"#;
+
+// The psalter as something to sing rather than only to read.
+//
+// `metrical_psalms` holds the running verse text and stays as it was. What
+// this adds is the shape a psalter is actually printed in: each setting knows
+// its metre, and -- where the scan was clean enough to divide exactly -- its
+// stanzas broken into metrical lines, one line per line of the tune.
+//
+// A tune belongs to a metre, not to a psalm. Any Common Metre tune carries
+// any Common Metre psalm, which is the whole point of naming metres, so tunes
+// are stored once and matched to psalms by `metre`.
+pub const CONTENT_MIGRATION_0016: &str = r#"
+CREATE TABLE metrical_psalm_settings (
+  id       INTEGER PRIMARY KEY,
+  psalm    INTEGER NOT NULL,
+  label    TEXT,               -- 'First Version' where the book prints two
+  metre    TEXT NOT NULL,      -- 'C.M.', 'L.M.', '8.7.8.7.'
+  pattern  TEXT NOT NULL,      -- syllables per line: '8,6,8,6'
+  UNIQUE(psalm, label)
+);
+CREATE INDEX idx_metrical_psalm_settings_psalm ON metrical_psalm_settings(psalm);
+
+-- One line of one stanza. `marks` is JSON, [{"verse":2,"word":0}], naming the
+-- Bible verses that begin inside this line -- in metrical psalmody a verse
+-- regularly begins mid-line, so the number cannot simply sit at the front.
+-- `syllables` is JSON, one entry per note the line is sung on, with longer
+-- words already divided ("sal","va","ti","on") -- so the words can be set
+-- under the notes without the two drifting apart.
+CREATE TABLE metrical_psalm_lines (
+  id          INTEGER PRIMARY KEY,
+  setting_id  INTEGER NOT NULL REFERENCES metrical_psalm_settings(id),
+  stanza      INTEGER NOT NULL,
+  line        INTEGER NOT NULL,
+  text        TEXT NOT NULL,
+  marks       TEXT NOT NULL DEFAULT '[]',
+  syllables   TEXT NOT NULL DEFAULT '[]',
+  UNIQUE(setting_id, stanza, line)
+);
+
+-- `notes` is JSON: an array of lines, each an array of syllables, each an
+-- array of {"midi":67,"beats":1}. A syllable is usually one note and
+-- occasionally two, where the tune carries it -- so the words can be set
+-- under the notes without the two drifting apart.
+CREATE TABLE psalm_tunes (
+  id        TEXT PRIMARY KEY,   -- 'st-anne'
+  name      TEXT NOT NULL,
+  metre     TEXT NOT NULL,
+  pattern   TEXT NOT NULL,
+  composer  TEXT,
+  tune_key  TEXT,
+  tempo     INTEGER NOT NULL,   -- crotchets per minute
+  notes     TEXT NOT NULL
+);
+CREATE INDEX idx_psalm_tunes_metre ON psalm_tunes(metre);
+"#;
+
 pub const CONTENT_MIGRATIONS: &[&str] = &[
     CONTENT_MIGRATION_0001,
     CONTENT_MIGRATION_0002,
@@ -787,6 +866,8 @@ pub const CONTENT_MIGRATIONS: &[&str] = &[
     CONTENT_MIGRATION_0012,
     CONTENT_MIGRATION_0013,
     CONTENT_MIGRATION_0014,
+    CONTENT_MIGRATION_0015,
+    CONTENT_MIGRATION_0016,
 ];
 
 pub const USER_MIGRATION_0001: &str = r#"

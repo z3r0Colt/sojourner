@@ -131,6 +131,7 @@ export type PaneContent =
   | { kind: "confession-for-passage"; params: PassageParams }
   | { kind: "encyclopedia-for-passage"; params: PassageParams }
   | { kind: "metrical"; params: PassageParams }
+  | { kind: "tunes"; params: Record<string, never> }
   | { kind: "mine"; params: PassageParams }
   | { kind: "westminster"; params: WestminsterParams }
   | { kind: "lexicon"; params: LexiconParams }
@@ -163,6 +164,7 @@ export const PANE_KIND_LIST: readonly PaneKind[] = [
   "confession-for-passage",
   "encyclopedia-for-passage",
   "metrical",
+  "tunes",
   "mine",
   "westminster",
   "lexicon",
