@@ -419,6 +419,19 @@ mark.find-current {
   margin: 0 0 0.75em;
 }
 
+/* The atlas needs land and water to read apart at a glance, which two
+   neighbouring surface greys never will. Water takes a wash of the accent
+   -- the one hue every theme defines and every theme keeps legible -- so the
+   coast is a real edge in all six of them without a palette of its own. */
+.atlas-map {
+  --atlas-water: color-mix(in srgb, var(--color-accent) 16%, var(--color-surface-2));
+  --atlas-land: var(--color-surface);
+  --atlas-coast: color-mix(in srgb, var(--color-accent) 45%, var(--color-line-2));
+  --atlas-water-line: color-mix(in srgb, var(--color-accent) 55%, var(--color-line-2));
+  --atlas-water-label: color-mix(in srgb, var(--color-accent) 70%, var(--color-ink-3));
+  background-color: var(--atlas-water);
+}
+
 /* ISBE articles carry an outline the dictionary's entries do not -- roman
    sections and numbered subsections, which the extractor promotes to h2/h3.
    Cross-references to other articles are dotted, to read as a different kind

@@ -142,11 +142,13 @@ const CATEGORIES: Category[] = [
     title: "Atlas",
     items: [
       { q: "What it is", a: "A map of the biblical world with 1,342 places named in Scripture, each with its coordinates, its modern identification where there is one, and every verse it appears in." },
-      { q: "Moving around the map", a: "Drag to pan and scroll to zoom, or use the buttons at the top right; the third one returns to the whole map. With the map focused, the arrow keys pan and + and − zoom. Place names can be turned off with the checkbox beneath the list." },
-      { q: "Finding a place", a: "Search or scroll the list on the left. Selecting a place centres the map on it and shows its details on the right, including every verse that names it — click any of them to open the passage." },
+      { q: "Moving around the map", a: "Drag to pan and scroll to zoom, or use the buttons at the top right; the third one returns to the whole map. With the map focused, the arrow keys pan and + and − zoom. The map shows more places the further you zoom in, as a map should — at the widest view only the territories and the great cities, and every village by the time you are down to a valley." },
+      { q: "Finding a place", a: "Search or scroll the list on the left, or click any dot on the map. Either way the map goes to it and its details come up on the right, including every verse that names it — click any of them to open the passage. Clicking on the map keeps the zoom you were at; picking from the list frames the place for you." },
+      { q: "Names and borders", a: "Beneath the list are switches for place names and region borders, and a size for the names — raise it if the map is hard to read. Territories and seas are written across the area they cover, the way an atlas names a country; towns are tagged beside their dot." },
       { q: "The map follows your reading", a: "Open an Atlas pane beside a Bible pane and the places named in the chapter you are reading are marked in the accent colour and the map frames them. Open Acts 17 and Thessalonica, Berea, and Athens light up together." },
       { q: "Journeys", a: "The Journeys tab traces fourteen routes through Scripture, from Abraham's travels and the Exodus to Paul's missionary journeys and the voyage to Rome. Each leg is numbered on the map and listed with the verse that records it." },
       { q: "How sure is the map?", a: "Most biblical sites are not certainly located, and the atlas says so rather than pretending otherwise. Each place carries a confidence — certain, probable, possible, or proposed — and the less certain ones are drawn as faded dots. Where several modern sites have been proposed, the detail panel says how many." },
+      { q: "Why are the borders fuzzy?", a: "Because nobody knows exactly where Bashan ended and Gilead began. The outlines come from scholarly estimates of how far each region reached, and are drawn as a soft wash inside a dashed line rather than a hard boundary, which would claim more than anyone can know. The region you have selected is drawn most clearly; a few of the major territories stay faintly outlined for your bearings." },
     ],
   },
   {
