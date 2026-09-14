@@ -1,11 +1,24 @@
-import { useEffect, useRef, useState, type MutableRefObject } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject, type ReactNode } from "react";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import ePub from "epubjs";
+import type Book from "epubjs/types/book";
+import type Contents from "epubjs/types/contents";
 import type Rendition from "epubjs/types/rendition";
 import type { NavItem } from "epubjs/types/navigation";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Button } from "../../components/ui/Button";
+import { ChevronLeft, ChevronRight, Minus, Plus, Type } from "lucide-react";
+import { Button, IconButton } from "../../components/ui/Button";
+import { Popover } from "../../components/ui/Popover";
 import { LoadingState } from "../../components/ui/EmptyState";
+import { checkboxClass, cx, selectSmClass } from "../../components/ui/classes";
+import {
+  EPUB_WIDTH_OPTIONS,
+  READING_FONT_OPTIONS,
+  useUiStore,
+  type EpubWidth,
+  type LineSpacing,
+  type ReadingFont,
+} from "../../state/uiStore";
+import { EPUB_STYLE_KEY, addRunOut, buildEpubCss, fitScannedPage, markScannedPage, pinInvisibleText, routeExternalLinks, unstackPositionedElements } from "./epubStyles";
 
 /** One entry of a book's table of contents, flattened with its depth. */
 export interface EpubTocItem {
@@ -26,6 +39,25 @@ export interface EpubLocation {
   href: string;
 }
 
+const FONT_SIZE_MIN = 12;
+const FONT_SIZE_MAX = 32;
+/** Roughly a paragraph's worth of text per generated location. */
+const LOCATION_CHARS = 1200;
+/** Long enough that dragging a pane divider re-renders the book once, at
+ * the end, rather than on every frame. */
+const RESIZE_SETTLE_MS = 150;
+/** Locations are generated after the book is on screen, not before it. */
+const LOCATIONS_DELAY_MS = 1200;
+/** How much of the visible height a page-down moves, keeping a couple of
+ * lines of overlap so the eye can pick up where it left off. */
+const PAGE_OVERLAP_PX = 56;
+
+const LINE_SPACING_OPTIONS: { value: LineSpacing; label: string }[] = [
+  { value: "compact", label: "Compact" },
+  { value: "normal", label: "Normal" },
+  { value: "relaxed", label: "Relaxed" },
+];
+
 function flattenToc(items: NavItem[] | undefined, depth = 0, out: EpubTocItem[] = []): EpubTocItem[] {
   for (const item of items ?? []) {
     const label = (item.label ?? "").trim();
@@ -34,6 +66,53 @@ function flattenToc(items: NavItem[] | undefined, depth = 0, out: EpubTocItem[] 
   }
   return out;
 }
+
+/** The contents entry a section belongs to, so the reader can say where in
+ * the book it is. Fragments are ignored: several entries can point into
+ * one file, and the first of them names the file well enough. */
+function labelForHref(toc: EpubTocItem[], href: string): string | null {
+  const path = href.split("#")[0];
+  return toc.find((item) => item.href.split("#")[0] === path)?.label ?? null;
+}
+
+/** epub.js types `getContents` as a single Contents; it returns one per
+ * rendered section. */
+function contentsOf(rendition: Rendition): Contents[] {
+  const contents = rendition.getContents() as unknown;
+  return Array.isArray(contents) ? (contents as Contents[]) : contents ? [contents as Contents] : [];
+}
+
+/** Re-measures the frame against its container. epub.js types both
+ * arguments as required, but omitting them is what asks it to measure. */
+function resizeToContainer(rendition: Rendition): void {
+  (rendition as unknown as { resize: (width?: number, height?: number) => void }).resize();
+}
+
+/**
+ * A counter that changes whenever the app's theme or accent does, so the
+ * stylesheet inside the book's frame can be rebuilt from the current
+ * tokens. Both are written onto `<html>` -- the theme as an attribute, the
+ * accent as inline custom properties -- so one observer catches both.
+ */
+function useThemeVersion(): number {
+  const [version, setVersion] = useState(0);
+  useEffect(() => {
+    const observer = new MutationObserver(() => setVersion((v) => v + 1));
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme", "style"] });
+    return () => observer.disconnect();
+  }, []);
+  return version;
+}
+
+interface Progress {
+  /** Index of the section on screen within the spine. */
+  index: number;
+  total: number;
+  /** How far through the whole book, once locations have been generated. */
+  percent: number | null;
+}
+
+const NO_PROGRESS: Progress = { index: 0, total: 0, percent: null };
 
 export function EpubReader({
   filePath,
@@ -56,11 +135,41 @@ export function EpubReader({
   onSelect?: (text: string, cfi: string | null) => void;
   controllerRef?: MutableRefObject<EpubController | null>;
 }) {
+  const hostRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const bookRef = useRef<Book | null>(null);
   const renditionRef = useRef<Rendition | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  // Callbacks and the opening CFI are read through refs so the book is
-  // opened once per file, not once per parent render.
+  const tocRef = useRef<EpubTocItem[]>([]);
+  const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
+  const [chapter, setChapter] = useState<string | null>(null);
+  const [progress, setProgress] = useState<Progress>(NO_PROGRESS);
+  /** Where the reader is dragging the progress slider to, before letting go. */
+  const [scrub, setScrub] = useState<number | null>(null);
+
+  const fontSize = useUiStore((s) => s.fontSize);
+  const setFontSize = useUiStore((s) => s.setFontSize);
+  const lineSpacing = useUiStore((s) => s.lineSpacing);
+  const setLineSpacing = useUiStore((s) => s.setLineSpacing);
+  const readingFont = useUiStore((s) => s.readingFont);
+  const setReadingFont = useUiStore((s) => s.setReadingFont);
+  const epubWidth = useUiStore((s) => s.epubWidth);
+  const setEpubWidth = useUiStore((s) => s.setEpubWidth);
+  const useBookStyles = useUiStore((s) => s.epubUseBookStyles);
+  const setUseBookStyles = useUiStore((s) => s.setEpubUseBookStyles);
+  const themeVersion = useThemeVersion();
+
+  const css = useMemo(() => {
+    // themeVersion carries no value of its own; changing is its whole
+    // purpose, because the colours are read from the theme's tokens.
+    void themeVersion;
+    return buildEpubCss({ fontSize, lineSpacing, readingFont, width: epubWidth, useBookStyles });
+  }, [fontSize, lineSpacing, readingFont, epubWidth, useBookStyles, themeVersion]);
+
+  // Callbacks, the stylesheet and the opening CFI are reached through refs
+  // so the book is opened once per file, not once per parent render or
+  // once per change of type size.
+  const cssRef = useRef(css);
+  cssRef.current = css;
   const onLocationRef = useRef(onLocation);
   onLocationRef.current = onLocation;
   const onTocRef = useRef(onToc);
@@ -77,103 +186,427 @@ export function EpubReader({
     };
   }, [controllerRef]);
 
-  // epubjs's paginated flow (CSS multi-column) computes its column track
-  // width from the container's pixel size at renderTo time, and is fragile
-  // against many books' own stylesheets (fixed-width body, viewport meta,
-  // etc): the title page would show, then every "page" after it landed on
-  // genuinely empty horizontal space because the column track epub.js
-  // thought it was paginating across didn't match what actually rendered.
-  // "scrolled-doc" flow (one continuously-scrollable vertical column, like
-  // a normal web page) sidesteps that whole class of bug at the cost of
-  // Prev/Next paging between sections instead of columns.
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-    setIsLoading(true);
+  const scrollerEl = useCallback(() => containerRef.current?.querySelector<HTMLElement>(".epub-container") ?? null, []);
 
-    const url = convertFileSrc(filePath);
-    const book = ePub(url);
-    let rendition: Rendition | null = null;
+  /** A page down (or up) that runs on into the next section at the end of
+   * this one, so a book can be read on the space bar alone. */
+  const pageBy = useCallback(
+    (direction: 1 | -1) => {
+      const el = scrollerEl();
+      const rendition = renditionRef.current;
+      if (!el || !rendition) return;
+      const atEnd = el.scrollTop + el.clientHeight >= el.scrollHeight - 2;
+      const atStart = el.scrollTop <= 2;
+      if (direction > 0 && atEnd) {
+        void rendition.next();
+      } else if (direction < 0 && atStart) {
+        void rendition.prev();
+      } else {
+        el.scrollBy({ top: direction * Math.max(120, el.clientHeight - PAGE_OVERLAP_PX), behavior: "smooth" });
+      }
+    },
+    [scrollerEl],
+  );
+
+  const handleKey = useCallback(
+    (event: { key: string; altKey: boolean; ctrlKey: boolean; metaKey: boolean; target: EventTarget | null; preventDefault: () => void }) => {
+      if (event.altKey || event.ctrlKey || event.metaKey) return;
+      const target = event.target as HTMLElement | null;
+      const tag = target?.tagName ?? "";
+      if (target?.isContentEditable || tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || tag === "BUTTON") return;
+      const el = scrollerEl();
+      switch (event.key) {
+        case " ":
+        case "PageDown":
+          pageBy(1);
+          break;
+        case "PageUp":
+          pageBy(-1);
+          break;
+        case "ArrowRight":
+          void renditionRef.current?.next();
+          break;
+        case "ArrowLeft":
+          void renditionRef.current?.prev();
+          break;
+        case "ArrowDown":
+          el?.scrollBy({ top: 80 });
+          break;
+        case "ArrowUp":
+          el?.scrollBy({ top: -80 });
+          break;
+        case "Home":
+          el?.scrollTo({ top: 0, behavior: "smooth" });
+          break;
+        case "End":
+          el?.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+          break;
+        default:
+          return;
+      }
+      event.preventDefault();
+    },
+    [pageBy, scrollerEl],
+  );
+  // Keys pressed inside the book land in its iframe rather than in this
+  // document, so the rendition forwards them to the same handler.
+  const handleKeyRef = useRef(handleKey);
+  handleKeyRef.current = handleKey;
+
+  /**
+   * epub.js's paginated flow (CSS multi-column) computes its column track
+   * from the container's pixel size and is fragile against a book's own
+   * stylesheet: the title page would show, then every "page" after it
+   * landed on empty horizontal space. Scrolled flow sidesteps that whole
+   * class of bug, at the cost of paging between sections rather than
+   * columns.
+   *
+   * The manager is the plain one rather than "continuous": the continuous
+   * manager keeps neighbouring sections rendered and, as it drops the ones
+   * that scroll out of view, subtracts their height from the scroll
+   * position to compensate -- which is exactly the jerk and jump you feel
+   * while reading. One section at a time scrolls natively and smoothly.
+   */
+  useEffect(() => {
+    const host = containerRef.current;
+    if (!host) return;
+    setStatus("loading");
+    setChapter(null);
+    setProgress(NO_PROGRESS);
+    setScrub(null);
+    tocRef.current = [];
+
+    const book = ePub(convertFileSrc(filePath));
+    bookRef.current = book;
     let disposed = false;
+    let resizeTimer: number | null = null;
+    let locationsTimer: number | null = null;
+
+    const rendition = book.renderTo(host, {
+      width: "100%",
+      height: "100%",
+      flow: "scrolled-doc",
+      manager: "default",
+      allowScriptedContent: false,
+      // A book that declares itself fixed-layout is read here as a
+      // reflowable one. epub.js honours "pre-paginated" by shrinking each
+      // page to fit the pane in both directions, which is the whole page
+      // visible and none of it readable -- and for a scanned book, which
+      // is what fixed layout nearly always means here, unreadable is the
+      // only thing that matters. Reflowed, the page runs the width of the
+      // pane and scrolls like any other.
+      layout: "reflowable",
+      // "scroll" rather than the default "auto", which gives epub.js's
+      // scroller `overflow-y: scroll; overflow-x: hidden`. Both halves
+      // matter: a vertical scrollbar that comes and goes with the length
+      // of a chapter would narrow the page each time it appeared, and the
+      // width epub.js measured before it appeared is what leaves a
+      // scrollbar's worth of sideways scroll under the text.
+      overflow: "scroll",
+    });
+    renditionRef.current = rendition;
+
+    rendition.on("keydown", (event: KeyboardEvent) => handleKeyRef.current(event));
+
+    rendition.hooks.content.register((contents: Contents) => {
+      const doc = contents.document;
+      // Both of these read the book's own styling, so they run before the
+      // reader's stylesheet replaces it.
+      const invisible = pinInvisibleText(doc);
+      const scan = markScannedPage(doc, invisible);
+      void contents.addStylesheetCss(cssRef.current, EPUB_STYLE_KEY);
+      if (scan) {
+        fitScannedPage(doc);
+        // A scan's width is only final once the image has arrived.
+        for (const image of doc.images) {
+          if (!image.complete) image.addEventListener("load", () => fitScannedPage(doc), { once: true });
+        }
+      } else {
+        unstackPositionedElements(doc, invisible);
+      }
+      addRunOut(doc);
+      routeExternalLinks(doc);
+    });
+
+    rendition.on("rendered", () => {
+      if (disposed) return;
+      setStatus("ready");
+      // A scroll that runs off the end of a chapter should stop there
+      // rather than carry on into whatever is behind the pane. The
+      // scroller is epub.js's own element, so it is styled once it exists.
+      const scroller = host.querySelector<HTMLElement>(".epub-container");
+      if (scroller) scroller.style.overscrollBehavior = "contain";
+    });
+
+    // epubjs renders each section in its own iframe, so a selection there
+    // never reaches window.getSelection(); the rendition reports it instead.
+    rendition.on("selected", (cfiRange: string, contents: { window: Window }) => {
+      const text = (contents.window.getSelection()?.toString() ?? "").replace(/\s+/g, " ").trim();
+      onSelectRef.current?.(text, text ? cfiRange : null);
+    });
+
+    rendition.on("relocated", (loc: { start?: { cfi?: string; href?: string; index?: number } }) => {
+      if (disposed) return;
+      const cfi = loc?.start?.cfi;
+      const href = loc?.start?.href;
+      if (cfi && href) onLocationRef.current?.({ cfi, href });
+      if (href) setChapter(labelForHref(tocRef.current, href));
+      setProgress((prev) => ({
+        index: loc?.start?.index ?? prev.index,
+        total: prev.total,
+        percent: cfi ? percentOf(book, cfi) : prev.percent,
+      }));
+    });
 
     book.loaded.navigation.then((nav) => {
-      if (!disposed) onTocRef.current?.(flattenToc(nav.toc));
+      if (disposed) return;
+      tocRef.current = flattenToc(nav.toc);
+      onTocRef.current?.(tocRef.current);
+      // The first section can be on screen before its name is known.
+      const href = rendition.location?.start?.href;
+      if (href) setChapter(labelForHref(tocRef.current, href));
     });
 
+    book.ready.then(
+      () => {
+        if (disposed) return;
+        let total = 0;
+        book.spine.each(() => {
+          total += 1;
+        });
+        setProgress((prev) => ({ ...prev, total }));
+
+        // Restoring a CFI before the spine has loaded silently fails, so
+        // the first display waits for the book to be ready. A CFI from
+        // another edition (or a book that changed on disk) falls back to
+        // the beginning rather than an empty view.
+        const target = initialCfiRef.current;
+        const shown = target ? rendition.display(target) : rendition.display();
+        shown?.catch?.(() => {
+          if (!disposed) void rendition.display();
+        });
+
+        // Reading every section to work out how long the book is costs a
+        // second or two, so it happens once the reader is already reading.
+        locationsTimer = window.setTimeout(() => {
+          book.locations
+            .generate(LOCATION_CHARS)
+            .then(() => {
+              if (disposed) return;
+              const cfi = rendition.location?.start?.cfi;
+              setProgress((prev) => ({ ...prev, percent: cfi ? percentOf(book, cfi) : prev.percent }));
+            })
+            .catch(() => {});
+        }, LOCATIONS_DELAY_MS);
+      },
+      () => {
+        if (!disposed) setStatus("error");
+      },
+    );
+
+    // A pane being dragged wider changes size every frame; each change
+    // re-renders the section, so only the size it settles at is acted on.
     const observer = new ResizeObserver((entries) => {
       const { width, height } = entries[0].contentRect;
-      if (width <= 0 || height <= 0) return;
-      if (!rendition) {
-        rendition = book.renderTo(container, {
-          width,
-          height,
-          flow: "scrolled-doc",
-          manager: "continuous",
-        });
-        rendition.themes.default({
-          "html, body": { margin: "0 !important", padding: "0 !important" },
-          "img, svg": { "max-width": "100% !important", height: "auto !important" },
-          "*": { "box-sizing": "border-box" },
-        });
-        rendition.on("rendered", () => setIsLoading(false));
-        // epubjs renders each section in its own iframe, so a selection
-        // there never reaches window.getSelection(); the rendition reports
-        // it instead.
-        rendition.on("selected", (cfiRange: string, contents: { window: Window }) => {
-          const text = (contents.window.getSelection()?.toString() ?? "").replace(/\s+/g, " ").trim();
-          onSelectRef.current?.(text, text ? cfiRange : null);
-        });
-        rendition.on("relocated", (loc: { start?: { cfi?: string; href?: string } }) => {
-          const cfi = loc?.start?.cfi;
-          const href = loc?.start?.href;
-          if (cfi && href) onLocationRef.current?.({ cfi, href });
-        });
-        // Restoring a CFI before the spine has loaded silently fails, so
-        // the first display waits for the book to be ready.
-        const target = initialCfiRef.current;
-        book.ready.then(() => {
-          if (disposed || !rendition) return;
-          const shown = target ? rendition.display(target) : rendition.display();
-          // A CFI from another edition (or a book that changed on disk)
-          // falls back to the beginning rather than an empty view.
-          shown?.catch?.(() => {
-            if (!disposed && rendition) rendition.display();
-          });
-        });
-        renditionRef.current = rendition;
-      } else {
-        rendition.resize(width, height);
-      }
+      if (disposed || width <= 0 || height <= 0) return;
+      if (resizeTimer != null) window.clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(() => {
+        if (!disposed) resizeToContainer(rendition);
+      }, RESIZE_SETTLE_MS);
     });
-    observer.observe(container);
+    observer.observe(host);
 
     return () => {
       disposed = true;
+      if (resizeTimer != null) window.clearTimeout(resizeTimer);
+      if (locationsTimer != null) window.clearTimeout(locationsTimer);
       observer.disconnect();
       book.destroy();
       renditionRef.current = null;
+      bookRef.current = null;
     };
   }, [filePath]);
 
+  // Type size, spacing, font, measure and theme are restyling, not
+  // re-rendering: the stylesheet is replaced in place and the reader keeps
+  // their place in the book.
+  useEffect(() => {
+    const rendition = renditionRef.current;
+    if (!rendition) return;
+    for (const contents of contentsOf(rendition)) void contents.addStylesheetCss(css, EPUB_STYLE_KEY);
+  }, [css]);
+
+  function commitScrub() {
+    const value = scrub;
+    setScrub(null);
+    const book = bookRef.current;
+    const rendition = renditionRef.current;
+    if (value == null || !book || !rendition) return;
+    const cfi = book.locations.cfiFromPercentage(value / 1000);
+    if (cfi) void rendition.display(cfi);
+  }
+
+  const percent = scrub != null ? scrub / 1000 : progress.percent;
+  const canScrub = progress.percent != null;
+  const atFirstSection = progress.total > 0 && progress.index <= 0;
+  const atLastSection = progress.total > 0 && progress.index >= progress.total - 1;
+
   return (
     <div className="flex h-full flex-col">
-      <div className="relative min-h-0 flex-1 bg-white">
-        <div ref={containerRef} className="absolute inset-0 overflow-y-auto" />
-        {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-bg">
-            <LoadingState label="Opening book…" />
+      <div className="flex h-9 shrink-0 items-center gap-2 border-b border-line bg-surface px-2">
+        <span className="min-w-0 flex-1 truncate text-xs text-ink-3" title={chapter ?? undefined}>
+          {chapter ?? ""}
+        </span>
+        <Popover
+          width="w-72"
+          trigger={({ toggle, open }) => <IconButton icon={Type} label="Text size, spacing, font, and page width" size="sm" active={open} onClick={toggle} />}
+        >
+          <Field label="Text size">
+            <div className="flex items-center gap-1">
+              <IconButton
+                icon={Minus}
+                label="Smaller text"
+                size="sm"
+                variant="secondary"
+                disabled={useBookStyles || fontSize <= FONT_SIZE_MIN}
+                onClick={() => setFontSize(Math.max(FONT_SIZE_MIN, fontSize - 1))}
+              />
+              <span className="min-w-[3rem] text-center text-sm tabular-nums text-ink">{fontSize}px</span>
+              <IconButton
+                icon={Plus}
+                label="Larger text"
+                size="sm"
+                variant="secondary"
+                disabled={useBookStyles || fontSize >= FONT_SIZE_MAX}
+                onClick={() => setFontSize(Math.min(FONT_SIZE_MAX, fontSize + 1))}
+              />
+            </div>
+          </Field>
+          <Field label="Line spacing">
+            <div className="flex gap-1">
+              {LINE_SPACING_OPTIONS.map((option) => (
+                <Button
+                  key={option.value}
+                  size="sm"
+                  className="flex-1"
+                  disabled={useBookStyles}
+                  active={!useBookStyles && lineSpacing === option.value}
+                  onClick={() => setLineSpacing(option.value)}
+                >
+                  {option.label}
+                </Button>
+              ))}
+            </div>
+          </Field>
+          <Field label="Font">
+            <select
+              value={readingFont}
+              disabled={useBookStyles}
+              onChange={(e) => setReadingFont(e.target.value as ReadingFont)}
+              className={cx(selectSmClass, "w-full")}
+            >
+              {READING_FONT_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Page width">
+            <select value={epubWidth} onChange={(e) => setEpubWidth(e.target.value as EpubWidth)} className={cx(selectSmClass, "w-full")}>
+              {EPUB_WIDTH_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <label className="mt-3 flex cursor-pointer items-start gap-2 border-t border-line pt-2.5 text-sm text-ink-2">
+            <input type="checkbox" className={cx(checkboxClass, "mt-0.5")} checked={useBookStyles} onChange={(e) => setUseBookStyles(e.target.checked)} />
+            <span>
+              Use the book's own styling
+              <span className="block text-xs text-ink-4">Shows the publisher's colours and type instead of yours.</span>
+            </span>
+          </label>
+          <p className="mt-2 text-xs text-ink-4">Size, spacing and font are shared with the Bible and commentaries.</p>
+        </Popover>
+      </div>
+
+      <div
+        ref={hostRef}
+        tabIndex={0}
+        role="region"
+        aria-label="Book text"
+        onKeyDown={handleKey}
+        className={cx("relative min-h-0 flex-1 outline-none", useBookStyles ? "bg-white" : "bg-surface")}
+      >
+        <div ref={containerRef} className="absolute inset-0" />
+        {status !== "ready" && (
+          <div className="absolute inset-0 flex items-center justify-center bg-bg p-8 text-center">
+            {status === "loading" ? (
+              <LoadingState label="Opening book…" />
+            ) : (
+              <p className="text-sm text-ink-3">This book could not be opened. The file may be damaged or not a valid EPUB.</p>
+            )}
           </div>
         )}
       </div>
-      <div className="flex justify-center gap-2 border-t border-line bg-surface py-2">
-        <Button size="sm" icon={ChevronLeft} onClick={() => renditionRef.current?.prev()} title="Previous section">
+
+      <div className="flex shrink-0 items-center gap-2 border-t border-line bg-surface px-2 py-1.5">
+        <Button
+          size="sm"
+          icon={ChevronLeft}
+          disabled={atFirstSection}
+          onClick={() => void renditionRef.current?.prev()}
+          title="Previous section (Left arrow)"
+        >
           Previous
         </Button>
-        <Button size="sm" onClick={() => renditionRef.current?.next()} title="Next section">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
+          <input
+            type="range"
+            min={0}
+            max={1000}
+            step={1}
+            value={Math.round((percent ?? 0) * 1000)}
+            disabled={!canScrub}
+            aria-label="Position in the book"
+            className="h-1 min-w-0 flex-1 accent-accent disabled:opacity-40"
+            onChange={(e) => setScrub(Number(e.target.value))}
+            onPointerUp={commitScrub}
+            onKeyUp={commitScrub}
+            onBlur={commitScrub}
+          />
+          <span className="shrink-0 text-xs tabular-nums text-ink-3" title={percent != null ? "How far through the book you are" : "Section of the book"}>
+            {percent != null ? `${Math.round(percent * 100)}%` : progress.total > 0 ? `${progress.index + 1} / ${progress.total}` : "…"}
+          </span>
+        </div>
+        <Button size="sm" disabled={atLastSection} onClick={() => void renditionRef.current?.next()} title="Next section (Right arrow)">
           Next
           <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
         </Button>
       </div>
+    </div>
+  );
+}
+
+/** How far through the book a CFI sits, or null before the locations that
+ * answer that have been generated. */
+function percentOf(book: Book, cfi: string): number | null {
+  try {
+    if (book.locations.length() === 0) return null;
+    const value = book.locations.percentageFromCfi(cfi);
+    return Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : null;
+  } catch {
+    return null;
+  }
+}
+
+function Field({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="mb-2.5">
+      <div className="mb-1 text-xs font-medium text-ink-3">{label}</div>
+      {children}
     </div>
   );
 }

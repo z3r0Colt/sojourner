@@ -130,6 +130,18 @@ fn strip_element(html: &str, tag: &str) -> String {
     loop {
         match rest.find(&open) {
             Some(start) => {
+                // `<head` must not match `<header`: the name has to end where
+                // the tag's attributes (or its end) begin.
+                let ends_name = match rest[start + open.len()..].chars().next() {
+                    None | Some('>') | Some('/') => true,
+                    Some(c) => c.is_whitespace(),
+                };
+                if !ends_name {
+                    let skip = start + open.len();
+                    out.push_str(&rest[..skip]);
+                    rest = &rest[skip..];
+                    continue;
+                }
                 out.push_str(&rest[..start]);
                 match rest[start..].find(&close) {
                     Some(end) => rest = &rest[start + end + close.len()..],
@@ -145,7 +157,11 @@ fn strip_element(html: &str, tag: &str) -> String {
 }
 
 fn strip_html_tags(html: &str) -> String {
-    let html = strip_element(html, "style");
+    // The head holds the section's <title>, which is the book's name repeated
+    // once per chapter -- not prose, and it would make a book of nothing but
+    // page scans look as though it had text to search.
+    let html = strip_element(html, "head");
+    let html = strip_element(&html, "style");
     let html = strip_element(&html, "script");
     let mut out = String::with_capacity(html.len());
     let mut in_tag = false;
@@ -174,6 +190,11 @@ fn extract_epub_text(path: &Path) -> anyhow::Result<String> {
         if name.ends_with(".xhtml") || name.ends_with(".html") || name.ends_with(".htm") {
             let mut content = String::new();
             if entry.read_to_string(&mut content).is_ok() {
+                // The table of contents is the chapter titles over again; it
+                // belongs to the reader's Contents list, not to the index.
+                if content.contains("epub:type=\"toc\"") || content.contains("epub:type='toc'") {
+                    continue;
+                }
                 combined.push_str(&strip_html_tags(&content));
                 combined.push('\n');
             }
@@ -224,5 +245,28 @@ mod tests {
     fn numeric_and_named_entities_are_decoded() {
         let html = "<p>Father&#8217;s house &amp; home</p>";
         assert_eq!(strip_html_tags(html), "Father\u{2019}s house & home");
+    }
+
+    #[test]
+    fn the_head_is_dropped_so_a_page_scan_indexes_as_nothing() {
+        // Every section of a scanned book carries the book's name in its
+        // title and an image in its body: no text to search.
+        let html = r#"<html><head><title>A Scanned Book</title></head>
+        <body><div><img src="page1.png" alt=""/></div></body></html>"#;
+        assert_eq!(strip_html_tags(html), "");
+    }
+
+    #[test]
+    fn a_header_element_is_not_mistaken_for_the_head() {
+        let html = "<html><head><title>Gone</title></head><body><header>Chapter One</header><p>Kept.</p></body></html>";
+        assert_eq!(strip_html_tags(html), "Chapter One Kept.");
+    }
+
+    #[test]
+    fn an_ocr_layer_is_indexed_like_any_other_text() {
+        // A searchable scan writes its OCR into the page as transparent text.
+        let html = r#"<html><head><title>Scan</title></head><body><div class="page"><img src="p1.png"/>
+        <span class="ocr" style="color:transparent">It is a great mercy</span></div></body></html>"#;
+        assert_eq!(strip_html_tags(html), "It is a great mercy");
     }
 }

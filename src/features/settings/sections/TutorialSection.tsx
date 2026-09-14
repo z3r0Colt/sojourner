@@ -171,6 +171,16 @@ const CATEGORIES: Category[] = [
       { q: "Search inside a book", a: "EPUB, PDF, and MOBI text is indexed. Use the search box at the top of Resources, or the Resources tab in the main search." },
       { q: "Pick up where you left off", a: "EPUBs and PDFs reopen at the place you last read; the position is stored with your data, so it survives a reinstall. An EPUB's chapters are listed under Contents in the reader sidebar (the list icon when the pane is narrow), with the chapter on screen marked." },
       {
+        q: "How an EPUB reads",
+        a: (
+          <>
+            A book scrolls one chapter at a time, in the app's theme, font, size and line spacing. The type button above the page changes those, sets how wide a line of text runs, and can show the book exactly as its publisher styled it instead. <Kbd>Space</Kbd> and <Kbd>PageDown</Kbd> turn the page,
+            carrying on into the next chapter at the end of one, and <Kbd>PageUp</Kbd> goes back; <Kbd>←</Kbd> and <Kbd>→</Kbd> jump a whole chapter; <Kbd>Home</Kbd> and <Kbd>End</Kbd> go to the top and bottom of the chapter. The bar underneath shows how far through the book you are, and can be
+            dragged to anywhere in it.
+          </>
+        ),
+      },
+      {
         q: "PDF zoom and find",
         a: <>The bar above a PDF page zooms in and out, shows the zoom level (click it to fit the page to the pane's width, the default), and has a Find box for the page you are on: every match is marked on the page, <Kbd>Enter</Kbd> and <Kbd>Shift</Kbd>+<Kbd>Enter</Kbd> step through them, and <Kbd>Esc</Kbd> clears. To search a whole book, use the main search instead.</>,
       },
