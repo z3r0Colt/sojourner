@@ -95,29 +95,14 @@ export function fitTo(points: WorldPoint[], size: Size, padding = 56): View | nu
   return { cx, cy, k: clampScale(k) };
 }
 
-/**
- * Drops labels that would collide, keeping the more important ones.
- *
- * Points arrive already ordered by importance, so this is a single greedy
- * pass: a label is placed when its box clears everything placed before it.
- * Simple, stable as the view moves, and fast enough to run on every frame of
- * a pan.
- */
-export function placeLabels<T extends { x: number; y: number; width: number; height: number }>(
-  candidates: T[],
-  limit = 90,
-): T[] {
-  const placed: T[] = [];
-  const taken: { left: number; right: number; top: number; bottom: number }[] = [];
-  for (const c of candidates) {
-    if (placed.length >= limit) break;
-    const box = { left: c.x, right: c.x + c.width, top: c.y - c.height, bottom: c.y };
-    const collides = taken.some(
-      (t) => box.left < t.right && box.right > t.left && box.top < t.bottom && box.bottom > t.top,
-    );
-    if (collides) continue;
-    taken.push(box);
-    placed.push(c);
-  }
-  return placed;
+export interface LabelBox {
+  left: number;
+  right: number;
+  top: number;
+  bottom: number;
+}
+
+/** True when a label's box runs into any already placed. */
+export function overlaps(box: LabelBox, taken: LabelBox[]): boolean {
+  return taken.some((t) => box.left < t.right && box.right > t.left && box.top < t.bottom && box.bottom > t.top);
 }

@@ -43,8 +43,8 @@ export function AboutSection() {
         <Source name="International Standard Bible Encyclopedia (1915)">
           James Orr, general editor. Public domain. Prepared from the edition distributed by the CrossWire Bible Society.
         </Source>
-        <Source name="Bible atlas — places">
-          Geographic data © OpenBible.info, used under a{" "}
+        <Source name="Bible atlas — places and region extents">
+          Geographic data, and the scholarly estimates of how far each region reached, © OpenBible.info, used under a{" "}
           <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer" className="text-accent hover:underline">
             Creative Commons Attribution 4.0
           </a>{" "}

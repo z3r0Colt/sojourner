@@ -18,7 +18,7 @@ import { useSetting } from "../../hooks/useSetting";
 import { bookName, toPassageRef } from "../../lib/passage";
 import { refAttrs } from "../../lib/refAttr";
 import { EmptyState, LoadingState } from "../../components/ui/EmptyState";
-import { cx, inputSmClass } from "../../components/ui/classes";
+import { cx, inputSmClass, selectSmClass } from "../../components/ui/classes";
 import { StudyActions } from "../sermons/StudyActions";
 import { atlasRef } from "../sermons/sourceIdentity";
 import { MapCanvas } from "./MapCanvas";
@@ -42,6 +42,15 @@ const CATEGORY_LABEL: Record<string, string> = {
 
 type Tab = "places" | "journeys";
 
+/** Bigger type means fewer names fit, so the map thins them out to match. */
+const LABEL_SIZES = [
+  { value: 10, label: "Small" },
+  { value: 12, label: "Medium" },
+  { value: 14, label: "Large" },
+  { value: 17, label: "Larger" },
+  { value: 20, label: "Largest" },
+];
+
 /**
  * The atlas: a map of the biblical world, the places named in it, and the
  * journeys traced through it.
@@ -57,6 +66,8 @@ export function AtlasView() {
   const { data: journeys } = useAtlasJourneys();
   const { data: books } = useBooks();
   const [showLabels, setShowLabels] = useSetting("atlas.labels", true);
+  const [labelSize, setLabelSize] = useSetting("atlas.labelSize", 12);
+  const [showBorders, setShowBorders] = useSetting("atlas.borders", true);
   // Beside a Bible pane the atlas gets a study column, not a page. Below the
   // width the three-column layout needs, the map keeps the space and the one
   // remaining column shows the detail when something is picked, the list
@@ -105,14 +116,21 @@ export function AtlasView() {
   // beside it changes -- but not while they are panning around by hand.
   const [fitToken, setFitToken] = useState(0);
   const [fitTargets, setFitTargets] = useState<AtlasPlace[]>([]);
-  const refit = (targets: AtlasPlace[]) => {
+  const [fitMode, setFitMode] = useState<"frame" | "center">("frame");
+  const refit = (targets: AtlasPlace[], mode: "frame" | "center" = "frame") => {
     if (!targets.length) return;
     setFitTargets(targets);
+    setFitMode(mode);
     setFitToken((n) => n + 1);
   };
+  // Where the current selection came from. Picking a place off the map
+  // should take you to it without discarding the zoom you used to find it;
+  // picking one out of the list has no such context to keep.
+  const pickedFromMap = useRef(false);
 
   useEffect(() => {
-    if (selected) refit([selected]);
+    if (selected) refit([selected], pickedFromMap.current ? "center" : "frame");
+    pickedFromMap.current = false;
   }, [selected?.slug]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -128,7 +146,8 @@ export function AtlasView() {
     if (!selected && !journey && passagePlaces?.length) refit(passagePlaces);
   }, [params.bookId, params.chapter, passagePlaces]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  function selectPlace(place: AtlasPlace) {
+  function selectPlace(place: AtlasPlace, from: "map" | "list" = "list") {
+    pickedFromMap.current = from === "map";
     setParams({ slug: place.slug, journey: null });
     setTab("places");
   }
@@ -236,15 +255,42 @@ export function AtlasView() {
           </div>
         )}
 
-        <label className="flex items-center gap-2 border-t border-line px-3 py-2 text-xs text-ink-3">
-          <input
-            type="checkbox"
-            checked={showLabels}
-            onChange={(e) => setShowLabels(e.target.checked)}
-            className="h-3.5 w-3.5 accent-accent"
-          />
-          Show place names on the map
-        </label>
+        <div className="border-t border-line px-3 py-2">
+          <label className="flex items-center gap-2 text-xs text-ink-3">
+            <input
+              type="checkbox"
+              checked={showLabels}
+              onChange={(e) => setShowLabels(e.target.checked)}
+              className="h-3.5 w-3.5 accent-accent"
+            />
+            Show place names on the map
+          </label>
+          <label className="mt-1.5 flex items-center gap-2 text-xs text-ink-3">
+            <input
+              type="checkbox"
+              checked={showBorders}
+              onChange={(e) => setShowBorders(e.target.checked)}
+              className="h-3.5 w-3.5 accent-accent"
+            />
+            Show region borders
+          </label>
+          {showLabels && (
+            <label className="mt-2 flex items-center gap-2 text-xs text-ink-3">
+              Name size
+              <select
+                value={labelSize}
+                onChange={(e) => setLabelSize(Number(e.target.value))}
+                className={cx(selectSmClass, "flex-1")}
+              >
+                {LABEL_SIZES.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+        </div>
       </aside>
       )}
 
@@ -256,9 +302,12 @@ export function AtlasView() {
             highlighted={highlighted}
             journey={journey}
             showLabels={showLabels}
-            onSelect={selectPlace}
+            showBorders={showBorders}
+            labelSize={labelSize}
+            onSelect={(place) => selectPlace(place, "map")}
             fitToken={fitToken}
             fitTargets={fitTargets}
+            fitMode={fitMode}
           />
         ) : (
           <LoadingState className="p-8" label="Loading the map…" />

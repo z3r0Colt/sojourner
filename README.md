@@ -8,15 +8,18 @@ The application itself never makes a network request. Everything it needs is in 
 
 Everything under `reference/` is committed and imported into `content.db` by `npm run build:content`. Most of it was prepared once and does not change.
 
-Two of those sets are produced by scripts in `tools/`, which download from the open web at development time. They are one-time: run them only to pick up a new upstream release, then commit what they write.
+Some of it is produced by scripts in `tools/`, which download from the open web at development time. They are one-time: run them only to pick up a new upstream release, then commit what they write.
 
 ```
 node tools/extract-isbe.mjs      # -> reference/isbe/       (encyclopedia, public domain)
 node tools/extract-atlas.mjs     # -> reference/atlas/      (places, CC BY 4.0)
 node tools/extract-basemap.mjs   # -> src/features/atlas/basemap.json  (coastlines, public domain)
+node tools/extract-borders.mjs   # -> src/features/atlas/borders.json  (region extents, CC BY 4.0)
 ```
 
-Each accepts an optional path to already-downloaded source files, so they can be run offline.
+Each accepts an optional path to already-downloaded source files, so they can be run offline. `extract-borders.mjs` fetches one small file per region and caches them under that path, so re-running it to retune the simplification costs nothing.
+
+The region borders are not lines anyone has surveyed. OpenBible publishes each region as a set of nested confidence contours -- "possibly reached this far" out at 10%, "certainly included this" in at 90% -- and the extractor keeps the widest and the middle one. The atlas draws them as a wash inside a dashed line for that reason: a crisp border would claim more than the evidence supports.
 
 `reference/atlas/journeys.json` is written by hand rather than extracted -- no open dataset traces the routes. Each leg names a place and the verse that records it, and the importer resolves the two together, so a leg that names a place Scripture does not put there fails the build rather than drawing a wrong line.
 

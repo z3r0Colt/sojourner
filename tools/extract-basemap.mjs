@@ -20,9 +20,13 @@ const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..
 const OUT_FILE = path.join(REPO_ROOT, "src", "features", "atlas", "basemap.json");
 
 // The places span lon -6.9..67.4, lat 11.6..44.9 -- Tarshish in the west to
-// Susa in the east, Nubia in the south to the Black Sea in the north. The
-// margin gives the map somewhere to pan to rather than ending at the data.
-const BBOX = { west: -12, south: 10, east: 70, north: 48 };
+// Susa in the east, Nubia in the south to the Black Sea in the north.
+//
+// The clip is drawn well outside that. A map framed exactly to its data
+// shows a straight edge where the coastline stops, which is the one thing
+// that gives away a map as a picture; the margin means the land runs off
+// the view instead.
+const BBOX = { west: -20, south: 0, east: 80, north: 58 };
 
 const LAYERS = [
   { name: "land", file: "ne_50m_land.json", kind: "polygon", minArea: 0.004 },
