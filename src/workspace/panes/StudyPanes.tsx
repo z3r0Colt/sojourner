@@ -6,6 +6,7 @@ import { ChapterNav } from "../../features/reading/ChapterNav";
 import { InterlinearView } from "../../features/reading/InterlinearView";
 import { CommentaryPanel } from "../../features/commentary/CommentaryPanel";
 import { CrossReferencesPanel } from "../../features/reading/CrossReferencesPanel";
+import { EncyclopediaForPassage } from "../../features/encyclopedia/EncyclopediaForPassage";
 import { ConfessionForPassagePanel } from "../../features/reading/ConfessionForPassagePanel";
 import { MetricalPsalmPanel } from "../../features/reading/MetricalPsalmPanel";
 import { MyNotesPane } from "../../features/reading/MyNotesPane";
@@ -84,6 +85,14 @@ export function CrossRefsPane() {
   const book = books?.find((b) => b.id === params.bookId);
   if (!book) return <LoadingState className="p-8" />;
   return <CrossReferencesPanel book={book} chapter={params.chapter} activeVerse={params.verse} />;
+}
+
+export function EncyclopediaForPassagePane() {
+  const [params] = usePaneParams("encyclopedia-for-passage");
+  const { data: books } = useBooks();
+  const book = books?.find((b) => b.id === params.bookId);
+  if (!book) return <LoadingState className="p-8" />;
+  return <EncyclopediaForPassage book={book} chapter={params.chapter} activeVerse={params.verse} />;
 }
 
 export function ConfessionPane() {

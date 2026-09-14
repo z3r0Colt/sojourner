@@ -1,6 +1,6 @@
 use crate::models::{
     DictionaryDefinition, DictionaryEntry, DictionaryEntrySummary, Footnote, InterlinearWord, IsbeEntry, IsbeEntrySummary,
-    IsbeSearchResult, MorphologyWord, StrongsEntry,
+    IsbePassageEntry, IsbeSearchResult, MorphologyWord, StrongsEntry,
 };
 use rusqlite::{params, Connection, OptionalExtension};
 use std::collections::HashMap;
@@ -264,6 +264,56 @@ pub fn search_isbe(conn: &Connection, query: &str, limit: i64) -> anyhow::Result
     )?;
     let rows = stmt.query_map(params![match_expr, limit], map_isbe_summary)?;
     Ok(rows.collect::<Result<Vec<_>, _>>()?)
+}
+
+/// The encyclopedia articles that discuss a passage, most relevant first.
+///
+/// Ranked by weight squared over the article's total reach: how much of this
+/// chapter the article cites, against how much else it talks about. Weight
+/// alone puts the sweeping articles on top -- "Archaeology" cites Genesis 14
+/// whole and would bury "Melchizedek" -- and focus alone hands the list to
+/// one-line stubs that happen to cite nothing else. Together they give
+/// Genesis 14 its kings, Exodus 20 the Ten Commandments, and Ruth 1 Naomi,
+/// Orpah and Elimelech.
+///
+/// The +3000 is three citations' worth of smoothing, so an article with a
+/// single reference cannot reach perfect focus and win on it.
+pub fn isbe_for_passage(
+    conn: &Connection,
+    book_id: i64,
+    chapter: i64,
+    verse: Option<i64>,
+    limit: i64,
+) -> anyhow::Result<Vec<IsbePassageEntry>> {
+    let verse_clause = if verse.is_some() { "AND r.verse = ?3" } else { "" };
+    let sql = format!(
+        "SELECT e.id, e.term, e.slug, GROUP_CONCAT(DISTINCT r.verse), e.ref_count,
+                SUM(r.weight) * SUM(r.weight) / (e.ref_count * 1000 + 3000) AS score
+         FROM isbe_refs r JOIN isbe_entries e ON e.id = r.entry_id
+         WHERE r.book_id = ?1 AND r.chapter = ?2 {verse_clause}
+         GROUP BY e.id
+         ORDER BY score DESC, e.ref_count ASC, e.term COLLATE NOCASE
+         LIMIT {}",
+        if verse.is_some() { "?4" } else { "?3" }
+    );
+    let mut stmt = conn.prepare(&sql)?;
+    let map = |r: &rusqlite::Row| -> rusqlite::Result<IsbePassageEntry> {
+        let verses: String = r.get(3)?;
+        let mut verses: Vec<i64> = verses.split(',').filter_map(|v| v.parse().ok()).collect();
+        verses.sort_unstable();
+        Ok(IsbePassageEntry {
+            id: r.get(0)?,
+            term: r.get(1)?,
+            slug: r.get(2)?,
+            verses,
+            ref_count: r.get(4)?,
+        })
+    };
+    let rows = match verse {
+        Some(v) => stmt.query_map(params![book_id, chapter, v, limit], map)?.collect::<Result<Vec<_>, _>>()?,
+        None => stmt.query_map(params![book_id, chapter, limit], map)?.collect::<Result<Vec<_>, _>>()?,
+    };
+    Ok(rows)
 }
 
 /// The encyclopedia as a corpus for the global search overlay.

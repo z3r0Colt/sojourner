@@ -12,7 +12,7 @@ import { SettingsView } from "../features/settings/SettingsView";
 import { SermonsView } from "../features/sermons/SermonsView";
 import { SermonPane } from "../features/sermons/SermonPane";
 import { IllustrationsView } from "../features/sermons/IllustrationsView";
-import { CommentaryPane, ConfessionPane, CrossRefsPane, InterlinearPane, MetricalPane, MinePane } from "./panes/StudyPanes";
+import { CommentaryPane, ConfessionPane, CrossRefsPane, EncyclopediaForPassagePane, InterlinearPane, MetricalPane, MinePane } from "./panes/StudyPanes";
 import { HarmonyPane, HighlightsPane, MemoryPane, NotesPane, PlansPane, PrayerPane, ResourcesPane, TodayPane } from "./panes/PagePanes";
 
 /** Kind → the component that renders it. Each reads its params from the
@@ -25,6 +25,7 @@ export const PANE_COMPONENTS: Record<PaneKind, ComponentType> = {
   commentary: CommentaryPane,
   crossrefs: CrossRefsPane,
   "confession-for-passage": ConfessionPane,
+  "encyclopedia-for-passage": EncyclopediaForPassagePane,
   metrical: MetricalPane,
   mine: MinePane,
   westminster: WestminsterView,

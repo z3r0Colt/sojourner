@@ -679,6 +679,17 @@ export function useIsbeEntryByTerm(term: string | null) {
   });
 }
 
+/** The encyclopedia articles that discuss the open chapter -- what makes the
+ *  encyclopedia meet the reader in the text instead of waiting to be searched. */
+export function useIsbeForPassage(bookId: number | null, chapter: number | null, verse?: number | null) {
+  return useQuery({
+    queryKey: ["isbeForPassage", bookId, chapter, verse ?? null],
+    queryFn: () => api.isbeForPassage(bookId as number, chapter as number, verse ?? null),
+    enabled: bookId != null && chapter != null,
+    staleTime: Infinity,
+  });
+}
+
 /** The dictionary entry on the same subject as an ISBE article, matched
  *  through the article's alternate headwords as well as its title. */
 export function useDictionaryEntryForIsbe(slug: string | null) {

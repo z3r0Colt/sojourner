@@ -462,6 +462,17 @@ export interface IsbeEntrySummary {
   slug: string;
 }
 
+/** An encyclopedia article that discusses the passage being read. */
+export interface IsbePassageEntry {
+  id: number;
+  term: string;
+  slug: string;
+  /** Which verses of it, in order. */
+  verses: number[];
+  /** References the whole article makes; small means focused. */
+  ref_count: number;
+}
+
 export interface IsbeSearchResult {
   id: number;
   term: string;

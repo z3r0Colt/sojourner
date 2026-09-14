@@ -129,6 +129,7 @@ export type PaneContent =
   | { kind: "commentary"; params: CommentaryParams }
   | { kind: "crossrefs"; params: PassageParams }
   | { kind: "confession-for-passage"; params: PassageParams }
+  | { kind: "encyclopedia-for-passage"; params: PassageParams }
   | { kind: "metrical"; params: PassageParams }
   | { kind: "mine"; params: PassageParams }
   | { kind: "westminster"; params: WestminsterParams }
@@ -160,6 +161,7 @@ export const PANE_KIND_LIST: readonly PaneKind[] = [
   "commentary",
   "crossrefs",
   "confession-for-passage",
+  "encyclopedia-for-passage",
   "metrical",
   "mine",
   "westminster",
@@ -190,6 +192,7 @@ export const PASSAGE_KINDS: ReadonlySet<PaneKind> = new Set<PaneKind>([
   "commentary",
   "crossrefs",
   "confession-for-passage",
+  "encyclopedia-for-passage",
   "metrical",
   "mine",
   "atlas",

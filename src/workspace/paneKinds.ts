@@ -182,6 +182,15 @@ export const PANE_KINDS: Registry = {
     acceptsPassage: false,
     listed: true,
   },
+  "encyclopedia-for-passage": {
+    kind: "encyclopedia-for-passage",
+    label: "Encyclopedia for passage",
+    icon: BookMarked,
+    title: (p, ctx) => passageTitle("Encyclopedia", { ...p, verse: p.verse }, ctx),
+    defaultWidth: 420,
+    acceptsPassage: true,
+    listed: true,
+  },
   encyclopedia: {
     kind: "encyclopedia",
     label: "Encyclopedia",
@@ -273,7 +282,7 @@ export function paneTitle(content: PaneContent, ctx: TitleContext): string {
 export const PANE_KIND_LIST_LISTED: readonly PaneKind[] = (Object.keys(PANE_KINDS) as PaneKind[]).filter((k) => PANE_KINDS[k].listed);
 
 /** The study-panel kinds, in the order the Add pane strip shows them. */
-export const STUDY_STRIP_KINDS: readonly PaneKind[] = ["commentary", "crossrefs", "confession-for-passage", "atlas", "metrical", "mine"];
+export const STUDY_STRIP_KINDS: readonly PaneKind[] = ["commentary", "crossrefs", "encyclopedia-for-passage", "confession-for-passage", "atlas", "metrical", "mine"];
 
 export { PASSAGE_KINDS };
 
@@ -296,6 +305,8 @@ export function routeFor(content: PaneContent): string {
       return "/study/crossrefs";
     case "confession-for-passage":
       return "/study/confessions";
+    case "encyclopedia-for-passage":
+      return "/study/encyclopedia";
     case "metrical":
       return "/study/metrical";
     case "mine":
@@ -368,6 +379,7 @@ export function parseRoute(pathname: string, search = ""): ContentRequest | null
       if (a === "commentary") return { kind: "commentary", params: {} };
       if (a === "crossrefs") return { kind: "crossrefs", params: {} };
       if (a === "confessions") return { kind: "confession-for-passage", params: {} };
+      if (a === "encyclopedia") return { kind: "encyclopedia-for-passage", params: {} };
       if (a === "metrical") return { kind: "metrical", params: {} };
       if (a === "mine") return { kind: "mine", params: {} };
       return null;

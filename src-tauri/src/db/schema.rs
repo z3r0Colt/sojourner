@@ -737,6 +737,41 @@ CREATE TABLE dictionary_aliases (
 CREATE INDEX idx_dictionary_alias ON dictionary_aliases(alias COLLATE NOCASE);
 "#;
 
+// Which encyclopedia articles discuss a given verse.
+//
+// ISBE tags every citation it makes -- 93,162 of them, over 24,735 distinct
+// verses in all 66 books -- and until now that was only good for making the
+// references clickable on the way out. Indexed the other way round it
+// answers the question a reader actually has open in front of them: what
+// does the encyclopedia say about *this* passage. That turns a work you have
+// to know how to search into one that meets you in the text.
+//
+// `ref_count` is how many references the whole article makes, and it is
+// there to rank: "Jesus Christ" cites 1,139 passages and would otherwise
+// surface on every chapter in the Bible, ahead of the article actually about
+// what you are reading.
+pub const CONTENT_MIGRATION_0014: &str = r#"
+ALTER TABLE isbe_entries ADD COLUMN ref_count INTEGER NOT NULL DEFAULT 0;
+
+-- `weight` is thousandths of a citation. A citation of one verse puts 1000
+-- on that verse; one of "Gen 14:1-24" puts about 42 on each of the
+-- twenty-four, so a sweep of a chapter is worth the same as a single precise
+-- reference rather than twenty-four times as much. Without that, an article
+-- that mentions a chapter in passing outranks the article the chapter is
+-- about: "Archaeology" cites Genesis 14 whole seven times and would bury
+-- "Melchizedek", which cites 14:18 five times and is the reason anyone opens
+-- that chapter.
+CREATE TABLE isbe_refs (
+  entry_id INTEGER NOT NULL REFERENCES isbe_entries(id),
+  book_id  INTEGER NOT NULL REFERENCES books(id),
+  chapter  INTEGER NOT NULL,
+  verse    INTEGER NOT NULL,
+  weight   INTEGER NOT NULL DEFAULT 1000
+);
+CREATE INDEX idx_isbe_refs_passage ON isbe_refs(book_id, chapter, verse);
+CREATE INDEX idx_isbe_refs_entry ON isbe_refs(entry_id);
+"#;
+
 pub const CONTENT_MIGRATIONS: &[&str] = &[
     CONTENT_MIGRATION_0001,
     CONTENT_MIGRATION_0002,
@@ -751,6 +786,7 @@ pub const CONTENT_MIGRATIONS: &[&str] = &[
     CONTENT_MIGRATION_0011,
     CONTENT_MIGRATION_0012,
     CONTENT_MIGRATION_0013,
+    CONTENT_MIGRATION_0014,
 ];
 
 pub const USER_MIGRATION_0001: &str = r#"

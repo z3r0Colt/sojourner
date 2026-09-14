@@ -3,7 +3,7 @@ use crate::db::DbState;
 use crate::error::AppResult;
 use crate::models::{
     AtlasJourney, AtlasPlace, AtlasPlaceVerse, ConcordanceEntry, DictionaryEntry, DictionaryEntrySummary, Footnote,
-    InterlinearWord, IsbeEntry, IsbeEntrySummary, IsbeSearchResult, MorphologyWord, StrongsEntry,
+    InterlinearWord, IsbeEntry, IsbeEntrySummary, IsbePassageEntry, IsbeSearchResult, MorphologyWord, StrongsEntry,
 };
 use std::collections::HashMap;
 use tauri::State;
@@ -84,6 +84,18 @@ pub fn find_dictionary_entry_for_isbe(db: State<DbState>, slug: String) -> AppRe
 pub fn search_isbe(db: State<DbState>, query: String, limit: i64) -> AppResult<Vec<IsbeEntrySummary>> {
     let conn = db.0.lock().unwrap();
     Ok(queries::search_isbe(&conn, &query, limit)?)
+}
+
+#[tauri::command]
+pub fn isbe_for_passage(
+    db: State<DbState>,
+    book_id: i64,
+    chapter: i64,
+    verse: Option<i64>,
+    limit: i64,
+) -> AppResult<Vec<IsbePassageEntry>> {
+    let conn = db.0.lock().unwrap();
+    Ok(queries::isbe_for_passage(&conn, book_id, chapter, verse, limit)?)
 }
 
 #[tauri::command]
