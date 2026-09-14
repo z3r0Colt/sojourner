@@ -25,6 +25,17 @@ export const READING_FONT_OPTIONS: { value: ReadingFont; label: string }[] = [
   { value: "sans", label: "Sans-serif" },
   { value: "dyslexic", label: "Dyslexia-friendly" },
 ];
+
+/** How wide a line of an EPUB is allowed to run before the page is
+ * centred in the pane (see `epubStyles.ts`). */
+export type EpubWidth = "narrow" | "medium" | "wide" | "full";
+
+export const EPUB_WIDTH_OPTIONS: { value: EpubWidth; label: string }[] = [
+  { value: "narrow", label: "Narrow" },
+  { value: "medium", label: "Medium" },
+  { value: "wide", label: "Wide" },
+  { value: "full", label: "Full width" },
+];
 /** How a copied passage is laid out: text alone, "text (John 3:16)",
  * "John 3:16 — text", or a Markdown blockquote with the reference on its
  * own line. See `lib/clipboard.ts`. */
@@ -62,6 +73,14 @@ interface UiState {
   /** Preaching mode's text size in pixels (SB4.1); the pulpit wants a much
    * larger face than the study does, so it is its own setting. */
   pulpitFontSize: number;
+  /** How wide an EPUB's text column runs. Size, spacing and font are the
+   * shared reading preferences above; only the measure is the book's own,
+   * because a book is read in a pane of its own width. */
+  epubWidth: EpubWidth;
+  /** Show an EPUB exactly as its publisher styled it, instead of in the
+   * app's theme, font and size. Off by default: most books are typeset for
+   * black on white and are hard to read in a dark theme. */
+  epubUseBookStyles: boolean;
   setTheme: (t: Theme) => void;
   setReduceMotion: (on: boolean) => void;
   setAccentSource: (s: AccentSource) => void;
@@ -79,6 +98,8 @@ interface UiState {
   toggleSidebar: () => void;
   setSermonFollowsCursor: (on: boolean) => void;
   setPulpitFontSize: (px: number) => void;
+  setEpubWidth: (w: EpubWidth) => void;
+  setEpubUseBookStyles: (on: boolean) => void;
 }
 
 const stored = (() => {
@@ -117,6 +138,18 @@ export const useUiStore = create<UiState>((set) => ({
   sidebarCollapsed: stored.sidebarCollapsed ?? false,
   sermonFollowsCursor: stored.sermonFollowsCursor ?? true,
   pulpitFontSize: stored.pulpitFontSize ?? 28,
+  epubWidth: stored.epubWidth ?? "medium",
+  epubUseBookStyles: stored.epubUseBookStyles ?? false,
+
+  setEpubWidth: (epubWidth) => {
+    persist({ epubWidth });
+    set({ epubWidth });
+  },
+
+  setEpubUseBookStyles: (epubUseBookStyles) => {
+    persist({ epubUseBookStyles });
+    set({ epubUseBookStyles });
+  },
 
   setPulpitFontSize: (px) => {
     const pulpitFontSize = Math.max(16, Math.min(72, Math.round(px)));
@@ -190,7 +223,10 @@ export const useUiStore = create<UiState>((set) => ({
     }),
 }));
 
-const LINE_HEIGHTS: Record<LineSpacing, number> = { compact: 1.5, normal: 1.7, relaxed: 1.9 };
+/** Exported because an EPUB is typeset inside its own frame, where the
+ * spacing has to be written into a stylesheet rather than an inline
+ * style. */
+export const READING_LINE_HEIGHTS: Record<LineSpacing, number> = { compact: 1.5, normal: 1.7, relaxed: 1.9 };
 
 /** Inline style for any long-form reading surface (Bible text, commentary,
  * confessions, dictionary entries) so the reader's size, spacing, and
@@ -201,6 +237,6 @@ export function useReadingTypography(scale = 1): React.CSSProperties {
   const lineSpacing = useUiStore((s) => s.lineSpacing);
   return {
     fontSize: Math.max(14, Math.round(fontSize * scale)),
-    lineHeight: LINE_HEIGHTS[lineSpacing],
+    lineHeight: READING_LINE_HEIGHTS[lineSpacing],
   };
 }

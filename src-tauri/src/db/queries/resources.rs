@@ -63,6 +63,122 @@ pub fn delete(conn: &Connection, id: i64) -> anyhow::Result<()> {
     Ok(())
 }
 
+/// Characters of the book shown either side of the word that was found.
+const SNIPPET_RADIUS: i64 = 80;
+/// The slice asked of SQLite, before it is cut back to whole words.
+const SNIPPET_WINDOW: i64 = SNIPPET_RADIUS * 2 + 60;
+
+/// A book the search matched, before it has been quoted.
+struct RankedHit {
+    resource_id: i64,
+    title: String,
+    kind: String,
+    /// bm25, which is negative: most relevant first.
+    rank: f64,
+    /// Where this book's text is to be read from when quoting it -- the
+    /// shipped copy in content.db, or the reader's own row in user.db.
+    shipped: bool,
+    /// The row id of that text, which for a shipped book is not the id of
+    /// the resource row that names it.
+    text_id: i64,
+}
+
+/// Cuts a passage of a book around the word that was found, ready for the
+/// library page to show.
+///
+/// This does by hand what `snippet()` would do, because `snippet()` cannot
+/// be afforded here -- see the note in `search`. `window` is the slice
+/// SQLite returned; `cut_before` and `cut_after` say whether the book
+/// carried on past either end of it.
+fn quote(window: &str, cut_before: bool, cut_after: bool, terms: &[String]) -> String {
+    let mut text = window;
+    // A window starts and ends mid-word; drop the halves.
+    if cut_before {
+        if let Some((at, c)) = text.char_indices().find(|(_, c)| c.is_whitespace()) {
+            text = &text[at + c.len_utf8()..];
+        }
+    }
+    if cut_after {
+        if let Some(at) = text.rfind(char::is_whitespace) {
+            text = &text[..at];
+        }
+    }
+    let mut out = String::with_capacity(text.len() + 16);
+    if cut_before {
+        out.push('…');
+    }
+    out.push_str(&mark_terms(text.trim(), terms));
+    if cut_after {
+        out.push('…');
+    }
+    out
+}
+
+/// A term shorter than this marks only the word itself, not everything
+/// beginning with it. Searching "of" does match a book on "offended" -- every
+/// term is searched for as a prefix -- but lighting that up in the quote
+/// helps nobody, and a page of "[the]" and "[Therefore]" is unreadable.
+const PREFIX_MARK_MIN: usize = 4;
+
+/// Wraps the words the search matched in the brackets the library page turns
+/// into `<mark>`.
+///
+/// Matching is anchored to the start of a word and runs to the end of it, so
+/// a real prefix search reads properly: "justif" marks "justification". Case
+/// is folded the ASCII way, which is what SQLite's own `lower()` does, so
+/// this pass and the one that placed the window agree.
+fn mark_terms(text: &str, terms: &[String]) -> String {
+    let bytes = text.as_bytes();
+    let mut out = String::with_capacity(text.len() + 16);
+    let mut at = 0;
+    while at < bytes.len() {
+        let starts_word = !text[..at].chars().next_back().is_some_and(char::is_alphanumeric);
+        let matched = starts_word
+            .then(|| {
+                terms.iter().find(|t| {
+                    !t.is_empty()
+                        && starts_with_ci(&bytes[at..], t.as_bytes())
+                        && (t.len() >= PREFIX_MARK_MIN || word_end(text, at + t.len()) == at + t.len())
+                })
+            })
+            .flatten();
+        match matched {
+            Some(term) => {
+                let end = word_end(text, at + term.len());
+                out.push('[');
+                out.push_str(&text[at..end]);
+                out.push(']');
+                at = end;
+            }
+            None => {
+                // Advancing by the character keeps `at` on a boundary; a
+                // multi-byte letter can never be mistaken for an ASCII one,
+                // since its bytes all have the high bit set.
+                let c = text[at..].chars().next().unwrap_or(' ');
+                out.push(c);
+                at += c.len_utf8();
+            }
+        }
+    }
+    out
+}
+
+/// Where the word running from `at` ends.
+///
+/// A word is letters and digits, which is how fts5's own tokenizer sees it:
+/// a dash or a curly apostrophe ends one, so "husks—while" is two words and
+/// only the first of them is marked.
+fn word_end(text: &str, at: usize) -> usize {
+    text[at..]
+        .char_indices()
+        .find(|(_, c)| !c.is_alphanumeric())
+        .map_or(text.len(), |(offset, _)| at + offset)
+}
+
+fn starts_with_ci(haystack: &[u8], needle: &[u8]) -> bool {
+    haystack.len() >= needle.len() && haystack[..needle.len()].eq_ignore_ascii_case(needle)
+}
+
 pub fn search(conn: &Connection, query: &str, limit: i64) -> anyhow::Result<Vec<ResourceSearchResult>> {
     if query.trim().is_empty() {
         return Ok(vec![]);
@@ -72,61 +188,127 @@ pub fn search(conn: &Connection, query: &str, limit: i64) -> anyhow::Result<Vec<
         .map(|t| format!("\"{}\"*", t.replace('"', "\"\"")))
         .collect::<Vec<_>>()
         .join(" ");
-    // Two indexes hold the library now: the reader's own books in user.db,
-    // and the shipped ones in content.db (their text is the same on every
+
+    // Ranking and quoting are deliberately two passes.
+    //
+    // A document in these indexes is a whole book, and the shipped library is
+    // a quarter of a gigabyte of them. fts5's `snippet()` walks every
+    // instance of every matched term in a document to choose its window, so
+    // on a common word it is enormously expensive -- a single book was
+    // measured here at up to 24 seconds. Asking for it in the same SELECT as
+    // `ORDER BY bm25` runs it on every book that matched, before the ranking
+    // has thrown any of them away, and an everyday phrase like "husks of the
+    // world" then never returns: that is what used to lock the app up.
+    //
+    // So the first pass ranks and takes the best few, with no snippet at all,
+    // and the second quotes only those, by cutting the text around the word
+    // rather than asking fts5 for it.
+    //
+    // Two indexes hold the library: the reader's own books in user.db, and
+    // the shipped ones in content.db (their text is the same on every
     // install, so it is not copied into anybody's own file). Each is asked
-    // separately -- fts5's snippet() and bm25() want their table in the FROM
-    // of the query they are called in -- and the two are merged by rank.
-    let mut hits = Vec::new();
+    // separately -- bm25() wants its table in the FROM of the query it is
+    // called in -- and the two are merged by rank.
+    let mut hits: Vec<RankedHit> = Vec::new();
     // A shipped book is excluded here even though user.db still indexes its
     // title: its text lives in content.db, so the second query is the one
     // that can quote it, and without this the same book comes back twice --
     // once with nothing to show for itself.
     let mut own = conn.prepare(
-        "SELECT res.id, res.title, res.kind, snippet(resources_fts, 2, '[', ']', '…', 12), bm25(resources_fts)
+        "SELECT res.id, res.title, res.kind, bm25(resources_fts)
          FROM resources_fts JOIN resources res ON res.id = resources_fts.rowid
          WHERE resources_fts MATCH ?1 AND res.library_key IS NULL
          ORDER BY bm25(resources_fts) LIMIT ?2",
     )?;
+    let rows = own.query_map(params![match_expr, limit], |r| {
+        let resource_id: i64 = r.get(0)?;
+        Ok(RankedHit { resource_id, title: r.get(1)?, kind: r.get(2)?, rank: r.get(3)?, shipped: false, text_id: resource_id })
+    })?;
+    for row in rows {
+        hits.push(row?);
+    }
+
     // Only where the attached content.db is new enough to have one: an older
     // one has no such table, and a reader's own books must still be findable.
-    let mut shipped = crate::library::is_available(conn)
-        .then(|| {
-            conn.prepare(
-                "SELECT res.id, res.title, res.kind, snippet(library_fts, 2, '[', ']', '…', 12), bm25(library_fts)
-                 FROM library_fts
-                 JOIN library_resources lib ON lib.id = library_fts.rowid
-                 JOIN resources res ON res.library_key = lib.file_name
-                 WHERE library_fts MATCH ?1 ORDER BY bm25(library_fts) LIMIT ?2",
-            )
-        })
-        .transpose()?;
-    for stmt in [Some(&mut own), shipped.as_mut()].into_iter().flatten() {
-        let rows = stmt.query_map(params![match_expr, limit], |r| {
-            Ok((
-                ResourceSearchResult {
-                    resource_id: r.get(0)?,
-                    title: r.get(1)?,
-                    kind: r.get(2)?,
-                    // The snippet is written into the page as HTML, so a book
-                    // with an angle bracket in it must not arrive as markup.
-                    // It can be null outright -- a match on a title in a row
-                    // whose text column is empty -- which is not an error.
-                    snippet: crate::db::queries::search::escape_snippet(
-                        &r.get::<_, Option<String>>(3)?.unwrap_or_default(),
-                    ),
-                },
-                r.get::<_, f64>(4)?,
-            ))
+    if crate::library::is_available(conn) {
+        let mut shipped = conn.prepare(
+            "SELECT res.id, res.title, res.kind, bm25(library_fts), lib.id
+             FROM library_fts
+             JOIN library_resources lib ON lib.id = library_fts.rowid
+             JOIN resources res ON res.library_key = lib.file_name
+             WHERE library_fts MATCH ?1 ORDER BY bm25(library_fts) LIMIT ?2",
+        )?;
+        let rows = shipped.query_map(params![match_expr, limit], |r| {
+            Ok(RankedHit { resource_id: r.get(0)?, title: r.get(1)?, kind: r.get(2)?, rank: r.get(3)?, shipped: true, text_id: r.get(4)? })
         })?;
         for row in rows {
             hits.push(row?);
         }
     }
+
     // bm25 is negative, most relevant first.
-    hits.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
-    hits.truncate(limit as usize);
-    Ok(hits.into_iter().map(|(hit, _)| hit).collect())
+    hits.sort_by(|a, b| a.rank.partial_cmp(&b.rank).unwrap_or(std::cmp::Ordering::Equal));
+    hits.truncate(limit.max(0) as usize);
+
+    // The word to centre each passage on: the longest of the terms, as the
+    // most distinctive of them. A term that turns out to be in the book's
+    // title rather than its text is not found, and the passage is taken from
+    // the opening instead -- which is also what a book with no text at all
+    // gets.
+    // Punctuation is trimmed off because fts5 tokenizes it away too: a search
+    // for `grace,` matches the word "grace", so that is what has to be looked
+    // for in the text.
+    let mut terms: Vec<String> = query
+        .split_whitespace()
+        .map(|t| t.trim_matches(|c: char| !c.is_alphanumeric()).to_ascii_lowercase())
+        .filter(|t| !t.is_empty())
+        .collect();
+    terms.sort_by_key(|t| std::cmp::Reverse(t.len()));
+    let needle = terms.first().cloned().unwrap_or_default();
+
+    let mut quote_own = conn.prepare(
+        "SELECT pos, substr(t, MAX(1, pos - ?3), ?4), length(t)
+         FROM (SELECT extracted_text AS t, instr(lower(extracted_text), ?2) AS pos FROM resources WHERE id = ?1)",
+    )?;
+    let mut quote_shipped = crate::library::is_available(conn)
+        .then(|| {
+            conn.prepare(
+                "SELECT pos, substr(t, MAX(1, pos - ?3), ?4), length(t)
+                 FROM (SELECT extracted_text AS t, instr(lower(extracted_text), ?2) AS pos FROM library_resources WHERE id = ?1)",
+            )
+        })
+        .transpose()?;
+
+    let mut out = Vec::with_capacity(hits.len());
+    for hit in hits {
+        let stmt = if hit.shipped { quote_shipped.as_mut() } else { Some(&mut quote_own) };
+        let found = match stmt {
+            Some(stmt) => stmt
+                .query_row(params![hit.text_id, needle, SNIPPET_RADIUS, SNIPPET_WINDOW], |r| {
+                    Ok((r.get::<_, Option<i64>>(0)?, r.get::<_, Option<String>>(1)?, r.get::<_, Option<i64>>(2)?))
+                })
+                .optional()?,
+            None => None,
+        };
+        let snippet = match found {
+            Some((pos, Some(window), Some(total))) => {
+                let start = (pos.unwrap_or(0) - SNIPPET_RADIUS).max(1);
+                quote(&window, start > 1, start - 1 + SNIPPET_WINDOW < total, &terms)
+            }
+            // A book with no text of its own: matched on its title, and there
+            // is nothing to quote. Not an error.
+            _ => String::new(),
+        };
+        out.push(ResourceSearchResult {
+            resource_id: hit.resource_id,
+            title: hit.title,
+            kind: hit.kind,
+            // The snippet is written into the page as HTML, so a book with an
+            // angle bracket in it must not arrive as markup.
+            snippet: crate::db::queries::search::escape_snippet(&snippet),
+        });
+    }
+    Ok(out)
 }
 
 fn map_passage_link(r: &rusqlite::Row) -> rusqlite::Result<ResourcePassageLink> {
@@ -331,4 +513,112 @@ pub fn list_by_tag(conn: &Connection, tag: &str) -> anyhow::Result<Vec<Resource>
     ))?;
     let rows = stmt.query_map(params![tag], map_resource)?;
     Ok(rows.collect::<Result<Vec<_>, _>>()?)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::db;
+
+    fn open_test(label: &str) -> (Connection, std::path::PathBuf) {
+        let dir = std::env::temp_dir().join(format!("sojourner-resource-search-{label}-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let content_db_path = dir.join("content.db");
+        db::open_content_db(&content_db_path).unwrap();
+        (db::open(&dir, &content_db_path).unwrap(), dir)
+    }
+
+    fn terms(words: &[&str]) -> Vec<String> {
+        words.iter().map(|w| w.to_string()).collect()
+    }
+
+    #[test]
+    fn a_quote_is_cut_back_to_whole_words_and_marked() {
+        let window = "rtion of the heart that has once tasted the sweetness of Christ will not lon";
+        let quoted = quote(window, true, true, &terms(&["sweetness"]));
+        assert_eq!(quoted, "…of the heart that has once tasted the [sweetness] of Christ will not…");
+    }
+
+    #[test]
+    fn the_opening_of_a_book_is_not_given_a_leading_ellipsis() {
+        let quoted = quote("Grace is the free favour of God", false, true, &terms(&["grace"]));
+        assert_eq!(quoted, "[Grace] is the free favour of…");
+    }
+
+    #[test]
+    fn a_term_is_marked_as_a_whole_word_and_never_inside_one() {
+        // A term of real length is searched, and marked, as a prefix.
+        assert_eq!(mark_terms("the husks of the world", &terms(&["husk"])), "the [husks] of the world");
+        assert_eq!(mark_terms("the doctrine of justification", &terms(&["justif"])), "the doctrine of [justification]");
+        // ...but never in the middle of a word.
+        assert_eq!(mark_terms("another the", &terms(&["the"])), "another [the]");
+    }
+
+    #[test]
+    fn a_short_term_marks_only_itself_and_does_not_light_up_the_page() {
+        // Searching "of the" used to mark "offended", "Therefore", "them"...
+        let text = "Therefore the husks of the world offended them";
+        assert_eq!(mark_terms(text, &terms(&["the", "of"])), "Therefore [the] husks [of] [the] world offended them");
+    }
+
+    #[test]
+    fn marking_folds_case_and_leaves_the_book_s_own_spelling_alone() {
+        assert_eq!(mark_terms("GRACE and Grace", &terms(&["grace"])), "[GRACE] and [Grace]");
+    }
+
+    #[test]
+    fn marking_steps_over_letters_that_are_more_than_one_byte() {
+        assert_eq!(mark_terms("a Sünde word", &terms(&["word"])), "a Sünde [word]");
+    }
+
+    #[test]
+    fn a_dash_or_an_apostrophe_ends_the_word_that_is_marked() {
+        assert_eq!(mark_terms("the husks—while eating", &terms(&["husks"])), "the [husks]—while eating");
+        assert_eq!(mark_terms("Saint Paul’s epistles", &terms(&["paul"])), "Saint [Paul]’s epistles");
+    }
+
+    #[test]
+    fn an_everyday_phrase_is_answered_from_the_book_s_text() {
+        // The regression this guards: asking fts5 for snippet() in the same
+        // statement as the ranking made a query of common words take minutes.
+        let (conn, dir) = open_test("phrase");
+        let body = format!(
+            "{}The heart that has once tasted the sweetness of Christ will not long be content with the husks of the world.{}",
+            "padding words to push the hit away from the opening. ".repeat(40),
+            " And so the chapter ends.".repeat(40),
+        );
+        create(&conn, "epub", "A Test Book", Some("An Author"), "book.epub", Some(&body)).unwrap();
+
+        let hits = search(&conn, "husks of the world", 10).unwrap();
+        assert_eq!(hits.len(), 1, "the book is found");
+        let snippet = &hits[0].snippet;
+        assert!(snippet.contains("[husks]"), "the searched word is marked: {snippet}");
+        assert!(snippet.starts_with('…') && snippet.ends_with('…'), "cut from the middle of the book: {snippet}");
+        assert!(snippet.contains("sweetness"), "with its surroundings: {snippet}");
+        assert!(snippet.chars().count() < 260, "and no more than a passage: {snippet}");
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn a_book_matched_only_by_its_title_still_comes_back() {
+        let (conn, dir) = open_test("title");
+        create(&conn, "pdf", "Institutes of the Christian Religion", None, "i.pdf", None).unwrap();
+        let hits = search(&conn, "Institutes", 10).unwrap();
+        assert_eq!(hits.len(), 1);
+        assert_eq!(hits[0].snippet, "", "nothing to quote, which is not an error");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn a_query_with_punctuation_still_finds_its_word_in_the_text() {
+        let (conn, dir) = open_test("punct");
+        let body = format!("{}Now grace, mercy and peace be with you.", "opening words. ".repeat(30));
+        create(&conn, "epub", "Another Book", None, "b.epub", Some(&body)).unwrap();
+        let hits = search(&conn, "grace,", 10).unwrap();
+        assert_eq!(hits.len(), 1);
+        assert!(hits[0].snippet.contains("[grace]"), "got: {}", hits[0].snippet);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
 }
