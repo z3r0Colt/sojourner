@@ -185,6 +185,57 @@ function aliasesFor(key) {
 const HEADING_AS = { underline: "h2", italic: "h3", bold: "h3" };
 const INLINE_AS = { underline: "strong", italic: "em", bold: "strong" };
 
+/**
+ * How far each Johannine epistle runs, for the repair below.
+ */
+const EPISTLE_BOUNDS = { "1": { chapters: 5 }, "2": { chapters: 1, verses: 13 }, "3": { chapters: 1, verses: 15 } };
+
+/**
+ * Repairs references to 1, 2 and 3 John that the edition tags as the Gospel.
+ *
+ * ISBE abbreviates all four books "Joh", and the tagging only ever saw the
+ * abbreviation: the prose reads "3 Joh 1:1" but the number sits outside the
+ * <ref>, so 220 references to the epistles carry osisRef="Bible:John.1.1"
+ * and land in the Gospel. The Gaius article, which is about the man 3 John
+ * is addressed to, cites John 1 eight times and nothing in 3 John.
+ *
+ * The number immediately before the tag is the evidence, and the epistles'
+ * own length is the check: 2 John has thirteen verses in one chapter, 3 John
+ * fifteen, 1 John five chapters. A reference past those is the Gospel after
+ * all and is left alone -- which is what saves the single genuine "2" before
+ * a John 12:12 in the corpus from being rewritten.
+ */
+function fixJohannineEpistles(text, stats) {
+  // "3 Joh 1:1,2,5,11" is four separate tags, and only the first is preceded
+  // by the number -- the rest are bare verses continuing the same citation.
+  // So the correction carries along the list, and a comma is what holds it
+  // together: a semicolon starts a new reference and ends the carry.
+  let carry = null;
+  return text.replace(
+    /([^<>]*)<ref\s+osisRef="Bible:John\.(\d+)\.(\d+)((?:-[^"]*)?)"/g,
+    (whole, before, chapter, verse, rest) => {
+      const numbered = /([123])\s*$/.exec(before)?.[1];
+      const continuing = carry?.digit && carry.chapter === chapter && /^[\s,]*$/.test(before);
+      const digit = numbered ?? (continuing ? carry.digit : null);
+      if (!digit) {
+        carry = null;
+        return whole;
+      }
+
+      const bounds = EPISTLE_BOUNDS[digit];
+      if (Number(chapter) > bounds.chapters || (bounds.verses && Number(verse) > bounds.verses)) {
+        carry = null;
+        return whole;
+      }
+
+      carry = { digit, chapter };
+      stats.epistleFixes++;
+      const book = `${digit}John`;
+      return `${before}<ref osisRef="Bible:${book}.${chapter}.${verse}${rest.replaceAll("John.", `${book}.`)}"`;
+    },
+  );
+}
+
 /** Turns the two <ref> forms into anchors the app already knows how to read. */
 function convertRefs(text, slugForKey, stats) {
   let s = text;
@@ -234,7 +285,7 @@ function convertRefs(text, slugForKey, stats) {
  */
 function toHtml(text, slugForKey, stats) {
   const s = convertRefs(
-    text.replace(/^\s*<entryFree\b[^>]*>/, "").replace(/<\/entryFree>\s*$/, ""),
+    fixJohannineEpistles(text.replace(/^\s*<entryFree\b[^>]*>/, "").replace(/<\/entryFree>\s*$/, ""), stats),
     slugForKey,
     stats,
   );
@@ -413,7 +464,7 @@ async function main() {
   // Pass 2: convert.
   const stats = {
     scripRefs: 0, isbeRefs: 0, danglingRefs: 0, unknownRefs: 0,
-    headings: 0, strayInline: 0, leftoverTags: new Map(),
+    headings: 0, strayInline: 0, epistleFixes: 0, leftoverTags: new Map(),
   };
   const byLetter = new Map();
   let redirects = 0;
@@ -476,6 +527,7 @@ async function main() {
   if (blank) console.log(`  ${blank} entries skipped as empty in the source`);
   if (stats.danglingRefs) console.log(`  ${stats.danglingRefs} cross-references to articles this edition doesn't carry (rendered as plain text)`);
   if (stats.strayInline) console.log(`  ${stats.strayInline} unbalanced emphasis tags repaired`);
+  if (stats.epistleFixes) console.log(`  ${stats.epistleFixes} references to 1/2/3 John repaired (the edition tags them as the Gospel)`);
   if (stats.unknownRefs) console.log(`  ${stats.unknownRefs} <ref> tags of an unrecognized shape (text kept)`);
   if (stats.leftoverTags.size) {
     console.log(`  WARNING unconverted tags: ${[...stats.leftoverTags].map(([t, n]) => `${t} x${n}`).join(", ")}`);
