@@ -1,0 +1,17 @@
+{
+ "source": "OpenBible.info Bible Geocoding",
+ "license": "CC BY 4.0",
+ "license_url": "https://creativecommons.org/licenses/by/4.0/",
+ "attribution": "Bible Geocoding data © OpenBible.info, used under CC BY 4.0.",
+ "origin": "https://github.com/openbibleinfo/Bible-Geocoding-Data",
+ "total_places": 1342,
+ "located": 1335,
+ "total_verse_references": 8742,
+ "by_confidence": {
+  "proposed": 429,
+  "certain": 358,
+  "possible": 355,
+  "probable": 193,
+  "unidentified": 7
+ }
+}

@@ -419,6 +419,34 @@ mark.find-current {
   margin: 0 0 0.75em;
 }
 
+/* ISBE articles carry an outline the dictionary's entries do not -- roman
+   sections and numbered subsections, which the extractor promotes to h2/h3.
+   Cross-references to other articles are dotted, to read as a different kind
+   of link from a Scripture reference. */
+.isbe-html h2 {
+  margin: 1.6em 0 0.5em;
+  font-size: 1em;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--color-ink-3);
+}
+.isbe-html h3 {
+  margin: 1.2em 0 0.4em;
+  font-size: 1em;
+  font-weight: 600;
+  color: var(--color-ink);
+}
+.isbe-html h2:first-child,
+.isbe-html h3:first-child {
+  margin-top: 0;
+}
+.isbe-html a.isbe-link {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 2px;
+}
+
 /* Thin, theme-aware scrollbars so panels don't get the stock light-gray
    Windows scrollbar in dark themes. */
 * {

@@ -591,6 +591,121 @@ CREATE TRIGGER library_ad AFTER DELETE ON library_resources BEGIN
 END;
 "#;
 
+// The encyclopedia (ISBE, 1915) and the atlas.
+//
+// `isbe_entries.body` is HTML rather than plain text, because the source
+// already tags every scripture citation and every cross-reference to another
+// article. Keeping that markup means the reader gets clickable references for
+// free from `CommentaryHtml`, instead of the frontend re-finding references
+// in prose that had already marked them.
+//
+// An ISBE key often carries several headwords ("ABGAR; ABGARUS; ABAGARUS")
+// or inverts one for alphabetizing ("ABOMINATION, BIRDS OF"). `isbe_aliases`
+// holds the other ways in so a search for "Abagarus" or "Birds of
+// Abomination" arrives at the article that covers it.
+//
+// The atlas's `atlas_place_verses` is the spine of the whole feature: it is
+// what turns "where is Thessalonica" into "what is on the map in Acts 17",
+// which is the question a reader actually has while reading.
+pub const CONTENT_MIGRATION_0012: &str = r#"
+CREATE TABLE isbe_entries (
+  id            INTEGER PRIMARY KEY,
+  term          TEXT NOT NULL,
+  sort_key      TEXT NOT NULL,
+  slug          TEXT NOT NULL UNIQUE,
+  body          TEXT NOT NULL,
+  plain_text    TEXT NOT NULL,
+  redirect_slug TEXT
+);
+CREATE INDEX idx_isbe_sort ON isbe_entries(sort_key COLLATE NOCASE);
+
+CREATE TABLE isbe_aliases (
+  alias    TEXT NOT NULL,
+  entry_id INTEGER NOT NULL REFERENCES isbe_entries(id)
+);
+CREATE INDEX idx_isbe_alias ON isbe_aliases(alias COLLATE NOCASE);
+
+CREATE VIRTUAL TABLE isbe_fts USING fts5(
+  term, plain_text, content='isbe_entries', content_rowid='id'
+);
+CREATE TRIGGER isbe_ai AFTER INSERT ON isbe_entries BEGIN
+  INSERT INTO isbe_fts(rowid, term, plain_text) VALUES (new.id, new.term, new.plain_text);
+END;
+CREATE TRIGGER isbe_au AFTER UPDATE ON isbe_entries BEGIN
+  INSERT INTO isbe_fts(isbe_fts, rowid, term, plain_text) VALUES('delete', old.id, old.term, old.plain_text);
+  INSERT INTO isbe_fts(rowid, term, plain_text) VALUES (new.id, new.term, new.plain_text);
+END;
+CREATE TRIGGER isbe_ad AFTER DELETE ON isbe_entries BEGIN
+  INSERT INTO isbe_fts(isbe_fts, rowid, term, plain_text) VALUES('delete', old.id, old.term, old.plain_text);
+END;
+
+CREATE TABLE atlas_places (
+  id                  TEXT PRIMARY KEY,
+  slug                TEXT NOT NULL UNIQUE,
+  name                TEXT NOT NULL,
+  article             TEXT,
+  kinds               TEXT NOT NULL,
+  category            TEXT NOT NULL,
+  lon                 REAL,
+  lat                 REAL,
+  approximate         INTEGER NOT NULL DEFAULT 0,
+  confidence          TEXT NOT NULL,
+  modern_name         TEXT,
+  modern_alternatives INTEGER NOT NULL DEFAULT 0,
+  verse_count         INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX idx_atlas_places_name ON atlas_places(name COLLATE NOCASE);
+
+CREATE TABLE atlas_place_verses (
+  place_id TEXT NOT NULL REFERENCES atlas_places(id),
+  book_id  INTEGER NOT NULL REFERENCES books(id),
+  chapter  INTEGER NOT NULL,
+  verse    INTEGER NOT NULL
+);
+CREATE INDEX idx_atlas_verses_ref   ON atlas_place_verses(book_id, chapter, verse);
+CREATE INDEX idx_atlas_verses_place ON atlas_place_verses(place_id);
+
+CREATE VIRTUAL TABLE atlas_fts USING fts5(
+  name, modern_name, content='atlas_places', content_rowid='rowid'
+);
+CREATE TRIGGER atlas_places_ai AFTER INSERT ON atlas_places BEGIN
+  INSERT INTO atlas_fts(rowid, name, modern_name) VALUES (new.rowid, new.name, new.modern_name);
+END;
+CREATE TRIGGER atlas_places_au AFTER UPDATE ON atlas_places BEGIN
+  INSERT INTO atlas_fts(atlas_fts, rowid, name, modern_name) VALUES('delete', old.rowid, old.name, old.modern_name);
+  INSERT INTO atlas_fts(rowid, name, modern_name) VALUES (new.rowid, new.name, new.modern_name);
+END;
+CREATE TRIGGER atlas_places_ad AFTER DELETE ON atlas_places BEGIN
+  INSERT INTO atlas_fts(atlas_fts, rowid, name, modern_name) VALUES('delete', old.rowid, old.name, old.modern_name);
+END;
+
+CREATE TABLE atlas_journeys (
+  id         INTEGER PRIMARY KEY,
+  slug       TEXT NOT NULL UNIQUE,
+  title      TEXT NOT NULL,
+  summary    TEXT NOT NULL,
+  era        TEXT NOT NULL,
+  reference  TEXT NOT NULL,
+  sort_order INTEGER NOT NULL
+);
+
+-- `place_id` is null for a station Scripture names but nobody can now locate
+-- (much of the wilderness itinerary is like this). Those legs still belong in
+-- the written route, so they are kept and simply not drawn.
+CREATE TABLE atlas_journey_legs (
+  id         INTEGER PRIMARY KEY,
+  journey_id INTEGER NOT NULL REFERENCES atlas_journeys(id),
+  sort_order INTEGER NOT NULL,
+  place_id   TEXT REFERENCES atlas_places(id),
+  label      TEXT NOT NULL,
+  note       TEXT,
+  book_id    INTEGER REFERENCES books(id),
+  chapter    INTEGER,
+  verse      INTEGER
+);
+CREATE INDEX idx_atlas_legs ON atlas_journey_legs(journey_id, sort_order);
+"#;
+
 pub const CONTENT_MIGRATIONS: &[&str] = &[
     CONTENT_MIGRATION_0001,
     CONTENT_MIGRATION_0002,
@@ -603,6 +718,7 @@ pub const CONTENT_MIGRATIONS: &[&str] = &[
     CONTENT_MIGRATION_0009,
     CONTENT_MIGRATION_0010,
     CONTENT_MIGRATION_0011,
+    CONTENT_MIGRATION_0012,
 ];
 
 pub const USER_MIGRATION_0001: &str = r#"
@@ -1322,9 +1438,11 @@ CREATE INDEX idx_reading_plan_schedule_date ON reading_plan_schedule(plan_code, 
 //
 // sermon_sources is one row per citation block, keyed by a source identity
 // the app can reopen (`commentary:<entryId>`, `westminster:<sectionId>`,
-// `strongs:G1343`, `dictionary:<slug>`, `resource:<id>:<page>`,
-// `illustration:<id>`) -- that string is what "Open source" hands back to
-// openContent. This doubles as the sermon's bibliography.
+// `strongs:G1343`, `dictionary:<slug>`, `encyclopedia:<slug>`,
+// `atlas:<place-slug>`, `resource:<id>:<page>`, `illustration:<id>`) -- that
+// string is what "Open source" hands back to openContent. This doubles as
+// the sermon's bibliography. The `kind` CHECK listing those is widened in
+// USER_MIGRATION_0018, not here.
 //
 // sermon_events logs rehearsals and preachings in one table because both
 // are timed runs of the same manuscript, and both feed the measured
@@ -1586,6 +1704,32 @@ ALTER TABLE resources ADD COLUMN library_key TEXT;
 CREATE UNIQUE INDEX idx_resources_library_key ON resources(library_key) WHERE library_key IS NOT NULL;
 "#;
 
+// Encyclopedia articles and atlas places become citable in a sermon.
+//
+// The `kind` CHECK lives in USER_MIGRATION_0015, which has shipped, so it
+// cannot be edited in place -- SQLite has no ALTER TABLE ... DROP CONSTRAINT,
+// and rewriting a migration a reader's database has already run would leave
+// their `user_version` past it and the constraint unchanged. Hence the
+// twelve-step rebuild, and hence the index recreated at the end: it belongs
+// to the old table and goes with it.
+pub const USER_MIGRATION_0018: &str = r#"
+CREATE TABLE sermon_sources_new (
+  id          INTEGER PRIMARY KEY,
+  sermon_id   INTEGER NOT NULL REFERENCES sermons(id) ON DELETE CASCADE,
+  kind        TEXT NOT NULL CHECK(kind IN ('commentary','confession','strongs','dictionary','resource','crossref','illustration','encyclopedia','atlas')),
+  ref_id      TEXT,
+  label       TEXT NOT NULL,
+  excerpt     TEXT,
+  sort_order  INTEGER NOT NULL DEFAULT 0,
+  created_at  TEXT NOT NULL
+);
+INSERT INTO sermon_sources_new (id, sermon_id, kind, ref_id, label, excerpt, sort_order, created_at)
+  SELECT id, sermon_id, kind, ref_id, label, excerpt, sort_order, created_at FROM sermon_sources;
+DROP TABLE sermon_sources;
+ALTER TABLE sermon_sources_new RENAME TO sermon_sources;
+CREATE INDEX idx_sermon_sources_sermon ON sermon_sources(sermon_id, sort_order);
+"#;
+
 pub const USER_MIGRATIONS: &[&str] = &[
     USER_MIGRATION_0001,
     USER_MIGRATION_0002,
@@ -1604,4 +1748,5 @@ pub const USER_MIGRATIONS: &[&str] = &[
     USER_MIGRATION_0015,
     USER_MIGRATION_0016,
     USER_MIGRATION_0017,
+    USER_MIGRATION_0018,
 ];

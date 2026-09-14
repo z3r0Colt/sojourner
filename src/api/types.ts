@@ -431,6 +431,83 @@ export interface DictionaryEntrySummary {
   slug: string;
 }
 
+/** An ISBE article. `body` is HTML: scripture citations are
+ *  `a.scripref[data-osis]` and cross-references to other articles are
+ *  `a.isbe-link[data-isbe]`, both decorated at render time. */
+export interface IsbeEntry {
+  id: number;
+  term: string;
+  slug: string;
+  body: string;
+  /** Set on a "See SOMETHING ELSE" stub, so the reader can be sent on. */
+  redirect_slug: string | null;
+}
+
+export interface IsbeEntrySummary {
+  id: number;
+  term: string;
+  slug: string;
+}
+
+export interface IsbeSearchResult {
+  id: number;
+  term: string;
+  slug: string;
+  /** HTML-escaped, with `[` and `]` around the matched words. */
+  snippet: string;
+}
+
+/** How firmly a place is tied to a modern location. Most biblical sites are
+ *  not certain, and the atlas says so rather than implying otherwise. */
+export type AtlasConfidence = "certain" | "probable" | "possible" | "proposed" | "unidentified";
+export type AtlasCategory = "settlement" | "region" | "water" | "mountain" | "other";
+
+export interface AtlasPlace {
+  id: string;
+  slug: string;
+  name: string;
+  /** "the" for places read as "the Jordan"; null otherwise. */
+  article: string | null;
+  kinds: string[];
+  category: AtlasCategory;
+  lon: number | null;
+  lat: number | null;
+  /** True when the coordinate is the centre of a search radius, not a site. */
+  approximate: boolean;
+  confidence: AtlasConfidence;
+  modern_name: string | null;
+  modern_alternatives: number;
+  verse_count: number;
+}
+
+export interface AtlasPlaceVerse {
+  book_id: number;
+  chapter: number;
+  verse: number;
+}
+
+export interface AtlasJourney {
+  id: number;
+  slug: string;
+  title: string;
+  summary: string;
+  era: string;
+  reference: string;
+  legs: AtlasJourneyLeg[];
+}
+
+export interface AtlasJourneyLeg {
+  place_id: string | null;
+  place_slug: string | null;
+  label: string;
+  note: string | null;
+  lon: number | null;
+  lat: number | null;
+  book_id: number | null;
+  chapter: number | null;
+  verse: number | null;
+}
+
 export interface InterlinearWord {
   id: number;
   sort_order: number;
@@ -614,7 +691,9 @@ export type SermonSourceKind =
   | "dictionary"
   | "resource"
   | "crossref"
-  | "illustration";
+  | "illustration"
+  | "encyclopedia"
+  | "atlas";
 export type SermonEventKind = "rehearsal" | "preaching";
 export type IllustrationKind = "illustration" | "quote";
 

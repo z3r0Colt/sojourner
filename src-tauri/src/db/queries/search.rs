@@ -34,7 +34,7 @@ use rusqlite::Connection;
 /// negated term with nothing positive before it (e.g. a query that's just
 /// `-word`) has no left-hand side to attach to and is simply dropped rather
 /// than emitted as invalid syntax.
-fn build_match_expr(query: &str) -> String {
+pub(crate) fn build_match_expr(query: &str) -> String {
     let mut out: Vec<String> = Vec::new();
     let mut chars = query.chars().peekable();
     let mut negate_next = false;

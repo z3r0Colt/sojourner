@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { ArrowLeftToLine, ArrowRightToLine, Check, Maximize2, Minimize2, MoreHorizontal, X } from "lucide-react";
-import { useBooks, useCommentarySources, useDictionaryIndex, useResources, useSermons, useTranslations, useWestminsterDocuments } from "../api/queries";
+import { useAtlasPlaces, useBooks, useCommentarySources, useDictionaryIndex, useIsbeIndex, useResources, useSermons, useTranslations, useWestminsterDocuments } from "../api/queries";
 import { useWorkspaceStore, LEADING_KINDS, LINK_GROUPS, PANE_KIND_LIST, PASSAGE_KINDS, type LinkGroup, type Pane } from "../state/workspaceStore";
 import { IconButton } from "../components/ui/Button";
 import { Popover, PopoverItem, PopoverLabel } from "../components/ui/Popover";
@@ -82,11 +82,13 @@ export function useTitleContext(): TitleContext {
   const { data: resources } = useResources();
   const { data: westminsterDocs } = useWestminsterDocuments();
   const { data: dictionaryIndex } = useDictionaryIndex();
+  const { data: isbeIndex } = useIsbeIndex();
+  const { data: atlasPlaces } = useAtlasPlaces();
   // A sermon pane's title is the sermon's own, so it follows a rename.
   const { data: sermons } = useSermons();
   return useMemo(
-    () => ({ books, translations, commentarySources, resources, westminsterDocs, dictionaryIndex, sermons }),
-    [books, translations, commentarySources, resources, westminsterDocs, dictionaryIndex, sermons],
+    () => ({ books, translations, commentarySources, resources, westminsterDocs, dictionaryIndex, isbeIndex, atlasPlaces, sermons }),
+    [books, translations, commentarySources, resources, westminsterDocs, dictionaryIndex, isbeIndex, atlasPlaces, sermons],
   );
 }
 

@@ -94,6 +94,19 @@ export interface DictionaryParams {
   slug: string | null;
 }
 
+export interface EncyclopediaParams {
+  slug: string | null;
+}
+
+/** The atlas follows the passage, so it carries the same book/chapter/verse
+ * every study pane does, alongside whichever place or journey is selected.
+ * `slug` and `journey` are what the reader chose; the passage is what the
+ * Bible pane beside it is showing. */
+export interface AtlasParams extends PassageParams {
+  slug: string | null;
+  journey: string | null;
+}
+
 export interface ResourceParams {
   id: number;
 }
@@ -121,6 +134,8 @@ export type PaneContent =
   | { kind: "westminster"; params: WestminsterParams }
   | { kind: "lexicon"; params: LexiconParams }
   | { kind: "dictionary"; params: DictionaryParams }
+  | { kind: "encyclopedia"; params: EncyclopediaParams }
+  | { kind: "atlas"; params: AtlasParams }
   | { kind: "resource"; params: ResourceParams }
   | { kind: "resources"; params: EmptyParams }
   | { kind: "commentary-book"; params: CommentaryBookParams }
@@ -150,6 +165,8 @@ export const PANE_KIND_LIST: readonly PaneKind[] = [
   "westminster",
   "lexicon",
   "dictionary",
+  "encyclopedia",
+  "atlas",
   "resource",
   "resources",
   "commentary-book",
@@ -175,6 +192,7 @@ export const PASSAGE_KINDS: ReadonlySet<PaneKind> = new Set<PaneKind>([
   "confession-for-passage",
   "metrical",
   "mine",
+  "atlas",
 ]);
 
 /** Kinds that lead a link group without following it. A sermon pane
