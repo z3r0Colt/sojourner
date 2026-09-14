@@ -462,6 +462,13 @@ export interface IsbeEntrySummary {
   slug: string;
 }
 
+/** How to say a name, in ISBE's own notation: `{ word: "MEPHIBOSHETH",
+ * respelling: "me-fib'-o-sheth" }`. */
+export interface Pronunciation {
+  word: string;
+  respelling: string;
+}
+
 /** An encyclopedia article that discusses the passage being read. */
 export interface IsbePassageEntry {
   id: number;
@@ -562,9 +569,55 @@ export interface MetricalPsalmVerse {
   text: string;
 }
 
+/** A Bible verse number that begins inside a metrical line -- regularly
+ *  part-way along it, since a stanza does not respect verse divisions. */
+export interface MetricalPsalmMark {
+  verse: number;
+  word: number;
+}
+
+export interface MetricalPsalmLine {
+  text: string;
+  marks: MetricalPsalmMark[];
+  /** One entry per note the line is sung on, longer words already divided
+   *  ("sal", "va", "ti", "on"), so the words sit under the notes. */
+  syllables: string[];
+}
+
+export interface MetricalPsalmStanza {
+  number: number;
+  lines: MetricalPsalmLine[];
+}
+
 export interface MetricalPsalmVersion {
   label: string | null;
+  /** "C.M.", "L.M.", "8.7.8.7." -- what decides which tunes will carry it. */
+  metre: string;
+  /** Syllables per line, e.g. [8, 6, 8, 6]. */
+  pattern: number[];
   verses: MetricalPsalmVerse[];
+  /** Empty where the scan was too damaged to divide into singable lines; the
+   *  psalm then reads as verses and its tune plays without words under it. */
+  stanzas: MetricalPsalmStanza[];
+}
+
+export interface TuneNote {
+  midi: number;
+  beats: number;
+}
+
+/** A tune, melody only. `lines` is one entry per line of the metre, each a
+ *  list of syllables, each syllable the note or notes it is sung to. */
+export interface PsalmTune {
+  id: string;
+  name: string;
+  metre: string;
+  pattern: number[];
+  composer: string | null;
+  key: string | null;
+  /** Crotchets per minute, as the source score marks it. */
+  tempo: number;
+  lines: TuneNote[][][];
 }
 
 export interface CrossReference {

@@ -5,6 +5,8 @@
 // of the app (ttsStore, ReadAloudWords, TtsPlayerBar) only depends on this
 // interface, not on Web Speech specifics.
 
+import { invoke } from "@tauri-apps/api/core";
+
 export interface TtsVoice {
   id: string; // voiceURI for web speech; provider voice id for cloud engines
   name: string;
@@ -35,12 +37,37 @@ export interface TtsEngine {
   pause(): void;
   resume(): void;
   cancel(): void;
+  /** Whether this engine reports which word it is saying. Engines that return
+   * finished audio cannot, and the highlight follows the verse instead. */
+  readonly reportsWordBoundaries: boolean;
+  /** Optional: change speed without re-speaking the current text. Web Speech
+   * fixes an utterance's rate when it starts and so leaves this out; an engine
+   * playing rendered audio can just play it faster. */
+  setRate?(rate: number): void;
+  /** Optional: an engine that needs to look for its files before it can say
+   * whether it is usable. Resolves to the same answer `isAvailable` gives. */
+  probe?(): Promise<boolean>;
+  /** Optional: start rendering text that is about to be needed. An engine that
+   * synthesizes a whole verse before it can play a note of it would otherwise
+   * leave a silence at every verse break. */
+  prefetch?(text: string, opts: SpeakOptions): void;
 }
 
-/** True as long as at least one attempt to load voices has resolved (Chromium loads them async). */
+/** True once the browser has actually produced a voice list. */
 let voicesReady = false;
 let voicesReadyPromise: Promise<void> | null = null;
 
+/**
+ * Chromium loads voices asynchronously, and on a cold start this can take
+ * several seconds -- longer than any fixed wait worth making a reader sit
+ * through.
+ *
+ * Nothing is latched until there is really a list: an earlier version gave up
+ * after a second and marked the voices "ready" while empty, and because that
+ * flag is a module-level latch, every later call short-circuited on it. The
+ * voice picker then stayed empty for the rest of the session, which looks
+ * exactly like a machine with no voices installed.
+ */
 function waitForVoices(): Promise<void> {
   if (voicesReady) return Promise.resolve();
   if (voicesReadyPromise) return voicesReadyPromise;
@@ -50,26 +77,32 @@ function waitForVoices(): Promise<void> {
       resolve();
       return;
     }
-    const existing = synth.getVoices();
-    if (existing.length > 0) {
-      voicesReady = true;
-      resolve();
-      return;
-    }
-    const onChange = () => {
-      voicesReady = true;
+    let poll = 0;
+    let giveUp = 0;
+    const stop = () => {
       synth.removeEventListener("voiceschanged", onChange);
+      window.clearInterval(poll);
+      window.clearTimeout(giveUp);
+    };
+    const check = () => {
+      if (synth.getVoices().length === 0) return;
+      voicesReady = true;
+      stop();
       resolve();
     };
+    // Polling as well as listening: Chromium does not reliably fire
+    // voiceschanged when the list was already populated a tick earlier.
+    const onChange = () => check();
     synth.addEventListener("voiceschanged", onChange);
-    // Some engines never fire voiceschanged if voices are already loaded synchronously
-    // by the time we get here on a later tick; fall back after a short timeout.
-    setTimeout(() => {
-      if (!voicesReady) {
-        voicesReady = true;
-        resolve();
-      }
-    }, 1000);
+    poll = window.setInterval(check, 250);
+    giveUp = window.setTimeout(() => {
+      stop();
+      // Left unlatched on purpose, so opening the picker again tries afresh
+      // rather than inheriting this attempt's empty answer.
+      voicesReadyPromise = null;
+      resolve();
+    }, 10_000);
+    check();
   });
   return voicesReadyPromise;
 }
@@ -77,6 +110,7 @@ function waitForVoices(): Promise<void> {
 export class WebSpeechEngine implements TtsEngine {
   readonly id = "webspeech";
   readonly label = "Windows voices (offline)";
+  readonly reportsWordBoundaries = true;
 
   isAvailable(): boolean {
     return typeof window !== "undefined" && !!window.speechSynthesis;
@@ -139,7 +173,173 @@ export class WebSpeechEngine implements TtsEngine {
 
 export const webSpeechEngine = new WebSpeechEngine();
 
+/** Used when no voice has been chosen: a clear, unhurried American reading. */
+const DEFAULT_KOKORO_VOICE = "af_heart";
+
+/** `af_heart` -> "Heart (American, female)". Kokoro names its voices by a
+ * language letter, a gender letter, then the name. */
+function describeKokoroVoice(id: string): string {
+  const [prefix, ...rest] = id.split("_");
+  const name = rest.join(" ") || id;
+  const pretty = name.charAt(0).toUpperCase() + name.slice(1);
+  const accent = prefix.startsWith("a") ? "American" : prefix.startsWith("b") ? "British" : "";
+  const gender = prefix.endsWith("f") ? "female" : prefix.endsWith("m") ? "male" : "";
+  const detail = [accent, gender].filter(Boolean).join(", ");
+  return detail ? `${pretty} (${detail})` : pretty;
+}
+
+/**
+ * Kokoro, run locally. The model is bundled in the installer and synthesis
+ * happens in Rust, which hands back a finished WAV for a whole verse.
+ *
+ * That shape is why this engine cannot report word boundaries: there is no
+ * stream of events to listen to, only audio. Playback is an `<audio>` element
+ * over a blob, which at least means speed changes are free.
+ */
+export class KokoroEngine implements TtsEngine {
+  readonly id = "kokoro";
+  readonly label = "Natural voice (offline)";
+  readonly reportsWordBoundaries = false;
+
+  private audio: HTMLAudioElement | null = null;
+  private objectUrl: string | null = null;
+  private available = false;
+  /** Bumped by every new utterance and by cancel, so audio that finishes
+   * rendering after the reader has moved on is thrown away instead of played
+   * over whatever is being said now. */
+  private generation = 0;
+
+  isAvailable(): boolean {
+    return this.available;
+  }
+
+  async probe(): Promise<boolean> {
+    try {
+      this.available = await invoke<boolean>("kokoro_available");
+    } catch {
+      this.available = false;
+    }
+    return this.available;
+  }
+
+  async listVoices(): Promise<TtsVoice[]> {
+    try {
+      const ids = await invoke<string[]>("kokoro_voices");
+      return ids.map((id) => ({ id, name: describeKokoroVoice(id), lang: id.startsWith("b") ? "en-GB" : "en-US" }));
+    } catch {
+      return [];
+    }
+  }
+
+  /**
+   * Verses already rendered or on their way, keyed by voice and text.
+   *
+   * A verse takes a few seconds to synthesize, which is comfortably less than
+   * it takes to say -- but only if the work starts before it is needed.
+   * Rendering on demand would put that few seconds of silence into every verse
+   * break. The store calls `prefetch` for the next verse as the current one
+   * starts, and by the time it is wanted it is usually already here.
+   */
+  private rendered = new Map<string, Promise<ArrayBuffer>>();
+
+  private render(text: string, voiceId: string | null): Promise<ArrayBuffer> {
+    const voice = voiceId ?? DEFAULT_KOKORO_VOICE;
+    const key = `${voice} ${text}`;
+    const existing = this.rendered.get(key);
+    if (existing) return existing;
+
+    const pending = invoke<ArrayBuffer>("kokoro_synthesize", {
+      text,
+      voice,
+      // Speed is applied on playback rather than baked into the audio, so
+      // moving the slider does not mean waiting for the verse to render again.
+      speed: 1,
+    });
+    // A failure must not be remembered, or the same verse would never be
+    // retried for the rest of the session.
+    pending.catch(() => this.rendered.delete(key));
+    this.rendered.set(key, pending);
+    // Only the verse playing and the one after it are worth holding; each is
+    // about a megabyte.
+    while (this.rendered.size > 3) {
+      const oldest = this.rendered.keys().next().value;
+      if (oldest === undefined) break;
+      this.rendered.delete(oldest);
+    }
+    return pending;
+  }
+
+  prefetch(text: string, opts: SpeakOptions): void {
+    void this.render(text, opts.voiceId).catch(() => undefined);
+  }
+
+  private release() {
+    if (this.audio) {
+      this.audio.pause();
+      this.audio.onended = null;
+      this.audio.onerror = null;
+      this.audio = null;
+    }
+    if (this.objectUrl) {
+      URL.revokeObjectURL(this.objectUrl);
+      this.objectUrl = null;
+    }
+  }
+
+  speak(text: string, opts: SpeakOptions, callbacks: SpeakCallbacks): void {
+    const generation = ++this.generation;
+    this.release();
+
+    this.render(text, opts.voiceId)
+      .then((buffer) => {
+        if (generation !== this.generation) return; // superseded while rendering
+        const url = URL.createObjectURL(new Blob([buffer], { type: "audio/wav" }));
+        const audio = new Audio(url);
+        audio.volume = opts.volume;
+        audio.playbackRate = opts.rate;
+        audio.onended = () => {
+          if (generation !== this.generation) return;
+          this.release();
+          callbacks.onEnd();
+        };
+        audio.onerror = () => {
+          if (generation !== this.generation) return;
+          this.release();
+          callbacks.onError("The voice could not play this verse.");
+        };
+        this.audio = audio;
+        this.objectUrl = url;
+        void audio.play().catch((err) => {
+          if (generation === this.generation) callbacks.onError(String(err));
+        });
+      })
+      .catch((err) => {
+        if (generation === this.generation) callbacks.onError(String(err));
+      });
+  }
+
+  setRate(rate: number): void {
+    if (this.audio) this.audio.playbackRate = rate;
+  }
+
+  pause(): void {
+    this.audio?.pause();
+  }
+
+  resume(): void {
+    void this.audio?.play().catch(() => undefined);
+  }
+
+  cancel(): void {
+    this.generation += 1;
+    this.release();
+  }
+}
+
+export const kokoroEngine = new KokoroEngine();
+
 /** Registry of available engines, keyed by id. Cloud engines get added here later. */
 export const ttsEngines: Record<string, TtsEngine> = {
   webspeech: webSpeechEngine,
+  kokoro: kokoroEngine,
 };

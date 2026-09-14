@@ -1,6 +1,6 @@
 use crate::models::{
     DictionaryDefinition, DictionaryEntry, DictionaryEntrySummary, Footnote, InterlinearWord, IsbeEntry, IsbeEntrySummary,
-    IsbePassageEntry, IsbeSearchResult, MorphologyWord, StrongsEntry,
+    IsbePassageEntry, IsbeSearchResult, MorphologyWord, Pronunciation, StrongsEntry,
 };
 use rusqlite::{params, Connection, OptionalExtension};
 use std::collections::HashMap;
@@ -184,6 +184,20 @@ fn map_isbe_summary(r: &rusqlite::Row) -> rusqlite::Result<IsbeEntrySummary> {
 pub fn list_isbe_index(conn: &Connection) -> anyhow::Result<Vec<IsbeEntrySummary>> {
     let mut stmt = conn.prepare("SELECT id, term, slug FROM isbe_entries ORDER BY sort_key COLLATE NOCASE")?;
     let rows = stmt.query_map([], map_isbe_summary)?;
+    Ok(rows.collect::<Result<Vec<_>, _>>()?)
+}
+
+/// Every respelling, read once at startup and held in memory: read-aloud looks
+/// up a word per spoken token, which is far too hot a path to go back to
+/// SQLite for, and the whole table is only a few thousand short rows.
+pub fn list_pronunciations(conn: &Connection) -> anyhow::Result<Vec<Pronunciation>> {
+    let mut stmt = conn.prepare("SELECT word, respelling FROM pronunciations")?;
+    let rows = stmt.query_map([], |r| {
+        Ok(Pronunciation {
+            word: r.get(0)?,
+            respelling: r.get(1)?,
+        })
+    })?;
     Ok(rows.collect::<Result<Vec<_>, _>>()?)
 }
 

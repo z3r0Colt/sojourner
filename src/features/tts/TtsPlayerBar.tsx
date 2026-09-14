@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { Moon, Pause, Play, Settings2, SkipBack, SkipForward, X } from "lucide-react";
 import { SLEEP_MINUTE_OPTIONS, useTtsStore } from "../../state/ttsStore";
 import { useWorkspaceStore } from "../../state/workspaceStore";
-import { ttsEngines, type TtsVoice } from "./ttsEngine";
+import { ttsEngines, type TtsEngine, type TtsVoice } from "./ttsEngine";
+import { PronunciationOverrides } from "./PronunciationOverrides";
 import { IconButton, Button } from "../../components/ui/Button";
 import { Popover } from "../../components/ui/Popover";
 import { selectClass, checkboxClass, cx } from "../../components/ui/classes";
@@ -27,13 +28,49 @@ function TtsSettings() {
   const setAutoScroll = useTtsStore((s) => s.setAutoScroll);
   const autoContinue = useTtsStore((s) => s.autoContinue);
   const setAutoContinue = useTtsStore((s) => s.setAutoContinue);
+  const usePronunciations = useTtsStore((s) => s.usePronunciations);
+  const setUsePronunciations = useTtsStore((s) => s.setUsePronunciations);
   const sleepMinutes = useTtsStore((s) => s.sleepMinutes);
   const setSleepMinutes = useTtsStore((s) => s.setSleepMinutes);
   const sourceKind = useTtsStore((s) => s.sourceKind);
 
+  const setEngineId = useTtsStore((s) => s.setEngineId);
+
+  // The neural voice only exists in a build whose model was fetched, so each
+  // engine is asked whether it is really there before being offered.
+  const [availableEngines, setAvailableEngines] = useState<TtsEngine[]>([]);
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const usable: TtsEngine[] = [];
+      for (const candidate of Object.values(ttsEngines)) {
+        const ok = candidate.probe ? await candidate.probe() : candidate.isAvailable();
+        if (ok) usable.push(candidate);
+      }
+      if (alive) setAvailableEngines(usable);
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
   const [voices, setVoices] = useState<TtsVoice[]>([]);
   useEffect(() => {
-    ttsEngines[engineId]?.listVoices().then(setVoices);
+    let alive = true;
+    const load = () => {
+      ttsEngines[engineId]?.listVoices().then((list) => {
+        if (alive) setVoices(list);
+      });
+    };
+    load();
+    // The list can arrive after this popover is already open, and a voice
+    // installed in Windows while the app is running shows up the same way.
+    const synth = window.speechSynthesis;
+    synth?.addEventListener("voiceschanged", load);
+    return () => {
+      alive = false;
+      synth?.removeEventListener("voiceschanged", load);
+    };
   }, [engineId]);
 
   // Web Speech can't change rate/pitch mid-utterance (setRate/setPitch restart
@@ -49,8 +86,21 @@ function TtsSettings() {
     <div className="p-1">
       <h3 className="mb-3 text-sm font-semibold text-ink">Read aloud settings</h3>
 
+      {availableEngines.length > 1 && (
+        <>
+          <label className="mb-1 block text-xs font-medium text-ink-3">Engine</label>
+          <select value={engineId} onChange={(e) => setEngineId(e.target.value)} className={cx(selectClass, "mb-3 w-full")}>
+            {availableEngines.map((e) => (
+              <option key={e.id} value={e.id}>
+                {e.label}
+              </option>
+            ))}
+          </select>
+        </>
+      )}
+
       <label className="mb-1 block text-xs font-medium text-ink-3">Voice</label>
-      <select value={voiceId ?? ""} onChange={(e) => setVoiceId(e.target.value || null)} className={cx(selectClass, "mb-3 w-full")}>
+      <select value={voiceId ?? ""} onChange={(e) => setVoiceId(e.target.value || null)} className={cx(selectClass, "mb-1 w-full")}>
         <option value="">System default</option>
         {voices.map((v) => (
           <option key={v.id} value={v.id}>
@@ -58,6 +108,11 @@ function TtsSettings() {
           </option>
         ))}
       </select>
+      <p className="mb-3 text-xs text-ink-3">
+        {ttsEngines[engineId]?.reportsWordBoundaries === false
+          ? "This voice follows along a verse at a time -- it returns finished audio, with no way to say which word it is on."
+          : "Follows along word by word."}
+      </p>
 
       <label className="mb-1 flex items-center justify-between text-xs font-medium text-ink-3">
         <span>Speed</span>
@@ -134,6 +189,27 @@ function TtsSettings() {
         </span>
       </label>
 
+      <label className="mt-3 flex items-start gap-2 text-sm text-ink-2">
+        <input
+          type="checkbox"
+          className={cx(checkboxClass, "mt-0.5")}
+          checked={usePronunciations}
+          onChange={(e) => setUsePronunciations(e.target.checked)}
+        />
+        <span>
+          Say biblical names properly
+          <span className="block text-xs text-ink-3">
+            Uses the encyclopedia's pronunciations for names like Mephibosheth. Takes effect at the next verse.
+          </span>
+        </span>
+      </label>
+
+      {usePronunciations && (
+        <div className="mt-3">
+          <PronunciationOverrides />
+        </div>
+      )}
+
       <label className="mb-1 mt-3 block text-xs font-medium text-ink-3" htmlFor="tts-sleep">
         Stop after
       </label>
@@ -146,7 +222,10 @@ function TtsSettings() {
       </select>
       <p className="mt-1 text-xs text-ink-3">The voice fades out over the last ten seconds, then reading stops.</p>
 
-      <p className="mt-3 text-xs text-ink-3">Uses the Windows voices installed on this device. No audio leaves the computer.</p>
+      <p className="mt-3 text-xs text-ink-3">
+        Uses the Windows voices installed on this device. No audio leaves the computer. For better ones, install a natural
+        voice in Windows Settings → Time &amp; language → Speech → Manage voices; it appears in this list on its own.
+      </p>
     </div>
   );
 }

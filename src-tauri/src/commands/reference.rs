@@ -3,7 +3,8 @@ use crate::db::DbState;
 use crate::error::AppResult;
 use crate::models::{
     AtlasJourney, AtlasPlace, AtlasPlaceVerse, ConcordanceEntry, DictionaryEntry, DictionaryEntrySummary, Footnote,
-    InterlinearWord, IsbeEntry, IsbeEntrySummary, IsbePassageEntry, IsbeSearchResult, MorphologyWord, StrongsEntry,
+    InterlinearWord, IsbeEntry, IsbeEntrySummary, IsbePassageEntry, IsbeSearchResult, MorphologyWord, Pronunciation,
+    StrongsEntry,
 };
 use std::collections::HashMap;
 use tauri::State;
@@ -60,6 +61,12 @@ pub fn search_dictionary(db: State<DbState>, query: String, limit: i64) -> AppRe
 pub fn list_isbe_index(db: State<DbState>) -> AppResult<Vec<IsbeEntrySummary>> {
     let conn = db.0.lock().unwrap();
     Ok(queries::list_isbe_index(&conn)?)
+}
+
+#[tauri::command]
+pub fn list_pronunciations(db: State<DbState>) -> AppResult<Vec<Pronunciation>> {
+    let conn = db.0.lock().unwrap();
+    Ok(queries::list_pronunciations(&conn)?)
 }
 
 #[tauri::command]

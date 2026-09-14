@@ -17,3 +17,4 @@ pub mod search;
 pub mod sermons;
 pub mod settings;
 pub mod study;
+pub mod tts;

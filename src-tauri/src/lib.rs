@@ -10,6 +10,7 @@ pub mod models;
 pub mod paths;
 pub mod resources;
 pub mod text;
+pub mod tts;
 
 use db::DbState;
 use std::path::PathBuf;
@@ -245,6 +246,7 @@ pub fn run() {
             commands::search::delete_search_history,
             commands::study::get_cross_references,
             commands::study::get_metrical_psalm,
+            commands::study::list_psalm_tunes,
             commands::study::list_westminster_documents,
             commands::study::list_westminster_sections,
             commands::study::get_westminster_section,
@@ -263,6 +265,10 @@ pub fn run() {
             commands::reference::find_dictionary_entry_by_term,
             commands::reference::search_dictionary,
             commands::reference::list_isbe_index,
+            commands::reference::list_pronunciations,
+            commands::tts::kokoro_available,
+            commands::tts::kokoro_voices,
+            commands::tts::kokoro_synthesize,
             commands::reference::get_isbe_entry,
             commands::reference::find_isbe_entry_by_term,
             commands::reference::find_dictionary_entry_for_isbe,

@@ -2,7 +2,8 @@ use crate::db::queries::{crossrefs, doctrine_topics, psalter, westminster};
 use crate::db::DbState;
 use crate::error::AppResult;
 use crate::models::{
-    CrossReference, DoctrineTopic, MetricalPsalmVersion, WestminsterCommentaryEntry, WestminsterCommentarySource,
+    CrossReference, DoctrineTopic, MetricalPsalmVersion, PsalmTune, WestminsterCommentaryEntry,
+    WestminsterCommentarySource,
     WestminsterDocument, WestminsterPassageMatch, WestminsterSection, WestminsterSectionSummary,
 };
 use serde::Serialize;
@@ -18,6 +19,15 @@ pub fn get_cross_references(db: State<DbState>, book_id: i64, chapter: i64, vers
 pub fn get_metrical_psalm(db: State<DbState>, psalm: i64) -> AppResult<Vec<MetricalPsalmVersion>> {
     let conn = db.0.lock().unwrap();
     Ok(psalter::get_metrical_psalm(&conn, psalm)?)
+}
+
+#[tauri::command]
+pub fn list_psalm_tunes(db: State<DbState>, metre: Option<String>) -> AppResult<Vec<PsalmTune>> {
+    let conn = db.0.lock().unwrap();
+    Ok(match metre {
+        Some(metre) => psalter::list_tunes_for_metre(&conn, &metre)?,
+        None => psalter::list_tunes(&conn)?,
+    })
 }
 
 #[tauri::command]
