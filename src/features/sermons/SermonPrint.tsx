@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { createPortal } from "react-dom";
 import { useBooks, usePassagesIn } from "../../api/queries";
 import { ManuscriptView } from "./ManuscriptView";
 import { outlineOf, passageBlocks, sectionsOf } from "./editor/documentModel";
@@ -43,7 +44,10 @@ export function SermonPrintRegion({
   const refs = useMemo(() => passageBlocks(sermon.body), [sermon.body]);
   const { byKey } = usePassagesIn(sermon.translation_id, refs);
 
-  return (
+  // Straight onto <body>, not into the toolbar where the menu lives: a pane
+  // is `relative overflow-hidden`, and an absolutely positioned print root
+  // inside one is cropped to a single pane-sized page.
+  return createPortal(
     <div className="print-root print-only sermon-print" aria-hidden="true">
       <SermonPrintHeader sermon={sermon} books={books} />
       {shape === "manuscript" && <ManuscriptView html={sermon.body} passages={byKey} />}
@@ -51,7 +55,8 @@ export function SermonPrintRegion({
       {(shape === "handout" || shape === "handout-key") && (
         <HandoutPrint sermon={sermon} passages={byKey} answerKey={shape === "handout-key"} options={handout} />
       )}
-    </div>
+    </div>,
+    document.body,
   );
 }
 

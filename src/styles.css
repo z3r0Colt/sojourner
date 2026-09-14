@@ -500,11 +500,23 @@ mark.find-current {
   animation: toast-in 160ms ease-out;
 }
 
+/* A region that exists for paper only (the prayer list's printable copy,
+   the sermon's print sheets). This has to come *before* the print block
+   below, which turns it back on: a media query adds no specificity, so if
+   this rule came later it would win even on paper and the sheet would
+   come out blank. */
+.print-only {
+  display: none;
+}
+
 /* Printing: any page marks its printable region with `.print-root` (the
    Bible pane's chapter text, the prayer list) and calls window.print();
    everything else (nav, side panels, popups, the app's own chrome) is
    hidden on paper. Only one region should carry the class at a time --
-   views add it while their print pass is running and drop it after. */
+   views add it while their print pass is running and drop it after.
+   A `.print-root` inside a pane has to be portalled to <body> first: a
+   pane is `relative overflow-hidden`, which would crop the sheet to a
+   single pane-sized page. */
 @media print {
   body * {
     visibility: hidden;
@@ -527,10 +539,6 @@ mark.find-current {
   .print-only {
     display: block;
   }
-}
-/* A region that exists for paper only (the prayer list's printable copy). */
-.print-only {
-  display: none;
 }
 
 /* ---------------------------------------------------------------------------
