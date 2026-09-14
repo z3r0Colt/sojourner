@@ -1,5 +1,5 @@
 use crate::models::{
-    DictionaryEntry, DictionaryEntrySummary, Footnote, InterlinearWord, IsbeEntry, IsbeEntrySummary,
+    DictionaryDefinition, DictionaryEntry, DictionaryEntrySummary, Footnote, InterlinearWord, IsbeEntry, IsbeEntrySummary,
     IsbeSearchResult, MorphologyWord, StrongsEntry,
 };
 use rusqlite::{params, Connection, OptionalExtension};
@@ -72,15 +72,27 @@ pub fn search_strongs(conn: &Connection, query: &str, language: Option<&str>, li
     Ok(rows)
 }
 
+fn map_dictionary_summary(r: &rusqlite::Row) -> rusqlite::Result<DictionaryEntrySummary> {
+    let stored: String = r.get(3)?;
+    // Each dictionary named once, however the column was written: this is
+    // "which works have an article here", and a homonym one of them covers
+    // twice is still one work.
+    let mut sources: Vec<String> = Vec::new();
+    for code in stored.split(',').filter(|s| !s.is_empty()) {
+        if !sources.iter().any(|s| s == code) {
+            sources.push(code.to_string());
+        }
+    }
+    Ok(DictionaryEntrySummary { id: r.get(0)?, term: r.get(1)?, slug: r.get(2)?, sources })
+}
+
+const DICTIONARY_COLS: &str = "de.id, de.term, de.slug, de.sources";
+
 pub fn list_dictionary_index(conn: &Connection) -> anyhow::Result<Vec<DictionaryEntrySummary>> {
-    let mut stmt = conn.prepare("SELECT id, term, slug FROM dictionary_entries ORDER BY term COLLATE NOCASE")?;
-    let rows = stmt.query_map([], |r| {
-        Ok(DictionaryEntrySummary {
-            id: r.get(0)?,
-            term: r.get(1)?,
-            slug: r.get(2)?,
-        })
-    })?;
+    let mut stmt = conn.prepare(&format!(
+        "SELECT {DICTIONARY_COLS} FROM dictionary_entries de ORDER BY de.term COLLATE NOCASE"
+    ))?;
+    let rows = stmt.query_map([], map_dictionary_summary)?;
     Ok(rows.collect::<Result<Vec<_>, _>>()?)
 }
 
@@ -92,34 +104,49 @@ pub fn list_dictionary_index(conn: &Connection) -> anyhow::Result<Vec<Dictionary
 pub fn find_dictionary_entry_by_term(conn: &Connection, term: &str) -> anyhow::Result<Option<DictionaryEntrySummary>> {
     Ok(conn
         .query_row(
-            "SELECT id, term, slug FROM dictionary_entries WHERE term = ?1 COLLATE NOCASE LIMIT 1",
+            &format!(
+                "SELECT {DICTIONARY_COLS} FROM dictionary_entries de WHERE de.term = ?1 COLLATE NOCASE
+                 UNION ALL
+                 SELECT {DICTIONARY_COLS} FROM dictionary_aliases a JOIN dictionary_entries de ON de.id = a.entry_id
+                 WHERE a.alias = ?1 COLLATE NOCASE
+                 LIMIT 1"
+            ),
             params![term],
-            |r| {
-                Ok(DictionaryEntrySummary {
-                    id: r.get(0)?,
-                    term: r.get(1)?,
-                    slug: r.get(2)?,
-                })
-            },
+            map_dictionary_summary,
         )
         .optional()?)
 }
 
 pub fn get_dictionary_entry(conn: &Connection, slug: &str) -> anyhow::Result<Option<DictionaryEntry>> {
-    Ok(conn
+    let entry = conn
         .query_row(
             "SELECT id, term, slug, body FROM dictionary_entries WHERE slug = ?1",
             params![slug],
-            |r| {
-                Ok(DictionaryEntry {
-                    id: r.get(0)?,
-                    term: r.get(1)?,
-                    slug: r.get(2)?,
-                    body: r.get(3)?,
-                })
-            },
+            |r| Ok((r.get::<_, i64>(0)?, r.get::<_, String>(1)?, r.get::<_, String>(2)?, r.get::<_, String>(3)?)),
         )
-        .optional()?)
+        .optional()?;
+    let Some((id, term, slug, body)) = entry else { return Ok(None) };
+
+    let mut definition_stmt = conn.prepare(
+        "SELECT source_code, source_name, body FROM dictionary_definitions
+         WHERE entry_id = ?1 ORDER BY sort_order",
+    )?;
+    let definitions = definition_stmt
+        .query_map(params![id], |r| {
+            Ok(DictionaryDefinition {
+                source_code: r.get(0)?,
+                source_name: r.get(1)?,
+                body: r.get(2)?,
+            })
+        })?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    let mut alias_stmt = conn.prepare("SELECT alias FROM dictionary_aliases WHERE entry_id = ?1 ORDER BY alias")?;
+    let aliases = alias_stmt
+        .query_map(params![id], |r| r.get::<_, String>(0))?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    Ok(Some(DictionaryEntry { id, term, slug, body, definitions, aliases }))
 }
 
 pub fn search_dictionary(conn: &Connection, query: &str, limit: i64) -> anyhow::Result<Vec<DictionaryEntrySummary>> {
@@ -131,17 +158,11 @@ pub fn search_dictionary(conn: &Connection, query: &str, limit: i64) -> anyhow::
         .map(|t| format!("\"{}\"*", t.replace('"', "\"\"")))
         .collect::<Vec<_>>()
         .join(" ");
-    let mut stmt = conn.prepare(
-        "SELECT de.id, de.term, de.slug FROM dictionary_fts JOIN dictionary_entries de ON de.id = dictionary_fts.rowid
-         WHERE dictionary_fts MATCH ?1 ORDER BY bm25(dictionary_fts) LIMIT ?2",
-    )?;
-    let rows = stmt.query_map(params![match_expr, limit], |r| {
-        Ok(DictionaryEntrySummary {
-            id: r.get(0)?,
-            term: r.get(1)?,
-            slug: r.get(2)?,
-        })
-    })?;
+    let mut stmt = conn.prepare(&format!(
+        "SELECT {DICTIONARY_COLS} FROM dictionary_fts JOIN dictionary_entries de ON de.id = dictionary_fts.rowid
+         WHERE dictionary_fts MATCH ?1 ORDER BY bm25(dictionary_fts) LIMIT ?2"
+    ))?;
+    let rows = stmt.query_map(params![match_expr, limit], map_dictionary_summary)?;
     Ok(rows.collect::<Result<Vec<_>, _>>()?)
 }
 
@@ -219,17 +240,11 @@ pub fn find_dictionary_entry_for_isbe(conn: &Connection, slug: &str) -> anyhow::
                UNION
                SELECT a.alias FROM isbe_aliases a JOIN isbe_entries e ON e.id = a.entry_id WHERE e.slug = ?1
              )
-             SELECT d.id, d.term, d.slug FROM dictionary_entries d
-             JOIN names ON d.term = names.n COLLATE NOCASE
+             SELECT de.id, de.term, de.slug, de.sources FROM dictionary_entries de
+             JOIN names ON de.term = names.n COLLATE NOCASE
              LIMIT 1",
             params![slug],
-            |r| {
-                Ok(DictionaryEntrySummary {
-                    id: r.get(0)?,
-                    term: r.get(1)?,
-                    slug: r.get(2)?,
-                })
-            },
+            map_dictionary_summary,
         )
         .optional()?)
 }

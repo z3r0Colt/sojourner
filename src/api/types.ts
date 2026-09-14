@@ -418,17 +418,30 @@ export interface StrongsEntry {
   thayers_definition: string | null;
 }
 
+/** One dictionary's article on a headword. An entry usually carries two. */
+export interface DictionaryDefinition {
+  source_code: string;
+  source_name: string;
+  body: string;
+}
+
 export interface DictionaryEntry {
   id: number;
   term: string;
   slug: string;
+  /** The whole entry as words, for citation and search snippets. */
   body: string;
+  definitions: DictionaryDefinition[];
+  /** Other spellings this headword is filed under elsewhere. */
+  aliases: string[];
 }
 
 export interface DictionaryEntrySummary {
   id: number;
   term: string;
   slug: string;
+  /** Which dictionaries have an article here ("EAS", "SMI"). */
+  sources: string[];
 }
 
 /** An ISBE article. `body` is HTML: scripture citations are
