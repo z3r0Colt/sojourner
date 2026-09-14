@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { BookA, BookOpen, History, Languages, ScrollText, type LucideIcon } from "lucide-react";
+import { BookA, BookMarked, BookOpen, History, Languages, MapPin, ScrollText, type LucideIcon } from "lucide-react";
 import type { Book } from "../../api/types";
 import { findPane, recentPositions, useWorkspaceStore, type Position } from "../../state/workspaceStore";
 import { useUiStore } from "../../state/uiStore";
 import { openContent } from "../../workspace/openContent";
 import { useTitleContext } from "../../workspace/PaneHeader";
 import { buildBookLookup, parseReference } from "../../hooks/useReferenceParser";
-import { useBookAliases, useTranslationCoverage, useDictionaryIndex, useReadingPlanProgressList, useReadingPlans, useSermons, useWestminsterDocuments } from "../../api/queries";
+import { useAtlasPlaces, useBookAliases, useDictionaryIndex, useIsbeIndex, useReadingPlanProgressList, useReadingPlans, useSermons, useTranslationCoverage, useWestminsterDocuments } from "../../api/queries";
 import { Modal } from "../../components/ui/Modal";
 import { Kbd } from "../../components/ui/Page";
 import { cx, inputClass } from "../../components/ui/classes";
@@ -58,6 +58,8 @@ export function GoToCommandPalette({
   const { data: aliases } = useBookAliases();
   const { data: coverage } = useTranslationCoverage(translationId ?? null);
   const { data: dictionaryIndex } = useDictionaryIndex();
+  const { data: isbeIndex } = useIsbeIndex();
+  const { data: atlasPlaces } = useAtlasPlaces();
   const { data: westminsterDocs } = useWestminsterDocuments();
   const focusedHistory = useWorkspaceStore((s) => findPane(s.panes, s.focusedPaneId)?.history);
   const recent = useMemo(() => recentPositions(focusedHistory), [focusedHistory]);
@@ -172,6 +174,35 @@ export function GoToCommandPalette({
           onClose();
         },
       }));
+    // The encyclopedia and the atlas are indexes of names too, and a reader
+    // typing "Melchizedek" or "Thessalonica" means one of them as often as a
+    // dictionary headword.
+    const articles = (isbeIndex ?? [])
+      .filter((e) => e.term.toLowerCase().includes(q))
+      .slice(0, 4)
+      .map<Candidate>((e) => ({
+        key: `isbe-${e.slug}`,
+        icon: BookMarked,
+        label: e.term,
+        hint: "Encyclopedia",
+        run: () => {
+          openContent("encyclopedia", { slug: e.slug });
+          onClose();
+        },
+      }));
+    const places = (atlasPlaces ?? [])
+      .filter((p) => p.name.toLowerCase().includes(q))
+      .slice(0, 4)
+      .map<Candidate>((p) => ({
+        key: `place-${p.slug}`,
+        icon: MapPin,
+        label: p.name,
+        hint: p.modern_name ? `Atlas · ${p.modern_name}` : "Atlas",
+        run: () => {
+          openContent("atlas", { slug: p.slug, journey: null });
+          onClose();
+        },
+      }));
     const docs = (westminsterDocs ?? [])
       .filter((d) => d.title.toLowerCase().includes(q) || d.code.toLowerCase() === q)
       .slice(0, 5)
@@ -186,9 +217,9 @@ export function GoToCommandPalette({
         },
       }));
     const cmds = filterCommands(commands, trimmed).slice(0, MIXED_COMMAND_LIMIT).map(commandCandidate);
-    return [...dict, ...docs, ...cmds];
+    return [...dict, ...articles, ...places, ...docs, ...cmds];
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [trimmed, query, commandMode, commands, parsed, isStrongs, notCovered, dictionaryIndex, westminsterDocs, recent, translationLabel]);
+  }, [trimmed, query, commandMode, commands, parsed, isStrongs, notCovered, dictionaryIndex, isbeIndex, atlasPlaces, westminsterDocs, recent, translationLabel]);
 
   useEffect(() => setSelected(0), [trimmed]);
 

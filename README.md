@@ -1,6 +1,26 @@
 # Sojourner's Study Companion
 
-A desktop Bible study application built with Tauri, Rust, and React/TypeScript. It bundles multiple public-domain Bible translations, classic commentaries, Strong's lexicon data, cross-references, and the Westminster Standards for offline study, reading, and note-taking.
+A desktop Bible study application built with Tauri, Rust, and React/TypeScript. It bundles multiple public-domain Bible translations, classic commentaries, Strong's lexicon data, a Bible dictionary and encyclopedia, an atlas of the biblical world, cross-references, and the Westminster Standards for offline study, reading, and note-taking.
+
+The application itself never makes a network request. Everything it needs is in `content.db` and the files beside it.
+
+## Reference data
+
+Everything under `reference/` is committed and imported into `content.db` by `npm run build:content`. Most of it was prepared once and does not change.
+
+Two of those sets are produced by scripts in `tools/`, which download from the open web at development time. They are one-time: run them only to pick up a new upstream release, then commit what they write.
+
+```
+node tools/extract-isbe.mjs      # -> reference/isbe/       (encyclopedia, public domain)
+node tools/extract-atlas.mjs     # -> reference/atlas/      (places, CC BY 4.0)
+node tools/extract-basemap.mjs   # -> src/features/atlas/basemap.json  (coastlines, public domain)
+```
+
+Each accepts an optional path to already-downloaded source files, so they can be run offline.
+
+`reference/atlas/journeys.json` is written by hand rather than extracted -- no open dataset traces the routes. Each leg names a place and the verse that records it, and the importer resolves the two together, so a leg that names a place Scripture does not put there fails the build rather than drawing a wrong line.
+
+The OpenBible.info data is CC BY 4.0. The credit for it in Settings → About is a condition of that licence.
 
 ## Development
 

@@ -21,7 +21,7 @@ import { LoadingState } from "../../components/ui/EmptyState";
 import { cx, inputClass, selectSmClass } from "../../components/ui/classes";
 import { htmlToText } from "../sermons/excerpt";
 
-type Tab = "verses" | "commentary" | "notes" | "prayer" | "resources" | "westminster" | "sermons" | "illustrations";
+type Tab = "verses" | "commentary" | "notes" | "prayer" | "resources" | "westminster" | "encyclopedia" | "sermons" | "illustrations";
 
 interface Row {
   key: string;
@@ -88,6 +88,13 @@ export function SearchOverlay({
     queryFn: () => api.searchWestminster(debounced, 50),
     enabled: active,
   });
+  // Twenty-six megabytes of encyclopedia: the largest body of prose the app
+  // carries, and until now the only one global search could not reach.
+  const { data: encyclopediaResults, isFetching: encyclopediaFetching } = useQuery({
+    queryKey: ["encyclopediaSearchOverlay", debounced],
+    queryFn: () => api.searchIsbeGlobal(debounced, 50),
+    enabled: active,
+  });
   // A preacher looks for his own work the same way he looks for a verse.
   const { data: sermonResults, isFetching: sermonsFetching } = useQuery({
     queryKey: ["sermonSearch", debounced],
@@ -110,7 +117,8 @@ export function SearchOverlay({
     if (q.trim().length > 1) api.recordSearchQuery(q.trim());
   }
 
-  const anyFetching = isFetching || resourcesFetching || westminsterFetching || sermonsFetching || illustrationsFetching;
+  const anyFetching =
+    isFetching || resourcesFetching || westminsterFetching || encyclopediaFetching || sermonsFetching || illustrationsFetching;
 
   const rows = useMemo<Row[]>(() => {
     if (!active) return [];
@@ -133,6 +141,17 @@ export function SearchOverlay({
         run: () => {
           const code = westminsterDocs?.find((d) => d.id === r.document_id)?.code ?? String(r.document_id);
           openContent("westminster", { docCode: code, sectionId: r.section_id });
+          onClose();
+        },
+      }));
+    }
+    if (tab === "encyclopedia") {
+      return (encyclopediaResults ?? []).map((r) => ({
+        key: `e-${r.id}`,
+        heading: r.term,
+        snippet: r.snippet,
+        run: () => {
+          openContent("encyclopedia", { slug: r.slug });
           onClose();
         },
       }));
@@ -174,7 +193,7 @@ export function SearchOverlay({
       },
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active, tab, results, resourceResults, westminsterResults, westminsterDocs, sermonResults, illustrationResults, books]);
+  }, [active, tab, results, resourceResults, westminsterResults, westminsterDocs, encyclopediaResults, sermonResults, illustrationResults, books]);
 
   useEffect(() => setSelected(0), [tab, debounced]);
 
@@ -199,6 +218,7 @@ export function SearchOverlay({
     { key: "prayer" as const, label: "Prayer", count: count(results?.prayers.length) },
     { key: "resources" as const, label: "Resources", count: count(resourceResults?.length) },
     { key: "westminster" as const, label: "Confessions", count: count(westminsterResults?.length) },
+    { key: "encyclopedia" as const, label: "Encyclopedia", count: count(encyclopediaResults?.length) },
     { key: "sermons" as const, label: "Sermons", count: count(sermonResults?.length) },
     { key: "illustrations" as const, label: "Illustrations", count: count(illustrationResults?.length) },
   ];
@@ -297,7 +317,7 @@ export function SearchOverlay({
         </div>
       )}
       <div className="min-h-0 flex-1 overflow-y-auto p-2">
-        {isError && tab !== "resources" && tab !== "westminster" && tab !== "sermons" && tab !== "illustrations" && (
+        {isError && tab !== "resources" && tab !== "westminster" && tab !== "encyclopedia" && tab !== "sermons" && tab !== "illustrations" && (
           <p className="p-3 text-sm text-danger">Search failed: {error instanceof Error ? error.message : "unknown error"}</p>
         )}
         {!active && <p className="p-3 text-sm text-ink-3">Type at least two characters to search.</p>}

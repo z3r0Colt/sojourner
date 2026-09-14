@@ -2,9 +2,9 @@ import { useEffect, useMemo, useRef, useState, Fragment, type ReactNode } from "
 import { useQuery } from "@tanstack/react-query";
 import { BookA, Search } from "lucide-react";
 import { api } from "../../api/client";
-import { useDictionaryIndex, useDictionaryEntry, useBooks } from "../../api/queries";
+import { useDictionaryIndex, useDictionaryEntry, useBooks, useIsbeEntryByTerm } from "../../api/queries";
 import { usePaneNavigate, usePaneParams } from "../../workspace/PaneContext";
-import { openPassage, targetFor } from "../../workspace/openContent";
+import { openContent, openPassage, targetFor } from "../../workspace/openContent";
 import { useReadingTypography } from "../../state/uiStore";
 import { buildBookLookup, scanScriptureRefs } from "../../hooks/useReferenceParser";
 import { refAttrs } from "../../lib/refAttr";
@@ -24,6 +24,10 @@ export function DictionaryView() {
   const { data: index } = useDictionaryIndex();
   const { data: entry } = useDictionaryEntry(slug ?? null);
   const { data: books } = useBooks();
+  // These entries are brief by design. Where the encyclopedia carries an
+  // article on the same headword, say so rather than letting the reader
+  // assume a sentence is all there is.
+  const { data: inEncyclopedia } = useIsbeEntryByTerm(entry?.term ?? null);
   const typography = useReadingTypography(0.95);
   const [query, setQuery] = useState("");
   const [debounced, setDebounced] = useState("");
@@ -121,7 +125,7 @@ export function DictionaryView() {
         {!entry && <EmptyState icon={BookA} title="Bible dictionary" description="Browse by letter or search on the left. Scripture references inside an entry are clickable." />}
         {entry && (
           <div className="mx-auto w-full max-w-[70ch]">
-            <div className="mb-4 flex items-start gap-2">
+            <div className="mb-2 flex items-start gap-2">
               <h1 className="reading-font min-w-0 flex-1 text-3xl font-semibold text-ink">{entry.term}</h1>
               <StudyActions
                 what={entry.term}
@@ -133,6 +137,15 @@ export function DictionaryView() {
                 })}
               />
             </div>
+            {inEncyclopedia && (
+              <button
+                type="button"
+                onClick={(e) => openContent("encyclopedia", { slug: inEncyclopedia.slug }, { target: targetFor(e, "focused") })}
+                className="mb-4 block text-sm text-accent hover:underline"
+              >
+                Read the full ISBE article →
+              </button>
+            )}
             <div ref={bodyRef} className="reading-font whitespace-pre-wrap text-ink" style={typography}>
               {renderLinkedBody(entry.body)}
             </div>

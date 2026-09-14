@@ -14,6 +14,8 @@ import type { SermonSourceKind } from "../../api/types";
  *   westminster:<docCode>:<sectionId>
  *   strongs:<G1343>
  *   dictionary:<slug>
+ *   encyclopedia:<slug>
+ *   atlas:<place-slug>
  *   resource:<id>[:<location>]
  *   crossref:<bookId>:<chapter>:<verse>[:<verseEnd>]
  *   illustration:<id>
@@ -33,6 +35,14 @@ export function strongsRef(id: string): string {
 
 export function dictionaryRef(slug: string): string {
   return `dictionary:${slug}`;
+}
+
+export function encyclopediaRef(slug: string): string {
+  return `encyclopedia:${slug}`;
+}
+
+export function atlasRef(slug: string): string {
+  return `atlas:${slug}`;
 }
 
 export function resourceRef(id: number, location?: string | null): string {
@@ -85,6 +95,12 @@ export function openSourceRef(_kind: SermonSourceKind | string, refId: string | 
     case "dictionary":
       openContent("dictionary", { slug: parts.slice(1).join(":") }, opts);
       return;
+    case "encyclopedia":
+      openContent("encyclopedia", { slug: parts.slice(1).join(":") }, opts);
+      return;
+    case "atlas":
+      openContent("atlas", { slug: parts.slice(1).join(":") }, opts);
+      return;
     case "resource": {
       const id = n(1);
       if (id == null) return;
@@ -113,6 +129,8 @@ export const SOURCE_KIND_LABEL: Record<SermonSourceKind, string> = {
   confession: "Confession",
   strongs: "Lexicon",
   dictionary: "Dictionary",
+  encyclopedia: "Encyclopedia",
+  atlas: "Atlas",
   resource: "Book",
   crossref: "Cross reference",
   illustration: "Illustration",

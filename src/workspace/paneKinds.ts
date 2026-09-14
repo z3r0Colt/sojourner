@@ -1,5 +1,6 @@
 import {
   BookA,
+  BookMarked,
   BookOpen,
   BookOpenText,
   Brain,
@@ -11,6 +12,7 @@ import {
   Library,
   Lightbulb,
   Link2,
+  MapPin,
   MessageSquareText,
   Mic,
   Music,
@@ -21,7 +23,17 @@ import {
   Sunrise,
   type LucideIcon,
 } from "lucide-react";
-import type { Book, CommentarySource, DictionaryEntrySummary, Resource, Sermon, Translation, WestminsterDocument } from "../api/types";
+import type {
+  AtlasPlace,
+  Book,
+  CommentarySource,
+  DictionaryEntrySummary,
+  IsbeEntrySummary,
+  Resource,
+  Sermon,
+  Translation,
+  WestminsterDocument,
+} from "../api/types";
 import { bookName } from "../lib/passage";
 import { PASSAGE_KINDS, type PaneContent, type PaneKind, type ParamsOf } from "../state/workspaceStore";
 
@@ -44,6 +56,8 @@ export interface TitleContext {
   resources?: Resource[];
   westminsterDocs?: WestminsterDocument[];
   dictionaryIndex?: DictionaryEntrySummary[];
+  isbeIndex?: IsbeEntrySummary[];
+  atlasPlaces?: AtlasPlace[];
   sermons?: Sermon[];
 }
 
@@ -168,6 +182,30 @@ export const PANE_KINDS: Registry = {
     acceptsPassage: false,
     listed: true,
   },
+  encyclopedia: {
+    kind: "encyclopedia",
+    label: "Encyclopedia",
+    icon: BookMarked,
+    title: (p, ctx) => {
+      const term = p.slug ? ctx.isbeIndex?.find((e) => e.slug === p.slug)?.term : undefined;
+      return term ? `Encyclopedia · ${term}` : "Encyclopedia";
+    },
+    defaultWidth: 900,
+    acceptsPassage: false,
+    listed: true,
+  },
+  atlas: {
+    kind: "atlas",
+    label: "Atlas",
+    icon: MapPin,
+    title: (p, ctx) => {
+      const place = p.slug ? ctx.atlasPlaces?.find((e) => e.slug === p.slug)?.name : undefined;
+      return place ? `Atlas · ${place}` : "Atlas";
+    },
+    defaultWidth: 900,
+    acceptsPassage: true,
+    listed: true,
+  },
   resource: {
     kind: "resource",
     label: "Resource",
@@ -235,7 +273,7 @@ export function paneTitle(content: PaneContent, ctx: TitleContext): string {
 export const PANE_KIND_LIST_LISTED: readonly PaneKind[] = (Object.keys(PANE_KINDS) as PaneKind[]).filter((k) => PANE_KINDS[k].listed);
 
 /** The study-panel kinds, in the order the Add pane strip shows them. */
-export const STUDY_STRIP_KINDS: readonly PaneKind[] = ["commentary", "crossrefs", "confession-for-passage", "metrical", "mine"];
+export const STUDY_STRIP_KINDS: readonly PaneKind[] = ["commentary", "crossrefs", "confession-for-passage", "atlas", "metrical", "mine"];
 
 export { PASSAGE_KINDS };
 
@@ -270,6 +308,11 @@ export function routeFor(content: PaneContent): string {
       return content.params.id ? `/lexicon/${encodeURIComponent(content.params.id)}` : "/lexicon";
     case "dictionary":
       return content.params.slug ? `/dictionary/${encodeURIComponent(content.params.slug)}` : "/dictionary";
+    case "encyclopedia":
+      return content.params.slug ? `/encyclopedia/${encodeURIComponent(content.params.slug)}` : "/encyclopedia";
+    case "atlas":
+      if (content.params.journey) return `/atlas/journey/${encodeURIComponent(content.params.journey)}`;
+      return content.params.slug ? `/atlas/${encodeURIComponent(content.params.slug)}` : "/atlas";
     case "resource":
       return `/resources/${content.params.id}`;
     case "resources":
@@ -334,6 +377,11 @@ export function parseRoute(pathname: string, search = ""): ContentRequest | null
       return { kind: "lexicon", params: { id: a ?? null } };
     case "dictionary":
       return { kind: "dictionary", params: { slug: a ?? null } };
+    case "encyclopedia":
+      return { kind: "encyclopedia", params: { slug: a ?? null } };
+    case "atlas":
+      if (a === "journey") return { kind: "atlas", params: { journey: b ?? null, slug: null } };
+      return { kind: "atlas", params: { slug: a ?? null, journey: null } };
     case "resources": {
       const id = num(a);
       return id != null ? { kind: "resource", params: { id } } : { kind: "resources", params: {} };

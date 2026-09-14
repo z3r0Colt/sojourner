@@ -125,7 +125,28 @@ const CATEGORIES: Category[] = [
       { q: "Look up a word while reading", a: "Double-click any word in the Bible text to open its Strong's entry in a popup, without switching to interlinear. The tagging follows the KJV's wording, so it matches best there; when a word can't be matched, the popup offers to search the lexicon for it instead." },
       { q: "Look up a Strong's number", a: "Click any tagged word in interlinear view to see its lexicon entry in a popup. “View full entry” opens the Lexicon page with a concordance of every verse using that word." },
       { q: "Lexicon page", a: "Search by English meaning, transliteration, or Strong's number (H1, G25). Thayer's fuller Greek definitions appear when available." },
-      { q: "Dictionary", a: "Encyclopedia-style entries for people, places, and topics, browsable by letter and searchable. Scripture references inside an entry are clickable." },
+      { q: "Dictionary", a: "Short entries for people, places, and topics from Easton's and Smith's, browsable by letter and searchable. Scripture references inside an entry are clickable. Where the encyclopedia covers the same headword, a link at the top offers the fuller article." },
+    ],
+  },
+  {
+    title: "Encyclopedia",
+    items: [
+      { q: "What it is", a: "The International Standard Bible Encyclopedia (1915), edited by James Orr: 9,349 articles, and much fuller than the Dictionary. Where a dictionary entry gives you a sentence on Melchizedek, the encyclopedia gives you several pages, with the arguments laid out and the sources named." },
+      { q: "Finding an article", a: "Browse by letter down the left, or search. The search looks inside the articles as well as at their titles, so you can find a subject that has no article of its own. Global search (Ctrl+K) has an Encyclopedia tab too." },
+      { q: "Following references", a: "Every Scripture citation is a link, and hovering one previews the verse. References to other articles are underlined with dots; clicking one goes straight there. A short entry that only says “See something else” offers a link to the article it points at." },
+      { q: "Dictionary and encyclopedia together", a: "Where both cover a subject, each links to the other at the top of the entry. Use the Dictionary to remind yourself who someone was, and the Encyclopedia when you need to study them." },
+      { q: "Sending an article to a sermon", a: "The same “Send to sermon” button that appears on commentary and dictionary entries appears here. Select a passage of the article first and the selection is what gets quoted." },
+    ],
+  },
+  {
+    title: "Atlas",
+    items: [
+      { q: "What it is", a: "A map of the biblical world with 1,342 places named in Scripture, each with its coordinates, its modern identification where there is one, and every verse it appears in." },
+      { q: "Moving around the map", a: "Drag to pan and scroll to zoom, or use the buttons at the top right; the third one returns to the whole map. With the map focused, the arrow keys pan and + and − zoom. Place names can be turned off with the checkbox beneath the list." },
+      { q: "Finding a place", a: "Search or scroll the list on the left. Selecting a place centres the map on it and shows its details on the right, including every verse that names it — click any of them to open the passage." },
+      { q: "The map follows your reading", a: "Open an Atlas pane beside a Bible pane and the places named in the chapter you are reading are marked in the accent colour and the map frames them. Open Acts 17 and Thessalonica, Berea, and Athens light up together." },
+      { q: "Journeys", a: "The Journeys tab traces fourteen routes through Scripture, from Abraham's travels and the Exodus to Paul's missionary journeys and the voyage to Rome. Each leg is numbered on the map and listed with the verse that records it." },
+      { q: "How sure is the map?", a: "Most biblical sites are not certainly located, and the atlas says so rather than pretending otherwise. Each place carries a confidence — certain, probable, possible, or proposed — and the less certain ones are drawn as faded dots. Where several modern sites have been proposed, the detail panel says how many." },
     ],
   },
   {

@@ -1,3 +1,4 @@
+pub mod atlas;
 pub mod bookmarks;
 pub mod catechism_memory;
 pub mod commentary;

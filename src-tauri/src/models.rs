@@ -292,6 +292,88 @@ pub struct DictionaryEntrySummary {
     pub slug: String,
 }
 
+/// An ISBE article. `body` is HTML (see the isbe importer): scripture
+/// citations are `a.scripref[data-osis]` and cross-references to other
+/// articles are `a.isbe-link[data-isbe]`.
+#[derive(Debug, Clone, Serialize)]
+pub struct IsbeEntry {
+    pub id: i64,
+    pub term: String,
+    pub slug: String,
+    pub body: String,
+    /// Set on a stub whose whole substance is "See SOMETHING ELSE", so the
+    /// reader can be sent on rather than shown a dead end.
+    pub redirect_slug: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct IsbeEntrySummary {
+    pub id: i64,
+    pub term: String,
+    pub slug: String,
+}
+
+/// An encyclopedia hit in the global search overlay: a summary plus enough of
+/// the article to judge it by. `snippet` is HTML-escaped with `[` and `]`
+/// around the matched words (see `search::escape_snippet`).
+#[derive(Debug, Clone, Serialize)]
+pub struct IsbeSearchResult {
+    pub id: i64,
+    pub term: String,
+    pub slug: String,
+    pub snippet: String,
+}
+
+/// A place named in Scripture, with wherever scholarship puts it and how
+/// firmly. `lon`/`lat` are null for the handful nobody can locate at all.
+#[derive(Debug, Clone, Serialize)]
+pub struct AtlasPlace {
+    pub id: String,
+    pub slug: String,
+    pub name: String,
+    pub article: Option<String>,
+    pub kinds: Vec<String>,
+    pub category: String,
+    pub lon: Option<f64>,
+    pub lat: Option<f64>,
+    pub approximate: bool,
+    pub confidence: String,
+    pub modern_name: Option<String>,
+    pub modern_alternatives: i64,
+    pub verse_count: i64,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct AtlasPlaceVerse {
+    pub book_id: i64,
+    pub chapter: i64,
+    pub verse: i64,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct AtlasJourney {
+    pub id: i64,
+    pub slug: String,
+    pub title: String,
+    pub summary: String,
+    pub era: String,
+    pub reference: String,
+    pub legs: Vec<AtlasJourneyLeg>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct AtlasJourneyLeg {
+    pub place_id: Option<String>,
+    pub place_slug: Option<String>,
+    pub label: String,
+    pub note: Option<String>,
+    pub lon: Option<f64>,
+    pub lat: Option<f64>,
+    pub book_id: Option<i64>,
+    pub chapter: Option<i64>,
+    pub verse: Option<i64>,
+}
+
 #[derive(Debug, Clone, Serialize)]
 pub struct InterlinearWord {
     pub id: i64,

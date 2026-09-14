@@ -1,3 +1,13 @@
+/** One credited source: what it is, and on what terms it is here. */
+function Source({ name, children }: { name: string; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-col gap-0.5 py-2.5 sm:flex-row sm:gap-3">
+      <dt className="shrink-0 font-medium text-ink sm:w-64">{name}</dt>
+      <dd className="min-w-0 flex-1 leading-relaxed text-ink-3">{children}</dd>
+    </div>
+  );
+}
+
 export function AboutSection() {
   return (
     <div>
@@ -15,10 +25,38 @@ export function AboutSection() {
         </p>
         <p>
           Included are multiple Bible translations, classic commentaries (Matthew Henry, Jamieson-Fausset-Brown, Spurgeon's Treasury of David, and others),
-          the Westminster Standards, Strong's lexicon with interlinear Hebrew and Greek, a harmony of the Gospels, reading plans, and tools for prayer and
-          Scripture memory.
+          the Westminster Standards, Strong's lexicon with interlinear Hebrew and Greek, a Bible dictionary and encyclopedia, an atlas of the biblical world,
+          a harmony of the Gospels, reading plans, and tools for prayer and Scripture memory.
         </p>
       </div>
+
+      <h2 className="mb-1 mt-8 text-lg font-semibold text-ink">Sources and licences</h2>
+      <p className="mb-4 text-sm text-ink-3">
+        Everything here is either in the public domain or used under a licence that asks only to be credited.
+      </p>
+      <dl className="divide-y divide-line text-sm">
+        <Source name="Bible translations, commentaries, and confessions">
+          The King James Version, the American Standard Version, and the other translations and classic works included here are in the public domain.
+        </Source>
+        <Source name="Strong's lexicon and Thayer's">Public domain.</Source>
+        <Source name="Easton's and Smith's Bible dictionaries">Public domain.</Source>
+        <Source name="International Standard Bible Encyclopedia (1915)">
+          James Orr, general editor. Public domain. Prepared from the edition distributed by the CrossWire Bible Society.
+        </Source>
+        <Source name="Bible atlas — places">
+          Geographic data © OpenBible.info, used under a{" "}
+          <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer" className="text-accent hover:underline">
+            Creative Commons Attribution 4.0
+          </a>{" "}
+          licence. Some underlying data comes from OpenStreetMap contributors, under the Open Database License.
+        </Source>
+        <Source name="Bible atlas — coastlines and rivers">
+          Made with Natural Earth. Free vector and raster map data at naturalearthdata.com. Public domain.
+        </Source>
+        <Source name="OpenDyslexic">
+          Used under the SIL Open Font License; the licence text ships beside the font.
+        </Source>
+      </dl>
 
       <blockquote className="mt-8 rounded-lg border border-line bg-surface-2 p-4">
         <p className="reading-font text-base italic leading-relaxed text-ink">

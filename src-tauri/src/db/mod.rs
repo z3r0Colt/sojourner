@@ -219,7 +219,10 @@ mod tests {
         }
 
         fn counts(conn: &Connection) -> Vec<(&'static str, i64)> {
-            ["notes", "highlights", "chapter_notes", "prayer_entries", "bookmarks", "memory_verses", "settings", "reading_plan_progress", "reading_plan_completions"]
+            // sermon_sources is here because USER_MIGRATION_0018 rebuilds that
+            // table wholesale to widen its `kind` constraint; a citation lost
+            // in the copy is a citation that would be lost for real.
+            ["notes", "highlights", "chapter_notes", "prayer_entries", "bookmarks", "memory_verses", "settings", "reading_plan_progress", "reading_plan_completions", "sermon_sources"]
                 .into_iter()
                 .map(|t| (t, conn.query_row(&format!("SELECT COUNT(*) FROM {t}"), [], |r| r.get(0)).unwrap_or(-1)))
                 .collect()
@@ -304,6 +307,44 @@ mod tests {
             .unwrap();
         assert_eq!(by_tag, 0, "a tag name is not a word of the sermon");
         conn.execute("DELETE FROM sermons WHERE id = ?1", [id]).unwrap();
+
+        // USER_MIGRATION_0018: the rebuilt sermon_sources takes the two new
+        // kinds, still refuses a nonsense one, and kept the index that went
+        // with the table it replaced -- a dropped index here is silent, and
+        // every sermon's bibliography reads through it.
+        let index: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type = 'index' AND name = 'idx_sermon_sources_sermon'",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+        assert_eq!(index, 1, "idx_sermon_sources_sermon must survive the table rebuild");
+
+        conn.execute(
+            "INSERT INTO sermons (title, body, created_at, updated_at) VALUES ('Sources', '', '2026-01-01', '2026-01-01')",
+            [],
+        )
+        .unwrap();
+        let sermon_id = conn.last_insert_rowid();
+        for kind in ["encyclopedia", "atlas"] {
+            conn.execute(
+                "INSERT INTO sermon_sources (sermon_id, kind, ref_id, label, created_at)
+                 VALUES (?1, ?2, 'x', 'A label', '2026-01-01')",
+                rusqlite::params![sermon_id, kind],
+            )
+            .unwrap_or_else(|e| panic!("{kind} should be an allowed source kind: {e}"));
+        }
+        assert!(
+            conn.execute(
+                "INSERT INTO sermon_sources (sermon_id, kind, ref_id, label, created_at)
+                 VALUES (?1, 'nonsense', 'x', 'A label', '2026-01-01')",
+                rusqlite::params![sermon_id],
+            )
+            .is_err(),
+            "the widened CHECK still has to reject a kind the app cannot open",
+        );
+        conn.execute("DELETE FROM sermons WHERE id = ?1", [sermon_id]).unwrap();
 
         drop(conn);
         let _ = std::fs::remove_dir_all(&dir);

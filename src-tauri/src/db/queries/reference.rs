@@ -1,4 +1,7 @@
-use crate::models::{DictionaryEntry, DictionaryEntrySummary, Footnote, InterlinearWord, MorphologyWord, StrongsEntry};
+use crate::models::{
+    DictionaryEntry, DictionaryEntrySummary, Footnote, InterlinearWord, IsbeEntry, IsbeEntrySummary,
+    IsbeSearchResult, MorphologyWord, StrongsEntry,
+};
 use rusqlite::{params, Connection, OptionalExtension};
 use std::collections::HashMap;
 
@@ -137,6 +140,138 @@ pub fn search_dictionary(conn: &Connection, query: &str, limit: i64) -> anyhow::
             id: r.get(0)?,
             term: r.get(1)?,
             slug: r.get(2)?,
+        })
+    })?;
+    Ok(rows.collect::<Result<Vec<_>, _>>()?)
+}
+
+// ---------------------------------------------------------------------------
+// Encyclopedia (ISBE)
+// ---------------------------------------------------------------------------
+
+fn map_isbe_summary(r: &rusqlite::Row) -> rusqlite::Result<IsbeEntrySummary> {
+    Ok(IsbeEntrySummary {
+        id: r.get(0)?,
+        term: r.get(1)?,
+        slug: r.get(2)?,
+    })
+}
+
+/// The whole index, in article order. Rows are ordered by `sort_key` rather
+/// than `term`, because ISBE alphabetizes "ABOMINATION, BIRDS OF" under
+/// Abomination and the displayed term keeps that inversion.
+pub fn list_isbe_index(conn: &Connection) -> anyhow::Result<Vec<IsbeEntrySummary>> {
+    let mut stmt = conn.prepare("SELECT id, term, slug FROM isbe_entries ORDER BY sort_key COLLATE NOCASE")?;
+    let rows = stmt.query_map([], map_isbe_summary)?;
+    Ok(rows.collect::<Result<Vec<_>, _>>()?)
+}
+
+pub fn get_isbe_entry(conn: &Connection, slug: &str) -> anyhow::Result<Option<IsbeEntry>> {
+    Ok(conn
+        .query_row(
+            "SELECT id, term, slug, body, redirect_slug FROM isbe_entries WHERE slug = ?1",
+            params![slug],
+            |r| {
+                Ok(IsbeEntry {
+                    id: r.get(0)?,
+                    term: r.get(1)?,
+                    slug: r.get(2)?,
+                    body: r.get(3)?,
+                    redirect_slug: r.get(4)?,
+                })
+            },
+        )
+        .optional()?)
+}
+
+/// Exact (case-insensitive) match on a headword -- what links a dictionary
+/// entry to the fuller article on the same subject. Alternate headwords count:
+/// Smith's "Abagarus" should reach the article ISBE files under
+/// "ABGAR; ABGARUS; ABAGARUS".
+pub fn find_isbe_entry_by_term(conn: &Connection, term: &str) -> anyhow::Result<Option<IsbeEntrySummary>> {
+    Ok(conn
+        .query_row(
+            "SELECT e.id, e.term, e.slug FROM isbe_entries e
+             WHERE e.term = ?1 COLLATE NOCASE
+             UNION ALL
+             SELECT e.id, e.term, e.slug FROM isbe_aliases a JOIN isbe_entries e ON e.id = a.entry_id
+             WHERE a.alias = ?1 COLLATE NOCASE
+             LIMIT 1",
+            params![term],
+            map_isbe_summary,
+        )
+        .optional()?)
+}
+
+/// The dictionary entry covering the same subject as an ISBE article.
+///
+/// The mirror of `find_isbe_entry_by_term`, and it has to go through the
+/// aliases for the same reason: ISBE files several headwords under one title,
+/// so the article a reader is looking at may be called "Melchizedek;
+/// Melchisedec" while Easton's calls the same man "Melchizedek". Matching the
+/// titles alone would silently hide the link on exactly the entries that
+/// carry the most names.
+pub fn find_dictionary_entry_for_isbe(conn: &Connection, slug: &str) -> anyhow::Result<Option<DictionaryEntrySummary>> {
+    Ok(conn
+        .query_row(
+            "WITH names(n) AS (
+               SELECT term FROM isbe_entries WHERE slug = ?1
+               UNION
+               SELECT a.alias FROM isbe_aliases a JOIN isbe_entries e ON e.id = a.entry_id WHERE e.slug = ?1
+             )
+             SELECT d.id, d.term, d.slug FROM dictionary_entries d
+             JOIN names ON d.term = names.n COLLATE NOCASE
+             LIMIT 1",
+            params![slug],
+            |r| {
+                Ok(DictionaryEntrySummary {
+                    id: r.get(0)?,
+                    term: r.get(1)?,
+                    slug: r.get(2)?,
+                })
+            },
+        )
+        .optional()?)
+}
+
+pub fn search_isbe(conn: &Connection, query: &str, limit: i64) -> anyhow::Result<Vec<IsbeEntrySummary>> {
+    if query.trim().is_empty() {
+        return Ok(vec![]);
+    }
+    let match_expr = query
+        .split_whitespace()
+        .map(|t| format!("\"{}\"*", t.replace('"', "\"\"")))
+        .collect::<Vec<_>>()
+        .join(" ");
+    let mut stmt = conn.prepare(
+        "SELECT e.id, e.term, e.slug FROM isbe_fts JOIN isbe_entries e ON e.id = isbe_fts.rowid
+         WHERE isbe_fts MATCH ?1 ORDER BY bm25(isbe_fts) LIMIT ?2",
+    )?;
+    let rows = stmt.query_map(params![match_expr, limit], map_isbe_summary)?;
+    Ok(rows.collect::<Result<Vec<_>, _>>()?)
+}
+
+/// The encyclopedia as a corpus for the global search overlay.
+///
+/// Separate from the pane's own `search_isbe` on two counts: it takes the full
+/// search-query language rather than bare prefixes, and it returns a snippet
+/// of the article body, so a result is worth reading before it is opened.
+pub fn search_isbe_global(conn: &Connection, query: &str, limit: i64) -> anyhow::Result<Vec<IsbeSearchResult>> {
+    if query.trim().is_empty() {
+        return Ok(vec![]);
+    }
+    let match_expr = super::search::build_match_expr(query);
+    let mut stmt = conn.prepare(
+        "SELECT e.id, e.term, e.slug, snippet(isbe_fts, 1, '[', ']', '…', 14)
+         FROM isbe_fts JOIN isbe_entries e ON e.id = isbe_fts.rowid
+         WHERE isbe_fts MATCH ?1 ORDER BY bm25(isbe_fts) LIMIT ?2",
+    )?;
+    let rows = stmt.query_map(params![match_expr, limit], |r| {
+        Ok(IsbeSearchResult {
+            id: r.get(0)?,
+            term: r.get(1)?,
+            slug: r.get(2)?,
+            snippet: super::search::escape_snippet(&r.get::<_, String>(3)?),
         })
     })?;
     Ok(rows.collect::<Result<Vec<_>, _>>()?)

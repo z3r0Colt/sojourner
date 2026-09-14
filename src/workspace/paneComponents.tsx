@@ -4,6 +4,8 @@ import { ReadingPane } from "../features/reading/ReadingPane";
 import { WestminsterView } from "../features/westminster/WestminsterView";
 import { LexiconView } from "../features/lexicon/LexiconView";
 import { DictionaryView } from "../features/dictionary/DictionaryView";
+import { EncyclopediaView } from "../features/encyclopedia/EncyclopediaView";
+import { AtlasView } from "../features/atlas/AtlasView";
 import { ResourceReaderView } from "../features/resources/ResourceReaderView";
 import { CommentaryStandaloneView } from "../features/commentary/CommentaryStandaloneView";
 import { SettingsView } from "../features/settings/SettingsView";
@@ -28,6 +30,8 @@ export const PANE_COMPONENTS: Record<PaneKind, ComponentType> = {
   westminster: WestminsterView,
   lexicon: LexiconView,
   dictionary: DictionaryView,
+  encyclopedia: EncyclopediaView,
+  atlas: AtlasView,
   resource: ResourceReaderView,
   resources: ResourcesPane,
   "commentary-book": CommentaryStandaloneView,

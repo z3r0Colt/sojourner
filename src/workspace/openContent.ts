@@ -99,6 +99,14 @@ export function completeParams<K extends PaneKind>(kind: K, partial: Partial<Par
       return { id: null, ...partial } as unknown as ParamsOf<K>;
     case "dictionary":
       return { slug: null, ...partial } as unknown as ParamsOf<K>;
+    case "encyclopedia":
+      return { slug: null, ...partial } as unknown as ParamsOf<K>;
+    case "atlas": {
+      // The atlas follows the passage, so it opens on whatever is being read
+      // rather than on an empty map.
+      const passage: PassageParams = currentPassage(s) ?? { bookId: 1, chapter: 1, verse: null };
+      return { ...passage, slug: null, journey: null, ...partial } as unknown as ParamsOf<K>;
+    }
     case "resource":
     case "sermon":
       return { id: 0, ...partial } as unknown as ParamsOf<K>;

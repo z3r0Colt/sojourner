@@ -34,8 +34,14 @@ import type {
   RedLetterRange,
   BackupInfo,
   Stats,
+  AtlasJourney,
+  AtlasPlace,
+  AtlasPlaceVerse,
   DictionaryEntry,
   DictionaryEntrySummary,
+  IsbeEntry,
+  IsbeEntrySummary,
+  IsbeSearchResult,
   InterlinearWord,
   MorphologyWord,
   Footnote,
@@ -210,6 +216,22 @@ export const api = {
   findDictionaryEntryByTerm: (term: string) => invoke<DictionaryEntrySummary | null>("find_dictionary_entry_by_term", { term }),
   searchDictionary: (query: string, limit = 50) =>
     invoke<DictionaryEntrySummary[]>("search_dictionary", { query, limit }),
+
+  listIsbeIndex: () => invoke<IsbeEntrySummary[]>("list_isbe_index"),
+  getIsbeEntry: (slug: string) => invoke<IsbeEntry | null>("get_isbe_entry", { slug }),
+  findIsbeEntryByTerm: (term: string) => invoke<IsbeEntrySummary | null>("find_isbe_entry_by_term", { term }),
+  findDictionaryEntryForIsbe: (slug: string) =>
+    invoke<DictionaryEntrySummary | null>("find_dictionary_entry_for_isbe", { slug }),
+  searchIsbe: (query: string, limit = 50) => invoke<IsbeEntrySummary[]>("search_isbe", { query, limit }),
+  searchIsbeGlobal: (query: string, limit = 50) => invoke<IsbeSearchResult[]>("search_isbe_global", { query, limit }),
+
+  listAtlasPlaces: () => invoke<AtlasPlace[]>("list_atlas_places"),
+  getAtlasPlace: (slug: string) => invoke<AtlasPlace | null>("get_atlas_place", { slug }),
+  getAtlasPlaceVerses: (slug: string) => invoke<AtlasPlaceVerse[]>("get_atlas_place_verses", { slug }),
+  placesInPassage: (bookId: number, chapter: number, verse?: number | null) =>
+    invoke<AtlasPlace[]>("places_in_passage", { bookId, chapter, verse: verse ?? null }),
+  searchAtlasPlaces: (query: string, limit = 50) => invoke<AtlasPlace[]>("search_atlas_places", { query, limit }),
+  listAtlasJourneys: () => invoke<AtlasJourney[]>("list_atlas_journeys"),
 
   getInterlinearForChapter: (bookId: number, chapter: number) =>
     invoke<Record<number, InterlinearWord[]>>("get_interlinear_for_chapter", { bookId, chapter }),

@@ -65,9 +65,16 @@ fn main() -> anyhow::Result<()> {
     let translation_count: i64 = conn.query_row("SELECT COUNT(*) FROM translations", [], |r| r.get(0))?;
     let commentary_count: i64 = conn.query_row("SELECT COUNT(*) FROM commentary_sources", [], |r| r.get(0))?;
     let strongs_count: i64 = conn.query_row("SELECT COUNT(*) FROM strongs_entries", [], |r| r.get(0))?;
+    // `reference::import_all`'s own report is discarded by populate_content_db,
+    // so the counts are read back here: a reference importer that quietly did
+    // nothing would otherwise leave no trace in this log.
+    let isbe_count: i64 = conn.query_row("SELECT COUNT(*) FROM isbe_entries", [], |r| r.get(0))?;
+    let place_count: i64 = conn.query_row("SELECT COUNT(*) FROM atlas_places", [], |r| r.get(0))?;
+    let journey_count: i64 = conn.query_row("SELECT COUNT(*) FROM atlas_journeys", [], |r| r.get(0))?;
     println!(
         "done: {translation_count} translation(s), {commentary_count} commentary source(s), {strongs_count} strongs entries, {library_count} shipped book(s), {failed} failure(s)"
     );
+    println!("  encyclopedia: {isbe_count} article(s); atlas: {place_count} place(s), {journey_count} journey(s)");
 
     if failed > 0 {
         anyhow::bail!("{failed} source file(s) failed to import -- see log above");

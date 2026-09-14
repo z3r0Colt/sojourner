@@ -1,3 +1,4 @@
+pub mod atlas;
 pub mod confessions;
 pub mod crossrefs;
 pub mod dictionary;
@@ -5,6 +6,7 @@ pub mod doctrine_topics;
 pub mod footnotes;
 pub mod harmony;
 pub mod interlinear;
+pub mod isbe;
 pub mod morphology;
 pub mod psalter;
 pub mod reading_plans;
@@ -35,6 +37,9 @@ pub struct ReferenceImportReport {
     pub harmony_readings: usize,
     pub red_letter_ranges: usize,
     pub thayers_entries: usize,
+    pub isbe_entries: usize,
+    pub atlas_places: usize,
+    pub atlas_journeys: usize,
 }
 
 fn table_count(conn: &Connection, table: &str) -> i64 {
@@ -185,6 +190,23 @@ pub fn import_all(conn: &mut Connection, reference_dir: &Path) -> anyhow::Result
         0
     };
 
+    let isbe_entries = if table_count(conn, "isbe_entries") == 0 {
+        isbe::import(conn, &reference_dir.join("isbe"))
+            .map_err(|e| anyhow::anyhow!("encyclopedia import failed: {e:#}"))?
+    } else {
+        0
+    };
+
+    // Places and journeys import together: a journey's legs are resolved
+    // against the gazetteer, so there is no state in which one is useful
+    // without the other.
+    let (atlas_places, atlas_journeys) = if table_count(conn, "atlas_places") == 0 {
+        atlas::import(conn, &reference_dir.join("atlas"))
+            .map_err(|e| anyhow::anyhow!("atlas import failed: {e:#}"))?
+    } else {
+        (0, 0)
+    };
+
     Ok(ReferenceImportReport {
         strongs_entries,
         dictionary_entries,
@@ -202,5 +224,8 @@ pub fn import_all(conn: &mut Connection, reference_dir: &Path) -> anyhow::Result
         harmony_readings,
         red_letter_ranges,
         thayers_entries,
+        isbe_entries,
+        atlas_places,
+        atlas_journeys,
     })
 }

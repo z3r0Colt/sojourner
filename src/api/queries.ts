@@ -659,6 +659,65 @@ export function useDictionaryEntryByTerm(term: string | null) {
   });
 }
 
+export function useIsbeIndex() {
+  return useQuery({ queryKey: ["isbeIndex"], queryFn: api.listIsbeIndex, staleTime: Infinity });
+}
+
+export function useIsbeEntry(slug: string | null) {
+  return useQuery({
+    queryKey: ["isbeEntry", slug],
+    queryFn: () => api.getIsbeEntry(slug as string),
+    enabled: slug != null,
+  });
+}
+
+export function useIsbeEntryByTerm(term: string | null) {
+  return useQuery({
+    queryKey: ["isbeEntryByTerm", term],
+    queryFn: () => api.findIsbeEntryByTerm(term as string),
+    enabled: term != null,
+  });
+}
+
+/** The dictionary entry on the same subject as an ISBE article, matched
+ *  through the article's alternate headwords as well as its title. */
+export function useDictionaryEntryForIsbe(slug: string | null) {
+  return useQuery({
+    queryKey: ["dictionaryEntryForIsbe", slug],
+    queryFn: () => api.findDictionaryEntryForIsbe(slug as string),
+    enabled: slug != null,
+  });
+}
+
+/** The whole gazetteer. 1,342 rows held for the session: the map redraws on
+ *  every pan and zoom, and it must not go to the database to do it. */
+export function useAtlasPlaces() {
+  return useQuery({ queryKey: ["atlasPlaces"], queryFn: api.listAtlasPlaces, staleTime: Infinity });
+}
+
+export function useAtlasJourneys() {
+  return useQuery({ queryKey: ["atlasJourneys"], queryFn: api.listAtlasJourneys, staleTime: Infinity });
+}
+
+export function useAtlasPlaceVerses(slug: string | null) {
+  return useQuery({
+    queryKey: ["atlasPlaceVerses", slug],
+    queryFn: () => api.getAtlasPlaceVerses(slug as string),
+    enabled: slug != null,
+  });
+}
+
+/** The places named in the chapter the reader has open -- what makes an
+ *  atlas pane follow along beside a Bible pane. */
+export function usePlacesInPassage(bookId: number | null, chapter: number | null) {
+  return useQuery({
+    queryKey: ["placesInPassage", bookId, chapter],
+    queryFn: () => api.placesInPassage(bookId as number, chapter as number),
+    enabled: bookId != null && chapter != null,
+    staleTime: Infinity,
+  });
+}
+
 export function useInterlinearForChapter(bookId: number | null, chapter: number | null) {
   return useQuery({
     queryKey: ["interlinear", bookId, chapter],
