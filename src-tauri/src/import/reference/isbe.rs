@@ -13,6 +13,39 @@ use serde::Deserialize;
 use std::collections::HashMap;
 use std::path::Path;
 
+/// A range wider than this is a whole-chapter gesture ("1Ch 2:1-55"), not a
+/// citation of each verse in it; expanding those in full would treble the
+/// index to say something it does not mean.
+const MAX_RANGE: i64 = 40;
+
+/// Every verse an article cites, weighted.
+///
+/// The citations are already tagged in the body as `data-osis`, so this
+/// reads them back out rather than re-finding references in prose. Each
+/// citation is worth 1000, shared among the verses it spans (see the
+/// `isbe_refs` schema for why).
+///
+/// A caveat inherited from the source: ISBE tags a handful of 3 John
+/// references as the Gospel -- the Gaius article cites "Joh 1:1" meaning
+/// 3 John 1:1 -- so those land on John 1. That is the edition's own error,
+/// and guessing at which "John" was meant would break the correct ones.
+fn collect_refs(body: &str, books: &HashMap<String, i64>, into: &mut HashMap<(i64, i64, i64), i64>) -> usize {
+    let mut total = 0;
+    for chunk in body.split("data-osis=\"").skip(1) {
+        let Some(raw) = chunk.split('"').next() else { continue };
+        total += 1;
+        let Some((osis, chapter, first, last)) = super::crossrefs::parse_ref_range(raw) else { continue };
+        let Some(&book_id) = books.get(osis) else { continue };
+        let span = if last >= first { last - first + 1 } else { 1 };
+        let each = (1000 / span).max(1);
+        let last = first + span.min(MAX_RANGE) - 1;
+        for verse in first..=last {
+            *into.entry((book_id, chapter, verse)).or_insert(0) += each;
+        }
+    }
+    total
+}
+
 #[derive(Deserialize)]
 struct RawEntry {
     term: String,
@@ -33,6 +66,7 @@ fn parse_file(path: &Path) -> anyhow::Result<Vec<RawEntry>> {
 }
 
 pub fn import(conn: &mut Connection, dir: &Path) -> anyhow::Result<usize> {
+    let books = super::crossrefs::load_book_lookup(conn)?;
     let mut all = Vec::new();
     if let Ok(files) = std::fs::read_dir(dir) {
         for f in files.flatten() {
@@ -52,28 +86,37 @@ pub fn import(conn: &mut Connection, dir: &Path) -> anyhow::Result<usize> {
     let tx = conn.transaction()?;
     {
         let mut entry_stmt = tx.prepare(
-            "INSERT INTO isbe_entries (term, sort_key, slug, body, plain_text, redirect_slug)
-             VALUES (?1,?2,?3,?4,?5,?6)
+            "INSERT INTO isbe_entries (term, sort_key, slug, body, plain_text, redirect_slug, ref_count)
+             VALUES (?1,?2,?3,?4,?5,?6,?7)
              ON CONFLICT(slug) DO UPDATE SET
                term=excluded.term, sort_key=excluded.sort_key, body=excluded.body,
-               plain_text=excluded.plain_text, redirect_slug=excluded.redirect_slug",
+               plain_text=excluded.plain_text, redirect_slug=excluded.redirect_slug,
+               ref_count=excluded.ref_count",
         )?;
         let mut alias_stmt = tx.prepare("INSERT INTO isbe_aliases (alias, entry_id) VALUES (?1,?2)")?;
+        let mut ref_stmt =
+            tx.prepare("INSERT INTO isbe_refs (entry_id, book_id, chapter, verse, weight) VALUES (?1,?2,?3,?4,?5)")?;
         for entry in &all {
             // The search index is built from the words, not the markup --
             // otherwise "scripref" matches every article carrying a citation.
             let plain = crate::text::html_to_text(&entry.body);
+            let mut refs: HashMap<(i64, i64, i64), i64> = HashMap::new();
+            let ref_count = collect_refs(&entry.body, &books, &mut refs);
             entry_stmt.execute(params![
                 entry.term,
                 entry.sort_key,
                 entry.slug,
                 entry.body,
                 plain,
-                entry.redirect_slug
+                entry.redirect_slug,
+                ref_count as i64
             ])?;
             let id = tx.last_insert_rowid();
             for alias in &entry.aliases {
                 alias_stmt.execute(params![alias, id])?;
+            }
+            for ((book_id, chapter, verse), weight) in refs {
+                ref_stmt.execute(params![id, book_id, chapter, verse, weight])?;
             }
         }
     }

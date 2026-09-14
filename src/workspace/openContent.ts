@@ -85,6 +85,7 @@ export function completeParams<K extends PaneKind>(kind: K, partial: Partial<Par
     case "interlinear":
     case "crossrefs":
     case "confession-for-passage":
+    case "encyclopedia-for-passage":
     case "metrical":
     case "mine":
     case "commentary": {

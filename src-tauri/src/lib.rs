@@ -268,6 +268,7 @@ pub fn run() {
             commands::reference::find_dictionary_entry_for_isbe,
             commands::reference::search_isbe,
             commands::reference::search_isbe_global,
+            commands::reference::isbe_for_passage,
             commands::reference::list_atlas_places,
             commands::reference::get_atlas_place,
             commands::reference::get_atlas_place_verses,

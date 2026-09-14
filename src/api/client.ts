@@ -41,6 +41,7 @@ import type {
   DictionaryEntrySummary,
   IsbeEntry,
   IsbeEntrySummary,
+  IsbePassageEntry,
   IsbeSearchResult,
   InterlinearWord,
   MorphologyWord,
@@ -224,6 +225,8 @@ export const api = {
     invoke<DictionaryEntrySummary | null>("find_dictionary_entry_for_isbe", { slug }),
   searchIsbe: (query: string, limit = 50) => invoke<IsbeEntrySummary[]>("search_isbe", { query, limit }),
   searchIsbeGlobal: (query: string, limit = 50) => invoke<IsbeSearchResult[]>("search_isbe_global", { query, limit }),
+  isbeForPassage: (bookId: number, chapter: number, verse?: number | null, limit = 40) =>
+    invoke<IsbePassageEntry[]>("isbe_for_passage", { bookId, chapter, verse: verse ?? null, limit }),
 
   listAtlasPlaces: () => invoke<AtlasPlace[]>("list_atlas_places"),
   getAtlasPlace: (slug: string) => invoke<AtlasPlace | null>("get_atlas_place", { slug }),

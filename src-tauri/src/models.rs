@@ -329,6 +329,19 @@ pub struct IsbeEntrySummary {
     pub slug: String,
 }
 
+/// An encyclopedia article that discusses the passage being read.
+#[derive(Debug, Clone, Serialize)]
+pub struct IsbePassageEntry {
+    pub id: i64,
+    pub term: String,
+    pub slug: String,
+    /// Which verses of it, in order.
+    pub verses: Vec<i64>,
+    /// References the whole article makes. A small number is a focused
+    /// article; "Jesus Christ" makes 1,139 and is about everything.
+    pub ref_count: i64,
+}
+
 /// An encyclopedia hit in the global search overlay: a summary plus enough of
 /// the article to judge it by. `snippet` is HTML-escaped with `[` and `]`
 /// around the matched words (see `search::escape_snippet`).
