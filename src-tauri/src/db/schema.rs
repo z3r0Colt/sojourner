@@ -706,6 +706,37 @@ CREATE TABLE atlas_journey_legs (
 CREATE INDEX idx_atlas_legs ON atlas_journey_legs(journey_id, sort_order);
 "#;
 
+// The dictionary carries two works, and used to lose track of which was
+// which: every definition was folded into one `body` string with "(Easton's)"
+// typed in front of it, so nothing could show them apart or let a reader pick
+// one. `dictionary_definitions` keeps them as what they are -- separate
+// articles by separate authors on the same headword.
+//
+// `dictionary_aliases` exists because the two spell things differently.
+// Easton's files "Abel-meholah" and Smith's "Abelmeholah"; 163 headwords were
+// split that way, so the index listed a subject twice and each copy held half
+// of what the app knew about it. The importer merges them and the spellings
+// it did not keep live on here, so searching either one still arrives.
+pub const CONTENT_MIGRATION_0013: &str = r#"
+ALTER TABLE dictionary_entries ADD COLUMN sources TEXT NOT NULL DEFAULT '';
+
+CREATE TABLE dictionary_definitions (
+  id          INTEGER PRIMARY KEY,
+  entry_id    INTEGER NOT NULL REFERENCES dictionary_entries(id),
+  source_code TEXT NOT NULL,
+  source_name TEXT NOT NULL,
+  body        TEXT NOT NULL,
+  sort_order  INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX idx_dictionary_definitions ON dictionary_definitions(entry_id, sort_order);
+
+CREATE TABLE dictionary_aliases (
+  alias    TEXT NOT NULL,
+  entry_id INTEGER NOT NULL REFERENCES dictionary_entries(id)
+);
+CREATE INDEX idx_dictionary_alias ON dictionary_aliases(alias COLLATE NOCASE);
+"#;
+
 pub const CONTENT_MIGRATIONS: &[&str] = &[
     CONTENT_MIGRATION_0001,
     CONTENT_MIGRATION_0002,
@@ -719,6 +750,7 @@ pub const CONTENT_MIGRATIONS: &[&str] = &[
     CONTENT_MIGRATION_0010,
     CONTENT_MIGRATION_0011,
     CONTENT_MIGRATION_0012,
+    CONTENT_MIGRATION_0013,
 ];
 
 pub const USER_MIGRATION_0001: &str = r#"

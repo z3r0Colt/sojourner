@@ -11,11 +11,21 @@ import { refAttrs } from "../../lib/refAttr";
 import { toPassageRef } from "../../lib/passage";
 import { EmptyState, LoadingState } from "../../components/ui/EmptyState";
 import { cx, inputSmClass } from "../../components/ui/classes";
+import { useSetting } from "../../hooks/useSetting";
 import { StudyActions } from "../sermons/StudyActions";
 import { dictionaryRef } from "../sermons/sourceIdentity";
 import { firstParagraph, selectionWithin } from "../sermons/excerpt";
 
 const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+
+/** The two works bound in here, and the choice to read only one. Easton's
+ *  is the more discursive, Smith's the more encyclopedic; a reader who
+ *  prefers one should not have to scroll past the other. */
+const SOURCES = [
+  { code: "", label: "Both dictionaries" },
+  { code: "EAS", label: "Easton's only" },
+  { code: "SMI", label: "Smith's only" },
+];
 
 export function DictionaryView() {
   const [{ slug: paneSlug }] = usePaneParams("dictionary");
@@ -32,9 +42,30 @@ export function DictionaryView() {
   const [query, setQuery] = useState("");
   const [debounced, setDebounced] = useState("");
   const [activeLetter, setActiveLetter] = useState("A");
+  const [source, setSource] = useSetting("dictionary.source", "");
   // "Send to sermon" quotes the reader's selection when there is one.
   const bodyRef = useRef<HTMLDivElement>(null);
   const bookLookup = useMemo(() => buildBookLookup(books ?? []), [books]);
+
+  // What the reader's choice leaves on the page, and whether it hid anything.
+  const shown = useMemo(
+    () => (entry ? entry.definitions.filter((d) => !source || d.source_code === source) : []),
+    [entry, source],
+  );
+  // One heading per dictionary. A few headwords are homonyms that a single
+  // work treats twice -- Easton's has "Hail" the weather and "Hail!" the
+  // greeting -- so those become numbered senses under one heading rather than
+  // the same title printed twice.
+  const works = useMemo(() => {
+    const out: { code: string; name: string; bodies: string[] }[] = [];
+    for (const d of shown) {
+      const last = out[out.length - 1];
+      if (last && last.code === d.source_code) last.bodies.push(d.body);
+      else out.push({ code: d.source_code, name: d.source_name, bodies: [d.body] });
+    }
+    return out;
+  }, [shown]);
+  const missingFromChoice = !!entry && !!source && shown.length < entry.definitions.length;
 
   useEffect(() => {
     const t = setTimeout(() => setDebounced(query), 250);
@@ -50,7 +81,13 @@ export function DictionaryView() {
   const letterEntries = useMemo(() => (index ?? []).filter((e) => e.term.toUpperCase().startsWith(activeLetter)), [index, activeLetter]);
 
   const showingSearch = debounced.trim().length > 1;
-  const list = showingSearch ? searchResults ?? [] : letterEntries;
+  const unfiltered = showingSearch ? searchResults ?? [] : letterEntries;
+  // Choosing one dictionary hides the headwords the other one alone carries
+  // -- about two thousand each way, so the list really is a different book.
+  const list = useMemo(
+    () => (source ? unfiltered.filter((e) => e.sources.includes(source)) : unfiltered),
+    [unfiltered, source],
+  );
 
   function jumpToRef(bookId: number, chapter: number, verse: number | undefined, e: React.MouseEvent) {
     openPassage({ bookId, chapter, verse }, { target: targetFor(e) });
@@ -106,6 +143,20 @@ export function DictionaryView() {
             ))}
           </div>
         )}
+        <div className="border-b border-line px-3 pb-2">
+          <select
+            value={source}
+            onChange={(e) => setSource(e.target.value)}
+            aria-label="Which dictionary to show"
+            className={cx(inputSmClass, "w-full")}
+          >
+            {SOURCES.map((o) => (
+              <option key={o.code} value={o.code}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+        </div>
         <div className="min-h-0 flex-1 overflow-y-auto">
           {list.map((e) => (
             <button
@@ -115,6 +166,9 @@ export function DictionaryView() {
               className={cx("block w-full border-b border-line px-3 py-2 text-left text-sm hover:bg-hover", slug === e.slug ? "bg-accent-soft font-medium text-accent" : "text-ink-2")}
             >
               {e.term}
+              {!source && e.sources.length === 1 && (
+                <span className="ml-1.5 text-xs text-ink-4">{e.sources[0] === "EAS" ? "Easton's" : "Smith's"}</span>
+              )}
             </button>
           ))}
           {list.length === 0 && <EmptyState compact title={showingSearch ? "No entries match" : `No entries under ${activeLetter}`} />}
@@ -137,6 +191,14 @@ export function DictionaryView() {
                 })}
               />
             </div>
+            {missingFromChoice && (
+              <p className="mb-4 text-sm text-ink-4">
+                Showing {source === "EAS" ? "Easton's" : "Smith's"} only.{" "}
+                <button type="button" onClick={() => setSource("")} className="text-accent hover:underline">
+                  Show both
+                </button>
+              </p>
+            )}
             {inEncyclopedia && (
               <button
                 type="button"
@@ -146,8 +208,28 @@ export function DictionaryView() {
                 Read the full ISBE article →
               </button>
             )}
-            <div ref={bodyRef} className="reading-font whitespace-pre-wrap text-ink" style={typography}>
-              {renderLinkedBody(entry.body)}
+            {entry.aliases.length > 0 && (
+              <p className="mb-4 text-sm text-ink-4">Also spelled {entry.aliases.join(", ")}</p>
+            )}
+            <div ref={bodyRef} style={typography}>
+              {works.map((work) => (
+                <section key={work.code} className="mb-7 last:mb-0">
+                  <h2 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-ink-3">{work.name}</h2>
+                  {work.bodies.map((body, i) => (
+                    <div key={i} className="reading-font mb-3 flex gap-2 whitespace-pre-wrap text-ink last:mb-0">
+                      {work.bodies.length > 1 && <span className="shrink-0 text-ink-4">{i + 1}.</span>}
+                      <span className="min-w-0">{renderLinkedBody(body)}</span>
+                    </div>
+                  ))}
+                </section>
+              ))}
+              {shown.length === 0 && (
+                <EmptyState
+                  compact
+                  title={`Not in ${source === "EAS" ? "Easton's" : "Smith's"}`}
+                  description="The other dictionary has an article on this headword."
+                />
+              )}
             </div>
           </div>
         )}

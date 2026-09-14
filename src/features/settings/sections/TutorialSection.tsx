@@ -125,7 +125,8 @@ const CATEGORIES: Category[] = [
       { q: "Look up a word while reading", a: "Double-click any word in the Bible text to open its Strong's entry in a popup, without switching to interlinear. The tagging follows the KJV's wording, so it matches best there; when a word can't be matched, the popup offers to search the lexicon for it instead." },
       { q: "Look up a Strong's number", a: "Click any tagged word in interlinear view to see its lexicon entry in a popup. “View full entry” opens the Lexicon page with a concordance of every verse using that word." },
       { q: "Lexicon page", a: "Search by English meaning, transliteration, or Strong's number (H1, G25). Thayer's fuller Greek definitions appear when available." },
-      { q: "Dictionary", a: "Short entries for people, places, and topics from Easton's and Smith's, browsable by letter and searchable. Scripture references inside an entry are clickable. Where the encyclopedia covers the same headword, a link at the top offers the fuller article." },
+      { q: "Dictionary", a: "Short entries for people, places, and topics from two works — Easton's and Smith's — browsable by letter and searchable. Each dictionary's article is shown under its own heading, and the box above the list reads from both or from either one alone. That is a real choice: Easton's carries about 1,300 headwords Smith's has nothing on, and Smith's about 1,850 that Easton's lacks. Scripture references inside an entry are clickable, and where the encyclopedia covers the same headword a link at the top offers the fuller article." },
+      { q: "Why do some entries say “also spelled”?", a: "Because the two dictionaries spell things differently — Easton's files Abel-meholah, Smith's Abelmeholah. Those used to be two half-entries in the list. They are one entry now, carrying both articles, and the spelling not on display still finds it when you search." },
     ],
   },
   {

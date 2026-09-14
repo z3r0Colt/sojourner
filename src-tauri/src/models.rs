@@ -277,12 +277,26 @@ pub struct StrongsEntry {
     pub thayers_definition: Option<String>,
 }
 
+/// One dictionary's article on a headword. An entry usually carries two --
+/// Easton's and Smith's -- and they are kept apart so the reader can tell
+/// who is speaking, and read only one if they prefer.
+#[derive(Debug, Clone, Serialize)]
+pub struct DictionaryDefinition {
+    pub source_code: String,
+    pub source_name: String,
+    pub body: String,
+}
+
 #[derive(Debug, Clone, Serialize)]
 pub struct DictionaryEntry {
     pub id: i64,
     pub term: String,
     pub slug: String,
+    /// The whole entry as words, for citation and search snippets.
     pub body: String,
+    pub definitions: Vec<DictionaryDefinition>,
+    /// Other spellings this headword is filed under elsewhere.
+    pub aliases: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -290,6 +304,8 @@ pub struct DictionaryEntrySummary {
     pub id: i64,
     pub term: String,
     pub slug: String,
+    /// Which dictionaries have an article here ("EAS", "SMI").
+    pub sources: Vec<String>,
 }
 
 /// An ISBE article. `body` is HTML (see the isbe importer): scripture
