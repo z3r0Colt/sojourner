@@ -117,12 +117,24 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
         // WebView2 drops the insert at the document start; focusing the view
         // first is what the note templates learned to do.
         editor.view.focus();
-        editor.chain().focus().command(insertAfterNodeSelection).insertContent(passageBlockHtml(passageRef)).run();
+        editor
+          .chain()
+          .focus()
+          .command(insertAfterNodeSelection)
+          .insertContent(passageBlockHtml(passageRef))
+          .command(caretBelowInsertedBlock)
+          .run();
       },
       insertSource: (item) => {
         if (!editor) return;
         editor.view.focus();
-        editor.chain().focus().command(insertAfterNodeSelection).insertContent(sourceBlockHtml(item)).run();
+        editor
+          .chain()
+          .focus()
+          .command(insertAfterNodeSelection)
+          .insertContent(sourceBlockHtml(item))
+          .command(caretBelowInsertedBlock)
+          .run();
       },
     }),
     [editor],
@@ -168,6 +180,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
       .insertContent(
         passageBlockHtml({ book_id: parsed.book.id, chapter: parsed.chapter, verse_start: start, verse_end: Math.max(start, end) }),
       )
+      .command(caretBelowInsertedBlock)
       .run();
     setPassageInput("");
     setPassageError(null);
@@ -423,6 +436,35 @@ function insertAfterNodeSelection({ tr, state, dispatch }: { tr: Transaction; st
   const { selection } = state;
   if (!(selection instanceof NodeSelection)) return true;
   if (dispatch) dispatch(tr.setSelection(TextSelection.near(tr.doc.resolve(selection.to), 1)));
+  return true;
+}
+
+/**
+ * After a block goes in, the caret belongs in body text *after* it.
+ *
+ * A citation holds editable content, so where insertContent leaves the caret
+ * is inside the quotation -- and the next thing the preacher types is
+ * silently absorbed into the quote rather than becoming his own next
+ * paragraph. A passage is an atom, where the caret can be left selecting the
+ * whole block, and then the next keystroke replaces it. Both end with the
+ * caret in an ordinary paragraph below, reusing an empty one if it is
+ * already there rather than stacking blank lines.
+ */
+function caretBelowInsertedBlock({ tr, dispatch }: { tr: Transaction; dispatch?: (tr: Transaction) => void }): boolean {
+  const { $to } = tr.selection;
+  // Climb to the top-level block holding (or being) what was just inserted.
+  const after = $to.depth > 0 ? $to.after(1) : tr.selection.to;
+  if (after > tr.doc.content.size) return true;
+  if (!dispatch) return true;
+
+  const paragraph = tr.doc.type.schema.nodes.paragraph;
+  const next = after < tr.doc.content.size ? tr.doc.resolve(after).nodeAfter : null;
+  if (next && next.type === paragraph && next.content.size === 0) {
+    dispatch(tr.setSelection(TextSelection.near(tr.doc.resolve(after + 1), 1)));
+    return true;
+  }
+  const withParagraph = tr.insert(after, paragraph.create());
+  dispatch(withParagraph.setSelection(TextSelection.near(withParagraph.doc.resolve(after + 1), 1)));
   return true;
 }
 
