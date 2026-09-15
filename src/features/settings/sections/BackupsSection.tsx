@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { open, save } from "@tauri-apps/plugin-dialog";
 import { openPath } from "@tauri-apps/plugin-opener";
 import { Download, FolderOpen, HardDrive, RotateCcw, ShieldCheck, Upload } from "lucide-react";
 import { api } from "../../../api/client";
@@ -30,27 +29,25 @@ export function BackupsSection() {
   const [autoBackupDays, setAutoBackupDays] = useSetting<number>(AUTO_BACKUP_DAYS_SETTING, AUTO_BACKUP_DAYS_DEFAULT);
 
   async function handleExport() {
-    const destPath = await save({
-      defaultPath: `sojourner-export-${new Date().toISOString().slice(0, 10)}.db`,
-      filters: [{ name: "Database", extensions: ["db"] }],
-    });
-    if (!destPath) return;
-    await api.exportDatabase(destPath);
+    const picked = await api.pickSavePath("database", `sojourner-export-${new Date().toISOString().slice(0, 10)}.db`);
+    if (!picked) return;
+    await api.exportDatabase(picked.token);
     toast.success("Exported. The file holds all your notes, highlights, plans, and other study data.");
   }
 
   async function handleImport() {
-    const sourcePath = await open({ multiple: false, filters: [{ name: "Database", extensions: ["db"] }] });
-    if (!sourcePath || Array.isArray(sourcePath)) return;
+    const picked = await api.pickOpenPath("database");
+    if (!picked) return;
     const proceed = await confirmDialog({
       title: "Replace everything with this file?",
       message:
-        "Importing replaces all current notes, highlights, plans, and other data with what's in the file. Your current data is backed up first, but this can't be undone from inside the app.",
+        "Importing replaces all current notes, highlights, plans, and other data with what's in the file. Your current data is backed up first, but this can't be undone from inside the app. " +
+        "A database file also carries the formatting and links of whoever made it, so restore one only from a source you trust.",
       confirmLabel: "Import and replace",
       danger: true,
     });
     if (!proceed) return;
-    await api.stageImport(sourcePath);
+    await api.stageImport(picked.token);
     await confirmDialog({ title: "Restart required", message: "The import is staged and takes effect the next time the app starts.", confirmLabel: "OK", cancelLabel: "Close" });
   }
 
@@ -76,9 +73,9 @@ export function BackupsSection() {
   }
 
   async function handlePickSyncFolder() {
-    const folder = await open({ directory: true });
-    if (!folder || Array.isArray(folder)) return;
-    setBackupSyncFolder.mutate(folder, { onSuccess: () => toast.success("Backups will also be copied there") });
+    const picked = await api.pickFolder();
+    if (!picked) return;
+    setBackupSyncFolder.mutate(picked.token, { onSuccess: () => toast.success("Backups will also be copied there") });
   }
 
   async function handleOpenLogsFolder() {
@@ -90,6 +87,7 @@ export function BackupsSection() {
       <h2 className="mb-1 text-lg font-semibold text-ink">Data &amp; backups</h2>
       <p className="mb-4 text-sm text-ink-3">
         Everything you write lives in one file on this device and never leaves it. This app makes no network requests of its own and sends nothing anywhere.
+        That file is not encrypted: it sits in the app's data folder, readable by anyone who can read this computer's files.
       </p>
       <div className="mb-4 flex flex-wrap gap-2">
         <Button variant="primary" icon={HardDrive} onClick={() => createBackup.mutate(undefined, { onSuccess: () => toast.success("Backup created") })} disabled={createBackup.isPending}>
@@ -166,6 +164,7 @@ export function BackupsSection() {
         </div>
         <p className="mt-2 text-xs text-ink-3">
           Point this at a folder synced by OneDrive, Dropbox, or similar and every backup is copied there too. A simple way to carry your data to another computer.
+          Choosing a synced folder does send that provider a complete, unencrypted copy of your notes and prayer journal.
         </p>
       </div>
 

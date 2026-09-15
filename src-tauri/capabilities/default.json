@@ -1,13 +1,15 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Capability for the main window",
+  "description": "What the main window's page is allowed to ask of the backend. Deliberately short: the page opens links and the logs folder, and everything else it needs goes through this app's own commands. `fs:default` is gone because it granted recursive read of the whole app-data folder -- user.db, the backups, the logs -- to any script running in the webview, and nothing in the page uses the fs plugin. `dialog:default` is gone because the file dialogs now run in Rust (see commands::file_picker), so the page has no reason to open one.",
   "windows": ["main"],
   "permissions": [
     "core:default",
     "opener:default",
-    "dialog:default",
-    "fs:default",
+    {
+      "identifier": "opener:allow-open-path",
+      "allow": [{ "path": "$APPDATA/logs" }]
+    },
     "window-state:default"
   ]
 }

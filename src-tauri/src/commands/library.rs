@@ -1,10 +1,10 @@
+use crate::commands::file_picker::{take_path, PickedPaths};
 use crate::db::queries::{commentary, verses, versification};
 use crate::db::DbState;
 use crate::error::AppResult;
 use crate::import;
 use crate::models::{Book, BookAlias, BookCoverage, CommentarySource, ImportReportItem, Translation};
 use crate::paths::default_import_roots;
-use std::path::PathBuf;
 use tauri::{AppHandle, Manager, State};
 
 #[tauri::command]
@@ -66,13 +66,19 @@ pub fn scan_library(app: AppHandle, db: State<DbState>) -> AppResult<Vec<ImportR
         .collect())
 }
 
-/// Copies a user-selected file into the app's writable imports folder (bibles/
-/// or commentaries/ depending on detection) and imports it immediately. This is
-/// the "Add File..." flow -- the mechanism by which the user seamlessly adds
-/// more Bible/commentary XML files after first install.
+/// Copies the file `pick_open_path` chose into the app's writable imports
+/// folder (bibles/ or commentaries/ depending on detection) and imports it
+/// immediately. This is the "Add File..." flow -- the mechanism by which the
+/// user seamlessly adds more Bible/commentary XML files after first install.
+/// `token` is that dialog's.
 #[tauri::command]
-pub fn add_file(app: AppHandle, db: State<DbState>, source_path: String) -> AppResult<ImportReportItem> {
-    let src = PathBuf::from(&source_path);
+pub fn add_file(
+    app: AppHandle,
+    db: State<DbState>,
+    picked: State<PickedPaths>,
+    token: String,
+) -> AppResult<ImportReportItem> {
+    let src = take_path(&picked, &token)?;
     let file_name = src
         .file_name()
         .ok_or_else(|| anyhow::anyhow!("invalid file path"))?;

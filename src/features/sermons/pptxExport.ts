@@ -16,7 +16,7 @@ const BACKGROUND = "0B0D11";
 const INK = "F2F3F5";
 const DIM = "9AA1AD";
 
-export async function exportSlidesToPptx(slides: Slide[], title: string, destPath: string): Promise<void> {
+export async function exportSlidesToPptx(slides: Slide[], title: string, token: string): Promise<void> {
   const { default: PptxGenJS } = await import("pptxgenjs");
   const pptx = new PptxGenJS();
   pptx.layout = "LAYOUT_16x9";
@@ -67,7 +67,9 @@ export async function exportSlidesToPptx(slides: Slide[], title: string, destPat
 
   // pptxgenjs hands back an ArrayBuffer; the file is written by a command,
   // because the fs plugin's scope deliberately allows no arbitrary path --
-  // the same reason every other export goes through Rust.
+  // the same reason every other export goes through Rust. `token` stands for
+  // the file the save dialog chose, so the destination is never this side's
+  // to name.
   const data = (await pptx.write({ outputType: "arraybuffer" })) as ArrayBuffer;
-  await api.exportSermonSlides(destPath, new Uint8Array(data));
+  await api.exportSermonSlides(token, new Uint8Array(data));
 }

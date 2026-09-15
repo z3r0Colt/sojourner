@@ -137,9 +137,15 @@ pub fn run() {
             }
             app.manage(DbState(Mutex::new(conn)));
             app.manage(AppDataDir(app_data_dir));
+            // The tokens the file dialogs hand back in place of paths, so no
+            // path the page could name ever reaches a command.
+            app.manage(commands::file_picker::PickedPaths::default());
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            commands::file_picker::pick_save_path,
+            commands::file_picker::pick_open_path,
+            commands::file_picker::pick_folder,
             commands::library::list_books,
             commands::library::list_book_aliases,
             commands::library::list_translations,

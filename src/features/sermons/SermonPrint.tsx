@@ -5,6 +5,7 @@ import { ManuscriptView } from "./ManuscriptView";
 import { outlineOf, passageBlocks, sectionsOf } from "./editor/documentModel";
 import { buildHandout } from "./handout";
 import { cx } from "../../components/ui/classes";
+import { sanitizeHtml } from "../../lib/sanitizeHtml";
 import { formatPreachDate, passageLabel, sermonTextLabel } from "./sermonFormat";
 import type { Passage, Sermon } from "../../api/types";
 
@@ -146,7 +147,7 @@ function HandoutPrint({
             <h2 className={section.level === 3 ? "sub" : undefined}>{section.heading}</h2>
           )}
           {section.references.length > 0 && <p className="handout-refs">{section.references.join("; ")}</p>}
-          <div className="sermon-html" dangerouslySetInnerHTML={{ __html: section.html }} />
+          <div className="sermon-html" dangerouslySetInnerHTML={{ __html: sanitizeHtml(section.html) }} />
           <div className="handout-lines" aria-hidden="true">
             {Array.from({ length: section.noteLines }, (_, n) => (
               <span key={n} />

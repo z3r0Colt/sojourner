@@ -752,6 +752,13 @@ mark.find-current {
   border-bottom: 1px solid currentColor;
   white-space: pre;
 }
+/* Five width buckets, standing in for the inline min-width the handout used
+   to carry: a `style` attribute does not survive the display sanitizer. */
+.handout-blank-w1 { min-width: 6ch; }
+.handout-blank-w2 { min-width: 10ch; }
+.handout-blank-w3 { min-width: 14ch; }
+.handout-blank-w4 { min-width: 20ch; }
+.handout-blank-w5 { min-width: 28ch; }
 .handout-blank-key {
   color: var(--color-accent);
   border-bottom: 1px dotted var(--color-accent);

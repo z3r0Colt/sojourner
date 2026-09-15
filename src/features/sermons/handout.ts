@@ -101,6 +101,15 @@ function refOf(el: Element): PassageRef | null {
   return { book_id: bookId, chapter, verse_start: start, verse_end: Math.max(start, end) };
 }
 
+/** Which of `.handout-blank-w1`..`w5` a word of this length gets. */
+function blankWidthClass(length: number): string {
+  if (length <= 4) return "handout-blank-w1";
+  if (length <= 8) return "handout-blank-w2";
+  if (length <= 12) return "handout-blank-w3";
+  if (length <= 18) return "handout-blank-w4";
+  return "handout-blank-w5";
+}
+
 /**
  * One section's prose, ready for paper: the heading dropped (the sheet
  * prints it itself), every blank drawn as a rule or as the key, citations
@@ -136,11 +145,13 @@ function renderSectionBody(html: string, options: HandoutOptions): string {
     if (options.answerKey) {
       blank.className = "handout-blank-key";
     } else {
-      blank.className = "handout-blank";
-      // A rule as wide as the word it hides, floored so a three-letter word
-      // still leaves something to write on.
-      blank.setAttribute("style", `min-width:${Math.max(5, Math.min(28, word.length + 2))}ch`);
-      blank.textContent = " ";
+      // A rule roughly as wide as the word it hides, floored so a
+      // three-letter word still leaves something to write on. The width is a
+      // class rather than an inline `style`, which the display sanitizer
+      // strips; five buckets are enough, and keep the widths out of the
+      // markup the reader's file carries.
+      blank.className = `handout-blank ${blankWidthClass(word.length)}`;
+      blank.textContent = String.fromCharCode(160);
     }
   }
 

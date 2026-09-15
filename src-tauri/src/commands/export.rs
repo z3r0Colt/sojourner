@@ -1,3 +1,4 @@
+use crate::commands::file_picker::{take_path, PickedPaths};
 use crate::db::queries::{notes, prayer_journal, verses};
 use crate::db::DbState;
 use crate::error::AppResult;
@@ -9,12 +10,13 @@ fn book_names(conn: &rusqlite::Connection) -> anyhow::Result<HashMap<i64, String
     Ok(verses::list_books(conn)?.into_iter().map(|b| (b.id, b.name)).collect())
 }
 
-/// Writes `dest_path` -- the path comes from a save dialog the frontend
-/// already ran (see BackupsSection's export flow for the same pattern),
-/// since a Rust command isn't subject to the webview fs plugin's scope
-/// restrictions the way a frontend-side file write would be.
+/// Writes the file the user chose in `pick_save_path`. The page holds only
+/// that dialog's token, never the path -- a Rust command isn't subject to
+/// the webview fs plugin's scope restrictions the way a frontend-side file
+/// write would be, so the path must not be the caller's to name.
 #[tauri::command]
-pub fn export_note(db: State<DbState>, note_id: i64, dest_path: String) -> AppResult<()> {
+pub fn export_note(db: State<DbState>, picked: State<PickedPaths>, note_id: i64, token: String) -> AppResult<()> {
+    let dest_path = take_path(&picked, &token)?;
     let conn = db.0.lock().unwrap();
     let note = notes::get(&conn, note_id)?.ok_or_else(|| anyhow::anyhow!("note not found"))?;
     let names = book_names(&conn)?;
@@ -24,7 +26,13 @@ pub fn export_note(db: State<DbState>, note_id: i64, dest_path: String) -> AppRe
 }
 
 #[tauri::command]
-pub fn export_chapter_note(db: State<DbState>, chapter_note_id: i64, dest_path: String) -> AppResult<()> {
+pub fn export_chapter_note(
+    db: State<DbState>,
+    picked: State<PickedPaths>,
+    chapter_note_id: i64,
+    token: String,
+) -> AppResult<()> {
+    let dest_path = take_path(&picked, &token)?;
     let conn = db.0.lock().unwrap();
     let note = notes::get_chapter_note(&conn, chapter_note_id)?.ok_or_else(|| anyhow::anyhow!("chapter note not found"))?;
     let names = book_names(&conn)?;
@@ -34,7 +42,13 @@ pub fn export_chapter_note(db: State<DbState>, chapter_note_id: i64, dest_path: 
 }
 
 #[tauri::command]
-pub fn export_prayer_entry(db: State<DbState>, prayer_entry_id: i64, dest_path: String) -> AppResult<()> {
+pub fn export_prayer_entry(
+    db: State<DbState>,
+    picked: State<PickedPaths>,
+    prayer_entry_id: i64,
+    token: String,
+) -> AppResult<()> {
+    let dest_path = take_path(&picked, &token)?;
     let conn = db.0.lock().unwrap();
     let entry = prayer_journal::get(&conn, prayer_entry_id)?.ok_or_else(|| anyhow::anyhow!("prayer entry not found"))?;
     let names = book_names(&conn)?;

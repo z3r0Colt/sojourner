@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { usePaneNavigate } from "../../workspace/PaneContext";
 import { useQuery } from "@tanstack/react-query";
-import { open } from "@tauri-apps/plugin-dialog";
 import { Book, ChevronDown, FileText, Film, FolderOpen, Headphones, HelpCircle, Library, MoreVertical, Plus, Trash2, type LucideIcon } from "lucide-react";
 import { api } from "../../api/client";
 import {
@@ -107,16 +106,15 @@ export function ResourceLibraryView() {
   });
 
   async function handleAdd() {
-    const selected = await open({
-      multiple: false,
-      filters: [{ name: "Resources", extensions: ["epub", "pdf", "mobi", "azw", "azw3", "mp4", "mkv", "webm", "mov", "mp3", "m4a", "wav", "ogg", "flac"] }],
-    });
-    if (!selected || Array.isArray(selected)) return;
-    const fileName = selected.split(/[\\/]/).pop() ?? "Untitled";
+    const picked = await api.pickOpenPath("resource");
+    if (!picked) return;
+    // The title still comes from the file name, which is what `display_path`
+    // is for: it is shown and read, never handed back to a command.
+    const fileName = picked.display_path.split(/[\\/]/).pop() ?? "Untitled";
     const title = fileName.replace(/\.[^.]+$/, "");
     setBusy(true);
     try {
-      await addResource.mutateAsync({ sourcePath: selected, title });
+      await addResource.mutateAsync({ token: picked.token, title });
       toast.success(`Added “${title}”`);
     } finally {
       setBusy(false);
@@ -124,11 +122,11 @@ export function ResourceLibraryView() {
   }
 
   async function handleImportFolder() {
-    const folder = await open({ directory: true });
-    if (!folder || Array.isArray(folder)) return;
+    const picked = await api.pickFolder();
+    if (!picked) return;
     setBusy(true);
     try {
-      setImportReport(await bulkImport.mutateAsync(folder));
+      setImportReport(await bulkImport.mutateAsync(picked.token));
     } finally {
       setBusy(false);
     }

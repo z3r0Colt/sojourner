@@ -5,6 +5,7 @@ import { BookOpenText, MessageSquareText } from "lucide-react";
 import { api } from "../../api/client";
 import { useBooks, useCommentaryForPassage, useCommentarySources } from "../../api/queries";
 import { decorateRefLinks } from "../../lib/refAttr";
+import { sanitizeHtml } from "../../lib/sanitizeHtml";
 import { toPassageRef } from "../../lib/passage";
 import { useTtsReadingHere, useTtsStore } from "../../state/ttsStore";
 import { useReadingTypography } from "../../state/uiStore";
@@ -190,8 +191,10 @@ export function CommentaryHtml({ html, onJumpToRef }: { html: string; onJumpToRe
   const { data: books } = useBooks();
   // One object per HTML string: React resets innerHTML whenever this
   // object's identity changes, which would wipe the attributes added below
-  // on every parent re-render.
-  const inner = useMemo(() => ({ __html: html }), [html]);
+  // on every parent re-render. Sanitized on the way in -- the importer
+  // already builds this markup from an allowlist of its own, so this is
+  // belt and braces, but no display point should be the exception.
+  const inner = useMemo(() => ({ __html: sanitizeHtml(html) }), [html]);
 
   // Hover previews: every `a.scripref` gets a data-ref derived from its
   // data-osis after render, so the stored HTML stays as imported. Runs

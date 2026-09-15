@@ -81,9 +81,24 @@ import type {
   IllustrationFilter,
   IllustrationInput,
   IllustrationUse,
+  PickKind,
+  PickedPath,
 } from "./types";
 
 export const api = {
+  // --- File dialogs --------------------------------------------------------
+  //
+  // The dialogs run in Rust, not here. What comes back is a single-use token
+  // standing for the chosen path (and a string to show the user); every
+  // command that reads or writes a user-chosen file takes that token. The
+  // page therefore never holds a filesystem path, and cannot name one -- a
+  // command called from the console with no dialog behind it has nothing to
+  // write to. `null` means the user cancelled.
+  pickSavePath: (kind: PickKind, defaultName?: string) =>
+    invoke<PickedPath | null>("pick_save_path", { kind, defaultName: defaultName ?? null }),
+  pickOpenPath: (kind: PickKind) => invoke<PickedPath | null>("pick_open_path", { kind }),
+  pickFolder: () => invoke<PickedPath | null>("pick_folder"),
+
   listBooks: () => invoke<Book[]>("list_books"),
   listBookAliases: () => invoke<BookAlias[]>("list_book_aliases"),
   getTranslationCoverage: (translationId: number) =>
@@ -95,7 +110,7 @@ export const api = {
   removeCommentarySource: (sourceId: number) =>
     invoke<void>("remove_commentary_source", { sourceId }),
   scanLibrary: () => invoke<ImportReportItem[]>("scan_library"),
-  addFile: (sourcePath: string) => invoke<ImportReportItem>("add_file", { sourcePath }),
+  addFile: (token: string) => invoke<ImportReportItem>("add_file", { token }),
 
   getChapter: (translationId: number, bookId: number, chapter: number) =>
     invoke<Verse[]>("get_chapter", { translationId, bookId, chapter }),
@@ -270,9 +285,9 @@ export const api = {
   listResources: () => invoke<Resource[]>("list_resources"),
   getResource: (id: number) => invoke<Resource | null>("get_resource", { id }),
   getResourceText: (id: number) => invoke<string | null>("get_resource_text", { id }),
-  addResource: (sourcePath: string, title: string, author?: string) =>
-    invoke<Resource>("add_resource", { sourcePath, title, author: author ?? null }),
-  bulkImportResources: (folderPath: string) => invoke<BulkImportOutcome>("bulk_import_resources", { folderPath }),
+  addResource: (token: string, title: string, author?: string) =>
+    invoke<Resource>("add_resource", { token, title, author: author ?? null }),
+  bulkImportResources: (token: string) => invoke<BulkImportOutcome>("bulk_import_resources", { token }),
   deleteResource: (id: number) => invoke<void>("delete_resource", { id }),
   searchResources: (query: string, limit = 50) => invoke<ResourceSearchResult[]>("search_resources", { query, limit }),
 
@@ -313,9 +328,9 @@ export const api = {
     invoke<Resource[]>("suggest_resources_for_passage", { bookId, chapter }),
   suggestResourcesForTopic: (topicId: number) => invoke<Resource[]>("suggest_resources_for_topic", { topicId }),
 
-  exportNote: (noteId: number, destPath: string) => invoke<void>("export_note", { noteId, destPath }),
-  exportChapterNote: (chapterNoteId: number, destPath: string) => invoke<void>("export_chapter_note", { chapterNoteId, destPath }),
-  exportPrayerEntry: (prayerEntryId: number, destPath: string) => invoke<void>("export_prayer_entry", { prayerEntryId, destPath }),
+  exportNote: (noteId: number, token: string) => invoke<void>("export_note", { noteId, token }),
+  exportChapterNote: (chapterNoteId: number, token: string) => invoke<void>("export_chapter_note", { chapterNoteId, token }),
+  exportPrayerEntry: (prayerEntryId: number, token: string) => invoke<void>("export_prayer_entry", { prayerEntryId, token }),
 
   listPrayerEntries: () => invoke<PrayerEntry[]>("list_prayer_entries"),
   createPrayerEntry: (input: {
@@ -467,12 +482,13 @@ export const api = {
 
   createBackup: () => invoke<string>("create_backup"),
   listBackups: () => invoke<BackupInfo[]>("list_backups"),
-  exportDatabase: (destPath: string) => invoke<void>("export_database", { destPath }),
-  stageImport: (sourcePath: string) => invoke<void>("stage_import", { sourcePath }),
+  exportDatabase: (token: string) => invoke<void>("export_database", { token }),
+  stageImport: (token: string) => invoke<void>("stage_import", { token }),
   stageRestore: (fileName: string) => invoke<void>("stage_restore", { fileName }),
   quickCheck: () => invoke<string[]>("quick_check"),
   getBackupSyncFolder: () => invoke<string | null>("get_backup_sync_folder"),
-  setBackupSyncFolder: (folder: string | null) => invoke<void>("set_backup_sync_folder", { folder }),
+  /** `token` from `pickFolder`, or null to clear the setting. */
+  setBackupSyncFolder: (token: string | null) => invoke<void>("set_backup_sync_folder", { token }),
   getLogsDir: () => invoke<string>("get_logs_dir"),
   /** Every count the Stats block shows (F3.5), in one round trip. */
   getStats: () => invoke<Stats>("get_stats"),
@@ -545,10 +561,10 @@ export const api = {
     invoke<IllustrationUse[]>("list_illustration_uses", { illustrationId: illustrationId ?? null }),
 
   /** Markdown, with every passage block rendered at export time. */
-  exportSermon: (sermonId: number, destPath: string) => invoke<void>("export_sermon", { sermonId, destPath }),
+  exportSermon: (sermonId: number, token: string) => invoke<void>("export_sermon", { sermonId, token }),
   /** The generated .pptx. The bytes come from pptxgenjs in the webview, but
    * the write goes through a command, since the fs plugin's scope allows no
    * arbitrary path. */
-  exportSermonSlides: (destPath: string, data: Uint8Array) =>
-    invoke<void>("export_sermon_slides", { destPath, data: Array.from(data) }),
+  exportSermonSlides: (token: string, data: Uint8Array) =>
+    invoke<void>("export_sermon_slides", { token, data: Array.from(data) }),
 };

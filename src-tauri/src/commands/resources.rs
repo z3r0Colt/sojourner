@@ -1,10 +1,10 @@
+use crate::commands::file_picker::{take_path, PickedPaths};
 use crate::db::queries::resources as queries;
 use crate::db::DbState;
 use crate::error::AppResult;
 use crate::models::{Resource, ResourceLink, ResourcePassageLink, ResourceSearchResult};
 use crate::resources::BulkImportOutcome;
 use crate::{paths, resources};
-use std::path::PathBuf;
 use tauri::{AppHandle, State};
 
 #[tauri::command]
@@ -25,17 +25,19 @@ pub fn get_resource_text(db: State<DbState>, id: i64) -> AppResult<Option<String
     Ok(queries::get_extracted_text(&conn, id)?)
 }
 
-/// Copies a user-picked file into the app's resources folder, detects its kind
-/// from the extension, best-effort extracts text for deep search, and records it.
+/// Copies the file `pick_open_path` chose into the app's resources folder,
+/// detects its kind from the extension, best-effort extracts text for deep
+/// search, and records it. `token` is that dialog's.
 #[tauri::command]
 pub fn add_resource(
     app: AppHandle,
     db: State<DbState>,
-    source_path: String,
+    picked: State<PickedPaths>,
+    token: String,
     title: String,
     author: Option<String>,
 ) -> AppResult<Resource> {
-    let src = PathBuf::from(&source_path);
+    let src = take_path(&picked, &token)?;
     let kind = resources::detect_kind(&src)
         .ok_or_else(|| anyhow::anyhow!("unrecognized file type: {}", src.display()))?;
 
@@ -64,15 +66,21 @@ pub fn add_resource(
     )?)
 }
 
-/// Recursively imports every epub/pdf/mobi/video/audio file under a
-/// user-chosen folder as a Resource (title from file name, author from its
+/// Recursively imports every epub/pdf/mobi/video/audio file under the folder
+/// `pick_folder` chose as a Resource (title from file name, author from its
 /// immediate parent folder) -- for a personal library organized as
 /// `Author/Book.epub`, adding it all at once rather than one file at a time.
 #[tauri::command]
-pub fn bulk_import_resources(app: AppHandle, db: State<DbState>, folder_path: String) -> AppResult<BulkImportOutcome> {
+pub fn bulk_import_resources(
+    app: AppHandle,
+    db: State<DbState>,
+    picked: State<PickedPaths>,
+    token: String,
+) -> AppResult<BulkImportOutcome> {
+    let folder_path = take_path(&picked, &token)?;
     let dest_dir = paths::resources_dir(&app).ok_or_else(|| anyhow::anyhow!("could not resolve resources directory"))?;
     let conn = db.0.lock().unwrap();
-    Ok(resources::import_folder(&conn, &dest_dir, &PathBuf::from(folder_path), &[])?)
+    Ok(resources::import_folder(&conn, &dest_dir, &folder_path, &[])?)
 }
 
 #[tauri::command]
