@@ -126,8 +126,14 @@ export function extractRefs(html: string, matcher: RefMatcher | null): NoteRefIn
   function add(ref: NoteRefInput) {
     found.set(`${ref.book_id}:${ref.chapter}:${ref.verse_start ?? ""}:${ref.verse_end ?? ""}`, ref);
   }
-  const container = document.createElement("div");
-  container.innerHTML = html;
+  // Parsed inertly, the way `sanitizeHtml` parses. This body is never shown,
+  // so it is never sanitized -- the hrefs have to survive as written for the
+  // refs to be read off them -- and a live element's `innerHTML` runs what it
+  // is given whether or not the element is ever attached. A note body can
+  // have arrived in an imported user.db, and the backfill walks every note in
+  // the file at launch, so that assignment was markup from someone else's
+  // file executing before anything had been displayed at all.
+  const container = new DOMParser().parseFromString(html, "text/html").body;
 
   for (const a of container.querySelectorAll("a[href]")) {
     const internal = parseInternalHref(a.getAttribute("href") ?? "");
