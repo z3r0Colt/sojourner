@@ -4,6 +4,7 @@ import { cx } from "../components/ui/classes";
 import { PaneContext, type PaneContextValue } from "./PaneContext";
 import { PANE_DRAG_TYPE, PaneHeader, usePaneTitle } from "./PaneHeader";
 import { PANE_COMPONENTS } from "./paneComponents";
+import { ErrorBoundary, PaneCrashCard } from "../layout/ErrorBoundary";
 
 export const PANE_MIN_WIDTH = 280;
 
@@ -67,7 +68,17 @@ export function Pane({ pane, showHeader, tabs, maximized }: { pane: PaneModel; s
       {showHeader && <PaneHeader pane={pane} focused={focused} tabs={tabs} maximized={maximized} />}
       <PaneContext.Provider value={ctx}>
         <div className="relative min-h-0 min-w-0 flex-1">
-          <Component key={pane.kind} />
+          {/* One view throwing costs the reader that view, not the whole
+              workspace -- which may well have a manuscript open beside it.
+              Keyed on the kind like the view itself, so navigating the pane
+              somewhere else clears a previous failure on its own. */}
+          <ErrorBoundary
+            key={pane.kind}
+            where={`pane:${pane.kind}`}
+            fallback={(error, reset) => <PaneCrashCard error={error} onRetry={reset} />}
+          >
+            <Component />
+          </ErrorBoundary>
         </div>
       </PaneContext.Provider>
       {dropTarget && (
