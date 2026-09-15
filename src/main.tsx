@@ -5,6 +5,7 @@ import { RouterProvider } from "react-router-dom";
 import { router } from "./router";
 import { useUiStore, type Theme } from "./state/uiStore";
 import { installCrashLogging } from "./lib/crashLog";
+import { ErrorBoundary } from "./layout/ErrorBoundary";
 import { Toaster } from "./components/ui/Toaster";
 import { ConfirmHost } from "./components/ui/ConfirmHost";
 import { toast } from "./components/ui/toast";
@@ -76,7 +77,12 @@ function ThemedRoot() {
   }, [accentSource, theme]);
   return (
     <>
-      <RouterProvider router={router} />
+      {/* The route has its own `errorElement`, which catches anything thrown
+          under it. This is for what that cannot reach: a throw in the router
+          itself, or in the provider tree above the route. */}
+      <ErrorBoundary where="router">
+        <RouterProvider router={router} />
+      </ErrorBoundary>
       <Toaster />
       <ConfirmHost />
     </>
