@@ -356,6 +356,7 @@ pub fn run() {
             commands::resources::get_resource_text,
             commands::resources::add_resource,
             commands::resources::bulk_import_resources,
+            commands::resources::reextract_resource,
             commands::resources::delete_resource,
             commands::resources::search_resources,
             commands::resources::list_resource_passage_links_for_chapter,

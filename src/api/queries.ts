@@ -575,6 +575,15 @@ export function useDeleteResource() {
   });
 }
 
+/** Reads a resource's text out of its file again; see `reextract_resource`. */
+export function useReextractResource() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: api.reextractResource,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["resources"] }),
+  });
+}
+
 export function useResourcePassageLinksForChapter(bookId: number | null, chapter: number | null) {
   return useQuery({
     queryKey: ["resourcePassageLinks", bookId, chapter],

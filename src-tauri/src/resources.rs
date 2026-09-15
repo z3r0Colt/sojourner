@@ -234,7 +234,7 @@ fn extract_pdf_text(path: &Path) -> anyhow::Result<String> {
 /// quarter-gigabyte book is a scan, not prose -- the resource is still
 /// findable by title, author and tag. Audio and video are not capped:
 /// nothing is extracted from them anyway, and they are legitimately large.
-const MAX_EXTRACT_BYTES: u64 = 256 * 1024 * 1024;
+pub const MAX_EXTRACT_BYTES: u64 = 256 * 1024 * 1024;
 
 /// Best-effort text extraction for full-text search indexing. Failures (encrypted
 /// PDFs, malformed files, unsupported variants) are swallowed -- the resource is

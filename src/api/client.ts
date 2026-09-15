@@ -288,6 +288,7 @@ export const api = {
   addResource: (token: string, title: string, author?: string) =>
     invoke<Resource>("add_resource", { token, title, author: author ?? null }),
   bulkImportResources: (token: string) => invoke<BulkImportOutcome>("bulk_import_resources", { token }),
+  reextractResource: (id: number) => invoke<Resource>("reextract_resource", { id }),
   deleteResource: (id: number) => invoke<void>("delete_resource", { id }),
   searchResources: (query: string, limit = 50) => invoke<ResourceSearchResult[]>("search_resources", { query, limit }),
 
