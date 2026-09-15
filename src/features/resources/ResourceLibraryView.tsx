@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { usePaneNavigate } from "../../workspace/PaneContext";
 import { useQuery } from "@tanstack/react-query";
-import { Book, ChevronDown, FileText, Film, FolderOpen, Headphones, HelpCircle, Library, MoreVertical, Plus, Trash2, type LucideIcon } from "lucide-react";
+import { Book, ChevronDown, FileText, Film, FolderOpen, Headphones, HelpCircle, Library, MoreVertical, Plus, RefreshCw, Trash2, type LucideIcon } from "lucide-react";
 import { api } from "../../api/client";
 import {
   useResources,
   useAddResource,
   useDeleteResource,
+  useReextractResource,
   useBulkImportResources,
   useAllResourceTags,
   useAllResourceTagsByResource,
@@ -42,6 +43,7 @@ export function ResourceLibraryView() {
   const { data: resources } = useResources();
   const addResource = useAddResource();
   const deleteResource = useDeleteResource();
+  const reextractResource = useReextractResource();
   const bulkImport = useBulkImportResources();
   const navigate = usePaneNavigate();
   const [query, setQuery] = useState("");
@@ -54,6 +56,7 @@ export function ResourceLibraryView() {
   // of names instead of every book's full entry at once.
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [activeTag, setActiveTag] = useState<string | null>(null);
+  const [reextracting, setReextracting] = useState<number | null>(null);
 
   const { data: tagPairs } = useAllResourceTagsByResource();
   const { data: allTags } = useAllResourceTags();
@@ -118,6 +121,20 @@ export function ResourceLibraryView() {
       toast.success(`Added “${title}”`);
     } finally {
       setBusy(false);
+    }
+  }
+
+  /** Ask for a resource's text again, and say plainly how it went. */
+  async function retryExtract(id: number, title: string) {
+    setReextracting(id);
+    try {
+      const updated = await reextractResource.mutateAsync(id);
+      if (updated.has_text) toast.success(`“${title}” is searchable now`);
+      else toast.info(`Still no text in “${title}” — it may be page images rather than words`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e));
+    } finally {
+      setReextracting(null);
     }
   }
 
@@ -245,9 +262,30 @@ export function ResourceLibraryView() {
                           {r.title}
                         </button>
                         {!r.has_text && r.kind !== "video" && r.kind !== "audio" && (
-                          <span className="shrink-0 text-xs text-amber-700 dark:text-amber-400" title="No text could be extracted, so search can't look inside it">
-                            not searchable
-                          </span>
+                          r.bundled ? (
+                            <span className="shrink-0 text-xs text-amber-700 dark:text-amber-400" title="No text could be extracted, so search can't look inside it">
+                              not searchable
+                            </span>
+                          ) : (
+                            // Text is read once, when a file is added, so a book
+                            // that failed then would stay unsearchable for good
+                            // without a way to ask again.
+                            <button
+                              type="button"
+                              disabled={reextracting === r.id}
+                              onClick={() => retryExtract(r.id, r.title)}
+                              title="No text could be extracted, so search can't look inside it. Try reading it again."
+                              className="shrink-0 rounded px-1 text-xs text-amber-700 hover:underline disabled:no-underline disabled:opacity-60 dark:text-amber-400"
+                            >
+                              {reextracting === r.id ? (
+                                "reading…"
+                              ) : (
+                                <span className="inline-flex items-center gap-1">
+                                  <RefreshCw className="h-3 w-3" aria-hidden="true" /> not searchable
+                                </span>
+                              )}
+                            </button>
+                          )
                         )}
                         {r.bundled ? (
                           <span

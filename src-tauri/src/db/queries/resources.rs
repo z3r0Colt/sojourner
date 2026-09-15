@@ -58,6 +58,15 @@ pub fn create(conn: &Connection, kind: &str, title: &str, author: Option<&str>, 
     Ok(conn.query_row(&format!("SELECT {RESOURCE_COLS} FROM resources WHERE id = ?1"), params![id], map_resource)?)
 }
 
+/// Replaces a resource's extracted text, after a re-extraction.
+///
+/// `resources_fts` is kept in step by the UPDATE trigger on this table, so a
+/// book that was "not searchable" becomes findable the moment this returns.
+pub fn set_extracted_text(conn: &Connection, id: i64, extracted_text: Option<&str>) -> anyhow::Result<Resource> {
+    conn.execute("UPDATE resources SET extracted_text = ?2 WHERE id = ?1", params![id, extracted_text])?;
+    Ok(conn.query_row(&format!("SELECT {RESOURCE_COLS} FROM resources WHERE id = ?1"), params![id], map_resource)?)
+}
+
 pub fn delete(conn: &Connection, id: i64) -> anyhow::Result<()> {
     conn.execute("DELETE FROM resources WHERE id = ?1", params![id])?;
     Ok(())

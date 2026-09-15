@@ -93,6 +93,66 @@ pub async fn bulk_import_resources(app: AppHandle, token: String) -> AppResult<B
     .map_err(|e| anyhow::anyhow!("the bulk import task did not finish: {e}"))?
 }
 
+/// Extracts a resource's text again from the file already in the resources
+/// folder, and replaces what is stored for it.
+///
+/// Extraction otherwise happens once and only once, when the file is added, so
+/// a book that failed then stays unsearchable for good -- a PDF that turned out
+/// to be page images, an epub the parser choked on, a file that was over the
+/// size cap. This is the way back for those, and the way an improvement to the
+/// extractor reaches books a reader added long ago. (The shipped library needs
+/// nothing of the kind: `library::import` rebuilds every book's text on each
+/// content.db build.)
+///
+/// Off the main thread for the same reason `add_resource` is: parsing a
+/// book-length PDF is seconds of work.
+///
+/// Returns the resource as it now stands. A successful return does not promise
+/// text was found -- if the file is still unreadable the resource comes back
+/// with `has_text` false, which is a different thing from the errors below and
+/// is left to the caller to report.
+#[tauri::command]
+pub async fn reextract_resource(app: AppHandle, id: i64) -> AppResult<Resource> {
+    tauri::async_runtime::spawn_blocking(move || -> AppResult<Resource> {
+        let db = app.state::<DbState>();
+        let conn = db.conn();
+        let resource =
+            queries::get(&conn, id)?.ok_or_else(|| anyhow::anyhow!("that resource is no longer in the library"))?;
+
+        // A shipped book's text lives in content.db, not in the reader's file,
+        // and is rebuilt with that database. There is nothing here to redo.
+        if resource.bundled {
+            return Err(anyhow::anyhow!("“{}” ships with the app; its text is rebuilt with the app", resource.title).into());
+        }
+
+        let path = std::path::PathBuf::from(&resource.file_path);
+        if !path.is_file() {
+            return Err(anyhow::anyhow!("the file for “{}” is no longer at {}", resource.title, resource.file_path).into());
+        }
+        let Some(kind) = resources::detect_kind(&path) else {
+            return Err(anyhow::anyhow!("“{}” is not a kind of file text can be read from", resource.title).into());
+        };
+        if !matches!(kind, "pdf" | "epub" | "mobi") {
+            return Err(anyhow::anyhow!("there is no text to read in a {kind} file").into());
+        }
+        let size = std::fs::metadata(&path).map(|m| m.len()).unwrap_or(0);
+        if size > resources::MAX_EXTRACT_BYTES {
+            return Err(anyhow::anyhow!(
+                "“{}” is too large to index ({} MB, over the {} MB limit)",
+                resource.title,
+                size / (1024 * 1024),
+                resources::MAX_EXTRACT_BYTES / (1024 * 1024)
+            )
+            .into());
+        }
+
+        let extracted = resources::extract_text(&path, kind);
+        Ok(queries::set_extracted_text(&conn, id, extracted.as_deref())?)
+    })
+    .await
+    .map_err(|e| anyhow::anyhow!("the re-index task did not finish: {e}"))?
+}
+
 #[tauri::command]
 pub fn delete_resource(db: State<DbState>, id: i64) -> AppResult<()> {
     let conn = db.conn();
