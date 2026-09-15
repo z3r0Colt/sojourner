@@ -1,3 +1,4 @@
+use crate::commands::clamp_limit;
 use crate::db::queries::prayer_journal as queries;
 use crate::db::DbState;
 use crate::error::AppResult;
@@ -6,7 +7,7 @@ use tauri::State;
 
 #[tauri::command]
 pub fn list_prayer_entries(db: State<DbState>) -> AppResult<Vec<PrayerEntry>> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(queries::list_all(&conn)?)
 }
 
@@ -26,7 +27,7 @@ pub fn create_prayer_entry(
     verse_start: Option<i64>,
     verse_end: Option<i64>,
 ) -> AppResult<PrayerEntry> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(queries::create(
         &conn, entry_date, mode, adoration, confession, thanksgiving, supplication, free_text, book_id, chapter,
         verse_start, verse_end,
@@ -50,7 +51,7 @@ pub fn update_prayer_entry(
     verse_start: Option<i64>,
     verse_end: Option<i64>,
 ) -> AppResult<()> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(queries::update(
         &conn, id, entry_date, mode, adoration, confession, thanksgiving, supplication, free_text, book_id, chapter,
         verse_start, verse_end,
@@ -59,36 +60,36 @@ pub fn update_prayer_entry(
 
 #[tauri::command]
 pub fn delete_prayer_entry(db: State<DbState>, id: i64) -> AppResult<()> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(queries::delete(&conn, id)?)
 }
 
 #[tauri::command]
 pub fn search_prayer_entries(db: State<DbState>, query: String, limit: i64) -> AppResult<Vec<PrayerEntry>> {
-    let conn = db.0.lock().unwrap();
-    Ok(queries::search(&conn, &query, limit)?)
+    let conn = db.conn();
+    Ok(queries::search(&conn, &query, clamp_limit(limit))?)
 }
 
 #[tauri::command]
 pub fn add_prayer_entry_tag(db: State<DbState>, prayer_entry_id: i64, tag: String) -> AppResult<()> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(queries::add_tag(&conn, prayer_entry_id, tag)?)
 }
 
 #[tauri::command]
 pub fn remove_prayer_entry_tag(db: State<DbState>, prayer_entry_id: i64, tag: String) -> AppResult<()> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(queries::remove_tag(&conn, prayer_entry_id, tag)?)
 }
 
 #[tauri::command]
 pub fn list_all_prayer_entry_tags(db: State<DbState>) -> AppResult<Vec<String>> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(queries::list_all_tags(&conn)?)
 }
 
 #[tauri::command]
 pub fn list_all_prayer_entry_tags_by_entry(db: State<DbState>) -> AppResult<Vec<(i64, String)>> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(queries::list_all_tags_by_entry(&conn)?)
 }

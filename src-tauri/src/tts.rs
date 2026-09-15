@@ -83,9 +83,18 @@ fn engine(app: &AppHandle) -> anyhow::Result<&'static Mutex<KokoroTts>> {
 /// work and must never run on the UI thread.
 pub fn synthesize(app: &AppHandle, text: &str, voice: &str, speed: f32) -> anyhow::Result<Vec<u8>> {
     let engine = engine(app)?;
-    let tts = engine
-        .lock()
-        .map_err(|_| anyhow::anyhow!("the voice engine failed during an earlier verse"))?;
+    // The old error here said that the voice engine had failed during an
+    // earlier verse, which was worth saying and is kept as this note -- but
+    // saying it was all this did, and it said it forever. A panic while this
+    // guard was held poisoned the mutex, and read-aloud was then dead for the
+    // life of the process: every later verse got that same message, including
+    // every verse of every chapter the reader opened afterwards.
+    //
+    // The model behind the guard is loaded weights and nothing else; a verse
+    // that panicked partway through synthesis leaves them exactly as they
+    // were. So the next verse gets a fresh attempt rather than inheriting the
+    // last one's failure, and a bad verse costs one verse.
+    let tts = engine.lock().unwrap_or_else(|e| e.into_inner());
     let (samples, _took) = tauri::async_runtime::block_on(tts.synth(text, Voice::new(voice).with_speed(speed)))
         .with_context(|| format!("could not speak with the voice '{voice}'"))?;
     Ok(wav_bytes(&samples, SAMPLE_RATE))

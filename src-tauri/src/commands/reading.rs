@@ -7,14 +7,14 @@ use tauri::State;
 
 #[tauri::command]
 pub fn get_chapter(db: State<DbState>, translation_id: i64, book_id: i64, chapter: i64) -> AppResult<Vec<Verse>> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(verses::get_chapter(&conn, translation_id, book_id, chapter)?)
 }
 
 /// Text for one or many verse ranges in one call -- see `verses::get_passages`.
 #[tauri::command]
 pub fn get_passages(db: State<DbState>, translation_id: i64, refs: Vec<PassageRef>) -> AppResult<Vec<Passage>> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(verses::get_passages(&conn, translation_id, &refs)?)
 }
 
@@ -25,7 +25,7 @@ pub fn get_parallel_chapter(
     book_id: i64,
     chapter: i64,
 ) -> AppResult<HashMap<i64, Vec<Verse>>> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     let mut map = HashMap::new();
     for tid in translation_ids {
         // `chapter` here is treated as the canonical (KJV-reference) chapter --
@@ -44,7 +44,7 @@ pub fn get_parallel_chapter(
 /// and Pentateuch) rather than erroring.
 #[tauri::command]
 pub fn compare_verse(db: State<DbState>, book_id: i64, chapter: i64, verse: i64) -> AppResult<Vec<Verse>> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     let translations = verses::list_translations(&conn)?;
     let mut result = Vec::new();
     for t in translations {
@@ -64,31 +64,31 @@ pub fn get_commentary_for_passage(
     chapter: i64,
     verse: Option<i64>,
 ) -> AppResult<Vec<CommentaryEntry>> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(commentary::get_commentary_for_passage(&conn, source_id, book_id, chapter, verse)?)
 }
 
 #[tauri::command]
 pub fn book_has_commentary(db: State<DbState>, source_id: i64, book_id: i64) -> AppResult<bool> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(commentary::book_has_commentary(&conn, source_id, book_id)?)
 }
 
 #[tauri::command]
 pub fn get_commentary_toc(db: State<DbState>, source_id: i64, book_id: i64) -> AppResult<Vec<CommentarySection>> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(commentary::list_sections_for_book(&conn, source_id, book_id)?)
 }
 
 #[tauri::command]
 pub fn get_section_entries(db: State<DbState>, section_id: i64) -> AppResult<Vec<CommentaryEntry>> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(commentary::get_section_entries(&conn, section_id)?)
 }
 
 #[tauri::command]
 pub fn get_reading_position(db: State<DbState>) -> AppResult<Option<ReadingPosition>> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(reading_position::get(&conn)?)
 }
 
@@ -100,7 +100,7 @@ pub fn set_reading_position(
     chapter: i64,
     verse: Option<i64>,
 ) -> AppResult<()> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     reading_position::set(&conn, translation_id, book_id, chapter, verse)?;
     // The reading log (F3.1) rides along with every position save: one row
     // per chapter per local day, so Today's "Recent chapters" survives a
@@ -112,6 +112,6 @@ pub fn set_reading_position(
 /// The most recently read chapters, newest first, each once (F3.1).
 #[tauri::command]
 pub fn list_reading_log(db: State<DbState>, limit: Option<i64>) -> AppResult<Vec<ReadingLogEntry>> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(reading_log::list_recent(&conn, limit.unwrap_or(12).clamp(1, 200))?)
 }

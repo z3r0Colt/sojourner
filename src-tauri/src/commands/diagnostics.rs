@@ -48,7 +48,7 @@ mod tests {
 /// Every count the Stats block shows, in one call (F3.5).
 #[tauri::command]
 pub fn get_stats(db: State<DbState>) -> AppResult<stats::Stats> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(stats::get_stats(&conn, &reading_log::today())?)
 }
 

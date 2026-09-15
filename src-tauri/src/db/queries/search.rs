@@ -338,49 +338,102 @@ pub fn search_notes(conn: &Connection, query: &str, limit: i64) -> anyhow::Resul
     }
     let match_expr = build_match_expr(query);
 
+    // Each branch selects its own bm25 rank alongside the row, so the two
+    // can be merged on relevance rather than concatenated.
+    //
+    // Concatenating and then truncating is what this used to do, and it meant
+    // the chapter notes were only ever whatever fell off the end: with the
+    // overlay's limit of 50, a query matching 50 passage notes returned no
+    // chapter notes at all, while the Notes tab confidently showed a count of
+    // 50. The reader had no way to tell a chapter note that did not match
+    // from one that had been cut.
+    //
+    // bm25 is comparable between these two because both indexes are over the
+    // same kind of text, tokenized the same way -- unlike the verse/commentary
+    // pair at the top of this file, which deliberately stay separate.
     let mut stmt = conn.prepare(&format!(
-        "SELECT n.id, n.book_id, n.chapter, n.verse_start, snippet(notes_fts, 0, '[', ']', '…', 12)
+        "SELECT n.id, n.book_id, n.chapter, n.verse_start, snippet(notes_fts, 0, '[', ']', '…', 12),
+                bm25(notes_fts)
          FROM notes_fts JOIN notes n ON n.id = notes_fts.rowid
          WHERE notes_fts MATCH ?1 AND n.{NOT_DELETED}
          ORDER BY bm25(notes_fts) LIMIT ?2"
     ))?;
-    let mut results = stmt
+    let ranked = stmt
         .query_map(rusqlite::params![match_expr, limit], |r| {
-            Ok(SearchResult {
-                kind: "note".to_string(),
-                entry_id: r.get(0)?,
-                book_id: Some(r.get(1)?),
-                chapter: r.get::<_, i64>(2)?.into(),
-                verse: r.get::<_, i64>(3)?.into(),
-                source_label: "Note".to_string(),
-                snippet: escape_snippet(&r.get::<_, String>(4)?),
-            })
+            Ok((
+                r.get::<_, f64>(5)?,
+                SearchResult {
+                    kind: "note".to_string(),
+                    entry_id: r.get(0)?,
+                    book_id: Some(r.get(1)?),
+                    chapter: r.get::<_, i64>(2)?.into(),
+                    verse: r.get::<_, i64>(3)?.into(),
+                    source_label: "Note".to_string(),
+                    snippet: escape_snippet(&r.get::<_, String>(4)?),
+                },
+            ))
         })?
         .collect::<Result<Vec<_>, _>>()?;
 
     let mut stmt = conn.prepare(&format!(
-        "SELECT cn.id, cn.book_id, cn.chapter, snippet(chapter_notes_fts, 0, '[', ']', '…', 12)
+        "SELECT cn.id, cn.book_id, cn.chapter, snippet(chapter_notes_fts, 0, '[', ']', '…', 12),
+                bm25(chapter_notes_fts)
          FROM chapter_notes_fts JOIN chapter_notes cn ON cn.id = chapter_notes_fts.rowid
          WHERE chapter_notes_fts MATCH ?1 AND cn.{NOT_DELETED}
          ORDER BY bm25(chapter_notes_fts) LIMIT ?2"
     ))?;
-    let chapter_results = stmt
+    let chapter_ranked = stmt
         .query_map(rusqlite::params![match_expr, limit], |r| {
-            Ok(SearchResult {
-                kind: "note".to_string(),
-                entry_id: r.get(0)?,
-                book_id: Some(r.get(1)?),
-                chapter: r.get::<_, i64>(2)?.into(),
-                verse: None,
-                source_label: "Chapter Note".to_string(),
-                snippet: escape_snippet(&r.get::<_, String>(3)?),
-            })
+            Ok((
+                r.get::<_, f64>(4)?,
+                SearchResult {
+                    kind: "note".to_string(),
+                    entry_id: r.get(0)?,
+                    book_id: Some(r.get(1)?),
+                    chapter: r.get::<_, i64>(2)?.into(),
+                    verse: None,
+                    source_label: "Chapter Note".to_string(),
+                    snippet: escape_snippet(&r.get::<_, String>(3)?),
+                },
+            ))
         })?
         .collect::<Result<Vec<_>, _>>()?;
 
-    results.extend(chapter_results);
-    results.truncate(limit as usize);
-    Ok(results)
+    // Lower bm25 is the better match, so the merge sorts ascending -- but it
+    // cannot sort on the rank alone, and this is the part worth explaining.
+    //
+    // FTS5 computes IDF per table, over that table's own documents. When a
+    // term appears in every row of an index its IDF is zero, and bm25 comes
+    // back as the same clamped -1e-6 for every one of them. That is not a
+    // corner case: it is what a search for a word the reader uses constantly
+    // looks like. Sorting on the rank alone then leaves every row tied, a
+    // stable sort keeps the passage notes in front of the chapter notes
+    // exactly as concatenating them did, and the truncate cuts the chapter
+    // notes off again -- the same bug, now with a sort in front of it.
+    //
+    // So ties break on each row's position within its own result set: the
+    // best chapter note is weighed against the best passage note, the second
+    // against the second, and so on. Where the ranks genuinely differ the
+    // rank still decides; where they tie the two kinds interleave, and a
+    // chapter note that matched is visible however many passage notes did.
+    let mut merged: Vec<(f64, usize, SearchResult)> = ranked
+        .into_iter()
+        .enumerate()
+        .map(|(i, (rank, result))| (rank, i, result))
+        .chain(
+            chapter_ranked
+                .into_iter()
+                .enumerate()
+                .map(|(i, (rank, result))| (rank, i, result)),
+        )
+        .collect();
+    merged.sort_by(|a, b| {
+        a.0.partial_cmp(&b.0)
+            .unwrap_or(std::cmp::Ordering::Equal)
+            .then(a.1.cmp(&b.1))
+    });
+    merged.truncate(limit as usize);
+    Ok(merged.into_iter().map(|(_, _, result)| result).collect())
 }
 
 /// Prayer journal entries: at most one linked passage per entry (a direct

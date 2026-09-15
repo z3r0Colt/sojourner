@@ -1,3 +1,4 @@
+use crate::commands::clamp_limit;
 use crate::commands::file_picker::{take_path, PickedPaths};
 use crate::db::queries::{illustrations, sermons, verses};
 use crate::db::DbState;
@@ -14,19 +15,19 @@ use tauri::{AppHandle, Manager, State};
 
 #[tauri::command]
 pub fn list_sermons(db: State<DbState>, filter: Option<SermonFilter>) -> AppResult<Vec<Sermon>> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(sermons::list(&conn, &filter.unwrap_or_default())?)
 }
 
 #[tauri::command]
 pub fn get_sermon(db: State<DbState>, sermon_id: i64) -> AppResult<Option<Sermon>> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(sermons::get(&conn, sermon_id)?)
 }
 
 #[tauri::command]
 pub fn create_sermon(db: State<DbState>, input: SermonInput) -> AppResult<Sermon> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(sermons::create(&conn, &input)?)
 }
 
@@ -34,44 +35,44 @@ pub fn create_sermon(db: State<DbState>, input: SermonInput) -> AppResult<Sermon
 /// in a single transaction so the derived tables never lag the document.
 #[tauri::command]
 pub fn update_sermon(db: State<DbState>, sermon_id: i64, input: SermonInput) -> AppResult<Sermon> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(sermons::update(&conn, sermon_id, &input)?)
 }
 
 #[tauri::command]
 pub fn set_sermon_stage(db: State<DbState>, sermon_id: i64, stage: String) -> AppResult<()> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(sermons::set_stage(&conn, sermon_id, &stage)?)
 }
 
 /// Soft delete -- the sermon goes to the Trash and can be restored.
 #[tauri::command]
 pub fn delete_sermon(db: State<DbState>, sermon_id: i64) -> AppResult<()> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(sermons::delete(&conn, sermon_id)?)
 }
 
 #[tauri::command]
 pub fn duplicate_sermon(db: State<DbState>, sermon_id: i64) -> AppResult<Sermon> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(sermons::duplicate(&conn, sermon_id)?)
 }
 
 #[tauri::command]
 pub fn list_all_sermon_tags(db: State<DbState>) -> AppResult<Vec<String>> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(sermons::list_all_tags(&conn)?)
 }
 
 #[tauri::command]
 pub fn search_sermons(db: State<DbState>, query: String, limit: Option<i64>) -> AppResult<Vec<Sermon>> {
-    let conn = db.0.lock().unwrap();
-    Ok(sermons::search(&conn, &query, limit.unwrap_or(30))?)
+    let conn = db.conn();
+    Ok(sermons::search(&conn, &query, clamp_limit(limit.unwrap_or(30)))?)
 }
 
 #[tauri::command]
 pub fn list_sermons_for_chapter(db: State<DbState>, book_id: i64, chapter: i64) -> AppResult<Vec<SermonForChapter>> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(sermons::list_for_chapter(&conn, book_id, chapter)?)
 }
 
@@ -89,7 +90,7 @@ pub fn add_sermon_event(
     word_count: Option<i64>,
     notes: Option<String>,
 ) -> AppResult<SermonEvent> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(sermons::add_event(
         &conn,
         sermon_id,
@@ -104,13 +105,13 @@ pub fn add_sermon_event(
 
 #[tauri::command]
 pub fn delete_sermon_event(db: State<DbState>, event_id: i64) -> AppResult<bool> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(sermons::delete_event(&conn, event_id)?)
 }
 
 #[tauri::command]
 pub fn list_sermon_events(db: State<DbState>, sermon_id: i64) -> AppResult<Vec<SermonEvent>> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(sermons::list_events(&conn, sermon_id)?)
 }
 
@@ -118,7 +119,7 @@ pub fn list_sermon_events(db: State<DbState>, sermon_id: i64) -> AppResult<Vec<S
 /// the app is measured rather than assumed.
 #[tauri::command]
 pub fn get_speaking_rate(db: State<DbState>) -> AppResult<Option<SpeakingRate>> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(sermons::speaking_rate(&conn)?)
 }
 
@@ -126,13 +127,13 @@ pub fn get_speaking_rate(db: State<DbState>) -> AppResult<Option<SpeakingRate>> 
 
 #[tauri::command]
 pub fn list_sermon_series(db: State<DbState>) -> AppResult<Vec<SermonSeries>> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(sermons::list_series(&conn)?)
 }
 
 #[tauri::command]
 pub fn create_sermon_series(db: State<DbState>, title: String, description: Option<String>) -> AppResult<SermonSeries> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(sermons::create_series(&conn, &title, description.as_deref())?)
 }
 
@@ -144,14 +145,14 @@ pub fn update_sermon_series(
     description: Option<String>,
     plan_code: Option<String>,
 ) -> AppResult<SermonSeries> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(sermons::update_series(&conn, series_id, &title, description.as_deref(), plan_code.as_deref())?)
 }
 
 /// The series goes; its sermons stay, with `series_id` cleared.
 #[tauri::command]
 pub fn delete_sermon_series(db: State<DbState>, series_id: i64) -> AppResult<bool> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(sermons::delete_series(&conn, series_id)?)
 }
 
@@ -159,49 +160,49 @@ pub fn delete_sermon_series(db: State<DbState>, series_id: i64) -> AppResult<boo
 
 #[tauri::command]
 pub fn list_illustrations(db: State<DbState>, filter: Option<IllustrationFilter>) -> AppResult<Vec<Illustration>> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(illustrations::list(&conn, &filter.unwrap_or_default())?)
 }
 
 #[tauri::command]
 pub fn get_illustration(db: State<DbState>, illustration_id: i64) -> AppResult<Option<Illustration>> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(illustrations::get(&conn, illustration_id)?)
 }
 
 #[tauri::command]
 pub fn create_illustration(db: State<DbState>, input: IllustrationInput) -> AppResult<Illustration> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(illustrations::create(&conn, &input)?)
 }
 
 #[tauri::command]
 pub fn update_illustration(db: State<DbState>, illustration_id: i64, input: IllustrationInput) -> AppResult<Illustration> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(illustrations::update(&conn, illustration_id, &input)?)
 }
 
 #[tauri::command]
 pub fn delete_illustration(db: State<DbState>, illustration_id: i64) -> AppResult<()> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(illustrations::delete(&conn, illustration_id)?)
 }
 
 #[tauri::command]
 pub fn list_all_illustration_tags(db: State<DbState>) -> AppResult<Vec<String>> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(illustrations::list_all_tags(&conn)?)
 }
 
 #[tauri::command]
 pub fn record_illustration_use(db: State<DbState>, illustration_id: i64, sermon_id: i64) -> AppResult<()> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(illustrations::record_use(&conn, illustration_id, sermon_id)?)
 }
 
 #[tauri::command]
 pub fn list_illustration_uses(db: State<DbState>, illustration_id: Option<i64>) -> AppResult<Vec<IllustrationUse>> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(illustrations::list_uses(&conn, illustration_id)?)
 }
 
@@ -245,7 +246,7 @@ pub async fn export_sermon(app: AppHandle, sermon_id: i64, token: String) -> App
         let picked = app.state::<PickedPaths>();
         let dest_path = take_path(&picked, &token)?;
         let db = app.state::<DbState>();
-        let conn = db.0.lock().unwrap();
+        let conn = db.conn();
         let sermon = sermons::get(&conn, sermon_id)?.ok_or_else(|| anyhow::anyhow!("sermon not found"))?;
         let book_names: HashMap<i64, String> =
             verses::list_books(&conn)?.into_iter().map(|b| (b.id, b.name)).collect();

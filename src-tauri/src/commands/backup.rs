@@ -37,7 +37,7 @@ pub async fn create_backup(app: AppHandle) -> AppResult<String> {
     tauri::async_runtime::spawn_blocking(move || -> AppResult<String> {
         let db = app.state::<DbState>();
         let app_data_dir = app.state::<AppDataDir>();
-        let conn = db.0.lock().unwrap();
+        let conn = db.conn();
         let path = backup::create_backup(&conn, &app_data_dir.0)?;
         Ok(path.file_name().unwrap().to_string_lossy().to_string())
     })
@@ -62,7 +62,7 @@ pub async fn export_database(app: AppHandle, token: String) -> AppResult<()> {
         let picked = app.state::<PickedPaths>();
         let dest_path = take_path(&picked, &token)?;
         let db = app.state::<DbState>();
-        let conn = db.0.lock().unwrap();
+        let conn = db.conn();
         Ok(backup::export_database(&conn, &dest_path)?)
     })
     .await
@@ -129,7 +129,7 @@ pub async fn stage_restore(app: AppHandle, file_name: String) -> AppResult<()> {
 pub async fn quick_check(app: AppHandle) -> AppResult<Vec<String>> {
     tauri::async_runtime::spawn_blocking(move || -> AppResult<Vec<String>> {
         let db = app.state::<DbState>();
-        let conn = db.0.lock().unwrap();
+        let conn = db.conn();
         Ok(backup::quick_check(&conn)?)
     })
     .await
@@ -138,7 +138,7 @@ pub async fn quick_check(app: AppHandle) -> AppResult<Vec<String>> {
 
 #[tauri::command]
 pub fn get_backup_sync_folder(db: State<DbState>) -> AppResult<Option<String>> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(backup::get_backup_sync_folder(&conn)?)
 }
 
@@ -157,7 +157,7 @@ pub fn set_backup_sync_folder(
         Some(token) => Some(take_path(&picked, &token)?.display().to_string()),
         None => None,
     };
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(backup::set_backup_sync_folder(&conn, folder)?)
 }
 

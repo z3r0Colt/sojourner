@@ -177,7 +177,22 @@ pub fn search(conn: &Connection, query: &str, limit: i64) -> anyhow::Result<Vec<
          WHERE westminster_fts MATCH ?1 ORDER BY bm25(westminster_fts) LIMIT ?2",
     )?;
     let rows = stmt.query_map(params![match_expr, limit], |r| {
-        Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?, r.get(4)?))
+        Ok((
+            r.get(0)?,
+            r.get(1)?,
+            r.get(2)?,
+            r.get(3)?,
+            // Column 4 is the snippet, and `WestminsterView` writes it
+            // straight into `dangerouslySetInnerHTML` -- as every snippet in
+            // this app is written, which is how the `[`/`]` match markers
+            // become <mark>. This was the one snippet producer that handed it
+            // over unescaped. Nothing in the shipped content.db exercises it
+            // (no section body contains a `<`), but an ampersand in one
+            // already renders wrong, and the invariant is what matters: a
+            // snippet goes out escaped, or the next body imported into this
+            // table is markup on the page.
+            super::search::escape_snippet(&r.get::<_, String>(4)?),
+        ))
     })?;
     Ok(rows.collect::<Result<Vec<_>, _>>()?)
 }

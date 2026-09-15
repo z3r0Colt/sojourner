@@ -29,6 +29,17 @@ use tauri_plugin_dialog::DialogExt;
 #[derive(Default)]
 pub struct PickedPaths(pub Mutex<HashMap<String, PathBuf>>);
 
+impl PickedPaths {
+    /// Recovered rather than re-panicked on, for the same reason as
+    /// [`crate::db::DbState::conn`]: a panic elsewhere while this guard was
+    /// held must not make every later file dialog fail. The map is a
+    /// `HashMap<String, PathBuf>` and nothing here can leave it half-written,
+    /// so what comes back is exactly the set of unredeemed choices.
+    fn paths(&self) -> std::sync::MutexGuard<'_, HashMap<String, PathBuf>> {
+        self.0.lock().unwrap_or_else(|e| e.into_inner())
+    }
+}
+
 /// How many unredeemed choices to keep before dropping the oldest.
 const MAX_PENDING: usize = 16;
 
@@ -60,7 +71,7 @@ fn filters_for(kind: &str) -> AppResult<&'static [(&'static str, &'static [&'sta
 fn remember(picked: &PickedPaths, path: PathBuf) -> PickedPath {
     let token = uuid::Uuid::new_v4().to_string();
     let display_path = path.display().to_string();
-    let mut pending = picked.0.lock().unwrap();
+    let mut pending = picked.paths();
     if pending.len() >= MAX_PENDING {
         // Abandoned flows would otherwise accumulate for the life of the
         // process. Nothing here is recoverable once its flow has moved on,
@@ -76,9 +87,7 @@ fn remember(picked: &PickedPaths, path: PathBuf) -> PickedPath {
 /// no-op -- most often it is a flow that ran twice.
 pub fn take_path(picked: &PickedPaths, token: &str) -> AppResult<PathBuf> {
     picked
-        .0
-        .lock()
-        .unwrap()
+        .paths()
         .remove(token)
         .ok_or_else(|| anyhow::anyhow!("that file choice has already been used -- choose the file again").into())
 }
@@ -169,7 +178,7 @@ mod tests {
         for i in 0..(MAX_PENDING * 3) {
             remember(&picked, PathBuf::from(format!("C:/tmp/{i}.md")));
         }
-        assert!(picked.0.lock().unwrap().len() <= MAX_PENDING);
+        assert!(picked.paths().len() <= MAX_PENDING);
     }
 
     #[test]

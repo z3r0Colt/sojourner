@@ -1,3 +1,4 @@
+use crate::commands::clamp_limit;
 use crate::db::queries::search as search_queries;
 use crate::db::queries::search::VerseSearchScope;
 use crate::db::DbState;
@@ -22,7 +23,10 @@ pub async fn search(
 ) -> AppResult<SearchResults> {
     tauri::async_runtime::spawn_blocking(move || -> AppResult<SearchResults> {
         let db = app.state::<DbState>();
-        let conn = db.0.lock().unwrap();
+        let conn = db.conn();
+        // Clamped once, for all four: each of these goes into its own
+        // `LIMIT ?`, so an unbounded one here is four unbounded queries.
+        let limit = clamp_limit(limit);
         let scope = VerseSearchScope { book_id, testament };
         let verses = search_queries::search_verses(&conn, &query, &translation_ids, &scope, limit)?;
         let commentary = search_queries::search_commentary(&conn, &query, &commentary_source_ids, limit)?;
@@ -40,30 +44,30 @@ pub async fn search(
 /// to the query the user actually meant.
 #[tauri::command]
 pub fn record_search_query(db: State<DbState>, query: String) -> AppResult<()> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(search_queries::record_search(&conn, &query)?)
 }
 
 #[tauri::command]
 pub fn list_recent_searches(db: State<DbState>, limit: i64) -> AppResult<Vec<String>> {
-    let conn = db.0.lock().unwrap();
-    Ok(search_queries::list_recent_searches(&conn, limit)?)
+    let conn = db.conn();
+    Ok(search_queries::list_recent_searches(&conn, clamp_limit(limit))?)
 }
 
 #[tauri::command]
 pub fn list_saved_searches(db: State<DbState>) -> AppResult<Vec<String>> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(search_queries::list_saved_searches(&conn)?)
 }
 
 #[tauri::command]
 pub fn set_search_saved(db: State<DbState>, query: String, saved: bool) -> AppResult<()> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(search_queries::set_search_saved(&conn, &query, saved)?)
 }
 
 #[tauri::command]
 pub fn delete_search_history(db: State<DbState>, query: String) -> AppResult<()> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(search_queries::delete_search_history(&conn, &query)?)
 }
