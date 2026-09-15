@@ -48,8 +48,14 @@ fn ready_to_close(window: tauri::Window) {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        // `tauri_plugin_dialog` stays: `commands::file_picker` uses DialogExt
+        // to run the file dialogs in Rust. There is deliberately no fs plugin
+        // -- see the capability's description for what `fs:default` granted
+        // and why it went. Registering the plugin while granting it nothing
+        // left a trap: the next person needing one file read would reach for
+        // `fs:default` because the plugin was already there, and silently
+        // hand the page recursive read of user.db, the backups and the logs.
         .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_window_state::Builder::default().build())
         // The manuscript autosave promises never to lose a keystroke, and on
         // the way out it could not keep that promise: its `beforeunload`
