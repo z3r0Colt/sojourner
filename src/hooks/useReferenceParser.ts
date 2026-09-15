@@ -1,3 +1,5 @@
+import { useMemo } from "react";
+import { useBookAliases, useBooks } from "../api/queries";
 import type { Book, BookAlias } from "../api/types";
 
 export interface ParsedReference {
@@ -40,6 +42,16 @@ export function buildBookLookup(books: Book[], aliases: BookAlias[] = []): Map<s
     }
   }
   return map;
+}
+
+/** The lookup every reference box should parse against: the canonical books
+ * plus the alternate names the bundled translations use for them, so that
+ * "Psalm 130:3-4" is understood wherever "Psalms 130:3-4" is. Built once and
+ * shared, since the books and their aliases never change while running. */
+export function useBookLookup(): Map<string, Book> {
+  const { data: books } = useBooks();
+  const { data: aliases } = useBookAliases();
+  return useMemo(() => buildBookLookup(books ?? [], aliases ?? []), [books, aliases]);
 }
 
 export interface ScriptureRefMatch {

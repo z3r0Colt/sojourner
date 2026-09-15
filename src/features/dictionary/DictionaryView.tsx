@@ -2,11 +2,11 @@ import { useEffect, useMemo, useRef, useState, Fragment, type ReactNode } from "
 import { useQuery } from "@tanstack/react-query";
 import { BookA, Search } from "lucide-react";
 import { api } from "../../api/client";
-import { useDictionaryIndex, useDictionaryEntry, useBooks, useIsbeEntryByTerm } from "../../api/queries";
+import { useDictionaryIndex, useDictionaryEntry, useIsbeEntryByTerm } from "../../api/queries";
 import { usePaneNavigate, usePaneParams } from "../../workspace/PaneContext";
 import { openContent, openPassage, targetFor } from "../../workspace/openContent";
 import { useReadingTypography } from "../../state/uiStore";
-import { buildBookLookup, scanScriptureRefs } from "../../hooks/useReferenceParser";
+import { scanScriptureRefs, useBookLookup } from "../../hooks/useReferenceParser";
 import { refAttrs } from "../../lib/refAttr";
 import { toPassageRef } from "../../lib/passage";
 import { EmptyState, LoadingState } from "../../components/ui/EmptyState";
@@ -33,7 +33,6 @@ export function DictionaryView() {
   const navigate = usePaneNavigate();
   const { data: index } = useDictionaryIndex();
   const { data: entry } = useDictionaryEntry(slug ?? null);
-  const { data: books } = useBooks();
   // These entries are brief by design. Where the encyclopedia carries an
   // article on the same headword, say so rather than letting the reader
   // assume a sentence is all there is.
@@ -45,7 +44,7 @@ export function DictionaryView() {
   const [source, setSource] = useSetting("dictionary.source", "");
   // "Send to sermon" quotes the reader's selection when there is one.
   const bodyRef = useRef<HTMLDivElement>(null);
-  const bookLookup = useMemo(() => buildBookLookup(books ?? []), [books]);
+  const bookLookup = useBookLookup();
 
   // What the reader's choice leaves on the page, and whether it hid anything.
   const shown = useMemo(

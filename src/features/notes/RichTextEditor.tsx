@@ -21,8 +21,8 @@ import {
   SquareDashedBottom,
   Underline as UnderlineIcon,
 } from "lucide-react";
-import { useBooks, useResources } from "../../api/queries";
-import { buildBookLookup, parseReference } from "../../hooks/useReferenceParser";
+import { useResources } from "../../api/queries";
+import { parseReference, useBookLookup } from "../../hooks/useReferenceParser";
 import { verseHref, resourceHref } from "../../lib/noteLinks";
 import { IconButton, Button } from "../../components/ui/Button";
 import { Popover, PopoverItem, PopoverLabel } from "../../components/ui/Popover";
@@ -64,7 +64,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
   },
   ref,
 ) {
-  const { data: books } = useBooks();
+  const bookLookup = useBookLookup();
   const { data: resources } = useResources();
   const [noteTemplates] = useNoteTemplates();
   // A sermon starts from a sermon template, a note from a note template;
@@ -144,7 +144,6 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
 
   function applyLink() {
     if (!editor) return;
-    const bookLookup = books ? buildBookLookup(books) : new Map();
     const parsed = linkInput.trim() ? parseReference(linkInput.trim(), bookLookup) : null;
     let href: string | null = null;
     if (linkResourceId) {
@@ -165,7 +164,6 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
   /** "Romans 8:28-30" typed into the Passage popover becomes a live block. */
   function applyPassage(close: () => void) {
     if (!editor) return;
-    const bookLookup = books ? buildBookLookup(books) : new Map();
     const parsed = parseReference(passageInput.trim(), bookLookup);
     if (!parsed) {
       setPassageError("That doesn't look like a reference.");
