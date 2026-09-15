@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useBooks } from "../../api/queries";
-import { buildBookLookup, parseReference } from "../../hooks/useReferenceParser";
+import { parseReference, useBookLookup } from "../../hooks/useReferenceParser";
 import type { PrayerEntry, PrayerEntryMode } from "../../api/types";
 import { Modal } from "../../components/ui/Modal";
 import { Button } from "../../components/ui/Button";
@@ -36,7 +36,7 @@ export function PrayerEntryEditorModal({
   onClose: () => void;
 }) {
   const { data: books } = useBooks();
-  const lookup = useMemo(() => buildBookLookup(books ?? []), [books]);
+  const lookup = useBookLookup();
   const initial = useMemo(
     () => ({
       entryDate: existing?.entry_date ?? new Date().toISOString().slice(0, 10),

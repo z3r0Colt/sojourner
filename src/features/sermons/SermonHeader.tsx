@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { ChevronDown, ChevronRight, Plus, X } from "lucide-react";
 import { useBooks, useSermonSeries, useTranslations } from "../../api/queries";
 import { useSetting } from "../../hooks/useSetting";
-import { buildBookLookup, parseReference } from "../../hooks/useReferenceParser";
+import { parseReference, useBookLookup } from "../../hooks/useReferenceParser";
 import { IconButton } from "../../components/ui/Button";
 import { cx, inputSmClass, selectSmClass } from "../../components/ui/classes";
 import { openContent, targetFor } from "../../workspace/openContent";
@@ -31,6 +31,7 @@ export function SermonHeader({
   paneWidth: number;
 }) {
   const { data: books } = useBooks();
+  const lookup = useBookLookup();
   const { data: translations } = useTranslations();
   const { data: series } = useSermonSeries();
   const [lastVenue, setLastVenue] = useSetting<string>(LAST_VENUE_SETTING, "");
@@ -58,7 +59,6 @@ export function SermonHeader({
   }, [lastVenue, preacherName]);
 
   function addText() {
-    const lookup = books ? buildBookLookup(books) : new Map();
     const parsed = parseReference(textInput.trim(), lookup);
     if (!parsed) {
       setTextError("That doesn't look like a reference.");

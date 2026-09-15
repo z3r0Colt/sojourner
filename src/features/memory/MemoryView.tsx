@@ -9,7 +9,7 @@ import {
   useDeleteMemoryVerse,
   useSetMemoryVerseDoctrinalLink,
 } from "../../api/queries";
-import { buildBookLookup, parseReference } from "../../hooks/useReferenceParser";
+import { parseReference, useBookLookup } from "../../hooks/useReferenceParser";
 import { MemoryPracticeCard } from "./MemoryPracticeCard";
 import { MemoryModeSelect } from "./MemoryModeSelect";
 import type { MemoryMode, MemoryVerse } from "../../api/types";
@@ -46,7 +46,7 @@ export function MemoryView() {
   const setMode = useSetMemoryVerseMode();
   const deleteVerse = useDeleteMemoryVerse();
   const setDoctrinalLink = useSetMemoryVerseDoctrinalLink();
-  const lookup = useMemo(() => buildBookLookup(books ?? []), [books]);
+  const lookup = useBookLookup();
 
   const [practicing, setPracticing] = useState(false);
   const [queue, setQueue] = useState<MemoryVerse[]>([]);

@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { createPortal } from "react-dom";
 import { useBooks, usePassagesIn } from "../../api/queries";
+import { useReaderTranslationId } from "../../state/workspaceStore";
 import { ManuscriptView } from "./ManuscriptView";
 import { outlineOf, passageBlocks, sectionsOf } from "./editor/documentModel";
 import { buildHandout } from "./handout";
@@ -43,7 +44,12 @@ export function SermonPrintRegion({
 }) {
   const { data: books } = useBooks();
   const refs = useMemo(() => passageBlocks(sermon.body), [sermon.body]);
-  const { byKey } = usePassagesIn(sermon.translation_id, refs);
+  // A sermon that has not pinned a translation renders in the reader's, the
+  // same fallback the pane and preaching mode make. Without it the query is
+  // disabled on a null id and every passage prints as an empty "…" under its
+  // reference -- a manuscript with no text in it.
+  const readerTranslationId = useReaderTranslationId();
+  const { byKey } = usePassagesIn(sermon.translation_id ?? readerTranslationId, refs);
 
   // Straight onto <body>, not into the toolbar where the menu lives: a pane
   // is `relative overflow-hidden`, and an absolutely positioned print root
