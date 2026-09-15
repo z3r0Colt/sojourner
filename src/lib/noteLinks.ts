@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from "react";
 import type { Book, NoteRefInput } from "../api/types";
 import { useBooks } from "../api/queries";
+import { sanitizeHtml } from "./sanitizeHtml";
 
 export interface RefMatcher {
   regex: RegExp;
@@ -62,12 +63,19 @@ export function parseInternalHref(href: string): { kind: "verse"; bookId: number
 /** Walks an HTML string's text nodes and wraps any plain-text scripture
  * references (not already inside a link) in an <a> pointing at our internal
  * verse:// scheme, so references typed as plain text become clickable
- * automatically -- no markup/markdown knowledge required from the user. */
+ * automatically -- no markup/markdown knowledge required from the user.
+ *
+ * This is also the only path a note body takes to the screen, so it is where
+ * the body is sanitized: a note can have arrived in an imported user.db, and
+ * markup from someone else's file must not reach `innerHTML` as it stands.
+ * Sanitizing happens before the book list has loaded too, so a note is never
+ * displayed raw during that first moment. */
 export function autoLinkScriptureRefs(html: string, matcherOrNull: RefMatcher | null): string {
-  if (!matcherOrNull) return html;
+  const safe = sanitizeHtml(html);
+  if (!matcherOrNull) return safe;
   const matcher = matcherOrNull;
   const container = document.createElement("div");
-  container.innerHTML = html;
+  container.innerHTML = safe;
 
   function walk(node: Node) {
     if (node.nodeType === Node.TEXT_NODE) {

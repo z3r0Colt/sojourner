@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { save } from "@tauri-apps/plugin-dialog";
 import { BookHeart, Download, Pencil, Plus, Trash2 } from "lucide-react";
 import { api } from "../../api/client";
 import {
@@ -80,12 +79,9 @@ export function PrayerJournalView() {
   const list = activeTag ? baseList?.filter((e) => (tagsById.get(e.id) ?? []).includes(activeTag)) : baseList;
 
   async function exportEntry(entry: PrayerEntry) {
-    const destPath = await save({
-      defaultPath: `prayer-${entry.entry_date}.md`,
-      filters: [{ name: "Markdown", extensions: ["md"] }],
-    });
-    if (!destPath) return;
-    await api.exportPrayerEntry(entry.id, destPath);
+    const picked = await api.pickSavePath("markdown", `prayer-${entry.entry_date}.md`);
+    if (!picked) return;
+    await api.exportPrayerEntry(entry.id, picked.token);
     toast.success("Prayer entry exported");
   }
 

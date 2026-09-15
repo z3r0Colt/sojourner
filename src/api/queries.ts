@@ -561,8 +561,8 @@ export function useResourceText(id: number | null) {
 export function useAddResource() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: { sourcePath: string; title: string; author?: string }) =>
-      api.addResource(input.sourcePath, input.title, input.author),
+    mutationFn: (input: { token: string; title: string; author?: string }) =>
+      api.addResource(input.token, input.title, input.author),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["resources"] }),
   });
 }

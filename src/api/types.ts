@@ -1000,3 +1000,18 @@ export interface IllustrationUse {
   preach_date: string | null;
   used_at: string;
 }
+
+// --- File dialogs ----------------------------------------------------------
+
+/** Which dialog filters `pickSavePath`/`pickOpenPath` should use. The page
+ * names a kind rather than a set of extensions, because the dialog itself is
+ * described on the Rust side (see `commands::file_picker`). */
+export type PickKind = "markdown" | "database" | "pptx" | "resource" | "library_xml";
+
+/** A file the user chose in a dialog Rust ran. `token` is what the commands
+ * that read or write it take -- one use, then it is spent. `display_path` is
+ * for showing the user which file they picked, and nothing else. */
+export interface PickedPath {
+  token: string;
+  display_path: string;
+}

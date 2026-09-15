@@ -1,3 +1,23 @@
+import { openUrl } from "@tauri-apps/plugin-opener";
+
+/** An external link. `target="_blank"` inside a webview can navigate the app
+ * window itself out of the app, so hand the URL to the system browser (the
+ * same route NoteBody takes for links in a note). */
+function ExternalLink({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <a
+      href={href}
+      onClick={(e) => {
+        e.preventDefault();
+        openUrl(href).catch(() => {});
+      }}
+      className="text-accent hover:underline"
+    >
+      {children}
+    </a>
+  );
+}
+
 /** One credited source: what it is, and on what terms it is here. */
 function Source({ name, children }: { name: string; children: React.ReactNode }) {
   return (
@@ -43,11 +63,15 @@ export function AboutSection() {
         <Source name="International Standard Bible Encyclopedia (1915)">
           James Orr, general editor. Public domain. Prepared from the edition distributed by the CrossWire Bible Society.
         </Source>
+        <Source name="Harmonies of the Gospels">
+          A. T. Robertson, <i>A Harmony of the Gospels for Students of the Life of Christ</i> (1922), based on the Broadus Harmony: public domain. The
+          four-column chronological harmony follows the table of contents of Robert M. Sutherland's <i>A Four-Column Parallel and Chronological Harmony of the
+          Gospels</i> (2020), whose stated terms permit reproduction with attribution. In both cases the event divisions and their references are reproduced,
+          not the verse text those books set in parallel.
+        </Source>
         <Source name="Bible atlas — places and region extents">
           Geographic data, and the scholarly estimates of how far each region reached, © OpenBible.info, used under a{" "}
-          <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer" className="text-accent hover:underline">
-            Creative Commons Attribution 4.0
-          </a>{" "}
+          <ExternalLink href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0</ExternalLink>{" "}
           licence. Some underlying data comes from OpenStreetMap contributors, under the Open Database License.
         </Source>
         <Source name="Bible atlas — coastlines and rivers">
@@ -63,12 +87,6 @@ export function AboutSection() {
           “The LORD bless thee, and keep thee: the LORD make his face shine upon thee, and be gracious unto thee: the LORD lift up his countenance upon thee, and
           give thee peace.”
         </p>
-        <Source name="Harmonies of the Gospels">
-          A. T. Robertson, <i>A Harmony of the Gospels for Students of the Life of Christ</i> (1922), based on the Broadus Harmony: public domain. The
-          four-column chronological harmony follows the table of contents of Robert M. Sutherland's <i>A Four-Column Parallel and Chronological Harmony of the
-          Gospels</i> (2020), whose stated terms permit reproduction with attribution. In both cases the event divisions and their references are reproduced,
-          not the verse text those books set in parallel.
-        </Source>
         <footer className="mt-2 text-xs text-ink-3">Numbers 6:24-26</footer>
       </blockquote>
     </div>

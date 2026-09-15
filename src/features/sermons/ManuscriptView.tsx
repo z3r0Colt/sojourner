@@ -3,6 +3,7 @@ import { useBooks, useTranslations } from "../../api/queries";
 import { formatRef, refKey } from "../../lib/passage";
 import { parseManuscript } from "./editor/documentModel";
 import { cx } from "../../components/ui/classes";
+import { sanitizeHtml } from "../../lib/sanitizeHtml";
 import type { Passage, PassageRef } from "../../api/types";
 
 /**
@@ -39,7 +40,9 @@ export function ManuscriptView({
         const ref = refOf(child);
         return { key: `p${i}`, kind: "passage" as const, ref, translationId: numAttr(child, "data-translation-id") };
       }
-      return { key: `h${i}`, kind: "html" as const, html: renderBlanks(child, blanksAs ?? "word") };
+      // Sanitized here rather than at the `dangerouslySetInnerHTML` below so
+      // a long manuscript is not walked again on every render.
+      return { key: `h${i}`, kind: "html" as const, html: sanitizeHtml(renderBlanks(child, blanksAs ?? "word")) };
     });
   }, [html, blanksAs]);
 

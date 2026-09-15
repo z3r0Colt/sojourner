@@ -213,25 +213,165 @@ fn extract_pdf_text(path: &Path) -> anyhow::Result<String> {
     Ok(pdf_extract::extract_text(path)?)
 }
 
+/// Above this, a pdf/epub/mobi is added without being indexed. Extraction
+/// holds the whole document and its extracted text in memory at once, and a
+/// quarter-gigabyte book is a scan, not prose -- the resource is still
+/// findable by title, author and tag. Audio and video are not capped:
+/// nothing is extracted from them anyway, and they are legitimately large.
+const MAX_EXTRACT_BYTES: u64 = 256 * 1024 * 1024;
+
 /// Best-effort text extraction for full-text search indexing. Failures (encrypted
 /// PDFs, malformed files, unsupported variants) are swallowed -- the resource is
 /// still usable, it just won't appear in deep-search results.
+///
+/// That includes a *panic*: `pdf_extract` panics outright on some malformed
+/// input, and before this the whole app went down with it, losing whatever
+/// was unsaved. `catch_unwind` turns that into the same `None` every other
+/// failure produces. The panic hook still runs first, so the crash log keeps
+/// its entry -- a file that cannot be indexed is still worth knowing about.
+/// This is why the release profile unwinds rather than aborting.
 pub fn extract_text(path: &Path, kind: &str) -> Option<String> {
-    let result = match kind {
+    extract_text_within(path, kind, MAX_EXTRACT_BYTES)
+}
+
+/// `extract_text` with the size cap given rather than assumed, so a test can
+/// cross it without writing a quarter of a gigabyte to disk.
+fn extract_text_within(path: &Path, kind: &str, max_bytes: u64) -> Option<String> {
+    if !matches!(kind, "pdf" | "epub" | "mobi") {
+        return None;
+    }
+    if std::fs::metadata(path).map(|m| m.len()).unwrap_or(0) > max_bytes {
+        return None;
+    }
+    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| match kind {
         "pdf" => extract_pdf_text(path),
         "epub" => extract_epub_text(path),
-        "mobi" => extract_mobi_text(path),
-        _ => return None,
-    };
+        _ => extract_mobi_text(path),
+    }));
     match result {
-        Ok(text) if !text.trim().is_empty() => Some(text),
+        Ok(Ok(text)) if !text.trim().is_empty() => Some(text),
         _ => None,
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::strip_html_tags;
+    use super::{extract_text, extract_text_within, strip_html_tags};
+    use std::path::PathBuf;
+
+    fn temp_dir(label: &str) -> PathBuf {
+        let dir = std::env::temp_dir().join(format!("sojourner-extract-test-{label}-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        dir
+    }
+
+    /// A valid one-page PDF whose font dictionary is whatever is given, with
+    /// the cross-reference offsets computed so the file really does parse.
+    fn pdf_with_font(font_dict: &str) -> Vec<u8> {
+        let stream = b"BT /F1 18 Tf 72 700 Td (Sojourner) Tj ET";
+        let objs: Vec<Vec<u8>> = vec![
+            b"<< /Type /Catalog /Pages 2 0 R >>".to_vec(),
+            b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>".to_vec(),
+            b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>".to_vec(),
+            format!("<< /Length {} >>
+stream
+{}
+endstream", stream.len(), String::from_utf8_lossy(stream)).into_bytes(),
+            format!("<< {font_dict} >>").into_bytes(),
+        ];
+        let mut out: Vec<u8> = b"%PDF-1.4
+".to_vec();
+        let mut offsets = Vec::new();
+        for (i, body) in objs.iter().enumerate() {
+            offsets.push(out.len());
+            out.extend_from_slice(format!("{} 0 obj
+", i + 1).as_bytes());
+            out.extend_from_slice(body);
+            out.extend_from_slice(b"
+endobj
+");
+        }
+        let xref = out.len();
+        out.extend_from_slice(format!("xref
+0 {}
+0000000000 65535 f 
+", objs.len() + 1).as_bytes());
+        for off in &offsets {
+            out.extend_from_slice(format!("{off:010} 00000 n 
+").as_bytes());
+        }
+        out.extend_from_slice(
+            format!("trailer
+<< /Size {} /Root 1 0 R >>
+startxref
+{}
+%%EOF
+", objs.len() + 1, xref).as_bytes(),
+        );
+        out
+    }
+
+    const PLAIN_FONT: &str = "/Type /Font /Subtype /Type1 /BaseFont /Helvetica";
+    // StandardEncoding is a legal PDF encoding that pdf-extract's
+    // `encoding_to_unicode_table` does not handle: it panics outright. This
+    // is the real shape of the crash the release profile used to abort on.
+    const PANICKING_FONT: &str = "/Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /StandardEncoding";
+
+    #[test]
+    fn an_intact_pdf_still_gives_up_its_text() {
+        let dir = temp_dir("intact");
+        let path = dir.join("book.pdf");
+        std::fs::write(&path, pdf_with_font(PLAIN_FONT)).unwrap();
+        assert!(extract_text(&path, "pdf").unwrap().contains("Sojourner"));
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn a_pdf_that_panics_the_extractor_is_caught_and_still_logged() {
+        let dir = temp_dir("panicking");
+        let path = dir.join("hostile.pdf");
+        std::fs::write(&path, pdf_with_font(PANICKING_FONT)).unwrap();
+
+        // The app's own hook, so this also proves the claim that a caught
+        // panic still leaves a crash log behind for the reader to send on.
+        let previous = std::panic::take_hook();
+        crate::crash_log::install_panic_hook(dir.clone());
+
+        let extracted = extract_text(&path, "pdf");
+
+        std::panic::set_hook(previous);
+
+        assert!(extracted.is_none(), "a panicking extraction must come back as None, not unwind out");
+        let logs: Vec<_> = std::fs::read_dir(dir.join("logs"))
+            .expect("the panic hook should have made a logs folder")
+            .filter_map(|e| e.ok())
+            .filter(|e| e.file_name().to_string_lossy().starts_with("crash-"))
+            .collect();
+        assert_eq!(logs.len(), 1, "expected exactly one crash log, got {logs:?}");
+        let body = std::fs::read_to_string(logs[0].path()).unwrap();
+        assert!(body.contains("unexpected encoding"), "the log should name the panic: {body}");
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn a_file_over_the_size_cap_is_added_without_being_indexed() {
+        let dir = temp_dir("cap");
+        let path = dir.join("big.pdf");
+        let bytes = pdf_with_font(PLAIN_FONT);
+        std::fs::write(&path, &bytes).unwrap();
+
+        // Under the cap it indexes; a cap below its size skips it entirely,
+        // leaving the resource searchable by title alone.
+        assert!(extract_text_within(&path, "pdf", bytes.len() as u64).is_some());
+        assert!(extract_text_within(&path, "pdf", (bytes.len() - 1) as u64).is_none());
+
+        // Audio and video are never extracted and so are never capped.
+        assert!(extract_text_within(&path, "audio", 0).is_none());
+        assert!(extract_text_within(&path, "video", 0).is_none());
+        let _ = std::fs::remove_dir_all(&dir);
+    }
 
     #[test]
     fn style_and_script_blocks_are_dropped_entirely_not_just_untagged() {

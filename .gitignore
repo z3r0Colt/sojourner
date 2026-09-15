@@ -40,3 +40,6 @@ dist-ssr
 
 # Build-time downloads (psalm tune scores); regenerate with npm run fetch:tunes
 .cache/
+
+# TypeScript incremental build state, written by `tsc -p tsconfig.node.json`.
+*.tsbuildinfo

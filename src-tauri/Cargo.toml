@@ -40,6 +40,9 @@ anyhow = "1"
 thiserror = "1"
 chrono = { version = "0.4", features = ["clock"] }
 once_cell = "1"
+# Random, unguessable tokens standing in for the file paths a dialog chose
+# (see `commands::file_picker`).
+uuid = { version = "1", features = ["v4"] }
 zip = "8.6.0"
 pdf-extract = "0.12.0"
 mobi = "0.8.0"
@@ -69,5 +72,9 @@ custom-protocol = ["tauri/custom-protocol"]
 codegen-units = 1
 lto = true
 opt-level = 3
-panic = "abort"
+# Unwind, not abort: `resources::extract_text` runs pdf-extract over files
+# the reader chose, and pdf-extract panics on some malformed input. Aborting
+# took the whole app down with it and lost unsaved work; unwinding lets that
+# one extraction be caught and the file added unindexed.
+panic = "unwind"
 strip = true

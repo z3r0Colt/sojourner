@@ -3,6 +3,7 @@ pub mod backup;
 pub mod catechism_memory;
 pub mod diagnostics;
 pub mod export;
+pub mod file_picker;
 pub mod harmony;
 pub mod library;
 pub mod prayer_journal;

@@ -1,3 +1,4 @@
+use crate::commands::file_picker::{take_path, PickedPaths};
 use crate::db::queries::{illustrations, sermons, verses};
 use crate::db::DbState;
 use crate::error::AppResult;
@@ -206,24 +207,29 @@ pub fn list_illustration_uses(db: State<DbState>, illustration_id: Option<i64>) 
 
 // Export --------------------------------------------------------------------
 
-/// Writes a generated .pptx to the path the save dialog already chose.
+/// Writes a generated .pptx to the file `pick_save_path` chose; `token` is
+/// that dialog's, redeemed here for the path.
 ///
 /// The deck is built by pptxgenjs, which only runs in the webview, so
 /// unlike every other export the bytes come *from* the frontend rather than
 /// being rendered here. The write still goes through a command because the
 /// fs plugin's scope deliberately allows no arbitrary path (see
-/// capabilities/default.json), which is the same reason export_note exists.
+/// capabilities/default.json), which is the same reason export_note exists
+/// -- and arbitrary bytes are only safe to write when the destination is
+/// one the user picked in a dialog this side of the boundary ran.
 #[tauri::command]
-pub fn export_sermon_slides(dest_path: String, data: Vec<u8>) -> AppResult<()> {
+pub fn export_sermon_slides(picked: State<PickedPaths>, token: String, data: Vec<u8>) -> AppResult<()> {
+    let dest_path = take_path(&picked, &token)?;
     std::fs::write(&dest_path, data)?;
     Ok(())
 }
 
-/// Writes the manuscript as Markdown to a path the frontend's save dialog
-/// already chose. The passage blocks are rendered here, at export time, so
-/// the file holds the words rather than a pointer to them.
+/// Writes the manuscript as Markdown to the file `pick_save_path` chose.
+/// The passage blocks are rendered here, at export time, so the file holds
+/// the words rather than a pointer to them.
 #[tauri::command]
-pub fn export_sermon(db: State<DbState>, sermon_id: i64, dest_path: String) -> AppResult<()> {
+pub fn export_sermon(db: State<DbState>, picked: State<PickedPaths>, sermon_id: i64, token: String) -> AppResult<()> {
+    let dest_path = take_path(&picked, &token)?;
     let conn = db.0.lock().unwrap();
     let sermon = sermons::get(&conn, sermon_id)?.ok_or_else(|| anyhow::anyhow!("sermon not found"))?;
     let book_names: HashMap<i64, String> =

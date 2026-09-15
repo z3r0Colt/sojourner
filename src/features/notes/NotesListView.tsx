@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import { save } from "@tauri-apps/plugin-dialog";
 import { Download, NotebookPen, Pencil } from "lucide-react";
 import { api } from "../../api/client";
 import {
@@ -88,22 +87,16 @@ export function NotesListView() {
   }
 
   async function exportNote(note: Note) {
-    const destPath = await save({
-      defaultPath: `${bookName(note.book_id)}-${note.chapter}-${note.verse_start}.md`.replace(/\s+/g, "-"),
-      filters: [{ name: "Markdown", extensions: ["md"] }],
-    });
-    if (!destPath) return;
-    await api.exportNote(note.id, destPath);
+    const picked = await api.pickSavePath("markdown", `${bookName(note.book_id)}-${note.chapter}-${note.verse_start}.md`.replace(/\s+/g, "-"));
+    if (!picked) return;
+    await api.exportNote(note.id, picked.token);
     toast.success("Note exported");
   }
 
   async function exportChapterNote(note: ChapterNote) {
-    const destPath = await save({
-      defaultPath: `${bookName(note.book_id)}-${note.chapter}.md`.replace(/\s+/g, "-"),
-      filters: [{ name: "Markdown", extensions: ["md"] }],
-    });
-    if (!destPath) return;
-    await api.exportChapterNote(note.id, destPath);
+    const picked = await api.pickSavePath("markdown", `${bookName(note.book_id)}-${note.chapter}.md`.replace(/\s+/g, "-"));
+    if (!picked) return;
+    await api.exportChapterNote(note.id, picked.token);
     toast.success("Chapter note exported");
   }
 

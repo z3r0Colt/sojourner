@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { open } from "@tauri-apps/plugin-dialog";
 import { FilePlus, RefreshCw, Trash2 } from "lucide-react";
 import { api } from "../../../api/client";
 import { useTranslations, useCommentarySources } from "../../../api/queries";
@@ -23,14 +22,11 @@ export function LibrarySection() {
   }
 
   async function handleAddFile() {
-    const selected = await open({
-      multiple: false,
-      filters: [{ name: "XML", extensions: ["xml"] }],
-    });
-    if (!selected || Array.isArray(selected)) return;
+    const picked = await api.pickOpenPath("library_xml");
+    if (!picked) return;
     setBusy(true);
     try {
-      const result = await api.addFile(selected);
+      const result = await api.addFile(picked.token);
       setReport([result]);
       refreshLibrary();
     } catch (e) {

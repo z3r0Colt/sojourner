@@ -131,8 +131,8 @@ pub fn stage_restore(app_data_dir: &Path, backup_path: &Path) -> anyhow::Result<
 
 /// Called once at startup, before user.db is ever opened. If a
 /// stage_import/stage_restore left a pending file, the *current* user.db is
-/// backed up first (a raw copy is safe here -- nothing has opened it yet
-/// this run), then the pending file takes its place.
+/// snapshotted into `backups/` first -- write-ahead log and all -- and the
+/// pending file then takes its place.
 pub fn apply_pending_import(app_data_dir: &Path) -> anyhow::Result<()> {
     let pending = app_data_dir.join(PENDING_IMPORT_MARKER);
     if !pending.is_file() {
@@ -143,7 +143,30 @@ pub fn apply_pending_import(app_data_dir: &Path) -> anyhow::Result<()> {
         let dir = backups_dir(app_data_dir);
         std::fs::create_dir_all(&dir)?;
         let timestamp = chrono::Utc::now().format("%Y%m%dT%H%M%SZ");
-        std::fs::copy(&user_db, dir.join(format!("user-pre-import-{timestamp}.db")))?;
+        let dest = dir.join(format!("user-pre-import-{timestamp}.db"));
+
+        // This is the reader's only way back, and the UI promises it ("Your
+        // current data is backed up first"), so it must hold everything --
+        // including whatever is still sitting in user.db-wal, which a raw
+        // file copy would miss and the lines below would then delete. That
+        // is not a corner case: the WAL survives exactly when the app did
+        // not close cleanly, which is when someone reaches for a restore.
+        // Opening the database lets SQLite recover the WAL first; the
+        // snapshot is then taken the same way `create_backup` takes one.
+        // Nothing has opened user.db yet this run, so this is safe here and
+        // nowhere else.
+        let snapshot = Connection::open(&user_db).and_then(|conn| {
+            conn.execute("VACUUM main INTO ?1", [dest.to_string_lossy().to_string()])?;
+            Ok(())
+        });
+        if let Err(e) = snapshot {
+            // A database too damaged to snapshot is also the one most likely
+            // to be the reason for the import. Keep what can be kept rather
+            // than refusing to start.
+            eprintln!("[import] could not snapshot user.db ({e}); falling back to a plain copy");
+            let _ = std::fs::remove_file(&dest);
+            std::fs::copy(&user_db, &dest)?;
+        }
     }
     std::fs::rename(&pending, &user_db)?;
     // A stale WAL/SHM from the previous database would otherwise be replayed
@@ -243,6 +266,77 @@ mod tests {
         assert!(issues.is_empty(), "expected no issues, got {issues:?}");
 
         drop(conn);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// The safety backup must hold work that is still only in the WAL.
+    ///
+    /// The WAL is left behind whenever the app did not close cleanly -- a
+    /// crash, a force-kill, a power cut -- and that is precisely when a
+    /// reader reaches for an import or a restore. A plain `fs::copy` of
+    /// user.db captures none of it, and `apply_pending_import` deletes the
+    /// WAL straight afterwards, so the "your current data is backed up
+    /// first" promise used to quietly lose the last session's work.
+    #[test]
+    fn the_pre_import_backup_holds_work_still_in_the_write_ahead_log() {
+        let dir = temp_dir("wal");
+        let content_db_path = dir.join("content.db");
+        db::open_content_db(&content_db_path).unwrap();
+
+        let live = dir.join("live");
+        std::fs::create_dir_all(&live).unwrap();
+        let conn = db::open(&live, &content_db_path).unwrap();
+        // Stop SQLite folding the WAL back into user.db, so the row below
+        // exists *only* in user.db-wal, as after an unclean shutdown.
+        conn.pragma_update(None, "wal_autocheckpoint", 0).unwrap();
+        conn.execute(
+            "INSERT INTO bookmarks (book_id, chapter, label, created_at) VALUES (7, 7, 'only-in-the-wal', '2026-01-01')",
+            [],
+        )
+        .unwrap();
+        assert!(live.join("user.db-wal").is_file(), "the test needs a WAL on disk");
+
+        // A second connection keeps the database open, so copying the three
+        // files captures the same on-disk state a killed process leaves.
+        let keep_open = db::open(&live, &content_db_path).unwrap();
+        let crashed = dir.join("crashed");
+        std::fs::create_dir_all(&crashed).unwrap();
+        for name in ["user.db", "user.db-wal", "user.db-shm"] {
+            if live.join(name).is_file() {
+                std::fs::copy(live.join(name), crashed.join(name)).unwrap();
+            }
+        }
+        drop(keep_open);
+        drop(conn);
+
+        // Something -- anything -- to import over the top of it.
+        let incoming = dir.join("incoming.db");
+        {
+            let other_content = dir.join("other-content.db");
+            db::open_content_db(&other_content).unwrap();
+            let other = db::open(&dir.join("other"), &other_content).unwrap();
+            drop(other);
+            std::fs::copy(dir.join("other").join("user.db"), &incoming).unwrap();
+        }
+
+        stage_import(&crashed, &incoming).unwrap();
+        apply_pending_import(&crashed).unwrap();
+
+        let backups = list_backups(&crashed).unwrap();
+        let pre = backups
+            .iter()
+            .find(|b| b.file_name.contains("pre-import"))
+            .expect("an import must leave a pre-import backup");
+        let saved = Connection::open(&pre.path).unwrap();
+        let label: Result<String, _> =
+            saved.query_row("SELECT label FROM bookmarks WHERE book_id = 7", [], |r| r.get(0));
+        assert_eq!(
+            label.unwrap_or_default(),
+            "only-in-the-wal",
+            "the safety backup dropped work that was still in the write-ahead log"
+        );
+
+        drop(saved);
         let _ = std::fs::remove_dir_all(&dir);
     }
 

@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { save } from "@tauri-apps/plugin-dialog";
 import { ChevronDown, Download, FileText, MoreHorizontal, Presentation, Printer } from "lucide-react";
 import { api } from "../../api/client";
 import { useBooks } from "../../api/queries";
@@ -53,12 +52,9 @@ export function SermonActionsMenu({
 
   async function exportMarkdown() {
     try {
-      const destPath = await save({
-        defaultPath: fileName("md"),
-        filters: [{ name: "Markdown", extensions: ["md"] }],
-      });
-      if (!destPath) return;
-      await api.exportSermon(sermon.id, destPath);
+      const picked = await api.pickSavePath("markdown", fileName("md"));
+      if (!picked) return;
+      await api.exportSermon(sermon.id, picked.token);
       toast.success("Sermon exported");
     } catch (error) {
       // A path that cannot be written, a file held open by Word: the reader
@@ -68,17 +64,14 @@ export function SermonActionsMenu({
   }
 
   async function exportSlides() {
-    const destPath = await save({
-      defaultPath: fileName("pptx"),
-      filters: [{ name: "PowerPoint", extensions: ["pptx"] }],
-    });
-    if (!destPath) return;
+    const picked = await api.pickSavePath("pptx", fileName("pptx"));
+    if (!picked) return;
     setExporting(true);
     try {
       // pptxgenjs is loaded here, on first use, so it never reaches the
       // startup bundle.
       const { exportSlidesToPptx } = await import("./pptxExport");
-      await exportSlidesToPptx(buildSlides(sermon, { books, passages }), sermon.title, destPath);
+      await exportSlidesToPptx(buildSlides(sermon, { books, passages }), sermon.title, picked.token);
       toast.success("Slides exported");
     } catch (error) {
       toast.error(`Could not write the slides: ${String(error)}`);

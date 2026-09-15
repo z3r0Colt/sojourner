@@ -60,5 +60,10 @@ pub fn log_frontend_error(app_data_dir: State<AppDataDir>, message: String, stac
 
 #[tauri::command]
 pub fn get_logs_dir(app_data_dir: State<AppDataDir>) -> AppResult<String> {
-    Ok(app_data_dir.0.join("logs").to_string_lossy().to_string())
+    let dir = app_data_dir.0.join("logs");
+    // The folder only comes into being when something is logged, and opening
+    // a path that isn't there fails; on a healthy install that is every
+    // launch, so make it before handing the path out.
+    let _ = std::fs::create_dir_all(&dir);
+    Ok(dir.to_string_lossy().to_string())
 }
