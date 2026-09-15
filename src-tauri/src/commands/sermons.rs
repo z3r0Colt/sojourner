@@ -8,7 +8,7 @@ use crate::models::{
     SermonEvent, SermonFilter, SermonForChapter, SermonInput, SermonSeries, SpeakingRate,
 };
 use std::collections::HashMap;
-use tauri::State;
+use tauri::{AppHandle, Manager, State};
 
 // Sermons -------------------------------------------------------------------
 
@@ -217,52 +217,70 @@ pub fn list_illustration_uses(db: State<DbState>, illustration_id: Option<i64>) 
 /// capabilities/default.json), which is the same reason export_note exists
 /// -- and arbitrary bytes are only safe to write when the destination is
 /// one the user picked in a dialog this side of the boundary ran.
+///
+/// Off the main thread: the destination is wherever the reader pointed the
+/// save dialog, which is routinely a synced or network folder, and a write
+/// there is not bounded by anything this app controls.
 #[tauri::command]
-pub fn export_sermon_slides(picked: State<PickedPaths>, token: String, data: Vec<u8>) -> AppResult<()> {
-    let dest_path = take_path(&picked, &token)?;
-    std::fs::write(&dest_path, data)?;
-    Ok(())
+pub async fn export_sermon_slides(app: AppHandle, token: String, data: Vec<u8>) -> AppResult<()> {
+    tauri::async_runtime::spawn_blocking(move || -> AppResult<()> {
+        let picked = app.state::<PickedPaths>();
+        let dest_path = take_path(&picked, &token)?;
+        std::fs::write(&dest_path, data)?;
+        Ok(())
+    })
+    .await
+    .map_err(|e| anyhow::anyhow!("the slide export did not finish: {e}"))?
 }
 
 /// Writes the manuscript as Markdown to the file `pick_save_path` chose.
 /// The passage blocks are rendered here, at export time, so the file holds
 /// the words rather than a pointer to them.
+///
+/// Off the main thread, for the same reason as `export_sermon_slides`, and
+/// because every passage block in the manuscript is fetched on the way.
 #[tauri::command]
-pub fn export_sermon(db: State<DbState>, picked: State<PickedPaths>, sermon_id: i64, token: String) -> AppResult<()> {
-    let dest_path = take_path(&picked, &token)?;
-    let conn = db.0.lock().unwrap();
-    let sermon = sermons::get(&conn, sermon_id)?.ok_or_else(|| anyhow::anyhow!("sermon not found"))?;
-    let book_names: HashMap<i64, String> =
-        verses::list_books(&conn)?.into_iter().map(|b| (b.id, b.name)).collect();
+pub async fn export_sermon(app: AppHandle, sermon_id: i64, token: String) -> AppResult<()> {
+    tauri::async_runtime::spawn_blocking(move || -> AppResult<()> {
+        let picked = app.state::<PickedPaths>();
+        let dest_path = take_path(&picked, &token)?;
+        let db = app.state::<DbState>();
+        let conn = db.0.lock().unwrap();
+        let sermon = sermons::get(&conn, sermon_id)?.ok_or_else(|| anyhow::anyhow!("sermon not found"))?;
+        let book_names: HashMap<i64, String> =
+            verses::list_books(&conn)?.into_iter().map(|b| (b.id, b.name)).collect();
 
-    // Every passage block in one round trip, in the sermon's translation.
-    let mut passage_text = HashMap::new();
-    let translation_id = match sermon.translation_id {
-        Some(id) => Some(id),
-        None => verses::list_translations(&conn)?.first().map(|t| t.id),
-    };
-    if let Some(translation_id) = translation_id {
-        let blocks: Vec<_> = sermon.passages.iter().filter(|p| p.role != "mentioned").collect();
-        let refs: Vec<PassageRef> = blocks
-            .iter()
-            .map(|p| PassageRef {
-                book_id: p.book_id,
-                chapter: p.chapter,
-                verse_start: p.verse_start.unwrap_or(1),
-                verse_end: p.verse_end.unwrap_or(p.verse_start.unwrap_or(176)),
-            })
-            .collect();
-        if !refs.is_empty() {
-            for (p, passage) in blocks.iter().zip(verses::get_passages(&conn, translation_id, &refs)?) {
-                passage_text.insert(
-                    export::passage_key(p.book_id, p.chapter, p.verse_start, p.verse_end),
-                    passage.text,
-                );
+        // Every passage block in one round trip, in the sermon's translation.
+        let mut passage_text = HashMap::new();
+        let translation_id = match sermon.translation_id {
+            Some(id) => Some(id),
+            None => verses::list_translations(&conn)?.first().map(|t| t.id),
+        };
+        if let Some(translation_id) = translation_id {
+            let blocks: Vec<_> = sermon.passages.iter().filter(|p| p.role != "mentioned").collect();
+            let refs: Vec<PassageRef> = blocks
+                .iter()
+                .map(|p| PassageRef {
+                    book_id: p.book_id,
+                    chapter: p.chapter,
+                    verse_start: p.verse_start.unwrap_or(1),
+                    verse_end: p.verse_end.unwrap_or(p.verse_start.unwrap_or(176)),
+                })
+                .collect();
+            if !refs.is_empty() {
+                for (p, passage) in blocks.iter().zip(verses::get_passages(&conn, translation_id, &refs)?) {
+                    passage_text.insert(
+                        export::passage_key(p.book_id, p.chapter, p.verse_start, p.verse_end),
+                        passage.text,
+                    );
+                }
             }
         }
-    }
 
-    let text = export::format_sermon(&sermon, &passage_text, &book_names);
-    std::fs::write(&dest_path, text)?;
-    Ok(())
+        let text = export::format_sermon(&sermon, &passage_text, &book_names);
+        std::fs::write(&dest_path, text)?;
+        Ok(())
+    })
+    .await
+    .map_err(|e| anyhow::anyhow!("the sermon export did not finish: {e}"))?
 }

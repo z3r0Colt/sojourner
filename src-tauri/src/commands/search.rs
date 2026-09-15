@@ -3,12 +3,16 @@ use crate::db::queries::search::VerseSearchScope;
 use crate::db::DbState;
 use crate::error::AppResult;
 use crate::models::SearchResults;
-use tauri::State;
+use tauri::{AppHandle, Manager, State};
 
+/// Off the main thread: four FTS queries in a row, over indexes that cover
+/// every verse of every installed translation and the whole of any imported
+/// commentary. See the note at the top of `commands::backup` for why this
+/// takes an `AppHandle` rather than the state it needs.
 #[tauri::command]
 #[allow(clippy::too_many_arguments)]
-pub fn search(
-    db: State<DbState>,
+pub async fn search(
+    app: AppHandle,
     query: String,
     translation_ids: Vec<i64>,
     commentary_source_ids: Vec<i64>,
@@ -16,13 +20,18 @@ pub fn search(
     testament: Option<String>,
     limit: i64,
 ) -> AppResult<SearchResults> {
-    let conn = db.0.lock().unwrap();
-    let scope = VerseSearchScope { book_id, testament };
-    let verses = search_queries::search_verses(&conn, &query, &translation_ids, &scope, limit)?;
-    let commentary = search_queries::search_commentary(&conn, &query, &commentary_source_ids, limit)?;
-    let notes = search_queries::search_notes(&conn, &query, limit)?;
-    let prayers = search_queries::search_prayer_entries(&conn, &query, limit)?;
-    Ok(SearchResults { verses, commentary, notes, prayers })
+    tauri::async_runtime::spawn_blocking(move || -> AppResult<SearchResults> {
+        let db = app.state::<DbState>();
+        let conn = db.0.lock().unwrap();
+        let scope = VerseSearchScope { book_id, testament };
+        let verses = search_queries::search_verses(&conn, &query, &translation_ids, &scope, limit)?;
+        let commentary = search_queries::search_commentary(&conn, &query, &commentary_source_ids, limit)?;
+        let notes = search_queries::search_notes(&conn, &query, limit)?;
+        let prayers = search_queries::search_prayer_entries(&conn, &query, limit)?;
+        Ok(SearchResults { verses, commentary, notes, prayers })
+    })
+    .await
+    .map_err(|e| anyhow::anyhow!("the search did not finish: {e}"))?
 }
 
 /// Called explicitly when the user commits to a search (Enter, or re-running
