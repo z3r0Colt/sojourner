@@ -47,6 +47,14 @@ pub fn create_backup(conn: &Connection, app_data_dir: &Path) -> anyhow::Result<P
             // Best-effort: a sync folder can be temporarily unavailable (an
             // unmounted external drive, a cloud-sync client not running)
             // without that being a reason to fail the backup itself.
+            //
+            // It can also be slow. `is_dir()` above answers true for a mapped
+            // network drive that has since stopped responding, and the copy
+            // then blocks until the SMB timeout -- minutes, not seconds, on a
+            // file this size. That is survivable only because every caller of
+            // this function is now off the main thread (see the note at the
+            // top of `commands::backup`); it must not be called from a
+            // synchronous command.
             let _ = std::fs::copy(&path, dest);
         }
     }

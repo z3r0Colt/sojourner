@@ -5,7 +5,7 @@ use crate::error::AppResult;
 use crate::models::{Resource, ResourceLink, ResourcePassageLink, ResourceSearchResult};
 use crate::resources::BulkImportOutcome;
 use crate::{paths, resources};
-use tauri::{AppHandle, State};
+use tauri::{AppHandle, Manager, State};
 
 #[tauri::command]
 pub fn list_resources(db: State<DbState>) -> AppResult<Vec<Resource>> {
@@ -28,59 +28,76 @@ pub fn get_resource_text(db: State<DbState>, id: i64) -> AppResult<Option<String
 /// Copies the file `pick_open_path` chose into the app's resources folder,
 /// detects its kind from the extension, best-effort extracts text for deep
 /// search, and records it. `token` is that dialog's.
+///
+/// Off the main thread: copying the file and then extracting its text are
+/// both open-ended (a book-length PDF is seconds of parsing), and a
+/// synchronous command would spend all of it on the thread that draws. See
+/// the note at the top of `commands::backup` for why this takes an
+/// `AppHandle` rather than the state it needs.
 #[tauri::command]
-pub fn add_resource(
+pub async fn add_resource(
     app: AppHandle,
-    db: State<DbState>,
-    picked: State<PickedPaths>,
     token: String,
     title: String,
     author: Option<String>,
 ) -> AppResult<Resource> {
-    let src = take_path(&picked, &token)?;
-    let kind = resources::detect_kind(&src)
-        .ok_or_else(|| anyhow::anyhow!("unrecognized file type: {}", src.display()))?;
+    tauri::async_runtime::spawn_blocking(move || -> AppResult<Resource> {
+        let picked = app.state::<PickedPaths>();
+        let src = take_path(&picked, &token)?;
+        let kind = resources::detect_kind(&src)
+            .ok_or_else(|| anyhow::anyhow!("unrecognized file type: {}", src.display()))?;
 
-    let dest_dir = paths::resources_dir(&app).ok_or_else(|| anyhow::anyhow!("could not resolve resources directory"))?;
-    let file_name = src.file_name().ok_or_else(|| anyhow::anyhow!("invalid file path"))?;
-    let mut dest_path = dest_dir.join(file_name);
-    let mut counter = 1;
-    while dest_path.exists() {
-        let stem = src.file_stem().and_then(|s| s.to_str()).unwrap_or("resource");
-        let ext = src.extension().and_then(|s| s.to_str()).unwrap_or("");
-        dest_path = dest_dir.join(format!("{stem}-{counter}.{ext}"));
-        counter += 1;
-    }
-    std::fs::copy(&src, &dest_path)?;
+        let dest_dir =
+            paths::resources_dir(&app).ok_or_else(|| anyhow::anyhow!("could not resolve resources directory"))?;
+        let file_name = src.file_name().ok_or_else(|| anyhow::anyhow!("invalid file path"))?;
+        let mut dest_path = dest_dir.join(file_name);
+        let mut counter = 1;
+        while dest_path.exists() {
+            let stem = src.file_stem().and_then(|s| s.to_str()).unwrap_or("resource");
+            let ext = src.extension().and_then(|s| s.to_str()).unwrap_or("");
+            dest_path = dest_dir.join(format!("{stem}-{counter}.{ext}"));
+            counter += 1;
+        }
+        std::fs::copy(&src, &dest_path)?;
 
-    let extracted = resources::extract_text(&dest_path, kind);
+        let extracted = resources::extract_text(&dest_path, kind);
 
-    let conn = db.0.lock().unwrap();
-    Ok(queries::create(
-        &conn,
-        kind,
-        &title,
-        author.as_deref(),
-        &dest_path.display().to_string(),
-        extracted.as_deref(),
-    )?)
+        let db = app.state::<DbState>();
+        let conn = db.0.lock().unwrap();
+        Ok(queries::create(
+            &conn,
+            kind,
+            &title,
+            author.as_deref(),
+            &dest_path.display().to_string(),
+            extracted.as_deref(),
+        )?)
+    })
+    .await
+    .map_err(|e| anyhow::anyhow!("the import task did not finish: {e}"))?
 }
 
 /// Recursively imports every epub/pdf/mobi/video/audio file under the folder
 /// `pick_folder` chose as a Resource (title from file name, author from its
 /// immediate parent folder) -- for a personal library organized as
 /// `Author/Book.epub`, adding it all at once rather than one file at a time.
+///
+/// Off the main thread, and the most obviously so of any command here: this
+/// walks a folder tree, copies every book in it, and extracts the text of
+/// each. On a personal library that is minutes of work.
 #[tauri::command]
-pub fn bulk_import_resources(
-    app: AppHandle,
-    db: State<DbState>,
-    picked: State<PickedPaths>,
-    token: String,
-) -> AppResult<BulkImportOutcome> {
-    let folder_path = take_path(&picked, &token)?;
-    let dest_dir = paths::resources_dir(&app).ok_or_else(|| anyhow::anyhow!("could not resolve resources directory"))?;
-    let conn = db.0.lock().unwrap();
-    Ok(resources::import_folder(&conn, &dest_dir, &folder_path, &[])?)
+pub async fn bulk_import_resources(app: AppHandle, token: String) -> AppResult<BulkImportOutcome> {
+    tauri::async_runtime::spawn_blocking(move || -> AppResult<BulkImportOutcome> {
+        let picked = app.state::<PickedPaths>();
+        let folder_path = take_path(&picked, &token)?;
+        let dest_dir =
+            paths::resources_dir(&app).ok_or_else(|| anyhow::anyhow!("could not resolve resources directory"))?;
+        let db = app.state::<DbState>();
+        let conn = db.0.lock().unwrap();
+        Ok(resources::import_folder(&conn, &dest_dir, &folder_path, &[])?)
+    })
+    .await
+    .map_err(|e| anyhow::anyhow!("the bulk import task did not finish: {e}"))?
 }
 
 #[tauri::command]
