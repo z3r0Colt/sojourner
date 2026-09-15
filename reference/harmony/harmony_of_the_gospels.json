@@ -1,7 +1,10 @@
 {
  "code": "gospel_harmony",
  "title": "Harmony of the Gospels",
+ "author": "Robert M. Sutherland",
+ "year": 2020,
  "description": "The events of Christ's life in chronological order across all four Gospels (plus Acts 1 for the ascension), each event's title paired with where it's told in Matthew, Mark, Luke, and John.",
+ "source_note": "Following the chronological table of contents of Robert M. Sutherland, A Four-Column Parallel and Chronological Harmony of the Gospels (2020), whose stated terms permit reproduction with attribution. The event breakdown and its Scripture references are reproduced; the book's commentary, Greek text and quoted verse text are not.",
  "sections": [
   {
    "order": 1,
@@ -1606,8 +1609,8 @@
      "chapter_start": 7,
      "verse_start": 37,
      "chapter_end": 7,
-     "verse_end": 58,
-     "label": "John 7:37-58"
+     "verse_end": 52,
+     "label": "John 7:37-52"
     }
    ]
   },
@@ -1618,10 +1621,10 @@
     {
      "book": "John",
      "chapter_start": 7,
-     "verse_start": 59,
+     "verse_start": 53,
      "chapter_end": 8,
      "verse_end": 11,
-     "label": "John 7:59-8:11"
+     "label": "John 7:53-8:11"
     }
    ]
   },

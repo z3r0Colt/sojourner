@@ -169,7 +169,11 @@ pub fn import_all(conn: &mut Connection, reference_dir: &Path) -> anyhow::Result
         0
     };
 
-    let harmony_readings = if table_count(conn, "harmony_sections") == 0 {
+    // Gated on `harmonies`, not `harmony_sections`: a content.db built before
+    // the app carried more than one harmony has sections already but no
+    // harmonies, and needs the import to run again (it clears the old rows
+    // itself).
+    let harmony_readings = if table_count(conn, "harmonies") == 0 {
         harmony::import(conn, &reference_dir.join("harmony"))
             .map_err(|e| anyhow::anyhow!("gospel harmony import failed: {e:#}"))?
     } else {

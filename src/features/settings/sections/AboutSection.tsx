@@ -26,7 +26,7 @@ export function AboutSection() {
         <p>
           Included are multiple Bible translations, classic commentaries (Matthew Henry, Jamieson-Fausset-Brown, Spurgeon's Treasury of David, and others),
           the Westminster Standards, Strong's lexicon with interlinear Hebrew and Greek, a Bible dictionary and encyclopedia, an atlas of the biblical world,
-          a harmony of the Gospels, reading plans, and tools for prayer and Scripture memory.
+          two harmonies of the Gospels, reading plans, and tools for prayer and Scripture memory.
         </p>
       </div>
 
@@ -63,6 +63,12 @@ export function AboutSection() {
           “The LORD bless thee, and keep thee: the LORD make his face shine upon thee, and be gracious unto thee: the LORD lift up his countenance upon thee, and
           give thee peace.”
         </p>
+        <Source name="Harmonies of the Gospels">
+          A. T. Robertson, <i>A Harmony of the Gospels for Students of the Life of Christ</i> (1922), based on the Broadus Harmony: public domain. The
+          four-column chronological harmony follows the table of contents of Robert M. Sutherland's <i>A Four-Column Parallel and Chronological Harmony of the
+          Gospels</i> (2020), whose stated terms permit reproduction with attribution. In both cases the event divisions and their references are reproduced,
+          not the verse text those books set in parallel.
+        </Source>
         <footer className="mt-2 text-xs text-ink-3">Numbers 6:24-26</footer>
       </blockquote>
     </div>

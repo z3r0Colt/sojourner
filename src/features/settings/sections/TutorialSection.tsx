@@ -221,6 +221,14 @@ const CATEGORIES: Category[] = [
         a: "“New plan” on the Reading plans page. “A book in N days” picks books (or a whole testament) and a length and divides the chapters evenly. “From a list” takes one line per day: a book, a chapter, a chapter range like Psalms 1-5, verses like John 3:16-21, or several readings separated by semicolons. Choose the days of the week you read on and the plan's dates skip the others. Your plans sit beside the built-in ones with a Custom mark, track progress and catch up the same way, and can be edited or deleted from their page (deleting asks first).",
       },
       { q: "Harmony of the Gospels", a: "The Harmony page lists the events of Christ's life in order. “Compare” shows the parallel Gospel accounts side by side." },
+      {
+        q: "Choose a different harmony",
+        a: "Two ship with the app, and the picker at the top right of the Harmony page switches between them; your choice is remembered. The four-column chronological harmony divides the life of Christ into 136 events and keeps to a plain list. Robertson's (1922) divides it into 185, groups them under fourteen periods from the Baptist's ministry to the ascension, and prints the place and approximate date under most events — “Bethany beyond Jordan. Probably A.D. 26”. Harmonists disagree about the order and the dating, which is the reason for having more than one.",
+      },
+      {
+        q: "Robertson's notes on the hard cases",
+        a: "Events Robertson footnoted show a “Note” button, and where a footnote defers to a longer discussion, “Read the note” jumps to it. The “Explanatory notes” tab holds all fourteen of those discussions — the two genealogies, the date of the Nativity, whether Christ ate the Passover, the hour of the crucifixion, the time of the resurrection.",
+      },
     ],
   },
   {

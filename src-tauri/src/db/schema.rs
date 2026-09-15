@@ -851,6 +851,92 @@ CREATE TABLE psalm_tunes (
 CREATE INDEX idx_psalm_tunes_metre ON psalm_tunes(metre);
 "#;
 
+// More than one harmony of the Gospels, and the prose each of them was
+// written with.
+//
+// CONTENT_MIGRATION_0003 assumed a single harmony -- `harmony_sections` had
+// nowhere to say which harmony a section belonged to, so a second one could
+// not be imported alongside the first. This gives harmonies the same shape
+// reading_plans has had since CONTENT_MIGRATION_0002: a parent row keyed by
+// `code`, with everything else hanging off it.
+//
+// Harmonists disagree, which is the point of having more than one. They
+// divide the life of Christ differently (136 events against Robertson's
+// 185), date the same event differently, and order the Perean ministry
+// differently again. Nothing here tries to reconcile them: each harmony
+// keeps its own sections, its own divisions, and its own reasoning.
+//
+// What a harmony carries besides the table:
+//
+//   `harmony_parts`  -- the periods a harmony groups its sections into
+//       (Robertson's fourteen: the Great Galilean Ministry, In the Shadow
+//       with Jesus, ...). Optional; a flat harmony has none.
+//   `headnote`       -- the place and approximate date printed under a
+//       section title ("Bethany beyond Jordan. Probably A.D. 26"). Kept as
+//       the one line the harmonist wrote rather than split into columns,
+//       because the two halves are not reliably separable and often only
+//       one of them is offered.
+//   `number`         -- the harmony's own label for the section, which is
+//       not always the ordinal: Robertson splits his §128 into 128a and
+//       128b, so 184 numbers cover 185 sections.
+//   `harmony_section_notes` -- the harmonist's footnotes on a section.
+//   `harmony_essays` -- longer discussions of the hard cases, which those
+//       footnotes point into by number (Robertson's fourteen "Explanatory
+//       Notes on Points of Special Difficulty": the two genealogies, the
+//       date of the Nativity, whether Christ ate the Passover, the hour of
+//       the crucifixion).
+//
+// `harmony_id` is added nullable because SQLite cannot add a NOT NULL
+// reference to a table that already has rows; the importer sets it on every
+// row it writes, and it re-imports both harmonies from scratch when it finds
+// `harmonies` empty (see import::reference::harmony).
+pub const CONTENT_MIGRATION_0017: &str = r#"
+CREATE TABLE harmonies (
+  id           INTEGER PRIMARY KEY,
+  code         TEXT NOT NULL UNIQUE,
+  title        TEXT NOT NULL,
+  author       TEXT,
+  year         INTEGER,
+  description  TEXT,
+  source_note  TEXT,            -- edition and provenance, shown in the app
+  sort_order   INTEGER NOT NULL
+);
+
+CREATE TABLE harmony_parts (
+  id          INTEGER PRIMARY KEY,
+  harmony_id  INTEGER NOT NULL REFERENCES harmonies(id) ON DELETE CASCADE,
+  sort_order  INTEGER NOT NULL,
+  label       TEXT,             -- 'Part VII', where the harmony numbers them
+  title       TEXT NOT NULL
+);
+CREATE INDEX idx_harmony_parts_harmony ON harmony_parts(harmony_id, sort_order);
+
+ALTER TABLE harmony_sections ADD COLUMN harmony_id INTEGER REFERENCES harmonies(id);
+ALTER TABLE harmony_sections ADD COLUMN part_id    INTEGER REFERENCES harmony_parts(id);
+ALTER TABLE harmony_sections ADD COLUMN number     TEXT;
+ALTER TABLE harmony_sections ADD COLUMN headnote   TEXT;
+CREATE INDEX idx_harmony_sections_harmony ON harmony_sections(harmony_id, sort_order);
+
+CREATE TABLE harmony_section_notes (
+  id           INTEGER PRIMARY KEY,
+  section_id   INTEGER NOT NULL REFERENCES harmony_sections(id) ON DELETE CASCADE,
+  sort_order   INTEGER NOT NULL,
+  marker       TEXT NOT NULL,   -- the footnote letter as the harmony prints it
+  text         TEXT NOT NULL,
+  essay_number INTEGER          -- the essay it defers to, where it does
+);
+CREATE INDEX idx_harmony_section_notes_section ON harmony_section_notes(section_id, sort_order);
+
+CREATE TABLE harmony_essays (
+  id          INTEGER PRIMARY KEY,
+  harmony_id  INTEGER NOT NULL REFERENCES harmonies(id) ON DELETE CASCADE,
+  number      INTEGER NOT NULL,
+  title       TEXT NOT NULL,
+  body        TEXT NOT NULL,    -- paragraphs separated by a blank line
+  UNIQUE(harmony_id, number)
+);
+"#;
+
 pub const CONTENT_MIGRATIONS: &[&str] = &[
     CONTENT_MIGRATION_0001,
     CONTENT_MIGRATION_0002,
@@ -868,6 +954,7 @@ pub const CONTENT_MIGRATIONS: &[&str] = &[
     CONTENT_MIGRATION_0014,
     CONTENT_MIGRATION_0015,
     CONTENT_MIGRATION_0016,
+    CONTENT_MIGRATION_0017,
 ];
 
 pub const USER_MIGRATION_0001: &str = r#"
