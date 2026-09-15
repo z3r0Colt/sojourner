@@ -21,11 +21,13 @@ dist-ssr
 # installer at build time so the app never needs the network to speak.
 /models/
 
-# The books that ship with the app, gathered by `npm run library:collect` from
-# whatever is in the reader's own library. Hundreds of megabytes of epub, so
-# they live beside the repo rather than in it -- keep a copy elsewhere, since
-# nothing here can rebuild them.
-/library/
+# /library/ is NOT ignored, and the reason is worth keeping straight: what this
+# file excludes is everything the repo can rebuild for itself. content/ comes
+# back from `npm run build:content`, models/ from `npm run fetch:voices`. The
+# books that ship with the app come back from nowhere -- `npm run
+# library:collect` gathers them from whatever happens to be in one reader's own
+# library on one machine -- so they are source, like bibles/ and commentaries/,
+# and they are versioned like source. 145 MB, largest file 3.6 MB.
 
 # Editor directories and files
 .vscode/*
