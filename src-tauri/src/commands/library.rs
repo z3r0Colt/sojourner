@@ -9,43 +9,43 @@ use tauri::{AppHandle, Manager, State};
 
 #[tauri::command]
 pub fn list_books(db: State<DbState>) -> AppResult<Vec<Book>> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(verses::list_books(&conn)?)
 }
 
 #[tauri::command]
 pub fn list_book_aliases(db: State<DbState>) -> AppResult<Vec<BookAlias>> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(versification::list_book_aliases(&conn)?)
 }
 
 #[tauri::command]
 pub fn list_translations(db: State<DbState>) -> AppResult<Vec<Translation>> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(verses::list_translations(&conn)?)
 }
 
 #[tauri::command]
 pub fn get_translation_coverage(db: State<DbState>, translation_id: i64) -> AppResult<Vec<BookCoverage>> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(verses::get_translation_coverage(&conn, translation_id)?)
 }
 
 #[tauri::command]
 pub fn list_commentary_sources(db: State<DbState>) -> AppResult<Vec<CommentarySource>> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(commentary::list_commentary_sources(&conn)?)
 }
 
 #[tauri::command]
 pub fn remove_translation(db: State<DbState>, translation_id: i64) -> AppResult<()> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(verses::remove_translation(&conn, translation_id)?)
 }
 
 #[tauri::command]
 pub fn remove_commentary_source(db: State<DbState>, source_id: i64) -> AppResult<()> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(commentary::remove_commentary_source(&conn, source_id)?)
 }
 
@@ -59,7 +59,7 @@ pub async fn scan_library(app: AppHandle) -> AppResult<Vec<ImportReportItem>> {
         let roots = default_import_roots(&app);
         let files = import::discover_candidate_files(&roots);
         let db = app.state::<DbState>();
-        let mut conn = db.0.lock().unwrap();
+        let mut conn = db.conn();
         let results = import::scan_files(&mut conn, &files);
         Ok(results
             .into_iter()
@@ -111,7 +111,7 @@ pub async fn add_file(app: AppHandle, token: String) -> AppResult<ImportReportIt
         std::fs::copy(&src, &dest_path)?;
 
         let db = app.state::<DbState>();
-        let mut conn = db.0.lock().unwrap();
+        let mut conn = db.conn();
         let mut results = import::scan_files(&mut conn, &[dest_path.clone()]);
         let result = results.pop().ok_or_else(|| anyhow::anyhow!("import produced no result"))?;
         Ok(ImportReportItem {

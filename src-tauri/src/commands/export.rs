@@ -26,7 +26,7 @@ pub async fn export_note(app: AppHandle, note_id: i64, token: String) -> AppResu
         let picked = app.state::<PickedPaths>();
         let dest_path = take_path(&picked, &token)?;
         let db = app.state::<DbState>();
-        let conn = db.0.lock().unwrap();
+        let conn = db.conn();
         let note = notes::get(&conn, note_id)?.ok_or_else(|| anyhow::anyhow!("note not found"))?;
         let names = book_names(&conn)?;
         let text = export::format_note(&note, &names);
@@ -43,7 +43,7 @@ pub async fn export_chapter_note(app: AppHandle, chapter_note_id: i64, token: St
         let picked = app.state::<PickedPaths>();
         let dest_path = take_path(&picked, &token)?;
         let db = app.state::<DbState>();
-        let conn = db.0.lock().unwrap();
+        let conn = db.conn();
         let note =
             notes::get_chapter_note(&conn, chapter_note_id)?.ok_or_else(|| anyhow::anyhow!("chapter note not found"))?;
         let names = book_names(&conn)?;
@@ -61,7 +61,7 @@ pub async fn export_prayer_entry(app: AppHandle, prayer_entry_id: i64, token: St
         let picked = app.state::<PickedPaths>();
         let dest_path = take_path(&picked, &token)?;
         let db = app.state::<DbState>();
-        let conn = db.0.lock().unwrap();
+        let conn = db.conn();
         let entry =
             prayer_journal::get(&conn, prayer_entry_id)?.ok_or_else(|| anyhow::anyhow!("prayer entry not found"))?;
         let names = book_names(&conn)?;

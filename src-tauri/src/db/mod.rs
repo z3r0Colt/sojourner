@@ -7,6 +7,24 @@ use std::sync::Mutex;
 
 pub struct DbState(pub Mutex<Connection>);
 
+impl DbState {
+    /// A panic in one command must not take every later one with it: the
+    /// connection itself is unharmed, so the guard is recovered rather than
+    /// re-panicked on. Without this a single poisoned lock leaves the app
+    /// open and wholly unusable until restart, with nothing said about why.
+    ///
+    /// What poisons the mutex here is a panic while the guard is held, and
+    /// the code under it is row-mapping and query building -- an unwrap on a
+    /// column that came back a different type, an index out of range. None
+    /// of that leaves SQLite mid-statement: rusqlite finalizes the statement
+    /// as it unwinds past it, and a transaction that was open rolls back the
+    /// same way. The next command gets a connection in exactly the state the
+    /// last committed write left it.
+    pub fn conn(&self) -> std::sync::MutexGuard<'_, Connection> {
+        self.0.lock().unwrap_or_else(|e| e.into_inner())
+    }
+}
+
 /// Applied to every connection (both the standalone content.db builder and
 /// the runtime user.db connection): WAL for concurrent-friendly reads while
 /// writing, NORMAL sync since WAL already protects against corruption on a
@@ -124,6 +142,25 @@ pub fn register_functions(conn: &Connection) -> rusqlite::Result<()> {
     )
 }
 
+/// Brings `schema_name` up to date, one migration per `user_version` step.
+///
+/// **Foreign keys cannot be turned off in here.** Every migration runs inside
+/// the single transaction below, and SQLite silently ignores
+/// `PRAGMA foreign_keys` inside a transaction -- it is a no-op that still
+/// reads back as ON, so there is no error and nothing to notice. That makes
+/// the twelve-step table rebuild from SQLite's own ALTER TABLE documentation
+/// unsafe here for any table with children: the `DROP TABLE` in the middle of
+/// it fires ON DELETE CASCADE and takes the children with it.
+///
+/// No migration written so far is affected. USER_MIGRATION_0018 rebuilds
+/// `sermon_sources`, which nothing references -- it is a child and not a
+/// parent, so there is nothing to cascade to. But `sermons`, `notes` and
+/// `resources` are all parents, and a future migration that rebuilds one of
+/// them the same way would silently delete its rows' children. Such a
+/// migration has to be written a different way: recreate the table under a
+/// new name, copy the rows across, repoint the children, and only then drop
+/// the original -- or be run outside this function, with foreign keys off
+/// before any transaction is opened.
 fn run_migrations(conn: &mut Connection, schema_name: &str, migrations: &[&str]) -> anyhow::Result<()> {
     let db_name = if schema_name == "main" {
         rusqlite::DatabaseName::Main
@@ -132,6 +169,18 @@ fn run_migrations(conn: &mut Connection, schema_name: &str, migrations: &[&str])
     };
     let current: i64 = conn.query_row(&format!("PRAGMA {schema_name}.user_version"), [], |r| r.get(0))?;
     let current = current as usize;
+    // A database written by a newer build of the app. The loop below would
+    // run nothing at all and report success, and every query afterwards would
+    // fail one at a time with "no such column" -- an app that opens and then
+    // does not work, with nothing said about why. The reader has downgraded,
+    // or restored a file from a machine running a later version; either way
+    // the only safe answer is to refuse the file and say so.
+    anyhow::ensure!(
+        current <= migrations.len(),
+        "this database was written by a newer version of the app \
+         (schema {current}, this build knows {})",
+        migrations.len()
+    );
     let tx = conn.transaction()?;
     for (i, migration) in migrations.iter().enumerate() {
         if i < current {
@@ -511,6 +560,141 @@ mod tests {
         let _ = std::fs::remove_dir_all(&dir);
     }
 
+    /// A database written by a later build of the app must be refused, not
+    /// opened. `run_migrations` skips every migration whose index is below
+    /// `user_version`, so a file from the future runs none of them and
+    /// reports success -- and then every query fails on its own with "no
+    /// such column", which is an app that opens and does not work.
+    #[test]
+    fn a_database_from_a_newer_build_is_refused_rather_than_half_opened() {
+        let dir = std::env::temp_dir().join(format!("sojourner-newer-schema-test-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let content_db_path = dir.join("content.db");
+        open_content_db(&content_db_path).unwrap();
+
+        // A user.db at this build's own version opens, as a control.
+        drop(open(&dir, &content_db_path).unwrap());
+
+        // Now claim it was written by a build that knows one migration more.
+        {
+            let raw = Connection::open(dir.join("user.db")).unwrap();
+            raw.pragma_update(None, "user_version", (schema::USER_MIGRATIONS.len() + 1) as i64)
+                .unwrap();
+        }
+        let err = open(&dir, &content_db_path).unwrap_err();
+        let message = format!("{err:#}");
+        assert!(
+            message.contains("newer version of the app"),
+            "the refusal must say why, not just fail: {message}",
+        );
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// The same file must also be refused at *import* time. By the time
+    /// `run_migrations` sees it, the swap has already happened and user.db is
+    /// gone -- the refusal there is an app that will not start. Refusing in
+    /// `validate_candidate_db` leaves the reader's own database in place.
+    #[test]
+    fn staging_a_newer_database_is_refused_before_it_replaces_anything() {
+        let dir = std::env::temp_dir().join(format!("sojourner-newer-import-test-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let content_db_path = dir.join("content.db");
+        open_content_db(&content_db_path).unwrap();
+
+        // A candidate file from a later build.
+        let incoming = dir.join("incoming.db");
+        {
+            let other = dir.join("other");
+            drop(open(&other, &content_db_path).unwrap());
+            std::fs::copy(other.join("user.db"), &incoming).unwrap();
+            let raw = Connection::open(&incoming).unwrap();
+            raw.pragma_update(None, "user_version", (schema::USER_MIGRATIONS.len() + 3) as i64)
+                .unwrap();
+        }
+
+        let live = dir.join("live");
+        std::fs::create_dir_all(&live).unwrap();
+        let err = crate::backup::stage_import(&live, &incoming).unwrap_err();
+        let message = format!("{err:#}");
+        assert!(
+            message.contains("newer version of the app"),
+            "the refusal must say why: {message}",
+        );
+        // And nothing was staged, so the next launch swaps nothing in.
+        assert!(
+            !live.join("user.db.pending-import").is_file(),
+            "a refused file must not be left staged",
+        );
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// Chapter notes and passage notes are two queries with the same limit,
+    /// and used to be concatenated and then cut to that limit -- so a query
+    /// matching `limit` passage notes returned no chapter notes at all, while
+    /// the Notes tab showed a confident count of `limit`.
+    ///
+    /// The tie is the case that matters, and the reason the merge cannot sort
+    /// on bm25 alone. FTS5 computes IDF per table: a term in every row of an
+    /// index has zero IDF, and every row comes back at the same clamped
+    /// -1e-6. Sorting on the rank by itself leaves them all equal, a stable
+    /// sort keeps the passage notes in front, and the chapter note is cut
+    /// exactly as before -- so this test is built on precisely that corpus.
+    #[test]
+    fn a_chapter_note_still_surfaces_when_passage_notes_fill_the_limit() {
+        use queries::{notes, search};
+
+        let dir = std::env::temp_dir().join(format!("sojourner-note-merge-test-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let content_db_path = dir.join("content.db");
+        open_content_db(&content_db_path).unwrap();
+        let conn = open(&dir, &content_db_path).unwrap();
+
+        let limit = 50;
+        // Comfortably more passage notes than the limit, every one of them a
+        // match -- which is what drives every bm25 score to the same value.
+        for verse in 1..=(limit + 10) {
+            notes::create(
+                &conn,
+                45,
+                8,
+                verse,
+                verse,
+                format!("<p>perseverance, and a good deal of other wording besides, number {verse}.</p>"),
+                None,
+                None,
+            )
+            .unwrap();
+        }
+        let chapter_note = notes::create_chapter_note(&conn, 43, 3, "<p>perseverance</p>".into(), None).unwrap();
+
+        let results = search::search_notes(&conn, "perseverance", limit).unwrap();
+        assert_eq!(results.len() as i64, limit, "the limit is still honoured");
+        assert!(
+            results.iter().any(|r| r.source_label == "Chapter Note" && r.entry_id == chapter_note.id),
+            "a chapter note must not be cut just because {limit} passage notes also matched",
+        );
+        // And the passage notes are still the bulk of it -- interleaving on a
+        // tie must not turn into chapter notes crowding the results out.
+        assert!(
+            results.iter().filter(|r| r.source_label == "Note").count() >= (limit as usize) - 2,
+            "the passage notes still fill the rest",
+        );
+
+        // With only a handful of matches on either side, everything fits and
+        // both kinds are present regardless of ordering.
+        let few = search::search_notes(&conn, "perseverance", 5).unwrap();
+        assert_eq!(few.len(), 5);
+        assert!(few.iter().any(|r| r.source_label == "Chapter Note"));
+
+        drop(conn);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
     /// Soft delete (USER_MIGRATION_0011): a deleted note must vanish from
     /// every list, search, count, and tag listing, show up in the Trash,
     /// come back whole on restore, and be gone for good on purge. Any query
@@ -706,3 +890,4 @@ mod tests {
         let _ = std::fs::remove_dir_all(&dir);
     }
 }
+

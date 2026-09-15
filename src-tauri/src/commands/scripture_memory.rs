@@ -6,13 +6,13 @@ use tauri::State;
 
 #[tauri::command]
 pub fn list_memory_verses(db: State<DbState>) -> AppResult<Vec<MemoryVerse>> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(queries::list_all(&conn)?)
 }
 
 #[tauri::command]
 pub fn list_due_memory_verses(db: State<DbState>) -> AppResult<Vec<MemoryVerse>> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(queries::list_due(&conn)?)
 }
 
@@ -26,13 +26,13 @@ pub fn create_memory_verse(
     translation_id: Option<i64>,
     mode: String,
 ) -> AppResult<MemoryVerse> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(queries::create(&conn, book_id, chapter, verse_start, verse_end, translation_id, mode)?)
 }
 
 #[tauri::command]
 pub fn set_memory_verse_mode(db: State<DbState>, id: i64, mode: String) -> AppResult<()> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(queries::set_mode(&conn, id, mode)?)
 }
 
@@ -43,18 +43,18 @@ pub fn set_memory_verse_doctrinal_link(
     westminster_section_id: Option<i64>,
     doctrinal_note: Option<String>,
 ) -> AppResult<()> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(queries::set_doctrinal_link(&conn, id, westminster_section_id, doctrinal_note)?)
 }
 
 #[tauri::command]
 pub fn delete_memory_verse(db: State<DbState>, id: i64) -> AppResult<()> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(queries::delete(&conn, id)?)
 }
 
 #[tauri::command]
 pub fn review_memory_verse(db: State<DbState>, id: i64, quality: i64) -> AppResult<MemoryVerse> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(queries::review(&conn, id, quality)?)
 }

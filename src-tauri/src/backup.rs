@@ -113,10 +113,25 @@ pub fn export_database(conn: &Connection, dest_path: &Path) -> anyhow::Result<()
 /// version has had since the first migration) before staging it -- so a
 /// wrong file is rejected immediately with a clear error rather than
 /// silently bricking the app on next launch.
+///
+/// The schema version is checked here as well as in `run_migrations`,
+/// because by the time that runs the file has already replaced user.db: the
+/// swap happens at startup, before anything opens the database, so a
+/// refusal there is an app that will not start. Refusing at import time is a
+/// message in the Settings pane with the reader's own database still in
+/// place.
 fn validate_candidate_db(path: &Path) -> anyhow::Result<()> {
     let conn = Connection::open_with_flags(path, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY)?;
     conn.query_row("SELECT 1 FROM settings LIMIT 1", [], |_| Ok(()))
         .or_else(|_| conn.query_row("SELECT COUNT(*) FROM settings", [], |_| Ok(())))?;
+
+    let version: i64 = conn.query_row("PRAGMA user_version", [], |r| r.get(0))?;
+    let known = crate::db::schema::USER_MIGRATIONS.len();
+    anyhow::ensure!(
+        version as usize <= known,
+        "this database was written by a newer version of the app \
+         (schema {version}, this build knows {known}) -- update the app and try again",
+    );
     Ok(())
 }
 

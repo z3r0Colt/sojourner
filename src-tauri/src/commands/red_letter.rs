@@ -6,6 +6,6 @@ use tauri::State;
 
 #[tauri::command]
 pub fn get_red_letter_ranges(db: State<DbState>, book_id: i64, chapter: i64) -> AppResult<Vec<RedLetterRange>> {
-    let conn = db.0.lock().unwrap();
+    let conn = db.conn();
     Ok(queries::get_ranges_for_chapter(&conn, book_id, chapter)?)
 }

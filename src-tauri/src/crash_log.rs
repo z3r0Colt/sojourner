@@ -11,9 +11,21 @@ fn logs_dir(app_data_dir: &Path) -> PathBuf {
     app_data_dir.join("logs")
 }
 
+/// How many log files to keep before writing no more. An error thrown inside
+/// a component that is re-rendering writes one of these per frame, so this is
+/// a real bound and not a theoretical one.
+const MAX_LOG_FILES: usize = 200;
+
 fn write_log(app_data_dir: &Path, prefix: &str, body: &str) {
     let dir = logs_dir(app_data_dir);
     if std::fs::create_dir_all(&dir).is_err() {
+        return;
+    }
+    // Keep the folder to a size a reader can actually attach to a bug report,
+    // and stop a render loop from filling the disk one file per frame. The
+    // oldest are kept rather than the newest: the first failure is the one
+    // that explains the rest.
+    if std::fs::read_dir(&dir).map(|d| d.count()).unwrap_or(0) >= MAX_LOG_FILES {
         return;
     }
     let timestamp = chrono::Utc::now().format("%Y%m%dT%H%M%S%.3fZ");

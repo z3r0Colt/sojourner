@@ -91,16 +91,32 @@ pub fn import_folder(
     Ok(outcome)
 }
 
-fn import_one(conn: &Connection, resources_dir: &Path, src: &Path, kind: &str, title: &str, author: Option<&str>) -> anyhow::Result<()> {
+/// Where a copy of `src` should go inside `resources_dir`: its own file name
+/// if nothing is there, else the stem with `-1`, `-2`, ... until one is free.
+///
+/// Both import paths -- this module's folder import and the single-file
+/// `commands::resources::add_resource` -- need exactly this, and had their
+/// own copy of it. Both also produced a trailing dot for a file with no
+/// extension at all (`book-1.`), which is not a name anyone meant to write;
+/// the extension is now only appended when there is one.
+pub fn free_destination_path(resources_dir: &Path, src: &Path) -> anyhow::Result<PathBuf> {
     let file_name = src.file_name().ok_or_else(|| anyhow::anyhow!("invalid file path"))?;
     let mut dest_path = resources_dir.join(file_name);
     let mut counter = 1;
     while dest_path.exists() {
         let stem = src.file_stem().and_then(|s| s.to_str()).unwrap_or("resource");
-        let ext = src.extension().and_then(|s| s.to_str()).unwrap_or("");
-        dest_path = resources_dir.join(format!("{stem}-{counter}.{ext}"));
+        let name = match src.extension().and_then(|s| s.to_str()) {
+            Some(ext) if !ext.is_empty() => format!("{stem}-{counter}.{ext}"),
+            _ => format!("{stem}-{counter}"),
+        };
+        dest_path = resources_dir.join(name);
         counter += 1;
     }
+    Ok(dest_path)
+}
+
+fn import_one(conn: &Connection, resources_dir: &Path, src: &Path, kind: &str, title: &str, author: Option<&str>) -> anyhow::Result<()> {
+    let dest_path = free_destination_path(resources_dir, src)?;
     std::fs::copy(src, &dest_path)?;
     let extracted = extract_text(&dest_path, kind);
     crate::db::queries::resources::create(conn, kind, title, author, &dest_path.display().to_string(), extracted.as_deref())?;
@@ -256,7 +272,7 @@ fn extract_text_within(path: &Path, kind: &str, max_bytes: u64) -> Option<String
 
 #[cfg(test)]
 mod tests {
-    use super::{extract_text, extract_text_within, strip_html_tags};
+    use super::{extract_text, extract_text_within, free_destination_path, strip_html_tags};
     use std::path::PathBuf;
 
     fn temp_dir(label: &str) -> PathBuf {
@@ -264,6 +280,30 @@ mod tests {
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).unwrap();
         dir
+    }
+
+    /// The one destination-naming rule both import paths now share, including
+    /// the case that used to come out as `book-1.` with a trailing dot.
+    #[test]
+    fn a_second_copy_of_a_book_is_numbered_and_never_left_ending_in_a_dot() {
+        let dir = temp_dir("dest");
+
+        // Nothing there yet: the file keeps its own name.
+        let src = dir.join("Institutes.epub");
+        assert_eq!(free_destination_path(&dir, &src).unwrap(), dir.join("Institutes.epub"));
+
+        // Taken once, then twice.
+        std::fs::write(dir.join("Institutes.epub"), b"x").unwrap();
+        assert_eq!(free_destination_path(&dir, &src).unwrap(), dir.join("Institutes-1.epub"));
+        std::fs::write(dir.join("Institutes-1.epub"), b"x").unwrap();
+        assert_eq!(free_destination_path(&dir, &src).unwrap(), dir.join("Institutes-2.epub"));
+
+        // A file with no extension gets no trailing dot.
+        let bare = dir.join("book");
+        std::fs::write(dir.join("book"), b"x").unwrap();
+        assert_eq!(free_destination_path(&dir, &bare).unwrap(), dir.join("book-1"));
+
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     /// A valid one-page PDF whose font dictionary is whatever is given, with
