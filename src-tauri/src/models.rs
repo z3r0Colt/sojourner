@@ -778,12 +778,71 @@ pub struct HarmonyReading {
     pub label: String,
 }
 
+/// One harmony of the Gospels, as listed in the picker.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Harmony {
+    pub id: i64,
+    pub code: String,
+    pub title: String,
+    pub author: Option<String>,
+    pub year: Option<i64>,
+    pub description: Option<String>,
+    pub source_note: Option<String>,
+    pub section_count: i64,
+}
+
+/// A period a harmony groups its sections into -- Robertson's fourteen, from
+/// "The Sources of the Gospels" to the ascension. A flat harmony has none.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HarmonyPart {
+    pub id: i64,
+    pub sort_order: i64,
+    pub label: Option<String>,
+    pub title: String,
+}
+
+/// A harmonist's footnote on one section, and the essay it defers to when it
+/// does rather than settling the point in place.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HarmonySectionNote {
+    pub marker: String,
+    pub text: String,
+    pub essay_number: Option<i64>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HarmonySection {
     pub id: i64,
     pub sort_order: i64,
+    /// The harmony's own label for the section, where it numbers them, which
+    /// need not be the ordinal -- Robertson has a 128a and a 128b.
+    pub number: Option<String>,
     pub title: String,
+    /// Place and approximate date, as the harmonist printed it.
+    pub headnote: Option<String>,
+    pub part_id: Option<i64>,
     pub readings: Vec<HarmonyReading>,
+    pub notes: Vec<HarmonySectionNote>,
+}
+
+/// One of the longer discussions appended to a harmony, reached from the
+/// section footnotes that cite it.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HarmonyEssay {
+    pub number: i64,
+    pub title: String,
+    pub body: String,
+}
+
+/// Everything one harmony needs to render, in a single round trip -- the
+/// largest is Robertson's at 185 sections, 434 readings and 14 essays, which
+/// is small enough that paging it would cost more than it saved.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HarmonyDetail {
+    pub harmony: Harmony,
+    pub parts: Vec<HarmonyPart>,
+    pub sections: Vec<HarmonySection>,
+    pub essays: Vec<HarmonyEssay>,
 }
 
 #[derive(Debug, Clone, Serialize)]

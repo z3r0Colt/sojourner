@@ -81,6 +81,10 @@ interface UiState {
    * app's theme, font and size. Off by default: most books are typeset for
    * black on white and are hard to read in a dark theme. */
   epubUseBookStyles: boolean;
+  /** Which harmony of the Gospels the harmony view opens on, by code. Null
+   * means the first bundled one. Harmonists divide and date the life of
+   * Christ differently, so a reader who has settled on one keeps it. */
+  harmonyCode: string | null;
   setTheme: (t: Theme) => void;
   setReduceMotion: (on: boolean) => void;
   setAccentSource: (s: AccentSource) => void;
@@ -100,6 +104,7 @@ interface UiState {
   setPulpitFontSize: (px: number) => void;
   setEpubWidth: (w: EpubWidth) => void;
   setEpubUseBookStyles: (on: boolean) => void;
+  setHarmonyCode: (code: string | null) => void;
 }
 
 const stored = (() => {
@@ -140,6 +145,12 @@ export const useUiStore = create<UiState>((set) => ({
   pulpitFontSize: stored.pulpitFontSize ?? 28,
   epubWidth: stored.epubWidth ?? "medium",
   epubUseBookStyles: stored.epubUseBookStyles ?? false,
+  harmonyCode: stored.harmonyCode ?? null,
+
+  setHarmonyCode: (harmonyCode) => {
+    set({ harmonyCode });
+    persist({ harmonyCode });
+  },
 
   setEpubWidth: (epubWidth) => {
     persist({ epubWidth });

@@ -30,7 +30,8 @@ import type {
   ReadingPlanProgress,
   PlanReadingInput,
   ScheduleEntry,
-  HarmonySection,
+  Harmony,
+  HarmonyDetail,
   RedLetterRange,
   BackupInfo,
   Stats,
@@ -458,7 +459,8 @@ export const api = {
   setReadingPlanSchedule: (planCode: string, entries: ScheduleEntry[]) =>
     invoke<ReadingPlanProgress>("set_reading_plan_schedule", { planCode, entries }),
 
-  listHarmonySections: () => invoke<HarmonySection[]>("list_harmony_sections"),
+  listHarmonies: () => invoke<Harmony[]>("list_harmonies"),
+  getHarmony: (code: string | null) => invoke<HarmonyDetail | null>("get_harmony", { code }),
 
   getRedLetterRanges: (bookId: number, chapter: number) =>
     invoke<RedLetterRange[]>("get_red_letter_ranges", { bookId, chapter }),

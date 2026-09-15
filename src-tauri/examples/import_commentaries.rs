@@ -15,7 +15,7 @@ fn main() -> anyhow::Result<()> {
         dirs
     };
 
-    let app_data_dir = PathBuf::from(std::env::var("APPDATA").unwrap()).join("com.shadesinc.biblestudy");
+    let app_data_dir = PathBuf::from(std::env::var("APPDATA").unwrap()).join("com.sojourner.study");
     let content_db_path = app_data_dir.join("content.db");
     if !content_db_path.exists() {
         db::open_content_db(&content_db_path)?;

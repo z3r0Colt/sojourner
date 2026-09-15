@@ -17,14 +17,14 @@
 //   npm run library:collect
 //
 // With no arguments it reads this machine's own library:
-//   %APPDATA%\com.shadesinc.biblestudy\{resources,user.db}
+//   %APPDATA%\com.sojourner.study\{resources,user.db}
 
 use rusqlite::Connection;
 use std::path::PathBuf;
 use tauri_app_lib::library;
 
 fn app_data_dir() -> Option<PathBuf> {
-    std::env::var_os("APPDATA").map(|d| PathBuf::from(d).join("com.shadesinc.biblestudy"))
+    std::env::var_os("APPDATA").map(|d| PathBuf::from(d).join("com.sojourner.study"))
 }
 
 fn main() -> anyhow::Result<()> {

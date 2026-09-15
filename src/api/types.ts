@@ -391,11 +391,58 @@ export interface HarmonyReading {
   label: string;
 }
 
+/** One bundled harmony of the Gospels, as listed in the picker. */
+export interface Harmony {
+  id: number;
+  code: string;
+  title: string;
+  author: string | null;
+  year: number | null;
+  description: string | null;
+  source_note: string | null;
+  section_count: number;
+}
+
+/** A period a harmony groups its sections into. A flat harmony has none. */
+export interface HarmonyPart {
+  id: number;
+  sort_order: number;
+  label: string | null;
+  title: string;
+}
+
+/** A harmonist's footnote on one section, and the essay it defers to. */
+export interface HarmonySectionNote {
+  marker: string;
+  text: string;
+  essay_number: number | null;
+}
+
 export interface HarmonySection {
   id: number;
   sort_order: number;
+  /** The harmony's own label, which need not be the ordinal (Robertson has a 128a). */
+  number: string | null;
   title: string;
+  /** Place and approximate date, as the harmonist printed it. */
+  headnote: string | null;
+  part_id: number | null;
   readings: HarmonyReading[];
+  notes: HarmonySectionNote[];
+}
+
+/** One of the longer discussions appended to a harmony. */
+export interface HarmonyEssay {
+  number: number;
+  title: string;
+  body: string;
+}
+
+export interface HarmonyDetail {
+  harmony: Harmony;
+  parts: HarmonyPart[];
+  sections: HarmonySection[];
+  essays: HarmonyEssay[];
 }
 
 export interface ConcordanceEntry {

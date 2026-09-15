@@ -1223,8 +1223,17 @@ export function useBulkImportResources() {
   });
 }
 
-export function useHarmonySections() {
-  return useQuery({ queryKey: ["harmonySections"], queryFn: api.listHarmonySections, staleTime: Infinity });
+export function useHarmonies() {
+  return useQuery({ queryKey: ["harmonies"], queryFn: api.listHarmonies, staleTime: Infinity });
+}
+
+/** One harmony whole. `code` of null asks for the first in picker order. */
+export function useHarmony(code: string | null) {
+  return useQuery({
+    queryKey: ["harmony", code],
+    queryFn: () => api.getHarmony(code),
+    staleTime: Infinity,
+  });
 }
 
 export function useRedLetterRanges(bookId: number | null, chapter: number | null) {

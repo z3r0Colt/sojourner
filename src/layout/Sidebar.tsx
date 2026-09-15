@@ -48,38 +48,47 @@ interface NavItem {
   badge?: { count: number; title: string };
 }
 
-/** Three groups, ordered by how a study session usually flows: read the
- * text, consult the study tools, then work in your own material. */
+/** The home screen, pinned above the groups: it is a dashboard over all of
+ * them rather than a peer of any one. */
+const TODAY: NavItem = { to: "/today", label: "Today", icon: Sunrise };
+
+/** Four groups, each answering "why is this here?" rather than "whose is it?":
+ * the text itself, works someone else wrote, work you wrote, and the practices
+ * you keep daily. */
 const GROUPS: { label: string; items: NavItem[] }[] = [
   {
-    label: "Read",
+    label: "Scripture",
     items: [
-      { to: "/today", label: "Today", icon: Sunrise },
       { to: "/", label: "Bible", icon: BookOpen, end: true },
+      { to: "/harmony", label: "Harmony", icon: Columns3 },
     ],
   },
   {
-    label: "Study",
+    label: "Library",
     items: [
       { to: "/westminster", label: "Confessions", icon: ScrollText },
       { to: "/lexicon", label: "Lexicon", icon: Languages },
       { to: "/dictionary", label: "Dictionary", icon: BookA },
       { to: "/encyclopedia", label: "Encyclopedia", icon: BookMarked },
       { to: "/atlas", label: "Atlas", icon: MapPin },
-      { to: "/harmony", label: "Harmony", icon: Columns3 },
+      { to: "/resources", label: "Resources", icon: Library },
     ],
   },
   {
-    label: "My study",
+    label: "Notebook",
     items: [
       { to: "/notes", label: "Notes", icon: NotebookPen },
       { to: "/highlights", label: "Highlights", icon: Highlighter },
-      { to: "/prayer", label: "Prayer", icon: HeartHandshake },
-      { to: "/memory", label: "Memory", icon: Brain },
-      { to: "/plans", label: "Reading plans", icon: CalendarCheck },
       { to: "/sermons", label: "Sermons", icon: Mic },
       { to: "/illustrations", label: "Illustrations", icon: Lightbulb },
-      { to: "/resources", label: "Resources", icon: Library },
+    ],
+  },
+  {
+    label: "Devotion",
+    items: [
+      { to: "/plans", label: "Reading plans", icon: CalendarCheck },
+      { to: "/prayer", label: "Prayer", icon: HeartHandshake },
+      { to: "/memory", label: "Memory", icon: Brain },
     ],
   },
 ];
@@ -162,6 +171,9 @@ export function Sidebar() {
       </Link>
 
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto py-1">
+        <div className={cx("flex flex-col", collapsed && "items-center")}>
+          <NavLink item={TODAY} collapsed={collapsed} />
+        </div>
         {GROUPS.map((g) => (
           <div key={g.label} className={cx("flex flex-col gap-0.5", collapsed && "items-center")}>
             {!collapsed ? (
