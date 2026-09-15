@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSermon, useUpdateSermon } from "../../api/queries";
 import { useNoteRefExtractor } from "../../lib/noteLinks";
+import { registerCloseFlush } from "../../lib/appClose";
 import { derivePassages, passageBlocks, sourceBlocks } from "./editor/documentModel";
 import type { PassageRef, Sermon, SermonInput, SermonStatus } from "../../api/types";
 
@@ -94,7 +95,7 @@ export function useSermonDraft(sermonId: number): SermonDraftHandle {
   const timerRef = useRef<number | null>(null);
   const loadedIdRef = useRef<number | null>(null);
   const seenUpdatedAtRef = useRef<string | null>(null);
-  const saveRef = useRef<() => void>(() => {});
+  const saveRef = useRef<() => void | Promise<void>>(() => {});
 
   // The server copy seeds the draft, and seeds it again whenever the stored
   // sermon has moved on -- another pane saved it, a series was deleted out
@@ -114,7 +115,10 @@ export function useSermonDraft(sermonId: number): SermonDraftHandle {
     setDraft(next);
   }, [sermon]);
 
-  const save = useCallback(() => {
+  // Returns a promise so the close handshake can wait for the write to land
+  // rather than merely starting it -- see `lib/appClose.ts`. Nothing that
+  // only wants to start a save has to await it.
+  const save = useCallback(async (): Promise<void> => {
     const current = draftRef.current;
     if (!current || !dirtyRef.current || loadedIdRef.current == null) return;
     dirtyRef.current = false;
@@ -148,7 +152,10 @@ export function useSermonDraft(sermonId: number): SermonDraftHandle {
       sources: sourceBlocks(current.body),
     };
     savingRef.current = true;
-    update.mutate(
+    // `mutateAsync` rather than `mutate` for the promise alone; the callbacks
+    // are unchanged. It rejects on failure, which `onError` has already dealt
+    // with, so the rejection is swallowed here rather than left unhandled.
+    await update.mutateAsync(
       { sermonId: loadedIdRef.current, input },
       {
         onSuccess: (saved) => {
@@ -168,7 +175,7 @@ export function useSermonDraft(sermonId: number): SermonDraftHandle {
           savingRef.current = false;
         },
       },
-    );
+    ).catch(() => {});
   }, [extractRefs, update]);
 
   saveRef.current = save;
@@ -192,14 +199,22 @@ export function useSermonDraft(sermonId: number): SermonDraftHandle {
   // Flushing on the way out, in every direction: the pane closing or the
   // sermon changing (the cleanup), the window losing focus, and the app
   // being closed.
+  //
+  // `beforeunload` is kept for the unload paths Rust does not mediate (a
+  // reload, say), but it is no longer what makes the promise at the top of
+  // this file true: it starts a save and returns, and the webview can be gone
+  // before the write lands. `registerCloseFlush` is the one the window
+  // actually waits on.
   useEffect(() => {
-    const onBlur = () => saveRef.current();
-    const onBeforeUnload = () => saveRef.current();
+    const onBlur = () => void saveRef.current();
+    const onBeforeUnload = () => void saveRef.current();
     window.addEventListener("blur", onBlur);
     window.addEventListener("beforeunload", onBeforeUnload);
+    const unregister = registerCloseFlush(() => saveRef.current());
     return () => {
       window.removeEventListener("blur", onBlur);
       window.removeEventListener("beforeunload", onBeforeUnload);
+      unregister();
     };
   }, []);
 

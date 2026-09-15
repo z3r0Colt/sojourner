@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, Compass, Keyboard, Search } from "lucide-react";
 import { useBooks, useBookmarks, useCreateBookmark, useDeleteBookmark, useTranslations } from "../api/queries";
 import { useUiStore } from "../state/uiStore";
@@ -23,6 +23,7 @@ import { toast } from "../components/ui/toast";
 import { stepChapter } from "../features/reading/chapterStep";
 import { resetZoom, zoomActionFor, zoomText } from "../features/reading/zoom";
 import { isTypingTarget } from "../lib/keyboard";
+import { installCloseHandshake } from "../lib/appClose";
 import { useNoteRefsBackfill } from "../features/notes/useNoteRefsBackfill";
 import { useLandingPageOnLaunch } from "../features/today/landing";
 import { useBackupReminder } from "../features/settings/backupReminder";
@@ -98,66 +99,79 @@ export function AppShell() {
     setDistractionFreeMode(false);
   }
 
-  useEffect(() => {
-    function onKeyDown(e: KeyboardEvent) {
-      const ctrl = e.ctrlKey || e.metaKey;
-      const key = e.key.toLowerCase();
-      const zoom = zoomActionFor(e);
-      if (zoom) {
-        // Text size is global, so this lives in the shell (and must beat the
-        // WebView's own page zoom, hence preventDefault).
+  // The handler is rebuilt on every render (it closes over
+  // `distractionFreeMode` and `books`), but the listener must not be: this is
+  // the app's hottest component, and attaching and detaching a window
+  // `keydown` on every render of it is work for nothing. Held in a ref and
+  // read through one stable listener instead -- the same shape
+  // `sermonDraft.ts` uses for its save.
+  const onKeyDownRef = useRef<(e: KeyboardEvent) => void>(() => {});
+  onKeyDownRef.current = function onKeyDown(e: KeyboardEvent) {
+    const ctrl = e.ctrlKey || e.metaKey;
+    const key = e.key.toLowerCase();
+    const zoom = zoomActionFor(e);
+    if (zoom) {
+      // Text size is global, so this lives in the shell (and must beat the
+      // WebView's own page zoom, hence preventDefault).
+      e.preventDefault();
+      if (zoom === "reset") resetZoom();
+      else zoomText(zoom === "in" ? 1 : -1);
+    } else if (ctrl && key === "k") {
+      e.preventDefault();
+      setPaletteOpen(true);
+    } else if (ctrl && key === "f") {
+      e.preventDefault();
+      setSearchOpen(true);
+    } else if (ctrl && key === "/") {
+      e.preventDefault();
+      setShortcutsOpen((v) => !v);
+    } else if (ctrl && key === "b" && !isTypingTarget(e.target)) {
+      e.preventDefault();
+      addOrFocusStudyPane();
+    } else if (ctrl && key === "d" && !isTypingTarget(e.target)) {
+      e.preventDefault();
+      toggleBookmarkHere();
+    } else if (ctrl && (key === "[" || key === "]") && !isTypingTarget(e.target)) {
+      e.preventDefault();
+      const bible = resolveBiblePane(useWorkspaceStore.getState());
+      if (!books || !bible) return;
+      const next = stepChapter(books, { bookId: bible.params.bookId, chapter: bible.params.chapter }, key === "]" ? 1 : -1);
+      if (next) openPassage(next, { target: bible.id });
+    } else if (ctrl && !e.altKey && e.key >= "1" && e.key <= "4" && !isTypingTarget(e.target)) {
+      const s = useWorkspaceStore.getState();
+      const pane = s.panes[Number(e.key) - 1];
+      if (pane) {
         e.preventDefault();
-        if (zoom === "reset") resetZoom();
-        else zoomText(zoom === "in" ? 1 : -1);
-      } else if (ctrl && key === "k") {
-        e.preventDefault();
-        setPaletteOpen(true);
-      } else if (ctrl && key === "f") {
-        e.preventDefault();
-        setSearchOpen(true);
-      } else if (ctrl && key === "/") {
-        e.preventDefault();
-        setShortcutsOpen((v) => !v);
-      } else if (ctrl && key === "b" && !isTypingTarget(e.target)) {
-        e.preventDefault();
-        addOrFocusStudyPane();
-      } else if (ctrl && key === "d" && !isTypingTarget(e.target)) {
-        e.preventDefault();
-        toggleBookmarkHere();
-      } else if (ctrl && (key === "[" || key === "]") && !isTypingTarget(e.target)) {
-        e.preventDefault();
-        const bible = resolveBiblePane(useWorkspaceStore.getState());
-        if (!books || !bible) return;
-        const next = stepChapter(books, { bookId: bible.params.bookId, chapter: bible.params.chapter }, key === "]" ? 1 : -1);
-        if (next) openPassage(next, { target: bible.id });
-      } else if (ctrl && !e.altKey && e.key >= "1" && e.key <= "4" && !isTypingTarget(e.target)) {
-        const s = useWorkspaceStore.getState();
-        const pane = s.panes[Number(e.key) - 1];
-        if (pane) {
-          e.preventDefault();
-          s.focusPane(pane.id);
-        }
-      } else if (e.key === "F11") {
-        e.preventDefault();
-        if (distractionFreeMode) exitFocusMode();
-        else enterFocusMode();
-      } else if (e.key === "Escape" && distractionFreeMode) {
-        exitFocusMode();
-      } else if (e.key === "Escape" && useWorkspaceStore.getState().maximizedPaneId && !isTypingTarget(e.target)) {
-        // A pane maximized from its header (double-click) restores on Escape;
-        // dialogs and menus stop the key before it gets here.
-        useWorkspaceStore.getState().setMaximized(null);
-      } else if (e.altKey && e.key === "ArrowLeft") {
-        e.preventDefault();
-        goBack();
-      } else if (e.altKey && e.key === "ArrowRight") {
-        e.preventDefault();
-        goForward();
+        s.focusPane(pane.id);
       }
+    } else if (e.key === "F11") {
+      e.preventDefault();
+      if (distractionFreeMode) exitFocusMode();
+      else enterFocusMode();
+    } else if (e.key === "Escape" && distractionFreeMode) {
+      exitFocusMode();
+    } else if (e.key === "Escape" && useWorkspaceStore.getState().maximizedPaneId && !isTypingTarget(e.target)) {
+      // A pane maximized from its header (double-click) restores on Escape;
+      // dialogs and menus stop the key before it gets here.
+      useWorkspaceStore.getState().setMaximized(null);
+    } else if (e.altKey && e.key === "ArrowLeft") {
+      e.preventDefault();
+      goBack();
+    } else if (e.altKey && e.key === "ArrowRight") {
+      e.preventDefault();
+      goForward();
     }
+  };
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => onKeyDownRef.current(e);
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  });
+  }, []);
+
+  // Closing the window is a handshake now, so that a manuscript's last save
+  // finishes before the webview goes -- see `lib/appClose.ts`.
+  useEffect(() => installCloseHandshake(), []);
 
   return (
     <div className="flex h-screen overflow-hidden bg-bg text-ink">

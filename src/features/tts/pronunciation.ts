@@ -117,6 +117,13 @@ export function loadPronunciationLexicon(): Promise<Map<string, string>> {
         return map;
       })
       .catch(() => {
+        // Clearing `loading` is what lets the next call try again. Left
+        // latched, one transient failure meant read-aloud mispronounced every
+        // proper noun for the rest of the session, with no way back short of
+        // restarting -- `applyOverrides` was the only other thing that reset
+        // it. `waitForVoices` in ttsEngine deliberately latches instead, and
+        // its comment says why: this one is the opposite case.
+        loading = null;
         lexicon = new Map();
         return lexicon;
       });
