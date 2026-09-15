@@ -1,0 +1,7116 @@
+{
+ "code": "townsend_nt",
+ "title": "The New Testament in Chronological Order (Townsend)",
+ "description": "George Townsend's arrangement of 1826, the companion to his Old Testament: the New Testament re-ordered so that it reads as one connected history, with the four Gospels harmonised into a single life of Christ -- each event read in every Gospel that records it -- and every epistle set at the point in the Acts where Paul or Peter or James wrote it. One of Townsend's own sections a day.",
+ "length_days": 388,
+ "days": [
+  {
+   "day": 1,
+   "readings": [
+    {
+     "book": "Mark",
+     "chapter_start": 1,
+     "verse_start": 1,
+     "chapter_end": 1,
+     "verse_end": 1,
+     "label": "Mark 1:1"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 1,
+     "verse_start": 1,
+     "chapter_end": 1,
+     "verse_end": 4,
+     "label": "Luke 1:1-4"
+    }
+   ]
+  },
+  {
+   "day": 2,
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 1,
+     "verse_start": 1,
+     "chapter_end": 1,
+     "verse_end": 18,
+     "label": "John 1:1-18"
+    }
+   ]
+  },
+  {
+   "day": 3,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 1,
+     "verse_start": 5,
+     "chapter_end": 1,
+     "verse_end": 25,
+     "label": "Luke 1:5-25"
+    }
+   ]
+  },
+  {
+   "day": 4,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 1,
+     "verse_start": 26,
+     "chapter_end": 1,
+     "verse_end": 38,
+     "label": "Luke 1:26-38"
+    }
+   ]
+  },
+  {
+   "day": 5,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 1,
+     "verse_start": 39,
+     "chapter_end": 1,
+     "verse_end": 56,
+     "label": "Luke 1:39-56"
+    }
+   ]
+  },
+  {
+   "day": 6,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 1,
+     "verse_start": 57,
+     "chapter_end": 1,
+     "verse_end": 80,
+     "label": "Luke 1:57-80"
+    }
+   ]
+  },
+  {
+   "day": 7,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 1,
+     "verse_start": 18,
+     "chapter_end": 1,
+     "verse_end": 25,
+     "label": "Matthew 1:18-25"
+    }
+   ]
+  },
+  {
+   "day": 8,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 2,
+     "verse_start": 1,
+     "chapter_end": 2,
+     "verse_end": 7,
+     "label": "Luke 2:1-7"
+    }
+   ]
+  },
+  {
+   "day": 9,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 1,
+     "verse_start": 1,
+     "chapter_end": 1,
+     "verse_end": 17,
+     "label": "Matthew 1:1-17"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 3,
+     "verse_start": 23,
+     "chapter_end": 3,
+     "verse_end": 38,
+     "label": "Luke 3:23-38"
+    }
+   ]
+  },
+  {
+   "day": 10,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 2,
+     "verse_start": 8,
+     "chapter_end": 2,
+     "verse_end": 20,
+     "label": "Luke 2:8-20"
+    }
+   ]
+  },
+  {
+   "day": 11,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 2,
+     "verse_start": 21,
+     "chapter_end": 2,
+     "verse_end": 21,
+     "label": "Luke 2:21"
+    }
+   ]
+  },
+  {
+   "day": 12,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 2,
+     "verse_start": 22,
+     "chapter_end": 2,
+     "verse_end": 39,
+     "label": "Luke 2:22-39"
+    }
+   ]
+  },
+  {
+   "day": 13,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 2,
+     "verse_start": 1,
+     "chapter_end": 2,
+     "verse_end": 12,
+     "label": "Matthew 2:1-12"
+    }
+   ]
+  },
+  {
+   "day": 14,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 2,
+     "verse_start": 13,
+     "chapter_end": 2,
+     "verse_end": 15,
+     "label": "Matthew 2:13-15"
+    }
+   ]
+  },
+  {
+   "day": 15,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 2,
+     "verse_start": 16,
+     "chapter_end": 2,
+     "verse_end": 18,
+     "label": "Matthew 2:16-18"
+    }
+   ]
+  },
+  {
+   "day": 16,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 2,
+     "verse_start": 19,
+     "chapter_end": 2,
+     "verse_end": 23,
+     "label": "Matthew 2:19-23"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 2,
+     "verse_start": 40,
+     "chapter_end": 2,
+     "verse_end": 40,
+     "label": "Luke 2:40"
+    }
+   ]
+  },
+  {
+   "day": 17,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 2,
+     "verse_start": 41,
+     "chapter_end": 2,
+     "verse_end": 52,
+     "label": "Luke 2:41-52"
+    }
+   ]
+  },
+  {
+   "day": 18,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 3,
+     "verse_start": 1,
+     "chapter_end": 3,
+     "verse_end": 12,
+     "label": "Matthew 3:1-12"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 1,
+     "verse_start": 2,
+     "chapter_end": 1,
+     "verse_end": 8,
+     "label": "Mark 1:2-8"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 3,
+     "verse_start": 1,
+     "chapter_end": 3,
+     "verse_end": 18,
+     "label": "Luke 3:1-18"
+    }
+   ]
+  },
+  {
+   "day": 19,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 3,
+     "verse_start": 13,
+     "chapter_end": 3,
+     "verse_end": 17,
+     "label": "Matthew 3:13-17"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 1,
+     "verse_start": 9,
+     "chapter_end": 1,
+     "verse_end": 11,
+     "label": "Mark 1:9-11"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 3,
+     "verse_start": 21,
+     "chapter_end": 3,
+     "verse_end": 23,
+     "label": "Luke 3:21-23"
+    }
+   ]
+  },
+  {
+   "day": 20,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 4,
+     "verse_start": 1,
+     "chapter_end": 4,
+     "verse_end": 11,
+     "label": "Matthew 4:1-11"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 1,
+     "verse_start": 12,
+     "chapter_end": 1,
+     "verse_end": 13,
+     "label": "Mark 1:12-13"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 4,
+     "verse_start": 1,
+     "chapter_end": 4,
+     "verse_end": 13,
+     "label": "Luke 4:1-13"
+    }
+   ]
+  },
+  {
+   "day": 21,
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 1,
+     "verse_start": 19,
+     "chapter_end": 1,
+     "verse_end": 34,
+     "label": "John 1:19-34"
+    }
+   ]
+  },
+  {
+   "day": 22,
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 1,
+     "verse_start": 35,
+     "chapter_end": 1,
+     "verse_end": 51,
+     "label": "John 1:35-51"
+    }
+   ]
+  },
+  {
+   "day": 23,
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 2,
+     "verse_start": 1,
+     "chapter_end": 2,
+     "verse_end": 11,
+     "label": "John 2:1-11"
+    }
+   ]
+  },
+  {
+   "day": 24,
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 2,
+     "verse_start": 12,
+     "chapter_end": 2,
+     "verse_end": 12,
+     "label": "John 2:12"
+    }
+   ]
+  },
+  {
+   "day": 25,
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 2,
+     "verse_start": 13,
+     "chapter_end": 2,
+     "verse_end": 25,
+     "label": "John 2:13-25"
+    }
+   ]
+  },
+  {
+   "day": 26,
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 3,
+     "verse_start": 1,
+     "chapter_end": 3,
+     "verse_end": 21,
+     "label": "John 3:1-21"
+    }
+   ]
+  },
+  {
+   "day": 27,
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 3,
+     "verse_start": 22,
+     "chapter_end": 3,
+     "verse_end": 36,
+     "label": "John 3:22-36"
+    }
+   ]
+  },
+  {
+   "day": 28,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 14,
+     "verse_start": 3,
+     "chapter_end": 14,
+     "verse_end": 5,
+     "label": "Matthew 14:3-5"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 6,
+     "verse_start": 17,
+     "chapter_end": 6,
+     "verse_end": 20,
+     "label": "Mark 6:17-20"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 3,
+     "verse_start": 19,
+     "chapter_end": 3,
+     "verse_end": 20,
+     "label": "Luke 3:19-20"
+    }
+   ]
+  },
+  {
+   "day": 29,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 4,
+     "verse_start": 12,
+     "chapter_end": 4,
+     "verse_end": 17,
+     "label": "Matthew 4:12-17"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 1,
+     "verse_start": 14,
+     "chapter_end": 1,
+     "verse_end": 15,
+     "label": "Mark 1:14-15"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 4,
+     "verse_start": 14,
+     "chapter_end": 4,
+     "verse_end": 15,
+     "label": "Luke 4:14-15"
+    }
+   ]
+  },
+  {
+   "day": 30,
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 4,
+     "verse_start": 1,
+     "chapter_end": 4,
+     "verse_end": 42,
+     "label": "John 4:1-42"
+    }
+   ]
+  },
+  {
+   "day": 31,
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 4,
+     "verse_start": 43,
+     "chapter_end": 4,
+     "verse_end": 54,
+     "label": "John 4:43-54"
+    }
+   ]
+  },
+  {
+   "day": 32,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 4,
+     "verse_start": 16,
+     "chapter_end": 4,
+     "verse_end": 30,
+     "label": "Luke 4:16-30"
+    }
+   ]
+  },
+  {
+   "day": 33,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 4,
+     "verse_start": 31,
+     "chapter_end": 4,
+     "verse_end": 32,
+     "label": "Luke 4:31-32"
+    }
+   ]
+  },
+  {
+   "day": 34,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 4,
+     "verse_start": 18,
+     "chapter_end": 4,
+     "verse_end": 22,
+     "label": "Matthew 4:18-22"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 1,
+     "verse_start": 16,
+     "chapter_end": 1,
+     "verse_end": 20,
+     "label": "Mark 1:16-20"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 5,
+     "verse_start": 1,
+     "chapter_end": 5,
+     "verse_end": 11,
+     "label": "Luke 5:1-11"
+    }
+   ]
+  },
+  {
+   "day": 35,
+   "readings": [
+    {
+     "book": "Mark",
+     "chapter_start": 1,
+     "verse_start": 21,
+     "chapter_end": 1,
+     "verse_end": 28,
+     "label": "Mark 1:21-28"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 4,
+     "verse_start": 33,
+     "chapter_end": 4,
+     "verse_end": 37,
+     "label": "Luke 4:33-37"
+    }
+   ]
+  },
+  {
+   "day": 36,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 8,
+     "verse_start": 14,
+     "chapter_end": 8,
+     "verse_end": 15,
+     "label": "Matthew 8:14-15"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 1,
+     "verse_start": 29,
+     "chapter_end": 1,
+     "verse_end": 31,
+     "label": "Mark 1:29-31"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 4,
+     "verse_start": 38,
+     "chapter_end": 4,
+     "verse_end": 39,
+     "label": "Luke 4:38-39"
+    }
+   ]
+  },
+  {
+   "day": 37,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 4,
+     "verse_start": 23,
+     "chapter_end": 4,
+     "verse_end": 25,
+     "label": "Matthew 4:23-25"
+    },
+    {
+     "book": "Matthew",
+     "chapter_start": 8,
+     "verse_start": 16,
+     "chapter_end": 8,
+     "verse_end": 17,
+     "label": "Matthew 8:16-17"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 1,
+     "verse_start": 32,
+     "chapter_end": 1,
+     "verse_end": 39,
+     "label": "Mark 1:32-39"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 4,
+     "verse_start": 40,
+     "chapter_end": 4,
+     "verse_end": 44,
+     "label": "Luke 4:40-44"
+    }
+   ]
+  },
+  {
+   "day": 38,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 8,
+     "verse_start": 2,
+     "chapter_end": 8,
+     "verse_end": 4,
+     "label": "Matthew 8:2-4"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 1,
+     "verse_start": 40,
+     "chapter_end": 1,
+     "verse_end": 45,
+     "label": "Mark 1:40-45"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 5,
+     "verse_start": 12,
+     "chapter_end": 5,
+     "verse_end": 16,
+     "label": "Luke 5:12-16"
+    }
+   ]
+  },
+  {
+   "day": 39,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 9,
+     "verse_start": 2,
+     "chapter_end": 9,
+     "verse_end": 8,
+     "label": "Matthew 9:2-8"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 2,
+     "verse_start": 1,
+     "chapter_end": 2,
+     "verse_end": 12,
+     "label": "Mark 2:1-12"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 5,
+     "verse_start": 17,
+     "chapter_end": 5,
+     "verse_end": 26,
+     "label": "Luke 5:17-26"
+    }
+   ]
+  },
+  {
+   "day": 40,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 9,
+     "verse_start": 9,
+     "chapter_end": 9,
+     "verse_end": 9,
+     "label": "Matthew 9:9"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 2,
+     "verse_start": 13,
+     "chapter_end": 2,
+     "verse_end": 14,
+     "label": "Mark 2:13-14"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 5,
+     "verse_start": 27,
+     "chapter_end": 5,
+     "verse_end": 28,
+     "label": "Luke 5:27-28"
+    }
+   ]
+  },
+  {
+   "day": 41,
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 5,
+     "verse_start": 1,
+     "chapter_end": 5,
+     "verse_end": 15,
+     "label": "John 5:1-15"
+    }
+   ]
+  },
+  {
+   "day": 42,
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 5,
+     "verse_start": 16,
+     "chapter_end": 5,
+     "verse_end": 47,
+     "label": "John 5:16-47"
+    }
+   ]
+  },
+  {
+   "day": 43,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 12,
+     "verse_start": 1,
+     "chapter_end": 12,
+     "verse_end": 8,
+     "label": "Matthew 12:1-8"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 2,
+     "verse_start": 23,
+     "chapter_end": 2,
+     "verse_end": 28,
+     "label": "Mark 2:23-28"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 6,
+     "verse_start": 1,
+     "chapter_end": 6,
+     "verse_end": 5,
+     "label": "Luke 6:1-5"
+    }
+   ]
+  },
+  {
+   "day": 44,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 12,
+     "verse_start": 9,
+     "chapter_end": 12,
+     "verse_end": 14,
+     "label": "Matthew 12:9-14"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 3,
+     "verse_start": 1,
+     "chapter_end": 3,
+     "verse_end": 6,
+     "label": "Mark 3:1-6"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 6,
+     "verse_start": 6,
+     "chapter_end": 6,
+     "verse_end": 11,
+     "label": "Luke 6:6-11"
+    }
+   ]
+  },
+  {
+   "day": 45,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 12,
+     "verse_start": 15,
+     "chapter_end": 12,
+     "verse_end": 21,
+     "label": "Matthew 12:15-21"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 3,
+     "verse_start": 7,
+     "chapter_end": 3,
+     "verse_end": 12,
+     "label": "Mark 3:7-12"
+    }
+   ]
+  },
+  {
+   "day": 46,
+   "readings": [
+    {
+     "book": "Mark",
+     "chapter_start": 3,
+     "verse_start": 13,
+     "chapter_end": 3,
+     "verse_end": 19,
+     "label": "Mark 3:13-19"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 6,
+     "verse_start": 12,
+     "chapter_end": 6,
+     "verse_end": 19,
+     "label": "Luke 6:12-19"
+    }
+   ]
+  },
+  {
+   "day": 47,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 5,
+     "verse_start": null,
+     "chapter_end": 7,
+     "verse_end": null,
+     "label": "Matthew 5-7"
+    },
+    {
+     "book": "Matthew",
+     "chapter_start": 8,
+     "verse_start": 1,
+     "chapter_end": 8,
+     "verse_end": 1,
+     "label": "Matthew 8:1"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 6,
+     "verse_start": 20,
+     "chapter_end": 6,
+     "verse_end": 49,
+     "label": "Luke 6:20-49"
+    }
+   ]
+  },
+  {
+   "day": 48,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 8,
+     "verse_start": 5,
+     "chapter_end": 8,
+     "verse_end": 13,
+     "label": "Matthew 8:5-13"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 7,
+     "verse_start": 1,
+     "chapter_end": 7,
+     "verse_end": 10,
+     "label": "Luke 7:1-10"
+    }
+   ]
+  },
+  {
+   "day": 49,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 7,
+     "verse_start": 11,
+     "chapter_end": 7,
+     "verse_end": 18,
+     "label": "Luke 7:11-18"
+    }
+   ]
+  },
+  {
+   "day": 50,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 11,
+     "verse_start": 2,
+     "chapter_end": 11,
+     "verse_end": 6,
+     "label": "Matthew 11:2-6"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 7,
+     "verse_start": 19,
+     "chapter_end": 7,
+     "verse_end": 23,
+     "label": "Luke 7:19-23"
+    }
+   ]
+  },
+  {
+   "day": 51,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 11,
+     "verse_start": 7,
+     "chapter_end": 11,
+     "verse_end": 15,
+     "label": "Matthew 11:7-15"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 7,
+     "verse_start": 24,
+     "chapter_end": 7,
+     "verse_end": 30,
+     "label": "Luke 7:24-30"
+    }
+   ]
+  },
+  {
+   "day": 52,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 11,
+     "verse_start": 16,
+     "chapter_end": 11,
+     "verse_end": 24,
+     "label": "Matthew 11:16-24"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 7,
+     "verse_start": 31,
+     "chapter_end": 7,
+     "verse_end": 35,
+     "label": "Luke 7:31-35"
+    }
+   ]
+  },
+  {
+   "day": 53,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 11,
+     "verse_start": 25,
+     "chapter_end": 11,
+     "verse_end": 30,
+     "label": "Matthew 11:25-30"
+    }
+   ]
+  },
+  {
+   "day": 54,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 7,
+     "verse_start": 36,
+     "chapter_end": 7,
+     "verse_end": 50,
+     "label": "Luke 7:36-50"
+    }
+   ]
+  },
+  {
+   "day": 55,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 8,
+     "verse_start": 1,
+     "chapter_end": 8,
+     "verse_end": 3,
+     "label": "Luke 8:1-3"
+    }
+   ]
+  },
+  {
+   "day": 56,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 12,
+     "verse_start": 22,
+     "chapter_end": 12,
+     "verse_end": 45,
+     "label": "Matthew 12:22-45"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 3,
+     "verse_start": 19,
+     "chapter_end": 3,
+     "verse_end": 30,
+     "label": "Mark 3:19-30"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 11,
+     "verse_start": 14,
+     "chapter_end": 11,
+     "verse_end": 28,
+     "label": "Luke 11:14-28"
+    }
+   ]
+  },
+  {
+   "day": 57,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 12,
+     "verse_start": 46,
+     "chapter_end": 12,
+     "verse_end": 50,
+     "label": "Matthew 12:46-50"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 3,
+     "verse_start": 31,
+     "chapter_end": 3,
+     "verse_end": 35,
+     "label": "Mark 3:31-35"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 8,
+     "verse_start": 19,
+     "chapter_end": 8,
+     "verse_end": 21,
+     "label": "Luke 8:19-21"
+    }
+   ]
+  },
+  {
+   "day": 58,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 13,
+     "verse_start": 1,
+     "chapter_end": 13,
+     "verse_end": 9,
+     "label": "Matthew 13:1-9"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 4,
+     "verse_start": 1,
+     "chapter_end": 4,
+     "verse_end": 9,
+     "label": "Mark 4:1-9"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 8,
+     "verse_start": 4,
+     "chapter_end": 8,
+     "verse_end": 8,
+     "label": "Luke 8:4-8"
+    }
+   ]
+  },
+  {
+   "day": 59,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 13,
+     "verse_start": 10,
+     "chapter_end": 13,
+     "verse_end": 17,
+     "label": "Matthew 13:10-17"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 4,
+     "verse_start": 10,
+     "chapter_end": 4,
+     "verse_end": 12,
+     "label": "Mark 4:10-12"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 8,
+     "verse_start": 9,
+     "chapter_end": 8,
+     "verse_end": 10,
+     "label": "Luke 8:9-10"
+    }
+   ]
+  },
+  {
+   "day": 60,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 13,
+     "verse_start": 18,
+     "chapter_end": 13,
+     "verse_end": 23,
+     "label": "Matthew 13:18-23"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 4,
+     "verse_start": 13,
+     "chapter_end": 4,
+     "verse_end": 23,
+     "label": "Mark 4:13-23"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 8,
+     "verse_start": 9,
+     "chapter_end": 8,
+     "verse_end": 9,
+     "label": "Luke 8:9"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 8,
+     "verse_start": 11,
+     "chapter_end": 8,
+     "verse_end": 17,
+     "label": "Luke 8:11-17"
+    }
+   ]
+  },
+  {
+   "day": 61,
+   "readings": [
+    {
+     "book": "Mark",
+     "chapter_start": 4,
+     "verse_start": 24,
+     "chapter_end": 4,
+     "verse_end": 25,
+     "label": "Mark 4:24-25"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 8,
+     "verse_start": 18,
+     "chapter_end": 8,
+     "verse_end": 18,
+     "label": "Luke 8:18"
+    }
+   ]
+  },
+  {
+   "day": 62,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 13,
+     "verse_start": 24,
+     "chapter_end": 13,
+     "verse_end": 53,
+     "label": "Matthew 13:24-53"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 4,
+     "verse_start": 26,
+     "chapter_end": 4,
+     "verse_end": 34,
+     "label": "Mark 4:26-34"
+    }
+   ]
+  },
+  {
+   "day": 63,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 8,
+     "verse_start": 18,
+     "chapter_end": 8,
+     "verse_end": 27,
+     "label": "Matthew 8:18-27"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 4,
+     "verse_start": 35,
+     "chapter_end": 4,
+     "verse_end": 41,
+     "label": "Mark 4:35-41"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 8,
+     "verse_start": 22,
+     "chapter_end": 8,
+     "verse_end": 25,
+     "label": "Luke 8:22-25"
+    }
+   ]
+  },
+  {
+   "day": 64,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 8,
+     "verse_start": 28,
+     "chapter_end": 8,
+     "verse_end": 34,
+     "label": "Matthew 8:28-34"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 5,
+     "verse_start": 1,
+     "chapter_end": 5,
+     "verse_end": 20,
+     "label": "Mark 5:1-20"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 8,
+     "verse_start": 26,
+     "chapter_end": 8,
+     "verse_end": 40,
+     "label": "Luke 8:26-40"
+    }
+   ]
+  },
+  {
+   "day": 65,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 9,
+     "verse_start": 10,
+     "chapter_end": 9,
+     "verse_end": 17,
+     "label": "Matthew 9:10-17"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 2,
+     "verse_start": 15,
+     "chapter_end": 2,
+     "verse_end": 22,
+     "label": "Mark 2:15-22"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 5,
+     "verse_start": 29,
+     "chapter_end": 5,
+     "verse_end": 39,
+     "label": "Luke 5:29-39"
+    }
+   ]
+  },
+  {
+   "day": 66,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 9,
+     "verse_start": 1,
+     "chapter_end": 9,
+     "verse_end": 1,
+     "label": "Matthew 9:1"
+    },
+    {
+     "book": "Matthew",
+     "chapter_start": 9,
+     "verse_start": 18,
+     "chapter_end": 9,
+     "verse_end": 26,
+     "label": "Matthew 9:18-26"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 5,
+     "verse_start": 21,
+     "chapter_end": 5,
+     "verse_end": 43,
+     "label": "Mark 5:21-43"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 8,
+     "verse_start": 40,
+     "chapter_end": 8,
+     "verse_end": 56,
+     "label": "Luke 8:40-56"
+    }
+   ]
+  },
+  {
+   "day": 67,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 9,
+     "verse_start": 27,
+     "chapter_end": 9,
+     "verse_end": 31,
+     "label": "Matthew 9:27-31"
+    }
+   ]
+  },
+  {
+   "day": 68,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 9,
+     "verse_start": 32,
+     "chapter_end": 9,
+     "verse_end": 34,
+     "label": "Matthew 9:32-34"
+    }
+   ]
+  },
+  {
+   "day": 69,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 13,
+     "verse_start": 54,
+     "chapter_end": 13,
+     "verse_end": 58,
+     "label": "Matthew 13:54-58"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 6,
+     "verse_start": 1,
+     "chapter_end": 6,
+     "verse_end": 6,
+     "label": "Mark 6:1-6"
+    }
+   ]
+  },
+  {
+   "day": 70,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 9,
+     "verse_start": 35,
+     "chapter_end": 9,
+     "verse_end": 38,
+     "label": "Matthew 9:35-38"
+    }
+   ]
+  },
+  {
+   "day": 71,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 10,
+     "verse_start": null,
+     "chapter_end": 10,
+     "verse_end": null,
+     "label": "Matthew 10"
+    },
+    {
+     "book": "Matthew",
+     "chapter_start": 11,
+     "verse_start": 1,
+     "chapter_end": 11,
+     "verse_end": 1,
+     "label": "Matthew 11:1"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 6,
+     "verse_start": 7,
+     "chapter_end": 6,
+     "verse_end": 13,
+     "label": "Mark 6:7-13"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 9,
+     "verse_start": 1,
+     "chapter_end": 9,
+     "verse_end": 6,
+     "label": "Luke 9:1-6"
+    }
+   ]
+  },
+  {
+   "day": 72,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 14,
+     "verse_start": 1,
+     "chapter_end": 14,
+     "verse_end": 12,
+     "label": "Matthew 14:1-12"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 6,
+     "verse_start": 14,
+     "chapter_end": 6,
+     "verse_end": 29,
+     "label": "Mark 6:14-29"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 9,
+     "verse_start": 7,
+     "chapter_end": 9,
+     "verse_end": 9,
+     "label": "Luke 9:7-9"
+    }
+   ]
+  },
+  {
+   "day": 73,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 14,
+     "verse_start": 13,
+     "chapter_end": 14,
+     "verse_end": 14,
+     "label": "Matthew 14:13-14"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 6,
+     "verse_start": 30,
+     "chapter_end": 6,
+     "verse_end": 34,
+     "label": "Mark 6:30-34"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 9,
+     "verse_start": 10,
+     "chapter_end": 9,
+     "verse_end": 11,
+     "label": "Luke 9:10-11"
+    },
+    {
+     "book": "John",
+     "chapter_start": 6,
+     "verse_start": 1,
+     "chapter_end": 6,
+     "verse_end": 2,
+     "label": "John 6:1-2"
+    }
+   ]
+  },
+  {
+   "day": 74,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 14,
+     "verse_start": 15,
+     "chapter_end": 14,
+     "verse_end": 21,
+     "label": "Matthew 14:15-21"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 6,
+     "verse_start": 35,
+     "chapter_end": 6,
+     "verse_end": 44,
+     "label": "Mark 6:35-44"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 9,
+     "verse_start": 12,
+     "chapter_end": 9,
+     "verse_end": 17,
+     "label": "Luke 9:12-17"
+    },
+    {
+     "book": "John",
+     "chapter_start": 6,
+     "verse_start": 3,
+     "chapter_end": 6,
+     "verse_end": 14,
+     "label": "John 6:3-14"
+    }
+   ]
+  },
+  {
+   "day": 75,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 14,
+     "verse_start": 22,
+     "chapter_end": 14,
+     "verse_end": 23,
+     "label": "Matthew 14:22-23"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 6,
+     "verse_start": 45,
+     "chapter_end": 6,
+     "verse_end": 46,
+     "label": "Mark 6:45-46"
+    },
+    {
+     "book": "John",
+     "chapter_start": 6,
+     "verse_start": 15,
+     "chapter_end": 6,
+     "verse_end": 15,
+     "label": "John 6:15"
+    }
+   ]
+  },
+  {
+   "day": 76,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 14,
+     "verse_start": 24,
+     "chapter_end": 14,
+     "verse_end": 33,
+     "label": "Matthew 14:24-33"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 6,
+     "verse_start": 47,
+     "chapter_end": 6,
+     "verse_end": 52,
+     "label": "Mark 6:47-52"
+    },
+    {
+     "book": "John",
+     "chapter_start": 6,
+     "verse_start": 16,
+     "chapter_end": 6,
+     "verse_end": 21,
+     "label": "John 6:16-21"
+    }
+   ]
+  },
+  {
+   "day": 77,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 14,
+     "verse_start": 34,
+     "chapter_end": 14,
+     "verse_end": 36,
+     "label": "Matthew 14:34-36"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 6,
+     "verse_start": 53,
+     "chapter_end": 6,
+     "verse_end": 56,
+     "label": "Mark 6:53-56"
+    }
+   ]
+  },
+  {
+   "day": 78,
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 6,
+     "verse_start": 22,
+     "chapter_end": 6,
+     "verse_end": 71,
+     "label": "John 6:22-71"
+    },
+    {
+     "book": "John",
+     "chapter_start": 7,
+     "verse_start": 1,
+     "chapter_end": 7,
+     "verse_end": 1,
+     "label": "John 7:1"
+    }
+   ]
+  },
+  {
+   "day": 79,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 15,
+     "verse_start": 1,
+     "chapter_end": 15,
+     "verse_end": 20,
+     "label": "Matthew 15:1-20"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 7,
+     "verse_start": 1,
+     "chapter_end": 7,
+     "verse_end": 23,
+     "label": "Mark 7:1-23"
+    }
+   ]
+  },
+  {
+   "day": 80,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 15,
+     "verse_start": 21,
+     "chapter_end": 15,
+     "verse_end": 28,
+     "label": "Matthew 15:21-28"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 7,
+     "verse_start": 24,
+     "chapter_end": 7,
+     "verse_end": 30,
+     "label": "Mark 7:24-30"
+    }
+   ]
+  },
+  {
+   "day": 81,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 15,
+     "verse_start": 29,
+     "chapter_end": 15,
+     "verse_end": 31,
+     "label": "Matthew 15:29-31"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 7,
+     "verse_start": 31,
+     "chapter_end": 7,
+     "verse_end": 37,
+     "label": "Mark 7:31-37"
+    }
+   ]
+  },
+  {
+   "day": 82,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 15,
+     "verse_start": 32,
+     "chapter_end": 15,
+     "verse_end": 39,
+     "label": "Matthew 15:32-39"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 8,
+     "verse_start": 1,
+     "chapter_end": 8,
+     "verse_end": 10,
+     "label": "Mark 8:1-10"
+    }
+   ]
+  },
+  {
+   "day": 83,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 16,
+     "verse_start": 1,
+     "chapter_end": 16,
+     "verse_end": 12,
+     "label": "Matthew 16:1-12"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 8,
+     "verse_start": 11,
+     "chapter_end": 8,
+     "verse_end": 21,
+     "label": "Mark 8:11-21"
+    }
+   ]
+  },
+  {
+   "day": 84,
+   "readings": [
+    {
+     "book": "Mark",
+     "chapter_start": 8,
+     "verse_start": 22,
+     "chapter_end": 8,
+     "verse_end": 26,
+     "label": "Mark 8:22-26"
+    }
+   ]
+  },
+  {
+   "day": 85,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 16,
+     "verse_start": 13,
+     "chapter_end": 16,
+     "verse_end": 20,
+     "label": "Matthew 16:13-20"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 8,
+     "verse_start": 27,
+     "chapter_end": 8,
+     "verse_end": 30,
+     "label": "Mark 8:27-30"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 9,
+     "verse_start": 18,
+     "chapter_end": 9,
+     "verse_end": 21,
+     "label": "Luke 9:18-21"
+    }
+   ]
+  },
+  {
+   "day": 86,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 16,
+     "verse_start": 21,
+     "chapter_end": 16,
+     "verse_end": 28,
+     "label": "Matthew 16:21-28"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 8,
+     "verse_start": 31,
+     "chapter_end": 8,
+     "verse_end": 38,
+     "label": "Mark 8:31-38"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 9,
+     "verse_start": 1,
+     "chapter_end": 9,
+     "verse_end": 1,
+     "label": "Mark 9:1"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 9,
+     "verse_start": 22,
+     "chapter_end": 9,
+     "verse_end": 27,
+     "label": "Luke 9:22-27"
+    }
+   ]
+  },
+  {
+   "day": 87,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 17,
+     "verse_start": 1,
+     "chapter_end": 17,
+     "verse_end": 13,
+     "label": "Matthew 17:1-13"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 9,
+     "verse_start": 2,
+     "chapter_end": 9,
+     "verse_end": 13,
+     "label": "Mark 9:2-13"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 9,
+     "verse_start": 28,
+     "chapter_end": 9,
+     "verse_end": 36,
+     "label": "Luke 9:28-36"
+    }
+   ]
+  },
+  {
+   "day": 88,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 17,
+     "verse_start": 14,
+     "chapter_end": 17,
+     "verse_end": 21,
+     "label": "Matthew 17:14-21"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 9,
+     "verse_start": 14,
+     "chapter_end": 9,
+     "verse_end": 29,
+     "label": "Mark 9:14-29"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 9,
+     "verse_start": 37,
+     "chapter_end": 9,
+     "verse_end": 43,
+     "label": "Luke 9:37-43"
+    }
+   ]
+  },
+  {
+   "day": 89,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 17,
+     "verse_start": 22,
+     "chapter_end": 17,
+     "verse_end": 23,
+     "label": "Matthew 17:22-23"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 9,
+     "verse_start": 30,
+     "chapter_end": 9,
+     "verse_end": 33,
+     "label": "Mark 9:30-33"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 9,
+     "verse_start": 43,
+     "chapter_end": 9,
+     "verse_end": 46,
+     "label": "Luke 9:43-46"
+    }
+   ]
+  },
+  {
+   "day": 90,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 17,
+     "verse_start": 24,
+     "chapter_end": 17,
+     "verse_end": 27,
+     "label": "Matthew 17:24-27"
+    }
+   ]
+  },
+  {
+   "day": 91,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 18,
+     "verse_start": 1,
+     "chapter_end": 18,
+     "verse_end": 35,
+     "label": "Matthew 18:1-35"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 9,
+     "verse_start": 33,
+     "chapter_end": 9,
+     "verse_end": 50,
+     "label": "Mark 9:33-50"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 9,
+     "verse_start": 47,
+     "chapter_end": 9,
+     "verse_end": 50,
+     "label": "Luke 9:47-50"
+    }
+   ]
+  },
+  {
+   "day": 92,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 10,
+     "verse_start": 1,
+     "chapter_end": 10,
+     "verse_end": 16,
+     "label": "Luke 10:1-16"
+    }
+   ]
+  },
+  {
+   "day": 93,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 19,
+     "verse_start": 1,
+     "chapter_end": 19,
+     "verse_end": 1,
+     "label": "Matthew 19:1"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 10,
+     "verse_start": 1,
+     "chapter_end": 10,
+     "verse_end": 1,
+     "label": "Mark 10:1"
+    },
+    {
+     "book": "John",
+     "chapter_start": 7,
+     "verse_start": 2,
+     "chapter_end": 7,
+     "verse_end": 10,
+     "label": "John 7:2-10"
+    }
+   ]
+  },
+  {
+   "day": 94,
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 7,
+     "verse_start": 11,
+     "chapter_end": 7,
+     "verse_end": 52,
+     "label": "John 7:11-52"
+    }
+   ]
+  },
+  {
+   "day": 95,
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 7,
+     "verse_start": 53,
+     "chapter_end": 7,
+     "verse_end": 53,
+     "label": "John 7:53"
+    },
+    {
+     "book": "John",
+     "chapter_start": 8,
+     "verse_start": 1,
+     "chapter_end": 8,
+     "verse_end": 11,
+     "label": "John 8:1-11"
+    }
+   ]
+  },
+  {
+   "day": 96,
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 8,
+     "verse_start": 12,
+     "chapter_end": 8,
+     "verse_end": 20,
+     "label": "John 8:12-20"
+    }
+   ]
+  },
+  {
+   "day": 97,
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 8,
+     "verse_start": 21,
+     "chapter_end": 8,
+     "verse_end": 59,
+     "label": "John 8:21-59"
+    }
+   ]
+  },
+  {
+   "day": 98,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 10,
+     "verse_start": 17,
+     "chapter_end": 10,
+     "verse_end": 24,
+     "label": "Luke 10:17-24"
+    }
+   ]
+  },
+  {
+   "day": 99,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 10,
+     "verse_start": 25,
+     "chapter_end": 10,
+     "verse_end": 28,
+     "label": "Luke 10:25-28"
+    }
+   ]
+  },
+  {
+   "day": 100,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 10,
+     "verse_start": 29,
+     "chapter_end": 10,
+     "verse_end": 37,
+     "label": "Luke 10:29-37"
+    }
+   ]
+  },
+  {
+   "day": 101,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 10,
+     "verse_start": 38,
+     "chapter_end": 10,
+     "verse_end": 42,
+     "label": "Luke 10:38-42"
+    }
+   ]
+  },
+  {
+   "day": 102,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 11,
+     "verse_start": 1,
+     "chapter_end": 11,
+     "verse_end": 13,
+     "label": "Luke 11:1-13"
+    }
+   ]
+  },
+  {
+   "day": 103,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 11,
+     "verse_start": 37,
+     "chapter_end": 11,
+     "verse_end": 54,
+     "label": "Luke 11:37-54"
+    }
+   ]
+  },
+  {
+   "day": 104,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 12,
+     "verse_start": 1,
+     "chapter_end": 12,
+     "verse_end": 12,
+     "label": "Luke 12:1-12"
+    }
+   ]
+  },
+  {
+   "day": 105,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 12,
+     "verse_start": 13,
+     "chapter_end": 12,
+     "verse_end": 14,
+     "label": "Luke 12:13-14"
+    }
+   ]
+  },
+  {
+   "day": 106,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 12,
+     "verse_start": 15,
+     "chapter_end": 12,
+     "verse_end": 34,
+     "label": "Luke 12:15-34"
+    }
+   ]
+  },
+  {
+   "day": 107,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 12,
+     "verse_start": 35,
+     "chapter_end": 12,
+     "verse_end": 59,
+     "label": "Luke 12:35-59"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 13,
+     "verse_start": 1,
+     "chapter_end": 13,
+     "verse_end": 9,
+     "label": "Luke 13:1-9"
+    }
+   ]
+  },
+  {
+   "day": 108,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 13,
+     "verse_start": 10,
+     "chapter_end": 13,
+     "verse_end": 17,
+     "label": "Luke 13:10-17"
+    }
+   ]
+  },
+  {
+   "day": 109,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 13,
+     "verse_start": 22,
+     "chapter_end": 13,
+     "verse_end": 22,
+     "label": "Luke 13:22"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 13,
+     "verse_start": 18,
+     "chapter_end": 13,
+     "verse_end": 21,
+     "label": "Luke 13:18-21"
+    }
+   ]
+  },
+  {
+   "day": 110,
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 9,
+     "verse_start": 1,
+     "chapter_end": 9,
+     "verse_end": 34,
+     "label": "John 9:1-34"
+    }
+   ]
+  },
+  {
+   "day": 111,
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 9,
+     "verse_start": 35,
+     "chapter_end": 9,
+     "verse_end": 41,
+     "label": "John 9:35-41"
+    },
+    {
+     "book": "John",
+     "chapter_start": 10,
+     "verse_start": 1,
+     "chapter_end": 10,
+     "verse_end": 21,
+     "label": "John 10:1-21"
+    }
+   ]
+  },
+  {
+   "day": 112,
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 10,
+     "verse_start": 22,
+     "chapter_end": 10,
+     "verse_end": 38,
+     "label": "John 10:22-38"
+    }
+   ]
+  },
+  {
+   "day": 113,
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 10,
+     "verse_start": 39,
+     "chapter_end": 10,
+     "verse_end": 42,
+     "label": "John 10:39-42"
+    }
+   ]
+  },
+  {
+   "day": 114,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 13,
+     "verse_start": 23,
+     "chapter_end": 13,
+     "verse_end": 35,
+     "label": "Luke 13:23-35"
+    }
+   ]
+  },
+  {
+   "day": 115,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 14,
+     "verse_start": 1,
+     "chapter_end": 14,
+     "verse_end": 24,
+     "label": "Luke 14:1-24"
+    }
+   ]
+  },
+  {
+   "day": 116,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 14,
+     "verse_start": 25,
+     "chapter_end": 14,
+     "verse_end": 35,
+     "label": "Luke 14:25-35"
+    }
+   ]
+  },
+  {
+   "day": 117,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 15,
+     "verse_start": 1,
+     "chapter_end": 15,
+     "verse_end": 10,
+     "label": "Luke 15:1-10"
+    }
+   ]
+  },
+  {
+   "day": 118,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 15,
+     "verse_start": 11,
+     "chapter_end": 15,
+     "verse_end": 32,
+     "label": "Luke 15:11-32"
+    }
+   ]
+  },
+  {
+   "day": 119,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 16,
+     "verse_start": 1,
+     "chapter_end": 16,
+     "verse_end": 13,
+     "label": "Luke 16:1-13"
+    }
+   ]
+  },
+  {
+   "day": 120,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 16,
+     "verse_start": 14,
+     "chapter_end": 16,
+     "verse_end": 17,
+     "label": "Luke 16:14-17"
+    }
+   ]
+  },
+  {
+   "day": 121,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 19,
+     "verse_start": 3,
+     "chapter_end": 19,
+     "verse_end": 12,
+     "label": "Matthew 19:3-12"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 10,
+     "verse_start": 2,
+     "chapter_end": 10,
+     "verse_end": 12,
+     "label": "Mark 10:2-12"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 16,
+     "verse_start": 18,
+     "chapter_end": 16,
+     "verse_end": 18,
+     "label": "Luke 16:18"
+    }
+   ]
+  },
+  {
+   "day": 122,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 19,
+     "verse_start": 13,
+     "chapter_end": 19,
+     "verse_end": 15,
+     "label": "Matthew 19:13-15"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 10,
+     "verse_start": 13,
+     "chapter_end": 10,
+     "verse_end": 17,
+     "label": "Mark 10:13-17"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 18,
+     "verse_start": 15,
+     "chapter_end": 18,
+     "verse_end": 17,
+     "label": "Luke 18:15-17"
+    }
+   ]
+  },
+  {
+   "day": 123,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 16,
+     "verse_start": 19,
+     "chapter_end": 16,
+     "verse_end": 31,
+     "label": "Luke 16:19-31"
+    }
+   ]
+  },
+  {
+   "day": 124,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 17,
+     "verse_start": 1,
+     "chapter_end": 17,
+     "verse_end": 10,
+     "label": "Luke 17:1-10"
+    }
+   ]
+  },
+  {
+   "day": 125,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 9,
+     "verse_start": 51,
+     "chapter_end": 9,
+     "verse_end": 62,
+     "label": "Luke 9:51-62"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 17,
+     "verse_start": 11,
+     "chapter_end": 17,
+     "verse_end": 11,
+     "label": "Luke 17:11"
+    }
+   ]
+  },
+  {
+   "day": 126,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 17,
+     "verse_start": 12,
+     "chapter_end": 17,
+     "verse_end": 19,
+     "label": "Luke 17:12-19"
+    }
+   ]
+  },
+  {
+   "day": 127,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 17,
+     "verse_start": 20,
+     "chapter_end": 17,
+     "verse_end": 37,
+     "label": "Luke 17:20-37"
+    }
+   ]
+  },
+  {
+   "day": 128,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 18,
+     "verse_start": 1,
+     "chapter_end": 18,
+     "verse_end": 8,
+     "label": "Luke 18:1-8"
+    }
+   ]
+  },
+  {
+   "day": 129,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 18,
+     "verse_start": 9,
+     "chapter_end": 18,
+     "verse_end": 14,
+     "label": "Luke 18:9-14"
+    }
+   ]
+  },
+  {
+   "day": 130,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 19,
+     "verse_start": 16,
+     "chapter_end": 19,
+     "verse_end": 29,
+     "label": "Matthew 19:16-29"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 10,
+     "verse_start": 17,
+     "chapter_end": 10,
+     "verse_end": 30,
+     "label": "Mark 10:17-30"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 18,
+     "verse_start": 18,
+     "chapter_end": 18,
+     "verse_end": 30,
+     "label": "Luke 18:18-30"
+    }
+   ]
+  },
+  {
+   "day": 131,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 19,
+     "verse_start": 30,
+     "chapter_end": 19,
+     "verse_end": 30,
+     "label": "Matthew 19:30"
+    },
+    {
+     "book": "Matthew",
+     "chapter_start": 20,
+     "verse_start": 1,
+     "chapter_end": 20,
+     "verse_end": 16,
+     "label": "Matthew 20:1-16"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 10,
+     "verse_start": 31,
+     "chapter_end": 10,
+     "verse_end": 31,
+     "label": "Mark 10:31"
+    }
+   ]
+  },
+  {
+   "day": 132,
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 11,
+     "verse_start": 1,
+     "chapter_end": 11,
+     "verse_end": 16,
+     "label": "John 11:1-16"
+    }
+   ]
+  },
+  {
+   "day": 133,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 20,
+     "verse_start": 17,
+     "chapter_end": 20,
+     "verse_end": 19,
+     "label": "Matthew 20:17-19"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 10,
+     "verse_start": 32,
+     "chapter_end": 10,
+     "verse_end": 34,
+     "label": "Mark 10:32-34"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 18,
+     "verse_start": 31,
+     "chapter_end": 18,
+     "verse_end": 34,
+     "label": "Luke 18:31-34"
+    }
+   ]
+  },
+  {
+   "day": 134,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 20,
+     "verse_start": 20,
+     "chapter_end": 20,
+     "verse_end": 28,
+     "label": "Matthew 20:20-28"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 10,
+     "verse_start": 35,
+     "chapter_end": 10,
+     "verse_end": 45,
+     "label": "Mark 10:35-45"
+    }
+   ]
+  },
+  {
+   "day": 135,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 20,
+     "verse_start": 29,
+     "chapter_end": 20,
+     "verse_end": 34,
+     "label": "Matthew 20:29-34"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 10,
+     "verse_start": 46,
+     "chapter_end": 10,
+     "verse_end": 52,
+     "label": "Mark 10:46-52"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 18,
+     "verse_start": 35,
+     "chapter_end": 18,
+     "verse_end": 43,
+     "label": "Luke 18:35-43"
+    }
+   ]
+  },
+  {
+   "day": 136,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 19,
+     "verse_start": 1,
+     "chapter_end": 19,
+     "verse_end": 28,
+     "label": "Luke 19:1-28"
+    }
+   ]
+  },
+  {
+   "day": 137,
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 11,
+     "verse_start": 17,
+     "chapter_end": 11,
+     "verse_end": 46,
+     "label": "John 11:17-46"
+    }
+   ]
+  },
+  {
+   "day": 138,
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 11,
+     "verse_start": 47,
+     "chapter_end": 11,
+     "verse_end": 48,
+     "label": "John 11:47-48"
+    }
+   ]
+  },
+  {
+   "day": 139,
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 11,
+     "verse_start": 49,
+     "chapter_end": 11,
+     "verse_end": 52,
+     "label": "John 11:49-52"
+    }
+   ]
+  },
+  {
+   "day": 140,
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 11,
+     "verse_start": 53,
+     "chapter_end": 11,
+     "verse_end": 53,
+     "label": "John 11:53"
+    }
+   ]
+  },
+  {
+   "day": 141,
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 11,
+     "verse_start": 54,
+     "chapter_end": 11,
+     "verse_end": 54,
+     "label": "John 11:54"
+    }
+   ]
+  },
+  {
+   "day": 142,
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 11,
+     "verse_start": 55,
+     "chapter_end": 11,
+     "verse_end": 57,
+     "label": "John 11:55-57"
+    }
+   ]
+  },
+  {
+   "day": 143,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 26,
+     "verse_start": 6,
+     "chapter_end": 26,
+     "verse_end": 13,
+     "label": "Matthew 26:6-13"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 14,
+     "verse_start": 3,
+     "chapter_end": 14,
+     "verse_end": 9,
+     "label": "Mark 14:3-9"
+    },
+    {
+     "book": "John",
+     "chapter_start": 12,
+     "verse_start": 1,
+     "chapter_end": 12,
+     "verse_end": 11,
+     "label": "John 12:1-11"
+    }
+   ]
+  },
+  {
+   "day": 144,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 21,
+     "verse_start": 1,
+     "chapter_end": 21,
+     "verse_end": 7,
+     "label": "Matthew 21:1-7"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 11,
+     "verse_start": 1,
+     "chapter_end": 11,
+     "verse_end": 7,
+     "label": "Mark 11:1-7"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 19,
+     "verse_start": 29,
+     "chapter_end": 19,
+     "verse_end": 35,
+     "label": "Luke 19:29-35"
+    },
+    {
+     "book": "John",
+     "chapter_start": 12,
+     "verse_start": 12,
+     "chapter_end": 12,
+     "verse_end": 18,
+     "label": "John 12:12-18"
+    }
+   ]
+  },
+  {
+   "day": 145,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 21,
+     "verse_start": 8,
+     "chapter_end": 21,
+     "verse_end": 9,
+     "label": "Matthew 21:8-9"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 11,
+     "verse_start": 8,
+     "chapter_end": 11,
+     "verse_end": 10,
+     "label": "Mark 11:8-10"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 19,
+     "verse_start": 36,
+     "chapter_end": 19,
+     "verse_end": 40,
+     "label": "Luke 19:36-40"
+    },
+    {
+     "book": "John",
+     "chapter_start": 12,
+     "verse_start": 19,
+     "chapter_end": 12,
+     "verse_end": 19,
+     "label": "John 12:19"
+    }
+   ]
+  },
+  {
+   "day": 146,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 19,
+     "verse_start": 41,
+     "chapter_end": 19,
+     "verse_end": 44,
+     "label": "Luke 19:41-44"
+    }
+   ]
+  },
+  {
+   "day": 147,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 21,
+     "verse_start": 10,
+     "chapter_end": 21,
+     "verse_end": 13,
+     "label": "Matthew 21:10-13"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 11,
+     "verse_start": 11,
+     "chapter_end": 11,
+     "verse_end": 11,
+     "label": "Mark 11:11"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 19,
+     "verse_start": 45,
+     "chapter_end": 19,
+     "verse_end": 46,
+     "label": "Luke 19:45-46"
+    }
+   ]
+  },
+  {
+   "day": 148,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 21,
+     "verse_start": 14,
+     "chapter_end": 21,
+     "verse_end": 16,
+     "label": "Matthew 21:14-16"
+    }
+   ]
+  },
+  {
+   "day": 149,
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 12,
+     "verse_start": 20,
+     "chapter_end": 12,
+     "verse_end": 43,
+     "label": "John 12:20-43"
+    }
+   ]
+  },
+  {
+   "day": 150,
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 12,
+     "verse_start": 44,
+     "chapter_end": 12,
+     "verse_end": 50,
+     "label": "John 12:44-50"
+    }
+   ]
+  },
+  {
+   "day": 151,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 21,
+     "verse_start": 17,
+     "chapter_end": 21,
+     "verse_end": 17,
+     "label": "Matthew 21:17"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 11,
+     "verse_start": 11,
+     "chapter_end": 11,
+     "verse_end": 11,
+     "label": "Mark 11:11"
+    }
+   ]
+  },
+  {
+   "day": 152,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 21,
+     "verse_start": 18,
+     "chapter_end": 21,
+     "verse_end": 19,
+     "label": "Matthew 21:18-19"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 11,
+     "verse_start": 12,
+     "chapter_end": 11,
+     "verse_end": 14,
+     "label": "Mark 11:12-14"
+    }
+   ]
+  },
+  {
+   "day": 153,
+   "readings": [
+    {
+     "book": "Mark",
+     "chapter_start": 11,
+     "verse_start": 15,
+     "chapter_end": 11,
+     "verse_end": 17,
+     "label": "Mark 11:15-17"
+    }
+   ]
+  },
+  {
+   "day": 154,
+   "readings": [
+    {
+     "book": "Mark",
+     "chapter_start": 11,
+     "verse_start": 18,
+     "chapter_end": 11,
+     "verse_end": 18,
+     "label": "Mark 11:18"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 19,
+     "verse_start": 47,
+     "chapter_end": 19,
+     "verse_end": 48,
+     "label": "Luke 19:47-48"
+    }
+   ]
+  },
+  {
+   "day": 155,
+   "readings": [
+    {
+     "book": "Mark",
+     "chapter_start": 11,
+     "verse_start": 19,
+     "chapter_end": 11,
+     "verse_end": 19,
+     "label": "Mark 11:19"
+    }
+   ]
+  },
+  {
+   "day": 156,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 21,
+     "verse_start": 20,
+     "chapter_end": 21,
+     "verse_end": 22,
+     "label": "Matthew 21:20-22"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 11,
+     "verse_start": 20,
+     "chapter_end": 11,
+     "verse_end": 26,
+     "label": "Mark 11:20-26"
+    }
+   ]
+  },
+  {
+   "day": 157,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 21,
+     "verse_start": 23,
+     "chapter_end": 21,
+     "verse_end": 46,
+     "label": "Matthew 21:23-46"
+    },
+    {
+     "book": "Matthew",
+     "chapter_start": 22,
+     "verse_start": 1,
+     "chapter_end": 22,
+     "verse_end": 14,
+     "label": "Matthew 22:1-14"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 11,
+     "verse_start": 27,
+     "chapter_end": 11,
+     "verse_end": 33,
+     "label": "Mark 11:27-33"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 12,
+     "verse_start": 1,
+     "chapter_end": 12,
+     "verse_end": 12,
+     "label": "Mark 12:1-12"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 20,
+     "verse_start": 1,
+     "chapter_end": 20,
+     "verse_end": 19,
+     "label": "Luke 20:1-19"
+    }
+   ]
+  },
+  {
+   "day": 158,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 22,
+     "verse_start": 15,
+     "chapter_end": 22,
+     "verse_end": 22,
+     "label": "Matthew 22:15-22"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 12,
+     "verse_start": 13,
+     "chapter_end": 12,
+     "verse_end": 17,
+     "label": "Mark 12:13-17"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 20,
+     "verse_start": 20,
+     "chapter_end": 20,
+     "verse_end": 26,
+     "label": "Luke 20:20-26"
+    }
+   ]
+  },
+  {
+   "day": 159,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 22,
+     "verse_start": 23,
+     "chapter_end": 22,
+     "verse_end": 33,
+     "label": "Matthew 22:23-33"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 12,
+     "verse_start": 18,
+     "chapter_end": 12,
+     "verse_end": 27,
+     "label": "Mark 12:18-27"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 20,
+     "verse_start": 27,
+     "chapter_end": 20,
+     "verse_end": 40,
+     "label": "Luke 20:27-40"
+    }
+   ]
+  },
+  {
+   "day": 160,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 22,
+     "verse_start": 34,
+     "chapter_end": 22,
+     "verse_end": 40,
+     "label": "Matthew 22:34-40"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 12,
+     "verse_start": 28,
+     "chapter_end": 12,
+     "verse_end": 35,
+     "label": "Mark 12:28-35"
+    }
+   ]
+  },
+  {
+   "day": 161,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 22,
+     "verse_start": 41,
+     "chapter_end": 22,
+     "verse_end": 46,
+     "label": "Matthew 22:41-46"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 12,
+     "verse_start": 35,
+     "chapter_end": 12,
+     "verse_end": 37,
+     "label": "Mark 12:35-37"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 20,
+     "verse_start": 41,
+     "chapter_end": 20,
+     "verse_end": 44,
+     "label": "Luke 20:41-44"
+    }
+   ]
+  },
+  {
+   "day": 162,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 23,
+     "verse_start": 1,
+     "chapter_end": 23,
+     "verse_end": 39,
+     "label": "Matthew 23:1-39"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 12,
+     "verse_start": 38,
+     "chapter_end": 12,
+     "verse_end": 40,
+     "label": "Mark 12:38-40"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 20,
+     "verse_start": 45,
+     "chapter_end": 20,
+     "verse_end": 47,
+     "label": "Luke 20:45-47"
+    }
+   ]
+  },
+  {
+   "day": 163,
+   "readings": [
+    {
+     "book": "Mark",
+     "chapter_start": 12,
+     "verse_start": 41,
+     "chapter_end": 12,
+     "verse_end": 44,
+     "label": "Mark 12:41-44"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 21,
+     "verse_start": 1,
+     "chapter_end": 21,
+     "verse_end": 4,
+     "label": "Luke 21:1-4"
+    }
+   ]
+  },
+  {
+   "day": 164,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 24,
+     "verse_start": 1,
+     "chapter_end": 24,
+     "verse_end": 35,
+     "label": "Matthew 24:1-35"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 13,
+     "verse_start": 1,
+     "chapter_end": 13,
+     "verse_end": 31,
+     "label": "Mark 13:1-31"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 21,
+     "verse_start": 5,
+     "chapter_end": 21,
+     "verse_end": 33,
+     "label": "Luke 21:5-33"
+    }
+   ]
+  },
+  {
+   "day": 165,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 24,
+     "verse_start": 36,
+     "chapter_end": 24,
+     "verse_end": 51,
+     "label": "Matthew 24:36-51"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 13,
+     "verse_start": 32,
+     "chapter_end": 13,
+     "verse_end": 37,
+     "label": "Mark 13:32-37"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 21,
+     "verse_start": 34,
+     "chapter_end": 21,
+     "verse_end": 36,
+     "label": "Luke 21:34-36"
+    }
+   ]
+  },
+  {
+   "day": 166,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 25,
+     "verse_start": 1,
+     "chapter_end": 25,
+     "verse_end": 13,
+     "label": "Matthew 25:1-13"
+    }
+   ]
+  },
+  {
+   "day": 167,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 25,
+     "verse_start": 14,
+     "chapter_end": 25,
+     "verse_end": 30,
+     "label": "Matthew 25:14-30"
+    }
+   ]
+  },
+  {
+   "day": 168,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 25,
+     "verse_start": 31,
+     "chapter_end": 25,
+     "verse_end": 46,
+     "label": "Matthew 25:31-46"
+    }
+   ]
+  },
+  {
+   "day": 169,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 21,
+     "verse_start": 37,
+     "chapter_end": 21,
+     "verse_end": 38,
+     "label": "Luke 21:37-38"
+    }
+   ]
+  },
+  {
+   "day": 170,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 26,
+     "verse_start": 1,
+     "chapter_end": 26,
+     "verse_end": 2,
+     "label": "Matthew 26:1-2"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 14,
+     "verse_start": 1,
+     "chapter_end": 14,
+     "verse_end": 1,
+     "label": "Mark 14:1"
+    }
+   ]
+  },
+  {
+   "day": 171,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 26,
+     "verse_start": 3,
+     "chapter_end": 26,
+     "verse_end": 5,
+     "label": "Matthew 26:3-5"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 14,
+     "verse_start": 1,
+     "chapter_end": 14,
+     "verse_end": 2,
+     "label": "Mark 14:1-2"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 22,
+     "verse_start": 1,
+     "chapter_end": 22,
+     "verse_end": 2,
+     "label": "Luke 22:1-2"
+    }
+   ]
+  },
+  {
+   "day": 172,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 26,
+     "verse_start": 14,
+     "chapter_end": 26,
+     "verse_end": 16,
+     "label": "Matthew 26:14-16"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 14,
+     "verse_start": 10,
+     "chapter_end": 14,
+     "verse_end": 11,
+     "label": "Mark 14:10-11"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 22,
+     "verse_start": 3,
+     "chapter_end": 22,
+     "verse_end": 6,
+     "label": "Luke 22:3-6"
+    }
+   ]
+  },
+  {
+   "day": 173,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 26,
+     "verse_start": 17,
+     "chapter_end": 26,
+     "verse_end": 19,
+     "label": "Matthew 26:17-19"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 14,
+     "verse_start": 12,
+     "chapter_end": 14,
+     "verse_end": 16,
+     "label": "Mark 14:12-16"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 22,
+     "verse_start": 7,
+     "chapter_end": 22,
+     "verse_end": 13,
+     "label": "Luke 22:7-13"
+    }
+   ]
+  },
+  {
+   "day": 174,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 26,
+     "verse_start": 20,
+     "chapter_end": 26,
+     "verse_end": 20,
+     "label": "Matthew 26:20"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 14,
+     "verse_start": 17,
+     "chapter_end": 14,
+     "verse_end": 17,
+     "label": "Mark 14:17"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 22,
+     "verse_start": 14,
+     "chapter_end": 22,
+     "verse_end": 18,
+     "label": "Luke 22:14-18"
+    },
+    {
+     "book": "John",
+     "chapter_start": 13,
+     "verse_start": 1,
+     "chapter_end": 13,
+     "verse_end": 1,
+     "label": "John 13:1"
+    }
+   ]
+  },
+  {
+   "day": 175,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 22,
+     "verse_start": 24,
+     "chapter_end": 22,
+     "verse_end": 27,
+     "label": "Luke 22:24-27"
+    },
+    {
+     "book": "John",
+     "chapter_start": 13,
+     "verse_start": 2,
+     "chapter_end": 13,
+     "verse_end": 16,
+     "label": "John 13:2-16"
+    }
+   ]
+  },
+  {
+   "day": 176,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 26,
+     "verse_start": 21,
+     "chapter_end": 26,
+     "verse_end": 25,
+     "label": "Matthew 26:21-25"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 14,
+     "verse_start": 18,
+     "chapter_end": 14,
+     "verse_end": 21,
+     "label": "Mark 14:18-21"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 22,
+     "verse_start": 21,
+     "chapter_end": 22,
+     "verse_end": 23,
+     "label": "Luke 22:21-23"
+    },
+    {
+     "book": "John",
+     "chapter_start": 13,
+     "verse_start": 17,
+     "chapter_end": 13,
+     "verse_end": 30,
+     "label": "John 13:17-30"
+    }
+   ]
+  },
+  {
+   "day": 177,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 22,
+     "verse_start": 28,
+     "chapter_end": 22,
+     "verse_end": 38,
+     "label": "Luke 22:28-38"
+    },
+    {
+     "book": "John",
+     "chapter_start": 13,
+     "verse_start": 31,
+     "chapter_end": 13,
+     "verse_end": 38,
+     "label": "John 13:31-38"
+    }
+   ]
+  },
+  {
+   "day": 178,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 26,
+     "verse_start": 26,
+     "chapter_end": 26,
+     "verse_end": 29,
+     "label": "Matthew 26:26-29"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 14,
+     "verse_start": 22,
+     "chapter_end": 14,
+     "verse_end": 25,
+     "label": "Mark 14:22-25"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 22,
+     "verse_start": 19,
+     "chapter_end": 22,
+     "verse_end": 20,
+     "label": "Luke 22:19-20"
+    }
+   ]
+  },
+  {
+   "day": 179,
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 14,
+     "verse_start": null,
+     "chapter_end": 14,
+     "verse_end": null,
+     "label": "John 14"
+    }
+   ]
+  },
+  {
+   "day": 180,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 26,
+     "verse_start": 30,
+     "chapter_end": 26,
+     "verse_end": 30,
+     "label": "Matthew 26:30"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 14,
+     "verse_start": 26,
+     "chapter_end": 14,
+     "verse_end": 26,
+     "label": "Mark 14:26"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 22,
+     "verse_start": 39,
+     "chapter_end": 22,
+     "verse_end": 39,
+     "label": "Luke 22:39"
+    }
+   ]
+  },
+  {
+   "day": 181,
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 15,
+     "verse_start": 1,
+     "chapter_end": 15,
+     "verse_end": 8,
+     "label": "John 15:1-8"
+    }
+   ]
+  },
+  {
+   "day": 182,
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 15,
+     "verse_start": 9,
+     "chapter_end": 15,
+     "verse_end": 27,
+     "label": "John 15:9-27"
+    },
+    {
+     "book": "John",
+     "chapter_start": 16,
+     "verse_start": 1,
+     "chapter_end": 16,
+     "verse_end": 4,
+     "label": "John 16:1-4"
+    }
+   ]
+  },
+  {
+   "day": 183,
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 16,
+     "verse_start": 5,
+     "chapter_end": 16,
+     "verse_end": 33,
+     "label": "John 16:5-33"
+    }
+   ]
+  },
+  {
+   "day": 184,
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 17,
+     "verse_start": null,
+     "chapter_end": 17,
+     "verse_end": null,
+     "label": "John 17"
+    }
+   ]
+  },
+  {
+   "day": 185,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 26,
+     "verse_start": 31,
+     "chapter_end": 26,
+     "verse_end": 35,
+     "label": "Matthew 26:31-35"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 14,
+     "verse_start": 27,
+     "chapter_end": 14,
+     "verse_end": 31,
+     "label": "Mark 14:27-31"
+    }
+   ]
+  },
+  {
+   "day": 186,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 26,
+     "verse_start": 36,
+     "chapter_end": 26,
+     "verse_end": 46,
+     "label": "Matthew 26:36-46"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 14,
+     "verse_start": 32,
+     "chapter_end": 14,
+     "verse_end": 42,
+     "label": "Mark 14:32-42"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 22,
+     "verse_start": 40,
+     "chapter_end": 22,
+     "verse_end": 46,
+     "label": "Luke 22:40-46"
+    },
+    {
+     "book": "John",
+     "chapter_start": 18,
+     "verse_start": 1,
+     "chapter_end": 18,
+     "verse_end": 2,
+     "label": "John 18:1-2"
+    }
+   ]
+  },
+  {
+   "day": 187,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 26,
+     "verse_start": 47,
+     "chapter_end": 26,
+     "verse_end": 56,
+     "label": "Matthew 26:47-56"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 14,
+     "verse_start": 43,
+     "chapter_end": 14,
+     "verse_end": 50,
+     "label": "Mark 14:43-50"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 22,
+     "verse_start": 47,
+     "chapter_end": 22,
+     "verse_end": 53,
+     "label": "Luke 22:47-53"
+    },
+    {
+     "book": "John",
+     "chapter_start": 18,
+     "verse_start": 3,
+     "chapter_end": 18,
+     "verse_end": 11,
+     "label": "John 18:3-11"
+    }
+   ]
+  },
+  {
+   "day": 188,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 26,
+     "verse_start": 57,
+     "chapter_end": 26,
+     "verse_end": 57,
+     "label": "Matthew 26:57"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 14,
+     "verse_start": 51,
+     "chapter_end": 14,
+     "verse_end": 53,
+     "label": "Mark 14:51-53"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 22,
+     "verse_start": 54,
+     "chapter_end": 22,
+     "verse_end": 54,
+     "label": "Luke 22:54"
+    },
+    {
+     "book": "John",
+     "chapter_start": 18,
+     "verse_start": 12,
+     "chapter_end": 18,
+     "verse_end": 14,
+     "label": "John 18:12-14"
+    }
+   ]
+  },
+  {
+   "day": 189,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 26,
+     "verse_start": 58,
+     "chapter_end": 26,
+     "verse_end": 58,
+     "label": "Matthew 26:58"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 14,
+     "verse_start": 54,
+     "chapter_end": 14,
+     "verse_end": 54,
+     "label": "Mark 14:54"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 22,
+     "verse_start": 55,
+     "chapter_end": 22,
+     "verse_end": 55,
+     "label": "Luke 22:55"
+    },
+    {
+     "book": "John",
+     "chapter_start": 18,
+     "verse_start": 15,
+     "chapter_end": 18,
+     "verse_end": 16,
+     "label": "John 18:15-16"
+    }
+   ]
+  },
+  {
+   "day": 190,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 26,
+     "verse_start": 59,
+     "chapter_end": 26,
+     "verse_end": 66,
+     "label": "Matthew 26:59-66"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 14,
+     "verse_start": 55,
+     "chapter_end": 14,
+     "verse_end": 64,
+     "label": "Mark 14:55-64"
+    },
+    {
+     "book": "John",
+     "chapter_start": 18,
+     "verse_start": 19,
+     "chapter_end": 18,
+     "verse_end": 24,
+     "label": "John 18:19-24"
+    }
+   ]
+  },
+  {
+   "day": 191,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 26,
+     "verse_start": 67,
+     "chapter_end": 26,
+     "verse_end": 68,
+     "label": "Matthew 26:67-68"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 14,
+     "verse_start": 65,
+     "chapter_end": 14,
+     "verse_end": 65,
+     "label": "Mark 14:65"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 22,
+     "verse_start": 63,
+     "chapter_end": 22,
+     "verse_end": 65,
+     "label": "Luke 22:63-65"
+    }
+   ]
+  },
+  {
+   "day": 192,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 26,
+     "verse_start": 69,
+     "chapter_end": 26,
+     "verse_end": 70,
+     "label": "Matthew 26:69-70"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 14,
+     "verse_start": 66,
+     "chapter_end": 14,
+     "verse_end": 68,
+     "label": "Mark 14:66-68"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 22,
+     "verse_start": 56,
+     "chapter_end": 22,
+     "verse_end": 57,
+     "label": "Luke 22:56-57"
+    },
+    {
+     "book": "John",
+     "chapter_start": 18,
+     "verse_start": 17,
+     "chapter_end": 18,
+     "verse_end": 18,
+     "label": "John 18:17-18"
+    },
+    {
+     "book": "John",
+     "chapter_start": 18,
+     "verse_start": 25,
+     "chapter_end": 18,
+     "verse_end": 27,
+     "label": "John 18:25-27"
+    }
+   ]
+  },
+  {
+   "day": 193,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 26,
+     "verse_start": 71,
+     "chapter_end": 26,
+     "verse_end": 72,
+     "label": "Matthew 26:71-72"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 14,
+     "verse_start": 69,
+     "chapter_end": 14,
+     "verse_end": 70,
+     "label": "Mark 14:69-70"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 22,
+     "verse_start": 58,
+     "chapter_end": 22,
+     "verse_end": 58,
+     "label": "Luke 22:58"
+    }
+   ]
+  },
+  {
+   "day": 194,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 26,
+     "verse_start": 73,
+     "chapter_end": 26,
+     "verse_end": 75,
+     "label": "Matthew 26:73-75"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 14,
+     "verse_start": 70,
+     "chapter_end": 14,
+     "verse_end": 72,
+     "label": "Mark 14:70-72"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 22,
+     "verse_start": 59,
+     "chapter_end": 22,
+     "verse_end": 61,
+     "label": "Luke 22:59-61"
+    }
+   ]
+  },
+  {
+   "day": 195,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 27,
+     "verse_start": 1,
+     "chapter_end": 27,
+     "verse_end": 1,
+     "label": "Matthew 27:1"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 15,
+     "verse_start": 1,
+     "chapter_end": 15,
+     "verse_end": 1,
+     "label": "Mark 15:1"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 22,
+     "verse_start": 66,
+     "chapter_end": 22,
+     "verse_end": 71,
+     "label": "Luke 22:66-71"
+    }
+   ]
+  },
+  {
+   "day": 196,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 27,
+     "verse_start": 3,
+     "chapter_end": 27,
+     "verse_end": 10,
+     "label": "Matthew 27:3-10"
+    }
+   ]
+  },
+  {
+   "day": 197,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 27,
+     "verse_start": 2,
+     "chapter_end": 27,
+     "verse_end": 2,
+     "label": "Matthew 27:2"
+    },
+    {
+     "book": "Matthew",
+     "chapter_start": 27,
+     "verse_start": 11,
+     "chapter_end": 27,
+     "verse_end": 14,
+     "label": "Matthew 27:11-14"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 15,
+     "verse_start": 1,
+     "chapter_end": 15,
+     "verse_end": 5,
+     "label": "Mark 15:1-5"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 23,
+     "verse_start": 1,
+     "chapter_end": 23,
+     "verse_end": 4,
+     "label": "Luke 23:1-4"
+    },
+    {
+     "book": "John",
+     "chapter_start": 18,
+     "verse_start": 28,
+     "chapter_end": 18,
+     "verse_end": 38,
+     "label": "John 18:28-38"
+    }
+   ]
+  },
+  {
+   "day": 198,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 23,
+     "verse_start": 5,
+     "chapter_end": 23,
+     "verse_end": 12,
+     "label": "Luke 23:5-12"
+    }
+   ]
+  },
+  {
+   "day": 199,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 27,
+     "verse_start": 15,
+     "chapter_end": 27,
+     "verse_end": 20,
+     "label": "Matthew 27:15-20"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 15,
+     "verse_start": 6,
+     "chapter_end": 15,
+     "verse_end": 11,
+     "label": "Mark 15:6-11"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 23,
+     "verse_start": 13,
+     "chapter_end": 23,
+     "verse_end": 19,
+     "label": "Luke 23:13-19"
+    },
+    {
+     "book": "John",
+     "chapter_start": 18,
+     "verse_start": 39,
+     "chapter_end": 18,
+     "verse_end": 39,
+     "label": "John 18:39"
+    }
+   ]
+  },
+  {
+   "day": 200,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 27,
+     "verse_start": 21,
+     "chapter_end": 27,
+     "verse_end": 23,
+     "label": "Matthew 27:21-23"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 15,
+     "verse_start": 12,
+     "chapter_end": 15,
+     "verse_end": 14,
+     "label": "Mark 15:12-14"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 23,
+     "verse_start": 20,
+     "chapter_end": 23,
+     "verse_end": 23,
+     "label": "Luke 23:20-23"
+    },
+    {
+     "book": "John",
+     "chapter_start": 18,
+     "verse_start": 40,
+     "chapter_end": 18,
+     "verse_end": 40,
+     "label": "John 18:40"
+    }
+   ]
+  },
+  {
+   "day": 201,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 27,
+     "verse_start": 24,
+     "chapter_end": 27,
+     "verse_end": 25,
+     "label": "Matthew 27:24-25"
+    }
+   ]
+  },
+  {
+   "day": 202,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 27,
+     "verse_start": 26,
+     "chapter_end": 27,
+     "verse_end": 30,
+     "label": "Matthew 27:26-30"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 15,
+     "verse_start": 15,
+     "chapter_end": 15,
+     "verse_end": 19,
+     "label": "Mark 15:15-19"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 23,
+     "verse_start": 24,
+     "chapter_end": 23,
+     "verse_end": 25,
+     "label": "Luke 23:24-25"
+    },
+    {
+     "book": "John",
+     "chapter_start": 19,
+     "verse_start": 1,
+     "chapter_end": 19,
+     "verse_end": 16,
+     "label": "John 19:1-16"
+    }
+   ]
+  },
+  {
+   "day": 203,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 27,
+     "verse_start": 31,
+     "chapter_end": 27,
+     "verse_end": 32,
+     "label": "Matthew 27:31-32"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 15,
+     "verse_start": 20,
+     "chapter_end": 15,
+     "verse_end": 21,
+     "label": "Mark 15:20-21"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 23,
+     "verse_start": 26,
+     "chapter_end": 23,
+     "verse_end": 32,
+     "label": "Luke 23:26-32"
+    },
+    {
+     "book": "John",
+     "chapter_start": 19,
+     "verse_start": 16,
+     "chapter_end": 19,
+     "verse_end": 17,
+     "label": "John 19:16-17"
+    }
+   ]
+  },
+  {
+   "day": 204,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 27,
+     "verse_start": 33,
+     "chapter_end": 27,
+     "verse_end": 34,
+     "label": "Matthew 27:33-34"
+    },
+    {
+     "book": "Matthew",
+     "chapter_start": 27,
+     "verse_start": 37,
+     "chapter_end": 27,
+     "verse_end": 38,
+     "label": "Matthew 27:37-38"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 15,
+     "verse_start": 22,
+     "chapter_end": 15,
+     "verse_end": 23,
+     "label": "Mark 15:22-23"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 15,
+     "verse_start": 26,
+     "chapter_end": 15,
+     "verse_end": 28,
+     "label": "Mark 15:26-28"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 23,
+     "verse_start": 33,
+     "chapter_end": 23,
+     "verse_end": 38,
+     "label": "Luke 23:33-38"
+    },
+    {
+     "book": "John",
+     "chapter_start": 19,
+     "verse_start": 18,
+     "chapter_end": 19,
+     "verse_end": 22,
+     "label": "John 19:18-22"
+    }
+   ]
+  },
+  {
+   "day": 205,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 23,
+     "verse_start": 34,
+     "chapter_end": 23,
+     "verse_end": 34,
+     "label": "Luke 23:34"
+    }
+   ]
+  },
+  {
+   "day": 206,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 27,
+     "verse_start": 35,
+     "chapter_end": 27,
+     "verse_end": 36,
+     "label": "Matthew 27:35-36"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 15,
+     "verse_start": 24,
+     "chapter_end": 15,
+     "verse_end": 25,
+     "label": "Mark 15:24-25"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 23,
+     "verse_start": 34,
+     "chapter_end": 23,
+     "verse_end": 34,
+     "label": "Luke 23:34"
+    },
+    {
+     "book": "John",
+     "chapter_start": 19,
+     "verse_start": 23,
+     "chapter_end": 19,
+     "verse_end": 24,
+     "label": "John 19:23-24"
+    }
+   ]
+  },
+  {
+   "day": 207,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 27,
+     "verse_start": 39,
+     "chapter_end": 27,
+     "verse_end": 44,
+     "label": "Matthew 27:39-44"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 15,
+     "verse_start": 29,
+     "chapter_end": 15,
+     "verse_end": 32,
+     "label": "Mark 15:29-32"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 23,
+     "verse_start": 35,
+     "chapter_end": 23,
+     "verse_end": 37,
+     "label": "Luke 23:35-37"
+    }
+   ]
+  },
+  {
+   "day": 208,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 23,
+     "verse_start": 39,
+     "chapter_end": 23,
+     "verse_end": 43,
+     "label": "Luke 23:39-43"
+    }
+   ]
+  },
+  {
+   "day": 209,
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 19,
+     "verse_start": 25,
+     "chapter_end": 19,
+     "verse_end": 27,
+     "label": "John 19:25-27"
+    }
+   ]
+  },
+  {
+   "day": 210,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 27,
+     "verse_start": 45,
+     "chapter_end": 27,
+     "verse_end": 51,
+     "label": "Matthew 27:45-51"
+    },
+    {
+     "book": "Matthew",
+     "chapter_start": 27,
+     "verse_start": 54,
+     "chapter_end": 27,
+     "verse_end": 56,
+     "label": "Matthew 27:54-56"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 15,
+     "verse_start": 33,
+     "chapter_end": 15,
+     "verse_end": 41,
+     "label": "Mark 15:33-41"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 23,
+     "verse_start": 44,
+     "chapter_end": 23,
+     "verse_end": 49,
+     "label": "Luke 23:44-49"
+    },
+    {
+     "book": "John",
+     "chapter_start": 19,
+     "verse_start": 28,
+     "chapter_end": 19,
+     "verse_end": 37,
+     "label": "John 19:28-37"
+    }
+   ]
+  },
+  {
+   "day": 211,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 27,
+     "verse_start": 57,
+     "chapter_end": 27,
+     "verse_end": 60,
+     "label": "Matthew 27:57-60"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 15,
+     "verse_start": 42,
+     "chapter_end": 15,
+     "verse_end": 46,
+     "label": "Mark 15:42-46"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 23,
+     "verse_start": 50,
+     "chapter_end": 23,
+     "verse_end": 54,
+     "label": "Luke 23:50-54"
+    },
+    {
+     "book": "John",
+     "chapter_start": 19,
+     "verse_start": 38,
+     "chapter_end": 19,
+     "verse_end": 42,
+     "label": "John 19:38-42"
+    }
+   ]
+  },
+  {
+   "day": 212,
+   "readings": [
+    {
+     "book": "Mark",
+     "chapter_start": 15,
+     "verse_start": 47,
+     "chapter_end": 15,
+     "verse_end": 47,
+     "label": "Mark 15:47"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 23,
+     "verse_start": 55,
+     "chapter_end": 23,
+     "verse_end": 55,
+     "label": "Luke 23:55"
+    }
+   ]
+  },
+  {
+   "day": 213,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 23,
+     "verse_start": 56,
+     "chapter_end": 23,
+     "verse_end": 56,
+     "label": "Luke 23:56"
+    }
+   ]
+  },
+  {
+   "day": 214,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 27,
+     "verse_start": 61,
+     "chapter_end": 27,
+     "verse_end": 61,
+     "label": "Matthew 27:61"
+    }
+   ]
+  },
+  {
+   "day": 215,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 27,
+     "verse_start": 62,
+     "chapter_end": 27,
+     "verse_end": 66,
+     "label": "Matthew 27:62-66"
+    }
+   ]
+  },
+  {
+   "day": 216,
+   "readings": [
+    {
+     "book": "Mark",
+     "chapter_start": 16,
+     "verse_start": 1,
+     "chapter_end": 16,
+     "verse_end": 1,
+     "label": "Mark 16:1"
+    }
+   ]
+  },
+  {
+   "day": 217,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 28,
+     "verse_start": 1,
+     "chapter_end": 28,
+     "verse_end": 1,
+     "label": "Matthew 28:1"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 16,
+     "verse_start": 2,
+     "chapter_end": 16,
+     "verse_end": 2,
+     "label": "Mark 16:2"
+    },
+    {
+     "book": "John",
+     "chapter_start": 20,
+     "verse_start": 1,
+     "chapter_end": 20,
+     "verse_end": 1,
+     "label": "John 20:1"
+    }
+   ]
+  },
+  {
+   "day": 218,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 28,
+     "verse_start": 2,
+     "chapter_end": 28,
+     "verse_end": 4,
+     "label": "Matthew 28:2-4"
+    }
+   ]
+  },
+  {
+   "day": 219,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 27,
+     "verse_start": 52,
+     "chapter_end": 27,
+     "verse_end": 53,
+     "label": "Matthew 27:52-53"
+    }
+   ]
+  },
+  {
+   "day": 220,
+   "readings": [
+    {
+     "book": "Mark",
+     "chapter_start": 16,
+     "verse_start": 2,
+     "chapter_end": 16,
+     "verse_end": 4,
+     "label": "Mark 16:2-4"
+    },
+    {
+     "book": "John",
+     "chapter_start": 20,
+     "verse_start": 1,
+     "chapter_end": 20,
+     "verse_end": 1,
+     "label": "John 20:1"
+    }
+   ]
+  },
+  {
+   "day": 221,
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 20,
+     "verse_start": 2,
+     "chapter_end": 20,
+     "verse_end": 2,
+     "label": "John 20:2"
+    }
+   ]
+  },
+  {
+   "day": 222,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 28,
+     "verse_start": 5,
+     "chapter_end": 28,
+     "verse_end": 7,
+     "label": "Matthew 28:5-7"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 16,
+     "verse_start": 5,
+     "chapter_end": 16,
+     "verse_end": 7,
+     "label": "Mark 16:5-7"
+    }
+   ]
+  },
+  {
+   "day": 223,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 28,
+     "verse_start": 8,
+     "chapter_end": 28,
+     "verse_end": 8,
+     "label": "Matthew 28:8"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 16,
+     "verse_start": 8,
+     "chapter_end": 16,
+     "verse_end": 8,
+     "label": "Mark 16:8"
+    }
+   ]
+  },
+  {
+   "day": 224,
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 20,
+     "verse_start": 3,
+     "chapter_end": 20,
+     "verse_end": 10,
+     "label": "John 20:3-10"
+    }
+   ]
+  },
+  {
+   "day": 225,
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 20,
+     "verse_start": 11,
+     "chapter_end": 20,
+     "verse_end": 11,
+     "label": "John 20:11"
+    }
+   ]
+  },
+  {
+   "day": 226,
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 20,
+     "verse_start": 11,
+     "chapter_end": 20,
+     "verse_end": 14,
+     "label": "John 20:11-14"
+    }
+   ]
+  },
+  {
+   "day": 227,
+   "readings": [
+    {
+     "book": "Mark",
+     "chapter_start": 16,
+     "verse_start": 9,
+     "chapter_end": 16,
+     "verse_end": 9,
+     "label": "Mark 16:9"
+    },
+    {
+     "book": "John",
+     "chapter_start": 20,
+     "verse_start": 14,
+     "chapter_end": 20,
+     "verse_end": 17,
+     "label": "John 20:14-17"
+    }
+   ]
+  },
+  {
+   "day": 228,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 28,
+     "verse_start": 9,
+     "chapter_end": 28,
+     "verse_end": 10,
+     "label": "Matthew 28:9-10"
+    },
+    {
+     "book": "John",
+     "chapter_start": 20,
+     "verse_start": 18,
+     "chapter_end": 20,
+     "verse_end": 18,
+     "label": "John 20:18"
+    }
+   ]
+  },
+  {
+   "day": 229,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 28,
+     "verse_start": 11,
+     "chapter_end": 28,
+     "verse_end": 15,
+     "label": "Matthew 28:11-15"
+    }
+   ]
+  },
+  {
+   "day": 230,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 24,
+     "verse_start": 1,
+     "chapter_end": 24,
+     "verse_end": 3,
+     "label": "Luke 24:1-3"
+    }
+   ]
+  },
+  {
+   "day": 231,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 24,
+     "verse_start": 4,
+     "chapter_end": 24,
+     "verse_end": 9,
+     "label": "Luke 24:4-9"
+    }
+   ]
+  },
+  {
+   "day": 232,
+   "readings": [
+    {
+     "book": "Mark",
+     "chapter_start": 16,
+     "verse_start": 10,
+     "chapter_end": 16,
+     "verse_end": 10,
+     "label": "Mark 16:10"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 24,
+     "verse_start": 10,
+     "chapter_end": 24,
+     "verse_end": 10,
+     "label": "Luke 24:10"
+    }
+   ]
+  },
+  {
+   "day": 233,
+   "readings": [
+    {
+     "book": "Mark",
+     "chapter_start": 16,
+     "verse_start": 11,
+     "chapter_end": 16,
+     "verse_end": 11,
+     "label": "Mark 16:11"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 24,
+     "verse_start": 11,
+     "chapter_end": 24,
+     "verse_end": 11,
+     "label": "Luke 24:11"
+    }
+   ]
+  },
+  {
+   "day": 234,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 24,
+     "verse_start": 12,
+     "chapter_end": 24,
+     "verse_end": 12,
+     "label": "Luke 24:12"
+    }
+   ]
+  },
+  {
+   "day": 235,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 24,
+     "verse_start": 12,
+     "chapter_end": 24,
+     "verse_end": 12,
+     "label": "Luke 24:12"
+    }
+   ]
+  },
+  {
+   "day": 236,
+   "readings": [
+    {
+     "book": "Mark",
+     "chapter_start": 16,
+     "verse_start": 12,
+     "chapter_end": 16,
+     "verse_end": 12,
+     "label": "Mark 16:12"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 24,
+     "verse_start": 13,
+     "chapter_end": 24,
+     "verse_end": 32,
+     "label": "Luke 24:13-32"
+    }
+   ]
+  },
+  {
+   "day": 237,
+   "readings": [
+    {
+     "book": "Mark",
+     "chapter_start": 16,
+     "verse_start": 13,
+     "chapter_end": 16,
+     "verse_end": 13,
+     "label": "Mark 16:13"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 24,
+     "verse_start": 33,
+     "chapter_end": 24,
+     "verse_end": 35,
+     "label": "Luke 24:33-35"
+    }
+   ]
+  },
+  {
+   "day": 238,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 24,
+     "verse_start": 36,
+     "chapter_end": 24,
+     "verse_end": 43,
+     "label": "Luke 24:36-43"
+    },
+    {
+     "book": "John",
+     "chapter_start": 20,
+     "verse_start": 19,
+     "chapter_end": 20,
+     "verse_end": 23,
+     "label": "John 20:19-23"
+    }
+   ]
+  },
+  {
+   "day": 239,
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 20,
+     "verse_start": 24,
+     "chapter_end": 20,
+     "verse_end": 25,
+     "label": "John 20:24-25"
+    }
+   ]
+  },
+  {
+   "day": 240,
+   "readings": [
+    {
+     "book": "Mark",
+     "chapter_start": 16,
+     "verse_start": 14,
+     "chapter_end": 16,
+     "verse_end": 14,
+     "label": "Mark 16:14"
+    },
+    {
+     "book": "John",
+     "chapter_start": 20,
+     "verse_start": 26,
+     "chapter_end": 20,
+     "verse_end": 29,
+     "label": "John 20:26-29"
+    }
+   ]
+  },
+  {
+   "day": 241,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 28,
+     "verse_start": 16,
+     "chapter_end": 28,
+     "verse_end": 18,
+     "label": "Matthew 28:16-18"
+    }
+   ]
+  },
+  {
+   "day": 242,
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 21,
+     "verse_start": 1,
+     "chapter_end": 21,
+     "verse_end": 24,
+     "label": "John 21:1-24"
+    }
+   ]
+  },
+  {
+   "day": 243,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 24,
+     "verse_start": 44,
+     "chapter_end": 24,
+     "verse_end": 49,
+     "label": "Luke 24:44-49"
+    },
+    {
+     "book": "Acts",
+     "chapter_start": 1,
+     "verse_start": 4,
+     "chapter_end": 1,
+     "verse_end": 5,
+     "label": "Acts 1:4-5"
+    }
+   ]
+  },
+  {
+   "day": 244,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 28,
+     "verse_start": 18,
+     "chapter_end": 28,
+     "verse_end": 20,
+     "label": "Matthew 28:18-20"
+    },
+    {
+     "book": "Mark",
+     "chapter_start": 16,
+     "verse_start": 15,
+     "chapter_end": 16,
+     "verse_end": 20,
+     "label": "Mark 16:15-20"
+    },
+    {
+     "book": "Luke",
+     "chapter_start": 24,
+     "verse_start": 50,
+     "chapter_end": 24,
+     "verse_end": 53,
+     "label": "Luke 24:50-53"
+    },
+    {
+     "book": "Acts",
+     "chapter_start": 1,
+     "verse_start": 6,
+     "chapter_end": 1,
+     "verse_end": 12,
+     "label": "Acts 1:6-12"
+    }
+   ]
+  },
+  {
+   "day": 245,
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 20,
+     "verse_start": 30,
+     "chapter_end": 20,
+     "verse_end": 31,
+     "label": "John 20:30-31"
+    },
+    {
+     "book": "John",
+     "chapter_start": 21,
+     "verse_start": 25,
+     "chapter_end": 21,
+     "verse_end": 25,
+     "label": "John 21:25"
+    }
+   ]
+  },
+  {
+   "day": 246,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 1,
+     "verse_start": 1,
+     "chapter_end": 1,
+     "verse_end": 3,
+     "label": "Acts 1:1-3"
+    },
+    {
+     "book": "Acts",
+     "chapter_start": 1,
+     "verse_start": 12,
+     "chapter_end": 1,
+     "verse_end": 14,
+     "label": "Acts 1:12-14"
+    }
+   ]
+  },
+  {
+   "day": 247,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 1,
+     "verse_start": 15,
+     "chapter_end": 1,
+     "verse_end": 26,
+     "label": "Acts 1:15-26"
+    }
+   ]
+  },
+  {
+   "day": 248,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 2,
+     "verse_start": 1,
+     "chapter_end": 2,
+     "verse_end": 13,
+     "label": "Acts 2:1-13"
+    }
+   ]
+  },
+  {
+   "day": 249,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 2,
+     "verse_start": 14,
+     "chapter_end": 2,
+     "verse_end": 36,
+     "label": "Acts 2:14-36"
+    }
+   ]
+  },
+  {
+   "day": 250,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 2,
+     "verse_start": 37,
+     "chapter_end": 2,
+     "verse_end": 42,
+     "label": "Acts 2:37-42"
+    }
+   ]
+  },
+  {
+   "day": 251,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 2,
+     "verse_start": 43,
+     "chapter_end": 2,
+     "verse_end": 47,
+     "label": "Acts 2:43-47"
+    }
+   ]
+  },
+  {
+   "day": 252,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 3,
+     "verse_start": 1,
+     "chapter_end": 3,
+     "verse_end": 10,
+     "label": "Acts 3:1-10"
+    }
+   ]
+  },
+  {
+   "day": 253,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 3,
+     "verse_start": 11,
+     "chapter_end": 3,
+     "verse_end": 26,
+     "label": "Acts 3:11-26"
+    }
+   ]
+  },
+  {
+   "day": 254,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 4,
+     "verse_start": 1,
+     "chapter_end": 4,
+     "verse_end": 7,
+     "label": "Acts 4:1-7"
+    }
+   ]
+  },
+  {
+   "day": 255,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 4,
+     "verse_start": 8,
+     "chapter_end": 4,
+     "verse_end": 22,
+     "label": "Acts 4:8-22"
+    }
+   ]
+  },
+  {
+   "day": 256,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 4,
+     "verse_start": 23,
+     "chapter_end": 4,
+     "verse_end": 31,
+     "label": "Acts 4:23-31"
+    }
+   ]
+  },
+  {
+   "day": 257,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 4,
+     "verse_start": 32,
+     "chapter_end": 4,
+     "verse_end": 37,
+     "label": "Acts 4:32-37"
+    }
+   ]
+  },
+  {
+   "day": 258,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 5,
+     "verse_start": 1,
+     "chapter_end": 5,
+     "verse_end": 10,
+     "label": "Acts 5:1-10"
+    }
+   ]
+  },
+  {
+   "day": 259,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 5,
+     "verse_start": 11,
+     "chapter_end": 5,
+     "verse_end": 16,
+     "label": "Acts 5:11-16"
+    }
+   ]
+  },
+  {
+   "day": 260,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 5,
+     "verse_start": 17,
+     "chapter_end": 5,
+     "verse_end": 21,
+     "label": "Acts 5:17-21"
+    }
+   ]
+  },
+  {
+   "day": 261,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 5,
+     "verse_start": 21,
+     "chapter_end": 5,
+     "verse_end": 33,
+     "label": "Acts 5:21-33"
+    }
+   ]
+  },
+  {
+   "day": 262,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 5,
+     "verse_start": 34,
+     "chapter_end": 5,
+     "verse_end": 42,
+     "label": "Acts 5:34-42"
+    }
+   ]
+  },
+  {
+   "day": 263,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 6,
+     "verse_start": 1,
+     "chapter_end": 6,
+     "verse_end": 6,
+     "label": "Acts 6:1-6"
+    }
+   ]
+  },
+  {
+   "day": 264,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 6,
+     "verse_start": 7,
+     "chapter_end": 6,
+     "verse_end": 7,
+     "label": "Acts 6:7"
+    }
+   ]
+  },
+  {
+   "day": 265,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 6,
+     "verse_start": 8,
+     "chapter_end": 6,
+     "verse_end": 14,
+     "label": "Acts 6:8-14"
+    }
+   ]
+  },
+  {
+   "day": 266,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 6,
+     "verse_start": 15,
+     "chapter_end": 6,
+     "verse_end": 15,
+     "label": "Acts 6:15"
+    },
+    {
+     "book": "Acts",
+     "chapter_start": 7,
+     "verse_start": 1,
+     "chapter_end": 7,
+     "verse_end": 50,
+     "label": "Acts 7:1-50"
+    }
+   ]
+  },
+  {
+   "day": 267,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 7,
+     "verse_start": 51,
+     "chapter_end": 7,
+     "verse_end": 53,
+     "label": "Acts 7:51-53"
+    }
+   ]
+  },
+  {
+   "day": 268,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 7,
+     "verse_start": 54,
+     "chapter_end": 7,
+     "verse_end": 60,
+     "label": "Acts 7:54-60"
+    },
+    {
+     "book": "Acts",
+     "chapter_start": 8,
+     "verse_start": 1,
+     "chapter_end": 8,
+     "verse_end": 2,
+     "label": "Acts 8:1-2"
+    }
+   ]
+  },
+  {
+   "day": 269,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 8,
+     "verse_start": 1,
+     "chapter_end": 8,
+     "verse_end": 1,
+     "label": "Acts 8:1"
+    },
+    {
+     "book": "Acts",
+     "chapter_start": 8,
+     "verse_start": 3,
+     "chapter_end": 8,
+     "verse_end": 3,
+     "label": "Acts 8:3"
+    }
+   ]
+  },
+  {
+   "day": 270,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 8,
+     "verse_start": 5,
+     "chapter_end": 8,
+     "verse_end": 13,
+     "label": "Acts 8:5-13"
+    }
+   ]
+  },
+  {
+   "day": 271,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 8,
+     "verse_start": 14,
+     "chapter_end": 8,
+     "verse_end": 17,
+     "label": "Acts 8:14-17"
+    }
+   ]
+  },
+  {
+   "day": 272,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 8,
+     "verse_start": 18,
+     "chapter_end": 8,
+     "verse_end": 24,
+     "label": "Acts 8:18-24"
+    }
+   ]
+  },
+  {
+   "day": 273,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 8,
+     "verse_start": 25,
+     "chapter_end": 8,
+     "verse_end": 25,
+     "label": "Acts 8:25"
+    }
+   ]
+  },
+  {
+   "day": 274,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 8,
+     "verse_start": 26,
+     "chapter_end": 8,
+     "verse_end": 40,
+     "label": "Acts 8:26-40"
+    }
+   ]
+  },
+  {
+   "day": 275,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 8,
+     "verse_start": 4,
+     "chapter_end": 8,
+     "verse_end": 4,
+     "label": "Acts 8:4"
+    }
+   ]
+  },
+  {
+   "day": 276,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 9,
+     "verse_start": 1,
+     "chapter_end": 9,
+     "verse_end": 9,
+     "label": "Acts 9:1-9"
+    }
+   ]
+  },
+  {
+   "day": 277,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 9,
+     "verse_start": 10,
+     "chapter_end": 9,
+     "verse_end": 19,
+     "label": "Acts 9:10-19"
+    }
+   ]
+  },
+  {
+   "day": 278,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 9,
+     "verse_start": 19,
+     "chapter_end": 9,
+     "verse_end": 30,
+     "label": "Acts 9:19-30"
+    }
+   ]
+  },
+  {
+   "day": 279,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 9,
+     "verse_start": 32,
+     "chapter_end": 9,
+     "verse_end": 43,
+     "label": "Acts 9:32-43"
+    }
+   ]
+  },
+  {
+   "day": 280,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 9,
+     "verse_start": 31,
+     "chapter_end": 9,
+     "verse_end": 31,
+     "label": "Acts 9:31"
+    }
+   ]
+  },
+  {
+   "day": 281,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 10,
+     "verse_start": 1,
+     "chapter_end": 10,
+     "verse_end": 16,
+     "label": "Acts 10:1-16"
+    }
+   ]
+  },
+  {
+   "day": 282,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 10,
+     "verse_start": 17,
+     "chapter_end": 10,
+     "verse_end": 33,
+     "label": "Acts 10:17-33"
+    }
+   ]
+  },
+  {
+   "day": 283,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 10,
+     "verse_start": 34,
+     "chapter_end": 10,
+     "verse_end": 43,
+     "label": "Acts 10:34-43"
+    }
+   ]
+  },
+  {
+   "day": 284,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 10,
+     "verse_start": 44,
+     "chapter_end": 10,
+     "verse_end": 48,
+     "label": "Acts 10:44-48"
+    }
+   ]
+  },
+  {
+   "day": 285,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 11,
+     "verse_start": 1,
+     "chapter_end": 11,
+     "verse_end": 18,
+     "label": "Acts 11:1-18"
+    }
+   ]
+  },
+  {
+   "day": 286,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 11,
+     "verse_start": 19,
+     "chapter_end": 11,
+     "verse_end": 21,
+     "label": "Acts 11:19-21"
+    }
+   ]
+  },
+  {
+   "day": 287,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 11,
+     "verse_start": 22,
+     "chapter_end": 11,
+     "verse_end": 24,
+     "label": "Acts 11:22-24"
+    }
+   ]
+  },
+  {
+   "day": 288,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 11,
+     "verse_start": 25,
+     "chapter_end": 11,
+     "verse_end": 26,
+     "label": "Acts 11:25-26"
+    }
+   ]
+  },
+  {
+   "day": 289,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 12,
+     "verse_start": 1,
+     "chapter_end": 12,
+     "verse_end": 19,
+     "label": "Acts 12:1-19"
+    }
+   ]
+  },
+  {
+   "day": 290,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 11,
+     "verse_start": 27,
+     "chapter_end": 11,
+     "verse_end": 30,
+     "label": "Acts 11:27-30"
+    }
+   ]
+  },
+  {
+   "day": 291,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 12,
+     "verse_start": 19,
+     "chapter_end": 12,
+     "verse_end": 23,
+     "label": "Acts 12:19-23"
+    }
+   ]
+  },
+  {
+   "day": 292,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 12,
+     "verse_start": 24,
+     "chapter_end": 12,
+     "verse_end": 24,
+     "label": "Acts 12:24"
+    }
+   ]
+  },
+  {
+   "day": 293,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 12,
+     "verse_start": 25,
+     "chapter_end": 12,
+     "verse_end": 25,
+     "label": "Acts 12:25"
+    }
+   ]
+  },
+  {
+   "day": 294,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 13,
+     "verse_start": 1,
+     "chapter_end": 13,
+     "verse_end": 3,
+     "label": "Acts 13:1-3"
+    }
+   ]
+  },
+  {
+   "day": 295,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 13,
+     "verse_start": 4,
+     "chapter_end": 13,
+     "verse_end": 4,
+     "label": "Acts 13:4"
+    }
+   ]
+  },
+  {
+   "day": 296,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 13,
+     "verse_start": 4,
+     "chapter_end": 13,
+     "verse_end": 12,
+     "label": "Acts 13:4-12"
+    }
+   ]
+  },
+  {
+   "day": 297,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 13,
+     "verse_start": 13,
+     "chapter_end": 13,
+     "verse_end": 13,
+     "label": "Acts 13:13"
+    }
+   ]
+  },
+  {
+   "day": 298,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 13,
+     "verse_start": 14,
+     "chapter_end": 13,
+     "verse_end": 50,
+     "label": "Acts 13:14-50"
+    }
+   ]
+  },
+  {
+   "day": 299,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 13,
+     "verse_start": 51,
+     "chapter_end": 13,
+     "verse_end": 52,
+     "label": "Acts 13:51-52"
+    },
+    {
+     "book": "Acts",
+     "chapter_start": 14,
+     "verse_start": 1,
+     "chapter_end": 14,
+     "verse_end": 6,
+     "label": "Acts 14:1-6"
+    }
+   ]
+  },
+  {
+   "day": 300,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 14,
+     "verse_start": 8,
+     "chapter_end": 14,
+     "verse_end": 20,
+     "label": "Acts 14:8-20"
+    }
+   ]
+  },
+  {
+   "day": 301,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 14,
+     "verse_start": 20,
+     "chapter_end": 14,
+     "verse_end": 20,
+     "label": "Acts 14:20"
+    },
+    {
+     "book": "Acts",
+     "chapter_start": 14,
+     "verse_start": 6,
+     "chapter_end": 14,
+     "verse_end": 7,
+     "label": "Acts 14:6-7"
+    }
+   ]
+  },
+  {
+   "day": 302,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 14,
+     "verse_start": 21,
+     "chapter_end": 14,
+     "verse_end": 23,
+     "label": "Acts 14:21-23"
+    }
+   ]
+  },
+  {
+   "day": 303,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 14,
+     "verse_start": 24,
+     "chapter_end": 14,
+     "verse_end": 25,
+     "label": "Acts 14:24-25"
+    }
+   ]
+  },
+  {
+   "day": 304,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 14,
+     "verse_start": 26,
+     "chapter_end": 14,
+     "verse_end": 28,
+     "label": "Acts 14:26-28"
+    }
+   ]
+  },
+  {
+   "day": 305,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 15,
+     "verse_start": 1,
+     "chapter_end": 15,
+     "verse_end": 2,
+     "label": "Acts 15:1-2"
+    }
+   ]
+  },
+  {
+   "day": 306,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 15,
+     "verse_start": 3,
+     "chapter_end": 15,
+     "verse_end": 29,
+     "label": "Acts 15:3-29"
+    }
+   ]
+  },
+  {
+   "day": 307,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 15,
+     "verse_start": 30,
+     "chapter_end": 15,
+     "verse_end": 35,
+     "label": "Acts 15:30-35"
+    }
+   ]
+  },
+  {
+   "day": 308,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 15,
+     "verse_start": 36,
+     "chapter_end": 15,
+     "verse_end": 36,
+     "label": "Acts 15:36"
+    }
+   ]
+  },
+  {
+   "day": 309,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 15,
+     "verse_start": 37,
+     "chapter_end": 15,
+     "verse_end": 41,
+     "label": "Acts 15:37-41"
+    },
+    {
+     "book": "Acts",
+     "chapter_start": 16,
+     "verse_start": 4,
+     "chapter_end": 16,
+     "verse_end": 5,
+     "label": "Acts 16:4-5"
+    }
+   ]
+  },
+  {
+   "day": 310,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 16,
+     "verse_start": 1,
+     "chapter_end": 16,
+     "verse_end": 3,
+     "label": "Acts 16:1-3"
+    }
+   ]
+  },
+  {
+   "day": 311,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 16,
+     "verse_start": 6,
+     "chapter_end": 16,
+     "verse_end": 6,
+     "label": "Acts 16:6"
+    }
+   ]
+  },
+  {
+   "day": 312,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 16,
+     "verse_start": 7,
+     "chapter_end": 16,
+     "verse_end": 10,
+     "label": "Acts 16:7-10"
+    }
+   ]
+  },
+  {
+   "day": 313,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 16,
+     "verse_start": 11,
+     "chapter_end": 16,
+     "verse_end": 11,
+     "label": "Acts 16:11"
+    }
+   ]
+  },
+  {
+   "day": 314,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 16,
+     "verse_start": 11,
+     "chapter_end": 16,
+     "verse_end": 11,
+     "label": "Acts 16:11"
+    }
+   ]
+  },
+  {
+   "day": 315,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 16,
+     "verse_start": 12,
+     "chapter_end": 16,
+     "verse_end": 40,
+     "label": "Acts 16:12-40"
+    }
+   ]
+  },
+  {
+   "day": 316,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 17,
+     "verse_start": 1,
+     "chapter_end": 17,
+     "verse_end": 9,
+     "label": "Acts 17:1-9"
+    }
+   ]
+  },
+  {
+   "day": 317,
+   "readings": [
+    {
+     "book": "Galatians",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 6,
+     "verse_end": null,
+     "label": "Galatians 1-6"
+    }
+   ]
+  },
+  {
+   "day": 318,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 17,
+     "verse_start": 10,
+     "chapter_end": 17,
+     "verse_end": 14,
+     "label": "Acts 17:10-14"
+    }
+   ]
+  },
+  {
+   "day": 319,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 17,
+     "verse_start": 15,
+     "chapter_end": 17,
+     "verse_end": 34,
+     "label": "Acts 17:15-34"
+    }
+   ]
+  },
+  {
+   "day": 320,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 18,
+     "verse_start": 1,
+     "chapter_end": 18,
+     "verse_end": 5,
+     "label": "Acts 18:1-5"
+    }
+   ]
+  },
+  {
+   "day": 321,
+   "readings": [
+    {
+     "book": "1 Thessalonians",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 5,
+     "verse_end": null,
+     "label": "1 Thessalonians 1-5"
+    }
+   ]
+  },
+  {
+   "day": 322,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 18,
+     "verse_start": 6,
+     "chapter_end": 18,
+     "verse_end": 11,
+     "label": "Acts 18:6-11"
+    }
+   ]
+  },
+  {
+   "day": 323,
+   "readings": [
+    {
+     "book": "2 Thessalonians",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 3,
+     "verse_end": null,
+     "label": "2 Thessalonians 1-3"
+    }
+   ]
+  },
+  {
+   "day": 324,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 18,
+     "verse_start": 12,
+     "chapter_end": 18,
+     "verse_end": 18,
+     "label": "Acts 18:12-18"
+    }
+   ]
+  },
+  {
+   "day": 325,
+   "readings": [
+    {
+     "book": "Titus",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 3,
+     "verse_end": null,
+     "label": "Titus 1-3"
+    }
+   ]
+  },
+  {
+   "day": 326,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 18,
+     "verse_start": 18,
+     "chapter_end": 18,
+     "verse_end": 18,
+     "label": "Acts 18:18"
+    }
+   ]
+  },
+  {
+   "day": 327,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 18,
+     "verse_start": 19,
+     "chapter_end": 18,
+     "verse_end": 19,
+     "label": "Acts 18:19"
+    }
+   ]
+  },
+  {
+   "day": 328,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 18,
+     "verse_start": 20,
+     "chapter_end": 18,
+     "verse_end": 22,
+     "label": "Acts 18:20-22"
+    }
+   ]
+  },
+  {
+   "day": 329,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 18,
+     "verse_start": 23,
+     "chapter_end": 18,
+     "verse_end": 23,
+     "label": "Acts 18:23"
+    }
+   ]
+  },
+  {
+   "day": 330,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 18,
+     "verse_start": 24,
+     "chapter_end": 18,
+     "verse_end": 28,
+     "label": "Acts 18:24-28"
+    }
+   ]
+  },
+  {
+   "day": 331,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 19,
+     "verse_start": 1,
+     "chapter_end": 19,
+     "verse_end": 10,
+     "label": "Acts 19:1-10"
+    }
+   ]
+  },
+  {
+   "day": 332,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 19,
+     "verse_start": 11,
+     "chapter_end": 19,
+     "verse_end": 20,
+     "label": "Acts 19:11-20"
+    }
+   ]
+  },
+  {
+   "day": 333,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 19,
+     "verse_start": 21,
+     "chapter_end": 19,
+     "verse_end": 22,
+     "label": "Acts 19:21-22"
+    }
+   ]
+  },
+  {
+   "day": 334,
+   "readings": [
+    {
+     "book": "1 Corinthians",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 16,
+     "verse_end": null,
+     "label": "1 Corinthians 1-16"
+    }
+   ]
+  },
+  {
+   "day": 335,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 19,
+     "verse_start": 22,
+     "chapter_end": 19,
+     "verse_end": 41,
+     "label": "Acts 19:22-41"
+    }
+   ]
+  },
+  {
+   "day": 336,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 20,
+     "verse_start": 1,
+     "chapter_end": 20,
+     "verse_end": 1,
+     "label": "Acts 20:1"
+    }
+   ]
+  },
+  {
+   "day": 337,
+   "readings": [
+    {
+     "book": "1 Timothy",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 6,
+     "verse_end": null,
+     "label": "1 Timothy 1-6"
+    }
+   ]
+  },
+  {
+   "day": 338,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 20,
+     "verse_start": 2,
+     "chapter_end": 20,
+     "verse_end": 3,
+     "label": "Acts 20:2-3"
+    }
+   ]
+  },
+  {
+   "day": 339,
+   "readings": [
+    {
+     "book": "2 Corinthians",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 13,
+     "verse_end": null,
+     "label": "2 Corinthians 1-13"
+    }
+   ]
+  },
+  {
+   "day": 340,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 20,
+     "verse_start": 3,
+     "chapter_end": 20,
+     "verse_end": 5,
+     "label": "Acts 20:3-5"
+    }
+   ]
+  },
+  {
+   "day": 341,
+   "readings": [
+    {
+     "book": "Romans",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 16,
+     "verse_end": null,
+     "label": "Romans 1-16"
+    }
+   ]
+  },
+  {
+   "day": 342,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 20,
+     "verse_start": 6,
+     "chapter_end": 20,
+     "verse_end": 12,
+     "label": "Acts 20:6-12"
+    }
+   ]
+  },
+  {
+   "day": 343,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 20,
+     "verse_start": 13,
+     "chapter_end": 20,
+     "verse_end": 14,
+     "label": "Acts 20:13-14"
+    }
+   ]
+  },
+  {
+   "day": 344,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 20,
+     "verse_start": 15,
+     "chapter_end": 20,
+     "verse_end": 15,
+     "label": "Acts 20:15"
+    }
+   ]
+  },
+  {
+   "day": 345,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 20,
+     "verse_start": 15,
+     "chapter_end": 20,
+     "verse_end": 15,
+     "label": "Acts 20:15"
+    }
+   ]
+  },
+  {
+   "day": 346,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 20,
+     "verse_start": 15,
+     "chapter_end": 20,
+     "verse_end": 38,
+     "label": "Acts 20:15-38"
+    }
+   ]
+  },
+  {
+   "day": 347,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 21,
+     "verse_start": 1,
+     "chapter_end": 21,
+     "verse_end": 3,
+     "label": "Acts 21:1-3"
+    }
+   ]
+  },
+  {
+   "day": 348,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 21,
+     "verse_start": 4,
+     "chapter_end": 21,
+     "verse_end": 6,
+     "label": "Acts 21:4-6"
+    }
+   ]
+  },
+  {
+   "day": 349,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 21,
+     "verse_start": 7,
+     "chapter_end": 21,
+     "verse_end": 7,
+     "label": "Acts 21:7"
+    }
+   ]
+  },
+  {
+   "day": 350,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 21,
+     "verse_start": 8,
+     "chapter_end": 21,
+     "verse_end": 14,
+     "label": "Acts 21:8-14"
+    }
+   ]
+  },
+  {
+   "day": 351,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 21,
+     "verse_start": 15,
+     "chapter_end": 21,
+     "verse_end": 26,
+     "label": "Acts 21:15-26"
+    }
+   ]
+  },
+  {
+   "day": 352,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 21,
+     "verse_start": 27,
+     "chapter_end": 21,
+     "verse_end": 36,
+     "label": "Acts 21:27-36"
+    }
+   ]
+  },
+  {
+   "day": 353,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 21,
+     "verse_start": 37,
+     "chapter_end": 21,
+     "verse_end": 40,
+     "label": "Acts 21:37-40"
+    },
+    {
+     "book": "Acts",
+     "chapter_start": 22,
+     "verse_start": 1,
+     "chapter_end": 22,
+     "verse_end": 21,
+     "label": "Acts 22:1-21"
+    }
+   ]
+  },
+  {
+   "day": 354,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 22,
+     "verse_start": 22,
+     "chapter_end": 22,
+     "verse_end": 22,
+     "label": "Acts 22:22"
+    }
+   ]
+  },
+  {
+   "day": 355,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 22,
+     "verse_start": 23,
+     "chapter_end": 22,
+     "verse_end": 29,
+     "label": "Acts 22:23-29"
+    }
+   ]
+  },
+  {
+   "day": 356,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 22,
+     "verse_start": 30,
+     "chapter_end": 22,
+     "verse_end": 30,
+     "label": "Acts 22:30"
+    },
+    {
+     "book": "Acts",
+     "chapter_start": 23,
+     "verse_start": 1,
+     "chapter_end": 23,
+     "verse_end": 10,
+     "label": "Acts 23:1-10"
+    }
+   ]
+  },
+  {
+   "day": 357,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 23,
+     "verse_start": 11,
+     "chapter_end": 23,
+     "verse_end": 11,
+     "label": "Acts 23:11"
+    }
+   ]
+  },
+  {
+   "day": 358,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 23,
+     "verse_start": 12,
+     "chapter_end": 23,
+     "verse_end": 35,
+     "label": "Acts 23:12-35"
+    }
+   ]
+  },
+  {
+   "day": 359,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 24,
+     "verse_start": 1,
+     "chapter_end": 24,
+     "verse_end": 21,
+     "label": "Acts 24:1-21"
+    }
+   ]
+  },
+  {
+   "day": 360,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 24,
+     "verse_start": 22,
+     "chapter_end": 24,
+     "verse_end": 27,
+     "label": "Acts 24:22-27"
+    }
+   ]
+  },
+  {
+   "day": 361,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 25,
+     "verse_start": 1,
+     "chapter_end": 25,
+     "verse_end": 12,
+     "label": "Acts 25:1-12"
+    }
+   ]
+  },
+  {
+   "day": 362,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 25,
+     "verse_start": 13,
+     "chapter_end": 25,
+     "verse_end": 22,
+     "label": "Acts 25:13-22"
+    }
+   ]
+  },
+  {
+   "day": 363,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 25,
+     "verse_start": 23,
+     "chapter_end": 25,
+     "verse_end": 27,
+     "label": "Acts 25:23-27"
+    },
+    {
+     "book": "Acts",
+     "chapter_start": 26,
+     "verse_start": null,
+     "chapter_end": 26,
+     "verse_end": null,
+     "label": "Acts 26"
+    }
+   ]
+  },
+  {
+   "day": 364,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 27,
+     "verse_start": 1,
+     "chapter_end": 27,
+     "verse_end": 1,
+     "label": "Acts 27:1"
+    }
+   ]
+  },
+  {
+   "day": 365,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 27,
+     "verse_start": 2,
+     "chapter_end": 27,
+     "verse_end": 2,
+     "label": "Acts 27:2"
+    }
+   ]
+  },
+  {
+   "day": 366,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 27,
+     "verse_start": 3,
+     "chapter_end": 27,
+     "verse_end": 4,
+     "label": "Acts 27:3-4"
+    }
+   ]
+  },
+  {
+   "day": 367,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 27,
+     "verse_start": 5,
+     "chapter_end": 27,
+     "verse_end": 8,
+     "label": "Acts 27:5-8"
+    }
+   ]
+  },
+  {
+   "day": 368,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 27,
+     "verse_start": 9,
+     "chapter_end": 27,
+     "verse_end": 13,
+     "label": "Acts 27:9-13"
+    }
+   ]
+  },
+  {
+   "day": 369,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 27,
+     "verse_start": 14,
+     "chapter_end": 27,
+     "verse_end": 44,
+     "label": "Acts 27:14-44"
+    }
+   ]
+  },
+  {
+   "day": 370,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 28,
+     "verse_start": 1,
+     "chapter_end": 28,
+     "verse_end": 10,
+     "label": "Acts 28:1-10"
+    }
+   ]
+  },
+  {
+   "day": 371,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 28,
+     "verse_start": 11,
+     "chapter_end": 28,
+     "verse_end": 14,
+     "label": "Acts 28:11-14"
+    }
+   ]
+  },
+  {
+   "day": 372,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 28,
+     "verse_start": 14,
+     "chapter_end": 28,
+     "verse_end": 16,
+     "label": "Acts 28:14-16"
+    }
+   ]
+  },
+  {
+   "day": 373,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 28,
+     "verse_start": 17,
+     "chapter_end": 28,
+     "verse_end": 29,
+     "label": "Acts 28:17-29"
+    }
+   ]
+  },
+  {
+   "day": 374,
+   "readings": [
+    {
+     "book": "Ephesians",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 6,
+     "verse_end": null,
+     "label": "Ephesians 1-6"
+    }
+   ]
+  },
+  {
+   "day": 375,
+   "readings": [
+    {
+     "book": "Philippians",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 4,
+     "verse_end": null,
+     "label": "Philippians 1-4"
+    }
+   ]
+  },
+  {
+   "day": 376,
+   "readings": [
+    {
+     "book": "Colossians",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 4,
+     "verse_end": null,
+     "label": "Colossians 1-4"
+    }
+   ]
+  },
+  {
+   "day": 377,
+   "readings": [
+    {
+     "book": "Philemon",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 1,
+     "verse_end": null,
+     "label": "Philemon 1"
+    }
+   ]
+  },
+  {
+   "day": 378,
+   "readings": [
+    {
+     "book": "James",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 5,
+     "verse_end": null,
+     "label": "James 1-5"
+    }
+   ]
+  },
+  {
+   "day": 379,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 28,
+     "verse_start": 30,
+     "chapter_end": 28,
+     "verse_end": 31,
+     "label": "Acts 28:30-31"
+    }
+   ]
+  },
+  {
+   "day": 380,
+   "readings": [
+    {
+     "book": "Hebrews",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 13,
+     "verse_end": null,
+     "label": "Hebrews 1-13"
+    }
+   ]
+  },
+  {
+   "day": 381,
+   "readings": [
+    {
+     "book": "2 Timothy",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 4,
+     "verse_end": null,
+     "label": "2 Timothy 1-4"
+    }
+   ]
+  },
+  {
+   "day": 382,
+   "readings": [
+    {
+     "book": "1 Peter",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 5,
+     "verse_end": null,
+     "label": "1 Peter 1-5"
+    }
+   ]
+  },
+  {
+   "day": 383,
+   "readings": [
+    {
+     "book": "2 Peter",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 3,
+     "verse_end": null,
+     "label": "2 Peter 1-3"
+    }
+   ]
+  },
+  {
+   "day": 384,
+   "readings": [
+    {
+     "book": "Jude",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 1,
+     "verse_end": null,
+     "label": "Jude 1"
+    }
+   ]
+  },
+  {
+   "day": 385,
+   "readings": [
+    {
+     "book": "Revelation",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 22,
+     "verse_end": null,
+     "label": "Revelation 1-22"
+    }
+   ]
+  },
+  {
+   "day": 386,
+   "readings": [
+    {
+     "book": "1 John",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 5,
+     "verse_end": null,
+     "label": "1 John 1-5"
+    }
+   ]
+  },
+  {
+   "day": 387,
+   "readings": [
+    {
+     "book": "2 John",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 1,
+     "verse_end": null,
+     "label": "2 John 1"
+    }
+   ]
+  },
+  {
+   "day": 388,
+   "readings": [
+    {
+     "book": "3 John",
+     "chapter_start": 1,
+     "verse_start": null,
+     "chapter_end": 1,
+     "verse_end": null,
+     "label": "3 John 1"
+    }
+   ]
+  }
+ ]
+}

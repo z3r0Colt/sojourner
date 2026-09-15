@@ -162,12 +162,12 @@ pub fn import_all(conn: &mut Connection, reference_dir: &Path) -> anyhow::Result
         0
     };
 
-    let reading_plan_readings = if table_count(conn, "reading_plans") == 0 {
-        reading_plans::import(conn, &reference_dir.join("reading_plans"))
-            .map_err(|e| anyhow::anyhow!("reading plans import failed: {e:#}"))?
-    } else {
-        0
-    };
+    // Not gated on the table being empty: reading_plans::import inserts by
+    // `code` and skips what is already there, so a content.db built before a
+    // plan existed picks it up without disturbing the plans already imported
+    // or the progress recorded against them.
+    let reading_plan_readings = reading_plans::import(conn, &reference_dir.join("reading_plans"))
+        .map_err(|e| anyhow::anyhow!("reading plans import failed: {e:#}"))?;
 
     // Gated on `harmonies`, not `harmony_sections`: a content.db built before
     // the app carried more than one harmony has sections already but no
