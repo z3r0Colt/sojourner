@@ -82,23 +82,42 @@ export function PdfReader({
   const [zoom, setZoom] = useState<Zoom>("fit");
   const [areaWidth, setAreaWidth] = useState(0);
   const [rendered, setRendered] = useState<RenderedPage | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [current, setCurrent] = useState(0);
   const onPageChangeRef = useRef(onPageChange);
   onPageChangeRef.current = onPageChange;
 
+  // A PDF that will not open is an ordinary thing for a file someone dragged
+  // in: pdf.js rejects with PasswordException on an encrypted one and
+  // InvalidPDFException on a damaged one. Without a `.catch` the rejection
+  // went to `unhandledrejection`, got logged, and the pane then showed an
+  // empty canvas forever with nothing said.
+  //
+  // The teardown was wrong too. `cleanup()` frees the pages' resources but
+  // leaves the document and its worker thread alive, and it does nothing at
+  // all if the load has not resolved yet -- so closing a pane while a large
+  // PDF was still opening leaked the worker. `task.destroy()` cancels the
+  // load if it is still running and tears the worker down either way.
   useEffect(() => {
     let cancelled = false;
     const url = convertFileSrc(filePath);
-    pdfjsLib.getDocument({ url }).promise.then((doc) => {
-      if (cancelled) return;
-      docRef.current = doc;
-      setNumPages(doc.numPages);
-      setPage((p) => Math.min(Math.max(1, p), doc.numPages));
-    });
+    setLoadError(null);
+    const task = pdfjsLib.getDocument({ url });
+    task.promise
+      .then((doc) => {
+        if (cancelled) return;
+        docRef.current = doc;
+        setNumPages(doc.numPages);
+        setPage((p) => Math.min(Math.max(1, p), doc.numPages));
+      })
+      .catch((e) => {
+        if (!cancelled) setLoadError(e instanceof Error ? e.message : String(e));
+      });
     return () => {
       cancelled = true;
-      docRef.current?.cleanup();
+      docRef.current = null;
+      void task.destroy();
     };
   }, [filePath]);
 
@@ -115,32 +134,40 @@ export function PdfReader({
     const doc = docRef.current;
     if (!doc || !canvasRef.current || numPages === 0) return;
     let cancelled = false;
-    doc.getPage(page).then(async (pdfPage) => {
-      if (cancelled || !canvasRef.current) return;
-      const base = pdfPage.getViewport({ scale: 1 });
-      const fitScale = areaWidth > 0 ? Math.max(0.1, (areaWidth - PAGE_GUTTER_PX) / base.width) : 1;
-      const scale = zoom === "fit" ? fitScale : zoom;
-      const viewport = pdfPage.getViewport({ scale });
-      const canvas = canvasRef.current;
-      // Draw at the device's pixel density so text stays crisp when zoomed.
-      const dpr = window.devicePixelRatio || 1;
-      canvas.width = Math.round(viewport.width * dpr);
-      canvas.height = Math.round(viewport.height * dpr);
-      canvas.style.width = `${Math.round(viewport.width)}px`;
-      canvas.style.height = `${Math.round(viewport.height)}px`;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
-      const [render, text] = await Promise.all([
-        pdfPage.render({ canvasContext: ctx, viewport, canvas, transform: dpr !== 1 ? [dpr, 0, 0, dpr, 0, 0] : undefined }).promise,
-        pdfPage.getTextContent(),
-      ]);
-      void render;
-      if (cancelled) return;
-      const items = text.items
-        .filter((it): it is TextItem => "str" in it)
-        .map((it) => ({ str: it.str, transform: it.transform as number[], width: it.width }));
-      setRendered({ scale, viewport, items });
-    });
+    // Same gap as the load: a page that will not render (a damaged object
+    // stream, a font the worker chokes on) rejected into nothing and left the
+    // canvas blank.
+    doc
+      .getPage(page)
+      .then(async (pdfPage) => {
+        if (cancelled || !canvasRef.current) return;
+        const base = pdfPage.getViewport({ scale: 1 });
+        const fitScale = areaWidth > 0 ? Math.max(0.1, (areaWidth - PAGE_GUTTER_PX) / base.width) : 1;
+        const scale = zoom === "fit" ? fitScale : zoom;
+        const viewport = pdfPage.getViewport({ scale });
+        const canvas = canvasRef.current;
+        // Draw at the device's pixel density so text stays crisp when zoomed.
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = Math.round(viewport.width * dpr);
+        canvas.height = Math.round(viewport.height * dpr);
+        canvas.style.width = `${Math.round(viewport.width)}px`;
+        canvas.style.height = `${Math.round(viewport.height)}px`;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+        const [render, text] = await Promise.all([
+          pdfPage.render({ canvasContext: ctx, viewport, canvas, transform: dpr !== 1 ? [dpr, 0, 0, dpr, 0, 0] : undefined }).promise,
+          pdfPage.getTextContent(),
+        ]);
+        void render;
+        if (cancelled) return;
+        const items = text.items
+          .filter((it): it is TextItem => "str" in it)
+          .map((it) => ({ str: it.str, transform: it.transform as number[], width: it.width }));
+        setRendered({ scale, viewport, items });
+      })
+      .catch((e) => {
+        if (!cancelled) setLoadError(e instanceof Error ? e.message : String(e));
+      });
     onPageChangeRef.current?.(page);
     return () => {
       cancelled = true;
@@ -221,18 +248,28 @@ export function PdfReader({
       </div>
 
       <div ref={scrollRef} className="min-h-0 flex-1 overflow-auto bg-surface-2 p-4">
-        <div className="relative mx-auto w-fit shadow-lg">
-          <canvas ref={canvasRef} className="block" />
-          <div ref={overlayRef} className="pointer-events-none absolute inset-0" aria-hidden="true">
-            {matches.map((m, i) => (
-              <span
-                key={i}
-                className={cx("absolute rounded-sm mix-blend-multiply", i === current ? "bg-accent/45 ring-2 ring-accent" : "bg-warn/40")}
-                style={{ left: m.left, top: m.top, width: m.width, height: m.height }}
-              />
-            ))}
+        {loadError ? (
+          <div className="mx-auto max-w-md rounded-lg border border-line bg-surface p-4 text-sm" role="alert">
+            <p className="font-medium text-ink">This PDF could not be opened</p>
+            <p className="mt-1 text-ink-3">
+              It may be password-protected, or damaged. The file is still in your library.
+            </p>
+            <p className="mt-2 break-words font-mono text-xs text-ink-4">{loadError}</p>
           </div>
-        </div>
+        ) : (
+          <div className="relative mx-auto w-fit shadow-lg">
+            <canvas ref={canvasRef} className="block" />
+            <div ref={overlayRef} className="pointer-events-none absolute inset-0" aria-hidden="true">
+              {matches.map((m, i) => (
+                <span
+                  key={i}
+                  className={cx("absolute rounded-sm mix-blend-multiply", i === current ? "bg-accent/45 ring-2 ring-accent" : "bg-warn/40")}
+                  style={{ left: m.left, top: m.top, width: m.width, height: m.height }}
+                />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="flex items-center justify-center gap-3 border-t border-line bg-surface py-2">

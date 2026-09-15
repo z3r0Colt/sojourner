@@ -244,7 +244,7 @@ export class KokoroEngine implements TtsEngine {
 
   private render(text: string, voiceId: string | null): Promise<ArrayBuffer> {
     const voice = voiceId ?? DEFAULT_KOKORO_VOICE;
-    const key = `${voice} ${text}`;
+    const key = `${voice}\u0000${text}`;
     const existing = this.rendered.get(key);
     if (existing) return existing;
 

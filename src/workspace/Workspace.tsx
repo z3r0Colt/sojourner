@@ -94,6 +94,11 @@ function useBootstrap() {
           s.publishPassage(bible.id, { bookId: pos.book_id, chapter: pos.chapter, verse: pos.verse ?? null });
         }
       })
+      // `.finally` re-throws rather than catching, so without this a failed
+      // `getReadingPosition` became an unhandled rejection. The app is not
+      // stuck either way -- `setReady` still runs below -- it just opens at
+      // the default passage instead of the saved one.
+      .catch(() => {})
       .finally(() => {
         if (!cancelled) useWorkspaceStore.getState().setReady();
       });

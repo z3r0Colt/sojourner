@@ -358,17 +358,27 @@ export function EpubReader({
       }));
     });
 
-    book.loaded.navigation.then((nav) => {
-      if (disposed) return;
-      tocRef.current = flattenToc(nav.toc);
-      onTocRef.current?.(tocRef.current);
-      // The first section can be on screen before its name is known.
-      const href = rendition.location?.start?.href;
-      if (href) setChapter(labelForHref(tocRef.current, href));
-    });
+    book.loaded.navigation
+      .then((nav) => {
+        if (disposed) return;
+        tocRef.current = flattenToc(nav.toc);
+        onTocRef.current?.(tocRef.current);
+        // The first section can be on screen before its name is known.
+        const href = rendition.location?.start?.href;
+        if (href) setChapter(labelForHref(tocRef.current, href));
+      })
+      // A missing or malformed table of contents is not a reason to refuse
+      // the book: it reads perfectly well, just without chapter names in the
+      // header and an empty contents list. Left uncaught this was an
+      // unhandled rejection instead.
+      .catch(() => {});
 
-    book.ready.then(
-      () => {
+    // `.then(onOk, onErr)` caught a rejected `book.ready` but not a throw
+    // inside `onOk` itself -- and everything below runs in there. A trailing
+    // `.catch` covers both, so a book that fails partway through opening says
+    // so rather than leaving the pane blank.
+    book.ready
+      .then(() => {
         if (disposed) return;
         let total = 0;
         book.spine.each(() => {
@@ -398,11 +408,10 @@ export function EpubReader({
             })
             .catch(() => {});
         }, LOCATIONS_DELAY_MS);
-      },
-      () => {
+      })
+      .catch(() => {
         if (!disposed) setStatus("error");
-      },
-    );
+      });
 
     // A pane being dragged wider changes size every frame; each change
     // re-renders the section, so only the size it settles at is acted on.

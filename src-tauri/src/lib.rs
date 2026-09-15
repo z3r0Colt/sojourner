@@ -15,13 +15,34 @@ pub mod tts;
 use db::DbState;
 use std::path::PathBuf;
 use std::sync::Mutex;
-use tauri::Manager;
+use tauri::{Emitter, Manager};
 
 /// The resolved app-data directory, managed as Tauri state so backup/export/
 /// import commands can find `user.db`, its `backups/` folder, and the
 /// pending-import marker without re-deriving the path (and without needing
 /// their own `AppHandle` plumbing just for that).
 pub struct AppDataDir(pub PathBuf);
+
+/// How long the window waits for the page to say it has finished saving.
+///
+/// The page is asked to flush and answer; this is the backstop for when it
+/// cannot. A webview that has crashed or hung would otherwise leave a window
+/// that refuses to close, which is a far worse failure than losing the last
+/// few hundred milliseconds of typing -- so the window goes either way.
+const CLOSE_FLUSH_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(2);
+
+/// Lets the page say it has finished its last save and the window may go.
+///
+/// This is a command rather than a direct call on the window from the page
+/// because `window.destroy()` would need a window permission granted in the
+/// capability, and the capability is deliberately minimal (read its
+/// `description`). A command of our own needs no new permission at all.
+#[tauri::command]
+fn ready_to_close(window: tauri::Window) {
+    // Closing twice is not an error: the timeout below may already have
+    // destroyed the window by the time this arrives.
+    let _ = window.destroy();
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -30,6 +51,38 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_window_state::Builder::default().build())
+        // The manuscript autosave promises never to lose a keystroke, and on
+        // the way out it could not keep that promise: its `beforeunload`
+        // handler called `update.mutate`, which posts an async IPC message
+        // and returns, and nothing asked the window to wait. The webview was
+        // torn down while that message was still in flight -- so the last
+        // debounce interval of typing was a race the reader could not see and
+        // sometimes lost.
+        //
+        // So the close is a handshake. The window is held, the page is told
+        // to flush, and it answers with `ready_to_close` when its last save
+        // has actually landed. `CLOSE_FLUSH_TIMEOUT` is the backstop for a
+        // page that cannot answer.
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                api.prevent_close();
+                if window.emit("app-closing", ()).is_err() {
+                    // Nothing is listening and nothing will answer, so
+                    // waiting the full timeout would only delay the close.
+                    let _ = window.destroy();
+                    return;
+                }
+                // A plain thread rather than the async runtime: this is one
+                // sleep and a destroy, and tokio is not a direct dependency
+                // of this crate. `destroy` dispatches to the main thread
+                // itself, so calling it from here is fine.
+                let window = window.clone();
+                std::thread::spawn(move || {
+                    std::thread::sleep(CLOSE_FLUSH_TIMEOUT);
+                    let _ = window.destroy();
+                });
+            }
+        })
         .setup(|app| {
             let handle = app.handle().clone();
             let app_data_dir = handle
@@ -143,6 +196,7 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            ready_to_close,
             commands::file_picker::pick_save_path,
             commands::file_picker::pick_open_path,
             commands::file_picker::pick_folder,

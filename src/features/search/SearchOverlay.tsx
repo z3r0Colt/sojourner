@@ -73,35 +73,35 @@ export function SearchOverlay({
   );
   const isSaved = savedSearches?.includes(debounced.trim()) ?? false;
 
-  const { data: results, isFetching, isError, error } = useQuery({
+  const { data: results, isFetching, error } = useQuery({
     queryKey: ["search", debounced, translationIds, sourceIds, scope],
     queryFn: () => api.search(debounced, translationIds, sourceIds, scope, 50),
     enabled: active && translationIds.length > 0,
   });
-  const { data: resourceResults, isFetching: resourcesFetching } = useQuery({
+  const { data: resourceResults, isFetching: resourcesFetching, error: resourcesError } = useQuery({
     queryKey: ["resourceSearch", debounced],
     queryFn: () => api.searchResources(debounced, 50),
     enabled: active,
   });
-  const { data: westminsterResults, isFetching: westminsterFetching } = useQuery({
+  const { data: westminsterResults, isFetching: westminsterFetching, error: westminsterError } = useQuery({
     queryKey: ["westminsterSearchOverlay", debounced],
     queryFn: () => api.searchWestminster(debounced, 50),
     enabled: active,
   });
   // Twenty-six megabytes of encyclopedia: the largest body of prose the app
   // carries, and until now the only one global search could not reach.
-  const { data: encyclopediaResults, isFetching: encyclopediaFetching } = useQuery({
+  const { data: encyclopediaResults, isFetching: encyclopediaFetching, error: encyclopediaError } = useQuery({
     queryKey: ["encyclopediaSearchOverlay", debounced],
     queryFn: () => api.searchIsbeGlobal(debounced, 50),
     enabled: active,
   });
   // A preacher looks for his own work the same way he looks for a verse.
-  const { data: sermonResults, isFetching: sermonsFetching } = useQuery({
+  const { data: sermonResults, isFetching: sermonsFetching, error: sermonsError } = useQuery({
     queryKey: ["sermonSearch", debounced],
     queryFn: () => api.searchSermons(debounced, 30),
     enabled: active,
   });
-  const { data: illustrationResults, isFetching: illustrationsFetching } = useQuery({
+  const { data: illustrationResults, isFetching: illustrationsFetching, error: illustrationsError } = useQuery({
     queryKey: ["illustrationSearch", debounced],
     queryFn: () => api.listIllustrations({ query: debounced }),
     enabled: active,
@@ -210,6 +210,26 @@ export function SearchOverlay({
     }
   }
 
+  // Nine tabs, six queries, and only the first query's error state was ever
+  // read -- so a failure in any of the other five fell through to "No results
+  // in this section." A reader searching their own sermons while the query
+  // was failing was told, in as many words, that none of their sermons
+  // matched. Each tab now answers for its own query.
+  const tabError: Record<Tab, unknown> = {
+    verses: error,
+    commentary: error,
+    notes: error,
+    prayer: error,
+    resources: resourcesError,
+    westminster: westminsterError,
+    encyclopedia: encyclopediaError,
+    sermons: sermonsError,
+    illustrations: illustrationsError,
+  };
+  // `error` is null on a query that has not failed, so the tab's own entry is
+  // the whole answer.
+  const activeError = tabError[tab];
+
   const count = (n: number | undefined) => (active && n != null ? n : undefined);
   const tabs = [
     { key: "verses" as const, label: "Scripture", count: count(results?.verses.length) },
@@ -317,11 +337,18 @@ export function SearchOverlay({
         </div>
       )}
       <div className="min-h-0 flex-1 overflow-y-auto p-2">
-        {isError && tab !== "resources" && tab !== "westminster" && tab !== "encyclopedia" && tab !== "sermons" && tab !== "illustrations" && (
-          <p className="p-3 text-sm text-danger">Search failed: {error instanceof Error ? error.message : "unknown error"}</p>
+        {activeError != null && (
+          <p className="p-3 text-sm text-danger">
+            Search failed: {activeError instanceof Error ? activeError.message : "unknown error"}
+          </p>
         )}
         {!active && <p className="p-3 text-sm text-ink-3">Type at least two characters to search.</p>}
-        {active && rows.length === 0 && !anyFetching && <p className="p-3 text-sm text-ink-3">No results in this section.</p>}
+        {/* Never both: a tab that failed has said so above, and telling the
+            reader there are no results as well would be the same untruth in
+            smaller type. */}
+        {active && rows.length === 0 && !anyFetching && activeError == null && (
+          <p className="p-3 text-sm text-ink-3">No results in this section.</p>
+        )}
         <ul role="listbox">
           {rows.map((r, i) => (
             <li key={r.key} role="option" aria-selected={i === selected}>
