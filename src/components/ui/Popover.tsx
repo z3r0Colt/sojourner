@@ -1,6 +1,11 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Check } from "lucide-react";
 import { cx } from "./classes";
+
+/** Breathing room kept between an open panel and the edge of the window. */
+const EDGE_GAP = 8;
+/** A panel shorter than this is not worth flipping or scrolling into. */
+const MIN_PANEL_HEIGHT = 140;
 
 /** Small anchored dropdown. Closes on outside click, Escape, or when the
  * trigger is clicked again. `trigger` receives the open state so it can
@@ -20,6 +25,56 @@ export function Popover({
 }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  // Where the panel ended up and how tall it is allowed to be. A tall panel on
+  // a trigger near the bottom of the window -- the read-aloud bar's settings,
+  // say -- would otherwise open downwards into empty space below the screen.
+  const [placement, setPlacement] = useState<{ up: boolean; maxHeight: number | null }>({ up: false, maxHeight: null });
+
+  const reposition = useCallback(() => {
+    const root = rootRef.current;
+    const panel = panelRef.current;
+    if (!root || !panel) return;
+    const rect = root.getBoundingClientRect();
+    const below = window.innerHeight - rect.bottom - EDGE_GAP;
+    const above = rect.top - EDGE_GAP;
+    // scrollHeight, not offsetHeight: once a max-height is in force the panel
+    // measures as exactly that, and it would never grow back.
+    const wanted = panel.scrollHeight;
+    const up = wanted > below && above > below;
+    const room = Math.max(up ? above : below, MIN_PANEL_HEIGHT);
+    setPlacement((prev) => {
+      const maxHeight = wanted > room ? room : null;
+      return prev.up === up && prev.maxHeight === maxHeight ? prev : { up, maxHeight };
+    });
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    reposition();
+    window.addEventListener("resize", reposition);
+    // A panel anchored to something inside a scrolling pane moves with it.
+    window.addEventListener("scroll", reposition, true);
+    return () => {
+      window.removeEventListener("resize", reposition);
+      window.removeEventListener("scroll", reposition, true);
+    };
+  }, [open, reposition]);
+
+  // Content that arrives or folds away after opening (a voice list, a revealed
+  // sub-section) changes how much room the panel needs.
+  useEffect(() => {
+    if (!open || typeof ResizeObserver === "undefined") return;
+    const panel = panelRef.current;
+    if (!panel) return;
+    const observer = new ResizeObserver(() => reposition());
+    observer.observe(panel);
+    return () => observer.disconnect();
+  }, [open, reposition]);
+
+  useEffect(() => {
+    if (!open) setPlacement({ up: false, maxHeight: null });
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -47,8 +102,11 @@ export function Popover({
       {trigger({ open, toggle: () => setOpen((v) => !v) })}
       {open && (
         <div
+          ref={panelRef}
+          style={placement.maxHeight != null ? { maxHeight: placement.maxHeight } : undefined}
           className={cx(
-            "absolute z-30 mt-1 rounded-lg border border-line bg-surface p-2 text-sm shadow-xl",
+            "absolute z-30 overflow-y-auto overscroll-contain rounded-lg border border-line bg-surface p-2 text-sm shadow-xl",
+            placement.up ? "bottom-full mb-1" : "top-full mt-1",
             align === "right" ? "right-0" : "left-0",
             width,
           )}
