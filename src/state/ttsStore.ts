@@ -44,6 +44,10 @@ interface TtsState {
   currentWordIndex: number;
   isPlaying: boolean;
   isPaused: boolean;
+  /** True between asking for a verse and the first sound of it. The neural
+   * voice renders before it can play, and without this the player claims to
+   * be reading a verse several seconds before any of it is audible. */
+  preparing: boolean;
   error: string | null;
   /** Sleep timer: the chosen length (0 = off) and when it fires. Survives
    * auto-continue's restarts; cleared by Stop. */
@@ -88,6 +92,19 @@ const stored = (() => {
   }
 })();
 
+/** True once the reader has picked an engine themselves; their choice then
+ * outranks whatever the startup probe below finds. */
+let engineChosen = stored.engineId !== undefined;
+
+/** Set when the queue was moved while paused: there is no half-spoken verse to
+ * pick up, so Play has to start the new one. */
+let speakOnResume = false;
+
+/** Failures since the last sound came out. One bad passage costs itself; a run
+ * of them means the voice is not working and reading stops. */
+let failures = 0;
+const GIVE_UP_AFTER = 3;
+
 function persist(partial: Record<string, unknown>) {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -131,26 +148,32 @@ function finishQueue(get: () => TtsState, set: (partial: Partial<TtsState>) => v
   const cur = get();
   const handler = cur.paneId != null ? queueEndHandlers.get(cur.paneId) : undefined;
   if (cur.autoContinue && cur.sourceKind === "scripture" && handler && handler()) {
-    set({ isPlaying: false, isPaused: false, currentWordIndex: -1, continuing: true });
+    set({ isPlaying: false, isPaused: false, preparing: false, currentWordIndex: -1, continuing: true });
     return;
   }
-  set({ isPlaying: false, isPaused: false, currentWordIndex: -1 });
+  set({ isPlaying: false, isPaused: false, preparing: false, currentWordIndex: -1 });
 }
 
 function speakCurrentSegment(get: () => TtsState, set: (partial: Partial<TtsState>) => void) {
+  speakOnResume = false;
   const s = get();
   const segment = s.segments[s.currentSegmentIndex];
   if (!segment) {
-    set({ isPlaying: false, isPaused: false });
+    set({ isPlaying: false, isPaused: false, preparing: false });
     return;
   }
   // The tokens stay those of the displayed verse. What the engine is given may
   // be a rewritten one -- "me-fib-o-sheth" for Mephibosheth -- so the boundary
   // events it reports are mapped back before they move the highlight.
   currentTokens = tokenizeWords(segment.text);
-  const rendered = s.usePronunciations ? buildSpoken(segment.text) : null;
+  // A voice with its own pronunciation dictionary is handed the names as they
+  // are written -- rewriting them is how "Jacob" became "ja-kub" and then
+  // K, U, B -- and only the reader's own corrections are applied to it.
+  const rendered = s.usePronunciations
+    ? buildSpoken(segment.text, { correctionsOnly: !engine().readsRespellings })
+    : null;
   currentChunks = rendered && rendered.changed > 0 ? rendered.chunks : null;
-  set({ currentWordIndex: -1, isPlaying: true, isPaused: false, error: null });
+  set({ currentWordIndex: -1, isPlaying: true, isPaused: false, preparing: true, error: null });
 
   const current = engine();
   const opts = { voiceId: s.voiceId, rate: s.rate, pitch: s.pitch, volume: s.volume * s.fadeLevel };
@@ -159,6 +182,10 @@ function speakCurrentSegment(get: () => TtsState, set: (partial: Partial<TtsStat
     rendered ? rendered.spoken : segment.text,
     opts,
     {
+      onSpeakingStart: () => {
+        failures = 0;
+        set({ preparing: false });
+      },
       onWordBoundary: (charIndex) => {
         const sourceIndex = currentChunks ? toSourceIndex(currentChunks, charIndex) : charIndex;
         const idx = findWordIndexAtChar(currentTokens, sourceIndex);
@@ -175,7 +202,21 @@ function speakCurrentSegment(get: () => TtsState, set: (partial: Partial<TtsStat
         }
       },
       onError: (message) => {
-        set({ isPlaying: false, isPaused: false, error: message });
+        // A passage the voice cannot speak should cost that passage, not the
+        // reading. Before this, one failure part-way through a commentary left
+        // a player that had simply gone quiet, with no way on but to start
+        // again -- and the reader had no idea which passage had done it.
+        const cur = get();
+        failures += 1;
+        if (failures < GIVE_UP_AFTER && cur.isPlaying && !cur.isPaused && cur.currentSegmentIndex + 1 < cur.segments.length) {
+          const skipped = cur.segments[cur.currentSegmentIndex]?.label;
+          set({ currentSegmentIndex: cur.currentSegmentIndex + 1 });
+          speakCurrentSegment(get, set);
+          // After the next one has started, which clears the error as it goes.
+          set({ error: `Could not read ${skipped ?? "one passage"}` });
+          return;
+        }
+        set({ isPlaying: false, isPaused: false, preparing: false, error: message });
       },
     },
   );
@@ -187,7 +228,9 @@ function speakCurrentSegment(get: () => TtsState, set: (partial: Partial<TtsStat
   // start it is ready by the time it is wanted.
   const next = s.segments[s.currentSegmentIndex + 1];
   if (next && current.prefetch) {
-    const nextRendered = s.usePronunciations ? buildSpoken(next.text) : null;
+    // The same text the next verse will be spoken from, or the render waiting
+    // for it would be of a different string and thrown away unused.
+    const nextRendered = s.usePronunciations ? buildSpoken(next.text, { correctionsOnly: !current.readsRespellings }) : null;
     current.prefetch(nextRendered ? nextRendered.spoken : next.text, opts);
   }
 }
@@ -250,6 +293,7 @@ export const useTtsStore = create<TtsState>((set, get) => ({
   currentWordIndex: -1,
   isPlaying: false,
   isPaused: false,
+  preparing: false,
   error: null,
   sleepMinutes: 0,
   sleepUntil: null,
@@ -257,6 +301,7 @@ export const useTtsStore = create<TtsState>((set, get) => ({
   continuing: false,
 
   setEngineId: (engineId) => {
+    engineChosen = true;
     engine().cancel();
     // Voice ids belong to the engine that issued them, so carrying one across
     // a switch would name a voice the new engine has never heard of.
@@ -327,6 +372,7 @@ export const useTtsStore = create<TtsState>((set, get) => ({
 
   start: (title, sourceKind, segments, opts) => {
     const startIndex = opts?.startIndex ?? 0;
+    failures = 0;
     engine().cancel();
     set({
       title,
@@ -352,15 +398,25 @@ export const useTtsStore = create<TtsState>((set, get) => ({
     set({ isPaused: true });
   },
   resume: () => {
+    // A seek while paused left the queue on a verse the engine has never been
+    // given, so there is nothing to resume: it has to be spoken from the top.
+    if (speakOnResume) {
+      speakOnResume = false;
+      set({ isPaused: false });
+      speakCurrentSegment(get, set);
+      return;
+    }
     engine().resume();
     set({ isPaused: false });
   },
   stop: () => {
     engine().cancel();
     stopSleepTicker();
+    speakOnResume = false;
     set({
       isPlaying: false,
       isPaused: false,
+      preparing: false,
       segments: [],
       currentSegmentIndex: 0,
       currentWordIndex: -1,
@@ -392,7 +448,31 @@ export const useTtsStore = create<TtsState>((set, get) => ({
   seek: (segmentIndex) => {
     const s = get();
     if (segmentIndex < 0 || segmentIndex >= s.segments.length) return;
+    // Choosing a verse while the reading is paused moves the place without
+    // breaking the pause -- the reader is reading, not listening, and a
+    // sentence of speech out of a paused player would be a fright.
+    if (s.isPaused) {
+      engine().cancel();
+      speakOnResume = true;
+      set({ currentSegmentIndex: segmentIndex, currentWordIndex: -1, preparing: false });
+      return;
+    }
     set({ currentSegmentIndex: segmentIndex });
     speakCurrentSegment(get, set);
   },
 }));
+
+// A reader who has never chosen an engine should hear the bundled neural voice,
+// not the 2013-era Windows one -- the robot is the fallback, not the default.
+// Whether the model was bundled is a question for Rust, so the store starts on
+// Web Speech (always there) and moves as soon as the answer comes back. This
+// runs at import, long before the player bar exists, and a stored choice or one
+// made in the meantime is left alone.
+if (!engineChosen) {
+  const natural = ttsEngines.kokoro;
+  void Promise.resolve(natural?.probe?.() ?? false)
+    .then((ok) => {
+      if (ok && !engineChosen) useTtsStore.setState({ engineId: natural.id });
+    })
+    .catch(() => undefined);
+}

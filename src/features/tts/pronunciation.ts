@@ -80,6 +80,10 @@ export function toSpoken(respelling: string): string {
 }
 
 let lexicon: Map<string, string> | null = null;
+/** The reader's own corrections alone. A voice with its own pronunciation
+ * dictionary is given these and nothing else: ISBE's respellings are for a
+ * voice that reads what it is handed, letter by letter. */
+let ownCorrections: Map<string, string> | null = null;
 let loading: Promise<Map<string, string>> | null = null;
 /** Corrections handed straight to us by the editor, so a rebuild right after
  * an edit uses what was just saved rather than racing the write to disk. */
@@ -107,6 +111,7 @@ export function loadPronunciationLexicon(): Promise<Map<string, string>> {
       .then(([rows, stored]) => {
         const map = new Map<string, string>();
         for (const row of rows) {
+          if (!plausibleRespelling(row.word, row.respelling)) continue;
           const spoken = toSpoken(row.respelling);
           if (spoken) map.set(row.word, spoken);
         }
@@ -114,9 +119,11 @@ export function loadPronunciationLexicon(): Promise<Map<string, string>> {
         // century old and its ear was not ours.
         for (const [word, spoken] of stored) map.set(word, spoken);
         lexicon = map;
+        ownCorrections = new Map(stored);
         return map;
       })
       .catch(() => {
+        ownCorrections = new Map();
         // Clearing `loading` is what lets the next call try again. Left
         // latched, one transient failure meant read-aloud mispronounced every
         // proper noun for the rest of the session, with no way back short of
@@ -187,6 +194,57 @@ function splitToken(token: string): { lead: string; core: string; suffix: string
   return { lead, core, suffix, trail };
 }
 
+const VOWELS = new Set(["a", "e", "i", "o", "u", "y"]);
+
+/** First letters a respelling may legitimately open with: ISBE writes the sound,
+ * so Cyrus becomes "si'-rus" and Pharaoh "fa'-ro". */
+const FIRST_LETTER_ALIKE: Record<string, string> = {
+  c: "ks",
+  k: "c",
+  s: "cz",
+  p: "f",
+  f: "p",
+  q: "k",
+  x: "z",
+  z: "xs",
+  g: "j",
+  j: "g",
+  w: "hr",
+  h: "w",
+  y: "i",
+};
+
+/**
+ * Whether a respelling is plausibly of *this* word.
+ *
+ * ISBE articles often carry a headword list -- "KING; KINGDOM" -- and the
+ * importer took the first respelling in the article for every word in it, so
+ * the table says KING is said "king'-dum". Others are truncated where the
+ * article broke the line ("ACCORDINGLY" -> "a-kord") or belong to the article's
+ * subject rather than its title ("POOL" -> "sis'-tern", "DILL" -> "an'-is").
+ * Read aloud, these are worse than no help at all: the voice says a word that
+ * is not the one on the page.
+ *
+ * A respelling of a word is about as long as the word and starts with the same
+ * sound, which is enough to catch them -- 189 of the 5,980 rows, every one of
+ * them wrong, with the names the feature exists for (Mephibosheth, Zerubbabel,
+ * Nebuchadnezzar, Melchizedek, Ahasuerus) all kept.
+ */
+export function plausibleRespelling(word: string, respelling: string): boolean {
+  const spelled = word.toLowerCase();
+  const said = respelling.toLowerCase().replace(/[^a-z]/g, "");
+  if (said.length === 0) return false;
+  if (said.length > spelled.length + 2) return false;
+  if (said.length < spelled.length - 3) return false;
+  const from = spelled[0];
+  const to = said[0];
+  if (from === to) return true;
+  if (VOWELS.has(from) && VOWELS.has(to)) return true;
+  // A silent first letter: "KNOWLEDGE" is said "nol'-ej", "WRITE" "rit".
+  if (spelled.length > 1 && to === spelled[1]) return true;
+  return (FIRST_LETTER_ALIKE[from] ?? "").includes(to);
+}
+
 /** The rewritten token, or null to leave it alone. */
 function replacementFor(token: string, lex: Map<string, string>): string | null {
   const { lead, core, suffix, trail } = splitToken(token);
@@ -206,8 +264,8 @@ function replacementFor(token: string, lex: Map<string, string>): string | null 
  * Before the lexicon has loaded, and when nothing in the verse needs help,
  * the text is passed through untouched.
  */
-export function buildSpoken(text: string): SpokenText {
-  const lex = lexicon;
+export function buildSpoken(text: string, opts?: { correctionsOnly?: boolean }): SpokenText {
+  const lex = opts?.correctionsOnly ? ownCorrections : lexicon;
   const whole: SpokenChunk[] = [
     { spokenStart: 0, spokenEnd: text.length, srcStart: 0, srcEnd: text.length, literal: true },
   ];

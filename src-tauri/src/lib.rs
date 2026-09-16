@@ -46,6 +46,7 @@ fn ready_to_close(window: tauri::Window) {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    crate::tts::point_voice_at_lexicon();
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         // `tauri_plugin_dialog` stays: `commands::file_picker` uses DialogExt
@@ -334,6 +335,7 @@ pub fn run() {
             commands::reference::list_isbe_index,
             commands::reference::list_pronunciations,
             commands::tts::kokoro_available,
+            commands::tts::kokoro_can_say,
             commands::tts::kokoro_voices,
             commands::tts::kokoro_synthesize,
             commands::reference::get_isbe_entry,

@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Bookmark, BookmarkCheck, Brain, Columns2, Copy, Mic, StickyNote, Underline } from "lucide-react";
+import { Bookmark, BookmarkCheck, Brain, Columns2, Copy, Mic, StickyNote, Underline, Volume2 } from "lucide-react";
 import { useViewportClampedPosition } from "../../lib/useViewportClampedPosition";
 import { HIGHLIGHT_COLORS, UNDERLINE_COLOR, highlightColorLabel, useHighlightLabels } from "./highlightColors";
 import { PopoverItem } from "../../components/ui/Popover";
@@ -19,6 +19,7 @@ export function VerseContextMenu({
   onMemorize,
   onBookmark,
   onSendToSermon,
+  onReadFromHere,
   onClose,
 }: {
   x: number;
@@ -34,6 +35,8 @@ export function VerseContextMenu({
   onBookmark: () => void;
   /** Drops this verse into the open sermon as a live passage block. */
   onSendToSermon?: () => void;
+  /** Reads the chapter aloud from this verse on. */
+  onReadFromHere?: () => void;
   onClose: () => void;
 }) {
   const { ref, style } = useViewportClampedPosition<HTMLDivElement>(x, y);
@@ -97,6 +100,11 @@ export function VerseContextMenu({
         <PopoverItem onClick={run(onCompare)}>
           <Columns2 className="h-4 w-4 text-ink-3" aria-hidden="true" /> Compare translations
         </PopoverItem>
+        {onReadFromHere && (
+          <PopoverItem onClick={run(onReadFromHere)}>
+            <Volume2 className="h-4 w-4 text-ink-3" aria-hidden="true" /> Read aloud from here
+          </PopoverItem>
+        )}
         {onSendToSermon && (
           <PopoverItem onClick={run(onSendToSermon)}>
             <Mic className="h-4 w-4 text-ink-3" aria-hidden="true" /> Send to sermon
