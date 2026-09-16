@@ -4,6 +4,8 @@ import { useSetting } from "../../hooks/useSetting";
 import { Button, IconButton } from "../../components/ui/Button";
 import { inputSmClass, cx } from "../../components/ui/classes";
 import { OVERRIDES_KEY, applyOverrides, loadPronunciationLexicon, lookupSpoken } from "./pronunciation";
+import { ttsEngines } from "./ttsEngine";
+import { useTtsStore } from "../../state/ttsStore";
 
 type Overrides = Record<string, string>;
 
@@ -44,6 +46,31 @@ export function PronunciationOverrides() {
     commit(next);
   };
 
+  // The natural voice reads from a dictionary and spells out what it cannot
+  // find, so a respelling can come back as "K, O, V" rather than a word. It
+  // knows the answer without speaking, so the reader is told before saving
+  // rather than left to work it out by ear.
+  const engineId = useTtsStore((s) => s.engineId);
+  const [unsayable, setUnsayable] = useState(false);
+  useEffect(() => {
+    const say = spoken.trim();
+    const engine = ttsEngines[engineId];
+    if (!say || !engine?.canSay) {
+      setUnsayable(false);
+      return;
+    }
+    let alive = true;
+    const t = window.setTimeout(() => {
+      void engine.canSay!(say).then((ok) => {
+        if (alive) setUnsayable(!ok);
+      });
+    }, 350);
+    return () => {
+      alive = false;
+      window.clearTimeout(t);
+    };
+  }, [spoken, engineId]);
+
   const typed = word.trim();
   const currently = typed ? lookupSpoken(typed) : null;
   const entries = Object.entries(overrides).sort(([a], [b]) => a.localeCompare(b));
@@ -71,6 +98,11 @@ export function PronunciationOverrides() {
           Add
         </Button>
       </div>
+      {unsayable && (
+        <p className="mt-1 text-xs text-danger">
+          This voice would spell that out letter by letter. Try syllables it can read as words -- "ya-cove" rather than "ya-kov".
+        </p>
+      )}
       <p className="mt-1 text-xs text-ink-3">
         {currently ? (
           <>

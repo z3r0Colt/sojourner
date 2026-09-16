@@ -39,6 +39,7 @@
     ],
     "resources": {
       "../content/content.db": "content.db",
+      "resources/kjv-g2p.tab": "kjv-g2p.tab",
       "../library/": "library/",
       "../models/": "models/"
     },

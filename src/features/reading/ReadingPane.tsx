@@ -312,7 +312,17 @@ export function ReadingPane() {
     overscan: 8,
   });
 
-  const setActiveVerse = (v: number | null) => setParams({ activeVerse: v });
+  const setActiveVerse = (v: number | null) => {
+    setParams({ activeVerse: v });
+    // Choosing a verse while this pane is reading aloud moves the reader to
+    // it, so the voice can be steered by pointing at the text rather than by
+    // tapping Next as many times as it takes.
+    if (v == null) return;
+    const tts = useTtsStore.getState();
+    if (tts.sourceKind !== "scripture" || tts.paneId !== paneId || tts.segments.length === 0) return;
+    const index = tts.segments.findIndex((segment) => segment.id === v);
+    if (index >= 0 && index !== tts.currentSegmentIndex) tts.seek(index);
+  };
 
   const matches = useMemo(() => (findOpen && verses && !printing ? findMatches(verses, findQuery, findWholeWord) : []), [findOpen, verses, findQuery, findWholeWord, printing]);
   const currentFind = matches.length === 0 ? -1 : Math.min(findIndex, matches.length - 1);
@@ -501,6 +511,33 @@ export function ReadingPane() {
       { paneId },
     );
   }, [bookId, chapter, verses, book, paneId]);
+
+  // Turning to another chapter while this pane is reading aloud takes the
+  // voice with it, instead of leaving it reading a chapter that is no longer
+  // on the screen. Landing on a particular verse -- a cross-reference, a
+  // search result -- starts the reading there.
+  //
+  // Not while paused: a paused player belongs to someone who is reading with
+  // their eyes, and turning the page should not start talking at them. And
+  // not for auto-continue's own page turn, which the effect above finishes.
+  const ttsTitle = useTtsStore((s) => (ttsHere ? s.title : null));
+  const ttsRunning = useTtsStore((s) => s.isPlaying && !s.isPaused);
+  useEffect(() => {
+    if (!ttsHere || !ttsRunning || autoRead.current || !verses || !book) return;
+    const here = `${book.name} ${chapter}`;
+    if (ttsTitle === here) return;
+    const tts = useTtsStore.getState();
+    if (tts.continuing) return;
+    if (verses.length === 0) {
+      tts.stop();
+      return;
+    }
+    const startIndex = scrollTarget != null ? verses.findIndex((v) => v.verse === scrollTarget) : 0;
+    tts.start(here, "scripture", verses.map((v) => ({ id: v.verse, text: v.text, label: `Verse ${v.verse}` })), {
+      paneId,
+      startIndex: Math.max(0, startIndex),
+    });
+  }, [ttsHere, ttsRunning, ttsTitle, verses, book, chapter, paneId, scrollTarget]);
 
   // Scroll the target verse into view once verses are loaded. Rows are
   // virtualized, so the target row may not be mounted yet -- ask the
@@ -1099,6 +1136,17 @@ export function ReadingPane() {
           onUnderline={(color) => commitHighlight("underline", color, { verseStart: verseMenu.verseNum, verseEnd: verseMenu.verseNum })}
           onNote={() => setNoteTarget({ verseStart: verseMenu.verseNum, verseEnd: verseMenu.verseNum })}
           onCompare={() => setCompareVerse(verseMenu.verseNum)}
+          onReadFromHere={
+            readAloudSegments.length > 0
+              ? () => {
+                  const index = readAloudSegments.findIndex((s) => s.id === verseMenu.verseNum);
+                  useTtsStore.getState().start(`${book.name} ${chapter}`, "scripture", readAloudSegments, {
+                    paneId,
+                    startIndex: Math.max(0, index),
+                  });
+                }
+              : undefined
+          }
           onSendToSermon={() =>
             sendToSermon(
               {

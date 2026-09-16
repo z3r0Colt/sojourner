@@ -12,6 +12,22 @@ pub fn kokoro_voices(app: AppHandle) -> Vec<String> {
     crate::tts::list_voices(&app)
 }
 
+/// Whether the voice would read this as words rather than spelling it out.
+///
+/// The pronunciation editor asks before saving a correction: a respelling like
+/// "ya-kov" is no help if the voice answers "K, O, V", and the reader can only
+/// find that out by hearing it. No model is loaded -- this is the text step.
+///
+/// Async, and off the main thread: the first call phonemizes the alphabet to
+/// learn what a spelled-out letter sounds like, and a synchronous command
+/// doing that would hold up the window while the reader is typing.
+#[tauri::command]
+pub async fn kokoro_can_say(text: String) -> bool {
+    tauri::async_runtime::spawn_blocking(move || !crate::tts::spells_out(&text))
+        .await
+        .unwrap_or(true)
+}
+
 /// One verse of audio, as WAV bytes.
 ///
 /// Returned as a raw `Response` rather than a `Vec<u8>`: a verse is around a

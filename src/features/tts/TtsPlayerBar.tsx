@@ -101,7 +101,7 @@ function TtsSettings() {
 
       <label className="mb-1 block text-xs font-medium text-ink-3">Voice</label>
       <select value={voiceId ?? ""} onChange={(e) => setVoiceId(e.target.value || null)} className={cx(selectClass, "mb-1 w-full")}>
-        <option value="">System default</option>
+        <option value="">{engineId === "webspeech" ? "System default" : "Default voice"}</option>
         {voices.map((v) => (
           <option key={v.id} value={v.id}>
             {v.name} ({v.lang})
@@ -199,7 +199,9 @@ function TtsSettings() {
         <span>
           Say biblical names properly
           <span className="block text-xs text-ink-3">
-            Uses the encyclopedia's pronunciations for names like Mephibosheth. Takes effect at the next verse.
+            {ttsEngines[engineId]?.readsRespellings === false
+              ? "This voice knows the biblical names already; this applies the corrections you add below. Takes effect at the next verse."
+              : "Uses the encyclopedia's pronunciations for names like Mephibosheth. Takes effect at the next verse."}
           </span>
         </span>
       </label>
@@ -223,8 +225,14 @@ function TtsSettings() {
       <p className="mt-1 text-xs text-ink-3">The voice fades out over the last ten seconds, then reading stops.</p>
 
       <p className="mt-3 text-xs text-ink-3">
-        Uses the Windows voices installed on this device. No audio leaves the computer. For better ones, install a natural
-        voice in Windows Settings → Time &amp; language → Speech → Manage voices; it appears in this list on its own.
+        {engineId === "webspeech" ? (
+          <>
+            Uses the Windows voices installed on this device. No audio leaves the computer. For better ones, install a natural
+            voice in Windows Settings → Time &amp; language → Speech → Manage voices; it appears in this list on its own.
+          </>
+        ) : (
+          <>The natural voice runs on this device, from the model that shipped with the app. No audio leaves the computer.</>
+        )}
       </p>
     </div>
   );
@@ -236,6 +244,7 @@ export function TtsPlayerBar() {
   const currentSegmentIndex = useTtsStore((s) => s.currentSegmentIndex);
   const isPlaying = useTtsStore((s) => s.isPlaying);
   const isPaused = useTtsStore((s) => s.isPaused);
+  const preparing = useTtsStore((s) => s.preparing);
   const error = useTtsStore((s) => s.error);
   const rate = useTtsStore((s) => s.rate);
   const pause = useTtsStore((s) => s.pause);
@@ -251,6 +260,20 @@ export function TtsPlayerBar() {
     const idx = s.panes.findIndex((p) => p.id === paneId);
     return idx >= 0 ? `Pane ${idx + 1}` : null;
   });
+
+  // A verse the store asked for in advance is ready the moment the one before
+  // it ends, so "Preparing the voice" would flash by unread between every
+  // verse. It is only worth saying when there is really a wait.
+  // Nor while paused: a paused player is not waiting on anything.
+  const [waiting, setWaiting] = useState(false);
+  useEffect(() => {
+    if (!preparing || isPaused) {
+      setWaiting(false);
+      return;
+    }
+    const t = window.setTimeout(() => setWaiting(true), 400);
+    return () => window.clearTimeout(t);
+  }, [preparing, isPaused]);
 
   // The sleep countdown ticks once a second while a timer is set.
   const [now, setNow] = useState(() => Date.now());
@@ -277,6 +300,11 @@ export function TtsPlayerBar() {
             {paneLabel ? `${paneLabel} · ` : ""}
             {continuing ? (
               "Continuing into the next chapter…"
+            ) : waiting ? (
+              <>
+                {currentLabel ? `${currentLabel} · ` : ""}
+                Preparing the voice…
+              </>
             ) : (
               <>
                 {currentLabel ? `${currentLabel} · ` : ""}
