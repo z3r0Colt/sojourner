@@ -1,4 +1,9 @@
+import { useEffect, useState } from "react";
 import { openUrl } from "@tauri-apps/plugin-opener";
+import { Check, Download, RefreshCw } from "lucide-react";
+import { api } from "../../../api/client";
+import type { UpdateCheck } from "../../../api/types";
+import { Button } from "../../../components/ui/Button";
 
 /** An external link. `target="_blank"` inside a webview can navigate the app
  * window itself out of the app, so hand the URL to the system browser (the
@@ -15,6 +20,85 @@ function ExternalLink({ href, children }: { href: string; children: React.ReactN
     >
       {children}
     </a>
+  );
+}
+
+/** The running version, and the one control in this app that reaches the
+ * network.
+ *
+ * A button and deliberately not a check at launch: the paragraph below
+ * promises this app makes no network request of its own accord, and that stays
+ * literally true only while nothing here runs unasked. Nothing is downloaded
+ * or installed either -- the reader is handed a link and does the rest, which
+ * is the whole of the update story (see `crate::update`). */
+function Updates() {
+  const [version, setVersion] = useState<string | null>(null);
+  const [checking, setChecking] = useState(false);
+  const [result, setResult] = useState<UpdateCheck | null>(null);
+  const [failed, setFailed] = useState<string | null>(null);
+
+  useEffect(() => {
+    api.appVersion().then(setVersion).catch(() => {});
+  }, []);
+
+  async function check() {
+    setChecking(true);
+    setFailed(null);
+    setResult(null);
+    try {
+      setResult(await api.checkForUpdate());
+    } catch (e) {
+      setFailed(String(e));
+    } finally {
+      setChecking(false);
+    }
+  }
+
+  return (
+    <div className="mb-6 rounded-lg border border-line bg-surface-2 p-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-sm text-ink-2">
+          Version <span className="font-medium text-ink">{version ?? "—"}</span>
+        </p>
+        <Button icon={RefreshCw} onClick={check} disabled={checking}>
+          {checking ? "Checking…" : "Check for updates"}
+        </Button>
+      </div>
+
+      <div aria-live="polite">
+        {result?.update_available && (
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-line pt-3">
+            <p className="text-sm text-ink-2">
+              <span className="font-medium text-ink">Version {result.latest}</span> is available.
+            </p>
+            <Button variant="primary" icon={Download} onClick={() => openUrl(result.url).catch(() => {})}>
+              Open download page
+            </Button>
+          </div>
+        )}
+
+        {result && !result.update_available && (
+          <p className="mt-2 flex items-center gap-1.5 text-sm text-ink-3">
+            <Check className="h-4 w-4 shrink-0 text-accent" aria-hidden="true" />
+            {result.latest
+              ? "You are running the latest version."
+              : "No releases have been published yet."}
+          </p>
+        )}
+
+        {failed && (
+          <div className="mt-2">
+            <p className="text-sm text-danger">Could not reach GitHub.</p>
+            <p className="mt-0.5 text-xs text-ink-4">{failed}</p>
+          </div>
+        )}
+      </div>
+
+      <p className="mt-2 text-xs leading-relaxed text-ink-4">
+        Asks GitHub for the latest version number, and nothing else. Nothing about you is sent, and
+        nothing installs itself — you download the installer and run it when you choose.
+      </p>
+    </div>
   );
 }
 
@@ -40,13 +124,16 @@ export function AboutSection() {
         </p>
       </div>
 
+      <Updates />
+
       <div className="space-y-4 text-sm leading-relaxed text-ink-2">
         <p>
           A private, offline study companion for reading Scripture alongside the historic commentaries, confessions, and reference works of the church,
           built for the sojourner making their way through this world toward the next (1 Peter 2:11; Hebrews 11:13).
         </p>
         <p>
-          Everything lives in one file on this device. There is no account, no sync service, and no network request this app makes of its own accord.
+          Everything lives in one file on this device. There is no account, no sync service, and no network request this app makes of its own accord —
+          the update check above is the only one it can make, and only when you press it.
           Your notes, highlights, and prayers stay yours. Back up or export any time from Settings → Data &amp; backups.
         </p>
         <p>

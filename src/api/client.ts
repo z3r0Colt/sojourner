@@ -54,6 +54,7 @@ import type {
   Backlink,
   TrashContents,
   TrashKind,
+  UpdateCheck,
   CrossReference,
   MetricalPsalmVersion,
   PsalmTune,
@@ -493,6 +494,14 @@ export const api = {
   getLogsDir: () => invoke<string>("get_logs_dir"),
   /** Every count the Stats block shows (F3.5), in one round trip. */
   getStats: () => invoke<Stats>("get_stats"),
+
+  /** The only call in this file that leaves the machine, and the only one the
+   * app never makes on its own -- it runs when the reader presses "Check for
+   * updates" in Settings → About, and never otherwise. Downloads nothing; the
+   * answer carries a link. */
+  checkForUpdate: () => invoke<UpdateCheck>("check_for_update"),
+  /** The running version, for About to show. Touches no network. */
+  appVersion: () => invoke<string>("app_version"),
   /** The Windows accent color as "#rrggbb", or null off Windows (F3.8). */
   getSystemAccent: () => invoke<string | null>("get_system_accent"),
 

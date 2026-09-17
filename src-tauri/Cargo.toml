@@ -46,6 +46,16 @@ zip = "8.6.0"
 pdf-extract = "0.12.0"
 mobi = "0.8.0"
 regex = "1"
+# The one HTTP client in the app, for the one request it makes: the update
+# check in `crate::update`, which only ever runs when a reader presses the
+# button in Settings → About. Blocking and small on purpose -- a single GET
+# behind a `spawn_blocking` needs no async runtime of its own, and `reqwest`
+# would pull one in for nothing.
+ureq = "3"
+# Comparing the running version against a release tag. Already in the tree as
+# a dependency of tauri's own; declared here so `crate::update` can say
+# `0.10.0 > 0.9.0`, which no string comparison gets right.
+semver = "1"
 # The offline neural voice. `default-features = false` drops the espeak-ng
 # fallback and the CMake build that comes with it, leaving the crate's own
 # bundled Misaki dictionary: permissively licensed, no C toolchain to install,
