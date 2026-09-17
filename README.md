@@ -6,6 +6,27 @@ A desktop Bible study application built with Tauri, Rust, and React/TypeScript. 
 
 The application itself never makes a network request. Everything it needs is in `content.db` and the files beside it.
 
+## The book library pack
+
+The several hundred Puritan and Reformed works the app can carry do **not** ship in the installer. They are built into a separate resource pack the reader downloads from the releases page and installs from a file (Settings → Book library). That keeps the installer to the Bibles, commentaries and reference data — a third smaller than it was — and leaves the library to readers who want it.
+
+```
+npm run build:pack          # -> packs/Sojourner-Library-<version>.sjpack
+```
+
+A pack is a zip: `pack.json` (a SHA-256 per member), `library.db` (the books' text and its FTS index, prebuilt), and `books/*.epub`. Installing it verifies every checksum into a staging folder and only then swaps it into place, so a truncated download leaves the installed library untouched. The app ATTACHes `library.db` as a third schema beside `user.db` and `content.db`; with no pack installed nothing is attached and every query that reads a shipped book simply returns nothing. See `src-tauri/src/pack.rs`.
+
+Nothing in the app downloads a pack. The reader fetches it themselves, which is what keeps the promise in Settings → About intact and lets a pack arrive on a USB stick.
+
+To add books to the library the pack is built from:
+
+```
+npm run library:collect                      # from this machine's own app library
+node tools/stage-library-books.mjs <folder>  # from a Shelf/Author/Book.epub tree
+```
+
+The second is dry by default and prints what it would add; pass `--apply` to copy. It skips books already shipped, books the app already carries as structured data (Calvin's and Matthew Henry's commentaries, the Westminster Standards, Easton's and Smith's dictionaries, the translations), and epubs with no usable text — page-image scans, and CCEL downloads whose chapter files came out empty.
+
 ## Reference data
 
 Everything under `reference/` is committed and imported into `content.db` by `npm run build:content`. Most of it was prepared once and does not change.

@@ -1006,7 +1006,40 @@ export interface IllustrationUse {
 /** Which dialog filters `pickSavePath`/`pickOpenPath` should use. The page
  * names a kind rather than a set of extensions, because the dialog itself is
  * described on the Rust side (see `commands::file_picker`). */
-export type PickKind = "markdown" | "database" | "pptx" | "resource" | "library_xml";
+export type PickKind = "markdown" | "database" | "pptx" | "resource" | "library_xml" | "pack";
+
+/** The installed book library pack, or the absence of one. */
+export interface PackStatus {
+  installed: boolean;
+  name: string | null;
+  version: string | null;
+  built_at: string | null;
+  book_count: number | null;
+  bytes_on_disk: number | null;
+}
+
+/**
+ * How far an install has got. Emitted on the `pack-install-progress` event,
+ * many times a second while `stage` is "extracting".
+ */
+export interface PackProgress {
+  stage: "checking" | "extracting" | "installing" | "cataloguing" | "done";
+  file: string | null;
+  files_done: number;
+  files_total: number;
+  bytes_done: number;
+  bytes_total: number;
+}
+
+/** What an install did, once it is done. */
+export interface PackInstallOutcome {
+  name: string;
+  version: string;
+  book_count: number;
+  bytes: number;
+  /** True when this replaced a pack that was already installed. */
+  replaced: boolean;
+}
 
 /** A file the user chose in a dialog Rust ran. `token` is what the commands
  * that read or write it take -- one use, then it is spent. `display_path` is

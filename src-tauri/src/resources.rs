@@ -383,14 +383,33 @@ startxref
         std::panic::set_hook(previous);
 
         assert!(extracted.is_none(), "a panicking extraction must come back as None, not unwind out");
-        let logs: Vec<_> = std::fs::read_dir(dir.join("logs"))
+
+        // Counted by what the logs *say*, not by how many there are.
+        //
+        // `install_panic_hook` sets the process-wide hook, and a Rust test
+        // binary runs its tests on threads of one process -- so for as long
+        // as this test holds the hook, a panic anywhere else in the suite
+        // writes its crash log into this folder too. An assertion failure in
+        // an unrelated test is such a panic. Asserting on the total file
+        // count therefore made a failure over here into a second, misleading
+        // failure over there, at exactly the moment the suite was already
+        // hard to read.
+        //
+        // What this test actually claims is narrower and is what is checked:
+        // the hostile PDF left one crash log, and that log names the panic.
+        let bodies: Vec<String> = std::fs::read_dir(dir.join("logs"))
             .expect("the panic hook should have made a logs folder")
             .filter_map(|e| e.ok())
             .filter(|e| e.file_name().to_string_lossy().starts_with("crash-"))
+            .filter_map(|e| std::fs::read_to_string(e.path()).ok())
             .collect();
-        assert_eq!(logs.len(), 1, "expected exactly one crash log, got {logs:?}");
-        let body = std::fs::read_to_string(logs[0].path()).unwrap();
-        assert!(body.contains("unexpected encoding"), "the log should name the panic: {body}");
+        let ours: Vec<&String> = bodies.iter().filter(|b| b.contains("unexpected encoding")).collect();
+        assert_eq!(
+            ours.len(),
+            1,
+            "one caught panic should leave exactly one crash log naming it, got {ours:?} (of {} in the folder)",
+            bodies.len()
+        );
 
         let _ = std::fs::remove_dir_all(&dir);
     }

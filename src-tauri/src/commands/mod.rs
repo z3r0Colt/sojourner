@@ -45,6 +45,7 @@ pub mod export;
 pub mod file_picker;
 pub mod harmony;
 pub mod library;
+pub mod pack;
 pub mod prayer_journal;
 pub mod prayer_list;
 pub mod reading;

@@ -199,12 +199,17 @@ pub fn apply_pending_import(app_data_dir: &Path) -> anyhow::Result<()> {
     Ok(())
 }
 
-/// Runs SQLite's own integrity check against both databases (the attached
-/// content.db as well as user.db) -- `Ok(true)` with a single "ok" element
+/// Runs SQLite's own integrity check against every database this connection
+/// holds open: user.db, the attached content.db, and -- when a resource pack
+/// is installed -- its library.db. `Ok(true)` with a single "ok" element
 /// means clean; anything else is a description of the corruption found.
 pub fn quick_check(conn: &Connection) -> anyhow::Result<Vec<String>> {
     let mut issues = Vec::new();
-    for schema in ["main", "content"] {
+    let mut schemas = vec!["main", "content"];
+    if crate::db::library_is_attached(conn) {
+        schemas.push(crate::db::LIBRARY_SCHEMA);
+    }
+    for schema in schemas {
         let mut stmt = conn.prepare(&format!("PRAGMA {schema}.quick_check"))?;
         let rows = stmt.query_map([], |r| r.get::<_, String>(0))?;
         for row in rows {

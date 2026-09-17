@@ -13,7 +13,9 @@ import {
   useAllResourceTagsByResource,
   useAddResourceTag,
   useRemoveResourceTag,
+  usePackStatus,
 } from "../../api/queries";
+import { PaneLink } from "../../workspace/PaneLink";
 import { TagRow, TagFilterBar } from "../../components/TagRow";
 import { Page } from "../../components/ui/Page";
 import { Button, IconButton } from "../../components/ui/Button";
@@ -58,6 +60,7 @@ export function ResourceLibraryView() {
   const [activeTag, setActiveTag] = useState<string | null>(null);
   const [reextracting, setReextracting] = useState<number | null>(null);
 
+  const { data: packStatus } = usePackStatus();
   const { data: tagPairs } = useAllResourceTagsByResource();
   const { data: allTags } = useAllResourceTags();
   const addTag = useAddResourceTag();
@@ -151,6 +154,12 @@ export function ResourceLibraryView() {
 
   const hasAny = (resources?.length ?? 0) > 0;
   const searching = debounced.trim().length > 1;
+  const packInstalled = packStatus?.installed ?? true;
+  // Books this reader has rows for -- tags, notes, bookmarks and all -- whose
+  // files are in a pack that is not installed. On an upgrade from a build that
+  // bundled the library this is every one of them, which is exactly the case
+  // that must not look like several hundred broken books.
+  const awaitingPack = packInstalled ? 0 : (resources ?? []).filter((r) => r.bundled).length;
 
   return (
     <Page
@@ -200,6 +209,22 @@ export function ResourceLibraryView() {
               ))}
             </ul>
           )}
+        </div>
+      )}
+
+      {awaitingPack > 0 && (
+        <div className="mb-4 rounded-lg border border-amber-500/40 bg-amber-500/5 p-3 text-sm">
+          <p className="text-ink">
+            {awaitingPack} {awaitingPack === 1 ? "book is" : "books are"} part of the book library, which isn't installed on this
+            computer. They can't be opened or searched until it is — everything you've written about them is kept meanwhile.
+          </p>
+          <p className="mt-1 text-ink-3">
+            The library is a separate download.{" "}
+            <PaneLink to="/settings?section=books" className="text-accent hover:underline">
+              Install it from Settings → Book library
+            </PaneLink>
+            .
+          </p>
         </div>
       )}
 
@@ -288,12 +313,23 @@ export function ResourceLibraryView() {
                           )
                         )}
                         {r.bundled ? (
-                          <span
-                            className="shrink-0 rounded-full border border-line px-1.5 py-0.5 text-[0.65rem] uppercase tracking-wide text-ink-4"
-                            title="Ships with the app. Read it, search it, tag it — it just can't be removed."
-                          >
-                            Shipped
-                          </span>
+                          packInstalled ? (
+                            <span
+                              className="shrink-0 rounded-full border border-line px-1.5 py-0.5 text-[0.65rem] uppercase tracking-wide text-ink-4"
+                              title="Part of the book library. Read it, search it, tag it — it just can't be removed on its own."
+                            >
+                              Library
+                            </span>
+                          ) : (
+                            // The book itself is not on this machine, but
+                            // everything the reader attached to it is.
+                            <span
+                              className="shrink-0 rounded-full border border-amber-500/40 px-1.5 py-0.5 text-[0.65rem] uppercase tracking-wide text-amber-700 dark:text-amber-400"
+                              title="This book is in the book library pack, which isn't installed. Your notes, tags and bookmarks on it are kept."
+                            >
+                              Not installed
+                            </span>
+                          )
                         ) : (
                           <Popover
                             width="w-44"
@@ -333,7 +369,22 @@ export function ResourceLibraryView() {
           <EmptyState
             icon={Library}
             title="Your library is empty"
-            description="Add EPUB, PDF, or MOBI books, or audio and video files. Books are indexed so you can search inside them, and any resource can be linked to the passage it speaks to."
+            description={
+              <>
+                Add EPUB, PDF, or MOBI books, or audio and video files. Books are indexed so you can search inside them, and any
+                resource can be linked to the passage it speaks to.
+                {!packStatus?.installed && (
+                  <>
+                    {" "}
+                    Several hundred Puritan and Reformed works are available as a separate download —{" "}
+                    <PaneLink to="/settings?section=books" className="text-accent hover:underline">
+                      install the book library
+                    </PaneLink>
+                    .
+                  </>
+                )}
+              </>
+            }
             action={
               <div className="flex gap-2">
                 <Button icon={FolderOpen} onClick={handleImportFolder}>

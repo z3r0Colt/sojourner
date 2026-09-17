@@ -38,3 +38,30 @@ pub fn resources_dir(app: &AppHandle) -> Option<PathBuf> {
     std::fs::create_dir_all(&dir).ok()?;
     Some(dir)
 }
+
+/// Where an installed resource pack lives: `library.db` beside a `books/`
+/// folder of epubs.
+///
+/// Under the app data dir rather than beside the executable, because that is
+/// the one place a reader can certainly write -- the pack is installed after
+/// the app is, and an install directory may well be read-only. It is also
+/// what keeps the books through an app upgrade, which replaces the install
+/// directory wholesale.
+///
+/// Not created here: whether this folder exists is exactly the question
+/// "is a pack installed", and a path lookup must not answer it by making it
+/// true. `crate::pack` creates it, once, at the end of an install.
+pub fn pack_dir(app: &AppHandle) -> Option<PathBuf> {
+    Some(app.path().app_data_dir().ok()?.join("library"))
+}
+
+/// The books themselves, inside [`pack_dir`]. Matches the assetProtocol scope
+/// in tauri.conf.json, which is what lets the epub reader load one.
+pub fn pack_books_dir(app: &AppHandle) -> Option<PathBuf> {
+    Some(pack_dir(app)?.join(crate::pack::BOOKS_DIR))
+}
+
+/// The pack's database, inside [`pack_dir`].
+pub fn pack_db_path(app: &AppHandle) -> Option<PathBuf> {
+    Some(pack_dir(app)?.join(crate::pack::LIBRARY_DB))
+}

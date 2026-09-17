@@ -182,6 +182,10 @@ export function AboutSection() {
           the Westminster Standards, Strong's lexicon with interlinear Hebrew and Greek, a Bible dictionary and encyclopedia, an atlas of the biblical world,
           two harmonies of the Gospels, reading plans, and tools for prayer and Scripture memory.
         </p>
+        <p>
+          The library of Puritan and Reformed works is a separate download, so the app itself stays small. Install it from Settings → Book library; nothing is
+          fetched from here.
+        </p>
       </div>
 
       <h2 className="mb-1 mt-8 text-lg font-semibold text-ink">Sources and licences</h2>
