@@ -1015,3 +1015,17 @@ export interface PickedPath {
   token: string;
   display_path: string;
 }
+
+// --- Updates ---------------------------------------------------------------
+
+/** The answer to "is there a newer Sojourner?" (see `crate::update`).
+ *
+ * Nothing here downloads or installs anything: `url` is a page for the reader
+ * to visit. `latest` is null when no release has been published yet, which is
+ * not an error and not an update. */
+export interface UpdateCheck {
+  current: string;
+  latest: string | null;
+  update_available: boolean;
+  url: string;
+}

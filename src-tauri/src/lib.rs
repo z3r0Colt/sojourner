@@ -11,6 +11,7 @@ pub mod paths;
 pub mod resources;
 pub mod text;
 pub mod tts;
+pub mod update;
 
 use db::DbState;
 use std::path::PathBuf;
@@ -422,6 +423,8 @@ pub fn run() {
             commands::export::export_note,
             commands::export::export_chapter_note,
             commands::export::export_prayer_entry,
+            commands::update::check_for_update,
+            commands::update::app_version,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
