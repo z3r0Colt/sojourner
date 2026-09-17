@@ -64,6 +64,7 @@ fn filters_for(kind: &str) -> AppResult<&'static [(&'static str, &'static [&'sta
             &["epub", "pdf", "mobi", "azw", "azw3", "mp4", "mkv", "webm", "mov", "mp3", "m4a", "wav", "ogg", "flac"],
         )],
         "library_xml" => &[("XML", &["xml"])],
+        "pack" => &[("Sojourner resource pack", &["sjpack"])],
         other => return Err(anyhow::anyhow!("unknown file kind: {other}").into()),
     })
 }

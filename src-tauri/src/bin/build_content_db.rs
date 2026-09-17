@@ -50,17 +50,10 @@ fn main() -> anyhow::Result<()> {
         }
     }
 
-    // The shipped library: whatever `collect_library` has put in library/,
-    // with its text extracted once here so a fresh install can search it.
-    let library_dir = repo_root.join(tauri_app_lib::library::LIBRARY_DIR);
-    let library_count = if library_dir.is_dir() {
-        let n = tauri_app_lib::library::import(&conn, &library_dir)?;
-        println!("  [library] {n} book(s) from {}", library_dir.display());
-        n
-    } else {
-        println!("  [library] none ({} does not exist)", library_dir.display());
-        0
-    };
+    // The shipped books are not here any more. They are built separately, by
+    // `build_library_pack`, into a resource pack the reader installs -- which
+    // is what takes a third of a gigabyte back out of this file. See
+    // `crate::pack`.
 
     let translation_count: i64 = conn.query_row("SELECT COUNT(*) FROM translations", [], |r| r.get(0))?;
     let commentary_count: i64 = conn.query_row("SELECT COUNT(*) FROM commentary_sources", [], |r| r.get(0))?;
@@ -73,7 +66,7 @@ fn main() -> anyhow::Result<()> {
     let journey_count: i64 = conn.query_row("SELECT COUNT(*) FROM atlas_journeys", [], |r| r.get(0))?;
     let pronunciation_count: i64 = conn.query_row("SELECT COUNT(*) FROM pronunciations", [], |r| r.get(0))?;
     println!(
-        "done: {translation_count} translation(s), {commentary_count} commentary source(s), {strongs_count} strongs entries, {library_count} shipped book(s), {failed} failure(s)"
+        "done: {translation_count} translation(s), {commentary_count} commentary source(s), {strongs_count} strongs entries, {failed} failure(s)"
     );
     println!("  encyclopedia: {isbe_count} article(s); atlas: {place_count} place(s), {journey_count} journey(s)");
     println!("  pronunciations: {pronunciation_count} word(s)");

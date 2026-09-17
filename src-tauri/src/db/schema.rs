@@ -937,6 +937,30 @@ CREATE TABLE harmony_essays (
 );
 "#;
 
+// The shipped books left content.db for a file of their own.
+//
+// Their text and its search index were a third of this database -- 330 MB of
+// the gigabyte -- and they are the one part of it a reader might reasonably
+// not want. So they moved into `library.db`, which ships as a separate
+// resource pack and is ATTACHed as `library` when one is installed (see
+// `LIBRARY_MIGRATIONS` below and `crate::pack`).
+//
+// CONTENT_MIGRATION_0011 is left exactly as it was written rather than
+// edited away: migrations are append-only here, and an existing content.db
+// has to be walked forward through the version that created these tables to
+// reach the version that drops them. A freshly built one runs both in turn
+// and ends up in the same place, one table create and drop the poorer.
+//
+// Dropping `library_fts` takes its four shadow tables with it. The triggers
+// have to go first -- they reference a table that is about to not exist.
+pub const CONTENT_MIGRATION_0018: &str = r#"
+DROP TRIGGER IF EXISTS library_ai;
+DROP TRIGGER IF EXISTS library_au;
+DROP TRIGGER IF EXISTS library_ad;
+DROP TABLE IF EXISTS library_fts;
+DROP TABLE IF EXISTS library_resources;
+"#;
+
 pub const CONTENT_MIGRATIONS: &[&str] = &[
     CONTENT_MIGRATION_0001,
     CONTENT_MIGRATION_0002,
@@ -955,7 +979,49 @@ pub const CONTENT_MIGRATIONS: &[&str] = &[
     CONTENT_MIGRATION_0015,
     CONTENT_MIGRATION_0016,
     CONTENT_MIGRATION_0017,
+    CONTENT_MIGRATION_0018,
 ];
+
+// library.db: the books that ship with the app, in a file of their own.
+//
+// This is the whole schema of the resource pack -- the same two tables and
+// three triggers that CONTENT_MIGRATION_0011 once created inside content.db,
+// moved here verbatim so a pack built by `build_library_pack` and a pack read
+// by the running app agree down to the trigger bodies.
+//
+// `library_fts` is an external-content table over `library_resources`
+// (`content='library_resources'`), which is why the pair could only ever move
+// together: FTS5 reads the base table's rows by rowid out of the same
+// database file, and there is no syntax for reaching across an ATTACH.
+pub const LIBRARY_MIGRATION_0001: &str = r#"
+CREATE TABLE library_resources (
+  id              INTEGER PRIMARY KEY,
+  file_name       TEXT NOT NULL UNIQUE,
+  kind            TEXT NOT NULL,
+  title           TEXT NOT NULL,
+  author          TEXT,
+  extracted_text  TEXT
+);
+CREATE VIRTUAL TABLE library_fts USING fts5(
+  title, author, extracted_text, content='library_resources', content_rowid='id'
+);
+CREATE TRIGGER library_ai AFTER INSERT ON library_resources BEGIN
+  INSERT INTO library_fts(rowid, title, author, extracted_text)
+  VALUES (new.id, new.title, new.author, new.extracted_text);
+END;
+CREATE TRIGGER library_au AFTER UPDATE ON library_resources BEGIN
+  INSERT INTO library_fts(library_fts, rowid, title, author, extracted_text)
+  VALUES('delete', old.id, old.title, old.author, old.extracted_text);
+  INSERT INTO library_fts(rowid, title, author, extracted_text)
+  VALUES (new.id, new.title, new.author, new.extracted_text);
+END;
+CREATE TRIGGER library_ad AFTER DELETE ON library_resources BEGIN
+  INSERT INTO library_fts(library_fts, rowid, title, author, extracted_text)
+  VALUES('delete', old.id, old.title, old.author, old.extracted_text);
+END;
+"#;
+
+pub const LIBRARY_MIGRATIONS: &[&str] = &[LIBRARY_MIGRATION_0001];
 
 pub const USER_MIGRATION_0001: &str = r#"
 CREATE TABLE highlights (

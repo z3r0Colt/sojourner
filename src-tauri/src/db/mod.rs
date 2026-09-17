@@ -56,6 +56,81 @@ pub fn open_content_db(content_db_path: &Path) -> anyhow::Result<Connection> {
     Ok(conn)
 }
 
+/// The schema name the shipped book library is attached under.
+pub const LIBRARY_SCHEMA: &str = "library";
+
+/// Opens (creating if necessary) a `library.db` in isolation and brings it up
+/// to date against [`schema::LIBRARY_MIGRATIONS`].
+///
+/// Used by `build_library_pack` to produce the file a resource pack carries,
+/// and by [`crate::pack`] to check a staged pack's database before it is
+/// installed. The running app never opens it this way -- it goes through
+/// [`attach_library`] instead, so that one connection can join the reader's
+/// own rows against the shipped books.
+pub fn open_library_db(library_db_path: &Path) -> anyhow::Result<Connection> {
+    if let Some(parent) = library_db_path.parent() {
+        std::fs::create_dir_all(parent)?;
+    }
+    let mut conn = Connection::open(library_db_path)?;
+    conn.execute_batch(PERFORMANCE_PRAGMAS)?;
+    // "main" rather than `LIBRARY_SCHEMA`: opened on its own, library.db *is*
+    // the main schema. `library` is only its name once attached to the app's
+    // connection, where it is never migrated.
+    run_migrations(&mut conn, "main", schema::LIBRARY_MIGRATIONS)?;
+    Ok(conn)
+}
+
+/// Whether the shipped book library is attached to this connection -- i.e.
+/// whether a resource pack is installed.
+pub fn library_is_attached(conn: &Connection) -> bool {
+    conn.prepare("PRAGMA database_list")
+        .and_then(|mut stmt| {
+            let rows = stmt.query_map([], |r| r.get::<_, String>(1))?;
+            rows.collect::<Result<Vec<_>, _>>()
+        })
+        .map(|names| names.iter().any(|n| n == LIBRARY_SCHEMA))
+        .unwrap_or(false)
+}
+
+/// ATTACHes an installed resource pack's `library.db` as `library`.
+///
+/// Its two tables (`library_resources`, `library_fts`) share no name with
+/// anything in user.db or content.db, so every query that reads them stays
+/// unqualified and SQLite falls through to this schema to find them -- the
+/// same trick the `content` attach relies on. Nothing is attached when no
+/// pack is installed, and `crate::library::is_available` is what every read
+/// path asks first.
+pub fn attach_library(conn: &Connection, library_db_path: &Path) -> anyhow::Result<()> {
+    anyhow::ensure!(
+        library_db_path.is_file(),
+        "no library database at {}",
+        library_db_path.display()
+    );
+    conn.execute(
+        "ATTACH DATABASE ?1 AS library",
+        [library_db_path.to_string_lossy().to_string()],
+    )?;
+    // Best-effort, exactly as for content: a pack installed on a read-only
+    // volume still reads fine, it just keeps SQLite's defaults.
+    let _ = conn.execute_batch(
+        "PRAGMA library.journal_mode = WAL;
+         PRAGMA library.synchronous = NORMAL;
+         PRAGMA library.mmap_size = 268435456;
+         PRAGMA library.temp_store = MEMORY;",
+    );
+    Ok(())
+}
+
+/// DETACHes the book library, releasing the file so it can be replaced or
+/// deleted. A no-op when no pack is attached.
+pub fn detach_library(conn: &Connection) -> anyhow::Result<()> {
+    if !library_is_attached(conn) {
+        return Ok(());
+    }
+    conn.execute_batch("DETACH DATABASE library")?;
+    Ok(())
+}
+
 /// True if `conn` (as returned by [`open_content_db`]) has no content
 /// imported yet -- i.e. it was just created fresh rather than opened from an
 /// already-populated file.

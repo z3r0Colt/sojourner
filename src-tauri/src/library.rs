@@ -2,23 +2,29 @@
 //!
 //! A reader's own resources are copied into the app-data folder and
 //! catalogued in user.db, text and all (see `commands::resources`). The
-//! shipped library works the other way round: the files are bundled beside
-//! the executable and read where they lie, their text is extracted once at
-//! package time into content.db, and user.db keeps only a stub row per book
-//! so that tags, passage links and reading positions -- all of which
+//! shipped library works the other way round: the files arrive in a resource
+//! pack and are read where they lie, their text is extracted once at build
+//! time into the pack's `library.db`, and user.db keeps only a stub row per
+//! book so that tags, passage links and reading positions -- all of which
 //! reference `resources(id)` -- work for a shipped book exactly as they do
 //! for one of the reader's own.
 //!
-//! Three moving parts:
+//! These books used to ship inside the installer, their text in content.db
+//! and their files beside the executable. They now ship separately (see
+//! `crate::pack`), which is why [`sync`] matters more than it did: the
+//! library can arrive, and leave, while a reader's notes about it stay put.
+//!
+//! Four moving parts:
 //!
 //! * [`collect`] tops up the repo's `library/` folder from a reader's own
 //!   library, carrying over the titles and authors already curated there,
 //!   and writes `library/manifest.json`. Run before a release build.
-//! * [`import`] reads that folder into content.db. `build_content_db` calls
-//!   it, so a packaged content.db always has the library in it.
-//! * [`sync`] runs at every launch: it makes user.db's stub rows agree with
-//!   what content.db holds, and repoints them at wherever the files are on
-//!   this machine -- an install directory, or a folder on a USB stick.
+//! * [`import`] reads that folder into a `library.db`. `build_library_pack`
+//!   calls it, so a built pack always has the books' text in it.
+//! * [`sync`] runs at every launch and after every install: it makes user.db's
+//!   stub rows agree with what the pack holds, and repoints them at wherever
+//!   the files are on this machine -- an app-data folder, or a USB stick.
+//! * [`retire_all`] is the other half of that, for when no pack is installed.
 
 use crate::resources::{detect_kind, extract_text};
 use rusqlite::{params, Connection, OptionalExtension};
@@ -42,7 +48,7 @@ pub struct LibraryEntry {
     pub author: Option<String>,
 }
 
-/// A shipped book as the app reads it back out of content.db.
+/// A shipped book as the app reads it back out of the installed pack.
 #[derive(Debug, Clone)]
 pub struct LibraryBook {
     pub file_name: String,
@@ -128,8 +134,9 @@ pub fn collect(source_dir: &Path, library_dir: &Path, catalogue: Option<&Connect
     Ok(CollectOutcome { added, already_there, total: entries.len() })
 }
 
-/// Reads `library_dir` into `content.db`, extracting each book's text. Called
-/// by `build_content_db`, which builds that file from scratch every time.
+/// Reads `library_dir` into a `library.db`, extracting each book's text.
+/// Called by `build_library_pack`, which builds that file from scratch every
+/// time.
 pub fn import(conn: &Connection, library_dir: &Path) -> anyhow::Result<usize> {
     let entries = read_manifest(library_dir)?;
     if entries.is_empty() {
@@ -156,24 +163,29 @@ pub fn import(conn: &Connection, library_dir: &Path) -> anyhow::Result<usize> {
     Ok(imported)
 }
 
-/// Whether the attached content.db is new enough to carry a shipped library.
+/// Whether this connection can see a shipped library at all.
 ///
-/// content.db is its own file with its own migrations, and an app can be
-/// handed an older one -- a dev checkout built before this existed, an
-/// install whose content resource was not replaced. Everything that reads the
-/// library asks this first rather than failing on a missing table.
+/// Three places it can live, and all three are real:
+///
+/// * `library` -- an installed resource pack, which is where it lives now.
+/// * `content` -- a content.db built before the books moved out into a pack.
+/// * `main` -- a standalone library.db, as `build_library_pack` opens it.
+///
+/// Everything that reads the library asks this first rather than failing on a
+/// missing table, because all three of those can be absent: no pack installed
+/// is the ordinary state of a fresh install, not an error.
 pub fn is_available(conn: &Connection) -> bool {
-    // Asked of each schema in turn and tolerant of both failing: this same
-    // function is called on the app's two-database connection and on a
-    // standalone content.db during a build, where `content` is not attached
-    // at all.
+    // Asked of each schema in turn and tolerant of every one failing: a query
+    // against `library.sqlite_master` is an error, not an empty result, when
+    // nothing is attached under that name.
     let has_table = |sql: &str| {
         conn.query_row(sql, [], |_| Ok(()))
             .optional()
             .unwrap_or(None)
             .is_some()
     };
-    has_table("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'library_resources'")
+    has_table("SELECT 1 FROM library.sqlite_master WHERE type = 'table' AND name = 'library_resources'")
+        || has_table("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'library_resources'")
         || has_table("SELECT 1 FROM content.sqlite_master WHERE type = 'table' AND name = 'library_resources'")
 }
 
@@ -191,6 +203,41 @@ pub fn list(conn: &Connection) -> anyhow::Result<Vec<LibraryBook>> {
     Ok(rows.collect::<Result<Vec<_>, _>>()?)
 }
 
+/// How many rows still claim to be one of the shipped books.
+///
+/// With no pack installed this is the count of books waiting for one -- what
+/// the Resources view needs in order to say so rather than listing several
+/// hundred books that will not open.
+pub fn count_marked(conn: &Connection) -> anyhow::Result<i64> {
+    Ok(conn.query_row(
+        "SELECT COUNT(*) FROM resources WHERE library_key IS NOT NULL",
+        [],
+        |r| r.get(0),
+    )?)
+}
+
+/// Lets go of every row that claims to be a shipped book, and says how many.
+///
+/// For when the reader *removes* the pack, and only then. It is deliberately
+/// not run at launch when no pack is installed: `library_key` is the only
+/// record that a row was ever one of the shipped books, and an upgrade from a
+/// build that bundled them needs that record kept so the books can be
+/// explained and then repointed when a pack arrives. [`sync`] cannot do this
+/// itself either -- it returns early when no library is attached.
+///
+/// What it clears is `library_key`, and only that. The row stays, and with it
+/// the title, the author, every tag, every passage link and every bookmark
+/// that references it. `file_path` still points where the file used to be, so
+/// a reader who keeps their own copy there loses nothing; a reader who does
+/// not sees a resource with no file behind it, which is what
+/// `queries::resources` reports as unavailable rather than opening to an
+/// error. Installing the pack again re-adopts the row by file name and hands
+/// it all back.
+pub fn retire_all(conn: &Connection) -> anyhow::Result<usize> {
+    let retired = conn.execute("UPDATE resources SET library_key = NULL WHERE library_key IS NOT NULL", [])?;
+    Ok(retired)
+}
+
 /// What one launch's [`sync`] changed, for the log line.
 #[derive(Debug, Default)]
 pub struct SyncOutcome {
@@ -206,7 +253,7 @@ pub struct SyncOutcome {
 /// * A row the reader already has for the same file -- because this library
 ///   was imported by hand before it shipped -- is adopted rather than
 ///   duplicated: it keeps its id, and with it every tag and bookmark, and
-///   gives up the copy of the text it was carrying, which content.db now
+///   gives up the copy of the text it was carrying, which the pack now
 ///   holds for every install.
 /// * A row whose file has moved (a reinstall, a different machine, a folder
 ///   on a stick) is repointed at where the files are now.
@@ -322,19 +369,25 @@ mod tests {
     use super::*;
     use crate::db;
 
+    /// The three-database setup the app actually runs on: user.db as `main`,
+    /// content.db attached as `content`, and an installed resource pack's
+    /// library.db attached as `library` -- seeded with two books, as
+    /// `build_library_pack` would leave them.
     fn scratch(name: &str) -> (PathBuf, Connection) {
         let dir = std::env::temp_dir().join(format!("sojourner-library-{name}-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).unwrap();
         let content_db_path = dir.join("content.db");
+        db::open_content_db(&content_db_path).unwrap();
+
+        let library_db_path = dir.join("library.db");
         {
-            // Two books shipped with the app, as `import` would leave them.
-            let content = db::open_content_db(&content_db_path).unwrap();
+            let library = db::open_library_db(&library_db_path).unwrap();
             for (file, title, author) in [
                 ("Mortification.epub", "Of the Mortification of Sin", "John Owen"),
                 ("All of Grace.epub", "All of Grace", "C. H. Spurgeon"),
             ] {
-                content
+                library
                     .execute(
                         "INSERT INTO library_resources (file_name, kind, title, author, extracted_text)
                          VALUES (?1, 'epub', ?2, ?3, 'the words of the book')",
@@ -344,12 +397,13 @@ mod tests {
             }
         }
         let conn = db::open(&dir, &content_db_path).unwrap();
+        db::attach_library(&conn, &library_db_path).unwrap();
         (dir, conn)
     }
 
     /// The reader who imported these books by hand before they shipped must
     /// end up with one row each, not two -- keeping the id everything else
-    /// hangs off, and giving up the copy of the text that content.db now
+    /// hangs off, and giving up the copy of the text that the pack now
     /// holds for every install.
     #[test]
     fn a_hand_imported_book_is_adopted_rather_than_duplicated() {
@@ -379,7 +433,7 @@ mod tests {
             .unwrap();
         assert_eq!(id, mine, "the reader's own row, kept");
         assert_eq!(key.as_deref(), Some("Mortification.epub"));
-        assert_eq!(text, None, "the text is content.db's business now");
+        assert_eq!(text, None, "the text is the pack's business now");
         assert_eq!(path, shipped_dir.join("Mortification.epub").display().to_string(), "pointed at the shipped file");
         assert_eq!(
             conn.query_row::<i64, _, _>("SELECT COUNT(*) FROM resource_tags WHERE resource_id = ?1", params![mine], |r| r.get(0)).unwrap(),
@@ -387,7 +441,7 @@ mod tests {
             "its tag survived"
         );
 
-        // Its text still reads, out of content.db.
+        // Its text still reads, out of the pack.
         assert_eq!(
             crate::db::queries::resources::get_extracted_text(&conn, mine).unwrap().as_deref(),
             Some("the words of the book")
@@ -434,10 +488,72 @@ mod tests {
         drop(conn);
         let _ = std::fs::remove_dir_all(&dir);
     }
+
+    /// Removing the resource pack must cost a reader nothing but the books.
+    ///
+    /// This is the case `sync` cannot cover: with the pack detached there is
+    /// no list of shipped books to compare against, so it returns before it
+    /// reaches its retiring step and the rows would sit there pointing at
+    /// files that are gone.
+    #[test]
+    fn removing_the_pack_retires_the_rows_and_keeps_what_the_reader_wrote() {
+        let (dir, conn) = scratch("retire");
+        let books = dir.join("books");
+        sync(&conn, &books).unwrap();
+
+        let id: i64 = conn
+            .query_row("SELECT id FROM resources WHERE library_key = 'All of Grace.epub'", [], |r| r.get(0))
+            .unwrap();
+        conn.execute("INSERT INTO resource_tags (resource_id, tag) VALUES (?1, 'grace')", params![id]).unwrap();
+
+        // The pack goes: detached, as `pack::remove` leaves it.
+        db::detach_library(&conn).unwrap();
+        assert!(!is_available(&conn), "nothing left to read the books out of");
+        assert_eq!(sync(&conn, &books).unwrap().retired, 0, "sync cannot do this one");
+
+        assert_eq!(retire_all(&conn).unwrap(), 2);
+        assert_eq!(
+            conn.query_row::<i64, _, _>("SELECT COUNT(*) FROM resources WHERE library_key IS NOT NULL", [], |r| r.get(0)).unwrap(),
+            0,
+            "no row still claims to be a shipped book"
+        );
+        assert_eq!(
+            conn.query_row::<i64, _, _>("SELECT COUNT(*) FROM resources", [], |r| r.get(0)).unwrap(),
+            2,
+            "but the rows themselves are still there"
+        );
+        assert_eq!(
+            conn.query_row::<i64, _, _>("SELECT COUNT(*) FROM resource_tags WHERE resource_id = ?1", params![id], |r| r.get(0)).unwrap(),
+            1,
+            "and so is the tag the reader put on one"
+        );
+
+        // Installing it again re-adopts the row by file name, tag and all.
+        db::attach_library(&conn, &dir.join("library.db")).unwrap();
+        let outcome = sync(&conn, &books).unwrap();
+        assert_eq!((outcome.adopted, outcome.added), (2, 0), "both adopted back, neither duplicated");
+        assert_eq!(
+            conn.query_row::<i64, _, _>("SELECT COUNT(*) FROM resource_tags WHERE resource_id = ?1", params![id], |r| r.get(0)).unwrap(),
+            1
+        );
+
+        drop(conn);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
 }
 
 /// A shipped book's text, for the reader that wants to search inside it.
+///
+/// `None` rather than an error when no pack is installed. A row should not
+/// still be claiming to be a shipped book in that case -- `retire_all` runs
+/// at launch and after a removal for exactly that reason -- but "the text is
+/// not here" is the honest answer either way, and it is better than the
+/// alternative, which is a missing-table error reaching a reader who only
+/// clicked on a book.
 pub fn extracted_text(conn: &Connection, library_key: &str) -> anyhow::Result<Option<String>> {
+    if !is_available(conn) {
+        return Ok(None);
+    }
     let text = conn
         .query_row(
             "SELECT extracted_text FROM library_resources WHERE file_name = ?1",

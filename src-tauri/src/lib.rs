@@ -7,6 +7,7 @@ pub mod export;
 pub mod import;
 pub mod library;
 pub mod models;
+pub mod pack;
 pub mod paths;
 pub mod resources;
 pub mod text;
@@ -152,39 +153,77 @@ pub fn run() {
 
             let conn = db::open(&app_data_dir, &content_db_path).expect("failed to open database");
 
-            // The shipped library (see `crate::library`): content.db carries
-            // the books' text, the files sit beside the executable, and
-            // user.db needs a row per book so each one can be tagged, linked
-            // and bookmarked like any other. Repointing them here is what
-            // makes the library survive an install somewhere else -- or a
-            // copy of the whole folder onto a USB stick. Best-effort: a
-            // library that cannot be synced must not stop the app opening.
-            let library_dir = handle
-                .path()
-                .resource_dir()
-                .map(|d| d.join(library::LIBRARY_DIR))
-                .ok()
-                .filter(|d| d.is_dir())
-                .or_else(|| {
+            // The shipped library (see `crate::library` and `crate::pack`).
+            //
+            // The books no longer ship with the app: they arrive as a
+            // resource pack the reader installs, which is a library.db of
+            // their text and a folder of the files. When one is installed it
+            // is ATTACHed here, and `library::sync` gives user.db a row per
+            // book -- so each is taggable, linkable and bookmarkable like any
+            // other resource -- repointed at wherever the files are on this
+            // machine. When none is installed, nothing is attached and the
+            // rows from a pack that was once here are retired, keeping their
+            // tags against the day it comes back.
+            //
+            // Best-effort throughout: a library that cannot be attached or
+            // synced must not stop the app opening.
+            let pack_db = paths::pack_db_path(&handle).filter(|p| p.is_file());
+            let library_dir = match &pack_db {
+                Some(db_path) => match db::attach_library(&conn, db_path) {
+                    Ok(()) => paths::pack_books_dir(&handle),
+                    Err(e) => {
+                        eprintln!("[library] could not attach the installed pack: {e:#}");
+                        None
+                    }
+                },
+                // Nothing installed. The repo's own `library/` folder is
+                // still worth naming in a dev build, but only for an older
+                // content.db that was built while the books still lived in
+                // it -- `is_available` below is what decides, and against a
+                // current content.db it says no. A dev checkout installs the
+                // pack the same way a reader does.
+                None => {
                     #[cfg(debug_assertions)]
                     {
                         let repo_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
                             .parent()
                             .expect("src-tauri has a parent directory");
                         let dir = repo_root.join(library::LIBRARY_DIR);
-                        return dir.is_dir().then_some(dir);
+                        dir.is_dir().then_some(dir)
                     }
                     #[cfg(not(debug_assertions))]
                     None
-                });
-            if let Some(dir) = library_dir {
-                match library::sync(&conn, &dir) {
+                }
+            };
+
+            match library_dir.filter(|_| library::is_available(&conn)) {
+                Some(dir) => match library::sync(&conn, &dir) {
                     Ok(o) if o.added + o.adopted + o.repointed + o.retired > 0 => println!(
                         "[library] {} added, {} adopted, {} repointed, {} retired",
                         o.added, o.adopted, o.repointed, o.retired
                     ),
                     Ok(_) => {}
                     Err(e) => eprintln!("[library] sync failed: {e:#}"),
+                },
+                // No pack, so nothing to sync against -- and deliberately
+                // nothing done to the rows either.
+                //
+                // An earlier version retired them here, which looked tidy and
+                // was wrong: clearing `library_key` is what tells the app a
+                // row was ever one of the shipped books, and without it a
+                // reader upgrading from a build that bundled the library sees
+                // several hundred books that will not open and no reason
+                // given. Left marked, the Resources view can say they are in
+                // the pack and offer to install it, and `sync` repoints every
+                // one of them the moment it arrives.
+                //
+                // Retiring stays what it always should have been: what
+                // happens when the reader *asks* for the books to go.
+                None => {
+                    let marked = library::count_marked(&conn).unwrap_or(0);
+                    if marked > 0 {
+                        println!("[library] no resource pack installed; {marked} book row(s) waiting for one");
+                    }
                 }
             }
 
@@ -217,6 +256,9 @@ pub fn run() {
             commands::library::remove_commentary_source,
             commands::library::scan_library,
             commands::library::add_file,
+            commands::pack::pack_status,
+            commands::pack::install_pack,
+            commands::pack::remove_pack,
             commands::reading::get_chapter,
             commands::reading::get_passages,
             commands::reading::get_parallel_chapter,

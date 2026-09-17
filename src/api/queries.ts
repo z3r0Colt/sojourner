@@ -1198,6 +1198,37 @@ export function useBackups() {
   return useQuery({ queryKey: ["backups"], queryFn: api.listBackups });
 }
 
+/** Whether the book library pack is installed, and which one. */
+export function usePackStatus() {
+  return useQuery({ queryKey: ["packStatus"], queryFn: api.packStatus });
+}
+
+/**
+ * Everything a pack install or removal changes.
+ *
+ * A pack is several hundred books arriving at once, so nothing that lists
+ * resources, searches them, or counts them is still correct afterwards --
+ * hence a broad invalidation rather than a careful one.
+ */
+export function useInvalidateAfterPackChange() {
+  const qc = useQueryClient();
+  return () => {
+    for (const key of [
+      "packStatus",
+      "resources",
+      "resource",
+      "resourceText",
+      "allResourceTags",
+      "allResourceTagsByResource",
+      "suggestedResources",
+      "suggestedResourcesForTopic",
+      "stats",
+    ]) {
+      qc.invalidateQueries({ queryKey: [key] });
+    }
+  };
+}
+
 export function useCreateBackup() {
   const qc = useQueryClient();
   return useMutation({

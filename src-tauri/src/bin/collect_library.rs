@@ -5,8 +5,13 @@
 // resource…", or "Import folder…"), then run this before a release build.
 // Everything new is copied into the repo's `library/` folder and recorded in
 // `library/manifest.json` with the title and author the app already knows for
-// it; `build_content_db` then extracts the text of each one into content.db,
-// and the bundler ships both.
+// it; `build_library_pack` then extracts the text of each one and writes the
+// resource pack that ships beside the installer.
+//
+// For a folder of epubs the app has never seen -- organized as
+// `Shelf/Author/Book.epub`, with no user.db to take titles from -- use
+// `tools/stage-library-books.mjs` instead, which derives the title and author
+// from the paths and skips books that duplicate what the app already has.
 //
 // Books already in library/ are left alone: the shipped set is deliberate, so
 // removing one means deleting its file and its manifest entry by hand.
@@ -77,18 +82,11 @@ fn main() -> anyhow::Result<()> {
         outcome.total
     );
 
-    // Extract into the content.db that is already built, rather than making
-    // anyone rebuild the Bibles and commentaries to add a book. A package
-    // build gets there its own way: `build_content_db` runs the same import
-    // against the file it builds from scratch.
-    let content_db = repo_root.join("content").join("content.db");
-    if content_db.is_file() {
-        println!("extracting text into {} ...", content_db.display());
-        let conn = tauri_app_lib::db::open_content_db(&content_db)?;
-        let imported = library::import(&conn, &library_dir)?;
-        println!("done: {imported} book(s) searchable in content.db");
-    } else {
-        println!("no content.db yet -- `npm run build:content` will extract them");
-    }
+    // The text is not extracted here any more. The shipped books left
+    // content.db for a resource pack of their own, and that pack is built
+    // from this folder in one pass by `build_library_pack` -- so the step
+    // after this one is `npm run build:pack`, not a rebuild of the Bibles
+    // and commentaries.
+    println!("next: npm run build:pack");
     Ok(())
 }

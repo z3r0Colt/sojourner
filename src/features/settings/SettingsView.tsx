@@ -1,5 +1,6 @@
-import { BookOpen, Database, GraduationCap, Info, Library, type LucideIcon } from "lucide-react";
+import { BookMarked, BookOpen, Database, GraduationCap, Info, Library, type LucideIcon } from "lucide-react";
 import { LibrarySection } from "./sections/LibrarySection";
+import { PacksSection } from "./sections/PacksSection";
 import { PreferencesSection } from "./sections/PreferencesSection";
 import { BackupsSection } from "./sections/BackupsSection";
 import { AboutSection } from "./sections/AboutSection";
@@ -7,11 +8,12 @@ import { TutorialSection } from "./sections/TutorialSection";
 import { cx } from "../../components/ui/classes";
 import { usePaneParams } from "../../workspace/PaneContext";
 
-type Section = "preferences" | "library" | "backups" | "tutorial" | "about";
+type Section = "preferences" | "library" | "books" | "backups" | "tutorial" | "about";
 
 const SECTIONS: { key: Section; label: string; icon: LucideIcon }[] = [
   { key: "preferences", label: "Reading", icon: BookOpen },
   { key: "library", label: "Library", icon: Library },
+  { key: "books", label: "Book library", icon: BookMarked },
   { key: "backups", label: "Data & backups", icon: Database },
   { key: "tutorial", label: "Tutorial", icon: GraduationCap },
   { key: "about", label: "About", icon: Info },
@@ -50,6 +52,7 @@ export function SettingsView() {
         </nav>
         <div className="min-w-0 flex-1 pb-10">
           {section === "library" && <LibrarySection />}
+          {section === "books" && <PacksSection />}
           {section === "preferences" && <PreferencesSection />}
           {section === "backups" && <BackupsSection />}
           {section === "tutorial" && <TutorialSection />}

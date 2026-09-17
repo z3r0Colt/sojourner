@@ -1,9 +1,51 @@
 [
   {
+    "file_name": "1677-89 London Baptist Confession of Faith.epub",
+    "kind": "epub",
+    "title": "1677-89 London Baptist Confession of Faith",
+    "author": null
+  },
+  {
+    "file_name": "A Brief Explication of the First Fifty Psalms.epub",
+    "kind": "epub",
+    "title": "A Brief Explication of the First Fifty Psalms",
+    "author": "David Dickson"
+  },
+  {
+    "file_name": "A Brief Explication of the Last Fifty Psalms.epub",
+    "kind": "epub",
+    "title": "A Brief Explication of the Last Fifty Psalms",
+    "author": "David Dickson"
+  },
+  {
+    "file_name": "A Brief Explication of the Other Fifty Psalms.epub",
+    "kind": "epub",
+    "title": "A Brief Explication of the Other Fifty Psalms",
+    "author": "David Dickson"
+  },
+  {
     "file_name": "All of Grace.epub",
     "kind": "epub",
     "title": "All of Grace",
     "author": "C. H. Spurgeon"
+  },
+  {
+    "file_name": "An Alarm to the Unconverted.epub",
+    "kind": "epub",
+    "title": "An Alarm to the Unconverted",
+    "author": "Joseph Alleine"
+  },
+  {
+    "file_name": "An American Translation (NT).epub",
+    "kind": "epub",
+    "title": "An American Translation (NT)",
+    "author": "Edgar J. Goodspeed"
+  },
+  {
+    "file_name": "An Essay for the Recording of Illustrious Providences.epub",
+    "kind": "epub",
+    "title": "An Essay for the Recording of Illustrious Providences",
+    "author": "Increase Mather"
   },
   {
     "file_name": "Apology of the Augsburg Confession.epub",
@@ -22,6 +64,12 @@
     "kind": "epub",
     "title": "Assorted Sermons",
     "author": "Martin Luther"
+  },
+  {
+    "file_name": "Astronomical and Commercial Discourses.epub",
+    "kind": "epub",
+    "title": "Astronomical and Commercial Discourses",
+    "author": "Thomas Chalmers"
   },
   {
     "file_name": "Beatitudes An Exposition of Matthew 51-12.epub",
@@ -78,16 +126,52 @@
     "author": "John Flavel"
   },
   {
+    "file_name": "Christ Crucified Vol 1.epub",
+    "kind": "epub",
+    "title": "Christ Crucified Vol 1",
+    "author": "James Durham"
+  },
+  {
+    "file_name": "Christ Crucified Vol 2.epub",
+    "kind": "epub",
+    "title": "Christ Crucified Vol 2",
+    "author": "James Durham"
+  },
+  {
     "file_name": "Christian in Complete Armour.epub",
     "kind": "epub",
     "title": "Christian in Complete Armour",
     "author": "William Gurnall"
   },
   {
+    "file_name": "Church of Christ Vol 1.epub",
+    "kind": "epub",
+    "title": "Church of Christ Vol 1",
+    "author": "James Bannerman"
+  },
+  {
+    "file_name": "Church of Christ Vol 2.epub",
+    "kind": "epub",
+    "title": "Church of Christ Vol 2",
+    "author": "James Bannerman"
+  },
+  {
+    "file_name": "Clavis Cantici.epub",
+    "kind": "epub",
+    "title": "Clavis Cantici",
+    "author": "James Durham"
+  },
+  {
     "file_name": "Commentaries on the Catholic Epistles.epub",
     "kind": "epub",
     "title": "Commentaries on the Catholic Epistles",
     "author": "John Calvin"
+  },
+  {
+    "file_name": "Commentary on Ephesians.epub",
+    "kind": "epub",
+    "title": "Commentary on Ephesians",
+    "author": "Charles Hodge"
   },
   {
     "file_name": "Commentary on Revelation.epub",
@@ -106,6 +190,12 @@
     "kind": "epub",
     "title": "Commenting and Commentaries",
     "author": "C. H. Spurgeon"
+  },
+  {
+    "file_name": "Complete Poetical Works.epub",
+    "kind": "epub",
+    "title": "Complete Poetical Works",
+    "author": "William Cowper"
   },
   {
     "file_name": "Complete Works of Thomas Manton, D.D. Vol. I.epub",
@@ -150,6 +240,12 @@
     "author": "Martin Luther"
   },
   {
+    "file_name": "Conscience with the Power and Cases Thereof.epub",
+    "kind": "epub",
+    "title": "Conscience with the Power and Cases Thereof",
+    "author": "William Ames"
+  },
+  {
     "file_name": "Crook in the Lot.epub",
     "kind": "epub",
     "title": "Crook in the Lot",
@@ -162,15 +258,21 @@
     "author": "John Owen"
   },
   {
-    "file_name": "Discourse Concerning Liturgies, and their Imposition.epub",
+    "file_name": "Diary and Letters.epub",
     "kind": "epub",
-    "title": "Discourse Concerning Liturgies, and their Imposition",
-    "author": "John Owen"
+    "title": "Diary and Letters",
+    "author": "Andrew Bonar"
   },
   {
     "file_name": "Discourse concerning Evangelical Love, Church Peace, and Unity.epub",
     "kind": "epub",
     "title": "Discourse concerning Evangelical Love, Church Peace, and Unity",
+    "author": "John Owen"
+  },
+  {
+    "file_name": "Discourse Concerning Liturgies, and their Imposition.epub",
+    "kind": "epub",
+    "title": "Discourse Concerning Liturgies, and their Imposition",
     "author": "John Owen"
   },
   {
@@ -202,6 +304,12 @@
     "kind": "epub",
     "title": "Discourse on the Cleansing Virtue of Christ’s Blood",
     "author": "Stephen Charnock"
+  },
+  {
+    "file_name": "Discourses on the Christian Revelation Viewed in Connection with Modern Astronomy.epub",
+    "kind": "epub",
+    "title": "Discourses on the Christian Revelation Viewed in Connection with Modern Astronomy",
+    "author": "Thomas Chalmers"
   },
   {
     "file_name": "Display of Arminianism.epub",
@@ -240,10 +348,28 @@
     "author": "John Owen"
   },
   {
+    "file_name": "Dogmatic Theology Vol 1.epub",
+    "kind": "epub",
+    "title": "Dogmatic Theology Vol 1",
+    "author": "William Shedd"
+  },
+  {
+    "file_name": "Dogmatic Theology Vol 2.epub",
+    "kind": "epub",
+    "title": "Dogmatic Theology Vol 2",
+    "author": "William Shedd"
+  },
+  {
     "file_name": "Duty of Pastors and People Distinguished.epub",
     "kind": "epub",
     "title": "Duty of Pastors and People Distinguished",
     "author": "John Owen"
+  },
+  {
+    "file_name": "Economy of the Covenants Vol 1.epub",
+    "kind": "epub",
+    "title": "Economy of the Covenants Vol 1",
+    "author": "Herman Witsius"
   },
   {
     "file_name": "Epistles of St. Peter and St. Jude Preached and Explained.epub",
@@ -306,6 +432,12 @@
     "author": "Horatius Bonar"
   },
   {
+    "file_name": "Godly Meditations upon the Lord's Prayer.epub",
+    "kind": "epub",
+    "title": "Godly Meditations upon the Lord's Prayer",
+    "author": "John Bradford"
+  },
+  {
     "file_name": "Gospel Grounds and Evidences of the Faith of God's Elect.epub",
     "kind": "epub",
     "title": "Gospel Grounds and Evidences of the Faith of God's Elect",
@@ -324,10 +456,22 @@
     "author": "John Owen"
   },
   {
+    "file_name": "Historical Theology.epub",
+    "kind": "epub",
+    "title": "Historical Theology",
+    "author": "William Cunningham"
+  },
+  {
     "file_name": "History of the Reformation of Religion in Scotland.epub",
     "kind": "epub",
     "title": "History of the Reformation of Religion in Scotland",
     "author": "John Knox"
+  },
+  {
+    "file_name": "Hitchcock's Bible Names Dictionary.epub",
+    "kind": "epub",
+    "title": "Hitchcock's Bible Names Dictionary",
+    "author": "Roswell D. Hitchcock"
   },
   {
     "file_name": "Holiness Its Nature, Hindrances, Difficulties, and Roots.epub",
@@ -342,6 +486,12 @@
     "author": "John Bunyan"
   },
   {
+    "file_name": "How To Pray.epub",
+    "kind": "epub",
+    "title": "How To Pray",
+    "author": "R. A. Torrey"
+  },
+  {
     "file_name": "Inquiry into the Original, Nature, Institution, Power, Order, and Communion of Evangelical Churches.epub",
     "kind": "epub",
     "title": "Inquiry into the Original, Nature, Institution, Power, Order, and Communion of Evangelical Churches",
@@ -354,6 +504,18 @@
     "author": "John Calvin"
   },
   {
+    "file_name": "Institutes of Theology.epub",
+    "kind": "epub",
+    "title": "Institutes of Theology",
+    "author": "Thomas Chalmers"
+  },
+  {
+    "file_name": "Introduction to the New Testament.epub",
+    "kind": "epub",
+    "title": "Introduction to the New Testament",
+    "author": "Louis Berkhof"
+  },
+  {
     "file_name": "Key to the Apocalypse.epub",
     "kind": "epub",
     "title": "Key to the Apocalypse",
@@ -364,6 +526,18 @@
     "kind": "epub",
     "title": "Large Catechism",
     "author": "Martin Luther"
+  },
+  {
+    "file_name": "Lectures on the Epistle of Paul to the Romans.epub",
+    "kind": "epub",
+    "title": "Lectures on the Epistle of Paul to the Romans",
+    "author": "Thomas Chalmers"
+  },
+  {
+    "file_name": "Lectures on the Establishment and Extension of National Churches.epub",
+    "kind": "epub",
+    "title": "Lectures on the Establishment and Extension of National Churches",
+    "author": "Thomas Chalmers"
   },
   {
     "file_name": "Life and Death of Mr Badman.epub",
@@ -396,6 +570,12 @@
     "author": "John Owen"
   },
   {
+    "file_name": "Memoir and Remains of R.M. M'Cheyne (by Andrew Bonar).epub",
+    "kind": "epub",
+    "title": "Memoir and Remains of R.M. M'Cheyne (by Andrew Bonar)",
+    "author": "Robert Murray M'Cheyne"
+  },
+  {
     "file_name": "Method of Grace in the Gospel Redemption.epub",
     "kind": "epub",
     "title": "Method of Grace in the Gospel Redemption",
@@ -426,6 +606,12 @@
     "author": "John Owen"
   },
   {
+    "file_name": "Nave's Topical Bible.epub",
+    "kind": "epub",
+    "title": "Nave's Topical Bible",
+    "author": "Orville J. Nave"
+  },
+  {
     "file_name": "Necessary Doctrine.epub",
     "kind": "epub",
     "title": "Necessary Doctrine",
@@ -436,6 +622,30 @@
     "kind": "epub",
     "title": "Necessity of Regeneration",
     "author": "Stephen Charnock"
+  },
+  {
+    "file_name": "New Schaff-Herzog Encyclopedia of Religious Knowledge, Vol. 1 (Aachen to Basilians).epub",
+    "kind": "epub",
+    "title": "New Schaff-Herzog Encyclopedia of Religious Knowledge, Vol. 1 (Aachen to Basilians)",
+    "author": "Samuel Macauley Jackson (ed.)"
+  },
+  {
+    "file_name": "New Schaff-Herzog Encyclopedia of Religious Knowledge, Vol. 13 (Index).epub",
+    "kind": "epub",
+    "title": "New Schaff-Herzog Encyclopedia of Religious Knowledge, Vol. 13 (Index)",
+    "author": "Samuel Macauley Jackson (ed.)"
+  },
+  {
+    "file_name": "New Schaff-Herzog Encyclopedia of Religious Knowledge, Vol. 2 (Basilica to Chambers).epub",
+    "kind": "epub",
+    "title": "New Schaff-Herzog Encyclopedia of Religious Knowledge, Vol. 2 (Basilica to Chambers)",
+    "author": "Samuel Macauley Jackson (ed.)"
+  },
+  {
+    "file_name": "New Schaff-Herzog Encyclopedia of Religious Knowledge, Vol. 9 (Petri to Reuchlin).epub",
+    "kind": "epub",
+    "title": "New Schaff-Herzog Encyclopedia of Religious Knowledge, Vol. 9 (Petri to Reuchlin)",
+    "author": "Samuel Macauley Jackson (ed.)"
   },
   {
     "file_name": "Of Communion with God the Father, Son and Holy Ghost.epub",
@@ -474,10 +684,28 @@
     "author": "John Calvin"
   },
   {
+    "file_name": "On the Power, Wisdom, and Goodness of God (Bridgewater Treatise).epub",
+    "kind": "epub",
+    "title": "On the Power, Wisdom, and Goodness of God (Bridgewater Treatise)",
+    "author": "Thomas Chalmers"
+  },
+  {
     "file_name": "Open Letter on Translating.epub",
     "kind": "epub",
     "title": "Open Letter on Translating",
     "author": "Martin Luther"
+  },
+  {
+    "file_name": "Outlines of Theology.epub",
+    "kind": "epub",
+    "title": "Outlines of Theology",
+    "author": "A.A. Hodge"
+  },
+  {
+    "file_name": "Person and Work of The Holy Spirit.epub",
+    "kind": "epub",
+    "title": "Person and Work of The Holy Spirit",
+    "author": "R. A. Torrey"
   },
   {
     "file_name": "Pilgrim's Progress.epub",
@@ -502,6 +730,12 @@
     "kind": "epub",
     "title": "Poema",
     "author": "John Owen"
+  },
+  {
+    "file_name": "Posthumous Works - Volume 1.epub",
+    "kind": "epub",
+    "title": "Posthumous Works - Volume 1",
+    "author": "Thomas Chalmers"
   },
   {
     "file_name": "Practical Exposition upon Psalm CXXX.epub",
@@ -558,6 +792,12 @@
     "author": "John Owen"
   },
   {
+    "file_name": "Revival Addresses.epub",
+    "kind": "epub",
+    "title": "Revival Addresses",
+    "author": "R. A. Torrey"
+  },
+  {
     "file_name": "Sacramental Discourses.epub",
     "kind": "epub",
     "title": "Sacramental Discourses",
@@ -576,10 +816,22 @@
     "author": "Richard Baxter"
   },
   {
+    "file_name": "Scottish Confession of Faith (1560).epub",
+    "kind": "epub",
+    "title": "Scottish Confession of Faith (1560)",
+    "author": null
+  },
+  {
     "file_name": "Select Sermons.epub",
     "kind": "epub",
     "title": "Select Sermons",
     "author": "Jonathan Edwards"
+  },
+  {
+    "file_name": "Select Works of Thomas Chalmers.epub",
+    "kind": "epub",
+    "title": "Select Works of Thomas Chalmers",
+    "author": "Thomas Chalmers"
   },
   {
     "file_name": "Selected Sermons of George Whitefield.epub",
@@ -592,6 +844,24 @@
     "kind": "epub",
     "title": "Selection from his Letters",
     "author": "Samuel Rutherford"
+  },
+  {
+    "file_name": "Sermons and Discourses - Volume 1.epub",
+    "kind": "epub",
+    "title": "Sermons and Discourses - Volume 1",
+    "author": "Thomas Chalmers"
+  },
+  {
+    "file_name": "Sermons and Discourses - Volume 2.epub",
+    "kind": "epub",
+    "title": "Sermons and Discourses - Volume 2",
+    "author": "Thomas Chalmers"
+  },
+  {
+    "file_name": "Sermons and Tracts by that Worthy Martyr of Christ, John Bradford.epub",
+    "kind": "epub",
+    "title": "Sermons and Tracts by that Worthy Martyr of Christ, John Bradford",
+    "author": "John Bradford"
   },
   {
     "file_name": "Sermons by Hugh Latimer.epub",
@@ -1002,6 +1272,42 @@
     "author": "C. H. Spurgeon"
   },
   {
+    "file_name": "Summary of Christian Doctrine.epub",
+    "kind": "epub",
+    "title": "Summary of Christian Doctrine",
+    "author": "Louis Berkhof"
+  },
+  {
+    "file_name": "Syllabus and Notes of Systematic and Polemic Theology.epub",
+    "kind": "epub",
+    "title": "Syllabus and Notes of Systematic and Polemic Theology",
+    "author": "Robert Dabney"
+  },
+  {
+    "file_name": "Systematic Theology Vol 1.epub",
+    "kind": "epub",
+    "title": "Systematic Theology Vol 1",
+    "author": "Charles Hodge"
+  },
+  {
+    "file_name": "Systematic Theology Vol 2.epub",
+    "kind": "epub",
+    "title": "Systematic Theology Vol 2",
+    "author": "Charles Hodge"
+  },
+  {
+    "file_name": "Systematic Theology Vol 3.epub",
+    "kind": "epub",
+    "title": "Systematic Theology Vol 3",
+    "author": "Charles Hodge"
+  },
+  {
+    "file_name": "Systematic Theology.epub",
+    "kind": "epub",
+    "title": "Systematic Theology",
+    "author": "Louis Berkhof"
+  },
+  {
     "file_name": "Table Talk.epub",
     "kind": "epub",
     "title": "Table Talk",
@@ -1020,16 +1326,76 @@
     "author": "Martin Luther"
   },
   {
+    "file_name": "The Bruised Reed.epub",
+    "kind": "epub",
+    "title": "The Bruised Reed",
+    "author": "Richard Sibbes"
+  },
+  {
+    "file_name": "The Christian's Great Interest.epub",
+    "kind": "epub",
+    "title": "The Christian's Great Interest",
+    "author": "William Guthrie"
+  },
+  {
+    "file_name": "The Complete Works of Hugh Binning.epub",
+    "kind": "epub",
+    "title": "The Complete Works of Hugh Binning",
+    "author": "Hugh Binning"
+  },
+  {
     "file_name": "The Doctrine of God.epub",
     "kind": "epub",
     "title": "The Doctrine of God",
     "author": "Louis Berkhof"
   },
   {
+    "file_name": "The Doctrine of Repentance.epub",
+    "kind": "epub",
+    "title": "The Doctrine of Repentance",
+    "author": "Thomas Watson"
+  },
+  {
+    "file_name": "The Duty of Giving Immediate Diligence to the Business of the Christian Life.epub",
+    "kind": "epub",
+    "title": "The Duty of Giving Immediate Diligence to the Business of the Christian Life",
+    "author": "Thomas Chalmers"
+  },
+  {
+    "file_name": "The Evidence and Authority of the Christian Revelation.epub",
+    "kind": "epub",
+    "title": "The Evidence and Authority of the Christian Revelation",
+    "author": "Thomas Chalmers"
+  },
+  {
+    "file_name": "The Gospel Mystery of Sanctification.epub",
+    "kind": "epub",
+    "title": "The Gospel Mystery of Sanctification",
+    "author": "Walter Marshall"
+  },
+  {
+    "file_name": "The Rare Jewel of Christian Contentment.epub",
+    "kind": "epub",
+    "title": "The Rare Jewel of Christian Contentment",
+    "author": "Jeremiah Burroughs"
+  },
+  {
+    "file_name": "The Soul's Conflict and Victory Over Itself by Faith.epub",
+    "kind": "epub",
+    "title": "The Soul's Conflict and Victory Over Itself by Faith",
+    "author": "Richard Sibbes"
+  },
+  {
     "file_name": "The works of Thomas Shepard.epub",
     "kind": "epub",
     "title": "The works of Thomas Shepard",
     "author": "Thomas Shepard"
+  },
+  {
+    "file_name": "Thoughts on Religious Experience.epub",
+    "kind": "epub",
+    "title": "Thoughts on Religious Experience",
+    "author": "Archibald Alexander"
   },
   {
     "file_name": "Three Volumes of Sermons.epub",
@@ -1042,6 +1408,12 @@
     "kind": "epub",
     "title": "Till He Come",
     "author": "C. H. Spurgeon"
+  },
+  {
+    "file_name": "Torrey's New Topical Textbook.epub",
+    "kind": "epub",
+    "title": "Torrey's New Topical Textbook",
+    "author": "R. A. Torrey"
   },
   {
     "file_name": "Translations from the French of Madame de la Mothe Guion.epub",
@@ -1122,6 +1494,12 @@
     "author": "John Owen"
   },
   {
+    "file_name": "Truth's Victory Over Error.epub",
+    "kind": "epub",
+    "title": "Truth's Victory Over Error",
+    "author": "David Dickson"
+  },
+  {
     "file_name": "Tryal &amp; Triumph of Faith or An Exposition of the History of Christ's dispossessing of the daughter of the woman of Canaan.epub",
     "kind": "epub",
     "title": "Tryal & Triumph of Faith or An Exposition of the History of Christ's dispossessing of the daughter of the woman of Canaan",
@@ -1152,6 +1530,12 @@
     "author": "John Owen"
   },
   {
+    "file_name": "Weymouth New Testament.epub",
+    "kind": "epub",
+    "title": "Weymouth New Testament",
+    "author": "Richard Francis Weymouth"
+  },
+  {
     "file_name": "Works of John Knox, Vol. 1.epub",
     "kind": "epub",
     "title": "Works of John Knox, Vol. 1",
@@ -1170,6 +1554,24 @@
     "author": "Jonathan Edwards"
   },
   {
+    "file_name": "Works of Thomas Chalmers - Complete in One Volume.epub",
+    "kind": "epub",
+    "title": "Works of Thomas Chalmers - Complete in One Volume",
+    "author": "Thomas Chalmers"
+  },
+  {
+    "file_name": "Works of Thomas Chalmers - Volume 3.epub",
+    "kind": "epub",
+    "title": "Works of Thomas Chalmers - Volume 3",
+    "author": "Thomas Chalmers"
+  },
+  {
+    "file_name": "Works of Thomas Chalmers - Volume 9.epub",
+    "kind": "epub",
+    "title": "Works of Thomas Chalmers - Volume 9",
+    "author": "Thomas Chalmers"
+  },
+  {
     "file_name": "Works of Thomas Manton, D.D. Vol. VI.epub",
     "kind": "epub",
     "title": "Works of Thomas Manton, D.D. Vol. VI",
@@ -1186,5 +1588,35 @@
     "kind": "epub",
     "title": "Works of Thomas Manton, D.D. Vol. XX",
     "author": "Thomas Manton"
+  },
+  {
+    "file_name": "Works, Vol. 1.epub",
+    "kind": "epub",
+    "title": "Works, Vol. 1",
+    "author": "Robert Traill"
+  },
+  {
+    "file_name": "Works, Vol. 2.epub",
+    "kind": "epub",
+    "title": "Works, Vol. 2",
+    "author": "Robert Traill"
+  },
+  {
+    "file_name": "Works, Vol. 3.epub",
+    "kind": "epub",
+    "title": "Works, Vol. 3",
+    "author": "Robert Traill"
+  },
+  {
+    "file_name": "Writings of John Bradford Vol 1 (Parker Society).epub",
+    "kind": "epub",
+    "title": "Writings of John Bradford Vol 1 (Parker Society)",
+    "author": "John Bradford"
+  },
+  {
+    "file_name": "Writings of John Bradford Vol 2 (Parker Society).epub",
+    "kind": "epub",
+    "title": "Writings of John Bradford Vol 2 (Parker Society)",
+    "author": "John Bradford"
   }
 ]

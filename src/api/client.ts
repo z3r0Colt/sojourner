@@ -84,6 +84,8 @@ import type {
   IllustrationUse,
   PickKind,
   PickedPath,
+  PackStatus,
+  PackInstallOutcome,
 } from "./types";
 
 export const api = {
@@ -112,6 +114,16 @@ export const api = {
     invoke<void>("remove_commentary_source", { sourceId }),
   scanLibrary: () => invoke<ImportReportItem[]>("scan_library"),
   addFile: (token: string) => invoke<ImportReportItem>("add_file", { token }),
+
+  // --- The book library pack ----------------------------------------------
+  //
+  // The shipped books are not in the installer; they arrive in a pack the
+  // reader fetches from the releases page and installs from a file. Nothing
+  // here downloads anything -- see `crate::pack` for why that is deliberate.
+  packStatus: () => invoke<PackStatus>("pack_status"),
+  /** Long-running. Listen on `pack-install-progress` for a progress bar. */
+  installPack: (token: string) => invoke<PackInstallOutcome>("install_pack", { token }),
+  removePack: () => invoke<void>("remove_pack"),
 
   getChapter: (translationId: number, bookId: number, chapter: number) =>
     invoke<Verse[]>("get_chapter", { translationId, bookId, chapter }),
