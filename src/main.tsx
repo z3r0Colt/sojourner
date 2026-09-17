@@ -11,9 +11,14 @@ import { ConfirmHost } from "./components/ui/ConfirmHost";
 import { toast } from "./components/ui/toast";
 import { api } from "./api/client";
 import { applyAccent } from "./lib/accent";
+import { splashNote } from "./lib/splash";
 import "./styles.css";
 
 installCrashLogging();
+
+// The bundle is here; what is left to wait on is the database. The splash
+// (index.html, public/splash.js) has been up since the first paint.
+splashNote("Opening your library…");
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 30_000, retry: 1 } },
