@@ -51,7 +51,7 @@ pub fn install_panic_hook(app_data_dir: PathBuf) {
             .or_else(|| info.payload().downcast_ref::<String>().cloned())
             .unwrap_or_else(|| "(non-string panic payload)".to_string());
         let body = format!(
-            "Sojourner's Study Companion -- backend panic\nWhen: {}\nWhere: {location}\nMessage: {payload}\n",
+            "Sojourner -- backend panic\nWhen: {}\nWhere: {location}\nMessage: {payload}\n",
             chrono::Utc::now().to_rfc3339(),
         );
         write_log(&app_data_dir, "crash", &body);
@@ -64,7 +64,7 @@ pub fn install_panic_hook(app_data_dir: PathBuf) {
 /// own via this command instead).
 pub fn log_frontend_error(app_data_dir: &Path, message: &str, stack: Option<&str>) {
     let body = format!(
-        "Sojourner's Study Companion -- frontend error\nWhen: {}\nMessage: {message}\n{}",
+        "Sojourner -- frontend error\nWhen: {}\nMessage: {message}\n{}",
         chrono::Utc::now().to_rfc3339(),
         stack.map(|s| format!("Stack:\n{s}\n")).unwrap_or_default(),
     );

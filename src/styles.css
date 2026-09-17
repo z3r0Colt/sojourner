@@ -252,6 +252,25 @@ html[data-reduce-motion="on"] *::after {
   scroll-behavior: auto !important;
 }
 
+/* The logo mark, wherever the app shows it. Two drawings rather than one:
+   the artwork is navy line-work around white pages, made for a light ground,
+   and on a dark one the lines vanish while the pages glare. The dark-ground
+   variant re-inks it pale and drops the pages -- see
+   `tools/build-brand-assets.py`. A background rather than an <img> so that
+   only the variant this theme shows is ever fetched; give it a size and,
+   where it is not decorative, a `role="img"` and a label.
+
+   The same pair dresses the splash screen, which cannot use this rule: it is
+   on screen before this stylesheet exists (see index.html). */
+.brand-mark {
+  background: url("/brand/sojourner-mark.png") center / contain no-repeat;
+}
+html[data-theme="dark"] .brand-mark,
+html[data-theme="oled"] .brand-mark,
+html[data-theme="contrast-dark"] .brand-mark {
+  background-image: url("/brand/sojourner-mark-dark.png");
+}
+
 /* The link-group letter in a pane header: a soft wash of the group's hue
    with the hue itself as the text. Unlinked panes show a muted dash. */
 .link-group {

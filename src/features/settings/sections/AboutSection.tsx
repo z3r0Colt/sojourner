@@ -32,7 +32,13 @@ export function AboutSection() {
   return (
     <div>
       <h2 className="mb-1 text-lg font-semibold text-ink">About</h2>
-      <p className="mb-6 text-sm text-ink-3">Sojourner's Study Companion</p>
+      <div className="mb-6 flex items-center gap-3">
+        <span className="brand-mark h-10 w-10 shrink-0" aria-hidden="true" />
+        <p className="text-sm leading-tight text-ink-3">
+          <span className="block font-semibold text-ink">Sojourner</span>
+          Bible Study Companion
+        </p>
+      </div>
 
       <div className="space-y-4 text-sm leading-relaxed text-ink-2">
         <p>
