@@ -156,16 +156,18 @@ export function Sidebar() {
     >
       <Link
         to="/"
-        title="Sojourner's Study Companion"
+        title="Sojourner — Bible Study Companion"
         className={cx("flex items-center gap-2 py-3 text-ink", collapsed ? "justify-center" : "px-1.5")}
       >
-        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-accent text-white">
-          <BookOpen className="h-4 w-4" aria-hidden="true" />
-        </span>
+        {/* The logo itself rather than a stand-in glyph (`.brand-mark` in
+            styles.css picks the drawing this theme can show). Decorative: the
+            name beside it says the same thing, and the link's `title` covers
+            the collapsed rail. */}
+        <span className="brand-mark h-7 w-7 shrink-0" aria-hidden="true" />
         {!collapsed && (
           <span className="min-w-0 leading-tight">
-            <span className="block truncate text-sm font-semibold">Sojourner's</span>
-            <span className="block truncate text-xs text-ink-3">Study Companion</span>
+            <span className="block truncate text-sm font-semibold">Sojourner</span>
+            <span className="block truncate text-xs text-ink-3">Bible Study Companion</span>
           </span>
         )}
       </Link>

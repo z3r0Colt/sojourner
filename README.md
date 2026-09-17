@@ -1,4 +1,6 @@
-# Sojourner's Study Companion
+# Sojourner
+
+*Bible Study Companion*
 
 A desktop Bible study application built with Tauri, Rust, and React/TypeScript. It bundles multiple public-domain Bible translations, classic commentaries, Strong's lexicon data, a Bible dictionary and encyclopedia, an atlas of the biblical world, cross-references, and the Westminster Standards for offline study, reading, and note-taking.
 
