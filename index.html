@@ -2,13 +2,179 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" type="image/png" href="/brand/sojourner-mark.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Sojourner's Study Companion</title>
+    <title>Sojourner</title>
+
+    <!-- The splash screen lives here, in the document itself, rather than in
+         a component or a second Tauri window. Both of those only appear once
+         the app bundle has been fetched, parsed and run -- which is exactly
+         the wait the splash exists to cover. Written out in the HTML with its
+         own styles, it is on screen at the first paint, and the whole app
+         loads behind it.
+
+         `public/splash.js` (a separate file because the app's CSP allows no
+         inline script) times it and takes it away again. It is loaded here in
+         the head, before the body is parsed, so that it can set
+         `data-splash-theme` on <html> in time: the splash is drawn light or
+         dark according to the reader's saved theme, and choosing after the
+         fact would mean a flash of the wrong one. -->
+    <script src="/splash.js"></script>
+
+    <style>
+      /* The ground, painted from the head -- before the body has been parsed,
+         and so before the splash itself exists. Without it the window shows a
+         frame of the webview's own white between opening and the first paint
+         of the splash, which is exactly the flash a splash screen is meant to
+         spare a reader. `splash.js` drops the attribute when it removes the
+         splash, and the app's own `--color-bg` takes over again. */
+      html[data-splash-theme] { background-color: #f7fafd; }
+      html[data-splash-theme="dark"] { background-color: #12293f; }
+
+      #splash {
+        position: fixed;
+        inset: 0;
+        z-index: 2147483647;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        /* Light by default, and dark below. Not the app's own theme tokens --
+           those arrive with the stylesheet in the bundle, which is part of
+           what this is covering. */
+        background: radial-gradient(120% 90% at 50% 8%, #ffffff 0%, #f7fafd 42%, #e9f0f7 100%);
+        --splash-verse: #274a70;
+        --splash-cite: #8a7246;
+        --splash-track: #dae3ed;
+        --splash-status: #5f748d;
+        font-family: ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+        -webkit-user-select: none;
+        user-select: none;
+        cursor: default;
+        transition: opacity 420ms ease;
+      }
+      html[data-splash-theme="dark"] #splash {
+        background: radial-gradient(120% 90% at 50% 8%, #1a3856 0%, #12293f 45%, #0b1a2a 100%);
+        --splash-verse: #b9cde4;
+        --splash-cite: #cfa563;
+        --splash-track: #24405c;
+        --splash-status: #8ca5bf;
+      }
+      #splash[data-leaving="true"] {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      #splash-inner {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 24px;
+        text-align: center;
+        animation: splash-rise 720ms cubic-bezier(0.16, 0.9, 0.3, 1) both;
+      }
+      @keyframes splash-rise {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: none; }
+      }
+
+      /* The lockup as supplied: mark, name and tagline in one drawing. A
+         background rather than an <img> so that only the variant this theme
+         actually shows is ever fetched. */
+      #splash-lockup {
+        width: clamp(260px, 30vw, 520px);
+        aspect-ratio: 1040 / 774;
+        margin-bottom: clamp(20px, 2.4vw, 34px);
+        background: url("/brand/sojourner-lockup.png") center / contain no-repeat;
+      }
+      html[data-splash-theme="dark"] #splash-lockup {
+        background-image: url("/brand/sojourner-lockup-dark.png");
+      }
+
+      #splash-rule {
+        width: clamp(96px, 10vw, 160px);
+        height: 2px;
+        margin-bottom: clamp(20px, 2.2vw, 30px);
+        border-radius: 2px;
+        background: linear-gradient(90deg, rgba(224, 164, 75, 0) 0%, #e0a44b 50%, rgba(224, 164, 75, 0) 100%);
+      }
+
+      #splash-verse {
+        margin: 0;
+        font-family: Georgia, "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif;
+        font-size: clamp(16px, 1.15vw, 21px);
+        font-style: italic;
+        line-height: 1.6;
+        color: var(--splash-verse);
+        max-width: 30em;
+        text-wrap: balance;
+      }
+      #splash-cite {
+        display: block;
+        margin-top: 12px;
+        font-family: ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+        font-size: clamp(11px, 0.72vw, 14px);
+        font-style: normal;
+        font-weight: 600;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+        color: var(--splash-cite);
+      }
+
+      #splash-progress {
+        width: clamp(220px, 22vw, 340px);
+        height: 4px;
+        margin-top: clamp(32px, 3.4vw, 52px);
+        border-radius: 999px;
+        background: var(--splash-track);
+        overflow: hidden;
+      }
+      #splash-bar {
+        display: block;
+        height: 100%;
+        width: 3%;
+        border-radius: 999px;
+        background: linear-gradient(90deg, #d99b3f 0%, #e8bd72 100%);
+        transition: width 220ms ease-out;
+      }
+
+      #splash-status {
+        margin: 14px 0 0;
+        font-size: clamp(12px, 0.8vw, 15px);
+        letter-spacing: 0.01em;
+        color: var(--splash-status);
+        min-height: 1.2em;
+      }
+
+      /* Nothing here is worth making anyone motion-sick over; the splash
+         still shows and still goes, it just stops moving to do it. */
+      @media (prefers-reduced-motion: reduce) {
+        #splash, #splash-inner, #splash-bar { transition: none; animation: none; }
+      }
+      html[data-reduce-motion="on"] #splash,
+      html[data-reduce-motion="on"] #splash-inner,
+      html[data-reduce-motion="on"] #splash-bar { transition: none; animation: none; }
+    </style>
   </head>
 
   <body>
     <div id="root"></div>
+
+    <div id="splash" role="status" aria-live="polite" aria-busy="true">
+      <div id="splash-inner">
+        <div id="splash-lockup" role="img" aria-label="Sojourner — Bible Study Companion"></div>
+        <div id="splash-rule" aria-hidden="true"></div>
+        <p id="splash-verse">
+          <span id="splash-verse-text"></span>
+          <cite id="splash-cite"></cite>
+        </p>
+        <div id="splash-progress" role="presentation">
+          <span id="splash-bar"></span>
+        </div>
+        <p id="splash-status">Starting Sojourner…</p>
+      </div>
+    </div>
+
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

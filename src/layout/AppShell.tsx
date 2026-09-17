@@ -24,6 +24,7 @@ import { stepChapter } from "../features/reading/chapterStep";
 import { resetZoom, zoomActionFor, zoomText } from "../features/reading/zoom";
 import { isTypingTarget } from "../lib/keyboard";
 import { installCloseHandshake } from "../lib/appClose";
+import { splashReady } from "../lib/splash";
 import { useNoteRefsBackfill } from "../features/notes/useNoteRefsBackfill";
 import { useLandingPageOnLaunch } from "../features/today/landing";
 import { useBackupReminder } from "../features/settings/backupReminder";
@@ -34,8 +35,10 @@ import { useFirstRunTour, useTourDone } from "../features/onboarding/firstRun";
 export function AppShell() {
   const distractionFreeMode = useUiStore((s) => s.distractionFreeMode);
   const setDistractionFreeMode = useUiStore((s) => s.setDistractionFreeMode);
-  const { data: books } = useBooks();
-  const { data: translations } = useTranslations();
+  const booksQuery = useBooks();
+  const translationsQuery = useTranslations();
+  const books = booksQuery.data;
+  const translations = translationsQuery.data;
   const { data: bookmarks } = useBookmarks();
   const createBookmark = useCreateBookmark();
   const deleteBookmark = useDeleteBookmark();
@@ -172,6 +175,16 @@ export function AppShell() {
   // Closing the window is a handshake now, so that a manuscript's last save
   // finishes before the webview goes -- see `lib/appClose.ts`.
   useEffect(() => installCloseHandshake(), []);
+
+  // The splash screen comes down once the database has answered with the two
+  // things the shell cannot draw without. An error counts as an answer: what
+  // the app has to say about a library that would not open is worth more than
+  // a loading bar that never fills. The splash keeps its own minimum showing
+  // time either way -- see index.html and public/splash.js.
+  const shellLoaded = !booksQuery.isPending && !translationsQuery.isPending;
+  useEffect(() => {
+    if (shellLoaded) splashReady();
+  }, [shellLoaded]);
 
   return (
     <div className="flex h-screen overflow-hidden bg-bg text-ink">

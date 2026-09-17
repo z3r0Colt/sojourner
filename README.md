@@ -27,6 +27,31 @@ The region borders are not lines anyone has surveyed. OpenBible publishes each r
 
 The OpenBible.info data is CC BY 4.0. The credit for it in Settings → About is a condition of that licence.
 
+## Brand assets and the splash screen
+
+The logo is supplied as two renders on a near-white ground, kept in `brand/source/`. `tools/build-brand-assets.py` cuts them out of that ground and writes everything the app actually loads:
+
+```
+python tools/build-brand-assets.py          # needs `pip install pillow numpy`
+npm run tauri -- icon brand/icon-source.png # then delete the ios/ and android/ sets it also writes
+```
+
+| written to | used by |
+| --- | --- |
+| `public/brand/sojourner-mark.png`, `-dark.png` | the sidebar mark, the About panel, the favicon |
+| `public/brand/sojourner-lockup.png`, `-dark.png` | the splash screen |
+| `brand/icon-source.png` | `tauri icon`, which fills `src-tauri/icons/` |
+
+Everything comes in a pair, because the artwork is navy line-work around white pages: a drawing made for a light ground, on which the lines vanish and the pages glare. The `-dark` variant treats it as ink coverage and re-inks the navy pale, dropping the pages entirely. Which one is shown is a CSS rule — `.brand-mark` in `src/styles.css` for the app, `[data-splash-theme]` in `index.html` for the splash — so only the one in use is ever fetched.
+
+The Windows icon is the exception: it puts the mark on an ivory tile rather than shipping it cut out, because Windows draws app icons against a dark taskbar by default and there is no second icon to switch to.
+
+The splash screen is written into `index.html` itself — markup and styles — and timed by `public/splash.js`, loaded from the head. Neither is part of the Vite bundle on purpose: a splash that only appears once the bundle has been fetched, parsed and run misses the very wait it exists to cover. This one is on screen at the first paint, and `splash.js` runs early enough to choose light or dark from the saved theme before anything is drawn.
+
+`app.windows[0].backgroundColor` in `tauri.conf.json` covers the one frame even that cannot reach — between the window opening and the first byte of the document. It is a single value where the splash has two, so it is set to the dark ground: a dark frame ahead of a light splash is a far gentler thing to open on than a white one ahead of a dark splash.
+
+It stays up for at least ten seconds (`MIN_MS` in `splash.js`), longer if the app is not ready by then, and leaves when `AppShell` reports that the database has answered with the books and translations it needs. `MAX_MS` is the backstop for an app that never reports ready at all. The verses it shows are quoted from the KJV the app itself ships.
+
 ## Development
 
 ```

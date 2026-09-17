@@ -16,6 +16,9 @@
  */
 import { Component, useEffect, useState, type CSSProperties, type ErrorInfo, type ReactNode } from "react";
 import { invoke } from "@tauri-apps/api/core";
+// Imports nothing itself and does nothing when the splash is absent, so it
+// keeps this file's rule of depending on as little of the app as possible.
+import { splashReady } from "../lib/splash";
 
 /** The message to show for whatever was thrown. A thrown non-Error (a
  * string, a rejected value) still has to read as something. */
@@ -132,6 +135,10 @@ function button(): CSSProperties {
  * render that threw -- nothing in the backend has died.
  */
 export function AppCrashScreen({ error }: { error: unknown }) {
+  // If the app crashed on the way up, the splash is still covering the
+  // window; left to its own backstop it would hide this for a further
+  // minute. Being told what went wrong is the whole point of this screen.
+  useEffect(() => splashReady(), []);
   return (
     <div
       role="alert"
