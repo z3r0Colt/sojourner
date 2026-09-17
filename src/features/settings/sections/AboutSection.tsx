@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { openUrl } from "@tauri-apps/plugin-opener";
-import { Check, Download, RefreshCw } from "lucide-react";
+import { Check, Download, Globe, Mail, RefreshCw } from "lucide-react";
 import { api } from "../../../api/client";
 import type { UpdateCheck } from "../../../api/types";
 import { Button } from "../../../components/ui/Button";
@@ -31,15 +31,10 @@ function ExternalLink({ href, children }: { href: string; children: React.ReactN
  * literally true only while nothing here runs unasked. Nothing is downloaded
  * or installed either -- the reader is handed a link and does the rest, which
  * is the whole of the update story (see `crate::update`). */
-function Updates() {
-  const [version, setVersion] = useState<string | null>(null);
+function Updates({ version }: { version: string | null }) {
   const [checking, setChecking] = useState(false);
   const [result, setResult] = useState<UpdateCheck | null>(null);
   const [failed, setFailed] = useState<string | null>(null);
-
-  useEffect(() => {
-    api.appVersion().then(setVersion).catch(() => {});
-  }, []);
 
   async function check() {
     setChecking(true);
@@ -102,6 +97,45 @@ function Updates() {
   );
 }
 
+/** Where the app comes from, and how to write back about it.
+ *
+ * Both are hand-offs, not requests: the website goes to the system browser and
+ * the address to whatever handles mail here, so the promise above -- that this
+ * app makes no network request of its own accord -- still holds. The running
+ * version rides along in the subject line, since the first thing any report
+ * needs is which build it came from. */
+function Contact({ version }: { version: string | null }) {
+  const subject = `Sojourner feedback${version ? ` (version ${version})` : ""}`;
+  const mail = `mailto:sojourner@gentleking.org?subject=${encodeURIComponent(subject)}`;
+
+  return (
+    <div className="mb-6 rounded-lg border border-line bg-surface-2 p-3">
+      <dl className="space-y-2 text-sm">
+        <div className="flex items-start gap-2">
+          <Globe className="mt-0.5 h-4 w-4 shrink-0 text-ink-4" aria-hidden="true" />
+          <dt className="sr-only">Ministry website</dt>
+          <dd className="min-w-0 text-ink-2">
+            <ExternalLink href="https://gentleking.org">gentleking.org</ExternalLink>
+            <span className="text-ink-3"> — the ministry behind Sojourner.</span>
+          </dd>
+        </div>
+        <div className="flex items-start gap-2">
+          <Mail className="mt-0.5 h-4 w-4 shrink-0 text-ink-4" aria-hidden="true" />
+          <dt className="sr-only">Feedback</dt>
+          <dd className="min-w-0 break-words text-ink-2">
+            <ExternalLink href={mail}>sojourner@gentleking.org</ExternalLink>
+            <span className="text-ink-3"> — questions, corrections, and what you would like to see next.</span>
+          </dd>
+        </div>
+      </dl>
+      <p className="mt-2 text-xs leading-relaxed text-ink-4">
+        Both open outside the app — the site in your browser, the address in your mail program. Nothing is
+        sent from here, and nothing about you goes with them.
+      </p>
+    </div>
+  );
+}
+
 /** One credited source: what it is, and on what terms it is here. */
 function Source({ name, children }: { name: string; children: React.ReactNode }) {
   return (
@@ -113,6 +147,12 @@ function Source({ name, children }: { name: string; children: React.ReactNode })
 }
 
 export function AboutSection() {
+  const [version, setVersion] = useState<string | null>(null);
+
+  useEffect(() => {
+    api.appVersion().then(setVersion).catch(() => {});
+  }, []);
+
   return (
     <div>
       <h2 className="mb-1 text-lg font-semibold text-ink">About</h2>
@@ -124,7 +164,8 @@ export function AboutSection() {
         </p>
       </div>
 
-      <Updates />
+      <Updates version={version} />
+      <Contact version={version} />
 
       <div className="space-y-4 text-sm leading-relaxed text-ink-2">
         <p>
