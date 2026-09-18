@@ -41,8 +41,9 @@ Against the four things that realistically threaten an app like this:
   from newer builds, soft delete with a 30-day sweep. 78 Rust tests, and they test the
   paths that matter rather than the easy ones. My one real complaint here is H2: those
   carefully written refusals are thrown into a panic nobody ever sees.
-- **A broken install.** This is where it fails. `tauri build` does not produce an
-  installer at all (C1).
+- **A broken install.** This is where it failed. `tauri build` did not produce an
+  installer at all (C1 — resolved 2026-09-18; the cause was an apostrophe in the old
+  product name, not the toolchain).
 
 Two findings below are about copyright rather than code, but they stop a release just
 as hard.
@@ -52,7 +53,8 @@ as hard.
 ## Fix these three first
 
 1. **C1 — `tauri build` fails; there is no installer.** The NSIS step aborts. Nothing
-   can ship until this produces a file.
+   can ship until this produces a file. *Resolved 2026-09-18: the installer builds,
+   installs, runs and uninstalls — see the section for what actually broke.*
 2. **C2 — Three copyrighted Bible translations are bundled into the installer.** NASB
    1995, NKJV 1982 and NLT 1996 are shipping in full with no licence. This is the one
    finding that carries legal consequence.
@@ -64,7 +66,7 @@ as hard.
 
 # Critical
 
-### C1 — `tauri build` produces no installer; the NSIS step aborts
+### C1 — `tauri build` produces no installer; the NSIS step aborts — resolved 2026-09-18
 
 **Evidence — tool output.** `npm run tauri -- build --config <override skipping only the
 967 MB content.db rebuild>`:
@@ -83,41 +85,58 @@ Everything up to bundling succeeded: the frontend built (`✓ 2257 modules trans
 (`Finished \`release\` profile [optimized] target(s) in 4m 46s`, `tauri-app.exe` 77.38 MB).
 `target\release\bundle\nsis\` is created and left empty.
 
-The failure is inside Tauri's own generated template, not this repo's config. The
-offending expansion is in the `utils.nsh` the CLI writes:
-
-`src-tauri/target/release/nsis/x64/utils.nsh`, in `!macro IsShortcutTarget`:
+**What it actually was (found 2026-09-18).** The first draft of this section blamed the
+`GetPath` call and the NSIS 3.11 toolchain. Both were wrong. Counting from the
+`!macro IsShortcutTarget` header, "macroline 11" is the line above `GetPath`, in
+`src-tauri/target/release/nsis/x64/utils.nsh`:
 
 ```
-      ${IShellLink::GetPath} $0 '(.r2, ${MAX_PATH}, 0, ${SLGP_RAWPATH})'
+      ${IPersistFile::Load} $1 '("${shortcut}", ${STGM_READ})'
 ```
 
-called from `installer.nsi:1246`. The CLI downloads NSIS 3.11
-(`nsis-3.11.zip`) and `nsis_tauri_utils` v0.5.3, and the template's call arity no longer
-matches that toolchain's `NSISCOMCALL`.
+`${shortcut}` is the Start Menu `.lnk` path, which contains `${PRODUCTNAME}` — and the
+product name at the reviewed commit was `Sojourner's Study Companion`. The apostrophe
+closes the single-quoted argument early, and what follows tokenises into exactly the 8
+parameters the error counts. Reproduced against the cached makensis 3.11 with the CLI's own
+generated `utils.nsh`: the name with the apostrophe fails with this exact message; the
+name `Sojourner` compiles to an installer. `UnpinShortcut` and `SetShortcutTarget` quote
+the same way and would have failed next.
 
-Note also that `@tauri-apps/cli` is **2.11.4** while the Rust `tauri` crate resolves to
-**2.11.5** — the CLI owns this template, so the CLI is the thing to move.
+Neither of the remedies first proposed here could have worked: `@tauri-apps/cli` 2.11.4 is
+the latest release (there is no 2.11.5), upstream `dev` still ships this macro and still
+pins NSIS 3.11, and NSIS 3.10 and 3.11 define `IShellLink::GetPath` and `NSISCOMCALL`
+identically.
 
-**Smallest change:** bump the bundler CLI and re-run until an installer is actually
-produced:
+**Fix.** Commit `8f28bc0` renamed the product to `Sojourner` for its own reasons and took
+the trigger with it. Two guards keep it from coming back: `src/tauriConf.test.ts` fails
+`npm test` if `productName` contains a quote, and README "Windows packaging" says why.
 
-```jsonc
-// package.json — devDependencies
-"@tauri-apps/cli": "^2.11.5",   // was "^2"
-```
+**Verified 2026-09-18** with the unmodified `npm run tauri build` — content database
+rebuild (64 sources, none failed), frontend, Rust release, NSIS — producing
+`Sojourner_0.1.0_x64-setup.exe` (538 MB). Installed silently (`/S`) as the current user
+with no elevation prompt into `%LOCALAPPDATA%\Sojourner`; Start Menu and desktop shortcuts
+and the HKCU uninstall entry were written; the installed app opened the bundled
+`content.db` and rendered the saved workspace, commentary text included, about 12 s after
+launch, with no new file in `logs/`; it closed with exit code 0; uninstall removed the
+shortcuts and the registry entry. So `resources`, `nsis.installMode: "currentUser"` and
+`webviewInstallMode: offlineInstaller` have now all been exercised. Two things noticed on
+the way, neither of which blocks a release:
 
-Then `npm install && npm run tauri build`. If the current latest still fails, the other
-lever is pinning the NSIS toolchain back to 3.10, which is a CLI-side setting rather
-than anything in `tauri.conf.json`. I could not verify offline which released CLI
-version carries the fixed template, so **treat the exact version as unconfirmed and the
-acceptance test as "an installer .exe exists and installs"**.
+- The uninstaller leaves `content.db-wal` and `content.db-shm` behind, because the app
+  creates them beside the shipped database on first open, so `%LOCALAPPDATA%\Sojourner`
+  survives uninstall holding two empty files. Opening the content database with
+  `immutable=1`, or shipping it with `journal_mode=DELETE`, would stop it.
+- `build_content_db.exe` (26 MB) is bundled into the installer next to `tauri-app.exe`:
+  the generated `installer.nsi` carries a `File` entry for it, and it lands in the install
+  folder. The CLI's `get_binaries` scans `src-tauri/src/bin/` for extra binaries to ship,
+  so the build tools would be better off outside that folder (an `examples/` target or a
+  separate crate). The four other tools in `src/bin/` were not bundled, and I did not find
+  out why only this one was.
 
-This is the finding that makes every other release item provisional: the bundle config
-(`resources`, `nsis.installMode`, `webviewInstallMode`) has **never been exercised
-end to end**, because this step has never completed.
+Still unexercised: first run on a clean machine, and upgrade over a previous version.
 
-Confidence: **sure** (reproduced; the error text is verbatim tool output).
+Confidence: **sure** (reproduced both ways; the installer was built, installed, run and
+removed on this machine).
 
 ---
 
@@ -965,7 +984,9 @@ Confidence: **sure** (measured).
   check `nsis.installMode: "currentUser"`, the `webviewInstallMode: offlineInstaller`
   path, per-user vs per-machine behaviour, first-run on a clean machine, upgrade over a
   previous version, or uninstall. The bundle configuration has been read but **never
-  executed**. Re-run this section once C1 is fixed.
+  executed**. Re-run this section once C1 is fixed. *2026-09-18: done on this machine —
+  built, installed per-user, run, uninstalled; see C1. A clean machine and an upgrade over
+  a previous version are still untested.*
 - **`cargo audit`** — not installed, and I did not install anything. The Rust dependency
   tree is therefore unaudited. `Cargo.lock` is committed, so this is a single command
   once the tool is available. Worth running before release: `pdf-extract 0.12`,
