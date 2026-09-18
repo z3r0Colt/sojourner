@@ -516,11 +516,19 @@ pub const CONTENT_MIGRATION_0008: &str = r#"
 CREATE INDEX idx_westminster_proofs_passage ON westminster_proofs(book_id, chapter, verse_start, verse_end);
 "#;
 
-// Translation-transparency flag: most bundled translations are true public
-// domain, but a couple (NASB, NKJV) are modern copyrighted texts the app
-// bundles under the operator's own license rather than PD status. Default
-// 'public_domain' covers the common case; the importer backfills 'licensed'
-// for the known non-PD codes right after import (see
+// Translation-transparency flag: every translation the app ships is true
+// public domain, and this column exists so one a *reader* imports is not
+// silently presented as though it were.
+//
+// It was written for a different situation. NASB 1995, NKJV 1982 and NLT
+// 1996 were once bundled and marked 'licensed' on the strength of a licence
+// that did not exist; they have since been removed from `bibles/`, and
+// `import::refuse_licensed_translations` fails the build if one returns.
+// What is left is the honest case: a reader with their own licensed copy
+// imports it through "Add File…", and the Library settings page marks it.
+//
+// Default 'public_domain' covers the common case; the importer backfills
+// 'licensed' for the known non-PD codes right after import (see
 // import::mod::backfill_license_status) so this never has to be
 // hand-maintained per translation file.
 pub const CONTENT_MIGRATION_0009: &str = r#"
