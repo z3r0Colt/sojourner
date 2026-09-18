@@ -197,6 +197,14 @@ export function AboutSection() {
           The King James Version, the American Standard Version, and the other translations and classic works included here are in the public domain.
         </Source>
         <Source name="Strong's lexicon and Thayer's">Public domain.</Source>
+        <Source name="Greek New Testament — text, parsing, and Strong's tagging">
+          The Translators Amalgamated Greek New Testament and the Translators Brief Lexicon of Extended Strong's for Greek, © Tyndale House Cambridge, used
+          under a{" "}
+          <ExternalLink href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0</ExternalLink> licence, from{" "}
+          <ExternalLink href="https://github.com/STEPBible/STEPBible-Data">STEPBible.org</ExternalLink>. The interlinear pane shows its Textus Receptus
+          wordstream — the Greek behind the King James Version, and the text Strong numbered — so each word's Strong's number is the one that edition prints,
+          not one this app inferred.
+        </Source>
         <Source name="Easton's and Smith's Bible dictionaries">Public domain.</Source>
         <Source name="International Standard Bible Encyclopedia (1915)">
           James Orr, general editor. Public domain. Prepared from the edition distributed by the CrossWire Bible Society.
