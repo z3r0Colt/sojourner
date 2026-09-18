@@ -122,18 +122,31 @@ shortcuts and the registry entry. So `resources`, `nsis.installMode: "currentUse
 `webviewInstallMode: offlineInstaller` have now all been exercised. Two things noticed on
 the way, neither of which blocks a release:
 
-- The uninstaller leaves `content.db-wal` and `content.db-shm` behind, because the app
-  creates them beside the shipped database on first open, so `%LOCALAPPDATA%\Sojourner`
-  survives uninstall holding two empty files. Opening the content database with
-  `immutable=1`, or shipping it with `journal_mode=DELETE`, would stop it.
-- `build_content_db.exe` (26 MB) is bundled into the installer next to `tauri-app.exe`:
-  the generated `installer.nsi` carries a `File` entry for it, and it lands in the install
-  folder. The CLI's `get_binaries` scans `src-tauri/src/bin/` for extra binaries to ship,
-  so the build tools would be better off outside that folder (an `examples/` target or a
-  separate crate). The four other tools in `src/bin/` were not bundled, and I did not find
-  out why only this one was.
+- The uninstaller left `content.db-wal` and `content.db-shm` behind, because the app
+  creates them beside the shipped database on first open (it is writable on purpose:
+  "Add file" imports a reader's own Bibles into it), so `%LOCALAPPDATA%\Sojourner`
+  survived uninstall holding two empty files. *Fixed the same day:*
+  `src-tauri/nsis/hooks.nsh` deletes the pair after uninstall and removes the folder, and
+  deletes a stale pair before an upgrade lands a new `content.db`, so an old write-ahead
+  log is never replayed onto the new file. Verified: after the upgrade the pair is gone,
+  after uninstall the folder is gone.
+- `build_content_db.exe` (26 MB) was bundled into the installer next to `tauri-app.exe`.
+  The CLI's `get_binaries` scans `src-tauri/src/bin/` and ships what it finds -- and,
+  through an upstream bug (`path.ends_with("")` is true for every path), exactly the
+  first one, which is why the other four tools were left out. *Fixed the same day:* the
+  tools are `[[bin]]` targets behind a `tools` feature that `tauri build` never enables;
+  the installer dropped from 538 MB to 532 MB and its `installer.nsi` lists no binary but
+  the app.
+- An upgrade overwrites files in place and does not run the previous uninstaller, so a
+  file the old version shipped and the new one does not is left where it was. Nothing
+  shipped so far is affected, but that is how the installer behaves.
+- "Add file" imports go into the installed `content.db`, which an upgrade replaces. The
+  source files stay in `%APPDATA%\com.sojourner.study\imports\`, and the scan in
+  Settings → Library brings them back, but nothing does that on its own after an upgrade.
 
-Still unexercised: first run on a clean machine, and upgrade over a previous version.
+Upgrade over a previous version was exercised on 2026-09-18 (the pre-fix installer, then
+this one over it: one uninstall entry, shortcuts kept, the app ran and closed cleanly).
+Still unexercised: first run on a clean machine.
 
 Confidence: **sure** (reproduced both ways; the installer was built, installed, run and
 removed on this machine).
@@ -985,8 +998,8 @@ Confidence: **sure** (measured).
   path, per-user vs per-machine behaviour, first-run on a clean machine, upgrade over a
   previous version, or uninstall. The bundle configuration has been read but **never
   executed**. Re-run this section once C1 is fixed. *2026-09-18: done on this machine —
-  built, installed per-user, run, uninstalled; see C1. A clean machine and an upgrade over
-  a previous version are still untested.*
+  built, installed per-user, run, upgraded over a previous build, uninstalled; see C1. A
+  clean machine is still untested.*
 - **`cargo audit`** — not installed, and I did not install anything. The Rust dependency
   tree is therefore unaudited. `Cargo.lock` is committed, so this is a single command
   once the tool is available. Worth running before release: `pdf-extract 0.12`,
