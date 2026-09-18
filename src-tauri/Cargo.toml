@@ -4,10 +4,41 @@ version = "0.1.0"
 description = "A Tauri App"
 authors = ["you"]
 edition = "2021"
-# `src/bin/build_content_db.rs` makes this crate produce two binaries; without
-# this, `cargo run` (used by `tauri dev`/`tauri build`) can't tell which one to
-# launch and refuses to start.
+# The build tools under `src/bin/` make this crate produce more than one
+# binary; without this, `cargo run` (used by `tauri dev`/`tauri build`) can't
+# tell which one to launch and refuses to start.
 default-run = "tauri-app"
+
+# The build tools, declared so they can be kept out of the app. Tauri's CLI
+# bundles every binary it finds under `src/bin/` into the installer -- a
+# 26 MB `build_content_db.exe` shipped beside the app until these were gated
+# behind a feature `tauri build` never enables. Run them with
+# `--features tools` (the npm scripts do); a plain `cargo build` skips them,
+# which also spares five LTO links on every app build.
+[[bin]]
+name = "build_content_db"
+path = "src/bin/build_content_db.rs"
+required-features = ["tools"]
+
+[[bin]]
+name = "build_library_pack"
+path = "src/bin/build_library_pack.rs"
+required-features = ["tools"]
+
+[[bin]]
+name = "collect_library"
+path = "src/bin/collect_library.rs"
+required-features = ["tools"]
+
+[[bin]]
+name = "import_epub_library"
+path = "src/bin/import_epub_library.rs"
+required-features = ["tools"]
+
+[[bin]]
+name = "check_topics"
+path = "src/bin/check_topics.rs"
+required-features = ["tools"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -75,6 +106,9 @@ winreg = "0.55"
 # connect" -- which is what every release build of this app did until now.
 [features]
 custom-protocol = ["tauri/custom-protocol"]
+# Enables the `src/bin/` build tools (see the `[[bin]]` entries above). Adds
+# nothing to the library itself.
+tools = []
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration
 [profile.release]

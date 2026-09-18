@@ -17,7 +17,7 @@
 // removing one means deleting its file and its manifest entry by hand.
 //
 // Usage (from src-tauri/):
-//   cargo run --release --bin collect_library [-- <source_dir> <user_db>]
+//   cargo run --release --features tools --bin collect_library [-- <source_dir> <user_db>]
 // Or via npm (from the repo root):
 //   npm run library:collect
 //

@@ -9,14 +9,14 @@
     "test": "vitest run",
     "preview": "vite preview",
     "tauri": "tauri",
-    "build:content": "cargo run --release --bin build_content_db --manifest-path src-tauri/Cargo.toml",
-    "build:pack": "cargo run --release --bin build_library_pack --manifest-path src-tauri/Cargo.toml",
+    "build:content": "cargo run --release --features tools --bin build_content_db --manifest-path src-tauri/Cargo.toml",
+    "build:pack": "cargo run --release --features tools --bin build_library_pack --manifest-path src-tauri/Cargo.toml",
     "build:g2p": "cargo run --release --example build_g2p_lexicon --manifest-path src-tauri/Cargo.toml",
     "fetch:voices": "node tools/fetch-voice-model.mjs",
     "fetch:tunes": "node tools/fetch-psalm-tunes.mjs",
     "import:tunes": "node tools/import-psalm-tunes.mjs",
     "build:psalter": "node tools/build-psalter.mjs",
-    "library:collect": "cargo run --release --bin collect_library --manifest-path src-tauri/Cargo.toml"
+    "library:collect": "cargo run --release --features tools --bin collect_library --manifest-path src-tauri/Cargo.toml"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.102.8",

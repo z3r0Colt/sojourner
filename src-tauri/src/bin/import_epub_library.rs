@@ -6,7 +6,7 @@
 // Tauri window, and with a curated exclude list for content this library
 // duplicates elsewhere in the app or that turned out to be unusable.
 //
-// Run with: cargo run --release --bin import_epub_library -- <app_data_dir> <content_db_path> <source_folder>
+// Run with: cargo run --release --features tools --bin import_epub_library -- <app_data_dir> <content_db_path> <source_folder>
 use std::path::PathBuf;
 use tauri_app_lib::{backup, db, resources};
 

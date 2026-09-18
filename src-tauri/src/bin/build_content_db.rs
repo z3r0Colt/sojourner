@@ -5,7 +5,7 @@
 // reference source files checked into the repo, so the app can ship the
 // finished database instead of running the import pipeline on first launch.
 //
-// Usage (from src-tauri/): cargo run --release --bin build_content_db
+// Usage (from src-tauri/): cargo run --release --features tools --bin build_content_db
 // Or via npm (from repo root): npm run build:content
 //
 // This is wired into `beforeBuildCommand` in tauri.conf.json, so `npm run

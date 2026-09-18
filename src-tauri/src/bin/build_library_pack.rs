@@ -10,7 +10,7 @@
 // to it). Everything in the manifest whose file is present goes in.
 //
 // Usage (from src-tauri/):
-//   cargo run --release --bin build_library_pack [-- <out_path>]
+//   cargo run --release --features tools --bin build_library_pack [-- <out_path>]
 // Or via npm (from the repo root):
 //   npm run build:pack
 //
