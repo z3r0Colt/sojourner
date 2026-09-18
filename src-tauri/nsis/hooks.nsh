@@ -13,6 +13,11 @@
 !macro NSIS_HOOK_PREINSTALL
   Delete "$INSTDIR\content.db-wal"
   Delete "$INSTDIR\content.db-shm"
+  ; An upgrade overwrites in place and never runs the previous uninstaller,
+  ; so a file an older build shipped and this one does not would stay put
+  ; for good. Name each such file here as it is dropped. The first build
+  ; (2026-09-18) bundled a build tool beside the app.
+  Delete "$INSTDIR\build_content_db.exe"
 !macroend
 
 ; After the generated section has removed everything it knows about (and

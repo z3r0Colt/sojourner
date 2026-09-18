@@ -138,15 +138,22 @@ the way, neither of which blocks a release:
   the installer dropped from 538 MB to 532 MB and its `installer.nsi` lists no binary but
   the app.
 - An upgrade overwrites files in place and does not run the previous uninstaller, so a
-  file the old version shipped and the new one does not is left where it was. Nothing
-  shipped so far is affected, but that is how the installer behaves.
+  file the old version shipped and the new one does not is left where it was. *Handled:*
+  the pre-install hook names each such file as it is dropped (so far only the build tool
+  above), and an upgrade from the pre-fix installer was seen to remove it.
 - "Add file" imports go into the installed `content.db`, which an upgrade replaces. The
-  source files stay in `%APPDATA%\com.sojourner.study\imports\`, and the scan in
-  Settings → Library brings them back, but nothing does that on its own after an upgrade.
+  source files stay in `%APPDATA%\com.sojourner.study\imports\`. *Fixed the same day:*
+  `commands::library::rescan_imports_after_upgrade` runs at launch off the main thread,
+  and when content.db's size or timestamp differs from the stamp kept in user.db it
+  re-imports that folder (the importers skip files they already hold by checksum).
+  Verified on an empty profile: an imported Bible came back after a simulated upgrade,
+  and a launch with nothing changed touched nothing.
 
 Upgrade over a previous version was exercised on 2026-09-18 (the pre-fix installer, then
 this one over it: one uninstall entry, shortcuts kept, the app ran and closed cleanly).
-Still unexercised: first run on a clean machine.
+First run on a clean machine was simulated by moving the app-data folder and the WebView2
+profile aside: a 4 KB user.db was created, the ten translations were listed, and the app
+opened and closed cleanly. A genuinely separate machine is the one thing left.
 
 Confidence: **sure** (reproduced both ways; the installer was built, installed, run and
 removed on this machine).

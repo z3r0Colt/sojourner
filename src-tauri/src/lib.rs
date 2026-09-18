@@ -240,6 +240,15 @@ pub fn run() {
             // The tokens the file dialogs hand back in place of paths, so no
             // path the page could name ever reaches a command.
             app.manage(commands::file_picker::PickedPaths::default());
+
+            // A reader's imported Bibles live in content.db, which an
+            // upgrade has just replaced if this is the first launch after
+            // one. Off the main thread: it takes the database lock only
+            // when there is something to bring back.
+            let rescan = app.handle().clone();
+            std::thread::spawn(move || {
+                commands::library::rescan_imports_after_upgrade(&rescan, &content_db_path);
+            });
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![

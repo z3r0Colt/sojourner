@@ -5,7 +5,61 @@ use crate::error::AppResult;
 use crate::import;
 use crate::models::{Book, BookAlias, BookCoverage, CommentarySource, ImportReportItem, Translation};
 use crate::paths::default_import_roots;
+use std::path::Path;
 use tauri::{AppHandle, Manager, State};
+
+/// The setting that remembers which content.db the imports were last
+/// reconciled against (its size and modification time).
+const CONTENT_DB_STAMP: &str = "content_db_stamp";
+
+/// Brings a reader's own imports back after an upgrade.
+///
+/// "Add file" copies a Bible or commentary into `imports/` under the app
+/// data dir and imports it into content.db -- but content.db is a bundled
+/// resource, and an upgrade replaces it wholesale, so every imported
+/// translation vanished until someone found the scan button in Settings.
+/// The source files never went anywhere, so this re-imports them.
+///
+/// Runs at every launch, off the main thread, but does real work only when
+/// content.db is not the file it was last time: its size and modification
+/// time are kept in user.db, and an unchanged stamp means nothing to do.
+/// The importers themselves skip a file whose checksum they already hold,
+/// so even a rescan is cheap when nothing is missing.
+pub fn rescan_imports_after_upgrade(app: &AppHandle, content_db_path: &Path) {
+    let stamp = match std::fs::metadata(content_db_path) {
+        Ok(m) => format!("{}:{:?}", m.len(), m.modified().ok()),
+        Err(_) => return,
+    };
+    let db = app.state::<DbState>();
+    let last = {
+        let conn = db.conn();
+        crate::db::queries::settings::get(&conn, CONTENT_DB_STAMP).ok().flatten()
+    };
+    if last.as_deref() == Some(stamp.as_str()) {
+        return;
+    }
+
+    // Only the reader's own folder: the bundled resource copies are what
+    // content.db was built from and need no reconciling.
+    let roots: Vec<_> = default_import_roots(app)
+        .into_iter()
+        .filter(|p| p.components().any(|c| c.as_os_str() == "imports"))
+        .collect();
+    let files = import::discover_candidate_files(&roots);
+    if !files.is_empty() {
+        let mut conn = db.conn();
+        for r in import::scan_files(&mut conn, &files) {
+            if r.status != "Skipped" {
+                println!("[imports] {} ({}): {} {}", r.path, r.format, r.status, r.detail.unwrap_or_default());
+            }
+        }
+    }
+
+    let conn = db.conn();
+    if let Err(e) = crate::db::queries::settings::set(&conn, CONTENT_DB_STAMP, &stamp) {
+        eprintln!("[imports] could not record the content.db stamp: {e:#}");
+    }
+}
 
 #[tauri::command]
 pub fn list_books(db: State<DbState>) -> AppResult<Vec<Book>> {
