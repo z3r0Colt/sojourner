@@ -745,7 +745,11 @@ needs testing rather than trusting.
 
 Confidence: **sure** on the advisory; **unsure** whether the override is drop-in.
 
-### M6 — Placeholder crate metadata, and no publisher, ships into the Windows uninstall entry
+### M6 — Placeholder crate metadata, and no publisher, ships into the Windows uninstall entry — resolved 2026-09-18
+
+*Publisher and copyright are Colt McClish, the description says what the app is. Verified
+on an install: the uninstall entry's Publisher and the executable's file properties both
+read "Colt McClish".*
 
 `src-tauri/Cargo.toml:2-5`:
 

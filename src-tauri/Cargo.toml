@@ -1,8 +1,8 @@
 [package]
 name = "tauri-app"
 version = "0.1.0"
-description = "A Tauri App"
-authors = ["you"]
+description = "Offline Bible study and sermon preparation"
+authors = ["Colt McClish"]
 edition = "2021"
 # The build tools under `src/bin/` make this crate produce more than one
 # binary; without this, `cargo run` (used by `tauri dev`/`tauri build`) can't
