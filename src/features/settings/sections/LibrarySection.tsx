@@ -85,7 +85,7 @@ export function LibrarySection() {
               {t.name} <span className="text-ink-3">· {t.verse_count.toLocaleString()} verses</span>
               {t.license_status === "licensed" && (
                 <span
-                  title="A modern copyrighted translation bundled under a license, not public domain. Verify your own rights to distribute it."
+                  title="A modern copyrighted translation. The app ships none of these — this one was imported on this computer, and whether it may be shared is your own arrangement with its publisher."
                   className={cx("ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-950/50 dark:text-amber-300")}
                 >
                   Licensed
