@@ -1,7 +1,9 @@
 import { useCallback, useState } from "react";
 import { BookOpen } from "lucide-react";
-import { useBooks, useChapter, useReviewMemoryVerse } from "../../api/queries";
+import { useBooks, useChapter, useMemoryVerses, useReviewMemoryVerse, useSetMemoryVerseTranslation } from "../../api/queries";
 import { useReaderTranslationId } from "../../state/workspaceStore";
+import { TranslationPick } from "./TranslationPick";
+import { toast } from "../../components/ui/toast";
 import { useReadingTypography } from "../../state/uiStore";
 import { applyMemoryMode, diffTyped, diffAccuracy } from "./memoryText";
 import { GradeButtons } from "./GradeButtons";
@@ -21,9 +23,14 @@ import { openPassage, targetFor } from "../../workspace/openContent";
 export function MemoryPracticeCard({ card, onDone, onBack }: { card: MemoryVerse; onDone: () => void; onBack?: () => void }) {
   const { data: books } = useBooks();
   const primaryTranslationId = useReaderTranslationId();
-  const translationId = card.translation_id ?? primaryTranslationId;
+  // The session queue holds the card as it was when practice began; the
+  // translation is read live so changing it here takes effect at once.
+  const { data: deck } = useMemoryVerses();
+  const pinnedTranslationId = deck?.find((v) => v.id === card.id)?.translation_id ?? card.translation_id;
+  const translationId = pinnedTranslationId ?? primaryTranslationId;
   const { data: verses } = useChapter(translationId, card.book_id, card.chapter);
   const review = useReviewMemoryVerse();
+  const setTranslation = useSetMemoryVerseTranslation();
   const typography = useReadingTypography(1.05);
   const [revealed, setRevealed] = useState(false);
   const [typed, setTyped] = useState("");
@@ -61,8 +68,20 @@ export function MemoryPracticeCard({ card, onDone, onBack }: { card: MemoryVerse
 
   return (
     <div className="mx-auto max-w-xl rounded-xl border border-line bg-surface p-6 shadow-sm">
-      <div className="mb-3 flex items-baseline justify-between gap-3">
-        <div className="text-sm font-semibold text-ink-3">{reference}</div>
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="text-sm font-semibold text-ink-3">{reference}</span>
+          {/* Which words are being learned: the card's translation, or the
+              reader's when none is pinned. Changing it here re-fetches the
+              text, so a card added in the wrong translation is put right
+              without leaving the practice. */}
+          <TranslationPick
+            value={pinnedTranslationId}
+            onChange={(translationId) =>
+              setTranslation.mutate({ id: card.id, translationId }, { onError: (e) => toast.error(e instanceof Error ? e.message : String(e)) })
+            }
+          />
+        </div>
         <button
           type="button"
           className="inline-flex items-center gap-1 text-xs text-accent hover:underline"

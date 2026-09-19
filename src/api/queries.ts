@@ -575,6 +575,27 @@ export function useDeleteResource() {
   });
 }
 
+/** Renames a resource and sets or clears its author. */
+export function useUpdateResource() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { id: number; title: string; author: string | null }) => api.updateResource(input.id, input.title, input.author),
+    onSuccess: (_, input) => {
+      qc.invalidateQueries({ queryKey: ["resources"] });
+      qc.invalidateQueries({ queryKey: ["resource", input.id] });
+    },
+  });
+}
+
+/** One author for several resources at once. */
+export function useSetAuthorForResources() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { ids: number[]; author: string | null }) => api.setAuthorForResources(input.ids, input.author),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["resources"] }),
+  });
+}
+
 /** Reads a resource's text out of its file again; see `reextract_resource`. */
 export function useReextractResource() {
   const qc = useQueryClient();
@@ -943,6 +964,18 @@ export function useSetMemoryVerseMode() {
   return useMutation({
     mutationFn: (input: { id: number; mode: MemoryMode }) => api.setMemoryVerseMode(input.id, input.mode),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["memoryVerses"] }),
+  });
+}
+
+/** Pins a card to a translation (null: the reader's current one). */
+export function useSetMemoryVerseTranslation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { id: number; translationId: number | null }) => api.setMemoryVerseTranslation(input.id, input.translationId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["memoryVerses"] });
+      qc.invalidateQueries({ queryKey: ["dueMemoryVerses"] });
+    },
   });
 }
 

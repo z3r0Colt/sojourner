@@ -5,20 +5,36 @@ import type Book from "epubjs/types/book";
 import type Contents from "epubjs/types/contents";
 import type Rendition from "epubjs/types/rendition";
 import type { NavItem } from "epubjs/types/navigation";
-import { ChevronLeft, ChevronRight, Minus, Plus, Type } from "lucide-react";
+import { ChevronLeft, ChevronRight, Minus, MoveHorizontal, Plus, Type, ZoomIn, ZoomOut } from "lucide-react";
 import { Button, IconButton } from "../../components/ui/Button";
 import { Popover } from "../../components/ui/Popover";
 import { LoadingState } from "../../components/ui/EmptyState";
 import { checkboxClass, cx, selectSmClass } from "../../components/ui/classes";
 import {
   EPUB_WIDTH_OPTIONS,
+  EPUB_ZOOM_MAX,
+  EPUB_ZOOM_MIN,
+  EPUB_ZOOM_STEP,
   READING_FONT_OPTIONS,
   useUiStore,
   type EpubWidth,
   type LineSpacing,
   type ReadingFont,
 } from "../../state/uiStore";
-import { EPUB_STYLE_KEY, addRunOut, buildEpubCss, fitScannedPage, markScannedPage, pinInvisibleText, routeExternalLinks, unstackPositionedElements } from "./epubStyles";
+import {
+  DESK_MARGIN_PX,
+  EPUB_STYLE_KEY,
+  addRunOut,
+  buildEpubCss,
+  fitScannedPage,
+  isScannedPage,
+  markScannedPage,
+  padSheetToHeight,
+  pinInvisibleText,
+  routeExternalLinks,
+  sheetWidthPx,
+  unstackPositionedElements,
+} from "./epubStyles";
 
 /** One entry of a book's table of contents, flattened with its depth. */
 export interface EpubTocItem {
@@ -156,20 +172,42 @@ export function EpubReader({
   const setEpubWidth = useUiStore((s) => s.setEpubWidth);
   const useBookStyles = useUiStore((s) => s.epubUseBookStyles);
   const setUseBookStyles = useUiStore((s) => s.setEpubUseBookStyles);
+  const zoom = useUiStore((s) => s.epubZoom);
+  const setZoom = useUiStore((s) => s.setEpubZoom);
   const themeVersion = useThemeVersion();
 
   const css = useMemo(() => {
     // themeVersion carries no value of its own; changing is its whole
     // purpose, because the colours are read from the theme's tokens.
     void themeVersion;
-    return buildEpubCss({ fontSize, lineSpacing, readingFont, width: epubWidth, useBookStyles });
-  }, [fontSize, lineSpacing, readingFont, epubWidth, useBookStyles, themeVersion]);
+    return buildEpubCss({ fontSize, lineSpacing, readingFont, width: epubWidth, useBookStyles, zoom });
+  }, [fontSize, lineSpacing, readingFont, epubWidth, useBookStyles, zoom, themeVersion]);
 
   // Callbacks, the stylesheet and the opening CFI are reached through refs
   // so the book is opened once per file, not once per parent render or
   // once per change of type size.
   const cssRef = useRef(css);
   cssRef.current = css;
+  const zoomRef = useRef(zoom);
+  zoomRef.current = zoom;
+
+  const zoomBy = useCallback(
+    (direction: 1 | -1) => setZoom(zoomRef.current + direction * EPUB_ZOOM_STEP),
+    [setZoom],
+  );
+  /** The zoom at which the sheet spans the pane. */
+  const fitWidth = useCallback(() => {
+    const host = hostRef.current;
+    const sheet = sheetWidthPx(epubWidth);
+    if (!host || sheet == null) {
+      setZoom(100);
+      return;
+    }
+    const scrollbar = 18;
+    setZoom(((host.clientWidth - DESK_MARGIN_PX * 2 - scrollbar) / sheet) * 100);
+  }, [epubWidth, setZoom]);
+  const fitWidthRef = useRef(fitWidth);
+  fitWidthRef.current = fitWidth;
   const onLocationRef = useRef(onLocation);
   onLocationRef.current = onLocation;
   const onTocRef = useRef(onToc);
@@ -210,7 +248,17 @@ export function EpubReader({
 
   const handleKey = useCallback(
     (event: { key: string; altKey: boolean; ctrlKey: boolean; metaKey: boolean; target: EventTarget | null; preventDefault: () => void }) => {
-      if (event.altKey || event.ctrlKey || event.metaKey) return;
+      // Ctrl and = / - / 0 zoom the page here, in place of the app's text
+      // size: a book has its own zoom, and this is where it is being read.
+      if ((event.ctrlKey || event.metaKey) && !event.altKey) {
+        if (event.key === "=" || event.key === "+") zoomBy(1);
+        else if (event.key === "-" || event.key === "_") zoomBy(-1);
+        else if (event.key === "0") setZoom(100);
+        else return;
+        event.preventDefault();
+        return;
+      }
+      if (event.altKey) return;
       const target = event.target as HTMLElement | null;
       const tag = target?.tagName ?? "";
       if (target?.isContentEditable || tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || tag === "BUTTON") return;
@@ -246,12 +294,24 @@ export function EpubReader({
       }
       event.preventDefault();
     },
-    [pageBy, scrollerEl],
+    [pageBy, scrollerEl, zoomBy, setZoom],
   );
   // Keys pressed inside the book land in its iframe rather than in this
   // document, so the rendition forwards them to the same handler.
   const handleKeyRef = useRef(handleKey);
   handleKeyRef.current = handleKey;
+
+  /** Ctrl+wheel zooms the page, wherever in the reader the pointer is. */
+  const handleWheel = useCallback(
+    (event: { ctrlKey: boolean; deltaY: number; preventDefault: () => void }) => {
+      if (!event.ctrlKey) return;
+      event.preventDefault();
+      if (event.deltaY !== 0) zoomBy(event.deltaY < 0 ? 1 : -1);
+    },
+    [zoomBy],
+  );
+  const handleWheelRef = useRef(handleWheel);
+  handleWheelRef.current = handleWheel;
 
   /**
    * epub.js's paginated flow (CSS multi-column) computes its column track
@@ -316,16 +376,25 @@ export function EpubReader({
       const scan = markScannedPage(doc, invisible);
       void contents.addStylesheetCss(cssRef.current, EPUB_STYLE_KEY);
       if (scan) {
-        fitScannedPage(doc);
+        fitScannedPage(doc, zoomRef.current / 100);
         // A scan's width is only final once the image has arrived.
         for (const image of doc.images) {
-          if (!image.complete) image.addEventListener("load", () => fitScannedPage(doc), { once: true });
+          if (!image.complete) image.addEventListener("load", () => fitScannedPage(doc, zoomRef.current / 100), { once: true });
         }
       } else {
         unstackPositionedElements(doc, invisible);
       }
       addRunOut(doc);
+      // The sheet fills the pane's height; images that arrive later push
+      // the text down, so the padding is redone as each one loads.
+      const pad = () => padSheetToHeight(doc, (hostRef.current?.clientHeight ?? 0) - DESK_MARGIN_PX);
+      pad();
+      for (const image of doc.images) {
+        if (!image.complete) image.addEventListener("load", pad, { once: true });
+      }
       routeExternalLinks(doc);
+      // The wheel inside the frame never reaches this document.
+      doc.addEventListener("wheel", (e) => handleWheelRef.current(e), { passive: false });
     });
 
     rendition.on("rendered", () => {
@@ -420,7 +489,9 @@ export function EpubReader({
       if (disposed || width <= 0 || height <= 0) return;
       if (resizeTimer != null) window.clearTimeout(resizeTimer);
       resizeTimer = window.setTimeout(() => {
-        if (!disposed) resizeToContainer(rendition);
+        if (disposed) return;
+        for (const contents of contentsOf(rendition)) padSheetToHeight(contents.document, height - DESK_MARGIN_PX);
+        resizeToContainer(rendition);
       }, RESIZE_SETTLE_MS);
     });
     observer.observe(host);
@@ -442,8 +513,18 @@ export function EpubReader({
   useEffect(() => {
     const rendition = renditionRef.current;
     if (!rendition) return;
-    for (const contents of contentsOf(rendition)) void contents.addStylesheetCss(css, EPUB_STYLE_KEY);
-  }, [css]);
+    for (const contents of contentsOf(rendition)) {
+      void contents.addStylesheetCss(css, EPUB_STYLE_KEY);
+      // A scan's zoom is inline (it multiplies the fit), so it is redone
+      // by hand; the frame's height follows once epub.js re-measures.
+      if (isScannedPage(contents.document)) fitScannedPage(contents.document, zoom / 100);
+      padSheetToHeight(contents.document, (hostRef.current?.clientHeight ?? 0) - DESK_MARGIN_PX);
+    }
+    // The section's height changed with its zoom; ask epub.js to measure
+    // the frame again so nothing is cut off or left as empty desk.
+    const timer = window.setTimeout(() => resizeToContainer(rendition), 60);
+    return () => window.clearTimeout(timer);
+  }, [css, zoom]);
 
   function commitScrub() {
     const value = scrub;
@@ -466,6 +547,20 @@ export function EpubReader({
         <span className="min-w-0 flex-1 truncate text-xs text-ink-3" title={chapter ?? undefined}>
           {chapter ?? ""}
         </span>
+        <div className="flex items-center gap-0.5" role="group" aria-label="Page zoom">
+          <IconButton icon={ZoomOut} label="Zoom out (Ctrl+-)" size="sm" onClick={() => zoomBy(-1)} disabled={zoom <= EPUB_ZOOM_MIN} />
+          <button
+            type="button"
+            className="min-w-[3.25rem] rounded px-1 text-center text-xs tabular-nums text-ink-2 hover:bg-hover"
+            onClick={() => setZoom(100)}
+            title="Page zoom; click to reset to 100% (Ctrl+0)"
+            aria-label={`Page zoom ${zoom} percent; reset to 100 percent`}
+          >
+            {zoom}%
+          </button>
+          <IconButton icon={ZoomIn} label="Zoom in (Ctrl+=)" size="sm" onClick={() => zoomBy(1)} disabled={zoom >= EPUB_ZOOM_MAX} />
+          <IconButton icon={MoveHorizontal} label="Fit the page to the pane's width" size="sm" onClick={fitWidth} />
+        </div>
         <Popover
           width="w-72"
           trigger={({ toggle, open }) => <IconButton icon={Type} label="Text size, spacing, font, and page width" size="sm" active={open} onClick={toggle} />}
@@ -537,7 +632,7 @@ export function EpubReader({
               <span className="block text-xs text-ink-4">Shows the publisher's colours and type instead of yours.</span>
             </span>
           </label>
-          <p className="mt-2 text-xs text-ink-4">Size, spacing and font are shared with the Bible and commentaries.</p>
+          <p className="mt-2 text-xs text-ink-4">Size, spacing and font are shared with the Bible and commentaries. The zoom buttons above the page (or Ctrl+scroll) scale this book alone.</p>
         </Popover>
       </div>
 
@@ -547,7 +642,8 @@ export function EpubReader({
         role="region"
         aria-label="Book text"
         onKeyDown={handleKey}
-        className={cx("relative min-h-0 flex-1 outline-none", useBookStyles ? "bg-white" : "bg-surface")}
+        onWheel={handleWheel}
+        className="relative min-h-0 flex-1 bg-surface-2 outline-none"
       >
         <div ref={containerRef} className="absolute inset-0" />
         {status !== "ready" && (

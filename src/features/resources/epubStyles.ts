@@ -45,6 +45,16 @@ const MEASURE: Record<EpubWidth, string> = {
   full: "none",
 };
 
+/** The sheet's outer width in pixels at 100% zoom (measure plus gutters),
+ * or null for "full", which follows the pane. What "Fit width" divides by. */
+export function sheetWidthPx(width: EpubWidth): number | null {
+  if (width === "full") return null;
+  return parseInt(MEASURE[width], 10) + 2 * 28;
+}
+
+/** The margin between the sheet and the pane's edge, in pixels. */
+export const DESK_MARGIN_PX = 16;
+
 const FONT_VAR: Record<ReadingFont, string> = {
   serif: "--font-reading",
   sans: "--font-reading-sans",
@@ -70,6 +80,10 @@ export interface EpubStyleSettings {
   width: EpubWidth;
   /** Leave the book's own colours, fonts and sizes alone. */
   useBookStyles: boolean;
+  /** Page zoom in percent; 100 is the size the settings above give. Applied
+   * as CSS `zoom` on the root so text, images and an OCR layer scale
+   * together and selection stays under the pointer (see `fitScannedPage`). */
+  zoom: number;
 }
 
 /** OpenDyslexic has to be declared again inside the book's frame: an
@@ -91,9 +105,16 @@ export function buildEpubCss(settings: EpubStyleSettings): string {
   const token = (name: string, fallback: string) => root.getPropertyValue(name).trim() || fallback;
   const measure = MEASURE[settings.width];
   const gutter = settings.width === "full" ? "40px" : "28px";
+  const zoom = Math.max(0.25, Math.min(4, settings.zoom / 100));
+  const desk = token("--color-surface-2", "#f1f1ee");
+  const sheet = settings.useBookStyles ? "#ffffff" : token("--color-surface", "#ffffff");
+  const rule = token("--color-line", "#e4e4df");
 
   // Always: undo the page-sized boxes, and keep wide content inside the
-  // pane instead of pushing a sideways scrollbar under the text.
+  // pane instead of pushing a sideways scrollbar under the text. The body
+  // is drawn as a sheet of paper on the desk the frame's canvas makes: it
+  // fills the frame's height at least, so a short chapter is still a page
+  // rather than a box at the top of an empty pane.
   const layout = `
 html {
   height: auto !important;
@@ -101,10 +122,10 @@ html {
   max-height: none !important;
   overflow: visible !important;
   -webkit-text-size-adjust: 100%;
+  background: ${desk} !important;
 }
 body {
   height: auto !important;
-  min-height: 0 !important;
   max-height: none !important;
   margin: 0 auto !important;
   box-sizing: border-box !important;
@@ -114,8 +135,20 @@ body {
   overflow-wrap: break-word;
 }
 html:not([${SCAN_ATTR}]) body {
-  max-width: ${measure} !important;
-  padding: 28px ${gutter} 0 !important;
+  max-width: ${settings.width === "full" ? "none" : `min(${measure}, calc((100vw - ${DESK_MARGIN_PX * 2}px) / ${zoom}))`} !important;
+  min-height: 0 !important;
+  margin: ${DESK_MARGIN_PX}px auto 0 !important;
+  /* No bottom padding: epub.js cuts the frame at the last child's bottom,
+     so the run-out (see addRunOut) is the sheet's bottom margin. */
+  padding: 40px ${gutter} 0 !important;
+  background: ${sheet} !important;
+  border: 1px solid ${rule};
+  border-radius: 2px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.12), 0 10px 30px rgba(0,0,0,0.10);
+  zoom: ${zoom};
+}
+html[${SCAN_ATTR}] body {
+  min-height: 0 !important;
 }
 html:not([${SCAN_ATTR}]) body :where(div, section, article, header, footer, aside, nav, main, figure, p, blockquote, dl, ul, ol) {
   height: auto !important;
@@ -130,7 +163,9 @@ html:not([${SCAN_ATTR}]) body :where(img, svg, video, canvas, object, embed, ifr
 }
 body :where(table) { max-width: 100% !important; }
 body :where(pre) { white-space: pre-wrap !important; overflow-wrap: break-word !important; }
-body [${RUN_OUT_ATTR}] { display: block; height: 64px; }
+/* Important, or the rule above that opens every div to "height: auto"
+   flattens the run-out to nothing. */
+body [${RUN_OUT_ATTR}] { display: block !important; height: 96px !important; min-height: 0 !important; }
 /* The frame is as wide as the pane, so a book squeezed into a narrow pane
    gives its gutters back to the text. */
 @media (max-width: 460px) {
@@ -165,13 +200,9 @@ html[${SCAN_ATTR}] body :where(img, svg) {
   const family = token(FONT_VAR[settings.readingFont], "serif");
   const lineHeight = READING_LINE_HEIGHTS[settings.lineSpacing];
 
+  void surface;
   const typography = `
-/* The frame's own canvas, which a webview paints white by default, is what
-   shows through a book that leaves html and body transparent. It has to be
-   painted rather than cleared, or a dark theme's text lands on white. */
-html { background: ${surface} !important; }
 body {
-  background: transparent !important;
   color: ${ink} !important;
   font-family: ${family} !important;
   font-size: ${settings.fontSize}px !important;
@@ -279,16 +310,22 @@ function visibleTextLength(body: HTMLElement, invisible: Set<HTMLElement>): numb
  */
 const MAX_SCAN_ZOOM = 2;
 
-export function fitScannedPage(doc: Document): void {
+/** `userZoom` is the reader's page zoom as a factor (1 = 100%), applied on
+ * top of the fit so a scan can be zoomed into like a text page. */
+export function fitScannedPage(doc: Document, userZoom = 1): void {
   const body = doc.body;
   if (!body) return;
   body.style.removeProperty("zoom");
   const pane = doc.documentElement.clientWidth;
   const content = body.scrollWidth;
   if (pane <= 0 || content <= 0) return;
-  const scale = Math.min(MAX_SCAN_ZOOM, pane / content);
+  const scale = Math.min(MAX_SCAN_ZOOM, pane / content) * userZoom;
   if (scale > 0.995 && scale < 1.005) return;
   body.style.setProperty("zoom", String(Math.round(scale * 1000) / 1000));
+}
+
+export function isScannedPage(doc: Document): boolean {
+  return doc.documentElement.hasAttribute(SCAN_ATTR);
 }
 
 /**
@@ -346,6 +383,34 @@ export function addRunOut(doc: Document): void {
   spacer.setAttribute(RUN_OUT_ATTR, "");
   spacer.setAttribute("aria-hidden", "true");
   body.appendChild(spacer);
+}
+
+/** The run-out's smallest height: the sheet's bottom margin, since the
+ * body's own padding there would be cut off. */
+const RUN_OUT_MIN_PX = 96;
+
+/**
+ * Grows the run-out so the sheet reaches at least `targetPx` down the
+ * frame: a short chapter is then a full page, not a card at the top of an
+ * empty pane. It has to be done through the run-out because epub.js sizes
+ * the frame from the bottom of the body's *content* -- a min-height, a
+ * bottom padding or a bottom margin on the body itself is simply cut off.
+ * Measured in frame pixels and written in the body's own (zoomed) pixels.
+ */
+export function padSheetToHeight(doc: Document, targetPx: number): void {
+  const body = doc.body;
+  const spacer = body?.querySelector<HTMLElement>(`[${RUN_OUT_ATTR}]`);
+  if (!body || !spacer || isScannedPage(doc)) return;
+  // Inline and important both: the stylesheet's "every box is auto height"
+  // repair is important too, and would otherwise win.
+  spacer.style.setProperty("height", `${RUN_OUT_MIN_PX}px`, "important");
+  const zoom = parseFloat(doc.defaultView?.getComputedStyle(body).zoom ?? "1") || 1;
+  const bottom = spacer.getBoundingClientRect().bottom;
+  const paddingBottom = parseFloat(doc.defaultView?.getComputedStyle(body).paddingBottom ?? "0") || 0;
+  // The sheet's bottom edge is the run-out's bottom plus the padding under
+  // it; that edge should land at the target.
+  const short = targetPx - (bottom + paddingBottom * zoom);
+  if (short > 0) spacer.style.setProperty("height", `${RUN_OUT_MIN_PX + short / zoom}px`, "important");
 }
 
 /**

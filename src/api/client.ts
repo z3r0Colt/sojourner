@@ -302,6 +302,8 @@ export const api = {
     invoke<Resource>("add_resource", { token, title, author: author ?? null }),
   bulkImportResources: (token: string) => invoke<BulkImportOutcome>("bulk_import_resources", { token }),
   reextractResource: (id: number) => invoke<Resource>("reextract_resource", { id }),
+  updateResource: (id: number, title: string, author: string | null) => invoke<Resource>("update_resource", { id, title, author }),
+  setAuthorForResources: (ids: number[], author: string | null) => invoke<number>("set_author_for_resources", { ids, author }),
   deleteResource: (id: number) => invoke<void>("delete_resource", { id }),
   searchResources: (query: string, limit = 50) => invoke<ResourceSearchResult[]>("search_resources", { query, limit }),
 
@@ -442,6 +444,8 @@ export const api = {
   ) => invoke<MemoryVerse>("create_memory_verse", { bookId, chapter, verseStart, verseEnd, translationId: translationId ?? null, mode }),
   setMemoryVerseMode: (id: number, mode: MemoryMode) =>
     invoke<void>("set_memory_verse_mode", { id, mode }),
+  setMemoryVerseTranslation: (id: number, translationId: number | null) =>
+    invoke<void>("set_memory_verse_translation", { id, translationId }),
   deleteMemoryVerse: (id: number) => invoke<void>("delete_memory_verse", { id }),
   reviewMemoryVerse: (id: number, quality: number) => invoke<MemoryVerse>("review_memory_verse", { id, quality }),
   setMemoryVerseDoctrinalLink: (id: number, westminsterSectionId: number | null, doctrinalNote: string | null) =>

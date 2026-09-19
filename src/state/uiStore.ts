@@ -36,6 +36,15 @@ export const EPUB_WIDTH_OPTIONS: { value: EpubWidth; label: string }[] = [
   { value: "wide", label: "Wide" },
   { value: "full", label: "Full width" },
 ];
+/** The Resources page's kind filter: books are epub, pdf, and mobi. */
+export type ResourceKindTab = "all" | "books" | "audio" | "video";
+/** How the Resources page groups what it lists. */
+export type ResourceGroupBy = "author" | "recent" | "topic";
+
+export const EPUB_ZOOM_MIN = 50;
+export const EPUB_ZOOM_MAX = 200;
+export const EPUB_ZOOM_STEP = 10;
+
 /** How a copied passage is laid out: text alone, "text (John 3:16)",
  * "John 3:16 — text", or a Markdown blockquote with the reference on its
  * own line. See `lib/clipboard.ts`. */
@@ -85,6 +94,13 @@ interface UiState {
    * means the first bundled one. Harmonists divide and date the life of
    * Christ differently, so a reader who has settled on one keeps it. */
   harmonyCode: string | null;
+  /** Page zoom of a book in Resources, in percent (100 is the app's text size). */
+  epubZoom: number;
+  resourcesKindTab: ResourceKindTab;
+  resourcesGroupBy: ResourceGroupBy;
+  setEpubZoom: (percent: number) => void;
+  setResourcesKindTab: (tab: ResourceKindTab) => void;
+  setResourcesGroupBy: (by: ResourceGroupBy) => void;
   setTheme: (t: Theme) => void;
   setReduceMotion: (on: boolean) => void;
   setAccentSource: (s: AccentSource) => void;
@@ -146,6 +162,23 @@ export const useUiStore = create<UiState>((set) => ({
   epubWidth: stored.epubWidth ?? "medium",
   epubUseBookStyles: stored.epubUseBookStyles ?? false,
   harmonyCode: stored.harmonyCode ?? null,
+  epubZoom: typeof stored.epubZoom === "number" ? stored.epubZoom : 100,
+  resourcesKindTab: stored.resourcesKindTab ?? "all",
+  resourcesGroupBy: stored.resourcesGroupBy ?? "author",
+
+  setEpubZoom: (percent) => {
+    const epubZoom = Math.max(EPUB_ZOOM_MIN, Math.min(EPUB_ZOOM_MAX, Math.round(percent)));
+    persist({ epubZoom });
+    set({ epubZoom });
+  },
+  setResourcesKindTab: (resourcesKindTab) => {
+    persist({ resourcesKindTab });
+    set({ resourcesKindTab });
+  },
+  setResourcesGroupBy: (resourcesGroupBy) => {
+    persist({ resourcesGroupBy });
+    set({ resourcesGroupBy });
+  },
 
   setHarmonyCode: (harmonyCode) => {
     set({ harmonyCode });

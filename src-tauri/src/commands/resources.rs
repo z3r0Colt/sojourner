@@ -53,6 +53,12 @@ pub async fn add_resource(
         let dest_path = resources::free_destination_path(&dest_dir, &src)?;
         std::fs::copy(&src, &dest_path)?;
 
+        // The title the caller sends is the file's name; what the file says
+        // about itself is better when it says anything, and it is the only
+        // place an author can come from for a single file.
+        let meta = resources::read_metadata(&dest_path, kind);
+        let title = meta.title.unwrap_or(title);
+        let author = author.or(meta.author);
         let extracted = resources::extract_text(&dest_path, kind);
 
         let db = app.state::<DbState>();
@@ -68,6 +74,28 @@ pub async fn add_resource(
     })
     .await
     .map_err(|e| anyhow::anyhow!("the import task did not finish: {e}"))?
+}
+
+/// Renames a resource and sets or clears its author. Shipped books may be
+/// edited too: the library sync only fills these in when it first adopts a
+/// row, so an edit survives an upgrade.
+#[tauri::command]
+pub fn update_resource(db: State<DbState>, id: i64, title: String, author: Option<String>) -> AppResult<Resource> {
+    let title = title.trim().to_string();
+    if title.is_empty() {
+        return Err(anyhow::anyhow!("a resource needs a title").into());
+    }
+    let author = author.map(|a| a.trim().to_string()).filter(|a| !a.is_empty());
+    let conn = db.conn();
+    Ok(queries::update_details(&conn, id, &title, author.as_deref())?)
+}
+
+/// One author for several resources at once.
+#[tauri::command]
+pub fn set_author_for_resources(db: State<DbState>, ids: Vec<i64>, author: Option<String>) -> AppResult<usize> {
+    let author = author.map(|a| a.trim().to_string()).filter(|a| !a.is_empty());
+    let conn = db.conn();
+    Ok(queries::set_author_many(&conn, &ids, author.as_deref())?)
 }
 
 /// Recursively imports every epub/pdf/mobi/video/audio file under the folder

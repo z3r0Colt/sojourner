@@ -67,6 +67,25 @@ pub fn set_extracted_text(conn: &Connection, id: i64, extracted_text: Option<&st
     Ok(conn.query_row(&format!("SELECT {RESOURCE_COLS} FROM resources WHERE id = ?1"), params![id], map_resource)?)
 }
 
+/// Renames a resource and sets (or clears) its author. The FTS index
+/// follows through the UPDATE trigger.
+pub fn update_details(conn: &Connection, id: i64, title: &str, author: Option<&str>) -> anyhow::Result<Resource> {
+    conn.execute("UPDATE resources SET title = ?2, author = ?3 WHERE id = ?1", params![id, title, author])?;
+    Ok(conn.query_row(&format!("SELECT {RESOURCE_COLS} FROM resources WHERE id = ?1"), params![id], map_resource)?)
+}
+
+/// Sets one author on several resources at once ("Set author for all" on
+/// the group with none).
+pub fn set_author_many(conn: &Connection, ids: &[i64], author: Option<&str>) -> anyhow::Result<usize> {
+    let tx = conn.unchecked_transaction()?;
+    let mut n = 0;
+    for id in ids {
+        n += tx.execute("UPDATE resources SET author = ?2 WHERE id = ?1", params![id, author])?;
+    }
+    tx.commit()?;
+    Ok(n)
+}
+
 pub fn delete(conn: &Connection, id: i64) -> anyhow::Result<()> {
     conn.execute("DELETE FROM resources WHERE id = ?1", params![id])?;
     Ok(())

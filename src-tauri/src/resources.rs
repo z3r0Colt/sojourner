@@ -64,11 +64,14 @@ pub fn import_folder(
         // the title reads naturally instead of showing the raw escape.
         let raw_title = path.file_stem().map(|s| s.to_string_lossy().to_string()).unwrap_or_else(|| rel.clone());
         let title = quick_xml::escape::unescape(&raw_title).map(|s| s.into_owned()).unwrap_or(raw_title);
+        // The folder names the author; a file sitting at the top of the
+        // folder falls back to what the file says about itself.
         let author = path
             .parent()
             .filter(|p| *p != source_folder)
             .and_then(|p| p.file_name())
-            .map(|n| n.to_string_lossy().to_string());
+            .map(|n| n.to_string_lossy().to_string())
+            .or_else(|| read_metadata(&path, kind).author);
 
         let exists: bool = conn
             .query_row(
@@ -121,6 +124,160 @@ fn import_one(conn: &Connection, resources_dir: &Path, src: &Path, kind: &str, t
     let extracted = extract_text(&dest_path, kind);
     crate::db::queries::resources::create(conn, kind, title, author, &dest_path.display().to_string(), extracted.as_deref())?;
     Ok(())
+}
+
+/// What a file says about itself: an EPUB's `dc:title` and `dc:creator`,
+/// a PDF's Info dictionary, an audio or video file's title and artist
+/// tags. Either field is None when the file does not say, or says
+/// something useless ("Unknown", "untitled").
+#[derive(Debug, Default, Clone, PartialEq)]
+pub struct FileMetadata {
+    pub title: Option<String>,
+    pub author: Option<String>,
+}
+
+impl FileMetadata {
+    fn cleaned(self) -> Self {
+        FileMetadata { title: clean_field(self.title), author: clean_field(self.author) }
+    }
+}
+
+/// Trims, caps, and drops the placeholder values files are so often
+/// stamped with.
+fn clean_field(value: Option<String>) -> Option<String> {
+    let value = value?;
+    let trimmed = value.split_whitespace().collect::<Vec<_>>().join(" ");
+    if trimmed.is_empty() {
+        return None;
+    }
+    let lower = trimmed.to_lowercase();
+    if matches!(lower.as_str(), "unknown" | "unknown author" | "untitled" | "none" | "n/a" | "anonymous") {
+        return None;
+    }
+    Some(trimmed.chars().take(300).collect())
+}
+
+/// Best effort, like `extract_text`: a file that will not give up its
+/// metadata (or panics a parser doing it) simply has none.
+pub fn read_metadata(path: &Path, kind: &str) -> FileMetadata {
+    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| match kind {
+        "epub" => epub_metadata(path),
+        "pdf" => pdf_metadata(path),
+        "audio" | "video" => media_metadata(path),
+        _ => Ok(FileMetadata::default()),
+    }));
+    match result {
+        Ok(Ok(meta)) => meta.cleaned(),
+        _ => FileMetadata::default(),
+    }
+}
+
+/// The OPF package document is where an EPUB keeps its Dublin Core
+/// metadata; `META-INF/container.xml` says where the OPF is.
+fn epub_metadata(path: &Path) -> anyhow::Result<FileMetadata> {
+    let file = File::open(path)?;
+    let mut zip = zip::ZipArchive::new(file)?;
+    let container = {
+        let mut entry = zip.by_name("META-INF/container.xml")?;
+        let mut s = String::new();
+        entry.read_to_string(&mut s)?;
+        s
+    };
+    let opf_path = opf_path_in(&container).ok_or_else(|| anyhow::anyhow!("no rootfile in container.xml"))?;
+    let opf = {
+        let mut entry = zip.by_name(&opf_path)?;
+        let mut s = String::new();
+        entry.read_to_string(&mut s)?;
+        s
+    };
+    Ok(opf_fields(&opf))
+}
+
+fn opf_path_in(container_xml: &str) -> Option<String> {
+    use quick_xml::events::Event;
+    let mut reader = quick_xml::Reader::from_str(container_xml);
+    loop {
+        match reader.read_event().ok()? {
+            Event::Start(e) | Event::Empty(e) if e.local_name().as_ref() == b"rootfile" => {
+                for attr in e.attributes().flatten() {
+                    if attr.key.as_ref() == b"full-path" {
+                        return attr.unescape_value().ok().map(|v| v.into_owned());
+                    }
+                }
+            }
+            Event::Eof => return None,
+            _ => {}
+        }
+    }
+}
+
+/// The first `<dc:title>` and `<dc:creator>` of an OPF document.
+fn opf_fields(opf: &str) -> FileMetadata {
+    use quick_xml::events::Event;
+    let mut reader = quick_xml::Reader::from_str(opf);
+    let mut meta = FileMetadata::default();
+    let mut current: Option<&'static str> = None;
+    loop {
+        match reader.read_event() {
+            Ok(Event::Start(e)) => {
+                current = match e.local_name().as_ref() {
+                    b"title" if meta.title.is_none() => Some("title"),
+                    b"creator" if meta.author.is_none() => Some("creator"),
+                    _ => None,
+                };
+            }
+            Ok(Event::Text(t)) => {
+                if let Some(field) = current {
+                    let text = t.unescape().map(|s| s.into_owned()).unwrap_or_default();
+                    if field == "title" {
+                        meta.title = Some(text);
+                    } else {
+                        meta.author = Some(text);
+                    }
+                }
+            }
+            Ok(Event::End(_)) => current = None,
+            Ok(Event::Eof) | Err(_) => break,
+            _ => {}
+        }
+        if meta.title.is_some() && meta.author.is_some() {
+            break;
+        }
+    }
+    meta
+}
+
+/// A PDF's Info dictionary. Strings there are UTF-16BE with a byte-order
+/// mark, or PDFDocEncoding, which is near enough Latin-1 to read lossily.
+fn pdf_metadata(path: &Path) -> anyhow::Result<FileMetadata> {
+    let doc = lopdf::Document::load(path)?;
+    let info = doc.trailer.get(b"Info")?;
+    let dict = match info {
+        lopdf::Object::Reference(id) => doc.get_object(*id)?.as_dict()?,
+        other => other.as_dict()?,
+    };
+    let field = |key: &[u8]| dict.get(key).ok().and_then(|o| o.as_str().ok()).map(decode_pdf_string);
+    Ok(FileMetadata { title: field(b"Title"), author: field(b"Author") })
+}
+
+fn decode_pdf_string(bytes: &[u8]) -> String {
+    if bytes.len() >= 2 && bytes[0] == 0xFE && bytes[1] == 0xFF {
+        let units: Vec<u16> = bytes[2..].chunks(2).filter(|c| c.len() == 2).map(|c| u16::from_be_bytes([c[0], c[1]])).collect();
+        String::from_utf16_lossy(&units)
+    } else {
+        bytes.iter().map(|&b| b as char).collect()
+    }
+}
+
+/// Title and artist tags, whichever tag format the file carries.
+fn media_metadata(path: &Path) -> anyhow::Result<FileMetadata> {
+    use lofty::prelude::*;
+    let tagged = lofty::read_from_path(path)?;
+    let tag = tagged.primary_tag().or_else(|| tagged.first_tag());
+    Ok(FileMetadata {
+        title: tag.and_then(|t| t.title().map(|s| s.to_string())),
+        author: tag.and_then(|t| t.artist().map(|s| s.to_string())),
+    })
 }
 
 pub fn detect_kind(path: &Path) -> Option<&'static str> {
@@ -272,8 +429,49 @@ fn extract_text_within(path: &Path, kind: &str, max_bytes: u64) -> Option<String
 
 #[cfg(test)]
 mod tests {
-    use super::{extract_text, extract_text_within, free_destination_path, strip_html_tags};
+    use super::{decode_pdf_string, extract_text, extract_text_within, free_destination_path, opf_fields, opf_path_in, read_metadata, strip_html_tags, FileMetadata};
+    use std::io::Write;
     use std::path::PathBuf;
+
+    #[test]
+    fn an_epub_gives_its_title_and_author_from_the_opf() {
+        let dir = temp_dir("epub-meta");
+        let path = dir.join("book.epub");
+        let file = std::fs::File::create(&path).unwrap();
+        let mut zip = zip::ZipWriter::new(file);
+        let opts = zip::write::SimpleFileOptions::default();
+        zip.start_file("META-INF/container.xml", opts).unwrap();
+        zip.write_all(br#"<?xml version="1.0"?><container><rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>"#).unwrap();
+        zip.start_file("OEBPS/content.opf", opts).unwrap();
+        zip.write_all(br#"<?xml version="1.0"?><package xmlns="http://www.idpf.org/2007/opf" xmlns:dc="http://purl.org/dc/elements/1.1/"><metadata><dc:title>The Bruised Reed</dc:title><dc:creator opf:role="aut">Richard Sibbes</dc:creator></metadata></package>"#).unwrap();
+        zip.finish().unwrap();
+        assert_eq!(read_metadata(&path, "epub"), FileMetadata { title: Some("The Bruised Reed".into()), author: Some("Richard Sibbes".into()) });
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn opf_parsing_takes_the_first_of_each_and_drops_placeholders() {
+        let meta = opf_fields(r#"<package xmlns:dc="x"><metadata><dc:creator>Unknown</dc:creator><dc:title>  A  Title </dc:title><dc:title>Second</dc:title></metadata></package>"#);
+        assert_eq!(meta.title.as_deref(), Some("  A  Title "));
+        assert_eq!(meta.cleaned(), FileMetadata { title: Some("A Title".into()), author: None });
+        assert_eq!(opf_path_in(r#"<container><rootfiles><rootfile full-path="a/b.opf"/></rootfiles></container>"#).as_deref(), Some("a/b.opf"));
+    }
+
+    #[test]
+    fn pdf_strings_decode_both_encodings() {
+        assert_eq!(decode_pdf_string(&[0xFE, 0xFF, 0x00, 0x4A, 0x00, 0x6F]), "Jo");
+        assert_eq!(decode_pdf_string(b"Caf\xe9"), "Café");
+    }
+
+    #[test]
+    fn a_file_with_no_metadata_gives_none_rather_than_an_error() {
+        let dir = temp_dir("no-meta");
+        let path = dir.join("plain.pdf");
+        std::fs::write(&path, pdf_with_font(PLAIN_FONT)).unwrap();
+        assert_eq!(read_metadata(&path, "pdf"), FileMetadata::default());
+        assert_eq!(read_metadata(&path, "mobi"), FileMetadata::default());
+        let _ = std::fs::remove_dir_all(&dir);
+    }
 
     fn temp_dir(label: &str) -> PathBuf {
         let dir = std::env::temp_dir().join(format!("sojourner-extract-test-{label}-{}", std::process::id()));

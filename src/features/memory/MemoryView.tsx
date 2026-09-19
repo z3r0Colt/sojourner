@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Brain, Flame, Play, Plus, Trash2 } from "lucide-react";
 import {
   useBooks,
@@ -6,18 +6,22 @@ import {
   useDueMemoryVerses,
   useCreateMemoryVerse,
   useSetMemoryVerseMode,
+  useSetMemoryVerseTranslation,
   useDeleteMemoryVerse,
   useSetMemoryVerseDoctrinalLink,
+  useTranslations,
 } from "../../api/queries";
+import { useReaderTranslationId } from "../../state/workspaceStore";
 import { parseReference, useBookLookup } from "../../hooks/useReferenceParser";
 import { MemoryPracticeCard } from "./MemoryPracticeCard";
 import { MemoryModeSelect } from "./MemoryModeSelect";
+import { TranslationPick } from "./TranslationPick";
 import type { MemoryMode, MemoryVerse } from "../../api/types";
 import { Button, IconButton } from "../../components/ui/Button";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { confirmDelete } from "../../components/ui/confirm";
 import { toast } from "../../components/ui/toast";
-import { cardClass, cx, inputClass } from "../../components/ui/classes";
+import { cardClass, cx, inputClass, selectClass } from "../../components/ui/classes";
 
 /** Counts consecutive calendar days with at least one review, working
  * backward from today (a day is still "current" if the streak's last day
@@ -46,7 +50,10 @@ export function MemoryView() {
   const setMode = useSetMemoryVerseMode();
   const deleteVerse = useDeleteMemoryVerse();
   const setDoctrinalLink = useSetMemoryVerseDoctrinalLink();
+  const setTranslation = useSetMemoryVerseTranslation();
   const lookup = useBookLookup();
+  const { data: translations } = useTranslations();
+  const readerTranslationId = useReaderTranslationId();
 
   const [practicing, setPracticing] = useState(false);
   const [queue, setQueue] = useState<MemoryVerse[]>([]);
@@ -54,6 +61,13 @@ export function MemoryView() {
   const [sessionSet, setSessionSet] = useState<MemoryVerse[]>([]);
   const [reference, setReference] = useState("");
   const [newMode, setNewMode] = useState<MemoryMode>("first-letter");
+  // The translation a new card is learned in. Starts on the one being
+  // read, and follows it until the reader picks one here by hand.
+  const [newTranslationId, setNewTranslationId] = useState<number | null>(readerTranslationId);
+  const [translationTouched, setTranslationTouched] = useState(false);
+  useEffect(() => {
+    if (!translationTouched) setNewTranslationId(readerTranslationId);
+  }, [readerTranslationId, translationTouched]);
   const [error, setError] = useState<string | null>(null);
 
   const streak = useMemo(
@@ -117,10 +131,16 @@ export function MemoryView() {
         chapter: parsed.chapter,
         verseStart: parsed.verse ?? 1,
         verseEnd: parsed.verseEnd ?? parsed.verse ?? 1,
-        translationId: undefined,
+        translationId: newTranslationId ?? undefined,
         mode: newMode,
       },
-      { onSuccess: () => toast.success(`Added ${parsed.book.name} ${parsed.chapter}:${parsed.verse ?? 1}`) },
+      {
+        onSuccess: () => {
+          const code = translations?.find((t) => t.id === newTranslationId)?.code;
+          toast.success(`Added ${parsed.book.name} ${parsed.chapter}:${parsed.verse ?? 1}${code ? ` (${code})` : ""}`);
+        },
+        onError: (e) => setError(e instanceof Error ? e.message : String(e)),
+      },
     );
     setReference("");
   }
@@ -197,12 +217,32 @@ export function MemoryView() {
           />
         </label>
         <label>
+          <span className="mb-1 block text-xs font-medium text-ink-3">Translation</span>
+          <select
+            value={newTranslationId ?? ""}
+            onChange={(e) => {
+              setTranslationTouched(true);
+              setNewTranslationId(e.target.value ? Number(e.target.value) : null);
+            }}
+            className={selectClass}
+            aria-label="Translation to memorize in"
+          >
+            <option value="">Reader's translation</option>
+            {translations?.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.code} · {t.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
           <span className="mb-1 block text-xs font-medium text-ink-3">Practice mode</span>
           <MemoryModeSelect value={newMode} onChange={setNewMode} />
         </label>
         <Button variant="primary" icon={Plus} onClick={addVerse}>
           Add
         </Button>
+        <p className="w-full text-xs text-ink-4">The words you learn are the words of that translation. "Reader's translation" follows whichever Bible you have open.</p>
         {error && <p className="w-full text-sm text-danger">{error}</p>}
       </div>
 
@@ -236,6 +276,12 @@ export function MemoryView() {
                   due {new Date(v.due_at).toLocaleDateString()} · {v.repetitions} review{v.repetitions === 1 ? "" : "s"}
                 </span>
               </div>
+              <TranslationPick
+                value={v.translation_id}
+                onChange={(translationId) =>
+                  setTranslation.mutate({ id: v.id, translationId }, { onError: (e) => toast.error(e instanceof Error ? e.message : String(e)) })
+                }
+              />
               <Button size="sm" variant="secondary" icon={Play} onClick={() => practiceOne(v)}>
                 Practice
               </Button>

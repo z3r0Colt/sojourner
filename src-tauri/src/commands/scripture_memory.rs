@@ -36,6 +36,21 @@ pub fn set_memory_verse_mode(db: State<DbState>, id: i64, mode: String) -> AppRe
     Ok(queries::set_mode(&conn, id, mode)?)
 }
 
+/// Pins a card to a translation, or (with None) lets it follow the reader's.
+/// The deck allows one card per passage per translation, so moving a card
+/// onto a translation that already has that passage is refused with a
+/// message rather than a constraint error.
+#[tauri::command]
+pub fn set_memory_verse_translation(db: State<DbState>, id: i64, translation_id: Option<i64>) -> AppResult<()> {
+    let conn = db.conn();
+    match queries::set_translation(&conn, id, translation_id) {
+        Err(e) if e.to_string().contains("UNIQUE") => {
+            Err(anyhow::anyhow!("that passage is already in your deck in that translation").into())
+        }
+        other => Ok(other?),
+    }
+}
+
 #[tauri::command]
 pub fn set_memory_verse_doctrinal_link(
     db: State<DbState>,

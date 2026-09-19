@@ -60,6 +60,11 @@ pub fn set_mode(conn: &Connection, id: i64, mode: String) -> anyhow::Result<()> 
     Ok(())
 }
 
+pub fn set_translation(conn: &Connection, id: i64, translation_id: Option<i64>) -> anyhow::Result<()> {
+    conn.execute("UPDATE memory_verses SET translation_id = ?1 WHERE id = ?2", params![translation_id, id])?;
+    Ok(())
+}
+
 /// Attaches (or clears, by passing `None`) the catechism question or
 /// confession paragraph this verse illustrates, plus an optional personal
 /// note on its doctrinal sense -- see the USER_MIGRATION_0008 schema

@@ -110,6 +110,9 @@ export function AppShell() {
   // `sermonDraft.ts` uses for its save.
   const onKeyDownRef = useRef<(e: KeyboardEvent) => void>(() => {});
   onKeyDownRef.current = function onKeyDown(e: KeyboardEvent) {
+    // A view that has already answered a chord (a book zooming on Ctrl+=)
+    // keeps it; the shell's global meaning applies only where nothing did.
+    if (e.defaultPrevented) return;
     const ctrl = e.ctrlKey || e.metaKey;
     const key = e.key.toLowerCase();
     const zoom = zoomActionFor(e);

@@ -75,6 +75,11 @@ once_cell = "1"
 uuid = { version = "1", features = ["v4"] }
 zip = "8.6.0"
 pdf-extract = "0.12.0"
+# Already in the tree through pdf-extract; named here for reading a PDF's
+# Info dictionary (title and author) when a file is added to Resources.
+lopdf = "0.42"
+# Title and artist tags of audio and video files, for the same purpose.
+lofty = "0.22"
 mobi = "0.8.0"
 regex = "1"
 # The one HTTP client in the app, for the one request it makes: the update
