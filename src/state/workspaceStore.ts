@@ -1,10 +1,33 @@
 import { create } from "zustand";
 import { useTtsStore } from "./ttsStore";
-import { ROW_SPLIT_DEFAULT, clampRowSplit, defaultLayoutFor, isLayoutId, layoutAfterAdd, layoutAfterClose, type LayoutId } from "../workspace/layouts";
+import { defaultLayoutFor, isLayoutId, treeFromTemplate } from "../workspace/layouts";
+import {
+  MAX_PANES,
+  addToLeaf,
+  findLeaf,
+  isLayoutNode,
+  leafOfPane,
+  movePaneTo as treeMovePaneTo,
+  normalize,
+  paneOrder,
+  placeholderLeaf,
+  removePane as treeRemovePane,
+  reorderTab as treeReorderTab,
+  setActiveTab as treeSetActiveTab,
+  setRatio as treeSetRatio,
+  splitLeaf,
+  splitLeafEmpty,
+  swapPaneIds,
+  type LayoutNode,
+  type Side,
+} from "../workspace/layoutTree";
+
+export { MAX_PANES };
 
 /**
- * The workspace: one to four panes side by side, each showing any content
- * the app has (a Bible chapter, a commentary, cross references, a page).
+ * The workspace: up to eight panes arranged by a split tree (see
+ * workspace/layoutTree.ts), each showing any content the app has (a Bible
+ * chapter, a commentary, cross references, a page).
  *
  * What lives here is per pane -- the passage, translation, selected verse,
  * paragraph and red-letter modes, link group, and history. What is global
@@ -217,31 +240,41 @@ export function isPaneKind(v: unknown): v is PaneKind {
 interface PaneMeta {
   id: string;
   linkGroup: LinkGroup;
-  /** Flex weight, not pixels: 1000 for a full reading column, 420 for a
-   * study pane. Resolution-independent, so the layout survives a monitor
-   * change. */
-  width: number;
   history: PaneContent[];
   future: PaneContent[];
 }
 
 export type Pane = PaneContent & PaneMeta;
 
-export const MAX_PANES = 4;
 const HISTORY_CAP = 50;
 const STORAGE_KEY = "bsa-workspace";
 /** Bump when the stored shape changes and add a case to `migrateWorkspace`.
  *   1  panes, focusedPaneId, lastTranslationId
- *   2  + layout, rowSplit (W3) */
-export const WORKSPACE_VERSION = 2;
+ *   2  + layout, rowSplit (W3)
+ *   3  tree replaces layout and rowSplit; pane widths dropped; up to eight panes */
+export const WORKSPACE_VERSION = 3;
 
 interface PersistedWorkspace {
   version: number;
   panes: Pane[];
   focusedPaneId: string;
   lastTranslationId: number | null;
-  layout: LayoutId;
-  rowSplit: number;
+  tree: LayoutNode;
+}
+
+export interface AddPaneOptions {
+  /** The pane the new one opens beside (default: the focused pane). */
+  after?: string;
+  /** Which side of that pane the new one goes on (default: right). */
+  side?: Side;
+  /** Join that pane's tab group instead of splitting. */
+  asTab?: boolean;
+  /** Fill this (empty) leaf instead of splitting anything. */
+  intoLeaf?: string;
+  /** The share of the split the existing pane keeps (default: half). */
+  ratio?: number;
+  linkGroup?: LinkGroup;
+  focus?: boolean;
 }
 
 interface WorkspaceState {
@@ -249,10 +282,11 @@ interface WorkspaceState {
   focusedPaneId: string;
   /** The one pane shown alone: a double-clicked header, or F11 with chrome hidden. */
   maximizedPaneId: string | null;
-  /** Which template arranges the panes (see workspace/layouts.ts). */
-  layout: LayoutId;
-  /** Fraction of a stacked column's height the top pane takes. */
-  rowSplit: number;
+  /** How the panes are arranged (see workspace/layoutTree.ts). */
+  tree: LayoutNode;
+  /** Pane ids in reading order, derived from the tree on every change so
+   * selectors never allocate. "Pane 3" and Ctrl+3 mean `order[2]`. */
+  order: string[];
   /** The translation most recently chosen in any Bible pane -- the default
    * for new Bible panes and for previews outside any pane. */
   lastTranslationId: number | null;
@@ -265,21 +299,28 @@ interface WorkspaceState {
   ready: boolean;
 
   setReady: () => void;
+  /** Focuses a pane and, if it is a tab, brings it to the front. */
   focusPane: (id: string) => void;
-  /** Adds a pane after `after` (or the focused pane) and returns its id.
+  /** Adds a pane beside `after` (or the focused pane) and returns its id.
    * Returns null when the workspace is full. */
-  addPane: (content: PaneContent, opts: { width: number; after?: string; linkGroup?: LinkGroup; focus?: boolean }) => string | null;
+  addPane: (content: PaneContent, opts?: AddPaneOptions) => string | null;
   closePane: (id: string) => void;
-  movePane: (id: string, direction: -1 | 1) => void;
-  /** Exchange two panes' positions (drag a header onto another pane). */
+  /** Exchange two panes' places. */
   swapPanes: (aId: string, bId: string) => void;
-  setLayout: (layout: LayoutId) => void;
-  setRowSplit: (rowSplit: number) => void;
-  /** Replace every pane and the layout at once (W4: switching workspaces).
+  /** Moves a pane onto a side of another leaf (a new split) or into it as a tab. */
+  movePaneTo: (paneId: string, targetLeafId: string, target: Side | "center", index?: number) => void;
+  /** Splits a pane's slot with an empty placeholder that offers to add content. */
+  splitPane: (paneId: string, side: Side) => void;
+  /** Removes an empty placeholder leaf. */
+  closeLeaf: (leafId: string) => void;
+  setActiveTab: (leafId: string, paneId: string) => void;
+  reorderTab: (leafId: string, paneId: string, toIndex: number) => void;
+  setRatio: (branchId: string, ratio: number) => void;
+  /** Rearranges the existing panes: the builder gets their ids in reading order. */
+  applyArrangement: (build: (paneIds: string[]) => LayoutNode) => void;
+  /** Replace every pane and the arrangement at once (W4: switching workspaces).
    * History is cleared and the first pane is focused. */
-  replaceWorkspace: (panes: Pane[], layout: LayoutId, rowSplit?: number) => void;
-  /** Shifts weight from the pane on the left of a divider to the one on its right (negative moves it back). */
-  resizeBetween: (leftId: string, rightId: string, deltaWeight: number) => void;
+  replaceWorkspace: (panes: Pane[], tree: LayoutNode) => void;
   setLinkGroup: (id: string, group: LinkGroup) => void;
   setMaximized: (id: string | null) => void;
   /** Patch a pane's params without touching history (selection, view modes). */
@@ -296,6 +337,23 @@ interface WorkspaceState {
 
 function newId(): string {
   return Math.random().toString(36).slice(2, 10);
+}
+
+/** The panes array in the tree's reading order. */
+function reorderPanes(panes: Pane[], tree: LayoutNode): Pane[] {
+  const order = paneOrder(tree);
+  return [...panes].sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
+}
+
+/** Drops a leaf and collapses its parent to the sibling; the root leaf stays. */
+function removeLeafNode(tree: LayoutNode, leafId: string): LayoutNode {
+  if (tree.type === "leaf") return tree;
+  if (tree.children[0].id === leafId) return tree.children[1];
+  if (tree.children[1].id === leafId) return tree.children[0];
+  const a = removeLeafNode(tree.children[0], leafId);
+  const b = removeLeafNode(tree.children[1], leafId);
+  if (a === tree.children[0] && b === tree.children[1]) return tree;
+  return { ...tree, children: [a, b] };
 }
 
 function shallowEqual(a: Record<string, unknown>, b: Record<string, unknown>): boolean {
@@ -327,7 +385,18 @@ export function migrateWorkspace(raw: unknown): PersistedWorkspace | null {
   if (data.version === 1) {
     // W3 added the layout template and the row split; a version-1
     // workspace gets the layout its pane count always implied.
-    data = { ...data, version: 2, layout: defaultLayoutFor(Array.isArray(data.panes) ? data.panes.length : 1), rowSplit: ROW_SPLIT_DEFAULT };
+    data = { ...data, version: 2, layout: defaultLayoutFor(Array.isArray(data.panes) ? data.panes.length : 1), rowSplit: 0.5 };
+  }
+  if (data.version === 2) {
+    // The template and row split become a tree of the same shape, with
+    // the column widths the old flex weights gave.
+    const rawPanes = Array.isArray(data.panes) ? data.panes : [];
+    const templatePanes = rawPanes
+      .filter((p): p is Record<string, unknown> => isPlainObject(p) && typeof p.id === "string")
+      .map((p) => ({ id: p.id as string, width: typeof p.width === "number" && p.width > 0 ? p.width : undefined }));
+    const layout = isLayoutId(data.layout) ? data.layout : defaultLayoutFor(templatePanes.length);
+    const rowSplit = typeof data.rowSplit === "number" && Number.isFinite(data.rowSplit) ? data.rowSplit : 0.5;
+    data = { ...data, version: 3, tree: treeFromTemplate(layout, templatePanes, rowSplit) };
   }
   if (data.version !== WORKSPACE_VERSION) return null;
   if (!Array.isArray(data.panes)) return null;
@@ -340,18 +409,16 @@ export function migrateWorkspace(raw: unknown): PersistedWorkspace | null {
       ...(contentOf(meta) as PaneContent),
       id: meta.id,
       linkGroup: group,
-      width: typeof meta.width === "number" && meta.width > 0 ? meta.width : 1000,
       history: Array.isArray(meta.history) ? meta.history.filter(isContent).slice(-HISTORY_CAP) : [],
       future: Array.isArray(meta.future) ? meta.future.filter(isContent).slice(0, HISTORY_CAP) : [],
     } as Pane);
   }
   if (panes.length === 0) return null;
-  const focusedPaneId = panes.some((p) => p.id === data.focusedPaneId) ? (data.focusedPaneId as string) : panes[0].id;
-  const lastTranslationId = typeof data.lastTranslationId === "number" ? data.lastTranslationId : null;
   const kept = panes.slice(0, MAX_PANES);
-  const layout = isLayoutId(data.layout) ? data.layout : defaultLayoutFor(kept.length);
-  const rowSplit = typeof data.rowSplit === "number" && Number.isFinite(data.rowSplit) ? clampRowSplit(data.rowSplit) : ROW_SPLIT_DEFAULT;
-  return { version: WORKSPACE_VERSION, panes: kept, focusedPaneId, lastTranslationId, layout, rowSplit };
+  const focusedPaneId = kept.some((p) => p.id === data.focusedPaneId) ? (data.focusedPaneId as string) : kept[0].id;
+  const lastTranslationId = typeof data.lastTranslationId === "number" ? data.lastTranslationId : null;
+  const tree = normalize(isLayoutNode(data.tree) ? data.tree : null, kept.map((p) => p.id));
+  return { version: WORKSPACE_VERSION, panes: kept, focusedPaneId, lastTranslationId, tree };
 }
 
 function loadWorkspace(): PersistedWorkspace | null {
@@ -375,7 +442,7 @@ function legacyUiPrefs(): Record<string, unknown> {
   }
 }
 
-function defaultWorkspace(): { panes: Pane[]; focusedPaneId: string } {
+function defaultWorkspace(): { panes: Pane[]; focusedPaneId: string; tree: LayoutNode } {
   const prefs = legacyUiPrefs();
   const bible: Pane = {
     id: newId(),
@@ -389,40 +456,48 @@ function defaultWorkspace(): { panes: Pane[]; focusedPaneId: string } {
       redLetterMode: prefs.redLetterMode === true,
     },
     linkGroup: "A",
-    width: 1000,
     history: [],
     future: [],
   };
   const panes: Pane[] = [bible];
+  const widths = [1000];
   if (prefs.commentaryPanelOpen === true) {
     panes.push({
       id: newId(),
       kind: "commentary",
       params: { bookId: 1, chapter: 1, verse: null, sourceId: null },
       linkGroup: "A",
-      width: typeof prefs.commentaryPanelWidth === "number" ? prefs.commentaryPanelWidth : 420,
       history: [],
       future: [],
     });
+    widths.push(typeof prefs.commentaryPanelWidth === "number" ? prefs.commentaryPanelWidth : 420);
   }
-  return { panes, focusedPaneId: bible.id };
+  const tree = treeFromTemplate(
+    defaultLayoutFor(panes.length),
+    panes.map((p, i) => ({ id: p.id, width: widths[i] })),
+  );
+  return { panes, focusedPaneId: bible.id, tree };
 }
 
 const initial = (() => {
   const stored = loadWorkspace();
   if (stored) {
-    return { panes: stored.panes, focusedPaneId: stored.focusedPaneId, lastTranslationId: stored.lastTranslationId, layout: stored.layout, rowSplit: stored.rowSplit, restored: true };
+    return { panes: stored.panes, focusedPaneId: stored.focusedPaneId, lastTranslationId: stored.lastTranslationId, tree: stored.tree, restored: true };
   }
   const fresh = defaultWorkspace();
-  return { ...fresh, lastTranslationId: null, layout: defaultLayoutFor(fresh.panes.length), rowSplit: ROW_SPLIT_DEFAULT, restored: false };
+  return { ...fresh, lastTranslationId: null, restored: false };
 })();
+
+/** The two fields that change together whenever the tree does. */
+function withTree(tree: LayoutNode): { tree: LayoutNode; order: string[] } {
+  return { tree, order: paneOrder(tree) };
+}
 
 export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   panes: initial.panes,
   focusedPaneId: initial.focusedPaneId,
   maximizedPaneId: null,
-  layout: initial.layout,
-  rowSplit: initial.rowSplit,
+  ...withTree(initial.tree),
   lastTranslationId: initial.lastTranslationId,
   restored: initial.restored,
   ready: false,
@@ -430,95 +505,130 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   setReady: () => set({ ready: true }),
 
   focusPane: (id) => {
-    if (get().focusedPaneId === id || !get().panes.some((p) => p.id === id)) return;
-    set({ focusedPaneId: id });
+    const { focusedPaneId, panes, tree } = get();
+    if (!panes.some((p) => p.id === id)) return;
+    const home = leafOfPane(tree, id);
+    const next = home && home.activeId !== id ? treeSetActiveTab(tree, home.id, id) : tree;
+    if (focusedPaneId === id && next === tree) return;
+    set({ focusedPaneId: id, ...(next === tree ? {} : withTree(next)) });
   },
 
-  addPane: (content, opts) => {
-    const { panes, focusedPaneId, layout } = get();
+  addPane: (content, opts = {}) => {
+    const { panes, focusedPaneId, tree } = get();
     if (panes.length >= MAX_PANES) return null;
-    const afterId = opts.after ?? focusedPaneId;
-    const idx = panes.findIndex((p) => p.id === afterId);
     // `null` is a real value here (an unlinked pane); only an omitted group defaults to A.
     const linkGroup = opts.linkGroup === undefined ? "A" : opts.linkGroup;
-    const pane = { ...content, id: newId(), linkGroup, width: opts.width, history: [], future: [] } as Pane;
-    const next = [...panes];
-    next.splice(idx >= 0 ? idx + 1 : next.length, 0, pane);
-    set({ panes: next, focusedPaneId: opts.focus === false ? focusedPaneId : pane.id, layout: layoutAfterAdd(layout, next.length) });
+    const pane = { ...content, id: newId(), linkGroup, history: [], future: [] } as Pane;
+    const originId = opts.after ?? focusedPaneId;
+    const originLeaf = leafOfPane(tree, originId);
+    const placeholder = opts.intoLeaf ? findLeaf(tree, opts.intoLeaf) : placeholderLeaf(tree);
+    let next: LayoutNode;
+    if (placeholder && placeholder.paneIds.length === 0) {
+      // An empty slot is waiting for content: it takes the pane, whatever
+      // the caller thought about splitting.
+      next = addToLeaf(tree, placeholder.id, pane.id);
+    } else if (originLeaf && opts.asTab) {
+      next = addToLeaf(tree, originLeaf.id, pane.id);
+    } else if (originLeaf) {
+      next = splitLeaf(tree, originLeaf.id, opts.side ?? "right", pane.id, opts.ratio ?? 0.5);
+    } else {
+      next = normalize(tree, [...panes.map((p) => p.id), pane.id]);
+    }
+    // Panes keep reading order in the array too, so anything that lists
+    // them (the palette, Ctrl+N) agrees with what is on screen.
+    const ordered = paneOrder(next);
+    const all = [...panes, pane].sort((a, b) => ordered.indexOf(a.id) - ordered.indexOf(b.id));
+    set({ panes: all, focusedPaneId: opts.focus === false ? focusedPaneId : pane.id, ...withTree(next) });
     return pane.id;
   },
 
   closePane: (id) => {
-    const { panes, focusedPaneId, maximizedPaneId, layout } = get();
+    const { panes, focusedPaneId, maximizedPaneId, tree } = get();
     if (panes.length <= 1) return;
     const idx = panes.findIndex((p) => p.id === id);
     if (idx < 0) return;
     const next = panes.filter((p) => p.id !== id);
-    const focused = focusedPaneId === id ? next[Math.min(idx, next.length - 1)].id : focusedPaneId;
+    const nextTree = treeRemovePane(tree, id);
+    let focused = focusedPaneId;
+    if (focusedPaneId === id) {
+      // The tab that took the closed one's place, else the neighbour in
+      // reading order.
+      const home = leafOfPane(tree, id);
+      const sibling = home ? findLeaf(nextTree, home.id)?.activeId : null;
+      const order = paneOrder(tree).filter((p) => p !== id);
+      const wasAt = paneOrder(tree).indexOf(id);
+      focused = sibling ?? order[Math.min(Math.max(wasAt, 0), order.length - 1)] ?? next[0].id;
+    }
     if (useTtsStore.getState().paneId === id) useTtsStore.getState().stop();
     set({
       panes: next,
       focusedPaneId: focused,
       maximizedPaneId: maximizedPaneId === id ? null : maximizedPaneId,
-      layout: layoutAfterClose(layout, next.length),
+      ...withTree(nextTree),
     });
-  },
-
-  movePane: (id, direction) => {
-    const { panes } = get();
-    const idx = panes.findIndex((p) => p.id === id);
-    const to = idx + direction;
-    if (idx < 0 || to < 0 || to >= panes.length) return;
-    const next = [...panes];
-    [next[idx], next[to]] = [next[to], next[idx]];
-    set({ panes: next });
   },
 
   swapPanes: (aId, bId) => {
-    const { panes } = get();
-    const a = panes.findIndex((p) => p.id === aId);
-    const b = panes.findIndex((p) => p.id === bId);
-    if (a < 0 || b < 0 || a === b) return;
-    const next = [...panes];
-    // Positions swap; widths stay with the slot so the columns keep their size.
-    const wa = next[a].width;
-    const wb = next[b].width;
-    [next[a], next[b]] = [{ ...next[b], width: wa }, { ...next[a], width: wb }];
-    set({ panes: next });
+    const { tree } = get();
+    const next = swapPaneIds(tree, aId, bId);
+    if (next !== tree) set({ ...withTree(next), panes: reorderPanes(get().panes, next) });
   },
 
-  setLayout: (layout) => {
-    if (get().layout !== layout) set({ layout, maximizedPaneId: null });
+  movePaneTo: (paneId, targetLeafId, target, index) => {
+    const { tree } = get();
+    const next = treeMovePaneTo(tree, paneId, targetLeafId, target, index);
+    if (next === tree) return;
+    set({ ...withTree(next), panes: reorderPanes(get().panes, next), maximizedPaneId: null });
   },
 
-  setRowSplit: (rowSplit) => {
-    const v = clampRowSplit(rowSplit);
-    if (get().rowSplit !== v) set({ rowSplit: v });
+  splitPane: (paneId, side) => {
+    const { tree } = get();
+    const home = leafOfPane(tree, paneId);
+    if (!home || placeholderLeaf(tree)) return;
+    set({ ...withTree(splitLeafEmpty(tree, home.id, side)), maximizedPaneId: null });
   },
 
-  replaceWorkspace: (panes, layout, rowSplit) => {
+  closeLeaf: (leafId) => {
+    const { tree } = get();
+    const target = findLeaf(tree, leafId);
+    if (!target || target.paneIds.length > 0 || tree.type === "leaf") return;
+    set(withTree(removeLeafNode(tree, leafId)));
+  },
+
+  setActiveTab: (leafId, paneId) => {
+    const { tree } = get();
+    const next = treeSetActiveTab(tree, leafId, paneId);
+    set({ focusedPaneId: paneId, ...(next === tree ? {} : withTree(next)) });
+  },
+
+  reorderTab: (leafId, paneId, toIndex) => {
+    const { tree } = get();
+    const next = treeReorderTab(tree, leafId, paneId, toIndex);
+    if (next !== tree) set({ ...withTree(next), panes: reorderPanes(get().panes, next) });
+  },
+
+  setRatio: (branchId, ratio) => {
+    const { tree } = get();
+    const next = treeSetRatio(tree, branchId, ratio);
+    if (next !== tree) set({ tree: next });
+  },
+
+  applyArrangement: (build) => {
+    const { panes, order } = get();
+    const next = normalize(build(order), panes.map((p) => p.id));
+    set({ ...withTree(next), panes: reorderPanes(panes, next), maximizedPaneId: null });
+  },
+
+  replaceWorkspace: (panes, tree) => {
     if (panes.length === 0) return;
     useTtsStore.getState().stop();
+    const kept = panes.slice(0, MAX_PANES);
+    const next = normalize(tree, kept.map((p) => p.id));
     set({
-      panes: panes.slice(0, MAX_PANES),
-      focusedPaneId: panes[0].id,
+      panes: reorderPanes(kept, next),
+      focusedPaneId: kept[0].id,
       maximizedPaneId: null,
-      layout,
-      rowSplit: rowSplit != null ? clampRowSplit(rowSplit) : get().rowSplit,
-    });
-  },
-
-  resizeBetween: (leftId, rightId, deltaWeight) => {
-    const MIN = 120;
-    set((s) => {
-      const left = s.panes.find((p) => p.id === leftId);
-      const right = s.panes.find((p) => p.id === rightId);
-      if (!left || !right) return {};
-      const delta = Math.max(MIN - left.width, Math.min(right.width - MIN, deltaWeight));
-      if (delta === 0) return {};
-      return {
-        panes: s.panes.map((p) => (p.id === leftId ? { ...p, width: p.width + delta } : p.id === rightId ? { ...p, width: p.width - delta } : p)),
-      };
+      ...withTree(next),
     });
   },
 
@@ -633,8 +743,7 @@ useWorkspaceStore.subscribe((s) => {
       panes: s.panes,
       focusedPaneId: s.focusedPaneId,
       lastTranslationId: s.lastTranslationId,
-      layout: s.layout,
-      rowSplit: s.rowSplit,
+      tree: s.tree,
     };
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));

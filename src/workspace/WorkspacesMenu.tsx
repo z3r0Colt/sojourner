@@ -9,10 +9,11 @@ import { Popover, PopoverItem, PopoverLabel } from "../components/ui/Popover";
 import { confirmDelete } from "../components/ui/confirm";
 import { toast } from "../components/ui/toast";
 import { cx, inputClass } from "../components/ui/classes";
-import { layoutMeta } from "./layouts";
+import { detectTemplate, layoutMeta } from "./layouts";
+import { leaves } from "./layoutTree";
 import { LayoutPictogram } from "./LayoutPicker";
 import { PANE_KINDS } from "./paneKinds";
-import { PRESET_WORKSPACES, WORKSPACES_SETTING, applyWorkspace, captureWorkspace, isPresetName, sanitizeSavedWorkspaces, type SavedWorkspace } from "./presets";
+import { PRESET_WORKSPACES, WORKSPACES_SETTING, applyWorkspace, captureWorkspace, isPresetName, sanitizeSavedWorkspaces, savedTree, type SavedWorkspace } from "./presets";
 
 /**
  * The Workspaces menu in the top bar: presets, the reader's saved
@@ -117,14 +118,17 @@ export function WorkspaceDialogs() {
 }
 
 function summary(w: SavedWorkspace): string {
-  return w.description ?? `${layoutMeta(w.layout).label} · ${w.panes.map((p) => PANE_KINDS[p.kind]?.label ?? p.kind).join(", ")}`;
+  if (w.description) return w.description;
+  const template = detectTemplate(savedTree(w));
+  const shape = template ? layoutMeta(template).label : `${leaves(savedTree(w)).length} slots`;
+  return `${shape} · ${w.panes.map((p) => PANE_KINDS[p.kind]?.label ?? p.kind).join(", ")}`;
 }
 
 function WorkspaceRow({ w, onApply, actions }: { w: SavedWorkspace; onApply: () => void; actions?: React.ReactNode }) {
   return (
     <div className="flex items-center gap-0.5">
       <PopoverItem onClick={onApply} className="min-w-0 flex-1">
-        <LayoutPictogram id={w.layout} className="text-ink-3" />
+        <LayoutPictogram tree={savedTree(w)} className="text-ink-3" />
         <span className="min-w-0 flex-1">
           <span className="block truncate font-medium text-ink">{w.name}</span>
           <span className="block truncate text-xs text-ink-3">{summary(w)}</span>

@@ -1,82 +1,77 @@
+import { useMemo } from "react";
 import { LayoutGrid } from "lucide-react";
 import { useWorkspaceStore } from "../state/workspaceStore";
 import { IconButton } from "../components/ui/Button";
 import { Popover, PopoverLabel } from "../components/ui/Popover";
 import { cx } from "../components/ui/classes";
-import { LAYOUTS, NARROW_WINDOW, slotsOf, type LayoutId } from "./layouts";
-import { useWindowWidth } from "./Workspace";
+import { LAYOUTS, arrangementFor, detectTemplate, type LayoutId } from "./layouts";
+import type { LayoutNode } from "./layoutTree";
 
-/** A small drawing of a layout: one rectangle per slot. */
-export function LayoutPictogram({ id, className }: { id: LayoutId; className?: string }) {
-  const W = 28;
-  const H = 18;
-  const g = 2;
-  const rects: [number, number, number, number][] = (() => {
-    const half = (W - g) / 2;
-    const third = (W - 2 * g) / 3;
-    const row = (H - g) / 2;
-    switch (id) {
-      case "one":
-        return [[0, 0, W, H]];
-      case "two":
-        return [
-          [0, 0, half, H],
-          [half + g, 0, half, H],
-        ];
-      case "two-plus-one":
-        return [
-          [0, 0, half, H],
-          [half + g, 0, half, row],
-          [half + g, row + g, half, row],
-        ];
-      case "three":
-        return [
-          [0, 0, third, H],
-          [third + g, 0, third, H],
-          [2 * (third + g), 0, third, H],
-        ];
-      case "two-by-two":
-        return [
-          [0, 0, half, row],
-          [half + g, 0, half, row],
-          [0, row + g, half, row],
-          [half + g, row + g, half, row],
-        ];
-    }
-  })();
+const W = 28;
+const H = 18;
+const GAP = 2;
+
+type Rect = [number, number, number, number];
+
+/** The boxes a tree divides a W×H picture into, by its ratios. */
+function rectsOf(node: LayoutNode, x: number, y: number, w: number, h: number, out: Rect[] = []): Rect[] {
+  if (node.type === "leaf") {
+    out.push([x, y, w, h]);
+    return out;
+  }
+  if (node.direction === "row") {
+    const a = Math.round((w - GAP) * node.ratio);
+    rectsOf(node.children[0], x, y, a, h, out);
+    rectsOf(node.children[1], x + a + GAP, y, w - a - GAP, h, out);
+  } else {
+    const a = Math.round((h - GAP) * node.ratio);
+    rectsOf(node.children[0], x, y, w, a, out);
+    rectsOf(node.children[1], x, y + a + GAP, w, h - a - GAP, out);
+  }
+  return out;
+}
+
+/** A small drawing of an arrangement: one rectangle per slot. Give it a
+ * template id, or any tree. */
+export function LayoutPictogram({ id, tree, className }: { id?: LayoutId; tree?: LayoutNode; className?: string }) {
+  const rects = useMemo(() => {
+    const node = tree ?? arrangementFor(id ?? "one", Array.from({ length: 6 }, (_, i) => String(i)));
+    return rectsOf(node, 0, 0, W, H);
+  }, [id, tree]);
   return (
     <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} className={cx("shrink-0", className)} aria-hidden="true">
       {rects.map(([x, y, w, h], i) => (
-        <rect key={i} x={x + 0.5} y={y + 0.5} width={w - 1} height={h - 1} rx={1.5} fill="currentColor" fillOpacity={0.18} stroke="currentColor" strokeWidth={1} />
+        <rect key={i} x={x + 0.5} y={y + 0.5} width={Math.max(0, w - 1)} height={Math.max(0, h - 1)} rx={1.5} fill="currentColor" fillOpacity={0.18} stroke="currentColor" strokeWidth={1} />
       ))}
     </svg>
   );
 }
 
-/** The layout picker in the top bar: one button per template, the current
- * one marked. Choosing a layout with more slots than panes leaves empty
- * slots that offer to add content. */
+/** The layout picker in the top bar: quick arrangements, one button per
+ * template, applied to the panes that exist. Panes beyond a template's
+ * slots become tabs in its last slot; the arrangement can be split and
+ * rearranged freely afterwards, so a template is marked as current only
+ * while the panes still have exactly its shape. */
 export function LayoutPicker() {
-  const layout = useWorkspaceStore((s) => s.layout);
-  const setLayout = useWorkspaceStore((s) => s.setLayout);
+  const tree = useWorkspaceStore((s) => s.tree);
+  const applyArrangement = useWorkspaceStore((s) => s.applyArrangement);
   const paneCount = useWorkspaceStore((s) => s.panes.length);
-  const windowWidth = useWindowWidth();
-  const narrow = windowWidth < NARROW_WINDOW;
-  const current = LAYOUTS.find((l) => l.id === layout);
+  const current = detectTemplate(tree);
+  const label = current ? LAYOUTS.find((l) => l.id === current)?.label : "custom";
 
   return (
     <Popover
       width="w-64"
       trigger={({ toggle, open }) => (
-        <IconButton icon={LayoutGrid} label={`Layout: ${current?.label ?? layout}. Choose a pane layout`} onClick={toggle} active={open} aria-haspopup="menu" aria-expanded={open} />
+        <IconButton icon={LayoutGrid} label={`Layout: ${label}. Choose a pane arrangement`} onClick={toggle} active={open} aria-haspopup="menu" aria-expanded={open} data-tour="layout" />
       )}
     >
       {(close) => (
         <>
-          <PopoverLabel>Layout</PopoverLabel>
-          <div role="radiogroup" aria-label="Pane layout" className="grid gap-0.5">
+          <PopoverLabel>Arrange panes</PopoverLabel>
+          <div role="radiogroup" aria-label="Pane arrangement" className="grid gap-0.5">
             {LAYOUTS.map((l) => {
-              const active = l.id === layout;
+              const active = l.id === current;
               const extra = paneCount - l.slots;
               return (
                 <button
@@ -85,7 +80,7 @@ export function LayoutPicker() {
                   role="radio"
                   aria-checked={active}
                   onClick={() => {
-                    setLayout(l.id);
+                    applyArrangement((ids) => arrangementFor(l.id, ids));
                     close();
                   }}
                   className={cx(
@@ -96,17 +91,13 @@ export function LayoutPicker() {
                   <LayoutPictogram id={l.id} className={active ? "text-accent" : "text-ink-3"} />
                   <span className="min-w-0 flex-1">
                     <span className="block font-medium">{l.label}</span>
-                    <span className="block text-xs text-ink-3">
-                      {extra > 0 ? `${extra} pane${extra > 1 ? "s" : ""} as tabs` : extra < 0 ? `${-extra} empty slot${extra < -1 ? "s" : ""}` : l.description}
-                    </span>
+                    <span className="block text-xs text-ink-3">{extra > 0 ? `${extra} pane${extra > 1 ? "s" : ""} as tabs` : l.description}</span>
                   </span>
                 </button>
               );
             })}
           </div>
-          {narrow && slotsOf(layout) >= 3 && (
-            <p className="px-2 pb-1 pt-2 text-xs text-ink-3">The window is narrower than {NARROW_WINDOW}px, so this layout shows as two columns with tabs on the right.</p>
-          )}
+          <p className="px-2 pb-1 pt-2 text-xs text-ink-3">These are starting points. Split any pane from its ⋯ menu, or drag a pane by its grip onto another pane's edge, to arrange them however you like.</p>
         </>
       )}
     </Popover>

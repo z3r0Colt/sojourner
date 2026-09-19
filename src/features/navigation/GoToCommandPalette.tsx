@@ -74,7 +74,7 @@ export function GoToCommandPalette({
   const panes = useWorkspaceStore((s) => s.panes);
   const focusedPaneId = useWorkspaceStore((s) => s.focusedPaneId);
   const maximizedPaneId = useWorkspaceStore((s) => s.maximizedPaneId);
-  const layout = useWorkspaceStore((s) => s.layout);
+  const layout = useWorkspaceStore((s) => s.tree);
   const focusMode = useUiStore((s) => s.distractionFreeMode);
   // The view commands name the current state ("Hide verse numbers"), so
   // they follow these preferences too.

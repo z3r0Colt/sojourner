@@ -140,13 +140,19 @@ export function AppShell() {
       if (!books || !bible) return;
       const next = stepChapter(books, { bookId: bible.params.bookId, chapter: bible.params.chapter }, key === "]" ? 1 : -1);
       if (next) openPassage(next, { target: bible.id });
-    } else if (ctrl && !e.altKey && e.key >= "1" && e.key <= "4" && !isTypingTarget(e.target)) {
+    } else if (ctrl && !e.altKey && e.key >= "1" && e.key <= "8" && !isTypingTarget(e.target)) {
       const s = useWorkspaceStore.getState();
       const pane = s.panes[Number(e.key) - 1];
       if (pane) {
         e.preventDefault();
         s.focusPane(pane.id);
       }
+    } else if (ctrl && !e.altKey && e.key === "\\" && !isTypingTarget(e.target)) {
+      // Ctrl+\ splits the focused pane to the right, Ctrl+Shift+\ downward,
+      // each leaving an empty slot that offers to add content.
+      e.preventDefault();
+      const s = useWorkspaceStore.getState();
+      s.splitPane(s.focusedPaneId, e.shiftKey ? "bottom" : "right");
     } else if (e.key === "F11") {
       e.preventDefault();
       if (distractionFreeMode) exitFocusMode();

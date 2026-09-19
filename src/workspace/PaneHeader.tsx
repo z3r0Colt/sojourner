@@ -1,12 +1,14 @@
 import { useMemo } from "react";
-import { ArrowLeftToLine, ArrowRightToLine, Check, Maximize2, Minimize2, MoreHorizontal, X } from "lucide-react";
+import { ArrowLeftToLine, ArrowRightToLine, Check, Columns2, GripVertical, Maximize2, Minimize2, MoreHorizontal, PanelRight, Rows2, X } from "lucide-react";
 import { useAtlasPlaces, useBooks, useCommentarySources, useDictionaryIndex, useIsbeIndex, useResources, useSermons, useTranslations, useWestminsterDocuments } from "../api/queries";
-import { useWorkspaceStore, LEADING_KINDS, LINK_GROUPS, PANE_KIND_LIST, PASSAGE_KINDS, type LinkGroup, type Pane } from "../state/workspaceStore";
+import { useWorkspaceStore, LEADING_KINDS, LINK_GROUPS, MAX_PANES, PANE_KIND_LIST, PASSAGE_KINDS, type LinkGroup, type Pane } from "../state/workspaceStore";
 import { IconButton } from "../components/ui/Button";
 import { Popover, PopoverItem, PopoverLabel } from "../components/ui/Popover";
 import { cx } from "../components/ui/classes";
 import { PANE_KINDS, paneTitle, type TitleContext } from "./paneKinds";
 import { openContent } from "./openContent";
+import { placeholderLeaf } from "./layoutTree";
+import { useDragHandle } from "./paneDrag";
 
 export function linkGroupClass(group: LinkGroup): string {
   return cx("link-group", group === "A" ? "link-group-a" : group === "B" ? "link-group-b" : group === "C" ? "link-group-c" : "link-group-none");
@@ -97,58 +99,115 @@ export function usePaneTitle(pane: Pane): string {
   return paneTitle(pane, useTitleContext());
 }
 
-/** The drag payload type for swapping panes by dragging a header. */
-export const PANE_DRAG_TYPE = "application/x-sojourner-pane";
-
-/** Tabs for the panes sharing one slot (a narrow window, or more panes than
- * the layout has slots). Clicking a tab focuses that pane, which makes it
- * the one shown. */
-function SlotTabs({ panes, activeId }: { panes: Pane[]; activeId: string }) {
-  const focusPane = useWorkspaceStore((s) => s.focusPane);
-  const ctx = useTitleContext();
+/** The grip at the left of a header: press and move to drag the pane onto
+ * another pane's edge (a new split) or middle (a tab there). */
+function Grip({ pane, title }: { pane: Pane; title: string }) {
+  const handle = useDragHandle(pane.id, title, pane.kind);
   return (
-    <div role="tablist" aria-label="Panes in this column" className="flex min-w-0 flex-1 items-stretch self-stretch overflow-hidden">
-      {panes.map((p) => {
-        const active = p.id === activeId;
-        const TabIcon = PANE_KINDS[p.kind].icon;
-        const title = paneTitle(p, ctx);
-        return (
-          <button
-            key={p.id}
-            type="button"
-            role="tab"
-            aria-selected={active}
-            title={title}
-            onClick={() => focusPane(p.id)}
-            className={cx(
-              "-mb-0.5 flex min-w-0 max-w-48 items-center gap-1.5 border-b-2 px-2 text-xs font-medium",
-              active ? "border-accent text-ink" : "border-transparent text-ink-3 hover:text-ink",
-            )}
-          >
-            <TabIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-            <span className="truncate">{title}</span>
-          </button>
-        );
-      })}
+    <button
+      type="button"
+      {...handle}
+      aria-label="Drag to move this pane"
+      title="Drag onto another pane's edge to split, or its middle to add as a tab"
+      className="-ml-0.5 mr-0.5 flex h-6 w-4 shrink-0 cursor-grab touch-none items-center justify-center rounded text-ink-4 hover:bg-hover hover:text-ink-2 active:cursor-grabbing"
+    >
+      <GripVertical className="h-3.5 w-3.5" aria-hidden="true" />
+    </button>
+  );
+}
+
+/** One tab in a leaf that holds several panes. The tab is its own drag
+ * handle, so it can be pulled out to another pane or reordered; a plain
+ * click selects it. */
+function Tab({ pane, active, title, onSelect, onClose }: { pane: Pane; active: boolean; title: string; onSelect: () => void; onClose: () => void }) {
+  const handle = useDragHandle(pane.id, title, pane.kind, onSelect);
+  const TabIcon = PANE_KINDS[pane.kind].icon;
+  return (
+    <div
+      role="tab"
+      aria-selected={active}
+      tabIndex={active ? 0 : -1}
+      title={title}
+      data-tab-pane-id={pane.id}
+      {...handle}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onSelect();
+        }
+      }}
+      className={cx(
+        "group/tab -mb-0.5 mt-1 flex h-7 min-w-0 max-w-52 shrink cursor-default touch-none select-none items-center gap-1.5 rounded-t-md border px-2 text-xs font-medium",
+        active ? "border-line border-b-surface border-t-2 border-t-accent bg-surface text-ink" : "border-transparent text-ink-3 hover:bg-hover hover:text-ink",
+      )}
+    >
+      <TabIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+      <span className="truncate">{title}</span>
+      <button
+        type="button"
+        aria-label={`Close ${title}`}
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={(e) => {
+          e.stopPropagation();
+          onClose();
+        }}
+        className={cx("-mr-1 ml-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded text-ink-4 hover:bg-line hover:text-ink", !active && "opacity-0 group-hover/tab:opacity-100 focus:opacity-100")}
+      >
+        <X className="h-3 w-3" aria-hidden="true" />
+      </button>
     </div>
   );
 }
 
-/** One row above a pane's content: the link-group letter, its title (or
- * the tabs of the panes sharing its slot), a menu (change content, move,
- * close), and a close button. The focused pane carries a thin accent rule
- * underneath. Shown only when the workspace has more than one pane, so a
- * single pane looks exactly as the page did before panes existed.
- * Double-click maximizes the pane (again restores it); dragging the header
- * onto another pane swaps the two. */
-export function PaneHeader({ pane, focused, tabs, maximized }: { pane: Pane; focused: boolean; tabs?: Pane[]; maximized?: boolean }) {
+/** Tabs for the panes sharing one leaf. Clicking a tab focuses that pane,
+ * which makes it the one shown; Left and Right move between them. */
+function SlotTabs({ panes, activeId, leafId }: { panes: Pane[]; activeId: string; leafId: string }) {
+  const setActiveTab = useWorkspaceStore((s) => s.setActiveTab);
+  const closePane = useWorkspaceStore((s) => s.closePane);
+  const ctx = useTitleContext();
+  return (
+    <div
+      role="tablist"
+      aria-label="Panes in this slot"
+      data-tab-strip=""
+      className="flex min-w-0 flex-1 items-end self-stretch overflow-hidden"
+      onKeyDown={(e) => {
+        if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+        const at = panes.findIndex((p) => p.id === activeId);
+        const next = panes[(at + (e.key === "ArrowRight" ? 1 : -1) + panes.length) % panes.length];
+        if (!next) return;
+        e.preventDefault();
+        setActiveTab(leafId, next.id);
+        (e.currentTarget.querySelector(`[data-tab-pane-id="${next.id}"]`) as HTMLElement | null)?.focus();
+      }}
+    >
+      {panes.map((p) => (
+        <Tab key={p.id} pane={p} active={p.id === activeId} title={paneTitle(p, ctx)} onSelect={() => setActiveTab(leafId, p.id)} onClose={() => closePane(p.id)} />
+      ))}
+    </div>
+  );
+}
+
+/** One row above a pane's content: the grip, the link-group letter, its
+ * title (or the tabs of the panes sharing its leaf), a menu (change
+ * content, split, move, close), and a close button. The focused pane
+ * carries a thin accent rule underneath. Shown only when the workspace has
+ * more than one pane, so a single pane looks exactly as the page did
+ * before panes existed. Double-click maximizes the pane (again restores it). */
+export function PaneHeader({ pane, focused, tabs, leafId, maximized }: { pane: Pane; focused: boolean; tabs?: Pane[]; leafId?: string; maximized?: boolean }) {
   const title = usePaneTitle(pane);
   const closePane = useWorkspaceStore((s) => s.closePane);
-  const movePane = useWorkspaceStore((s) => s.movePane);
+  const swapPanes = useWorkspaceStore((s) => s.swapPanes);
+  const splitPane = useWorkspaceStore((s) => s.splitPane);
+  const movePaneTo = useWorkspaceStore((s) => s.movePaneTo);
   const setMaximized = useWorkspaceStore((s) => s.setMaximized);
   const index = useWorkspaceStore((s) => s.panes.findIndex((p) => p.id === pane.id));
   const count = useWorkspaceStore((s) => s.panes.length);
+  const prevId = useWorkspaceStore((s) => s.panes[index - 1]?.id);
+  const nextId = useWorkspaceStore((s) => s.panes[index + 1]?.id);
+  const canSplit = useWorkspaceStore((s) => s.panes.length < MAX_PANES && !placeholderLeaf(s.tree));
   const Icon = PANE_KINDS[pane.kind].icon;
+  const inTabs = !!tabs && tabs.length > 1;
 
   function toggleMaximized() {
     setMaximized(maximized ? null : pane.id);
@@ -156,26 +215,19 @@ export function PaneHeader({ pane, focused, tabs, maximized }: { pane: Pane; foc
 
   return (
     <div
-      draggable
-      onDragStart={(e) => {
-        e.dataTransfer.setData(PANE_DRAG_TYPE, pane.id);
-        e.dataTransfer.effectAllowed = "move";
-      }}
       onDoubleClick={(e) => {
-        // Buttons in the header keep their own double-clicks.
-        if ((e.target as HTMLElement).closest("button")) return;
+        // Buttons and tabs in the header keep their own double-clicks.
+        if ((e.target as HTMLElement).closest("button, [role=tab]")) return;
         if (count > 1) toggleMaximized();
       }}
-      title={maximized ? "Double-click to restore all panes" : "Double-click to maximize · drag onto another pane to swap"}
-      className={cx(
-        "flex h-8 shrink-0 cursor-grab items-center gap-1 border-b bg-surface-2/60 pl-1.5 pr-1 active:cursor-grabbing",
-        focused ? "border-accent" : "border-line",
-      )}
+      title={maximized ? "Double-click to restore all panes" : "Double-click to maximize"}
+      className={cx("flex h-8 shrink-0 items-center gap-1 border-b bg-surface-2/60 pl-1 pr-1", focused ? "border-accent" : "border-line")}
       style={{ borderBottomWidth: 2 }}
     >
+      {!maximized && <Grip pane={pane} title={title} />}
       <LinkGroupToggle pane={pane} />
-      {tabs && tabs.length > 1 ? (
-        <SlotTabs panes={tabs} activeId={pane.id} />
+      {inTabs && leafId ? (
+        <SlotTabs panes={tabs} activeId={pane.id} leafId={leafId} />
       ) : (
         <>
           <Icon className="h-3.5 w-3.5 shrink-0 text-ink-3" aria-hidden="true" />
@@ -194,7 +246,7 @@ export function PaneHeader({ pane, focused, tabs, maximized }: { pane: Pane; foc
         />
       )}
       <Popover
-        width="w-60"
+        width="w-64"
         trigger={({ toggle, open }) => <IconButton icon={MoreHorizontal} label="Pane menu" size="sm" active={open} onClick={toggle} />}
       >
         {(close) => (
@@ -221,19 +273,47 @@ export function PaneHeader({ pane, focused, tabs, maximized }: { pane: Pane; foc
             <div className="my-1 h-px bg-line" aria-hidden="true" />
             <PopoverItem
               onClick={() => {
-                movePane(pane.id, -1);
+                splitPane(pane.id, "right");
                 close();
               }}
-              className={cx(index === 0 && "opacity-45")}
+              className={cx(!canSplit && "opacity-45")}
+            >
+              <Columns2 className="h-4 w-4 text-ink-3" aria-hidden="true" /> Split right
+            </PopoverItem>
+            <PopoverItem
+              onClick={() => {
+                splitPane(pane.id, "bottom");
+                close();
+              }}
+              className={cx(!canSplit && "opacity-45")}
+            >
+              <Rows2 className="h-4 w-4 text-ink-3" aria-hidden="true" /> Split down
+            </PopoverItem>
+            {inTabs && leafId && (
+              <PopoverItem
+                onClick={() => {
+                  movePaneTo(pane.id, leafId, "right");
+                  close();
+                }}
+              >
+                <PanelRight className="h-4 w-4 text-ink-3" aria-hidden="true" /> Move this tab to its own pane
+              </PopoverItem>
+            )}
+            <PopoverItem
+              onClick={() => {
+                if (prevId) swapPanes(pane.id, prevId);
+                close();
+              }}
+              className={cx(!prevId && "opacity-45")}
             >
               <ArrowLeftToLine className="h-4 w-4 text-ink-3" aria-hidden="true" /> Swap with previous pane
             </PopoverItem>
             <PopoverItem
               onClick={() => {
-                movePane(pane.id, 1);
+                if (nextId) swapPanes(pane.id, nextId);
                 close();
               }}
-              className={cx(index === count - 1 && "opacity-45")}
+              className={cx(!nextId && "opacity-45")}
             >
               <ArrowRightToLine className="h-4 w-4 text-ink-3" aria-hidden="true" /> Swap with next pane
             </PopoverItem>

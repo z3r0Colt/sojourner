@@ -8,6 +8,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Columns2,
+  Rows2,
   Database,
   Eye,
   EyeOff,
@@ -61,7 +62,8 @@ import {
 import { READING_FONT_OPTIONS, THEME_OPTIONS, useUiStore, type LineSpacing } from "../../state/uiStore";
 import { PANE_KINDS, paneTitle, type TitleContext } from "../../workspace/paneKinds";
 import { openContent, openPassage } from "../../workspace/openContent";
-import { LAYOUTS } from "../../workspace/layouts";
+import { LAYOUTS, arrangementFor, detectTemplate } from "../../workspace/layouts";
+import { leafOfPane, placeholderLeaf } from "../../workspace/layoutTree";
 import { stepChapter } from "../reading/chapterStep";
 import { resetZoom, zoomText } from "../reading/zoom";
 import { requestNewPrayerEntry } from "../prayer/prayerActions";
@@ -196,23 +198,76 @@ export function paneCommands(ctx: CommandContext): Command[] {
     }
 
     if (idx > 0) {
+      const prev = s.panes[idx - 1];
       out.push({
         id: "swap-left",
         group: PANES,
-        label: "Swap this pane with the one on its left",
+        label: "Swap this pane with the previous one",
         icon: ArrowLeftToLine,
         keywords: "move left neighbor",
-        run: () => useWorkspaceStore.getState().movePane(focused.id, -1),
+        run: () => useWorkspaceStore.getState().swapPanes(focused.id, prev.id),
       });
     }
     if (idx >= 0 && idx < s.panes.length - 1) {
+      const next = s.panes[idx + 1];
       out.push({
         id: "swap-right",
         group: PANES,
-        label: "Swap this pane with the one on its right",
+        label: "Swap this pane with the next one",
         icon: ArrowRightToLine,
         keywords: "move right neighbor",
-        run: () => useWorkspaceStore.getState().movePane(focused.id, 1),
+        run: () => useWorkspaceStore.getState().swapPanes(focused.id, next.id),
+      });
+    }
+
+    if (!full && !placeholderLeaf(s.tree)) {
+      out.push({
+        id: "split-right",
+        group: PANES,
+        label: "Split this pane to the right",
+        icon: Columns2,
+        keys: ["Ctrl", "\\"],
+        keywords: "split column side empty slot",
+        run: () => useWorkspaceStore.getState().splitPane(focused.id, "right"),
+      });
+      out.push({
+        id: "split-down",
+        group: PANES,
+        label: "Split this pane downward",
+        icon: Rows2,
+        keys: ["Ctrl", "Shift", "\\"],
+        keywords: "split row stack below empty slot",
+        run: () => useWorkspaceStore.getState().splitPane(focused.id, "bottom"),
+      });
+    }
+    const home = leafOfPane(s.tree, focused.id);
+    if (home && home.paneIds.length > 1) {
+      out.push({
+        id: "tab-out",
+        group: PANES,
+        label: "Move this tab to its own pane",
+        icon: Columns2,
+        keywords: "tab group split out",
+        run: () => useWorkspaceStore.getState().movePaneTo(focused.id, home.id, "right"),
+      });
+      const at = home.paneIds.indexOf(focused.id);
+      const nextTab = home.paneIds[(at + 1) % home.paneIds.length];
+      const prevTab = home.paneIds[(at - 1 + home.paneIds.length) % home.paneIds.length];
+      out.push({
+        id: "tab-next",
+        group: PANES,
+        label: "Next tab in this pane",
+        icon: ArrowRightToLine,
+        keywords: "tab switch",
+        run: () => useWorkspaceStore.getState().focusPane(nextTab),
+      });
+      out.push({
+        id: "tab-prev",
+        group: PANES,
+        label: "Previous tab in this pane",
+        icon: ArrowLeftToLine,
+        keywords: "tab switch",
+        run: () => useWorkspaceStore.getState().focusPane(prevTab),
       });
     }
 
@@ -260,16 +315,17 @@ export function paneCommands(ctx: CommandContext): Command[] {
   return out;
 }
 
-/** Layout templates (W3). */
+/** Quick arrangements (W3): a template applied to the panes that exist. */
 export function layoutCommands(): Command[] {
   const s = useWorkspaceStore.getState();
-  return LAYOUTS.filter((l) => l.id !== s.layout).map<Command>((l) => ({
+  const current = detectTemplate(s.tree);
+  return LAYOUTS.filter((l) => l.id !== current).map<Command>((l) => ({
     id: `layout-${l.id}`,
     group: "Layout",
     label: `Layout: ${l.label}`,
     icon: LayoutGrid,
-    keywords: `${l.slots} panes columns grid split ${l.description}`,
-    run: () => useWorkspaceStore.getState().setLayout(l.id),
+    keywords: `${l.slots} panes columns grid split arrange ${l.description}`,
+    run: () => useWorkspaceStore.getState().applyArrangement((ids) => arrangementFor(l.id, ids)),
   }));
 }
 

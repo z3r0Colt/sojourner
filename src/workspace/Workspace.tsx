@@ -1,30 +1,29 @@
-import { Fragment, useEffect, useRef, useState, type RefObject } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { LayoutGrid, Minimize2 } from "lucide-react";
+import { LayoutGrid, Minimize2, X } from "lucide-react";
 import { api } from "../api/client";
 import { useBooks } from "../api/queries";
 import { useUiStore } from "../state/uiStore";
-import { currentPassage, findPane, useWorkspaceStore, type Pane as PaneModel, type PaneKind } from "../state/workspaceStore";
+import { MAX_PANES, currentPassage, findPane, useWorkspaceStore, type Pane as PaneModel, type PaneKind } from "../state/workspaceStore";
 import { Button, IconButton } from "../components/ui/Button";
 import { EmptyState } from "../components/ui/EmptyState";
 import { Popover, PopoverItem, PopoverLabel } from "../components/ui/Popover";
 import { cx } from "../components/ui/classes";
-import { Pane, PANE_MIN_WIDTH } from "./Pane";
+import { Pane } from "./Pane";
 import { PANE_KINDS, PANE_KIND_LIST_LISTED, STUDY_STRIP_KINDS, parseRoute, routeFor } from "./paneKinds";
 import { openContent } from "./openContent";
-import { assignSlots, columnsOf, effectiveLayout, slotsOf } from "./layouts";
+import { DIVIDER_PX, RATIO_MAX, RATIO_MIN, minSize, type BranchNode, type LayoutNode, type LeafNode } from "./layoutTree";
+import { DragOverlay } from "./DragOverlay";
 
 /**
- * The workspace: the panes arranged by the chosen layout template with
- * draggable dividers, the "Add pane" strip on the right edge, the URL
- * mirror, and the launch bootstrap. With one pane and no chrome hidden it
- * renders that pane's view edge to edge, exactly as the page did before
- * panes existed.
+ * The workspace: the panes arranged by the split tree (layoutTree.ts),
+ * with a draggable rule between the two halves of every split, the "Add
+ * pane" strip on the right edge, the URL mirror, and the launch bootstrap.
+ * With one pane and no chrome hidden it renders that pane's view edge to
+ * edge, exactly as the page did before panes existed.
  *
- * Layouts (see layouts.ts) are columns of slots. A slot holding several
- * panes shows them as tabs in the pane header; an empty slot offers to add
- * content. Below 1300px of window width the three- and four-slot layouts
- * collapse to two columns with the extra panes as tabs on the right.
+ * A leaf of the tree holding several panes shows them as tabs; an empty
+ * leaf (made by "Split right" or "Split down") offers to add content.
  */
 
 /** Keeps the URL and the focused pane's content in step, in both
@@ -123,21 +122,9 @@ function useElementSize(ref: RefObject<HTMLElement | null>): { width: number; he
   return size;
 }
 
-/** The window's inner width, for the narrow-window layout fallback. */
-export function useWindowWidth(): number {
-  const [width, setWidth] = useState(() => window.innerWidth);
-  useEffect(() => {
-    const onResize = () => setWidth(window.innerWidth);
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, []);
-  return width;
-}
-
-const DIVIDER_PX = 6;
-
-/** The draggable rule between two panes or two rows. Arrow keys resize it
- * too. `onDelta` receives the pointer movement in pixels along the axis. */
+/** The draggable rule between the two halves of a split. Arrow keys
+ * resize it too. `onDelta` receives the pointer movement in pixels along
+ * the axis. */
 function Divider({ orientation, onDelta, label }: { orientation: "vertical" | "horizontal"; onDelta: (deltaPx: number) => void; label: string }) {
   const dragging = useRef<{ start: number; moved: number } | null>(null);
   const vertical = orientation === "vertical";
@@ -194,7 +181,7 @@ function AddPaneStrip() {
   const panes = useWorkspaceStore((s) => s.panes);
   const focusPane = useWorkspaceStore((s) => s.focusPane);
   const inPsalms = useWorkspaceStore((s) => currentPassage(s)?.bookId === 19);
-  const full = panes.length >= 4;
+  const full = panes.length >= MAX_PANES;
 
   function open(kind: PaneKind) {
     const existing = panes.find((p) => p.kind === kind);
@@ -222,14 +209,16 @@ function AddPaneStrip() {
   );
 }
 
-/** An empty slot of a layout with more slots than panes: offers to fill it. */
-function EmptySlot({ afterPaneId }: { afterPaneId: string | undefined }) {
+/** An empty slot made by "Split": offers to fill it, or to close it again. */
+function EmptySlot({ leafId }: { leafId: string }) {
+  const closeLeaf = useWorkspaceStore((s) => s.closeLeaf);
   return (
-    <div className="flex h-full min-h-0 min-w-0 flex-1 items-center justify-center bg-bg p-4" data-empty-slot="">
+    <div className="relative flex h-full min-h-0 min-w-0 flex-1 items-center justify-center bg-bg p-4" data-empty-slot="">
+      <IconButton icon={X} label="Close this empty slot" size="sm" onClick={() => closeLeaf(leafId)} className="absolute right-1 top-1" />
       <EmptyState
         icon={LayoutGrid}
         title="Empty pane"
-        description="Choose what to show here, or Ctrl+click any link to open it in this space."
+        description="Choose what to show here, drag a pane in, or Ctrl+click any link to open it in this space."
         compact
         action={
           <Popover
@@ -252,7 +241,7 @@ function EmptySlot({ afterPaneId }: { afterPaneId: string | undefined }) {
                       <PopoverItem
                         key={k}
                         onClick={() => {
-                          openContent(k, {}, { target: "new", from: afterPaneId });
+                          openContent(k, {}, { target: "new", intoLeaf: leafId });
                           close();
                         }}
                       >
@@ -271,108 +260,107 @@ function EmptySlot({ afterPaneId }: { afterPaneId: string | undefined }) {
   );
 }
 
-/** One slot: a pane, several panes as tabs (only the active one visible),
+/** One leaf: a pane, several panes as tabs (only the active one visible),
  * or a placeholder. Panes stay mounted while hidden so their scroll
  * position and state survive switching tabs. */
-function Slot({ panes, showHeader, minWidth, lastPaneId }: { panes: PaneModel[]; showHeader: boolean; minWidth: number; lastPaneId: string | undefined }) {
-  const focusedPaneId = useWorkspaceStore((s) => s.focusedPaneId);
-  const [activeId, setActiveId] = useState<string | null>(null);
-  const inSlot = panes.some((p) => p.id === focusedPaneId);
-  // The focused pane is always the visible tab; otherwise the last one
-  // shown here stays, falling back to the first.
-  useEffect(() => {
-    if (inSlot) setActiveId(focusedPaneId);
-  }, [inSlot, focusedPaneId]);
-  const active = (inSlot ? focusedPaneId : activeId && panes.some((p) => p.id === activeId) ? activeId : panes[0]?.id) ?? null;
-
-  if (panes.length === 0) return <EmptySlot afterPaneId={lastPaneId} />;
-  const tabs = panes.length > 1 ? panes : undefined;
+function Leaf({ leaf, showHeader }: { leaf: LeafNode; showHeader: boolean }) {
+  const panes = useWorkspaceStore((s) => s.panes);
+  const members = leaf.paneIds.map((id) => findPane(panes, id)).filter((p): p is PaneModel => p != null);
+  if (members.length === 0) {
+    return (
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col" data-leaf-id={leaf.id}>
+        <EmptySlot leafId={leaf.id} />
+      </div>
+    );
+  }
+  const active = leaf.activeId ?? members[0].id;
+  const tabs = members.length > 1 ? members : undefined;
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col" style={{ minWidth }}>
-      {panes.map((pane) => (
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col" data-leaf-id={leaf.id}>
+      {members.map((pane) => (
         <div key={pane.id} hidden={pane.id !== active} className="flex min-h-0 min-w-0 flex-1 flex-col">
-          <Pane pane={pane} showHeader={showHeader || panes.length > 1} tabs={tabs} />
+          {/* Only the visible pane draws the tab strip; a hidden pane's
+              copy would be a second set of tabs for the drag hit-test. */}
+          <Pane pane={pane} showHeader={showHeader || members.length > 1} tabs={pane.id === active ? tabs : undefined} leafId={leaf.id} />
         </div>
       ))}
     </div>
   );
 }
 
+/** A split: two children along an axis with the rule between them. The
+ * rule moves the ratio, clamped so neither side drops under the smallest
+ * box its own leaves need. */
+function Branch({ node, showHeader }: { node: BranchNode; showHeader: boolean }) {
+  const setRatio = useWorkspaceStore((s) => s.setRatio);
+  const ref = useRef<HTMLDivElement>(null);
+  const row = node.direction === "row";
+
+  function onDelta(px: number) {
+    const el = ref.current;
+    const axis = el ? (row ? el.clientWidth : el.clientHeight) - DIVIDER_PX : 0;
+    if (axis <= 0) return;
+    const a = minSize(node.children[0]);
+    const b = minSize(node.children[1]);
+    const lo = Math.max(RATIO_MIN, (row ? a.width : a.height) / axis);
+    const hi = Math.min(RATIO_MAX, 1 - (row ? b.width : b.height) / axis);
+    const next = node.ratio + px / axis;
+    setRatio(node.id, lo <= hi ? Math.min(hi, Math.max(lo, next)) : next);
+  }
+
+  return (
+    <div ref={ref} className={cx("flex min-h-0 min-w-0 flex-1", row ? "flex-row" : "flex-col")} data-branch-id={node.id}>
+      <div className="flex min-h-0 min-w-0 flex-col" style={{ flex: `${node.ratio} 1 0px` }}>
+        <TreeNode node={node.children[0]} showHeader={showHeader} />
+      </div>
+      <Divider orientation={row ? "vertical" : "horizontal"} label={row ? "Resize columns" : "Resize rows"} onDelta={onDelta} />
+      <div className="flex min-h-0 min-w-0 flex-col" style={{ flex: `${1 - node.ratio} 1 0px` }}>
+        <TreeNode node={node.children[1]} showHeader={showHeader} />
+      </div>
+    </div>
+  );
+}
+
+function TreeNode({ node, showHeader }: { node: LayoutNode; showHeader: boolean }) {
+  return node.type === "leaf" ? <Leaf leaf={node} showHeader={showHeader} /> : <Branch node={node} showHeader={showHeader} />;
+}
+
+/** Said once when the window cannot hold the arrangement at the panes'
+ * minimum sizes; dismissed until the arrangement changes again. */
+function NarrowHint({ tree, width }: { tree: LayoutNode; width: number }) {
+  const [dismissedFor, setDismissedFor] = useState<LayoutNode | null>(null);
+  const needed = minSize(tree).width;
+  if (width <= 0 || needed <= width || dismissedFor === tree) return null;
+  return (
+    <div className="flex shrink-0 items-center gap-2 border-b border-line bg-surface-2 px-3 py-1 text-xs text-ink-2" role="status">
+      <span className="min-w-0 flex-1">The window is narrower than this arrangement needs. Use the layout button to stack some panes as tabs, or drag a pane onto another to add it as a tab.</span>
+      <Button size="sm" variant="ghost" onClick={() => setDismissedFor(tree)}>
+        Dismiss
+      </Button>
+    </div>
+  );
+}
+
 export function Workspace() {
   const panes = useWorkspaceStore((s) => s.panes);
-  const layoutChosen = useWorkspaceStore((s) => s.layout);
-  const rowSplit = useWorkspaceStore((s) => s.rowSplit);
+  const tree = useWorkspaceStore((s) => s.tree);
   const maximizedPaneId = useWorkspaceStore((s) => s.maximizedPaneId);
-  const resizeBetween = useWorkspaceStore((s) => s.resizeBetween);
-  const setRowSplit = useWorkspaceStore((s) => s.setRowSplit);
   const distractionFreeMode = useUiStore((s) => s.distractionFreeMode);
   const containerRef = useRef<HTMLDivElement>(null);
   useUrlMirror();
   useBootstrap();
 
-  const windowWidth = useWindowWidth();
-  const { width: containerWidth, height: containerHeight } = useElementSize(containerRef);
+  const { width: containerWidth } = useElementSize(containerRef);
   const maximized = findPane(panes, maximizedPaneId);
-  const layout = effectiveLayout(layoutChosen, windowWidth, panes.length);
-  const columns = columnsOf(layout);
-  const slots = assignSlots(panes, slotsOf(layout));
-  const lastPaneId = panes[panes.length - 1]?.id;
   const showHeader = panes.length > 1 && !distractionFreeMode;
-  const minWidth = containerWidth > 0 ? Math.min(PANE_MIN_WIDTH, Math.floor((containerWidth - DIVIDER_PX * (columns.length - 1)) / columns.length)) : PANE_MIN_WIDTH;
-
-  /** The pane whose flex weight sizes a column: the first pane in its top slot. */
-  function columnLead(col: number[]): PaneModel | undefined {
-    for (const slot of col) if (slots[slot]?.[0]) return slots[slot][0];
-    return undefined;
-  }
-  function pxPerWeight(): number {
-    const total = columns.reduce((sum, col) => sum + (columnLead(col)?.width ?? 420), 0);
-    return (containerRef.current?.clientWidth ?? 1000) / Math.max(total, 1);
-  }
 
   return (
-    <div className="flex h-full min-h-0" data-layout={layout}>
-      <div ref={containerRef} className={cx("flex min-h-0 min-w-0 flex-1")}>
-        {maximized ? (
-          <Pane pane={maximized} showHeader={showHeader} maximized />
-        ) : (
-          columns.map((col, ci) => {
-            const lead = columnLead(col);
-            const prevLead = ci > 0 ? columnLead(columns[ci - 1]) : undefined;
-            return (
-              <Fragment key={ci}>
-                {ci > 0 && (
-                  <Divider
-                    orientation="vertical"
-                    label={`Resize columns ${ci} and ${ci + 1}`}
-                    onDelta={(px) => {
-                      if (prevLead && lead) resizeBetween(prevLead.id, lead.id, px / pxPerWeight());
-                    }}
-                  />
-                )}
-                <div className="flex min-h-0 min-w-0 flex-col" style={{ flex: `${lead?.width ?? 420} 1 0px`, minWidth }}>
-                  {col.map((slotIndex, ri) => (
-                    <Fragment key={slotIndex}>
-                      {ri > 0 && (
-                        <Divider
-                          orientation="horizontal"
-                          label="Resize rows"
-                          onDelta={(px) => setRowSplit(rowSplit + px / Math.max(containerHeight, 1))}
-                        />
-                      )}
-                      <div
-                        className="flex min-h-0 min-w-0 flex-col"
-                        style={{ flex: col.length > 1 ? `${ri === 0 ? rowSplit : 1 - rowSplit} 1 0px` : "1 1 0px" }}
-                      >
-                        <Slot panes={slots[slotIndex] ?? []} showHeader={showHeader} minWidth={0} lastPaneId={lastPaneId} />
-                      </div>
-                    </Fragment>
-                  ))}
-                </div>
-              </Fragment>
-            );
-          })
-        )}
+    <div className="flex h-full min-h-0" data-leaves={panes.length}>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+        {!maximized && !distractionFreeMode && <NarrowHint tree={tree} width={containerWidth} />}
+        <div ref={containerRef} className="flex min-h-0 min-w-0 flex-1">
+          {maximized ? <Pane pane={maximized} showHeader={showHeader} maximized /> : <TreeNode node={tree} showHeader={showHeader} />}
+        </div>
       </div>
       {!distractionFreeMode && <AddPaneStrip />}
       {distractionFreeMode && (
@@ -390,6 +378,7 @@ export function Workspace() {
           Exit focus
         </Button>
       )}
+      <DragOverlay />
     </div>
   );
 }

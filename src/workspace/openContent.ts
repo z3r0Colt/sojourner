@@ -1,4 +1,5 @@
 import {
+  MAX_PANES,
   PASSAGE_KINDS,
   currentPassage,
   findPane,
@@ -15,6 +16,7 @@ import {
   type Position,
 } from "../state/workspaceStore";
 import { PANE_KINDS } from "./paneKinds";
+import { DIVIDER_PX, PANE_MIN_PX, type Side } from "./layoutTree";
 
 /**
  * The one way to jump anywhere.
@@ -44,6 +46,8 @@ export interface OpenOptions {
    * plain jump stays independent, so Romans on the left and Galatians on
    * the right can be read side by side. Study panes always link. */
   link?: boolean;
+  /** With target "new": fill this empty slot rather than splitting. */
+  intoLeaf?: string;
 }
 
 /** "new" for Ctrl+click, Cmd+click, or a middle-click; otherwise `fallback`. */
@@ -161,11 +165,34 @@ function groupForNewPane(content: PaneContent, origin: Pane | undefined, opts: O
   return free;
 }
 
+/** Where a new pane goes beside its origin: to the right, or below when
+ * the origin is already too narrow to halve; as a tab when there is no
+ * room either way. Measured from the DOM, so outside the app (tests) it
+ * is simply "right". */
+function placementBeside(originId: string | undefined): { side: Side; asTab: boolean } {
+  if (!originId || typeof document === "undefined") return { side: "right", asTab: false };
+  const el = document.querySelector<HTMLElement>(`[data-pane-id="${originId}"]`);
+  if (!el) return { side: "right", asTab: false };
+  const { width, height } = el.getBoundingClientRect();
+  if (width >= PANE_MIN_PX * 2 + DIVIDER_PX) return { side: "right", asTab: false };
+  if (height >= PANE_MIN_PX * 2 + DIVIDER_PX) return { side: "bottom", asTab: false };
+  return { side: "right", asTab: true };
+}
+
+/** The share of a split the origin keeps: the two kinds' relative weights,
+ * so a study pane opened beside the Bible takes about a third. */
+function ratioBeside(origin: Pane | undefined, kind: PaneKind): number {
+  const a = origin ? PANE_KINDS[origin.kind].defaultWidth : 1000;
+  const b = PANE_KINDS[kind].defaultWidth;
+  return a / (a + b);
+}
+
 function openInNewPane(content: PaneContent, opts: OpenOptions) {
   const store = useWorkspaceStore.getState();
   const origin = findPane(store.panes, opts.from ?? store.focusedPaneId);
   const linkGroup = groupForNewPane(content, origin, opts);
-  const id = store.addPane(content, { width: PANE_KINDS[content.kind].defaultWidth, after: origin?.id, linkGroup });
+  const placement = opts.intoLeaf ? { side: "right" as Side, asTab: false } : placementBeside(origin?.id);
+  const id = store.addPane(content, { after: origin?.id, linkGroup, intoLeaf: opts.intoLeaf, ...placement, ratio: ratioBeside(origin, content.kind) });
   if (!id) return;
   const passage = passageOf(content);
   if (passage && content.kind !== "bible") useWorkspaceStore.getState().publishPassage(id, passage);
@@ -176,7 +203,7 @@ export function openContent<K extends PaneKind>(kind: K, params: Partial<ParamsO
   const store = useWorkspaceStore.getState();
 
   if (target === "new") {
-    if (store.panes.length >= 4) {
+    if (store.panes.length >= MAX_PANES) {
       // The workspace is full: fall back to the focused pane rather than drop the jump.
       openContent(kind, params, { ...opts, target: "focused" });
       return;

@@ -6,7 +6,63 @@ vi.mock("./ttsStore", () => ({
   useTtsStore: { getState: () => ({ paneId: null, stop: () => {} }) },
 }));
 
-import { useWorkspaceStore, type Pane } from "./workspaceStore";
+import { migrateWorkspace, useWorkspaceStore, type Pane } from "./workspaceStore";
+import { leaves, paneOrder, validateTree } from "../workspace/layoutTree";
+
+const bible = (id: string, width = 1000) => ({
+  id,
+  kind: "bible",
+  params: { translationId: null, bookId: 1, chapter: 1, activeVerse: null, paragraphMode: false, redLetterMode: false },
+  linkGroup: "A",
+  width,
+  history: [],
+  future: [],
+});
+const study = (id: string, width = 420) => ({ id, kind: "crossrefs", params: { bookId: 1, chapter: 1, verse: null }, linkGroup: "A", width, history: [], future: [] });
+
+describe("migrateWorkspace", () => {
+  it("upgrades a version-1 workspace to a tree of the pane count's template", () => {
+    const out = migrateWorkspace({ version: 1, panes: [bible("a"), study("b")], focusedPaneId: "b", lastTranslationId: 3 });
+    expect(out).not.toBeNull();
+    expect(out!.version).toBe(3);
+    expect(validateTree(out!.tree, ["a", "b"])).toEqual([]);
+    expect(leaves(out!.tree).length).toBe(2);
+    expect(out!.tree.type === "branch" && out!.tree.ratio).toBeCloseTo(1000 / 1420, 3);
+    expect(out!.focusedPaneId).toBe("b");
+    expect(out!.lastTranslationId).toBe(3);
+  });
+
+  it("upgrades a version-2 two-plus-one with its row split", () => {
+    const out = migrateWorkspace({ version: 2, panes: [bible("a"), study("b"), study("c")], focusedPaneId: "a", lastTranslationId: null, layout: "two-plus-one", rowSplit: 0.3 });
+    expect(out).not.toBeNull();
+    const t = out!.tree;
+    expect(t.type).toBe("branch");
+    const right = t.type === "branch" ? t.children[1] : null;
+    expect(right?.type === "branch" && right.direction).toBe("column");
+    expect(right?.type === "branch" && right.ratio).toBeCloseTo(0.3);
+    expect(paneOrder(t)).toEqual(["a", "b", "c"]);
+    expect((out!.panes[0] as unknown as { width?: number }).width).toBeUndefined();
+  });
+
+  it("normalizes a version-3 workspace whose tree is rubbish", () => {
+    const out = migrateWorkspace({ version: 3, panes: [bible("a"), study("b")], focusedPaneId: "a", lastTranslationId: null, tree: { nope: 1 } });
+    expect(out).not.toBeNull();
+    expect(paneOrder(out!.tree)).toEqual(["a", "b"]);
+  });
+
+  it("keeps at most eight panes and drops the rest from the tree", () => {
+    const panes = Array.from({ length: 10 }, (_, i) => study(`p${i}`));
+    const out = migrateWorkspace({ version: 2, panes, focusedPaneId: "p9", lastTranslationId: null, layout: "three", rowSplit: 0.5 });
+    expect(out!.panes.length).toBe(8);
+    expect(validateTree(out!.tree, out!.panes.map((p) => p.id))).toEqual([]);
+    expect(out!.focusedPaneId).toBe("p0");
+  });
+
+  it("refuses an unknown version or an empty workspace", () => {
+    expect(migrateWorkspace({ version: 9, panes: [bible("a")] })).toBeNull();
+    expect(migrateWorkspace({ version: 3, panes: [], tree: null })).toBeNull();
+  });
+});
 
 function biblePane(panes: Pane[], id: string) {
   const pane = panes.find((p) => p.id === id);
@@ -23,7 +79,7 @@ describe("publishPassage to a linked Bible pane", () => {
     leader = s.panes[0].id;
     const id = s.addPane(
       { kind: "bible", params: { translationId: null, bookId: 43, chapter: 3, activeVerse: null, paragraphMode: false, redLetterMode: false } },
-      { width: 1000, linkGroup: "A" },
+      { linkGroup: "A" },
     );
     if (!id) throw new Error("workspace full");
     follower = id;
