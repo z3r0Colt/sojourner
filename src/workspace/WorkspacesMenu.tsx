@@ -160,7 +160,7 @@ export function WorkspacesMenu() {
     <Popover
       width="w-80"
       trigger={({ toggle, open }) => (
-        <Button variant="ghost" icon={Layers} onClick={toggle} active={open} aria-haspopup="menu" aria-expanded={open} title="Switch, save, or manage workspaces">
+        <Button variant="ghost" icon={Layers} onClick={toggle} active={open} aria-haspopup="menu" aria-expanded={open} title="Switch, save, or manage workspaces" data-tour="workspaces">
           Workspaces
         </Button>
       )}

@@ -209,13 +209,13 @@ export function AppShell() {
               Go to
               <Kbd>Ctrl K</Kbd>
             </Button>
-            <Button variant="ghost" icon={Search} onClick={() => setSearchOpen(true)} title="Search Scripture, commentary, notes, prayers, resources, and confessions (Ctrl+F)">
+            <Button variant="ghost" icon={Search} onClick={() => setSearchOpen(true)} title="Search Scripture, commentary, notes, prayers, resources, and confessions (Ctrl+F)" data-tour="search">
               Search
               <Kbd>Ctrl F</Kbd>
             </Button>
             <WorkspacesMenu />
             <LayoutPicker />
-            <IconButton icon={Keyboard} label="Keyboard shortcuts (Ctrl+/)" onClick={() => setShortcutsOpen(true)} />
+            <IconButton icon={Keyboard} label="Keyboard shortcuts (Ctrl+/)" onClick={() => setShortcutsOpen(true)} data-tour="shortcuts" />
           </header>
         )}
 

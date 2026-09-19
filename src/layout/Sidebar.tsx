@@ -177,7 +177,7 @@ export function Sidebar() {
           <NavLink item={TODAY} collapsed={collapsed} />
         </div>
         {GROUPS.map((g) => (
-          <div key={g.label} className={cx("flex flex-col gap-0.5", collapsed && "items-center")}>
+          <div key={g.label} className={cx("flex flex-col gap-0.5", collapsed && "items-center")} data-tour={`sidebar-${g.label.toLowerCase()}`}>
             {!collapsed ? (
               <div className="mb-1 px-2.5 text-xs font-semibold uppercase tracking-wide text-ink-4">{g.label}</div>
             ) : (
@@ -191,7 +191,9 @@ export function Sidebar() {
       </div>
 
       <div className={cx("flex flex-col gap-0.5 border-t border-line py-2", collapsed && "items-center")}>
-        <NavLink item={{ to: "/settings", label: "Settings", icon: Settings }} collapsed={collapsed} />
+        <div data-tour="settings" className={cx("flex flex-col", collapsed && "items-center")}>
+          <NavLink item={{ to: "/settings", label: "Settings", icon: Settings }} collapsed={collapsed} />
+        </div>
         <button
           type="button"
           onClick={toggleSidebar}

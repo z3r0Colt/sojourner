@@ -2,10 +2,11 @@ import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "re
 import { Button } from "../../components/ui/Button";
 import { Kbd } from "../../components/ui/Page";
 import { openContent } from "../../workspace/openContent";
+import { useWorkspaceStore } from "../../state/workspaceStore";
 import { useTourStore } from "./tourStore";
 
 /**
- * Three spotlight steps drawn over the live app (F3.7). Each target is an
+ * Nine spotlight steps drawn over the live app (F3.7). Each target is an
  * element marked `data-tour="<name>"`; the overlay measures it, dims
  * everything else with an SVG mask cutout, and floats a card beside it.
  * Fully keyboard-driven: Tab stays inside the card, Right/Left step,
@@ -19,25 +20,27 @@ interface Step {
   body: ReactNode;
   /** Shown when the target cannot be found on screen. */
   missing: string;
+  /** This step points at a pane header, so a second pane must be open. */
+  needsSecondPane?: boolean;
 }
 
-const STEPS: Step[] = [
+export const TOUR_STEPS: Step[] = [
   {
     target: "goto",
     title: "Jump anywhere",
     body: (
       <>
-        Click <b>Go to</b> (or press <Kbd>Ctrl</Kbd>+<Kbd>K</Kbd>) and type a reference like “John 3:16”, a Strong's number, or a word. Type <Kbd>&gt;</Kbd> first to list every command.
+        Click <b>Go to</b> (or press <Kbd>Ctrl</Kbd>+<Kbd>K</Kbd>) and type a reference like “John 3:16”, a Strong's number, or a word. Type <Kbd>&gt;</Kbd> first to list every command the app has.
       </>
     ),
     missing: "The Go to button sits in the top bar.",
   },
   {
     target: "verse",
-    title: "Click a verse: linked panes follow it",
+    title: "Click a verse; linked panes follow it",
     body: (
       <>
-        Click a verse number for its menu: highlight, note, copy, compare, memorize. Click anywhere on a verse to select it, and every linked commentary, cross-reference, or confession pane moves to it.
+        Click a verse number for its menu: highlight, note, copy, compare, memorize, bookmark. Click anywhere on a verse to select it, and every linked commentary, cross-reference, or confession pane moves to it. <Kbd>↓</Kbd> and <Kbd>↑</Kbd> select the next and previous verse.
       </>
     ),
     missing: "Open the Bible to see this in place.",
@@ -47,12 +50,75 @@ const STEPS: Step[] = [
     title: "Study beside the text",
     body: (
       <>
-        These icons open commentary, cross references, confessions, or your own notes beside the text. <Kbd>Ctrl</Kbd>+click any link, sidebar item, or reference to open it in a new pane.
+        These icons open Commentary, Cross references, Confessions, or Mine (your own notes on the chapter) beside the text. <Kbd>Ctrl</Kbd>+click any link, sidebar item, or reference to open it in a new pane.
       </>
     ),
     missing: "The Add pane strip sits on the right edge of the Bible page.",
   },
+  {
+    target: "pane-header",
+    title: "Every pane has a header",
+    body: (
+      <>
+        The letter is the pane's link group: panes in one group follow each other's passage. The dotted grip at the left moves the pane: drag it onto another pane's edge to split that pane, or onto its middle to add it as a tab. Double-click the header to maximize; the ⋯ menu changes what the pane shows, splits it, or closes it.
+      </>
+    ),
+    missing: "Headers appear once a second pane is open.",
+    needsSecondPane: true,
+  },
+  {
+    target: "layout",
+    title: "Arrange the panes",
+    body: (
+      <>
+        Pick a quick arrangement here, from one pane to two by three. Then split, drag, and resize freely: every divider is its own, and up to eight panes fit. The Workspaces button beside it saves an arrangement under a name.
+      </>
+    ),
+    missing: "The layout button sits in the top bar, beside Workspaces.",
+  },
+  {
+    target: "sidebar-library",
+    title: "The library",
+    body: (
+      <>
+        Works someone else wrote: the Westminster Confession and Catechisms, a Hebrew and Greek lexicon, two Bible dictionaries, the ISBE encyclopedia, an atlas of 1,342 places, and Resources for your own books, audio, and video.
+      </>
+    ),
+    missing: "The Library group is in the sidebar on the left.",
+  },
+  {
+    target: "sidebar-notebook",
+    title: "Your notebook",
+    body: (
+      <>
+        What you write: Notes on verses and chapters, every Highlight in one place, Sermons with a manuscript editor, rehearsal clock, and slides, and Illustrations kept apart from any one sermon.
+      </>
+    ),
+    missing: "The Notebook group is in the sidebar on the left.",
+  },
+  {
+    target: "sidebar-devotion",
+    title: "Daily practice",
+    body: (
+      <>
+        Reading plans (M'Cheyne, chronological, and your own), a Prayer journal and prayer list, and Scripture and catechism Memory with spaced repetition. Today, at the top of the sidebar, gathers all of it for the day.
+      </>
+    ),
+    missing: "The Devotion group is in the sidebar on the left.",
+  },
+  {
+    target: "settings",
+    title: "Settings and the tutorial",
+    body: (
+      <>
+        Theme, text, backups, added translations, the book library pack, and a full written tutorial with a step for every feature. Press <Kbd>Ctrl</Kbd>+<Kbd>/</Kbd> any time for the keyboard shortcuts.
+      </>
+    ),
+    missing: "Settings is at the bottom of the sidebar.",
+  },
 ];
+
+const STEPS = TOUR_STEPS;
 
 const PAD = 6;
 const CARD_W = 340;
@@ -120,9 +186,27 @@ export function TourOverlay({ onFinish }: { onFinish: () => void }) {
   const last = step === STEPS.length - 1;
 
   function finish() {
+    // A pane the tour opened for its header step goes away with the tour.
+    const opened = useTourStore.getState().openedPaneId;
+    if (opened) {
+      useWorkspaceStore.getState().closePane(opened);
+      useTourStore.getState().setOpenedPane(null);
+    }
     stop();
     onFinish();
   }
+
+  // The header step has nothing to point at on a fresh install's single
+  // pane, so the tour opens a commentary pane beside the Bible for it.
+  useEffect(() => {
+    if (!active || !current?.needsSecondPane) return;
+    const ws = useWorkspaceStore.getState();
+    if (ws.panes.length > 1) return;
+    const before = new Set(ws.panes.map((p) => p.id));
+    openContent("commentary", {}, { target: "new" });
+    const added = useWorkspaceStore.getState().panes.find((p) => !before.has(p.id));
+    if (added) useTourStore.getState().setOpenedPane(added.id);
+  }, [active, current]);
 
   // Keep the cutout on its target while the app moves under it: the pane
   // may scroll, the window may resize, a query may reflow the toolbar.

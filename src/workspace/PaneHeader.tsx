@@ -221,6 +221,7 @@ export function PaneHeader({ pane, focused, tabs, leafId, maximized }: { pane: P
         if (count > 1) toggleMaximized();
       }}
       title={maximized ? "Double-click to restore all panes" : "Double-click to maximize"}
+      data-tour="pane-header"
       className={cx("flex h-8 shrink-0 items-center gap-1 border-b bg-surface-2/60 pl-1 pr-1", focused ? "border-accent" : "border-line")}
       style={{ borderBottomWidth: 2 }}
     >
