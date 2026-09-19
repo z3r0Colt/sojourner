@@ -593,17 +593,22 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     const next = panes.map((p) => {
       if (p.id === fromId || p.linkGroup !== from.linkGroup || !PASSAGE_KINDS.has(p.kind)) return p;
       if (p.kind === "bible") {
+        // The verse is both selected (`activeVerse`, the highlight) and made
+        // the scroll target (`verse`): a follower whose rows are virtualized
+        // would otherwise highlight a row that is not even mounted, and the
+        // reader would see nothing move.
+        const target = passage.verse ?? undefined;
         const sameChapter = p.params.bookId === passage.bookId && p.params.chapter === passage.chapter;
         if (sameChapter) {
-          if (p.params.activeVerse === passage.verse) return p;
+          if (p.params.activeVerse === passage.verse && p.params.verse === target) return p;
           changed = true;
-          return { ...p, params: { ...p.params, activeVerse: passage.verse } } as Pane;
+          return { ...p, params: { ...p.params, activeVerse: passage.verse, verse: target } } as Pane;
         }
         // A linked Bible pane follows chapter changes but keeps its own
         // translation and view modes; the move goes on its history like any
         // other navigation so Back restores it.
         changed = true;
-        const params: BibleParams = { ...p.params, bookId: passage.bookId, chapter: passage.chapter, verse: undefined, activeVerse: passage.verse };
+        const params: BibleParams = { ...p.params, bookId: passage.bookId, chapter: passage.chapter, verse: target, activeVerse: passage.verse };
         return { ...p, params, history: [...p.history, contentOf(p)].slice(-HISTORY_CAP), future: [] } as Pane;
       }
       const cur = p.params as PassageParams;

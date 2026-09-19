@@ -542,11 +542,17 @@ export function ReadingPane() {
   // Scroll the target verse into view once verses are loaded. Rows are
   // virtualized, so the target row may not be mounted yet -- ask the
   // virtualizer to scroll to its index rather than querying the DOM.
+  // Paragraph mode does not go through the virtualizer, so there the row is
+  // found in the DOM instead; it is always mounted.
   useEffect(() => {
     if (scrollTarget == null || !verses) return;
+    if (paragraphMode) {
+      containerRef.current?.querySelector(`[data-verse-row="${scrollTarget}"]`)?.scrollIntoView({ block: "center" });
+      return;
+    }
     const index = verses.findIndex((v) => v.verse === scrollTarget);
     if (index >= 0) rowVirtualizer.scrollToIndex(index, { align: "center" });
-  }, [scrollTarget, verses, rowVirtualizer, bookId, chapter]);
+  }, [scrollTarget, verses, rowVirtualizer, bookId, chapter, paragraphMode]);
 
   // A new chapter with no verse target starts at the top (the end-of-chapter
   // card and the chapter pickers both land here), not wherever the previous
