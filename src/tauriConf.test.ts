@@ -15,4 +15,16 @@ describe("tauri.conf.json", () => {
   it("keeps quotes out of the product name, which the NSIS template cannot carry", () => {
     expect(conf.productName).not.toMatch(/['"]/);
   });
+
+  // A book is styled by stylesheets injected inline into its frame: the
+  // book's own, epub.js's, and the reader's. The policy allows that with
+  // 'unsafe-inline' -- but the packaged build appends a nonce to style-src
+  // for the inline splash style, and a nonce makes browsers ignore
+  // 'unsafe-inline' altogether. Every book then rendered as a bare white
+  // box in the installed app, while dev (no nonce) looked fine. Tauri's own
+  // knob leaves style-src as written; this keeps it from being lost again.
+  it("leaves style-src alone so inline stylesheets in a book's frame still apply", () => {
+    expect(conf.app.security.csp).toContain("style-src 'self' 'unsafe-inline'");
+    expect(conf.app.security.dangerousDisableAssetCspModification).toContain("style-src");
+  });
 });
