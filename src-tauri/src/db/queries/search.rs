@@ -35,6 +35,15 @@ use rusqlite::Connection;
 /// `-word`) has no left-hand side to attach to and is simply dropped rather
 /// than emitted as invalid syntax.
 pub(crate) fn build_match_expr(query: &str) -> String {
+    build_match_expr_with(query, true)
+}
+
+/// `build_match_expr` with the prefix expansion under the caller's control.
+/// With `prefix` false a bare word is matched whole: `son` finds "son" (and,
+/// through the stemmer, "sons") but no longer "song" or "Sondern". Quoted
+/// phrases were always exact and are unaffected.
+pub(crate) fn build_match_expr_with(query: &str, prefix: bool) -> String {
+    let star = if prefix { "*" } else { "" };
     let mut out: Vec<String> = Vec::new();
     let mut chars = query.chars().peekable();
     let mut negate_next = false;
@@ -94,7 +103,7 @@ pub(crate) fn build_match_expr(query: &str) -> String {
                 };
                 if !word.is_empty() {
                     let escaped = word.replace('"', "\"\"");
-                    push_term(&mut out, format!("\"{escaped}\"*"), negate);
+                    push_term(&mut out, format!("\"{escaped}\"{star}"), negate);
                 }
                 negate_next = false;
             }
@@ -109,7 +118,14 @@ pub(crate) fn build_match_expr(query: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{build_match_expr, escape_snippet};
+    use super::{build_match_expr, build_match_expr_with, escape_snippet};
+
+    #[test]
+    fn whole_words_drop_the_prefix_star_but_keep_phrases_and_operators() {
+        assert_eq!(build_match_expr_with("son", false), "\"son\"");
+        assert_eq!(build_match_expr_with("love -hate", false), "\"love\" NOT \"hate\"");
+        assert_eq!(build_match_expr_with("\"in the beginning\" light", false), "\"in the beginning\" \"light\"");
+    }
 
     /// A snippet is written into the page as HTML, so whatever someone typed
     /// has to arrive escaped -- while the match markers, which the page turns
@@ -196,57 +212,106 @@ pub struct VerseSearchScope {
     pub testament: Option<String>,
 }
 
+/// How the Scripture and commentary searches match and order.
+#[derive(Default, Clone, Copy)]
+pub struct SearchOptions {
+    /// Match each bare word whole rather than as a prefix (see
+    /// `build_match_expr_with`).
+    pub whole_words: bool,
+    /// Return hits in Bible order (book, chapter, verse) rather than by
+    /// bm25 relevance -- what a concordance reader expects when the list is
+    /// long and every hit is as good as the next.
+    pub passage_order: bool,
+}
+
+/// One tab's worth of results, with the number of rows the query matched in
+/// all. `total` is only counted when the page came back full: a page shorter
+/// than `limit` is already the whole answer, and the count costs a second
+/// pass over the index.
+pub struct SearchPage {
+    pub results: Vec<SearchResult>,
+    pub total: i64,
+}
+
+/// The `WHERE` fragment that narrows a Scripture or commentary search by
+/// book or testament, and the values to bind for it, in order. Both
+/// searches carry a `book_id` on the row and reach the testament through
+/// `books`, so the same fragment serves both once the alias is supplied.
+fn scope_sql(scope: &VerseSearchScope, alias: &str) -> (String, Vec<Box<dyn rusqlite::ToSql>>) {
+    let mut sql = String::new();
+    let mut params: Vec<Box<dyn rusqlite::ToSql>> = Vec::new();
+    if let Some(book_id) = scope.book_id {
+        sql.push_str(&format!(" AND {alias}.book_id = ?"));
+        params.push(Box::new(book_id));
+    }
+    if let Some(testament) = scope.testament.clone() {
+        sql.push_str(" AND b.testament = ?");
+        params.push(Box::new(testament));
+    }
+    (sql, params)
+}
+
+fn count_matches(conn: &Connection, sql: &str, params: &[&dyn rusqlite::ToSql]) -> anyhow::Result<i64> {
+    Ok(conn.query_row(sql, params, |r| r.get::<_, i64>(0))?)
+}
+
 pub fn search_verses(
     conn: &Connection,
     query: &str,
     translation_ids: &[i64],
     scope: &VerseSearchScope,
+    options: SearchOptions,
     limit: i64,
-) -> anyhow::Result<Vec<SearchResult>> {
+) -> anyhow::Result<SearchPage> {
     if query.trim().is_empty() || translation_ids.is_empty() {
-        return Ok(vec![]);
+        return Ok(SearchPage { results: vec![], total: 0 });
     }
-    let match_expr = build_match_expr(query);
+    let match_expr = build_match_expr_with(query, !options.whole_words);
+    if match_expr.is_empty() {
+        return Ok(SearchPage { results: vec![], total: 0 });
+    }
     let placeholders = translation_ids
         .iter()
         .map(|_| "?")
         .collect::<Vec<_>>()
         .join(",");
-    let mut scope_sql = String::new();
-    if scope.book_id.is_some() {
-        scope_sql.push_str(" AND v.book_id = ?");
-    }
-    if scope.testament.is_some() {
-        scope_sql.push_str(" AND b.testament = ?");
-    }
-    let needs_books_join = scope.testament.is_some();
+    let (scope_sql, scope_params) = scope_sql(scope, "v");
+    // CROSS JOIN, deliberately: it tells SQLite to keep this join order, so
+    // the full-text index always drives. Left to itself the planner, given a
+    // single translation to filter on, walked that translation's verses and
+    // probed the index once per row -- fourteen seconds for a word like
+    // "love", against eighteen milliseconds when the index leads.
+    let from = format!(
+        "FROM verses_fts
+         CROSS JOIN verses v ON v.id = verses_fts.rowid
+         JOIN translations t ON t.id = v.translation_id
+         {}
+         WHERE verses_fts MATCH ?1 AND v.translation_id IN ({placeholders}){scope_sql}",
+        if scope.testament.is_some() { "JOIN books b ON b.id = v.book_id" } else { "" },
+    );
+    let order = if options.passage_order {
+        "v.book_id, v.chapter, v.verse, t.id"
+    } else {
+        "bm25(verses_fts)"
+    };
     let sql = format!(
         "SELECT v.id, v.book_id, v.chapter, v.verse, t.code,
                 snippet(verses_fts, 0, '[', ']', '…', 10)
-         FROM verses_fts
-         JOIN verses v ON v.id = verses_fts.rowid
-         JOIN translations t ON t.id = v.translation_id
-         {}
-         WHERE verses_fts MATCH ?1 AND v.translation_id IN ({placeholders}){scope_sql}
-         ORDER BY bm25(verses_fts)
+         {from}
+         ORDER BY {order}
          LIMIT ?{}",
-        if needs_books_join { "JOIN books b ON b.id = v.book_id" } else { "" },
-        translation_ids.len() + 2 + scope.book_id.is_some() as usize + scope.testament.is_some() as usize
+        translation_ids.len() + 2 + scope_params.len()
     );
-    let mut stmt = conn.prepare(&sql)?;
     let mut bind_params: Vec<Box<dyn rusqlite::ToSql>> = vec![Box::new(match_expr)];
     for id in translation_ids {
         bind_params.push(Box::new(*id));
     }
-    if let Some(book_id) = scope.book_id {
-        bind_params.push(Box::new(book_id));
-    }
-    if let Some(testament) = scope.testament.clone() {
-        bind_params.push(Box::new(testament));
-    }
-    bind_params.push(Box::new(limit));
-    let param_refs: Vec<&dyn rusqlite::ToSql> = bind_params.iter().map(|b| b.as_ref()).collect();
+    bind_params.extend(scope_params);
+    let filter_refs: Vec<&dyn rusqlite::ToSql> = bind_params.iter().map(|b| b.as_ref()).collect();
+    let mut param_refs = filter_refs.clone();
+    param_refs.push(&limit);
 
+    let mut stmt = conn.prepare(&sql)?;
     let rows = stmt.query_map(param_refs.as_slice(), |r| {
         Ok(SearchResult {
             kind: "verse".to_string(),
@@ -258,40 +323,66 @@ pub fn search_verses(
             snippet: escape_snippet(&r.get::<_, String>(5)?),
         })
     })?;
-    Ok(rows.collect::<Result<Vec<_>, _>>()?)
+    let results = rows.collect::<Result<Vec<_>, _>>()?;
+    let total = if results.len() as i64 >= limit {
+        count_matches(conn, &format!("SELECT COUNT(*) {from}"), &filter_refs)?
+    } else {
+        results.len() as i64
+    };
+    Ok(SearchPage { results, total })
 }
 
 pub fn search_commentary(
     conn: &Connection,
     query: &str,
     source_ids: &[i64],
+    scope: &VerseSearchScope,
+    options: SearchOptions,
     limit: i64,
-) -> anyhow::Result<Vec<SearchResult>> {
+) -> anyhow::Result<SearchPage> {
     if query.trim().is_empty() || source_ids.is_empty() {
-        return Ok(vec![]);
+        return Ok(SearchPage { results: vec![], total: 0 });
     }
-    let match_expr = build_match_expr(query);
+    let match_expr = build_match_expr_with(query, !options.whole_words);
+    if match_expr.is_empty() {
+        return Ok(SearchPage { results: vec![], total: 0 });
+    }
     let placeholders = source_ids.iter().map(|_| "?").collect::<Vec<_>>().join(",");
+    let (scope_sql, scope_params) = scope_sql(scope, "ce");
+    // CROSS JOIN for the same reason as in `search_verses`: one commentary
+    // chosen must not turn into a walk of that commentary's every entry.
+    let from = format!(
+        "FROM commentary_fts
+         CROSS JOIN commentary_entries ce ON ce.id = commentary_fts.rowid
+         JOIN commentary_sections sec ON sec.id = ce.section_id
+         JOIN commentary_sources cs2 ON cs2.id = sec.commentary_source_id
+         {}
+         WHERE commentary_fts MATCH ?1 AND sec.commentary_source_id IN ({placeholders}){scope_sql}",
+        if scope.testament.is_some() { "JOIN books b ON b.id = ce.book_id" } else { "" },
+    );
+    let order = if options.passage_order {
+        "ce.book_id, ce.chapter, ce.verse_start, cs2.id"
+    } else {
+        "bm25(commentary_fts)"
+    };
     let sql = format!(
         "SELECT ce.id, ce.book_id, ce.chapter, ce.verse_start, cs2.title,
                 snippet(commentary_fts, 0, '[', ']', '…', 12)
-         FROM commentary_fts
-         JOIN commentary_entries ce ON ce.id = commentary_fts.rowid
-         JOIN commentary_sections sec ON sec.id = ce.section_id
-         JOIN commentary_sources cs2 ON cs2.id = sec.commentary_source_id
-         WHERE commentary_fts MATCH ?1 AND sec.commentary_source_id IN ({placeholders})
-         ORDER BY bm25(commentary_fts)
+         {from}
+         ORDER BY {order}
          LIMIT ?{}",
-        source_ids.len() + 2
+        source_ids.len() + 2 + scope_params.len()
     );
-    let mut stmt = conn.prepare(&sql)?;
     let mut bind_params: Vec<Box<dyn rusqlite::ToSql>> = vec![Box::new(match_expr)];
     for id in source_ids {
         bind_params.push(Box::new(*id));
     }
-    bind_params.push(Box::new(limit));
-    let param_refs: Vec<&dyn rusqlite::ToSql> = bind_params.iter().map(|b| b.as_ref()).collect();
+    bind_params.extend(scope_params);
+    let filter_refs: Vec<&dyn rusqlite::ToSql> = bind_params.iter().map(|b| b.as_ref()).collect();
+    let mut param_refs = filter_refs.clone();
+    param_refs.push(&limit);
 
+    let mut stmt = conn.prepare(&sql)?;
     let rows = stmt.query_map(param_refs.as_slice(), |r| {
         Ok(SearchResult {
             kind: "commentary".to_string(),
@@ -303,7 +394,13 @@ pub fn search_commentary(
             snippet: escape_snippet(&r.get::<_, String>(5)?),
         })
     })?;
-    Ok(rows.collect::<Result<Vec<_>, _>>()?)
+    let results = rows.collect::<Result<Vec<_>, _>>()?;
+    let total = if results.len() as i64 >= limit {
+        count_matches(conn, &format!("SELECT COUNT(*) {from}"), &filter_refs)?
+    } else {
+        results.len() as i64
+    };
+    Ok(SearchPage { results, total })
 }
 
 /// A snippet, ready to be written into the page as HTML.
@@ -332,11 +429,14 @@ pub(crate) fn escape_snippet(snippet: &str) -> String {
 /// up together in the "Notes" search tab. The FTS tables still index
 /// soft-deleted rows (external content, unchanged triggers), so each branch
 /// joins its base table and filters on `deleted_at` there.
-pub fn search_notes(conn: &Connection, query: &str, limit: i64) -> anyhow::Result<Vec<SearchResult>> {
+pub fn search_notes(conn: &Connection, query: &str, options: SearchOptions, limit: i64) -> anyhow::Result<Vec<SearchResult>> {
     if query.trim().is_empty() {
         return Ok(vec![]);
     }
-    let match_expr = build_match_expr(query);
+    let match_expr = build_match_expr_with(query, !options.whole_words);
+    if match_expr.is_empty() {
+        return Ok(vec![]);
+    }
 
     // Each branch selects its own bm25 rank alongside the row, so the two
     // can be merged on relevance rather than concatenated.
@@ -439,11 +539,19 @@ pub fn search_notes(conn: &Connection, query: &str, limit: i64) -> anyhow::Resul
 /// Prayer journal entries: at most one linked passage per entry (a direct
 /// column, not a link table -- see USER_MIGRATION_0002's schema comment),
 /// so this is a plain left-hand reference rather than a subquery.
-pub fn search_prayer_entries(conn: &Connection, query: &str, limit: i64) -> anyhow::Result<Vec<SearchResult>> {
+pub fn search_prayer_entries(
+    conn: &Connection,
+    query: &str,
+    options: SearchOptions,
+    limit: i64,
+) -> anyhow::Result<Vec<SearchResult>> {
     if query.trim().is_empty() {
         return Ok(vec![]);
     }
-    let match_expr = build_match_expr(query);
+    let match_expr = build_match_expr_with(query, !options.whole_words);
+    if match_expr.is_empty() {
+        return Ok(vec![]);
+    }
     let mut stmt = conn.prepare(&format!(
         "SELECT pe.id, pe.entry_date, pe.book_id, pe.chapter, pe.verse_start,
                 snippet(prayer_entries_fts, -1, '[', ']', '…', 12)

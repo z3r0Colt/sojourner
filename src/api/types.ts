@@ -199,7 +199,10 @@ export interface SearchResult {
 
 export interface SearchResults {
   verses: SearchResult[];
+  /** How many verses matched in all; `verses` holds at most the limit asked for. */
+  verse_total: number;
   commentary: SearchResult[];
+  commentary_total: number;
   notes: SearchResult[];
   prayers: SearchResult[];
 }

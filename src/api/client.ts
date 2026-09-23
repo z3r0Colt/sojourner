@@ -220,7 +220,7 @@ export const api = {
     query: string,
     translationIds: number[],
     commentarySourceIds: number[],
-    scope: { bookId?: number; testament?: "OT" | "NT" } = {},
+    scope: { bookId?: number; testament?: "OT" | "NT"; wholeWords?: boolean; passageOrder?: boolean } = {},
     limit = 50,
   ) =>
     invoke<SearchResults>("search", {
@@ -229,6 +229,8 @@ export const api = {
       commentarySourceIds,
       bookId: scope.bookId ?? null,
       testament: scope.testament ?? null,
+      wholeWords: scope.wholeWords ?? false,
+      passageOrder: scope.passageOrder ?? false,
       limit,
     }),
   recordSearchQuery: (query: string) => invoke<void>("record_search_query", { query }),

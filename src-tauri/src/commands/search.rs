@@ -1,6 +1,6 @@
 use crate::commands::clamp_limit;
 use crate::db::queries::search as search_queries;
-use crate::db::queries::search::VerseSearchScope;
+use crate::db::queries::search::{SearchOptions, VerseSearchScope};
 use crate::db::DbState;
 use crate::error::AppResult;
 use crate::models::SearchResults;
@@ -10,6 +10,11 @@ use tauri::{AppHandle, Manager, State};
 /// every verse of every installed translation and the whole of any imported
 /// commentary. See the note at the top of `commands::backup` for why this
 /// takes an `AppHandle` rather than the state it needs.
+///
+/// `translation_ids` and `commentary_source_ids` are whatever the reader
+/// chose to look in -- one translation, or all of them; `book_id` and
+/// `testament` narrow both Scripture and commentary; `whole_words` and
+/// `passage_order` are explained on `SearchOptions`.
 #[tauri::command]
 #[allow(clippy::too_many_arguments)]
 pub async fn search(
@@ -19,6 +24,8 @@ pub async fn search(
     commentary_source_ids: Vec<i64>,
     book_id: Option<i64>,
     testament: Option<String>,
+    whole_words: Option<bool>,
+    passage_order: Option<bool>,
     limit: i64,
 ) -> AppResult<SearchResults> {
     tauri::async_runtime::spawn_blocking(move || -> AppResult<SearchResults> {
@@ -28,11 +35,23 @@ pub async fn search(
         // `LIMIT ?`, so an unbounded one here is four unbounded queries.
         let limit = clamp_limit(limit);
         let scope = VerseSearchScope { book_id, testament };
-        let verses = search_queries::search_verses(&conn, &query, &translation_ids, &scope, limit)?;
-        let commentary = search_queries::search_commentary(&conn, &query, &commentary_source_ids, limit)?;
-        let notes = search_queries::search_notes(&conn, &query, limit)?;
-        let prayers = search_queries::search_prayer_entries(&conn, &query, limit)?;
-        Ok(SearchResults { verses, commentary, notes, prayers })
+        let options = SearchOptions {
+            whole_words: whole_words.unwrap_or(false),
+            passage_order: passage_order.unwrap_or(false),
+        };
+        let verses = search_queries::search_verses(&conn, &query, &translation_ids, &scope, options, limit)?;
+        let commentary =
+            search_queries::search_commentary(&conn, &query, &commentary_source_ids, &scope, options, limit)?;
+        let notes = search_queries::search_notes(&conn, &query, options, limit)?;
+        let prayers = search_queries::search_prayer_entries(&conn, &query, options, limit)?;
+        Ok(SearchResults {
+            verses: verses.results,
+            verse_total: verses.total,
+            commentary: commentary.results,
+            commentary_total: commentary.total,
+            notes,
+            prayers,
+        })
     })
     .await
     .map_err(|e| anyhow::anyhow!("the search did not finish: {e}"))?

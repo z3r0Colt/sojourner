@@ -560,7 +560,10 @@ pub struct WestminsterCommentaryEntry {
 #[derive(Debug, Clone, Serialize)]
 pub struct SearchResults {
     pub verses: Vec<SearchResult>,
+    /// How many verses matched in all, `verses` being at most `limit` of them.
+    pub verse_total: i64,
     pub commentary: Vec<SearchResult>,
+    pub commentary_total: i64,
     pub notes: Vec<SearchResult>,
     pub prayers: Vec<SearchResult>,
 }

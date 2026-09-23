@@ -50,6 +50,8 @@ export const EPUB_ZOOM_STEP = 10;
  * own line. See `lib/clipboard.ts`. */
 export type CopyFormat = "text" | "text-ref" | "ref-text" | "markdown";
 
+export type SearchTranslation = "all" | "reader" | number;
+
 /**
  * Global, window-level preferences (local storage). Anything about *what*
  * a pane shows -- translation, chapter, selected verse, paragraph mode,
@@ -98,6 +100,21 @@ interface UiState {
   epubZoom: number;
   resourcesKindTab: ResourceKindTab;
   resourcesGroupBy: ResourceGroupBy;
+  /** Which translation the search box looks in: "all", "reader" for
+   * whatever the Bible pane is showing, or one translation's id. Kept
+   * between searches, because a reader who searches the KJV searches the
+   * KJV tomorrow too. */
+  searchTranslation: SearchTranslation;
+  /** Which commentary the search box looks in: "all" or one source's id. */
+  searchCommentarySource: "all" | number;
+  /** Match bare words whole instead of as prefixes ("son" no longer finds "song"). */
+  searchWholeWords: boolean;
+  /** List Scripture and commentary hits in Bible order instead of by relevance. */
+  searchPassageOrder: boolean;
+  setSearchTranslation: (t: SearchTranslation) => void;
+  setSearchCommentarySource: (s: "all" | number) => void;
+  setSearchWholeWords: (on: boolean) => void;
+  setSearchPassageOrder: (on: boolean) => void;
   setEpubZoom: (percent: number) => void;
   setResourcesKindTab: (tab: ResourceKindTab) => void;
   setResourcesGroupBy: (by: ResourceGroupBy) => void;
@@ -165,6 +182,28 @@ export const useUiStore = create<UiState>((set) => ({
   epubZoom: typeof stored.epubZoom === "number" ? stored.epubZoom : 100,
   resourcesKindTab: stored.resourcesKindTab ?? "all",
   resourcesGroupBy: stored.resourcesGroupBy ?? "author",
+  searchTranslation:
+    stored.searchTranslation === "all" || typeof stored.searchTranslation === "number" ? stored.searchTranslation : "reader",
+  searchCommentarySource: typeof stored.searchCommentarySource === "number" ? stored.searchCommentarySource : "all",
+  searchWholeWords: stored.searchWholeWords ?? false,
+  searchPassageOrder: stored.searchPassageOrder ?? false,
+
+  setSearchTranslation: (searchTranslation) => {
+    persist({ searchTranslation });
+    set({ searchTranslation });
+  },
+  setSearchCommentarySource: (searchCommentarySource) => {
+    persist({ searchCommentarySource });
+    set({ searchCommentarySource });
+  },
+  setSearchWholeWords: (searchWholeWords) => {
+    persist({ searchWholeWords });
+    set({ searchWholeWords });
+  },
+  setSearchPassageOrder: (searchPassageOrder) => {
+    persist({ searchPassageOrder });
+    set({ searchPassageOrder });
+  },
 
   setEpubZoom: (percent) => {
     const epubZoom = Math.max(EPUB_ZOOM_MIN, Math.min(EPUB_ZOOM_MAX, Math.round(percent)));

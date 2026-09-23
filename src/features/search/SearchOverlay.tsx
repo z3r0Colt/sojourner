@@ -13,15 +13,20 @@ import {
   useDeleteSearchHistory,
 } from "../../api/queries";
 import { openContent } from "../../workspace/openContent";
+import { useUiStore } from "../../state/uiStore";
+import { useReaderTranslationId } from "../../state/workspaceStore";
 import { Modal } from "../../components/ui/Modal";
 import { Tabs } from "../../components/ui/Tabs";
 import { Button } from "../../components/ui/Button";
 import { Kbd } from "../../components/ui/Page";
 import { LoadingState } from "../../components/ui/EmptyState";
-import { cx, inputClass, selectSmClass } from "../../components/ui/classes";
+import { checkboxClass, cx, inputClass, selectSmClass } from "../../components/ui/classes";
 import { htmlToText } from "../sermons/excerpt";
 
 type Tab = "verses" | "commentary" | "notes" | "prayer" | "resources" | "westminster" | "encyclopedia" | "sermons" | "illustrations";
+
+/** How many results one page asks for; the last is the server's cap. */
+const PAGE_SIZES = [50, 200, 500];
 
 interface Row {
   key: string;
@@ -47,6 +52,17 @@ export function SearchOverlay({
   const [selected, setSelected] = useState(0);
   const [scopeBookId, setScopeBookId] = useState<number | "">("");
   const [scopeTestament, setScopeTestament] = useState<"" | "OT" | "NT">("");
+  // Fifty at first; "Show more" widens the page, up to the server's cap.
+  const [limit, setLimit] = useState(PAGE_SIZES[0]);
+  const searchTranslation = useUiStore((s) => s.searchTranslation);
+  const setSearchTranslation = useUiStore((s) => s.setSearchTranslation);
+  const searchCommentarySource = useUiStore((s) => s.searchCommentarySource);
+  const setSearchCommentarySource = useUiStore((s) => s.setSearchCommentarySource);
+  const wholeWords = useUiStore((s) => s.searchWholeWords);
+  const setWholeWords = useUiStore((s) => s.setSearchWholeWords);
+  const passageOrder = useUiStore((s) => s.searchPassageOrder);
+  const setPassageOrder = useUiStore((s) => s.setSearchPassageOrder);
+  const readerTranslationId = useReaderTranslationId();
   const { data: translations } = useTranslations();
   const { data: sources } = useCommentarySources();
   const { data: books } = useBooks();
@@ -61,23 +77,45 @@ export function SearchOverlay({
     return () => clearTimeout(t);
   }, [query]);
 
-  const translationIds = useMemo(() => translations?.map((t) => t.id) ?? [], [translations]);
-  const sourceIds = useMemo(() => sources?.map((s) => s.id) ?? [], [sources]);
+  // The reader's own translation is the one to search unless they say
+  // otherwise -- searching every installed translation at once returned the
+  // same verse six times over. A remembered choice that no longer exists
+  // (the translation was removed) falls back to all of them rather than to
+  // nothing.
+  const readerTranslation = translations?.find((t) => t.id === readerTranslationId);
+  const translationIds = useMemo(() => {
+    const all = translations?.map((t) => t.id) ?? [];
+    if (searchTranslation === "all") return all;
+    const wanted = searchTranslation === "reader" ? readerTranslationId : searchTranslation;
+    return wanted != null && all.includes(wanted) ? [wanted] : all;
+  }, [translations, searchTranslation, readerTranslationId]);
+  const sourceIds = useMemo(() => {
+    const all = sources?.map((s) => s.id) ?? [];
+    if (searchCommentarySource === "all") return all;
+    return all.includes(searchCommentarySource) ? [searchCommentarySource] : all;
+  }, [sources, searchCommentarySource]);
   const active = debounced.trim().length > 1;
   const scope = useMemo(
     () => ({
       bookId: scopeBookId === "" ? undefined : scopeBookId,
       testament: scopeTestament === "" ? undefined : scopeTestament,
+      wholeWords,
+      passageOrder,
     }),
-    [scopeBookId, scopeTestament],
+    [scopeBookId, scopeTestament, wholeWords, passageOrder],
   );
   const isSaved = savedSearches?.includes(debounced.trim()) ?? false;
 
   const { data: results, isFetching, error } = useQuery({
-    queryKey: ["search", debounced, translationIds, sourceIds, scope],
-    queryFn: () => api.search(debounced, translationIds, sourceIds, scope, 50),
+    queryKey: ["search", debounced, translationIds, sourceIds, scope, limit],
+    queryFn: () => api.search(debounced, translationIds, sourceIds, scope, limit),
     enabled: active && translationIds.length > 0,
+    // Keep the shorter page on screen while the longer one loads, so "Show
+    // more" extends the list instead of blanking it.
+    placeholderData: (previous) => previous,
   });
+  // A wider page is asked for once; the next query starts at fifty again.
+  useEffect(() => setLimit(PAGE_SIZES[0]), [debounced, translationIds, sourceIds, scope]);
   const { data: resourceResults, isFetching: resourcesFetching, error: resourcesError } = useQuery({
     queryKey: ["resourceSearch", debounced],
     queryFn: () => api.searchResources(debounced, 50),
@@ -231,9 +269,16 @@ export function SearchOverlay({
   const activeError = tabError[tab];
 
   const count = (n: number | undefined) => (active && n != null ? n : undefined);
+  // Scripture and commentary know how many matched beyond the page shown;
+  // the other tabs return at most one page and say nothing further.
+  const total = tab === "verses" ? results?.verse_total : tab === "commentary" ? results?.commentary_total : undefined;
+  const nextPageSize = PAGE_SIZES.find((n) => n > limit);
+  const canShowMore = total != null && total > rows.length && nextPageSize != null;
+  const showsFilters = tab === "verses" || tab === "commentary" || tab === "notes" || tab === "prayer";
+  const showsScope = tab === "verses" || tab === "commentary";
   const tabs = [
-    { key: "verses" as const, label: "Scripture", count: count(results?.verses.length) },
-    { key: "commentary" as const, label: "Commentary", count: count(results?.commentary.length) },
+    { key: "verses" as const, label: "Scripture", count: count(results?.verse_total) },
+    { key: "commentary" as const, label: "Commentary", count: count(results?.commentary_total) },
     { key: "notes" as const, label: "Notes", count: count(results?.notes.length) },
     { key: "prayer" as const, label: "Prayer", count: count(results?.prayers.length) },
     { key: "resources" as const, label: "Resources", count: count(resourceResults?.length) },
@@ -309,31 +354,98 @@ export function SearchOverlay({
           </div>
         )}
       </div>
-      <div className="flex items-center gap-2 border-b border-line px-3">
-        <Tabs size="sm" bare className="min-w-0 flex-1 overflow-x-auto" items={tabs} value={tab} onChange={setTab} />
+      {/* Nine tabs will not fit one row of the box; they wrap onto a second
+          rather than scroll, so every tab is always in view and there is no
+          scrollbar under them. */}
+      <div className="flex items-start gap-2 border-b border-line px-3">
+        <Tabs size="sm" bare className="min-w-0 flex-1 flex-wrap" items={tabs} value={tab} onChange={setTab} />
         {anyFetching && <LoadingState className="shrink-0 py-1" label="Searching…" />}
       </div>
-      {tab === "verses" && (
-        <div className="flex items-center gap-2 border-b border-line px-3 py-1.5 text-xs text-ink-3">
-          <span>Limit to</span>
-          <select value={scopeTestament} onChange={(e) => setScopeTestament(e.target.value as "" | "OT" | "NT")} className={selectSmClass} aria-label="Testament">
-            <option value="">Whole Bible</option>
-            <option value="OT">Old Testament</option>
-            <option value="NT">New Testament</option>
-          </select>
-          <select
-            value={scopeBookId}
-            onChange={(e) => setScopeBookId(e.target.value === "" ? "" : Number(e.target.value))}
-            className={selectSmClass}
-            aria-label="Book"
-          >
-            <option value="">Any book</option>
-            {books?.map((b) => (
-              <option key={b.id} value={b.id}>
-                {b.name}
-              </option>
-            ))}
-          </select>
+      {showsFilters && (
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 border-b border-line px-3 py-1.5 text-xs text-ink-3">
+          {tab === "verses" && (
+            <select
+              value={String(searchTranslation)}
+              onChange={(e) => {
+                const v = e.target.value;
+                setSearchTranslation(v === "all" || v === "reader" ? v : Number(v));
+              }}
+              className={selectSmClass}
+              aria-label="Translation"
+            >
+              {readerTranslation && <option value="reader">Current translation ({readerTranslation.code})</option>}
+              <option value="all">All translations</option>
+              {translations?.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.code} · {t.name}
+                </option>
+              ))}
+            </select>
+          )}
+          {tab === "commentary" && (
+            <select
+              value={String(searchCommentarySource)}
+              onChange={(e) => setSearchCommentarySource(e.target.value === "all" ? "all" : Number(e.target.value))}
+              className={selectSmClass}
+              aria-label="Commentary"
+            >
+              <option value="all">All commentaries</option>
+              {sources?.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.title}
+                </option>
+              ))}
+            </select>
+          )}
+          {showsScope && (
+            <>
+              <span>in</span>
+              <select
+                value={scopeTestament}
+                onChange={(e) => {
+                  const testament = e.target.value as "" | "OT" | "NT";
+                  setScopeTestament(testament);
+                  // A book of the other testament cannot stay chosen.
+                  const book = books?.find((b) => b.id === scopeBookId);
+                  if (testament !== "" && book && book.testament !== testament) setScopeBookId("");
+                }}
+                className={selectSmClass}
+                aria-label="Testament"
+              >
+                <option value="">Whole Bible</option>
+                <option value="OT">Old Testament</option>
+                <option value="NT">New Testament</option>
+              </select>
+              <select
+                value={scopeBookId}
+                onChange={(e) => setScopeBookId(e.target.value === "" ? "" : Number(e.target.value))}
+                className={selectSmClass}
+                aria-label="Book"
+              >
+                <option value="">Any book</option>
+                {books
+                  ?.filter((b) => scopeTestament === "" || b.testament === scopeTestament)
+                  .map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.name}
+                    </option>
+                  ))}
+              </select>
+              <select
+                value={passageOrder ? "passage" : "relevance"}
+                onChange={(e) => setPassageOrder(e.target.value === "passage")}
+                className={selectSmClass}
+                aria-label="Sort order"
+              >
+                <option value="relevance">Best match first</option>
+                <option value="passage">Bible order</option>
+              </select>
+            </>
+          )}
+          <label className="inline-flex items-center gap-1.5">
+            <input type="checkbox" checked={wholeWords} onChange={(e) => setWholeWords(e.target.checked)} className={checkboxClass} />
+            Whole words
+          </label>
         </div>
       )}
       <div className="min-h-0 flex-1 overflow-y-auto p-2">
@@ -364,6 +476,20 @@ export function SearchOverlay({
             </li>
           ))}
         </ul>
+        {active && total != null && total > rows.length && (
+          <div className="flex items-center justify-between gap-2 px-3 py-2 text-xs text-ink-3">
+            <span>
+              Showing {rows.length} of {total}
+            </span>
+            {canShowMore ? (
+              <Button size="sm" variant="ghost" onClick={() => setLimit(nextPageSize)} disabled={isFetching}>
+                Show more
+              </Button>
+            ) : (
+              <span>Narrow the search to see the rest.</span>
+            )}
+          </div>
+        )}
       </div>
       <div className="flex items-center gap-2 border-t border-line px-3 py-1.5 text-xs text-ink-3">
         <Kbd>↑↓</Kbd> choose <Kbd>Enter</Kbd> open <Kbd>Esc</Kbd> close

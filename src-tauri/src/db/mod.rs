@@ -548,12 +548,12 @@ mod tests {
         }
 
         // And each index now answers for the words rather than the markup.
-        assert_eq!(search::search_notes(&conn, "oath", 10).unwrap().len(), 1);
-        assert_eq!(search::search_notes(&conn, "without", 10).unwrap().len(), 1, "a word formatting had split");
-        assert_eq!(search::search_notes(&conn, "Nicodemus", 10).unwrap().len(), 1, "chapter notes too");
-        assert!(search::search_notes(&conn, "strong", 10).unwrap().is_empty(), "no longer by a tag name");
-        assert!(search::search_notes(&conn, "href", 10).unwrap().is_empty(), "nor by an attribute");
-        let hit = &search::search_notes(&conn, "sworn", 10).unwrap()[0];
+        assert_eq!(search::search_notes(&conn, "oath", Default::default(), 10).unwrap().len(), 1);
+        assert_eq!(search::search_notes(&conn, "without", Default::default(), 10).unwrap().len(), 1, "a word formatting had split");
+        assert_eq!(search::search_notes(&conn, "Nicodemus", Default::default(), 10).unwrap().len(), 1, "chapter notes too");
+        assert!(search::search_notes(&conn, "strong", Default::default(), 10).unwrap().is_empty(), "no longer by a tag name");
+        assert!(search::search_notes(&conn, "href", Default::default(), 10).unwrap().is_empty(), "nor by an attribute");
+        let hit = &search::search_notes(&conn, "sworn", Default::default(), 10).unwrap()[0];
         assert!(!hit.snippet.contains('<'), "the snippet reads as prose: {}", hit.snippet);
 
         assert_eq!(sermons::search(&conn, "unchangeable", 10).unwrap().len(), 1);
@@ -603,17 +603,17 @@ mod tests {
         )
         .unwrap();
 
-        assert_eq!(search::search_notes(&conn, "oath", 10).unwrap().len(), 1, "found by its words");
-        assert!(search::search_notes(&conn, "strong", 10).unwrap().is_empty(), "not by a tag name");
-        assert!(search::search_notes(&conn, "href", 10).unwrap().is_empty(), "not by an attribute");
-        let hit = &search::search_notes(&conn, "sworn", 10).unwrap()[0];
+        assert_eq!(search::search_notes(&conn, "oath", Default::default(), 10).unwrap().len(), 1, "found by its words");
+        assert!(search::search_notes(&conn, "strong", Default::default(), 10).unwrap().is_empty(), "not by a tag name");
+        assert!(search::search_notes(&conn, "href", Default::default(), 10).unwrap().is_empty(), "not by an attribute");
+        let hit = &search::search_notes(&conn, "sworn", Default::default(), 10).unwrap()[0];
         assert!(!hit.snippet.contains('<'), "the snippet is prose, not markup: {}", hit.snippet);
         assert!(hit.snippet.contains("[sworn]"), "the match is still marked: {}", hit.snippet);
 
         // A word split by formatting is one word.
         notes::update(&conn, note.id, "<p>a righteousness <em>with</em>out the law</p>".into(), None).unwrap();
-        assert_eq!(search::search_notes(&conn, "without", 10).unwrap().len(), 1, "reindexed, and the word is whole");
-        assert!(search::search_notes(&conn, "oath", 10).unwrap().is_empty(), "the old text is gone");
+        assert_eq!(search::search_notes(&conn, "without", Default::default(), 10).unwrap().len(), 1, "reindexed, and the word is whole");
+        assert!(search::search_notes(&conn, "oath", Default::default(), 10).unwrap().is_empty(), "the old text is gone");
 
         // The same holds for a manuscript, whose title is plain text already.
         let sermon = sermons::create(
@@ -747,7 +747,7 @@ mod tests {
         }
         let chapter_note = notes::create_chapter_note(&conn, 43, 3, "<p>perseverance</p>".into(), None).unwrap();
 
-        let results = search::search_notes(&conn, "perseverance", limit).unwrap();
+        let results = search::search_notes(&conn, "perseverance", Default::default(), limit).unwrap();
         assert_eq!(results.len() as i64, limit, "the limit is still honoured");
         assert!(
             results.iter().any(|r| r.source_label == "Chapter Note" && r.entry_id == chapter_note.id),
@@ -762,7 +762,7 @@ mod tests {
 
         // With only a handful of matches on either side, everything fits and
         // both kinds are present regardless of ordering.
-        let few = search::search_notes(&conn, "perseverance", 5).unwrap();
+        let few = search::search_notes(&conn, "perseverance", Default::default(), 5).unwrap();
         assert_eq!(few.len(), 5);
         assert!(few.iter().any(|r| r.source_label == "Chapter Note"));
 
@@ -789,13 +789,13 @@ mod tests {
         let note = notes::create(&conn, 43, 3, 16, 16, "God so loved the world".into(), None, None).unwrap();
         notes::add_tag(&conn, note.id, "gospel".into()).unwrap();
         assert_eq!(notes::list_for_chapter(&conn, 43, 3).unwrap().len(), 1);
-        assert_eq!(search::search_notes(&conn, "loved", 10).unwrap().len(), 1);
+        assert_eq!(search::search_notes(&conn, "loved", Default::default(), 10).unwrap().len(), 1);
 
         notes::delete(&conn, note.id).unwrap();
 
         assert!(notes::list_for_chapter(&conn, 43, 3).unwrap().is_empty(), "list_for_chapter");
         assert!(notes::list_all(&conn).unwrap().is_empty(), "list_all (count)");
-        assert!(search::search_notes(&conn, "loved", 10).unwrap().is_empty(), "search");
+        assert!(search::search_notes(&conn, "loved", Default::default(), 10).unwrap().is_empty(), "search");
         assert!(notes::list_all_tags(&conn).unwrap().is_empty(), "tags of a deleted note");
         assert!(notes::list_all_tags_by_note(&conn).unwrap().is_empty(), "tags by note");
 
