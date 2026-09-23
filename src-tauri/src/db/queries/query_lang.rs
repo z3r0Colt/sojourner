@@ -66,6 +66,8 @@ pub struct Filters {
     pub testament: Option<String>,
     /// Upper-case translation codes.
     pub translations: Vec<String>,
+    /// `t:all`.
+    pub all_translations: bool,
     /// Lower-case fragments of commentary titles.
     pub commentaries: Vec<String>,
     /// "G26", "H2617" -- without leading zeros.
@@ -402,6 +404,8 @@ pub fn parse(query: &str, options: ParseOptions) -> ParsedQuery {
     let mut near: Option<u32> = None;
     let mut words_chip: Vec<String> = Vec::new();
     let mut not_chip: Vec<String> = Vec::new();
+    // Whether any word actually took an older spelling, for the chip.
+    let mut widened = false;
 
     let toks = tokenize(query);
 
@@ -517,6 +521,7 @@ pub fn parse(query: &str, options: ParseOptions) -> ParsedQuery {
                     if forms.is_empty() {
                         format!("{base}{star}")
                     } else {
+                        widened = true;
                         let mut alts = vec![format!("{base}{star}")];
                         alts.extend(forms.iter().map(|f| quote(f)));
                         q.mark_words.extend(forms);
@@ -555,7 +560,7 @@ pub fn parse(query: &str, options: ParseOptions) -> ParsedQuery {
     if !not_chip.is_empty() {
         chips.push(format!("not: {}", not_chip.join(", ")));
     }
-    if options.older_spellings && !q.fts.is_empty() {
+    if widened {
         chips.push("older spellings".into());
     }
     chips.append(&mut q.chips);
@@ -612,7 +617,11 @@ fn apply_filter(q: &mut ParsedQuery, key: &str, value: &str) {
         }
         "t" => {
             let codes: Vec<String> = value.split(',').map(|s| s.trim().to_uppercase()).filter(|s| !s.is_empty()).collect();
-            if !codes.is_empty() {
+            // `t:all` is every translation, which is what no t: means too.
+            if codes.iter().any(|c| c == "ALL") {
+                q.chips.push("all translations".into());
+                f.all_translations = true;
+            } else if !codes.is_empty() {
                 q.chips.push(codes.join(", "));
                 f.translations.extend(codes);
             }

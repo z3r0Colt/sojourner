@@ -146,7 +146,9 @@ export function SearchPanel({ query, onQueryChange, docked, onOpenVerse, onOpene
     return wanted != null && all.includes(wanted) ? [wanted] : all;
   }, [translations, searchTranslation, readerTranslationId]);
   const typedCodes = getToken(effective, "t")?.toUpperCase().split(",").filter(Boolean) ?? null;
-  const searchedIds = typedCodes ? (translations ?? []).filter((t) => typedCodes.includes(t.code.toUpperCase())).map((t) => t.id) : translationIds;
+  const searchedIds = typedCodes
+    ? (translations ?? []).filter((t) => typedCodes.includes("ALL") || typedCodes.includes(t.code.toUpperCase())).map((t) => t.id)
+    : translationIds;
   const olderSpellings = olderSpellingsPref && searchesOlderEnglish(translations, searchedIds);
   const sourceIds = useMemo(() => {
     const all = sources?.map((s) => s.id) ?? [];
@@ -408,7 +410,7 @@ export function SearchPanel({ query, onQueryChange, docked, onOpenVerse, onOpene
   // The scope dropdowns read and write `in:` in the box.
   const inToken = getToken(query, "in");
   const testamentValue = inToken?.toLowerCase() === "ot" ? "OT" : inToken?.toLowerCase() === "nt" ? "NT" : "";
-  const scopeBook = books?.find((b) => inToken != null && bookToken(b).toLowerCase() === inToken.toLowerCase());
+  const scopeBook = inToken != null && !inToken.includes(",") ? lookup.get(inToken.toLowerCase().replace(/[^a-z0-9]/g, "")) : undefined;
   const customScope = inToken != null && !testamentValue && !scopeBook;
 
   // The parsed-as chip: what the search understood, including the chapter
@@ -878,8 +880,10 @@ function ConcordanceLine({ row, selected, onHover, refLabel }: { row: Row; selec
       )}
     >
       <span className="truncate text-xs text-ink-3">{refLabel}</span>
-      <span className="truncate text-right text-ink-2" dir="ltr">
-        {tail(before, 60)}
+      {/* Right-to-left only so the ellipsis falls at the start and the
+          words nearest the match stay in view; the text itself stays LTR. */}
+      <span className="truncate text-right text-ink-2" style={{ direction: "rtl" }}>
+        <bdi dir="ltr">{tail(before, 80)}</bdi>
       </span>
       <mark className="rounded bg-accent-soft px-0.5 font-medium text-accent">{match}</mark>
       <span className="truncate text-ink-2">{head(after, 60)}</span>

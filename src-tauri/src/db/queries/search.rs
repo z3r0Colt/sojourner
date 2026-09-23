@@ -249,6 +249,10 @@ fn verse_conditions(q: &ParsedQuery, scope: &VerseSearchScope) -> (String, Vec<B
 /// The translations to search: those typed in the box (`t:kjv,geneva`) when
 /// there are any, else the ones chosen under it.
 fn resolve_translations(conn: &Connection, q: &ParsedQuery, chosen: &[i64]) -> anyhow::Result<Vec<i64>> {
+    if q.filters.all_translations {
+        let mut stmt = conn.prepare("SELECT id FROM translations ORDER BY id")?;
+        return Ok(stmt.query_map([], |r| r.get::<_, i64>(0))?.collect::<Result<Vec<_>, _>>()?);
+    }
     if q.filters.translations.is_empty() {
         return Ok(chosen.to_vec());
     }
