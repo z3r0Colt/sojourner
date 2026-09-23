@@ -13,6 +13,7 @@ import { SettingsView } from "../features/settings/SettingsView";
 import { SermonsView } from "../features/sermons/SermonsView";
 import { SermonPane } from "../features/sermons/SermonPane";
 import { IllustrationsView } from "../features/sermons/IllustrationsView";
+import { SearchPane } from "../features/search/SearchPane";
 import { CommentaryPane, ConfessionPane, CrossRefsPane, EncyclopediaForPassagePane, InterlinearPane, MetricalPane, MinePane } from "./panes/StudyPanes";
 import { HarmonyPane, HighlightsPane, MemoryPane, NotesPane, PlansPane, PrayerPane, ResourcesPane, TodayPane } from "./panes/PagePanes";
 
@@ -48,5 +49,6 @@ export const PANE_COMPONENTS: Record<PaneKind, ComponentType> = {
   sermons: SermonsView,
   sermon: SermonPane,
   illustrations: IllustrationsView,
+  search: SearchPane,
   settings: SettingsView,
 };

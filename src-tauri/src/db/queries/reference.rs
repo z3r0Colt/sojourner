@@ -49,11 +49,7 @@ pub fn search_strongs(conn: &Connection, query: &str, language: Option<&str>, li
     if query.trim().is_empty() {
         return Ok(vec![]);
     }
-    let match_expr = query
-        .split_whitespace()
-        .map(|t| format!("\"{}\"*", t.replace('"', "\"\"")))
-        .collect::<Vec<_>>()
-        .join(" ");
+    let match_expr = super::search::build_match_expr(query);
     let lang_clause = if language.is_some() { "AND se.language = ?3" } else { "" };
     let sql = format!(
         "SELECT {STRONGS_COLS}
@@ -153,11 +149,7 @@ pub fn search_dictionary(conn: &Connection, query: &str, limit: i64) -> anyhow::
     if query.trim().is_empty() {
         return Ok(vec![]);
     }
-    let match_expr = query
-        .split_whitespace()
-        .map(|t| format!("\"{}\"*", t.replace('"', "\"\"")))
-        .collect::<Vec<_>>()
-        .join(" ");
+    let match_expr = super::search::build_match_expr(query);
     let mut stmt = conn.prepare(&format!(
         "SELECT {DICTIONARY_COLS} FROM dictionary_fts JOIN dictionary_entries de ON de.id = dictionary_fts.rowid
          WHERE dictionary_fts MATCH ?1 ORDER BY bm25(dictionary_fts) LIMIT ?2"
@@ -267,11 +259,7 @@ pub fn search_isbe(conn: &Connection, query: &str, limit: i64) -> anyhow::Result
     if query.trim().is_empty() {
         return Ok(vec![]);
     }
-    let match_expr = query
-        .split_whitespace()
-        .map(|t| format!("\"{}\"*", t.replace('"', "\"\"")))
-        .collect::<Vec<_>>()
-        .join(" ");
+    let match_expr = super::search::build_match_expr(query);
     let mut stmt = conn.prepare(
         "SELECT e.id, e.term, e.slug FROM isbe_fts JOIN isbe_entries e ON e.id = isbe_fts.rowid
          WHERE isbe_fts MATCH ?1 ORDER BY bm25(isbe_fts) LIMIT ?2",
@@ -341,7 +329,7 @@ pub fn search_isbe_global(conn: &Connection, query: &str, limit: i64) -> anyhow:
     }
     let match_expr = super::search::build_match_expr(query);
     let mut stmt = conn.prepare(
-        "SELECT e.id, e.term, e.slug, snippet(isbe_fts, 1, '[', ']', '…', 14)
+        "SELECT e.id, e.term, e.slug, snippet(isbe_fts, 1, char(2), char(3), '…', 14)
          FROM isbe_fts JOIN isbe_entries e ON e.id = isbe_fts.rowid
          WHERE isbe_fts MATCH ?1 ORDER BY bm25(isbe_fts) LIMIT ?2",
     )?;

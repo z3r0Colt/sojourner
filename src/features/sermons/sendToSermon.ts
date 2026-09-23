@@ -28,6 +28,8 @@ export interface SermonItem {
   excerpt: string | null;
   /** Set when `kind` is "passage". */
   passage?: PassageRef;
+  /** Several passages at once (a search's results), each its own block. */
+  passages?: PassageRef[];
 }
 
 interface PendingRequest {
@@ -112,7 +114,13 @@ export function useSendToSermonRequest(sermonId: number, onInsert: (item: Sermon
     clearTimer();
     useSendToSermonStore.getState().setRequest(null);
     onInsert(request.item);
-    toast.success(request.item.kind === "passage" ? "Passage added to the sermon" : "Sent to the sermon");
+    toast.success(
+      request.item.passages
+        ? `${request.item.passages.length} passages added to the sermon`
+        : request.item.kind === "passage"
+          ? "Passage added to the sermon"
+          : "Sent to the sermon",
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [request, sermonId]);
 }

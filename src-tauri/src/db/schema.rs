@@ -993,6 +993,28 @@ ALTER TABLE translations ADD COLUMN script TEXT NOT NULL DEFAULT 'latin';
 ALTER TABLE translations ADD COLUMN direction TEXT NOT NULL DEFAULT 'ltr';
 "#;
 
+// Two things search and the word study need that the index alone cannot give.
+//
+// `search_vocab` is every word the English translations use, with how often:
+// the suggestions under the search box, and "did you mean" when a word
+// matches nothing. FTS5 has its own vocabulary, but it holds stems
+// ("belov"), which are no use to show a reader. Built at import from the
+// verse text (see `import::vocab`).
+//
+// The indexes put a Strong's number, a lemma, or a parsing code one lookup
+// away from every verse that has it: `G26` in the search box, the word study's
+// occurrence list, and the morphology search all start there.
+pub const CONTENT_MIGRATION_0020: &str = r#"
+CREATE TABLE search_vocab (
+  word   TEXT PRIMARY KEY,
+  count  INTEGER NOT NULL
+) WITHOUT ROWID;
+CREATE INDEX idx_morphology_strongs ON morphology_words(strongs_id);
+CREATE INDEX idx_morphology_lemma ON morphology_words(lemma);
+CREATE INDEX idx_morphology_code ON morphology_words(morph_code);
+CREATE INDEX idx_interlinear_strongs ON interlinear_words(strongs_id);
+"#;
+
 pub const CONTENT_MIGRATIONS: &[&str] = &[
     CONTENT_MIGRATION_0001,
     CONTENT_MIGRATION_0002,
@@ -1013,6 +1035,7 @@ pub const CONTENT_MIGRATIONS: &[&str] = &[
     CONTENT_MIGRATION_0017,
     CONTENT_MIGRATION_0018,
     CONTENT_MIGRATION_0019,
+    CONTENT_MIGRATION_0020,
 ];
 
 // library.db: the books that ship with the app, in a file of their own.

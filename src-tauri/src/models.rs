@@ -318,6 +318,9 @@ pub struct SearchResult {
     pub snippet: String,
     pub source_label: String,
     pub entry_id: i64,
+    /// The translation a verse hit is from, or the commentary an entry is
+    /// from; None for the reader's own notes and prayers.
+    pub source_id: Option<i64>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -574,10 +577,24 @@ pub struct SearchResults {
     pub verses: Vec<SearchResult>,
     /// How many verses matched in all, `verses` being at most `limit` of them.
     pub verse_total: i64,
+    /// Why the Scripture search could not run (a regular expression that
+    /// does not compile, or one asked of every translation at once).
+    pub verse_error: Option<String>,
     pub commentary: Vec<SearchResult>,
     pub commentary_total: i64,
     pub notes: Vec<SearchResult>,
     pub prayers: Vec<SearchResult>,
+    pub parsed: ParsedSummary,
+}
+
+/// What the search understood of the query, for the chip under the box.
+#[derive(Debug, Clone, Serialize)]
+pub struct ParsedSummary {
+    pub chips: Vec<String>,
+    /// Filter words it did not understand (`in:narnia`).
+    pub unknown: Vec<String>,
+    /// The words it searched for, for marking matches elsewhere.
+    pub mark_words: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]

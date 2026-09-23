@@ -166,13 +166,9 @@ pub fn search(conn: &Connection, query: &str, limit: i64) -> anyhow::Result<Vec<
     if query.trim().is_empty() {
         return Ok(vec![]);
     }
-    let match_expr = query
-        .split_whitespace()
-        .map(|t| format!("\"{}\"*", t.replace('"', "\"\"")))
-        .collect::<Vec<_>>()
-        .join(" ");
+    let match_expr = super::search::build_match_expr(query);
     let mut stmt = conn.prepare(
-        "SELECT ws.id, ws.document_id, ws.heading, ws.prompt, snippet(westminster_fts, 2, '[', ']', '…', 12)
+        "SELECT ws.id, ws.document_id, ws.heading, ws.prompt, snippet(westminster_fts, 2, char(2), char(3), '…', 12)
          FROM westminster_fts JOIN westminster_sections ws ON ws.id = westminster_fts.rowid
          WHERE westminster_fts MATCH ?1 ORDER BY bm25(westminster_fts) LIMIT ?2",
     )?;

@@ -65,10 +65,8 @@ fn hydrate(conn: &Connection, list: &mut [Illustration]) -> anyhow::Result<()> {
 }
 
 fn fts_query(raw: &str) -> String {
-    raw.split_whitespace()
-        .map(|w| format!("\"{}\"*", w.replace('"', "")))
-        .collect::<Vec<_>>()
-        .join(" ")
+    // The one query language every search box shares (see `query_lang`).
+    super::search::build_match_expr(raw)
 }
 
 pub fn list(conn: &Connection, filter: &IllustrationFilter) -> anyhow::Result<Vec<Illustration>> {

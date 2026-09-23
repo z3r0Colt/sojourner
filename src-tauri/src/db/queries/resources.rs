@@ -173,9 +173,9 @@ fn mark_terms(text: &str, terms: &[String]) -> String {
         match matched {
             Some(term) => {
                 let end = word_end(text, at + term.len());
-                out.push('[');
+                out.push(super::search::MARK_START);
                 out.push_str(&text[at..end]);
-                out.push(']');
+                out.push(super::search::MARK_END);
                 at = end;
             }
             None => {
@@ -211,11 +211,10 @@ pub fn search(conn: &Connection, query: &str, limit: i64) -> anyhow::Result<Vec<
     if query.trim().is_empty() {
         return Ok(vec![]);
     }
-    let match_expr = query
-        .split_whitespace()
-        .map(|t| format!("\"{}\"*", t.replace('"', "\"\"")))
-        .collect::<Vec<_>>()
-        .join(" ");
+    let match_expr = super::search::build_match_expr(query);
+    if match_expr.is_empty() {
+        return Ok(vec![]);
+    }
 
     // Ranking and quoting are deliberately two passes.
     //
@@ -286,8 +285,12 @@ pub fn search(conn: &Connection, query: &str, limit: i64) -> anyhow::Result<Vec<
     // Punctuation is trimmed off because fts5 tokenizes it away too: a search
     // for `grace,` matches the word "grace", so that is what has to be looked
     // for in the text.
-    let mut terms: Vec<String> = query
-        .split_whitespace()
+    // The words searched for, as the query language read them: a phrase's
+    // words, not its quotation marks; nothing that was excluded.
+    let mut terms: Vec<String> = super::query_lang::parse(query, Default::default())
+        .mark_words
+        .iter()
+        .flat_map(|w| w.split_whitespace().map(str::to_string).collect::<Vec<_>>())
         .map(|t| t.trim_matches(|c: char| !c.is_alphanumeric()).to_ascii_lowercase())
         .filter(|t| !t.is_empty())
         .collect();
@@ -548,6 +551,11 @@ mod tests {
     use super::*;
     use crate::db;
 
+    /// The match markers as brackets, so expectations stay readable.
+    fn brackets(s: &str) -> String {
+        s.replace(super::super::search::MARK_START, "[").replace(super::super::search::MARK_END, "]")
+    }
+
     fn open_test(label: &str) -> (Connection, std::path::PathBuf) {
         let dir = std::env::temp_dir().join(format!("sojourner-resource-search-{label}-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
@@ -565,45 +573,45 @@ mod tests {
     fn a_quote_is_cut_back_to_whole_words_and_marked() {
         let window = "rtion of the heart that has once tasted the sweetness of Christ will not lon";
         let quoted = quote(window, true, true, &terms(&["sweetness"]));
-        assert_eq!(quoted, "…of the heart that has once tasted the [sweetness] of Christ will not…");
+        assert_eq!(brackets(&quoted), "…of the heart that has once tasted the [sweetness] of Christ will not…");
     }
 
     #[test]
     fn the_opening_of_a_book_is_not_given_a_leading_ellipsis() {
         let quoted = quote("Grace is the free favour of God", false, true, &terms(&["grace"]));
-        assert_eq!(quoted, "[Grace] is the free favour of…");
+        assert_eq!(brackets(&quoted), "[Grace] is the free favour of…");
     }
 
     #[test]
     fn a_term_is_marked_as_a_whole_word_and_never_inside_one() {
         // A term of real length is searched, and marked, as a prefix.
-        assert_eq!(mark_terms("the husks of the world", &terms(&["husk"])), "the [husks] of the world");
-        assert_eq!(mark_terms("the doctrine of justification", &terms(&["justif"])), "the doctrine of [justification]");
+        assert_eq!(brackets(&mark_terms("the husks of the world", &terms(&["husk"]))), "the [husks] of the world");
+        assert_eq!(brackets(&mark_terms("the doctrine of justification", &terms(&["justif"]))), "the doctrine of [justification]");
         // ...but never in the middle of a word.
-        assert_eq!(mark_terms("another the", &terms(&["the"])), "another [the]");
+        assert_eq!(brackets(&mark_terms("another the", &terms(&["the"]))), "another [the]");
     }
 
     #[test]
     fn a_short_term_marks_only_itself_and_does_not_light_up_the_page() {
         // Searching "of the" used to mark "offended", "Therefore", "them"...
         let text = "Therefore the husks of the world offended them";
-        assert_eq!(mark_terms(text, &terms(&["the", "of"])), "Therefore [the] husks [of] [the] world offended them");
+        assert_eq!(brackets(&mark_terms(text, &terms(&["the", "of"]))), "Therefore [the] husks [of] [the] world offended them");
     }
 
     #[test]
     fn marking_folds_case_and_leaves_the_book_s_own_spelling_alone() {
-        assert_eq!(mark_terms("GRACE and Grace", &terms(&["grace"])), "[GRACE] and [Grace]");
+        assert_eq!(brackets(&mark_terms("GRACE and Grace", &terms(&["grace"]))), "[GRACE] and [Grace]");
     }
 
     #[test]
     fn marking_steps_over_letters_that_are_more_than_one_byte() {
-        assert_eq!(mark_terms("a Sünde word", &terms(&["word"])), "a Sünde [word]");
+        assert_eq!(brackets(&mark_terms("a Sünde word", &terms(&["word"]))), "a Sünde [word]");
     }
 
     #[test]
     fn a_dash_or_an_apostrophe_ends_the_word_that_is_marked() {
-        assert_eq!(mark_terms("the husks—while eating", &terms(&["husks"])), "the [husks]—while eating");
-        assert_eq!(mark_terms("Saint Paul’s epistles", &terms(&["paul"])), "Saint [Paul]’s epistles");
+        assert_eq!(brackets(&mark_terms("the husks—while eating", &terms(&["husks"]))), "the [husks]—while eating");
+        assert_eq!(brackets(&mark_terms("Saint Paul’s epistles", &terms(&["paul"]))), "Saint [Paul]’s epistles");
     }
 
     #[test]
@@ -621,7 +629,7 @@ mod tests {
         let hits = search(&conn, "husks of the world", 10).unwrap();
         assert_eq!(hits.len(), 1, "the book is found");
         let snippet = &hits[0].snippet;
-        assert!(snippet.contains("[husks]"), "the searched word is marked: {snippet}");
+        assert!(brackets(&snippet).contains("[husks]"), "the searched word is marked: {snippet}");
         assert!(snippet.starts_with('…') && snippet.ends_with('…'), "cut from the middle of the book: {snippet}");
         assert!(snippet.contains("sweetness"), "with its surroundings: {snippet}");
         assert!(snippet.chars().count() < 260, "and no more than a passage: {snippet}");
@@ -646,7 +654,7 @@ mod tests {
         create(&conn, "epub", "Another Book", None, "b.epub", Some(&body)).unwrap();
         let hits = search(&conn, "grace,", 10).unwrap();
         assert_eq!(hits.len(), 1);
-        assert!(hits[0].snippet.contains("[grace]"), "got: {}", hits[0].snippet);
+        assert!(brackets(&hits[0].snippet).contains("[grace]"), "got: {}", hits[0].snippet);
         let _ = std::fs::remove_dir_all(&dir);
     }
 }

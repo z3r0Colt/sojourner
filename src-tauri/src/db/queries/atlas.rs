@@ -93,11 +93,7 @@ pub fn search_atlas_places(conn: &Connection, query: &str, limit: i64) -> anyhow
     if query.trim().is_empty() {
         return Ok(vec![]);
     }
-    let match_expr = query
-        .split_whitespace()
-        .map(|t| format!("\"{}\"*", t.replace('"', "\"\"")))
-        .collect::<Vec<_>>()
-        .join(" ");
+    let match_expr = super::search::build_match_expr(query);
     let mut stmt = conn.prepare(&format!(
         "SELECT {PLACE_COLS} FROM atlas_fts JOIN atlas_places p ON p.rowid = atlas_fts.rowid
          WHERE atlas_fts MATCH ?1 ORDER BY bm25(atlas_fts) LIMIT ?2"

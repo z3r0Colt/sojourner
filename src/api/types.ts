@@ -205,16 +205,41 @@ export interface SearchResult {
   snippet: string;
   source_label: string;
   entry_id: number;
+  /** The translation a verse hit is from, or the commentary an entry is from. */
+  source_id: number | null;
 }
 
 export interface SearchResults {
   verses: SearchResult[];
   /** How many verses matched in all; `verses` holds at most the limit asked for. */
   verse_total: number;
+  /** Why the Scripture search could not run (a bad regular expression). */
+  verse_error: string | null;
   commentary: SearchResult[];
   commentary_total: number;
   notes: SearchResult[];
   prayers: SearchResult[];
+  parsed: {
+    /** "love near God", "not: world", "in Psalms", "KJV". */
+    chips: string[];
+    /** Filter words not understood ("in:narnia"). */
+    unknown: string[];
+    mark_words: string[];
+  };
+}
+
+/** Hits per book and per translation (or commentary): [id, count] pairs. */
+export interface SearchFacets {
+  by_book: [number, number][];
+  by_source: [number, number][];
+}
+
+export interface SearchScope {
+  bookId?: number;
+  testament?: "OT" | "NT";
+  wholeWords?: boolean;
+  passageOrder?: boolean;
+  olderSpellings?: boolean;
 }
 
 export interface ImportReportItem {

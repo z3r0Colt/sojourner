@@ -111,10 +111,20 @@ interface UiState {
   searchWholeWords: boolean;
   /** List Scripture and commentary hits in Bible order instead of by relevance. */
   searchPassageOrder: boolean;
+  /** Match older spellings (shew, -eth) when an older English translation
+   * is searched. On unless the reader switches it off. */
+  searchOlderSpellings: boolean;
+  /** Scripture hits as a concordance: one line each, the match in a fixed column. */
+  searchConcordance: boolean;
+  /** Hits per book and translation down the side of the results. */
+  searchShowFacets: boolean;
   setSearchTranslation: (t: SearchTranslation) => void;
   setSearchCommentarySource: (s: "all" | number) => void;
   setSearchWholeWords: (on: boolean) => void;
   setSearchPassageOrder: (on: boolean) => void;
+  setSearchOlderSpellings: (on: boolean) => void;
+  setSearchConcordance: (on: boolean) => void;
+  setSearchShowFacets: (on: boolean) => void;
   setEpubZoom: (percent: number) => void;
   setResourcesKindTab: (tab: ResourceKindTab) => void;
   setResourcesGroupBy: (by: ResourceGroupBy) => void;
@@ -187,6 +197,9 @@ export const useUiStore = create<UiState>((set) => ({
   searchCommentarySource: typeof stored.searchCommentarySource === "number" ? stored.searchCommentarySource : "all",
   searchWholeWords: stored.searchWholeWords ?? false,
   searchPassageOrder: stored.searchPassageOrder ?? false,
+  searchOlderSpellings: stored.searchOlderSpellings ?? true,
+  searchConcordance: stored.searchConcordance ?? false,
+  searchShowFacets: stored.searchShowFacets ?? true,
 
   setSearchTranslation: (searchTranslation) => {
     persist({ searchTranslation });
@@ -203,6 +216,18 @@ export const useUiStore = create<UiState>((set) => ({
   setSearchPassageOrder: (searchPassageOrder) => {
     persist({ searchPassageOrder });
     set({ searchPassageOrder });
+  },
+  setSearchOlderSpellings: (searchOlderSpellings) => {
+    persist({ searchOlderSpellings });
+    set({ searchOlderSpellings });
+  },
+  setSearchConcordance: (searchConcordance) => {
+    persist({ searchConcordance });
+    set({ searchConcordance });
+  },
+  setSearchShowFacets: (searchShowFacets) => {
+    persist({ searchShowFacets });
+    set({ searchShowFacets });
   },
 
   setEpubZoom: (percent) => {

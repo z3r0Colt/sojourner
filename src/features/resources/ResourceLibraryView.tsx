@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { snippetHtml } from "../../lib/snippet";
 import { usePaneNavigate } from "../../workspace/PaneContext";
 import { useQuery } from "@tanstack/react-query";
 import { convertFileSrc } from "@tauri-apps/api/core";
@@ -430,7 +431,7 @@ export function ResourceLibraryView() {
                 </div>
                 <div
                   className="mt-0.5 text-sm text-ink-2"
-                  dangerouslySetInnerHTML={{ __html: r.snippet.replace(/\[/g, "<mark class='rounded bg-accent-soft px-0.5 text-accent'>").replace(/\]/g, "</mark>") }}
+                  dangerouslySetInnerHTML={{ __html: snippetHtml(r.snippet) }}
                 />
               </button>
             </li>

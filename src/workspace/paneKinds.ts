@@ -18,6 +18,7 @@ import {
   Music,
   NotebookPen,
   ScrollText,
+  Search,
   Settings,
   StickyNote,
   Sunrise,
@@ -275,6 +276,15 @@ export const PANE_KINDS: Registry = {
     listed: false,
   },
   illustrations: { kind: "illustrations", label: "Illustrations", icon: Lightbulb, title: () => "Illustrations", defaultWidth: 900, acceptsPassage: false, listed: true },
+  search: {
+    kind: "search",
+    label: "Search",
+    icon: Search,
+    title: (p) => (p.query.trim() ? `Search · ${p.query.trim()}` : "Search"),
+    defaultWidth: 520,
+    acceptsPassage: false,
+    listed: true,
+  },
   settings: { kind: "settings", label: "Settings", icon: Settings, title: () => "Settings", defaultWidth: 900, acceptsPassage: false, listed: true },
 };
 
@@ -364,8 +374,8 @@ export function routeFor(content: PaneContent): string {
       return `/sermons/${content.params.id}`;
     case "illustrations":
       return "/illustrations";
-    case "illustrations":
-      return "/illustrations";
+    case "search":
+      return content.params.query ? `/search?q=${encodeURIComponent(content.params.query)}` : "/search";
     case "settings":
       return content.params.section ? `/settings?section=${encodeURIComponent(content.params.section)}` : "/settings";
   }
@@ -432,6 +442,8 @@ export function parseRoute(pathname: string, search = ""): ContentRequest | null
     }
     case "illustrations":
       return { kind: "illustrations", params: {} };
+    case "search":
+      return { kind: "search", params: { query: new URLSearchParams(search).get("q") ?? "" } };
     case "settings": {
       const section = new URLSearchParams(search).get("section");
       return { kind: "settings", params: { section } };

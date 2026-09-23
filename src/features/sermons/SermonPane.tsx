@@ -109,6 +109,10 @@ export function SermonPane() {
   useSendToSermonRequest(params.id, (item) => {
     const handle = editorRef.current;
     if (!handle) return;
+    if (item.kind === "passage" && item.passages) {
+      for (const passage of item.passages) handle.insertPassage(passage);
+      return;
+    }
     if (item.kind === "passage" && item.passage) {
       handle.insertPassage(item.passage);
       return;

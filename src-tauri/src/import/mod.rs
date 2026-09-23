@@ -2,6 +2,7 @@ pub mod checksum;
 pub mod reference;
 pub mod thml;
 pub mod usfm;
+pub mod vocab;
 pub mod zefania;
 
 use rusqlite::Connection;
@@ -183,6 +184,10 @@ pub fn populate_content_db(
     if reference_dir.is_dir() {
         reference::import_all(conn, reference_dir)?;
     }
+
+    // Rebuilt every time, since it is read from every translation and takes
+    // seconds: the search box's word suggestions (see `vocab`).
+    vocab::build(conn)?;
 
     Ok(results)
 }

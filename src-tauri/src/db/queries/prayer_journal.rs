@@ -104,11 +104,7 @@ pub fn search(conn: &Connection, query: &str, limit: i64) -> anyhow::Result<Vec<
     if query.trim().is_empty() {
         return Ok(vec![]);
     }
-    let match_expr = query
-        .split_whitespace()
-        .map(|t| format!("\"{}\"*", t.replace('"', "\"\"")))
-        .collect::<Vec<_>>()
-        .join(" ");
+    let match_expr = super::search::build_match_expr(query);
     let cols_pe = SELECT_COLS
         .split(", ")
         .map(|c| format!("pe.{c}"))

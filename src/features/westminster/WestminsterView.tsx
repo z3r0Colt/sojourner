@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { snippetHtml } from "../../lib/snippet";
 import { useQuery } from "@tanstack/react-query";
 import { BookA, ChevronDown, ChevronLeft, ChevronRight, ListTree, Search } from "lucide-react";
 import { api } from "../../api/client";
@@ -224,7 +225,7 @@ export function WestminsterView() {
                       {r.prompt && <div className="text-xs text-ink-2">{r.prompt}</div>}
                       <div
                         className="text-xs text-ink-3"
-                        dangerouslySetInnerHTML={{ __html: r.snippet.replace(/\[/g, "<mark class='rounded bg-accent-soft px-0.5 text-accent'>").replace(/\]/g, "</mark>") }}
+                        dangerouslySetInnerHTML={{ __html: snippetHtml(r.snippet) }}
                       />
                     </button>
                   ))

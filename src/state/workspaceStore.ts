@@ -146,6 +146,10 @@ export interface SettingsParams {
 
 export type EmptyParams = Record<string, never>;
 
+export interface SearchParams {
+  query: string;
+}
+
 export type PaneContent =
   | { kind: "bible"; params: BibleParams }
   | { kind: "interlinear"; params: PassageParams }
@@ -174,6 +178,7 @@ export type PaneContent =
   | { kind: "sermons"; params: EmptyParams }
   | { kind: "sermon"; params: SermonParams }
   | { kind: "illustrations"; params: EmptyParams }
+  | { kind: "search"; params: SearchParams }
   | { kind: "settings"; params: SettingsParams };
 
 export type PaneKind = PaneContent["kind"];
@@ -207,6 +212,7 @@ export const PANE_KIND_LIST: readonly PaneKind[] = [
   "sermons",
   "sermon",
   "illustrations",
+  "search",
   "settings",
 ];
 

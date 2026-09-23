@@ -222,10 +222,8 @@ pub fn list(conn: &Connection, filter: &SermonFilter) -> anyhow::Result<Vec<Serm
 /// Turns what the reader typed into an FTS5 MATCH expression: every word a
 /// prefix term, quoted so punctuation can't be read as operator syntax.
 fn fts_query(raw: &str) -> String {
-    raw.split_whitespace()
-        .map(|w| format!("\"{}\"*", w.replace('"', "")))
-        .collect::<Vec<_>>()
-        .join(" ")
+    // The one query language every search box shares (see `query_lang`).
+    super::search::build_match_expr(raw)
 }
 
 /// By id, deleted or not -- the Trash and export both need a row the list

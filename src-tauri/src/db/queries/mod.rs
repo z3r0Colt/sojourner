@@ -14,6 +14,7 @@ pub mod prayer_list;
 pub mod reading_log;
 pub mod reading_position;
 pub mod psalter;
+pub mod query_lang;
 pub mod reading_plans;
 pub mod red_letter;
 pub mod reference;

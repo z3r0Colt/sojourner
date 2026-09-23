@@ -243,8 +243,8 @@ export function AppShell() {
       {searchOpen && (
         <SearchOverlay
           onClose={() => setSearchOpen(false)}
-          onJumpToVerse={(bookId, chapter, verse) => {
-            openPassage({ bookId, chapter, verse: verse ?? undefined });
+          onJumpToVerse={(bookId, chapter, verse, newPane) => {
+            openPassage({ bookId, chapter, verse: verse ?? undefined }, newPane ? { target: "new" } : {});
             setSearchOpen(false);
           }}
         />

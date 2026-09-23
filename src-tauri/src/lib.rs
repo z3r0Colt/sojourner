@@ -9,6 +9,7 @@ pub mod library;
 pub mod models;
 pub mod pack;
 pub mod paths;
+pub mod refparse;
 pub mod resources;
 pub mod text;
 pub mod tts;
@@ -360,6 +361,9 @@ pub fn run() {
             commands::harmony::get_harmony,
             commands::red_letter::get_red_letter_ranges,
             commands::search::search,
+            commands::search::search_facets,
+            commands::search::suggest_search_words,
+            commands::search::did_you_mean,
             commands::search::record_search_query,
             commands::search::list_recent_searches,
             commands::search::list_saved_searches,
