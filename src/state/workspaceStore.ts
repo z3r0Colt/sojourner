@@ -150,6 +150,11 @@ export interface SearchParams {
   query: string;
 }
 
+export interface WordStudyParams {
+  /** A Strong's number, "G3056". */
+  id: string | null;
+}
+
 export type PaneContent =
   | { kind: "bible"; params: BibleParams }
   | { kind: "interlinear"; params: PassageParams }
@@ -179,6 +184,7 @@ export type PaneContent =
   | { kind: "sermon"; params: SermonParams }
   | { kind: "illustrations"; params: EmptyParams }
   | { kind: "search"; params: SearchParams }
+  | { kind: "wordstudy"; params: WordStudyParams }
   | { kind: "settings"; params: SettingsParams };
 
 export type PaneKind = PaneContent["kind"];
@@ -213,6 +219,7 @@ export const PANE_KIND_LIST: readonly PaneKind[] = [
   "sermon",
   "illustrations",
   "search",
+  "wordstudy",
   "settings",
 ];
 

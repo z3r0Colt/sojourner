@@ -1015,6 +1015,41 @@ CREATE INDEX idx_morphology_code ON morphology_words(morph_code);
 CREATE INDEX idx_interlinear_strongs ON interlinear_words(strongs_id);
 "#;
 
+// The word study and the morphology search.
+//
+// `morph_codes` is every parsing code in `morphology_words`, read into plain
+// fields by `crate::morph` at import -- "aorist", "imperative", "genitive" --
+// so the search form can ask for fields and the word study can say what a
+// form is without anyone reading a code letter. Keyed by the code as stored.
+//
+// `lemma_glosses` is how the KJV renders each Strong's number: the English
+// the interlinear tags with that number, lower-cased, with how often. It is
+// the "renderings" list of a word study, and the filter on its occurrences.
+pub const CONTENT_MIGRATION_0021: &str = r#"
+CREATE TABLE morph_codes (
+  code            TEXT PRIMARY KEY,
+  language        TEXT NOT NULL,
+  part_of_speech  TEXT,
+  tense           TEXT,
+  voice           TEXT,
+  mood            TEXT,
+  person          TEXT,
+  number          TEXT,
+  gender          TEXT,
+  gram_case       TEXT,
+  state           TEXT,
+  stem            TEXT,
+  kind            TEXT,
+  description     TEXT NOT NULL
+) WITHOUT ROWID;
+CREATE TABLE lemma_glosses (
+  strongs_id  TEXT NOT NULL,
+  gloss       TEXT NOT NULL,
+  count       INTEGER NOT NULL,
+  PRIMARY KEY (strongs_id, gloss)
+) WITHOUT ROWID;
+"#;
+
 pub const CONTENT_MIGRATIONS: &[&str] = &[
     CONTENT_MIGRATION_0001,
     CONTENT_MIGRATION_0002,
@@ -1036,6 +1071,7 @@ pub const CONTENT_MIGRATIONS: &[&str] = &[
     CONTENT_MIGRATION_0018,
     CONTENT_MIGRATION_0019,
     CONTENT_MIGRATION_0020,
+    CONTENT_MIGRATION_0021,
 ];
 
 // library.db: the books that ship with the app, in a file of their own.

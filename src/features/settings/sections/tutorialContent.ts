@@ -523,6 +523,31 @@ export const TUTORIAL: TutorialCategory[] = [
         links: [{ label: "Lexicon", to: "/lexicon" }],
       },
       {
+        id: "word-study",
+        title: "Word study",
+        what: "One Hebrew or Greek word, studied: how often it occurs, where, how the KJV renders it, the forms it takes with their parsing, the words it comes from and gives rise to, and every occurrence.",
+        steps: [
+          "Double-click a word in the text, or click one in the interlinear, and choose Word study in the popup. A lexicon entry has the same button.",
+          "The counts are of the Hebrew Old Testament and the Greek New Testament (Textus Receptus) themselves, not of any English translation.",
+          "Click a rendering to list only the verses where the KJV renders the word that way; click a bar or a book to list only that book's.",
+          "The occurrence list shows each verse in the translation you are reading; the list beside it switches translation.",
+          "The send-to-sermon button puts a short summary of the study into the open sermon.",
+        ],
+        links: [{ label: "Word study", to: "/wordstudy" }],
+      },
+      {
+        id: "grammar-search",
+        title: "Search by grammar",
+        what: "Find every word with a given parsing, such as every aorist imperative in Ephesians, without knowing any code letters.",
+        steps: [
+          "Open Search and choose the Grammar tab.",
+          "Pick the Greek New Testament or the Hebrew Old Testament, then any of the fields: part of speech, tense, voice, mood, person, number, gender, case, and for Hebrew the stem and state.",
+          "Type a word to narrow it: a Strong's number (G3056) or the word itself, with or without accents or vowel points.",
+          "Choose a book to search just that book. Each result shows the matching words with their parsing and the verse in the translation you are reading.",
+        ],
+        links: [{ label: "Open Search", press: "search" }],
+      },
+      {
         id: "dictionary",
         title: "Dictionary",
         what: "Short entries on people, places, and topics from Easton's and Smith's, merged where both cover a headword.",

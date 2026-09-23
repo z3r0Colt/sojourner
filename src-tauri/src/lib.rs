@@ -7,8 +7,10 @@ pub mod export;
 pub mod import;
 pub mod library;
 pub mod models;
+pub mod morph;
 pub mod pack;
 pub mod paths;
+pub mod plain;
 pub mod refparse;
 pub mod resources;
 pub mod text;
@@ -385,6 +387,10 @@ pub fn run() {
             commands::reference::get_concordance,
             commands::reference::get_strongs_entries,
             commands::reference::search_strongs,
+            commands::reference::get_word_study,
+            commands::reference::get_word_study_occurrences,
+            commands::reference::get_morph_field_values,
+            commands::reference::morph_search,
             commands::reference::list_dictionary_index,
             commands::reference::get_dictionary_entry,
             commands::reference::find_dictionary_entry_by_term,

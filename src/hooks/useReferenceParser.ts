@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useBookAliases, useBooks } from "../api/queries";
 import type { Book, BookAlias } from "../api/types";
+import { BOOK_ABBREVIATIONS } from "../lib/bookAbbreviations";
 
 export interface ParsedReference {
   book: Book;
@@ -32,6 +33,12 @@ export function buildBookLookup(books: Book[], aliases: BookAlias[] = []): Map<s
       for (const word of words[num] ?? []) {
         map.set(normalize(`${word} ${rest}`), b);
       }
+    }
+  }
+  // The abbreviations readers type: Jn, Mt, Ps, 1Co, Rev...
+  for (const b of books) {
+    for (const key of BOOK_ABBREVIATIONS[b.id - 1] ?? []) {
+      if (!map.has(key)) map.set(key, b);
     }
   }
   for (const a of aliases) {

@@ -82,6 +82,10 @@ lopdf = "0.42"
 lofty = "0.22"
 mobi = "0.8.0"
 regex = "1"
+# Accent- and point-insensitive Greek and Hebrew: a lemma, a search term, or a
+# lexicon headword compared by its bare letters (see `crate::plain`). Already
+# in the tree through url/idna.
+unicode-normalization = "0.1"
 # The one HTTP client in the app, for the one request it makes: the update
 # check in `crate::update`, which only ever runs when a reader presses the
 # button in Settings → About. Blocking and small on purpose -- a single GET

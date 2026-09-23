@@ -183,3 +183,42 @@ pub fn get_footnotes_for_chapter(
     let conn = db.conn();
     Ok(queries::get_footnotes_for_chapter(&conn, translation_id, book_id, chapter)?)
 }
+
+/// One Strong's number, studied: occurrences, renderings, distribution,
+/// forms, related words (see `queries::word_study`).
+#[tauri::command]
+pub fn get_word_study(db: State<DbState>, strongs_id: String) -> AppResult<Option<crate::db::queries::word_study::WordStudy>> {
+    let conn = db.conn();
+    Ok(crate::db::queries::word_study::word_study(&conn, &strongs_id)?)
+}
+
+#[tauri::command]
+pub fn get_word_study_occurrences(
+    db: State<DbState>,
+    strongs_id: String,
+    translation_id: Option<i64>,
+    gloss: Option<String>,
+) -> AppResult<Vec<crate::db::queries::word_study::Occurrence>> {
+    let conn = db.conn();
+    Ok(crate::db::queries::word_study::occurrences(&conn, &strongs_id, translation_id, gloss.as_deref())?)
+}
+
+#[tauri::command]
+pub fn get_morph_field_values(db: State<DbState>, language: String) -> AppResult<std::collections::BTreeMap<String, Vec<String>>> {
+    let conn = db.conn();
+    Ok(crate::db::queries::word_study::morph_field_values(&conn, &language)?)
+}
+
+/// Off the main thread: a broad parsing ("every noun") walks a large part of
+/// the tagged text.
+#[tauri::command]
+pub async fn morph_search(app: tauri::AppHandle, query: crate::db::queries::word_study::MorphQuery) -> AppResult<crate::db::queries::word_study::MorphSearchPage> {
+    use tauri::Manager;
+    tauri::async_runtime::spawn_blocking(move || -> AppResult<_> {
+        let db = app.state::<DbState>();
+        let conn = db.conn();
+        Ok(crate::db::queries::word_study::morph_search(&conn, &query)?)
+    })
+    .await
+    .map_err(|e| anyhow::anyhow!("the morphology search did not finish: {e}"))?
+}

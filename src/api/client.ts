@@ -16,6 +16,10 @@ import type {
   ReadingPosition,
   ReadingLogEntry,
   SearchResults,
+  WordStudy,
+  WordOccurrence,
+  MorphQuery,
+  MorphSearchPage,
   SearchFacets,
   SearchScope,
   ImportReportItem,
@@ -258,6 +262,11 @@ export const api = {
   getStrongsEntry: (id: string) => invoke<StrongsEntry | null>("get_strongs_entry", { id }),
   getConcordance: (strongsId: string) => invoke<ConcordanceEntry[]>("get_concordance", { strongsId }),
   getStrongsEntries: (ids: string[]) => invoke<StrongsEntry[]>("get_strongs_entries", { ids }),
+  getWordStudy: (strongsId: string) => invoke<WordStudy | null>("get_word_study", { strongsId }),
+  getWordStudyOccurrences: (strongsId: string, translationId: number | null, gloss: string | null) =>
+    invoke<WordOccurrence[]>("get_word_study_occurrences", { strongsId, translationId, gloss }),
+  getMorphFieldValues: (language: "greek" | "hebrew") => invoke<Record<string, string[]>>("get_morph_field_values", { language }),
+  morphSearch: (query: MorphQuery) => invoke<MorphSearchPage>("morph_search", { query }),
   searchStrongs: (query: string, language?: "hebrew" | "greek", limit = 50) =>
     invoke<StrongsEntry[]>("search_strongs", { query, language: language ?? null, limit }),
 

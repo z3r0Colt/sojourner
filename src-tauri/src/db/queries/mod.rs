@@ -28,6 +28,7 @@ pub mod trash;
 pub mod verses;
 pub mod versification;
 pub mod westminster;
+pub mod word_study;
 
 /// The soft-delete filter every list, search, and count over `notes`,
 /// `chapter_notes`, `prayer_entries`, `sermons`, or `illustrations` must

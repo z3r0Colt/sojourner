@@ -1,9 +1,9 @@
-import { Search, X } from "lucide-react";
+import { BookA, Search, X } from "lucide-react";
 import { useBooks, useStrongsEntry } from "../../api/queries";
 import { useViewportClampedPosition } from "../../lib/useViewportClampedPosition";
 import { CommentaryHtml } from "../commentary/CommentaryPanel";
 import { PaneLink as Link } from "../../workspace/PaneLink";
-import { openPassage, targetFor } from "../../workspace/openContent";
+import { openContent, openPassage, targetFor } from "../../workspace/openContent";
 import { Button, IconButton } from "../../components/ui/Button";
 import { LoadingState } from "../../components/ui/EmptyState";
 import { StudyActions } from "../sermons/StudyActions";
@@ -112,9 +112,22 @@ export function StrongsPopup({
               <span className="font-semibold">KJV usage:</span> {entry.kjv_usage}
             </p>
           )}
-          <Link to={`/lexicon/${entry.id}`} className="text-sm text-accent hover:underline" onClick={onClose}>
-            View full entry and concordance
-          </Link>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <Button
+              size="sm"
+              variant="secondary"
+              icon={BookA}
+              onClick={(e) => {
+                openContent("wordstudy", { id: entry.id }, { target: targetFor(e, "new") });
+                onClose();
+              }}
+            >
+              Word study
+            </Button>
+            <Link to={`/lexicon/${entry.id}`} className="text-sm text-accent hover:underline" onClick={onClose}>
+              Full lexicon entry
+            </Link>
+          </div>
         </div>
       )}
       {hint && (

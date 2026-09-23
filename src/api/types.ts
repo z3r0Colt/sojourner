@@ -1100,3 +1100,52 @@ export interface UpdateCheck {
   update_available: boolean;
   url: string;
 }
+
+/** One Strong's number, studied (see `queries::word_study`). Counts are of
+ * the tagged Greek and Hebrew, not of any English translation. */
+export interface WordStudy {
+  entry: StrongsEntry;
+  occurrences: number;
+  verses: number;
+  /** How the KJV renders it, commonest first. */
+  renderings: { gloss: string; count: number }[];
+  /** [book id, occurrences], canonical order. */
+  by_book: [number, number][];
+  forms: { form: string; morph_code: string; description: string; count: number }[];
+  related: { id: string; original_word: string; transliteration: string | null; short_definition: string | null; relation: "root" | "derived" }[];
+}
+
+export interface WordOccurrence {
+  book_id: number;
+  chapter: number;
+  verse: number;
+  original_word: string;
+  morph_code: string | null;
+  description: string | null;
+  /** The KJV's words for it in this verse. */
+  renderings: string[];
+  text: string | null;
+}
+
+export interface MorphQuery {
+  language: "greek" | "hebrew";
+  word?: string | null;
+  fields: Record<string, string>;
+  book_ids: number[];
+  testament?: "OT" | "NT" | null;
+  translation_id?: number | null;
+  limit: number;
+}
+
+export interface MorphSearchPage {
+  hits: {
+    book_id: number;
+    chapter: number;
+    verse: number;
+    words: { sort_order: number; original_word: string; description: string; strongs_id: string | null }[];
+    text: string | null;
+  }[];
+  verse_total: number;
+  word_total: number;
+  description: string;
+}

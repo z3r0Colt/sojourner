@@ -27,6 +27,7 @@ import { checkboxClass, cx, inputClass, selectSmClass } from "../../components/u
 import { htmlToText } from "../sermons/excerpt";
 import { sendToSermon } from "../sermons/sendToSermon";
 import { snippetHtml, snippetText, splitAtFirstMatch } from "../../lib/snippet";
+import { MorphSearch } from "./MorphSearch";
 import {
   OPERATOR_HELP,
   bareWords,
@@ -50,7 +51,8 @@ export type SearchTab =
   | "westminster"
   | "encyclopedia"
   | "sermons"
-  | "illustrations";
+  | "illustrations"
+  | "grammar";
 
 /** How many results one page asks for; the last is the server's cap. */
 const PAGE_SIZES = [50, 200, 500];
@@ -247,7 +249,7 @@ export function SearchPanel({ query, onQueryChange, docked, onOpenVerse, onOpene
   };
 
   function rowsFor(t: Exclude<SearchTab, "all">): Row[] {
-    if (!active) return [];
+    if (!active || t === "grammar") return [];
     if (t === "resources") {
       return (resourceResults ?? []).map((r) => ({
         key: `r-${r.resource_id}`,
@@ -323,7 +325,7 @@ export function SearchPanel({ query, onQueryChange, docked, onOpenVerse, onOpene
 
   // The All tab: Scripture first and weighted heaviest, then the rest a few
   // each, so one list answers "where does this come up at all?".
-  const ALL_SHARE: [Exclude<SearchTab, "all">, number, string][] = [
+  const ALL_SHARE: [Exclude<SearchTab, "all" | "grammar">, number, string][] = [
     ["verses", 8, "Scripture"],
     ["commentary", 4, "Commentary"],
     ["westminster", 3, "Confessions"],
@@ -385,6 +387,7 @@ export function SearchPanel({ query, onQueryChange, docked, onOpenVerse, onOpene
     encyclopedia: encyclopediaError,
     sermons: sermonsError,
     illustrations: illustrationsError,
+    grammar: null,
   };
   const activeError = tabError[tab];
 
@@ -405,6 +408,7 @@ export function SearchPanel({ query, onQueryChange, docked, onOpenVerse, onOpene
     { key: "encyclopedia" as const, label: "Encyclopedia", count: count(encyclopediaResults?.length) },
     { key: "sermons" as const, label: "Sermons", count: count(sermonResults?.length) },
     { key: "illustrations" as const, label: "Illustrations", count: count(illustrationResults?.length) },
+    { key: "grammar" as const, label: "Grammar" },
   ];
 
   // The scope dropdowns read and write `in:` in the box.
@@ -609,7 +613,8 @@ export function SearchPanel({ query, onQueryChange, docked, onOpenVerse, onOpene
         <Tabs size="sm" bare className="min-w-0 flex-1 flex-wrap" items={tabs} value={tab} onChange={setTab} />
         {anyFetching && <LoadingState className="shrink-0 py-1" label="Searching…" />}
       </div>
-      {showsFilters && (
+      {tab === "grammar" && <MorphSearch onOpenVerse={(b, c, v, n) => onOpenVerse(b, c, v, n)} />}
+      {tab !== "grammar" && showsFilters && (
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 border-b border-line px-3 py-1.5 text-xs text-ink-3">
           {(tab === "verses" || tab === "all") && (
             <select
@@ -756,7 +761,7 @@ export function SearchPanel({ query, onQueryChange, docked, onOpenVerse, onOpene
           )}
         </div>
       )}
-      <div className="flex min-h-0 flex-1">
+      <div className={cx("flex min-h-0 flex-1", tab === "grammar" && "hidden")}>
         {showFacets && facetRows && (tab === "verses" || tab === "commentary") && active && (
           <aside className="hidden w-40 shrink-0 overflow-y-auto border-r border-line p-2 text-xs sm:block" aria-label="Counts by book">
             {facetRows.sources.length > 1 && (

@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Languages, Search } from "lucide-react";
+import { BookA, Languages, Search } from "lucide-react";
 import { api } from "../../api/client";
 import { useBooks, useStrongsEntry } from "../../api/queries";
 import { ConcordancePanel } from "./ConcordancePanel";
 import { CommentaryHtml } from "../commentary/CommentaryPanel";
 import { usePaneNavigate, usePaneParams } from "../../workspace/PaneContext";
-import { openPassage, targetFor } from "../../workspace/openContent";
+import { openContent, openPassage, targetFor } from "../../workspace/openContent";
 import { useReadingTypography } from "../../state/uiStore";
 import { Button } from "../../components/ui/Button";
 import { EmptyState, LoadingState } from "../../components/ui/EmptyState";
@@ -146,6 +146,14 @@ export function LexiconView() {
                 <span className="font-semibold">KJV usage:</span> {entry.kjv_usage}
               </p>
             )}
+            <Button
+              className="mt-4"
+              variant="secondary"
+              icon={BookA}
+              onClick={(e) => openContent("wordstudy", { id: entry.id }, { target: targetFor(e, "new") })}
+            >
+              Word study: renderings, forms, where it occurs
+            </Button>
             <ConcordancePanel strongsId={entry.id} />
           </div>
         )}

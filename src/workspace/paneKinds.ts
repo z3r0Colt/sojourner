@@ -276,6 +276,15 @@ export const PANE_KINDS: Registry = {
     listed: false,
   },
   illustrations: { kind: "illustrations", label: "Illustrations", icon: Lightbulb, title: () => "Illustrations", defaultWidth: 900, acceptsPassage: false, listed: true },
+  wordstudy: {
+    kind: "wordstudy",
+    label: "Word study",
+    icon: BookA,
+    title: (p) => (p.id ? `Word study · ${p.id}` : "Word study"),
+    defaultWidth: 700,
+    acceptsPassage: false,
+    listed: true,
+  },
   search: {
     kind: "search",
     label: "Search",
@@ -374,6 +383,8 @@ export function routeFor(content: PaneContent): string {
       return `/sermons/${content.params.id}`;
     case "illustrations":
       return "/illustrations";
+    case "wordstudy":
+      return content.params.id ? `/wordstudy/${encodeURIComponent(content.params.id)}` : "/wordstudy";
     case "search":
       return content.params.query ? `/search?q=${encodeURIComponent(content.params.query)}` : "/search";
     case "settings":
@@ -442,6 +453,8 @@ export function parseRoute(pathname: string, search = ""): ContentRequest | null
     }
     case "illustrations":
       return { kind: "illustrations", params: {} };
+    case "wordstudy":
+      return { kind: "wordstudy", params: { id: a ?? null } };
     case "search":
       return { kind: "search", params: { query: new URLSearchParams(search).get("q") ?? "" } };
     case "settings": {

@@ -16,6 +16,7 @@ pub mod thayers;
 pub mod treasury;
 pub mod westminster;
 pub mod westminster_commentary;
+pub mod word_study;
 
 use rusqlite::Connection;
 use std::path::Path;
@@ -210,6 +211,11 @@ pub fn import_all(conn: &mut Connection, reference_dir: &Path) -> anyhow::Result
     } else {
         (0, 0)
     };
+
+    // After the morphology and the interlinear, which it reads.
+    if table_count(conn, "morph_codes") == 0 {
+        word_study::import(conn).map_err(|e| anyhow::anyhow!("word study tables failed: {e:#}"))?;
+    }
 
     Ok(ReferenceImportReport {
         strongs_entries,

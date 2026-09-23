@@ -4682,6 +4682,7 @@ dependencies = [
  "tauri-plugin-opener",
  "tauri-plugin-window-state",
  "thiserror 1.0.69",
+ "unicode-normalization",
  "ureq",
  "uuid",
  "winreg",

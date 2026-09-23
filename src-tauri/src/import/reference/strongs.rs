@@ -32,6 +32,17 @@ fn text_content(node: roxmltree::Node) -> String {
                         out.push_str(prefix);
                         out.push_str(num.trim_start_matches('0'));
                     }
+                } else if tag == "w" && child.attribute("src").is_some() {
+                    // The Hebrew dictionary names a root as an empty element,
+                    // `<w src="2616" lemma="חָסַד" xlit="châçad"/>`, whose
+                    // number is Hebrew; without this "from H2616 (châçad)"
+                    // read "from ;".
+                    let num = child.attribute("src").unwrap_or("").trim_start_matches('0');
+                    out.push('H');
+                    out.push_str(num);
+                    if let Some(x) = child.attribute("xlit") {
+                        out.push_str(&format!(" ({x})"));
+                    }
                 } else {
                     walk(child, out);
                 }
