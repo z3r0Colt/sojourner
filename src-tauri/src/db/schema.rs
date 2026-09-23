@@ -969,6 +969,30 @@ DROP TABLE IF EXISTS library_fts;
 DROP TABLE IF EXISTS library_resources;
 "#;
 
+// What a translation is, beyond its name: the terms it ships under and the
+// credit line those terms require, how much of the Bible it covers, and the
+// script and direction it is written in.
+//
+// `license_status` stays the flag it always was ('licensed' marks a reader's
+// own copyrighted import). `license` is the actual licence text shown in
+// About -- "Public domain", "CC BY-SA 4.0", "CC0" -- and `credit` the line a
+// CC BY work must carry wherever it is reproduced. Both are NULL for a
+// translation imported without them (every Zefania file), which About reads
+// as public domain because that is what every bundled Zefania file is.
+//
+// `script` ('latin', 'greek', 'hebrew') and `direction` ('ltr', 'rtl') are
+// for the original-language editions: a Hebrew pane reads right to left, and
+// the translation picker lists the Greek and Hebrew texts under their own
+// heading. `scope` is a short human note ("New Testament and part of the
+// Old") for a translation that does not cover all 66 books.
+pub const CONTENT_MIGRATION_0019: &str = r#"
+ALTER TABLE translations ADD COLUMN license TEXT;
+ALTER TABLE translations ADD COLUMN credit TEXT;
+ALTER TABLE translations ADD COLUMN scope TEXT;
+ALTER TABLE translations ADD COLUMN script TEXT NOT NULL DEFAULT 'latin';
+ALTER TABLE translations ADD COLUMN direction TEXT NOT NULL DEFAULT 'ltr';
+"#;
+
 pub const CONTENT_MIGRATIONS: &[&str] = &[
     CONTENT_MIGRATION_0001,
     CONTENT_MIGRATION_0002,
@@ -988,6 +1012,7 @@ pub const CONTENT_MIGRATIONS: &[&str] = &[
     CONTENT_MIGRATION_0016,
     CONTENT_MIGRATION_0017,
     CONTENT_MIGRATION_0018,
+    CONTENT_MIGRATION_0019,
 ];
 
 // library.db: the books that ship with the app, in a file of their own.

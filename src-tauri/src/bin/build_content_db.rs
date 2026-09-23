@@ -19,13 +19,19 @@ fn main() -> anyhow::Result<()> {
     let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let repo_root = manifest_dir.parent().expect("src-tauri has a parent directory").to_path_buf();
 
-    let mut args = std::env::args().skip(1);
+    // `--update` builds onto the existing file instead of starting fresh:
+    // migrations run, and every importer that finds its tables already
+    // filled (or its source unchanged) skips itself, so only what is new is
+    // imported. A development convenience -- a release always builds clean.
+    let args: Vec<String> = std::env::args().skip(1).collect();
+    let update = args.iter().any(|a| a == "--update");
     let out_path = args
-        .next()
+        .iter()
+        .find(|a| !a.starts_with("--"))
         .map(PathBuf::from)
         .unwrap_or_else(|| repo_root.join("content").join("content.db"));
 
-    if out_path.exists() {
+    if out_path.exists() && !update {
         std::fs::remove_file(&out_path)?;
         let wal = out_path.with_extension("db-wal");
         let shm = out_path.with_extension("db-shm");

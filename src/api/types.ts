@@ -16,6 +16,16 @@ export interface Translation {
   imported_at: string;
   verse_count: number;
   license_status: "public_domain" | "licensed";
+  /** The licence as About shows it ("CC BY-SA 4.0"); null for the bundled
+   * Zefania files, which are all public domain. */
+  license: string | null;
+  /** The credit line the licence requires, where it requires one. */
+  credit: string | null;
+  /** "New Testament and part of the Old", for a partial translation. */
+  scope: string | null;
+  script: "latin" | "greek" | "hebrew";
+  direction: "ltr" | "rtl";
+  source_format: string;
 }
 
 export interface BookCoverage {

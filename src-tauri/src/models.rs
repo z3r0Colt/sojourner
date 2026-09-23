@@ -20,6 +20,18 @@ pub struct Translation {
     pub imported_at: String,
     pub verse_count: i64,
     pub license_status: String,
+    /// The licence as About shows it ("CC BY-SA 4.0"); None for the bundled
+    /// Zefania files, which are all public domain.
+    pub license: Option<String>,
+    /// The credit line the licence requires, where it requires one.
+    pub credit: Option<String>,
+    /// "New Testament and part of the Old", for a partial translation.
+    pub scope: Option<String>,
+    /// 'latin', 'greek' or 'hebrew'.
+    pub script: String,
+    /// 'ltr' or 'rtl'.
+    pub direction: String,
+    pub source_format: String,
 }
 
 /// Which chapters of a book a given translation actually has verses for --

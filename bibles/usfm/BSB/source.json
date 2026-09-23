@@ -1,0 +1,14 @@
+{
+  "code": "BSB",
+  "name": "Berean Standard Bible",
+  "year": 2023,
+  "language": "en",
+  "license": "Public domain",
+  "credit": "The Holy Bible, Berean Standard Bible (BSB), dedicated to the public domain in 2023 by BSB Publishing.",
+  "scope": null,
+  "source_url": "https://ebible.org/Scriptures/engbsb_usfm.zip",
+  "fetched": "2026-09-23",
+  "books": 66,
+  "missing_books": [],
+  "changes": "Word-level Strong's tags and alignment milestones removed; text, headings, poetry and footnotes unchanged."
+}

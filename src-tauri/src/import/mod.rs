@@ -1,6 +1,7 @@
 pub mod checksum;
 pub mod reference;
 pub mod thml;
+pub mod usfm;
 pub mod zefania;
 
 use rusqlite::Connection;
@@ -154,7 +155,26 @@ pub fn populate_content_db(
     reference_dir: &Path,
 ) -> anyhow::Result<Vec<ScannedFile>> {
     let files = discover_candidate_files(&[bibles_dir.to_path_buf(), commentaries_dir.to_path_buf()]);
-    let results = scan_files(conn, &files);
+    let mut results = scan_files(conn, &files);
+    // USFM translations are folders, not single files: `bibles/usfm/<CODE>/`
+    // with a `source.json` naming the translation (see `usfm`).
+    for dir in usfm::discover(&bibles_dir.join("usfm")) {
+        let outcome = usfm::import_dir(&dir, conn);
+        results.push(match outcome {
+            Ok(o) => ScannedFile {
+                path: dir.display().to_string(),
+                format: "usfm".into(),
+                status: format!("{:?}", o.status),
+                detail: o.detail,
+            },
+            Err(e) => ScannedFile {
+                path: dir.display().to_string(),
+                format: "usfm".into(),
+                status: "Failed".into(),
+                detail: Some(format!("{e:#}")),
+            },
+        });
+    }
     backfill_license_status(conn)?;
     // Before any of the reference work, so a build that must not ship stops
     // in seconds rather than after the half hour the importers take.

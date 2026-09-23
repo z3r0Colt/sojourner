@@ -22,7 +22,7 @@ pub fn list_translations(conn: &Connection) -> anyhow::Result<Vec<Translation>> 
     let mut stmt = conn.prepare(
         "SELECT t.id, t.code, t.name, t.language, t.source_path, t.imported_at,
                 (SELECT COUNT(*) FROM verses v WHERE v.translation_id = t.id) as verse_count,
-                t.license_status
+                t.license_status, t.license, t.credit, t.scope, t.script, t.direction, t.source_format
          FROM translations t ORDER BY t.name",
     )?;
     let rows = stmt.query_map([], |r| {
@@ -35,6 +35,12 @@ pub fn list_translations(conn: &Connection) -> anyhow::Result<Vec<Translation>> 
             imported_at: r.get(5)?,
             verse_count: r.get(6)?,
             license_status: r.get(7)?,
+            license: r.get(8)?,
+            credit: r.get(9)?,
+            scope: r.get(10)?,
+            script: r.get(11)?,
+            direction: r.get(12)?,
+            source_format: r.get(13)?,
         })
     })?;
     Ok(rows.collect::<Result<Vec<_>, _>>()?)

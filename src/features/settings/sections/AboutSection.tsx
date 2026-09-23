@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { Check, Download, Globe, Mail, RefreshCw } from "lucide-react";
 import { api } from "../../../api/client";
+import { useTranslations } from "../../../api/queries";
 import type { UpdateCheck } from "../../../api/types";
 import { Button } from "../../../components/ui/Button";
 
@@ -136,6 +137,26 @@ function Contact({ version }: { version: string | null }) {
   );
 }
 
+/** Every translation that ships with its own terms -- the modern ones and,
+ * later, the Greek and Hebrew editions -- credited in the words its licence
+ * asks for. Read from the library, so a translation added to the build is
+ * credited without anyone remembering to add a line here. */
+function TranslationCredits() {
+  const { data: translations } = useTranslations();
+  const credited = (translations ?? []).filter((t) => t.credit && t.license_status !== "licensed");
+  return (
+    <>
+      {credited.map((t) => (
+        <Source key={t.id} name={t.name}>
+          {t.credit}
+          {t.license && !t.credit!.includes(t.license) ? ` ${t.license}.` : ""}
+          {t.scope ? ` Covers the ${t.scope}.` : ""}
+        </Source>
+      ))}
+    </>
+  );
+}
+
 /** One credited source: what it is, and on what terms it is here. */
 function Source({ name, children }: { name: string; children: React.ReactNode }) {
   return (
@@ -194,8 +215,10 @@ export function AboutSection() {
       </p>
       <dl className="divide-y divide-line text-sm">
         <Source name="Bible translations, commentaries, and confessions">
-          The King James Version, the American Standard Version, and the other translations and classic works included here are in the public domain.
+          The King James Version, the American Standard Version, and the other translations and classic works included here are in the public domain,
+          except where a translation is listed below with its own terms.
         </Source>
+        <TranslationCredits />
         <Source name="Strong's lexicon and Thayer's">Public domain.</Source>
         <Source name="Greek New Testament — text, parsing, and Strong's tagging">
           The Translators Amalgamated Greek New Testament and the Translators Brief Lexicon of Extended Strong's for Greek, © Tyndale House Cambridge, used
@@ -225,6 +248,23 @@ export function AboutSection() {
         </Source>
         <Source name="OpenDyslexic">
           Used under the SIL Open Font License; the licence text ships beside the font.
+        </Source>
+      </dl>
+
+      <h2 className="mb-1 mt-8 text-lg font-semibold text-ink">Considered and not included</h2>
+      <p className="mb-3 text-sm text-ink-3">
+        Readers ask about these. They are left out because their terms do not allow an app to give them away, not because of their quality.
+      </p>
+      <dl className="divide-y divide-line text-sm">
+        <Source name="NET Bible">Free to read online, but its licence does not permit redistributing the whole text inside another program.</Source>
+        <Source name="ESV, NIV, NASB, NKJV, NLT, CSB">
+          In copyright. A reader who holds a licensed copy in Zefania XML can add it from Settings → Library; it is marked as licensed there and never
+          leaves this computer.
+        </Source>
+        <Source name="Danby's Mishnah (1933)">Not yet in the public domain.</Source>
+        <Source name="Post-1929 English translations of Reformed works">
+          Wilhelmus à Brakel's <i>Christian's Reasonable Service</i>, Bavinck's <i>Reformed Dogmatics</i>, Turretin's <i>Institutes</i> in Dennison's
+          edition, and Vos's <i>Biblical Theology</i> are in copyright in English. The originals are older, but the translations are not.
         </Source>
       </dl>
 

@@ -1,0 +1,14 @@
+{
+  "code": "UST",
+  "name": "Simplified Text (UST)",
+  "year": 2022,
+  "language": "en",
+  "license": "CC BY-SA 4.0",
+  "credit": "Adapted from the unfoldingWord® Simplified Text, © unfoldingWord, licensed CC BY-SA 4.0. The original work by unfoldingWord is available from unfoldingword.org/ust. Changes: word alignment and tagging removed; section headings not shown.",
+  "scope": null,
+  "source_url": "https://git.door43.org/unfoldingWord/en_ust/archive/master.zip",
+  "fetched": "2026-09-23",
+  "books": 66,
+  "missing_books": [],
+  "changes": "Word-level Strong's tags and alignment milestones removed; text, headings, poetry and footnotes unchanged."
+}

@@ -55,6 +55,7 @@ import { BookmarksMenu } from "./BookmarksMenu";
 import { FindBar } from "./FindBar";
 import { findMatches, findRangesByVerse } from "./findMatches";
 import { computeRedLetterSpans } from "./redLetterSpans";
+import { groupTranslations } from "./translationGroups";
 import { sendToSermon } from "../sermons/sendToSermon";
 import { captureIllustration } from "../sermons/illustrationCapture";
 import { crossrefRef } from "../sermons/sourceIdentity";
@@ -780,10 +781,15 @@ export function ReadingPane() {
       <span className="mx-1 h-5 w-px bg-line" aria-hidden="true" />
       {translations && (
         <select aria-label="Translation" className={selectSmClass} value={translationId ?? ""} onChange={(e) => setParams({ translationId: Number(e.target.value) })}>
-          {translations.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.code}
-            </option>
+          {groupTranslations(translations).map((g) => (
+            <optgroup key={g.label} label={g.label}>
+              {g.translations.map((t) => (
+                <option key={t.id} value={t.id} title={t.scope ? `${t.name} (${t.scope})` : t.name}>
+                  {t.code}
+                  {t.scope ? " (partial)" : ""}
+                </option>
+              ))}
+            </optgroup>
           ))}
         </select>
       )}
