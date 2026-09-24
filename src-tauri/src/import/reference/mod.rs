@@ -123,15 +123,26 @@ pub fn import_all(conn: &mut Connection, reference_dir: &Path) -> anyhow::Result
         0
     };
 
-    let footnotes = if table_count(conn, "footnotes") == 0 {
-        let asv = footnotes::import(conn, &reference_dir.join("footnotes").join("asv"), "ASV")
-            .map_err(|e| anyhow::anyhow!("ASV footnotes import failed: {e:#}"))?;
-        let kjv = footnotes::import_osis(conn, &reference_dir.join("footnotes").join("kjv").join("kjv.osis.xml"), "KJV")
-            .map_err(|e| anyhow::anyhow!("KJV footnotes import failed: {e:#}"))?;
-        asv + kjv
-    } else {
-        0
+    // Asked per translation, not of the table: the USFM translations (BSB,
+    // ULT...) bring their own footnotes in before this runs, and an empty-table
+    // check then skipped the ASV's and the KJV's on every clean build.
+    let has_footnotes = |conn: &Connection, code: &str| {
+        conn.query_row(
+            "SELECT 1 FROM footnotes f JOIN translations t ON t.id = f.translation_id WHERE t.code = ?1 LIMIT 1",
+            [code],
+            |_| Ok(()),
+        )
+        .is_ok()
     };
+    let mut footnotes = 0;
+    if !has_footnotes(conn, "ASV") {
+        footnotes += footnotes::import(conn, &reference_dir.join("footnotes").join("asv"), "ASV")
+            .map_err(|e| anyhow::anyhow!("ASV footnotes import failed: {e:#}"))?;
+    }
+    if !has_footnotes(conn, "KJV") {
+        footnotes += footnotes::import_osis(conn, &reference_dir.join("footnotes").join("kjv").join("kjv.osis.xml"), "KJV")
+            .map_err(|e| anyhow::anyhow!("KJV footnotes import failed: {e:#}"))?;
+    }
 
     let westminster_commentary_entries = if table_count(conn, "westminster_commentary_entries") == 0 {
         westminster_commentary::import(conn, &reference_dir.join("westminster_commentary"))
