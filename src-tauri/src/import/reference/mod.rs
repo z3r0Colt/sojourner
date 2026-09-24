@@ -3,6 +3,7 @@ pub mod confessions;
 pub mod crossrefs;
 pub mod dictionary;
 pub mod doctrine_topics;
+pub mod editions;
 pub mod footnotes;
 pub mod harmony;
 pub mod interlinear;
@@ -212,6 +213,14 @@ pub fn import_all(conn: &mut Connection, reference_dir: &Path) -> anyhow::Result
     } else {
         (0, 0)
     };
+
+    // The Greek and Hebrew editions, read from the tagged texts above.
+    let has_wlc: bool = conn
+        .query_row("SELECT 1 FROM translations WHERE code = 'WLC'", [], |_| Ok(()))
+        .is_ok();
+    if !has_wlc {
+        editions::import(conn, &reference_dir.join("morphology")).map_err(|e| anyhow::anyhow!("editions import failed: {e:#}"))?;
+    }
 
     if table_count(conn, "lexicon_entries") == 0 {
         lexicons::import(conn, reference_dir).map_err(|e| anyhow::anyhow!("lexicons import failed: {e:#}"))?;

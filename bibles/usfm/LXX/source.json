@@ -1,0 +1,103 @@
+{
+  "code": "LXX",
+  "name": "Septuagint (Brenton's Greek text)",
+  "year": 1851,
+  "language": "grc",
+  "script": "greek",
+  "direction": "ltr",
+  "license": "Public domain",
+  "credit": "The Septuagint in the Greek text printed by Sir Lancelot C. L. Brenton (1851), after the Vatican Codex. Public domain. The Psalms, Daniel and Nehemiah are laid out in English chapter and verse numbering; Jeremiah 25–52, which the Septuagint orders differently, Esther, whose Greek additions run through it, and the deuterocanonical books are not included.",
+  "scope": "Old Testament",
+  "psalms_numbering": "lxx",
+  "adjust": [
+    {
+      "book": "DAN",
+      "chapter": 3,
+      "verses": [
+        24,
+        90
+      ],
+      "action": "drop"
+    },
+    {
+      "book": "DAN",
+      "chapter": 3,
+      "verses": [
+        91,
+        97
+      ],
+      "shift": -67
+    },
+    {
+      "book": "DAN",
+      "chapter": 6,
+      "verses": [
+        1,
+        1
+      ],
+      "chapter_shift": -1,
+      "shift": 30
+    },
+    {
+      "book": "DAN",
+      "chapter": 6,
+      "verses": [
+        2,
+        29
+      ],
+      "shift": -1
+    },
+    {
+      "book": "JER",
+      "chapters": [
+        25,
+        52
+      ],
+      "action": "drop"
+    },
+    {
+      "book": "EZR",
+      "chapters": [
+        11,
+        23
+      ],
+      "chapter_shift": -10,
+      "to_book": "NEH"
+    }
+  ],
+  "source_url": "https://ebible.org/Scriptures/grcbrent_usfm.zip",
+  "fetched": "2026-09-24",
+  "books": 37,
+  "missing_books": [
+    "NEH",
+    "EST",
+    "MAT",
+    "MRK",
+    "LUK",
+    "JHN",
+    "ACT",
+    "ROM",
+    "1CO",
+    "2CO",
+    "GAL",
+    "EPH",
+    "PHP",
+    "COL",
+    "1TH",
+    "2TH",
+    "1TI",
+    "2TI",
+    "TIT",
+    "PHM",
+    "HEB",
+    "JAS",
+    "1PE",
+    "2PE",
+    "1JN",
+    "2JN",
+    "3JN",
+    "JUD",
+    "REV"
+  ],
+  "changes": "Word-level Strong's tags and alignment milestones removed; text, headings, poetry and footnotes unchanged."
+}

@@ -278,6 +278,8 @@ fn verse_query(q: &ParsedQuery, translation_ids: &[i64], scope: &VerseSearchScop
     let books_join = if needs_books { "JOIN books b ON b.id = v.book_id" } else { "" };
     let mut params: Vec<Box<dyn rusqlite::ToSql>> = Vec::new();
     let indexed = !q.fts.is_empty();
+    // Greek and Hebrew are matched by their bare letters (see verses_plain).
+    let fts_table = if q.original_script { "verses_plain" } else { "verses_fts" };
     let from = if indexed {
         params.push(Box::new(q.fts.clone()));
         // CROSS JOIN, deliberately: it tells SQLite to keep this join order,
@@ -286,11 +288,11 @@ fn verse_query(q: &ParsedQuery, translation_ids: &[i64], scope: &VerseSearchScop
         // verses and probed the index once per row -- fourteen seconds for a
         // word like "love", against eighteen milliseconds when the index leads.
         format!(
-            "FROM verses_fts
-             CROSS JOIN verses v ON v.id = verses_fts.rowid
+            "FROM {fts_table}
+             CROSS JOIN verses v ON v.id = {fts_table}.rowid
              JOIN translations t ON t.id = v.translation_id
              {books_join}
-             WHERE verses_fts MATCH ? AND v.translation_id IN ({placeholders}){cond_sql}"
+             WHERE {fts_table} MATCH ? AND v.translation_id IN ({placeholders}){cond_sql}"
         )
     } else {
         format!(
@@ -325,14 +327,16 @@ pub fn search_verses(
     }
     let regex = q.regex.as_deref().map(query_lang::compile_regex).transpose()?;
     let vq = verse_query(q, &translation_ids, scope);
-    let order = if options.passage_order || !vq.indexed {
+    let order = if options.passage_order || !vq.indexed || q.original_script {
         "v.book_id, v.chapter, v.verse, t.id"
     } else {
         "bm25(verses_fts)"
     };
     // The whole verse, its matches marked: verses are short enough to show
-    // entire, and the concordance view lines hits up on the first mark.
-    let text_col = if vq.indexed { "highlight(verses_fts, 0, char(2), char(3))" } else { "v.text" };
+    // entire, and the concordance view lines hits up on the first mark. A
+    // Greek or Hebrew search matched the bare letters, so its marks are put
+    // on the pointed text by hand.
+    let text_col = if vq.indexed && !q.original_script { "highlight(verses_fts, 0, char(2), char(3))" } else { "v.text" };
     let params: Vec<&dyn rusqlite::ToSql> = vq.params.iter().map(|b| b.as_ref()).collect();
 
     let map = |r: &rusqlite::Row| -> rusqlite::Result<(SearchResult, String)> {
@@ -395,6 +399,9 @@ pub fn search_verses(
         .map(|r| r.map(|(res, _)| res))
         .collect::<Result<Vec<_>, _>>()?;
     for r in &mut results {
+        if q.original_script {
+            r.snippet = mark_original(&r.snippet, &q.mark_words);
+        }
         r.snippet = escape_snippet(&r.snippet);
     }
     let total = if results.len() as i64 >= limit {
@@ -403,6 +410,35 @@ pub fn search_verses(
         results.len() as i64
     };
     Ok(SearchPage { results, total })
+}
+
+/// Marks, in pointed Greek or Hebrew, the words whose bare letters are one
+/// of `words` (themselves bare letters) -- whole words, or a prefix where the
+/// search word was typed as one.
+fn mark_original(text: &str, words: &[String]) -> String {
+    let mut spans = Vec::new();
+    let mut start: Option<usize> = None;
+    let push = |s: usize, e: usize, spans: &mut Vec<(usize, usize)>| {
+        let bare = crate::plain::plain_word(&text[s..e]);
+        if !bare.is_empty() && words.iter().any(|w| !w.is_empty() && (bare == *w || bare.starts_with(w.as_str()))) {
+            spans.push((s, e));
+        }
+    };
+    for (i, c) in text.char_indices() {
+        let in_word = c.is_alphanumeric() || query_lang::is_original_script(c) && !c.is_whitespace() && c != '׃' && c != '־' && c != '׀';
+        match (in_word, start) {
+            (true, None) => start = Some(i),
+            (false, Some(s)) => {
+                push(s, i, &mut spans);
+                start = None;
+            }
+            _ => {}
+        }
+    }
+    if let Some(s) = start {
+        push(s, text.len(), &mut spans);
+    }
+    query_lang::mark_spans(text, spans)
 }
 
 /// A verse the index did not mark (or marked by stem, not by form): the
@@ -951,6 +987,13 @@ mod real_content {
         assert!(shew.total > plain.total * 3, "{} vs {}", shew.total, plain.total);
         let facets = verse_facets(&conn, &o.parse("in:psalms +LORD"), &[k], &VerseSearchScope::default()).unwrap();
         assert_eq!(facets.by_book.len(), 1);
+        let wlc: i64 = conn.query_row("SELECT id FROM translations WHERE code = 'WLC'", [], |r| r.get(0)).unwrap();
+        let heb = run(&conn, "בראשית", &[wlc], o);
+        assert!(heb.results.iter().any(|r| (r.book_id, r.chapter, r.verse) == (Some(1), Some(1), Some(1))), "Genesis 1:1 by bare letters");
+        assert!(heb.results[0].snippet.contains(MARK_START), "{}", heb.results[0].snippet);
+        let sbl: i64 = conn.query_row("SELECT id FROM translations WHERE code = 'SBLGNT'", [], |r| r.get(0)).unwrap();
+        // The nominative form; the word study counts every form.
+        assert!(run(&conn, "λογος", &[sbl], o).total > 50);
         println!("did you mean 'shewbred': {:?}", did_you_mean(&conn, "shewbred", 3).unwrap());
         println!("suggest 'righ': {:?}", suggest_words(&conn, "righ", 5).unwrap());
     }

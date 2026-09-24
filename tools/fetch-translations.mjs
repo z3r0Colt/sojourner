@@ -71,6 +71,49 @@ const SOURCES = [
     credit: "Adapted from the unfoldingWord® Simplified Text, © unfoldingWord, licensed CC BY-SA 4.0. The original work by unfoldingWord is available from unfoldingword.org/ust. Changes: word alignment and tagging removed; section headings not shown.",
     url: "https://git.door43.org/unfoldingWord/en_ust/archive/master.zip",
   },
+  {
+    code: "LXX",
+    name: "Septuagint (Brenton's Greek text)",
+    year: 1851,
+    license: "Public domain",
+    credit:
+      "The Septuagint in the Greek text printed by Sir Lancelot C. L. Brenton (1851), after the Vatican Codex. Public domain. The Psalms, Daniel and Nehemiah are laid out in English chapter and verse numbering; Jeremiah 25–52, which the Septuagint orders differently, Esther, whose Greek additions run through it, and the deuterocanonical books are not included.",
+    url: "https://ebible.org/Scriptures/grcbrent_usfm.zip",
+    renameBooks: { DAG: "DAN" },
+    scope: "Old Testament",
+    language: "grc",
+    script: "greek",
+    psalms_numbering: "lxx",
+    adjust: [
+      // Daniel 3:24-90 is the Song of the Three; English 3:24-30 is 3:91-97.
+      { book: "DAN", chapter: 3, verses: [24, 90], action: "drop" },
+      { book: "DAN", chapter: 3, verses: [91, 97], shift: -67 },
+      // Brenton's Daniel 6:1 is the English 5:31.
+      { book: "DAN", chapter: 6, verses: [1, 1], chapter_shift: -1, shift: 30 },
+      { book: "DAN", chapter: 6, verses: [2, 29], shift: -1 },
+      { book: "JER", chapters: [25, 52], action: "drop" },
+      // 2 Esdras 11-23 is Nehemiah 1-13.
+      { book: "EZR", chapters: [11, 23], chapter_shift: -10, to_book: "NEH" },
+    ],
+  },
+  {
+    code: "VUL",
+    name: "Clementine Vulgate",
+    year: 1598,
+    license: "Public domain",
+    credit:
+      "The Clementine Vulgate (1592/1598). Public domain. From eBible.org's edition; its Glossa Ordinaria notes are not included. The Psalms are laid out in English chapter and verse numbering; the deuterocanonical books are not included.",
+    url: "https://ebible.org/Scriptures/latVUC_usfm.zip",
+    language: "la",
+    script: "latin",
+    footnotes: false,
+    strip: "[]",
+    psalms_numbering: "lxx",
+    adjust: [
+      { book: "DAN", chapter: 3, verses: [24, 90], action: "drop" },
+      { book: "DAN", chapter: 3, verses: [91, 97], shift: -67 },
+    ],
+  },
 ];
 
 // The 66 books the app carries, by USFM id, in canonical order. Anything else
@@ -104,7 +147,8 @@ export function slim(usfm) {
 }
 
 async function fetchZip(url) {
-  const res = await fetch(url);
+  // eBible refuses requests without a browser-like user agent for some files.
+  const res = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0 (Sojourner build tools)" } });
   if (!res.ok) throw new Error(`${url}: HTTP ${res.status}`);
   return JSZip.loadAsync(Buffer.from(await res.arrayBuffer()));
 }
@@ -121,11 +165,15 @@ async function fetchOne(src) {
     if (entry.dir || !entry.name.toLowerCase().endsWith(".usfm")) continue;
     const text = await entry.async("string");
     const id = /^﻿?\\id\s+(\S+)/m.exec(text)?.[1]?.toUpperCase();
-    const index = BOOKS.indexOf(id);
+    // Brenton gives Daniel as "DAG", the Greek Daniel with its additions;
+    // its canonical chapters are Daniel's.
+    const bookId = src.renameBooks?.[id] ?? id;
+    const index = BOOKS.indexOf(bookId);
     if (index < 0) continue;
-    found.set(id, true);
-    const name = `${String(index + 1).padStart(2, "0")}-${id}.usfm`;
-    await writeFile(join(dir, name), slim(text), "utf8");
+    found.set(bookId, true);
+    const name = `${String(index + 1).padStart(2, "0")}-${bookId}.usfm`;
+    const body = bookId === id ? slim(text) : slim(text).replace(/^\\id\s+\S+/m, `\\id ${bookId}`);
+    await writeFile(join(dir, name), body, "utf8");
   }
 
   const missing = BOOKS.filter((b) => !found.has(b));
@@ -133,11 +181,18 @@ async function fetchOne(src) {
     code: src.code,
     name: src.name,
     year: src.year,
-    language: "en",
+    language: src.language ?? "en",
+    script: src.script ?? "latin",
+    direction: src.direction ?? "ltr",
     license: src.license,
     credit: src.credit,
     // Only a translation that does not cover all 66 books says so.
     scope: src.scope ?? null,
+    // Import options (see SourceMeta in src-tauri/src/import/usfm.rs).
+    ...(src.footnotes === false ? { footnotes: false } : {}),
+    ...(src.strip ? { strip: src.strip } : {}),
+    ...(src.psalms_numbering ? { psalms_numbering: src.psalms_numbering } : {}),
+    ...(src.adjust ? { adjust: src.adjust } : {}),
     source_url: src.url,
     fetched: new Date().toISOString().slice(0, 10),
     books: found.size,

@@ -106,6 +106,9 @@ pub struct ParsedQuery {
     /// Filter words that were not understood (`in:narnia`), reported rather
     /// than silently dropped.
     pub unknown: Vec<String>,
+    /// The words are Greek or Hebrew: searched by bare letters against
+    /// `verses_plain`, since the reader rarely types accents or points.
+    pub original_script: bool,
 }
 
 impl ParsedQuery {
@@ -392,8 +395,42 @@ fn book_label(id: i64) -> String {
     crate::refparse::book_name(id).unwrap_or("?").to_string()
 }
 
+/// True for a Greek or Hebrew letter (or one of their marks).
+pub fn is_original_script(c: char) -> bool {
+    matches!(c as u32, 0x0370..=0x03FF | 0x1F00..=0x1FFF | 0x0590..=0x05FF)
+}
+
+/// The query with each run of Greek or Hebrew reduced to bare letters,
+/// everything else (operators, filters, English) left as typed.
+fn plain_original_runs(query: &str) -> String {
+    let mut out = String::with_capacity(query.len());
+    let mut run = String::new();
+    for c in query.chars() {
+        if is_original_script(c) || (!run.is_empty() && crate::plain::plain(&c.to_string()).is_empty()) {
+            run.push(c);
+        } else {
+            if !run.is_empty() {
+                out.push_str(&crate::plain::plain(&run));
+                run.clear();
+            }
+            out.push(c);
+        }
+    }
+    out.push_str(&crate::plain::plain(&run));
+    out
+}
+
 /// Parses what the reader typed.
 pub fn parse(query: &str, options: ParseOptions) -> ParsedQuery {
+    if query.chars().any(is_original_script) {
+        let mut q = parse_inner(&plain_original_runs(query), ParseOptions { older_spellings: false, ..options });
+        q.original_script = true;
+        return q;
+    }
+    parse_inner(query, options)
+}
+
+fn parse_inner(query: &str, options: ParseOptions) -> ParsedQuery {
     let star = if options.prefix { "*" } else { "" };
     let mut q = ParsedQuery::default();
     let mut out: Vec<String> = Vec::new();

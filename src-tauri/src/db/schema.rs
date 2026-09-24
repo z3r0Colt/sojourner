@@ -1096,6 +1096,15 @@ CREATE TRIGGER lexicon_ad AFTER DELETE ON lexicon_entries BEGIN
 END;
 "#;
 
+// A second index over the Greek and Hebrew texts, of their bare letters:
+// accents, breathings, vowel points and cantillation removed (see
+// `crate::plain`). A reader types בראשית, not בְּרֵאשִׁית; this is what
+// matches it. Rowid is the verse's id. Rebuilt at every import, from every
+// translation whose script is not Latin (see `import::plain_index`).
+pub const CONTENT_MIGRATION_0023: &str = r#"
+CREATE VIRTUAL TABLE verses_plain USING fts5(text, tokenize='unicode61');
+"#;
+
 pub const CONTENT_MIGRATIONS: &[&str] = &[
     CONTENT_MIGRATION_0001,
     CONTENT_MIGRATION_0002,
@@ -1119,6 +1128,7 @@ pub const CONTENT_MIGRATIONS: &[&str] = &[
     CONTENT_MIGRATION_0020,
     CONTENT_MIGRATION_0021,
     CONTENT_MIGRATION_0022,
+    CONTENT_MIGRATION_0023,
 ];
 
 // library.db: the books that ship with the app, in a file of their own.

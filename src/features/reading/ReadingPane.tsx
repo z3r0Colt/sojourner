@@ -29,6 +29,7 @@ import {
   useResources,
   useFootnotesForChapter,
   useInterlinearForChapter,
+  useMorphologyForChapter,
   useRedLetterRanges,
   useTranslations,
   useTrashToast,
@@ -37,7 +38,7 @@ import {
 import { useNoteRefExtractor } from "../../lib/noteLinks";
 import { useSetting } from "../../hooks/useSetting";
 import { StrongsPopup } from "../lexicon/StrongsPopup";
-import { matchStrongs, wordFromSelection, type WordAtPoint } from "./wordLookup";
+import { matchOriginalStrongs, matchStrongs, wordFromSelection, type WordAtPoint } from "./wordLookup";
 import { api } from "../../api/client";
 import { VerseRow } from "./VerseRow";
 import { SelectionToolbar } from "./SelectionToolbar";
@@ -143,6 +144,9 @@ export function ReadingPane() {
   const book = books?.find((b) => b.id === bookId) ?? null;
 
   const { data: translations } = useTranslations();
+  // Greek and Hebrew texts take their own font, and Hebrew reads right to left.
+  const currentTranslation = translations?.find((t) => t.id === translationId);
+  const originalText = !!currentTranslation && currentTranslation.script !== "latin";
 
   // A pane with no translation yet (fresh install), or one whose translation
   // was removed from the library, falls back to the KJV or the first one.
@@ -255,11 +259,24 @@ export function ReadingPane() {
   // outside the KJV a miss shows a one-time hint (a setting, so dismissing
   // it survives a reinstall).
   const [wordLookup, setWordLookup] = useState<(WordAtPoint & { x: number; y: number }) | null>(null);
-  const { data: interlinear, isLoading: interlinearLoading } = useInterlinearForChapter(wordLookup ? bookId : null, wordLookup ? chapter : null);
+  // An English text is matched through the KJV-tagged interlinear; a Greek
+  // or Hebrew one through the tagged words of the text itself.
+  const lookupEnglish = !!wordLookup && !originalText;
+  const lookupOriginal = !!wordLookup && originalText;
+  const { data: interlinear, isLoading: interlinearLoading } = useInterlinearForChapter(lookupEnglish ? bookId : null, lookupEnglish ? chapter : null);
+  const { data: morphology, isLoading: morphologyLoading } = useMorphologyForChapter(lookupOriginal ? bookId : null, lookupOriginal ? chapter : null);
   const [kjvHintDismissed, setKjvHintDismissed] = useSetting<boolean>("word_lookup_kjv_hint_dismissed", false);
-  const wordStrongs = wordLookup && interlinear ? matchStrongs(wordLookup.word, wordLookup.occurrence, interlinear[wordLookup.verse] ?? []) : null;
+  const wordStrongs = !wordLookup
+    ? null
+    : lookupOriginal
+      ? morphology
+        ? matchOriginalStrongs(wordLookup.word, wordLookup.occurrence, morphology[wordLookup.verse] ?? [])
+        : null
+      : interlinear
+        ? matchStrongs(wordLookup.word, wordLookup.occurrence, interlinear[wordLookup.verse] ?? [])
+        : null;
   const translationCode = translations?.find((t) => t.id === translationId)?.code;
-  const showKjvHint = !!wordLookup && !!interlinear && !wordStrongs && translationCode !== "KJV" && !kjvHintDismissed;
+  const showKjvHint = lookupEnglish && !!interlinear && !wordStrongs && translationCode !== "KJV" && !kjvHintDismissed;
 
   useEffect(() => {
     if (!wordLookup) return;
@@ -786,7 +803,7 @@ export function ReadingPane() {
               {g.translations.map((t) => (
                 <option key={t.id} value={t.id} title={t.scope ? `${t.name} (${t.scope})` : t.name}>
                   {t.code}
-                  {t.scope ? " (partial)" : ""}
+                  {t.scope === "Old Testament" ? " (OT)" : t.scope === "New Testament" ? " (NT)" : t.scope ? " (partial)" : ""}
                 </option>
               ))}
             </optgroup>
@@ -1024,7 +1041,11 @@ export function ReadingPane() {
             )}
 
             {paragraphMode || printing ? (
-              <div className={cx("reading-font text-ink", printing && "print-root")} style={typography}>
+              <div
+                className={cx("reading-font text-ink", printing && "print-root", originalText && "text-original")}
+                dir={currentTranslation?.direction ?? "ltr"}
+                style={typography}
+              >
                 {paragraphMode ? (
                   <ParagraphVerses
                     verses={verses ?? []}
@@ -1050,7 +1071,11 @@ export function ReadingPane() {
                 )}
               </div>
             ) : (
-              <div className="text-ink" style={{ position: "relative", height: rowVirtualizer.getTotalSize(), ...typography }}>
+              <div
+                className={cx("text-ink", originalText && "text-original")}
+                dir={currentTranslation?.direction ?? "ltr"}
+                style={{ position: "relative", height: rowVirtualizer.getTotalSize(), ...typography }}
+              >
                 {rowVirtualizer.getVirtualItems().map((item) => {
                   const v = verses![item.index];
                   return (
@@ -1224,7 +1249,7 @@ export function ReadingPane() {
         <StrongsPopup
           id={wordStrongs}
           word={wordLookup.word}
-          loading={interlinearLoading}
+          loading={lookupOriginal ? morphologyLoading : interlinearLoading}
           x={wordLookup.x}
           y={wordLookup.y}
           onClose={() => setWordLookup(null)}

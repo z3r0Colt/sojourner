@@ -1,0 +1,39 @@
+{
+  "code": "VUL",
+  "name": "Clementine Vulgate",
+  "year": 1598,
+  "language": "la",
+  "script": "latin",
+  "direction": "ltr",
+  "license": "Public domain",
+  "credit": "The Clementine Vulgate (1592/1598). Public domain. From eBible.org's edition; its Glossa Ordinaria notes are not included. The Psalms are laid out in English chapter and verse numbering; the deuterocanonical books are not included.",
+  "scope": null,
+  "footnotes": false,
+  "strip": "[]",
+  "psalms_numbering": "lxx",
+  "adjust": [
+    {
+      "book": "DAN",
+      "chapter": 3,
+      "verses": [
+        24,
+        90
+      ],
+      "action": "drop"
+    },
+    {
+      "book": "DAN",
+      "chapter": 3,
+      "verses": [
+        91,
+        97
+      ],
+      "shift": -67
+    }
+  ],
+  "source_url": "https://ebible.org/Scriptures/latVUC_usfm.zip",
+  "fetched": "2026-09-24",
+  "books": 66,
+  "missing_books": [],
+  "changes": "Word-level Strong's tags and alignment milestones removed; text, headings, poetry and footnotes unchanged."
+}

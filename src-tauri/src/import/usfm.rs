@@ -53,6 +53,141 @@ pub struct SourceMeta {
     pub script: Option<String>,
     #[serde(default)]
     pub direction: Option<String>,
+    /// False to leave the source's footnotes out (the Vulgate's carry the
+    /// whole Glossa Ordinaria).
+    #[serde(default)]
+    pub footnotes: Option<bool>,
+    /// Characters removed from the verse text (editorial brackets).
+    #[serde(default)]
+    pub strip: Option<String>,
+    /// "lxx": the Psalms are numbered as the Septuagint and Vulgate number
+    /// them, and are laid out in English numbering on import (see
+    /// `remap_lxx_psalms`).
+    #[serde(default)]
+    pub psalms_numbering: Option<String>,
+    /// Passages this edition numbers differently from English Bibles, and
+    /// what to do with them.
+    #[serde(default)]
+    pub adjust: Vec<Adjust>,
+}
+
+/// One adjustment: `drop` the verses (or chapters) named, or renumber them
+/// -- `shift` their verse numbers, `chapter_shift` their chapters, or move
+/// them `to_book` another book (the Septuagint joins Nehemiah to Ezra).
+#[derive(Debug, Deserialize)]
+pub struct Adjust {
+    /// USFM book id.
+    pub book: String,
+    #[serde(default)]
+    pub chapter: Option<i64>,
+    #[serde(default)]
+    pub chapters: Option<[i64; 2]>,
+    #[serde(default)]
+    pub verses: Option<[i64; 2]>,
+    #[serde(default)]
+    pub action: Option<String>,
+    #[serde(default)]
+    pub shift: Option<i64>,
+    #[serde(default)]
+    pub chapter_shift: Option<i64>,
+    #[serde(default)]
+    pub to_book: Option<String>,
+}
+
+impl Adjust {
+    fn applies(&self, book: &str, v: &ParsedVerse) -> bool {
+        self.book.eq_ignore_ascii_case(book)
+            && self.chapter.is_none_or(|c| c == v.chapter)
+            && self.chapters.is_none_or(|[a, b]| v.chapter >= a && v.chapter <= b)
+            && self.verses.is_none_or(|[a, b]| v.verse >= a && v.verse <= b)
+    }
+}
+
+/// Applies an edition's adjustments to one book. Verses moved to another
+/// book come back separately, with that book's USFM id.
+fn apply_adjustments(book_id_usfm: &str, verses: Vec<ParsedVerse>, adjust: &[Adjust]) -> (Vec<ParsedVerse>, Vec<(String, ParsedVerse)>) {
+    let mut kept = Vec::new();
+    let mut moved = Vec::new();
+    'verses: for mut v in verses {
+        let applicable: Vec<&Adjust> = adjust.iter().filter(|a| a.applies(book_id_usfm, &v)).collect();
+        let mut to_book = None;
+        for a in applicable {
+            if a.action.as_deref() == Some("drop") {
+                continue 'verses;
+            }
+            if let Some(d) = a.shift {
+                v.verse += d;
+                v.verse_end += d;
+            }
+            if let Some(d) = a.chapter_shift {
+                v.chapter += d;
+            }
+            if let Some(b) = &a.to_book {
+                to_book = Some(b.clone());
+            }
+        }
+        match to_book {
+            Some(b) => moved.push((b, v)),
+            None => kept.push(v),
+        }
+    }
+    (kept, moved)
+}
+
+/// Where each Septuagint (and Vulgate) psalm falls in English numbering:
+/// (English psalm, how many of its verses this segment takes, the English
+/// verse it starts after, how many English verses it covers). Psalm 9 is
+/// English 9 and 10; 113 is 114 and 115; 114 and 115 together are 116;
+/// 146 and 147 together are 147. Between them the numbers run one behind.
+fn lxx_psalm_segments(c: i64) -> Vec<(i64, Option<usize>, i64, Option<i64>)> {
+    match c {
+        1..=8 | 148..=150 => vec![(c, None, 0, None)],
+        9 => vec![(9, Some(21), 0, None), (10, None, 0, None)],
+        10..=112 | 116..=145 => vec![(c + 1, None, 0, None)],
+        113 => vec![(114, Some(8), 0, None), (115, None, 0, None)],
+        114 => vec![(116, None, 0, Some(9))],
+        115 => vec![(116, None, 9, None)],
+        146 => vec![(147, None, 0, Some(11))],
+        147 => vec![(147, None, 11, None)],
+        _ => vec![],
+    }
+}
+
+/// Lays Septuagint-numbered Psalms out in English numbering. Within a psalm
+/// the extra verses these editions have are its title, numbered as a verse
+/// of its own; they open the first English verse rather than pushing every
+/// verse after them one place on.
+fn remap_lxx_psalms(verses: Vec<ParsedVerse>, english_counts: &HashMap<i64, i64>) -> Vec<ParsedVerse> {
+    let mut by_chapter: std::collections::BTreeMap<i64, Vec<ParsedVerse>> = std::collections::BTreeMap::new();
+    for v in verses {
+        by_chapter.entry(v.chapter).or_default().push(v);
+    }
+    let mut out: Vec<ParsedVerse> = Vec::new();
+    for (c, mut vs) in by_chapter {
+        vs.sort_by_key(|v| v.verse);
+        let mut rest = vs.as_slice();
+        for (eng, take, base, span) in lxx_psalm_segments(c) {
+            let n = take.unwrap_or(rest.len()).min(rest.len());
+            let (seg, after) = rest.split_at(n);
+            rest = after;
+            let m = span.unwrap_or_else(|| english_counts.get(&eng).copied().unwrap_or(n as i64) - base);
+            let offset = (n as i64 - m).max(0);
+            for (i, v) in seg.iter().enumerate() {
+                let target = base + ((i as i64 + 1) - offset).max(1);
+                match out.last_mut().filter(|last| last.chapter == eng && last.verse == target) {
+                    Some(last) => {
+                        let shift = utf16_len(&last.text) + 1;
+                        last.text = format!("{} {}", last.text, v.text);
+                        for f in &v.footnotes {
+                            last.footnotes.push(ParsedFootnote { text: f.text.clone(), offset: f.offset + shift });
+                        }
+                    }
+                    None => out.push(ParsedVerse { chapter: eng, verse: target, verse_end: target, text: v.text.clone(), footnotes: v.footnotes.clone() }),
+                }
+            }
+        }
+    }
+    out
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -436,12 +571,51 @@ pub fn import_dir(dir: &Path, conn: &mut Connection) -> anyhow::Result<ImportOut
         }
     }
 
-    let mut books = Vec::new();
+    // English verse counts per psalm, for laying out Septuagint numbering:
+    // read from the KJV, which the Zefania pass has imported by now.
+    let english_psalms: HashMap<i64, i64> = if meta.psalms_numbering.as_deref() == Some("lxx") {
+        let mut stmt = conn.prepare(
+            "SELECT v.chapter, COUNT(*) FROM verses v JOIN translations t ON t.id = v.translation_id
+             WHERE t.code = 'KJV' AND v.book_id = 19 GROUP BY v.chapter",
+        )?;
+        let rows = stmt.query_map([], |r| Ok((r.get(0)?, r.get(1)?)))?;
+        rows.collect::<Result<_, _>>()?
+    } else {
+        HashMap::new()
+    };
+
+    let mut books: Vec<(i64, ParsedBook)> = Vec::new();
+    let mut moved: Vec<(String, ParsedVerse)> = Vec::new();
     for f in usfm_files(dir)? {
-        let parsed = parse_book(&std::fs::read_to_string(&f)?);
-        match book_id_for_usfm(&parsed.id) {
-            Some(book_id) => books.push((book_id, parsed)),
-            None => continue,
+        let mut parsed = parse_book(&std::fs::read_to_string(&f)?);
+        let Some(book_id) = book_id_for_usfm(&parsed.id) else { continue };
+        if let Some(chars) = meta.strip.as_deref().filter(|c| !c.is_empty()) {
+            for v in &mut parsed.verses {
+                // Offsets are recomputed only when notes are kept; with the
+                // characters gone a note would sit a little late otherwise.
+                v.text = v.text.chars().filter(|c| !chars.contains(*c)).collect::<String>().split_whitespace().collect::<Vec<_>>().join(" ");
+            }
+        }
+        if meta.footnotes == Some(false) {
+            for v in &mut parsed.verses {
+                v.footnotes.clear();
+            }
+        }
+        let (kept, to_move) = apply_adjustments(&parsed.id, std::mem::take(&mut parsed.verses), &meta.adjust);
+        parsed.verses = kept;
+        moved.extend(to_move);
+        if book_id == 19 && meta.psalms_numbering.as_deref() == Some("lxx") {
+            parsed.verses = remap_lxx_psalms(std::mem::take(&mut parsed.verses), &english_psalms);
+        }
+        books.push((book_id, parsed));
+    }
+    // Verses an adjustment moved into another book (Nehemiah out of the
+    // Septuagint's Ezra) join that book, or become it.
+    for (usfm_id, v) in moved {
+        let Some(book_id) = book_id_for_usfm(&usfm_id) else { continue };
+        match books.iter_mut().find(|(id, _)| *id == book_id) {
+            Some((_, b)) => b.verses.push(v),
+            None => books.push((book_id, ParsedBook { id: usfm_id.to_ascii_uppercase(), verses: vec![v] })),
         }
     }
     anyhow::ensure!(!books.is_empty(), "no books found in {}", dir.display());
@@ -588,6 +762,23 @@ mod tests {
         let b = parse_book(src);
         assert_eq!(b.verses[0].text, "The LORD is my shepherd; I shall not want.");
         assert_eq!(b.verses[1].text, "He makes me lie down Selah");
+    }
+
+    #[test]
+    fn septuagint_psalms_land_on_english_numbers() {
+        let v = |c: i64, n: i64, t: &str| ParsedVerse { chapter: c, verse: n, verse_end: n, text: t.into(), footnotes: vec![] };
+        // LXX 22 = English 23; LXX 10 (8 verses, title separate) = English 11 (7).
+        let mut src = vec![v(22, 1, "Dominus regit me"), v(22, 2, "in loco")];
+        for i in 1..=8 {
+            src.push(v(10, i, &format!("x{i}")));
+        }
+        let counts: HashMap<i64, i64> = [(23, 6), (11, 7)].into_iter().collect();
+        let out = remap_lxx_psalms(src, &counts);
+        let ps23: Vec<_> = out.iter().filter(|p| p.chapter == 23).map(|p| (p.verse, p.text.as_str())).collect();
+        assert_eq!(ps23, vec![(1, "Dominus regit me"), (2, "in loco")]);
+        let ps11: Vec<_> = out.iter().filter(|p| p.chapter == 11).map(|p| (p.verse, p.text.as_str())).collect();
+        assert_eq!(ps11[0], (1, "x1 x2"));
+        assert_eq!(ps11.last().unwrap(), &(7, "x8"));
     }
 
     #[test]

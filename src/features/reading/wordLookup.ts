@@ -1,4 +1,5 @@
-import type { InterlinearWord } from "../../api/types";
+import type { InterlinearWord, MorphologyWord } from "../../api/types";
+import { bareGreek } from "./editionDiff";
 import { closestWithAttr, textOffsetWithin } from "../../lib/domOffsets";
 
 /**
@@ -65,6 +66,26 @@ export function matchStrongs(word: string, occurrence: number, phrases: Interlin
         return shorter >= 4 && (w.startsWith(target) || target.startsWith(w));
       }),
     );
+  }
+  if (candidates.length === 0) return null;
+  return (candidates[Math.min(occurrence, candidates.length - 1)] ?? candidates[0]).strongs_id;
+}
+
+/** The Strong's number for a word clicked in a Greek or Hebrew text, from
+ * the verse's tagged words (the TR and the Leningrad Codex), compared by
+ * bare letters so accents, points and punctuation do not matter. Another
+ * edition's spelling that the tagged text lacks falls back to a shared
+ * beginning of at least four letters. */
+export function matchOriginalStrongs(word: string, occurrence: number, words: MorphologyWord[]): string | null {
+  const target = bareGreek(word);
+  if (!target) return null;
+  const tagged = words.filter((w) => w.strongs_id);
+  let candidates = tagged.filter((w) => bareGreek(w.original_word) === target);
+  if (candidates.length === 0) {
+    candidates = tagged.filter((w) => {
+      const b = bareGreek(w.original_word);
+      return Math.min(b.length, target.length) >= 4 && (b.startsWith(target.slice(0, 4)) || target.startsWith(b.slice(0, 4)));
+    });
   }
   if (candidates.length === 0) return null;
   return (candidates[Math.min(occurrence, candidates.length - 1)] ?? candidates[0]).strongs_id;

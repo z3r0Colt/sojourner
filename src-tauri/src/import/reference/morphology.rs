@@ -3,84 +3,30 @@ use rusqlite::{params, Connection};
 use std::collections::HashMap;
 use std::path::Path;
 
-/// Extracts a Strong's number from an OSHB lemma string, which may carry a
-/// morpheme prefix ("b/7225" -> preposition + noun) and/or a homonym-disambiguating
-/// letter suffix ("1254 a"). We want just the headword number: "7225", "1254".
-fn strongs_from_lemma(lemma: &str) -> Option<String> {
-    let last_segment = lemma.rsplit('/').next().unwrap_or(lemma);
-    let digits: String = last_segment.chars().take_while(|c| c.is_ascii_digit()).collect();
-    if digits.is_empty() {
-        None
-    } else {
-        Some(format!("H{digits}"))
-    }
-}
-
-fn import_hebrew_book(
-    _tx: &Connection,
-    path: &Path,
-    book_id: i64,
-    insert: &mut rusqlite::Statement,
-) -> anyhow::Result<usize> {
-    let text = std::fs::read_to_string(path)?;
-    let doc = roxmltree::Document::parse(&text)?;
-    let mut count = 0usize;
-
-    for verse in doc
-        .descendants()
-        .filter(|n| n.is_element() && n.tag_name().name() == "verse" && n.attribute("osisID").is_some())
-    {
-        let osis_id = verse.attribute("osisID").unwrap();
-        // osisID looks like "Gen.1.1"; take the last two dot-separated numbers.
-        let parts: Vec<&str> = osis_id.rsplitn(3, '.').collect();
-        if parts.len() != 3 {
-            continue;
-        }
-        let (Ok(verse_num), Ok(chapter_num)) = (parts[0].parse::<i64>(), parts[1].parse::<i64>()) else {
-            continue;
-        };
-
-        let mut sort_order = 0i64;
-        for w in verse
-            .children()
-            .filter(|n| n.is_element() && n.tag_name().name() == "w")
-        {
-            let original_word = w.text().unwrap_or("").replace('/', "");
-            if original_word.trim().is_empty() {
-                continue;
-            }
-            let lemma = w.attribute("lemma").map(|s| s.to_string());
-            let morph = w.attribute("morph").map(|s| s.to_string());
-            let strongs_id = lemma.as_deref().and_then(strongs_from_lemma);
-            insert.execute(params![book_id, chapter_num, verse_num, sort_order, original_word, lemma, morph, strongs_id])?;
-            sort_order += 1;
-            count += 1;
-        }
-    }
-    Ok(count)
-}
-
-fn import_hebrew(conn: &mut Connection, dir: &Path, book_lookup: &HashMap<String, i64>) -> anyhow::Result<usize> {
+/// The Hebrew Old Testament's words, from STEPBible's TAHOT: the Leningrad
+/// Codex in English chapter and verse numbering, with Hebrew lemmas and the
+/// OSHB parsing codes (see `editions::read_tahot`). It replaced the OSHB XML
+/// this table was first built from, whose Hebrew numbering put every word of
+/// a titled psalm, Malachi 4 and Joel 3 a verse or a chapter away from the
+/// KJV beside it.
+fn import_hebrew(conn: &mut Connection, dir: &Path) -> anyhow::Result<usize> {
+    let tahot = super::editions::read_tahot(dir)?;
     let tx = conn.transaction()?;
-    let mut total = 0usize;
     {
         let mut insert = tx.prepare(
             "INSERT INTO morphology_words (book_id, chapter, verse, sort_order, original_word, lemma, morph_code, strongs_id)
              VALUES (?1,?2,?3,?4,?5,?6,?7,?8)",
         )?;
-        let entries = std::fs::read_dir(dir)?;
-        for entry in entries.flatten() {
-            let path = entry.path();
-            let Some(stem) = path.file_stem().and_then(|s| s.to_str()) else { continue };
-            let Some(&book_id) = book_lookup.get(stem) else { continue };
-            total += import_hebrew_book(&tx, &path, book_id, &mut insert)?;
+        for w in &tahot.words {
+            insert.execute(params![w.book_id, w.chapter, w.verse, w.sort_order, w.original_word, w.lemma, w.morph_code, w.strongs_id])?;
         }
     }
     tx.commit()?;
-    Ok(total)
+    println!("morphology (hebrew): {} words from TAHOT", tahot.words.len());
+    Ok(tahot.words.len())
 }
 
-const GREEK_BOOK_ALIASES: &[(&str, &str)] = &[
+pub(crate) const GREEK_BOOK_ALIASES: &[(&str, &str)] = &[
     ("Mat", "Matt"), ("Mrk", "Mark"), ("Luk", "Luke"), ("Jhn", "John"), ("Act", "Acts"),
     ("Rom", "Rom"), ("1Co", "1Cor"), ("2Co", "2Cor"), ("Gal", "Gal"), ("Eph", "Eph"),
     ("Php", "Phil"), ("Col", "Col"), ("1Th", "1Thess"), ("2Th", "2Thess"), ("1Ti", "1Tim"),
@@ -106,7 +52,7 @@ const EDITION: &str = "TR";
 /// trailing letter that distinguishes senses STEPBible separates but Strong
 /// did not ("G2424G", "G1492H"). `strongs_entries.id` is unpadded and carries
 /// no suffix, so "G0976" -> "G976" and "G2424G" -> "G2424".
-fn normalize_tagnt_strongs(raw: &str) -> Option<String> {
+pub(crate) fn normalize_tagnt_strongs(raw: &str) -> Option<String> {
     let raw = raw.trim();
     let (prefix, rest) = raw.split_at(raw.char_indices().nth(1)?.0);
     if prefix != "H" && prefix != "G" {
@@ -149,7 +95,7 @@ fn parse_extended_strongs_aliases(text: &str) -> HashMap<String, String> {
 /// verse. The word index after `#` is deliberately ignored: it counts every
 /// word of the amalgamated text, so once we filter to one edition it has gaps,
 /// and `sort_order` is renumbered per verse from what we actually keep.
-fn parse_tagnt_ref(cell: &str) -> Option<(&str, i64, i64)> {
+pub(crate) fn parse_tagnt_ref(cell: &str) -> Option<(&str, i64, i64)> {
     let cell = cell.split(['#', '=']).next()?;
     let mut parts = cell.split('.');
     let book = parts.next()?;
@@ -168,7 +114,7 @@ fn parse_tagnt_ref(cell: &str) -> Option<(&str, i64, i64)> {
 /// around passages of disputed authenticity ("[[Πάντα ... ἀμήν.]]", the longer
 /// ending of Mark and the pericope adulterae), which the edition means and we
 /// keep, and unlike ordinary punctuation, which this pane has always shown.
-fn greek_word(cell: &str) -> String {
+pub(crate) fn greek_word(cell: &str) -> String {
     let cell = match cell.rfind(" (") {
         Some(i) => &cell[..i],
         None => cell,
@@ -183,7 +129,7 @@ fn greek_word(cell: &str) -> String {
 /// three places earlier, "Byz»1" = one place later). The edition is still the
 /// TR; we keep TAGNT's printed word order and read the marker only as part of
 /// the name.
-fn edition_name(token: &str) -> &str {
+pub(crate) fn edition_name(token: &str) -> &str {
     let token = token.trim();
     match token.find(['«', '»']) {
         Some(i) => token[..i].trim_end(),
@@ -193,16 +139,16 @@ fn edition_name(token: &str) -> &str {
 
 /// True when `list` ("NA28+NA27+Tyn+SBL+WH+Treg+TR+Byz") names `edition`.
 /// Compared whole so that "TR" does not match "Treg".
-fn lists_edition(list: &str, edition: &str) -> bool {
+pub(crate) fn lists_edition(list: &str, edition: &str) -> bool {
     list.split('+').any(|e| edition_name(e) == edition)
 }
 
 /// One reading of a word: the Greek as printed, its Strong's number and its
 /// parsing code.
-struct Reading<'a> {
-    word: &'a str,
-    d_strongs: &'a str,
-    morph_code: &'a str,
+pub(crate) struct Reading<'a> {
+    pub word: &'a str,
+    pub d_strongs: &'a str,
+    pub morph_code: &'a str,
 }
 
 /// Where an edition differs from the reading TAGNT prints in the row, the row
@@ -223,7 +169,7 @@ struct Reading<'a> {
 /// a word would vanish from the text wherever our edition simply spells it
 /// differently -- 3,134 words of the TR, including every "Ἀμών" for "Ἀμώς" in
 /// Matthew's genealogy.
-fn variant_reading<'a>(column: &'a str, edition: &str) -> Option<Reading<'a>> {
+pub(crate) fn variant_reading<'a>(column: &'a str, edition: &str) -> Option<Reading<'a>> {
     column.split('¦').find_map(|entry| {
         let (reading, editions) = entry.rsplit_once(" in: ")?;
         if !lists_edition(editions.trim(), edition) {
@@ -379,7 +325,7 @@ fn import_greek(conn: &mut Connection, dir: &Path, book_lookup: &HashMap<String,
 
 pub fn import(conn: &mut Connection, dir: &Path) -> anyhow::Result<usize> {
     let book_lookup = load_book_lookup(conn)?;
-    let hebrew = import_hebrew(conn, &dir.join("hebrew"), &book_lookup)?;
+    let hebrew = import_hebrew(conn, &dir.join("hebrew-tahot"))?;
     let greek = import_greek(conn, &dir.join("greek-tagnt"), &book_lookup)?;
     Ok(hebrew + greek)
 }

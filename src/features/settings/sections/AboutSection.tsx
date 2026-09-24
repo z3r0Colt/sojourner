@@ -244,6 +244,13 @@ export function AboutSection() {
           wordstream — the Greek behind the King James Version, and the text Strong numbered — so each word's Strong's number is the one that edition prints,
           not one this app inferred.
         </Source>
+        <Source name="Hebrew Old Testament — text, parsing, and Strong's tagging">
+          The Translators Amalgamated Hebrew OT, © Tyndale House Cambridge, used under a{" "}
+          <ExternalLink href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0</ExternalLink> licence, from{" "}
+          <ExternalLink href="https://github.com/STEPBible/STEPBible-Data">STEPBible.org</ExternalLink>: the Leningrad Codex word by word, with the
+          Open Scriptures Hebrew Bible's parsing, in English chapter and verse numbering so that the interlinear, the word study and the Hebrew text line up
+          with the English beside them.
+        </Source>
         <Source name="Easton's and Smith's Bible dictionaries">Public domain.</Source>
         <Source name="International Standard Bible Encyclopedia (1915)">
           James Orr, general editor. Public domain. Prepared from the edition distributed by the CrossWire Bible Society.
@@ -261,6 +268,10 @@ export function AboutSection() {
         </Source>
         <Source name="Bible atlas — coastlines and rivers">
           Made with Natural Earth. Free vector and raster map data at naturalearthdata.com. Public domain.
+        </Source>
+        <Source name="Noto Serif and Noto Serif Hebrew">
+          The fonts the Greek and Hebrew texts are set in, © The Noto Project Authors, used under the SIL Open Font License; the licence ships beside the
+          fonts.
         </Source>
         <Source name="OpenDyslexic">
           Used under the SIL Open Font License; the licence text ships beside the font.

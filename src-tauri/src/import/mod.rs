@@ -1,4 +1,5 @@
 pub mod checksum;
+pub mod plain_index;
 pub mod reference;
 pub mod thml;
 pub mod usfm;
@@ -188,6 +189,8 @@ pub fn populate_content_db(
     // Rebuilt every time, since it is read from every translation and takes
     // seconds: the search box's word suggestions (see `vocab`).
     vocab::build(conn)?;
+    // And the bare-letters index over the Greek and Hebrew texts.
+    plain_index::build(conn)?;
 
     Ok(results)
 }
