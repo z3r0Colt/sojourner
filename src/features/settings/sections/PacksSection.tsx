@@ -105,7 +105,7 @@ export function PacksSection() {
     <div>
       <h2 className="mb-1 text-lg font-semibold text-ink">Book library</h2>
       <p className="mb-4 text-sm text-ink-3">
-        The book library comes as separate downloads, one per shelf: Puritan and Reformed, Church Fathers, Ancient literature, Reformers,
+        The book library comes as separate downloads, one per shelf: Puritan and Reformed, Church Fathers, Ancient literature,
         and Nineteenth century. Install any or all of them; each can be removed on its own. Everything
         else — every Bible translation, every commentary, the lexicons, the encyclopedia, the atlas and the confessions — is already
         here and needs nothing added.
@@ -173,7 +173,7 @@ export function PacksSection() {
           </ul>
           <p className="mt-3 text-sm text-ink-3">
             {installed.reduce((n, p) => n + (p.book_count ?? 0), 0).toLocaleString()} books on{" "}
-            {installed.length} shelf{installed.length === 1 ? "" : "s"},{" "}
+            {installed.length} {installed.length === 1 ? "shelf" : "shelves"},{" "}
             {formatBytes(installed.reduce((n, p) => n + (p.bytes_on_disk ?? 0), 0))} in all.
           </p>
           <Button className="mt-3" icon={FilePlus} onClick={handleInstall} disabled={busy}>
