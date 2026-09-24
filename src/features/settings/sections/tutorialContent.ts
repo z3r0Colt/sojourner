@@ -516,6 +516,8 @@ export const TUTORIAL: TutorialCategory[] = [
         steps: [
           "Double-click a word in the Bible text.",
           "The popup shows the Strong's entry. The tagging follows the KJV's wording, so it matches best there; when a word cannot be matched, the popup offers to search the lexicon for it.",
+          "From the popup, open the word's study, or its entry in each full lexicon that has it.",
+          "A proper name opens the Factbook entry for the person or place that verse means: the Zechariah of 2 Chronicles 24, not a list of every Zechariah.",
         ],
       },
       {
@@ -568,18 +570,6 @@ export const TUTORIAL: TutorialCategory[] = [
           "Dates are approximate, as the Theographic Bible Metadata gives them (a traditional chronology, Ussher's for the early ages).",
         ],
         links: [{ label: "Timeline", to: "/timeline" }],
-      },
-      {
-        id: "citations",
-        title: "Cited in your library",
-        what: "Every book on your installed shelves, and every book of your own, that cites the verse you are reading: Augustine and Chrysostom on it, Josephus beside it, the Puritans preaching it.",
-        steps: [
-          "A small book icon and number after a verse shows how many times your library cites it. Click it to list them.",
-          "Or add the Cited in your library pane beside the text: it follows the passage, grouped by shelf, each with the words around the reference.",
-          "Click a citation to open the book at that place, with the reference marked.",
-          "Install more shelves (Church Fathers, Ancient literature, Nineteenth century) from Settings → Book library. Your own books are indexed too once their text has been read.",
-        ],
-        links: [{ label: "Settings → Book library", to: "/settings?section=books" }],
       },
       {
         id: "grammar-search",
@@ -786,18 +776,31 @@ export const TUTORIAL: TutorialCategory[] = [
       },
       {
         id: "book-library",
-        title: "The book library pack",
-        what: "Several hundred Puritan and Reformed works ship as a separate pack, installed from a file.",
+        title: "The book library: shelves to install",
+        what: "The library comes as separate packs, one per shelf: Puritan and Reformed works, the Church Fathers, ancient literature (Josephus, Philo, 1 Enoch, the Roman historians), and the nineteenth century (Schaff, Edersheim). Install any or all.",
         steps: [
-          "Download the library pack from the Sojourner releases page (or copy it from a USB stick). Nothing is fetched from inside the app.",
-          "Open Settings → Book library and click Install from file…. It takes a minute or two; you can keep reading meanwhile.",
-          "Installed books show a Library badge in Resources: read, search, tag, and link them like any other, though they cannot be removed one at a time. Update… installs a newer pack; Remove takes the pack away.",
-          "If the pack is not installed, books you had notes or tags on show Not installed; everything you wrote about them is kept.",
+          "Download the packs you want from the Sojourner releases page (or copy them from a USB stick). Nothing is fetched from inside the app.",
+          "Open Settings → Book library and click Install from file…, once for each pack. It takes a minute or two; you can keep reading meanwhile.",
+          "Each shelf is listed with its size and can be removed on its own. Installing a newer pack for a shelf you have replaces it; the other shelves are not touched.",
+          "Installed books show a Library badge in Resources: read, search, tag, and link them like any other, though they cannot be removed one at a time.",
+          "If a shelf is removed, books you had notes or tags on show Not installed; everything you wrote about them is kept, and comes back if you install it again.",
         ],
         links: [
           { label: "Settings → Book library", to: "/settings?section=books" },
           { label: "Resources", to: "/resources" },
         ],
+      },
+      {
+        id: "citations",
+        title: "Cited in your library",
+        what: "Every book on your installed shelves, and every book of your own, that cites the verse you are reading: Augustine and Chrysostom on it, Josephus beside it, the Puritans preaching it.",
+        steps: [
+          "A small book icon and number after a verse shows how many times your library cites it. Click it to list them.",
+          "Or add the Cited in your library pane beside the text: it follows the passage, grouped by shelf, each with the words around the reference.",
+          "Click a citation to open the book at that place, with the reference marked.",
+          "Install more shelves (Church Fathers, Ancient literature, Nineteenth century) from Settings → Book library. Your own books are indexed too once their text has been read.",
+        ],
+        links: [{ label: "Settings → Book library", to: "/settings?section=books" }],
       },
     ],
   },
