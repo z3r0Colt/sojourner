@@ -887,4 +887,42 @@ mod tests {
             assert!(safe_member_path(&dir, bad).is_err(), "{bad} should have been refused");
         }
     }
+
+    /// The release check: every pack in `packs/` for this version installs
+    /// through the same path Settings uses, into the layout the app reads
+    /// (the Puritan shelf at the root, each other shelf in `shelves/<id>`),
+    /// and all of them attach side by side with their citations. Run before
+    /// a release: `cargo test --lib real_packs -- --ignored`.
+    #[test]
+    #[ignore]
+    fn real_packs_install_and_attach_side_by_side() {
+        let packs = Path::new(env!("CARGO_MANIFEST_DIR")).join("..").join("packs");
+        let version = env!("CARGO_PKG_VERSION");
+        let root = scratch("real");
+        let conn = rusqlite::Connection::open_in_memory().unwrap();
+        let mut installed = 0;
+        for entry in std::fs::read_dir(&packs).unwrap().flatten() {
+            let path = entry.path();
+            let name = path.file_name().unwrap().to_string_lossy().to_string();
+            if !name.ends_with(&format!("-{version}.sjpack")) {
+                continue;
+            }
+            let manifest = peek_manifest(&path).unwrap();
+            let dir = if manifest.id == "library" { root.clone() } else { root.join("shelves").join(&manifest.id) };
+            let outcome = install(&path, &dir, &mut |_| {}, &mut noop, &mut noop).unwrap();
+            assert_eq!(outcome.book_count, manifest.book_count, "{name}");
+            crate::db::attach_pack(&conn, &manifest.id, &dir.join(LIBRARY_DB)).unwrap();
+            let schema = crate::db::pack_schema(&manifest.id);
+            let books: i64 = conn.query_row(&format!("SELECT COUNT(*) FROM {schema}.library_resources"), [], |r| r.get(0)).unwrap();
+            let citations: i64 = conn.query_row(&format!("SELECT COUNT(*) FROM {schema}.library_citations"), [], |r| r.get(0)).unwrap();
+            println!("{name}: {} as {schema}, {books} books, {citations} citations", manifest.name);
+            assert_eq!(books as usize, manifest.book_count);
+            assert!(citations > 0, "{name} carries no citations");
+            installed += 1;
+        }
+        assert!(installed >= 4, "expected four packs for {version} in {}", packs.display());
+        assert_eq!(crate::db::attached_library_schemas(&conn).len(), installed);
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
 }
