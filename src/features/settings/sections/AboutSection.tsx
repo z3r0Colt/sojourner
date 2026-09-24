@@ -251,6 +251,12 @@ export function AboutSection() {
           Open Scriptures Hebrew Bible's parsing, in English chapter and verse numbering so that the interlinear, the word study and the Hebrew text line up
           with the English beside them.
         </Source>
+        <Source name="Factbook — people, places and their family and verses">
+          The Translators Individualised Proper Names with all References, © Tyndale House Cambridge, used under a{" "}
+          <ExternalLink href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0</ExternalLink> licence, from{" "}
+          <ExternalLink href="https://github.com/STEPBible/STEPBible-Data">STEPBible.org</ExternalLink>. Its identifications, family links and references
+          are used; its short descriptions, which it notes were adapted from an AI model's output, are not.
+        </Source>
         <Source name="Easton's and Smith's Bible dictionaries">Public domain.</Source>
         <Source name="International Standard Bible Encyclopedia (1915)">
           James Orr, general editor. Public domain. Prepared from the edition distributed by the CrossWire Bible Society.

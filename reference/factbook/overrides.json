@@ -1,0 +1,5 @@
+{
+  "_comment": "Entity unique name -> the articles and place it links to, where matching by name finds the wrong one or none. Keys are TIPNR UniqueNames; values may give isbe (a list of slugs), dictionary (a list of slugs) and atlas (one slug). An empty list means 'none'.",
+  "Zechariah@2Ch.24.20-Luk": { "isbe": ["zechariah-1"] },
+  "Jerusalem@Gen.14.18-Rev": { "atlas": "jerusalem" }
+}

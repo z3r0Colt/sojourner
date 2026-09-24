@@ -1,7 +1,8 @@
-import { BookA, Search, X } from "lucide-react";
+import { BookA, Search, Users, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../../api/client";
 import { useBooks, useStrongsEntry } from "../../api/queries";
+import type { FactbookSummary } from "../../api/types";
 import { useViewportClampedPosition } from "../../lib/useViewportClampedPosition";
 import { CommentaryHtml } from "../commentary/CommentaryPanel";
 import { PaneLink as Link } from "../../workspace/PaneLink";
@@ -24,6 +25,7 @@ export function StrongsPopup({
   onClose,
   onSearchLexicon,
   hint,
+  factbook,
 }: {
   id: string | null;
   /** The word that was looked up, shown when there is no entry to name. */
@@ -35,6 +37,8 @@ export function StrongsPopup({
   onClose: () => void;
   onSearchLexicon?: (word: string) => void;
   hint?: { text: string; onDismiss: () => void } | null;
+  /** Who the double-clicked proper name means in its verse (the Factbook). */
+  factbook?: FactbookSummary | null;
 }) {
   const { data: entry, isLoading } = useStrongsEntry(id);
   const { ref, style } = useViewportClampedPosition<HTMLDivElement>(x, y);
@@ -82,9 +86,25 @@ export function StrongsPopup({
           <IconButton icon={X} label="Close" size="sm" onClick={onClose} />
         </span>
       </div>
+      {factbook && (
+        <button
+          type="button"
+          onClick={(e) => {
+            openContent("factbook", { id: factbook.id }, { target: targetFor(e, "new") });
+            onClose();
+          }}
+          className="mb-2 flex w-full items-center gap-2 rounded-md border border-accent/30 bg-accent-soft px-2 py-1.5 text-left text-sm hover:bg-accent-soft-2"
+        >
+          <Users className="h-4 w-4 shrink-0 text-accent" aria-hidden="true" />
+          <span className="min-w-0">
+            <span className="block font-medium text-accent">{factbook.name}</span>
+            <span className="block truncate text-xs text-ink-3">{factbook.description !== "Place" ? factbook.description : factbook.entity_type} · Factbook</span>
+          </span>
+        </button>
+      )}
       {(loading || (id != null && isLoading)) && <LoadingState className="py-2" />}
       {!loading && id != null && !isLoading && !entry && <p className="text-sm text-ink-3">No lexicon entry found.</p>}
-      {!loading && id == null && (
+      {!loading && id == null && !factbook && (
         <div className="text-sm">
           <p className="mb-2 text-ink-2">No Strong's number matched this word here.</p>
           {word && onSearchLexicon && (

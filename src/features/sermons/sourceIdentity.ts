@@ -16,6 +16,8 @@ import type { SermonSourceKind } from "../../api/types";
  *   dictionary:<slug>
  *   encyclopedia:<slug>
  *   atlas:<place-slug>
+ *   factbook:<unique name>   (sent with the "encyclopedia" kind, which the
+ *                             sermon's sources table already allows)
  *   resource:<id>[:<location>]
  *   crossref:<bookId>:<chapter>:<verse>[:<verseEnd>]
  *   illustration:<id>
@@ -39,6 +41,10 @@ export function dictionaryRef(slug: string): string {
 
 export function encyclopediaRef(slug: string): string {
   return `encyclopedia:${slug}`;
+}
+
+export function factbookRef(id: string): string {
+  return `factbook:${id}`;
 }
 
 export function atlasRef(slug: string): string {
@@ -100,6 +106,9 @@ export function openSourceRef(_kind: SermonSourceKind | string, refId: string | 
       return;
     case "atlas":
       openContent("atlas", { slug: parts.slice(1).join(":") }, opts);
+      return;
+    case "factbook":
+      openContent("factbook", { id: parts.slice(1).join(":") }, opts);
       return;
     case "resource": {
       const id = n(1);

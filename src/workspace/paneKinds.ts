@@ -19,6 +19,7 @@ import {
   NotebookPen,
   ScrollText,
   Search,
+  Users,
   Settings,
   StickyNote,
   Sunrise,
@@ -276,6 +277,24 @@ export const PANE_KINDS: Registry = {
     listed: false,
   },
   illustrations: { kind: "illustrations", label: "Illustrations", icon: Lightbulb, title: () => "Illustrations", defaultWidth: 900, acceptsPassage: false, listed: true },
+  factbook: {
+    kind: "factbook",
+    label: "Factbook",
+    icon: Users,
+    title: (p) => (p.id ? `Factbook · ${p.id.split("@")[0].replace(/_/g, " ")}` : "Factbook"),
+    defaultWidth: 800,
+    acceptsPassage: false,
+    listed: true,
+  },
+  "factbook-for-passage": {
+    kind: "factbook-for-passage",
+    label: "People and places",
+    icon: Users,
+    title: (p, ctx) => passageTitle("People and places", p, ctx),
+    defaultWidth: 420,
+    acceptsPassage: true,
+    listed: true,
+  },
   wordstudy: {
     kind: "wordstudy",
     label: "Word study",
@@ -310,7 +329,7 @@ export function paneTitle(content: PaneContent, ctx: TitleContext): string {
 export const PANE_KIND_LIST_LISTED: readonly PaneKind[] = (Object.keys(PANE_KINDS) as PaneKind[]).filter((k) => PANE_KINDS[k].listed);
 
 /** The study-panel kinds, in the order the Add pane strip shows them. */
-export const STUDY_STRIP_KINDS: readonly PaneKind[] = ["commentary", "crossrefs", "encyclopedia-for-passage", "confession-for-passage", "atlas", "metrical", "mine"];
+export const STUDY_STRIP_KINDS: readonly PaneKind[] = ["commentary", "crossrefs", "encyclopedia-for-passage", "factbook-for-passage", "confession-for-passage", "atlas", "metrical", "mine"];
 
 export { PASSAGE_KINDS };
 
@@ -385,6 +404,10 @@ export function routeFor(content: PaneContent): string {
       return "/illustrations";
     case "wordstudy":
       return content.params.id ? `/wordstudy/${encodeURIComponent(content.params.id)}` : "/wordstudy";
+    case "factbook":
+      return content.params.id ? `/factbook/${encodeURIComponent(content.params.id)}` : "/factbook";
+    case "factbook-for-passage":
+      return "/study/factbook";
     case "search":
       return content.params.query ? `/search?q=${encodeURIComponent(content.params.query)}` : "/search";
     case "settings":
@@ -415,6 +438,7 @@ export function parseRoute(pathname: string, search = ""): ContentRequest | null
       if (a === "metrical") return { kind: "metrical", params: {} };
       if (a === "tunes") return { kind: "tunes", params: {} };
       if (a === "mine") return { kind: "mine", params: {} };
+      if (a === "factbook") return { kind: "factbook-for-passage", params: {} };
       return null;
     case "westminster":
       return { kind: "westminster", params: { docCode: a ?? null, sectionId: num(b) } };
@@ -455,6 +479,8 @@ export function parseRoute(pathname: string, search = ""): ContentRequest | null
       return { kind: "illustrations", params: {} };
     case "wordstudy":
       return { kind: "wordstudy", params: { id: a ?? null } };
+    case "factbook":
+      return { kind: "factbook", params: { id: a ?? null } };
     case "search":
       return { kind: "search", params: { query: new URLSearchParams(search).get("q") ?? "" } };
     case "settings": {

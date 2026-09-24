@@ -4,6 +4,7 @@ pub mod crossrefs;
 pub mod dictionary;
 pub mod doctrine_topics;
 pub mod editions;
+pub mod factbook;
 pub mod footnotes;
 pub mod harmony;
 pub mod interlinear;
@@ -224,6 +225,11 @@ pub fn import_all(conn: &mut Connection, reference_dir: &Path) -> anyhow::Result
 
     if table_count(conn, "lexicon_entries") == 0 {
         lexicons::import(conn, reference_dir).map_err(|e| anyhow::anyhow!("lexicons import failed: {e:#}"))?;
+    }
+
+    // After the encyclopedia, dictionary and atlas, which it links to.
+    if table_count(conn, "factbook_entities") == 0 {
+        factbook::import(conn, &reference_dir.join("factbook")).map_err(|e| anyhow::anyhow!("factbook import failed: {e:#}"))?;
     }
 
     // After the morphology and the interlinear, which it reads.

@@ -545,6 +545,19 @@ export const TUTORIAL: TutorialCategory[] = [
         links: [{ label: "Word study", to: "/wordstudy" }],
       },
       {
+        id: "factbook",
+        title: "Factbook: people and places",
+        what: "A page for every person, place and named thing in the Bible: which Zechariah a verse means, who his father was, every verse that names him, and what the encyclopedia and dictionaries say.",
+        steps: [
+          "Double-click a name in the text. The popup names the person or place that verse means; click it to open the Factbook entry.",
+          "Or open Factbook in the sidebar and type a name, or search for it and choose the People and places tab.",
+          "An entry lists the forms of the name in English, Hebrew and Greek (click one for its word study), the family as links, every verse by book, and the encyclopedia article and dictionary entries inline. A place opens in the atlas.",
+          "For the chapter you are reading, add the People and places pane: it follows the passage and lists everyone and everywhere the chapter names, those in the selected verse first.",
+          "The identifications and family links are STEPBible's (Tyndale House, CC BY 4.0).",
+        ],
+        links: [{ label: "Factbook", to: "/factbook" }],
+      },
+      {
         id: "grammar-search",
         title: "Search by grammar",
         what: "Find every word with a given parsing, such as every aorist imperative in Ephesians, without knowing any code letters.",

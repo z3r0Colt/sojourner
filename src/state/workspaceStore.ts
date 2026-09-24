@@ -156,6 +156,11 @@ export interface SearchParams {
   query: string;
 }
 
+export interface FactbookParams {
+  /** TIPNR's unique name, "Zechariah@2Ch.24.20-Luk". */
+  id: string | null;
+}
+
 export interface WordStudyParams {
   /** A Strong's number, "G3056". */
   id: string | null;
@@ -191,6 +196,8 @@ export type PaneContent =
   | { kind: "illustrations"; params: EmptyParams }
   | { kind: "search"; params: SearchParams }
   | { kind: "wordstudy"; params: WordStudyParams }
+  | { kind: "factbook"; params: FactbookParams }
+  | { kind: "factbook-for-passage"; params: PassageParams }
   | { kind: "settings"; params: SettingsParams };
 
 export type PaneKind = PaneContent["kind"];
@@ -226,6 +233,8 @@ export const PANE_KIND_LIST: readonly PaneKind[] = [
   "illustrations",
   "search",
   "wordstudy",
+  "factbook",
+  "factbook-for-passage",
   "settings",
 ];
 
@@ -237,6 +246,7 @@ export const PASSAGE_KINDS: ReadonlySet<PaneKind> = new Set<PaneKind>([
   "crossrefs",
   "confession-for-passage",
   "encyclopedia-for-passage",
+  "factbook-for-passage",
   "metrical",
   "mine",
   "atlas",

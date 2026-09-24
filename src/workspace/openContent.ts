@@ -90,6 +90,7 @@ export function completeParams<K extends PaneKind>(kind: K, partial: Partial<Par
     case "crossrefs":
     case "confession-for-passage":
     case "encyclopedia-for-passage":
+    case "factbook-for-passage":
     case "metrical":
     case "mine":
     case "commentary": {
@@ -120,6 +121,7 @@ export function completeParams<K extends PaneKind>(kind: K, partial: Partial<Par
     case "search":
       return { query: "", ...partial } as unknown as ParamsOf<K>;
     case "wordstudy":
+    case "factbook":
       return { id: null, ...partial } as unknown as ParamsOf<K>;
     case "settings":
       return { section: null, ...partial } as unknown as ParamsOf<K>;

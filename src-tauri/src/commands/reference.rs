@@ -259,3 +259,36 @@ pub fn search_lexicons(
     let conn = db.conn();
     Ok(crate::db::queries::lexicons::search(&conn, &query, &sources, crate::commands::clamp_limit(limit))?)
 }
+
+#[tauri::command]
+pub fn get_factbook_entry(db: State<DbState>, id: String) -> AppResult<Option<crate::db::queries::factbook::FactbookEntry>> {
+    let conn = db.conn();
+    Ok(crate::db::queries::factbook::get_entry(&conn, &id)?)
+}
+
+/// The people, places and things a chapter names.
+#[tauri::command]
+pub fn get_factbook_for_passage(db: State<DbState>, book_id: i64, chapter: i64) -> AppResult<Vec<crate::db::queries::factbook::PassageEntity>> {
+    let conn = db.conn();
+    Ok(crate::db::queries::factbook::for_passage(&conn, book_id, chapter)?)
+}
+
+/// Who (or what) a double-clicked proper name means in its verse.
+#[tauri::command]
+pub fn get_factbook_for_word(
+    db: State<DbState>,
+    book_id: i64,
+    chapter: i64,
+    verse: i64,
+    word: String,
+    strongs_id: Option<String>,
+) -> AppResult<Option<crate::db::queries::factbook::FactbookSummary>> {
+    let conn = db.conn();
+    Ok(crate::db::queries::factbook::for_word(&conn, book_id, chapter, verse, &word, strongs_id.as_deref())?)
+}
+
+#[tauri::command]
+pub fn search_factbook(db: State<DbState>, query: String, limit: i64) -> AppResult<Vec<crate::db::queries::factbook::FactbookSummary>> {
+    let conn = db.conn();
+    Ok(crate::db::queries::factbook::search(&conn, &query, crate::commands::clamp_limit(limit))?)
+}

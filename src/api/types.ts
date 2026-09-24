@@ -1178,3 +1178,34 @@ export interface LexiconHit {
   strongs_id: string | null;
   snippet: string;
 }
+
+/** A person, place or named thing (from STEPBible's TIPNR). */
+export interface FactbookSummary {
+  /** TIPNR's unique name, "Zechariah@2Ch.24.20-Luk". */
+  id: string;
+  kind: "person" | "place" | "other";
+  name: string;
+  description: string;
+  entity_type: string;
+  verse_count: number;
+}
+
+export interface FactbookEntry {
+  summary: FactbookSummary;
+  /** One sentence, with Scripture links (render through CommentaryHtml). */
+  summary_html: string;
+  tribe: string | null;
+  region: string | null;
+  lat: number | null;
+  lon: number | null;
+  names: { significance: string; english: string; original: string | null; strongs_id: string | null; strongs_plain: string | null }[];
+  relations: { kind: string; qualifier: string | null; entity: FactbookSummary }[];
+  /** [book, chapter, verse]. */
+  verses: [number, number, number][];
+  links: { kind: "isbe" | "dictionary" | "atlas"; slug: string; title: string }[];
+}
+
+export interface PassageEntity {
+  entity: FactbookSummary;
+  verses: number[];
+}

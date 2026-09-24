@@ -1105,6 +1105,68 @@ pub const CONTENT_MIGRATION_0023: &str = r#"
 CREATE VIRTUAL TABLE verses_plain USING fts5(text, tokenize='unicode61');
 "#;
 
+// The Factbook: one entry per person, place and named thing, from STEPBible's
+// TIPNR (see `import::reference::factbook`). `id` is TIPNR's unique name
+// ("Zechariah@2Ch.24.20-Luk"), stable across its releases.
+//
+// `factbook_names` is every form of the name, with its Hebrew or Greek and
+// Strong's number (`strongs_id` as TIPNR disambiguates it, "H2148w";
+// `strongs_plain` as the rest of the app numbers it, "H2148").
+// `factbook_verses` is every verse that names the entity, keyed for the
+// passage lookup; `factbook_links` the encyclopedia articles, dictionary
+// entries and atlas place it is linked to.
+pub const CONTENT_MIGRATION_0024: &str = r#"
+CREATE TABLE factbook_entities (
+  id           TEXT PRIMARY KEY,
+  kind         TEXT NOT NULL CHECK(kind IN ('person','place','other')),
+  name         TEXT NOT NULL,
+  description  TEXT NOT NULL,
+  summary      TEXT NOT NULL,
+  entity_type  TEXT NOT NULL,
+  tribe        TEXT,
+  region       TEXT,
+  lat          REAL,
+  lon          REAL,
+  verse_count  INTEGER NOT NULL
+);
+CREATE INDEX idx_factbook_name ON factbook_entities(name COLLATE NOCASE);
+CREATE TABLE factbook_names (
+  id             INTEGER PRIMARY KEY,
+  entity_id      TEXT NOT NULL REFERENCES factbook_entities(id),
+  significance   TEXT NOT NULL,
+  english        TEXT NOT NULL,
+  original       TEXT,
+  strongs_id     TEXT,
+  strongs_plain  TEXT
+);
+CREATE INDEX idx_factbook_names_entity ON factbook_names(entity_id);
+CREATE INDEX idx_factbook_names_english ON factbook_names(english COLLATE NOCASE);
+CREATE INDEX idx_factbook_names_strongs ON factbook_names(strongs_plain);
+CREATE TABLE factbook_relations (
+  id         INTEGER PRIMARY KEY,
+  from_id    TEXT NOT NULL REFERENCES factbook_entities(id),
+  to_id      TEXT NOT NULL REFERENCES factbook_entities(id),
+  kind       TEXT NOT NULL,
+  qualifier  TEXT
+);
+CREATE INDEX idx_factbook_relations_from ON factbook_relations(from_id);
+CREATE INDEX idx_factbook_relations_to ON factbook_relations(to_id);
+CREATE TABLE factbook_verses (
+  entity_id  TEXT NOT NULL REFERENCES factbook_entities(id),
+  book_id    INTEGER NOT NULL,
+  chapter    INTEGER NOT NULL,
+  verse      INTEGER NOT NULL,
+  PRIMARY KEY (entity_id, book_id, chapter, verse)
+) WITHOUT ROWID;
+CREATE INDEX idx_factbook_verses_passage ON factbook_verses(book_id, chapter, verse);
+CREATE TABLE factbook_links (
+  entity_id  TEXT NOT NULL REFERENCES factbook_entities(id),
+  kind       TEXT NOT NULL CHECK(kind IN ('isbe','dictionary','atlas')),
+  slug       TEXT NOT NULL,
+  PRIMARY KEY (entity_id, kind, slug)
+) WITHOUT ROWID;
+"#;
+
 pub const CONTENT_MIGRATIONS: &[&str] = &[
     CONTENT_MIGRATION_0001,
     CONTENT_MIGRATION_0002,
@@ -1129,6 +1191,7 @@ pub const CONTENT_MIGRATIONS: &[&str] = &[
     CONTENT_MIGRATION_0021,
     CONTENT_MIGRATION_0022,
     CONTENT_MIGRATION_0023,
+    CONTENT_MIGRATION_0024,
 ];
 
 // library.db: the books that ship with the app, in a file of their own.

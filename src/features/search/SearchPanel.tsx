@@ -53,6 +53,7 @@ export type SearchTab =
   | "sermons"
   | "illustrations"
   | "lexicons"
+  | "factbook"
   | "grammar";
 
 /** How many results one page asks for; the last is the server's cap. */
@@ -203,6 +204,12 @@ export function SearchPanel({ query, onQueryChange, docked, onOpenVerse, onOpene
     queryFn: () => api.searchLexicons(effective, lexiconFilter ? [lexiconFilter] : [], 50),
     enabled: active,
   });
+  // People and places by name: the Factbook matches the words as a name.
+  const { data: factbookResults, isFetching: factbookFetching } = useQuery({
+    queryKey: ["factbookSearchOverlay", effective],
+    queryFn: () => api.searchFactbook(effective.replace(/\S+:\S*/g, "").replace(/["()]/g, "").trim(), 30),
+    enabled: active,
+  });
   const facetKind = tab === "commentary" ? "commentary" : "verses";
   const { data: facets } = useQuery({
     queryKey: ["searchFacets", facetKind, effective, translationIds, sourceIds, scope],
@@ -250,7 +257,7 @@ export function SearchPanel({ query, onQueryChange, docked, onOpenVerse, onOpene
   }
 
   const anyFetching =
-    isFetching || resourcesFetching || westminsterFetching || encyclopediaFetching || sermonsFetching || illustrationsFetching || lexiconsFetching;
+    isFetching || resourcesFetching || westminsterFetching || encyclopediaFetching || sermonsFetching || illustrationsFetching || lexiconsFetching || factbookFetching;
 
   const opened = () => {
     if (!docked) onOpened?.();
@@ -307,6 +314,17 @@ export function SearchPanel({ query, onQueryChange, docked, onOpenVerse, onOpene
         },
       }));
     }
+    if (t === "factbook") {
+      return (factbookResults ?? []).map((r) => ({
+        key: `f-${r.id}`,
+        heading: `${r.name} · ${r.kind === "place" ? "Place" : r.description || r.entity_type} · ${r.verse_count} verse${r.verse_count === 1 ? "" : "s"}`,
+        snippet: "",
+        run: (e) => {
+          openContent("factbook", { id: r.id }, docked || (e && (e.ctrlKey || e.metaKey)) ? { target: "new" } : {});
+          opened();
+        },
+      }));
+    }
     if (t === "sermons") {
       return (sermonResults ?? []).map((sermon) => ({
         key: `s-${sermon.id}`,
@@ -353,6 +371,7 @@ export function SearchPanel({ query, onQueryChange, docked, onOpenVerse, onOpene
     ["commentary", 4, "Commentary"],
     ["westminster", 3, "Confessions"],
     ["encyclopedia", 3, "Encyclopedia"],
+    ["factbook", 3, "Factbook"],
     ["lexicons", 2, "Lexicons"],
     ["resources", 3, "Books"],
     ["notes", 3, "Notes"],
@@ -369,7 +388,7 @@ export function SearchPanel({ query, onQueryChange, docked, onOpenVerse, onOpene
         .map((r) => ({ ...r, key: `all-${r.key}`, heading: `${label} · ${r.heading}` })),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active, tab, results, resourceResults, westminsterResults, westminsterDocs, encyclopediaResults, sermonResults, illustrationResults, lexiconResults, books, docked]);
+  }, [active, tab, results, resourceResults, westminsterResults, westminsterDocs, encyclopediaResults, sermonResults, illustrationResults, lexiconResults, factbookResults, books, docked]);
 
   // The Go-to row sits above the results and is chosen first.
   const goTo: Row | null = reference
@@ -412,6 +431,7 @@ export function SearchPanel({ query, onQueryChange, docked, onOpenVerse, onOpene
     sermons: sermonsError,
     illustrations: illustrationsError,
     lexicons: lexiconsError,
+    factbook: null,
     grammar: null,
   };
   const activeError = tabError[tab];
@@ -434,6 +454,7 @@ export function SearchPanel({ query, onQueryChange, docked, onOpenVerse, onOpene
     { key: "sermons" as const, label: "Sermons", count: count(sermonResults?.length) },
     { key: "illustrations" as const, label: "Illustrations", count: count(illustrationResults?.length) },
     { key: "lexicons" as const, label: "Lexicons", count: count(lexiconResults?.length) },
+    { key: "factbook" as const, label: "People and places", count: count(factbookResults?.length) },
     { key: "grammar" as const, label: "Grammar" },
   ];
 

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { Bookmark, BookmarkCheck, Columns2, Languages, Maximize2, MoreHorizontal, Paperclip, Printer, SlidersHorizontal, Sparkles, Square, StickyNote, TextSearch, Type, Volume2 } from "lucide-react";
 import { THEME_OPTIONS, useReadingTypography, useUiStore } from "../../state/uiStore";
@@ -275,6 +275,13 @@ export function ReadingPane() {
       : interlinear
         ? matchStrongs(wordLookup.word, wordLookup.occurrence, interlinear[wordLookup.verse] ?? [])
         : null;
+  // A proper name: who the verse means by it, from the Factbook.
+  const looksLikeName = !!wordLookup && /^\p{Lu}/u.test(wordLookup.word.trim().replace(/^[^\p{L}]+/u, ""));
+  const { data: factbookHit } = useQuery({
+    queryKey: ["factbookForWord", bookId, chapter, wordLookup?.verse, wordLookup?.word, wordStrongs],
+    queryFn: () => api.getFactbookForWord(bookId, chapter, wordLookup!.verse, wordLookup!.word, wordStrongs),
+    enabled: !!wordLookup && (looksLikeName || originalText),
+  });
   const translationCode = translations?.find((t) => t.id === translationId)?.code;
   const showKjvHint = lookupEnglish && !!interlinear && !wordStrongs && translationCode !== "KJV" && !kjvHintDismissed;
 
@@ -1250,6 +1257,7 @@ export function ReadingPane() {
           id={wordStrongs}
           word={wordLookup.word}
           loading={lookupOriginal ? morphologyLoading : interlinearLoading}
+          factbook={factbookHit ?? null}
           x={wordLookup.x}
           y={wordLookup.y}
           onClose={() => setWordLookup(null)}
