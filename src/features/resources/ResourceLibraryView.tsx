@@ -16,7 +16,7 @@ import {
   useAllResourceTagsByResource,
   useAddResourceTag,
   useRemoveResourceTag,
-  usePackStatus,
+  usePackStatuses,
   useUpdateResource,
   useSetAuthorForResources,
 } from "../../api/queries";
@@ -235,7 +235,11 @@ export function ResourceLibraryView() {
   const [editing, setEditing] = useState<Resource | null>(null);
   const [assigning, setAssigning] = useState<Resource[] | null>(null);
 
-  const { data: packStatus } = usePackStatus();
+  // Any shelf will do: a row still keyed to a shipped book after the launch
+  // sync is one whose pack is installed, unless no pack is installed at all
+  // (an upgrade from the builds that bundled the library).
+  const { data: packStatuses } = usePackStatuses();
+  const anyPackInstalled = packStatuses ? packStatuses.some((p) => p.installed) : true;
   const { data: tagPairs } = useAllResourceTagsByResource();
   const { data: allTags } = useAllResourceTags();
   const addTag = useAddResourceTag();
@@ -336,7 +340,7 @@ export function ResourceLibraryView() {
 
   const hasAny = all.length > 0;
   const searching = debounced.trim().length > 1;
-  const packInstalled = packStatus?.installed ?? true;
+  const packInstalled = anyPackInstalled;
   // Books this reader has rows for -- tags, notes, bookmarks and all -- whose
   // files are in a pack that is not installed. On an upgrade from a build that
   // bundled the library this is every one of them, which is exactly the case
@@ -549,7 +553,7 @@ export function ResourceLibraryView() {
               <>
                 Add EPUB, PDF, or MOBI books, or audio and video files. Books are indexed so you can search inside them, and any
                 resource can be linked to the passage it speaks to.
-                {!packStatus?.installed && (
+                {!anyPackInstalled && (
                   <>
                     {" "}
                     Several hundred Puritan and Reformed works are available as a separate download —{" "}

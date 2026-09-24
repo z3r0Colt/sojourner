@@ -2355,6 +2355,16 @@ CREATE INDEX idx_resource_citations_passage ON resource_citations(book_id, chapt
 CREATE INDEX idx_resource_citations_resource ON resource_citations(resource_id);
 "#;
 
+// Which of the reader's books have been scanned for citations, whatever the
+// scan found: without it a book that cites no Scripture looked unscanned and
+// was read again in full at every launch.
+pub const USER_MIGRATION_0020: &str = r#"
+CREATE TABLE resource_citation_scans (
+  resource_id INTEGER PRIMARY KEY REFERENCES resources(id) ON DELETE CASCADE
+);
+INSERT OR IGNORE INTO resource_citation_scans (resource_id) SELECT DISTINCT resource_id FROM resource_citations;
+"#;
+
 pub const USER_MIGRATIONS: &[&str] = &[
     USER_MIGRATION_0001,
     USER_MIGRATION_0002,
@@ -2375,4 +2385,5 @@ pub const USER_MIGRATIONS: &[&str] = &[
     USER_MIGRATION_0017,
     USER_MIGRATION_0018,
     USER_MIGRATION_0019,
+    USER_MIGRATION_0020,
 ];

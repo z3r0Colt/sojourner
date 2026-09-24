@@ -707,18 +707,58 @@ export function EpubReader({
  * as printed are not found (the extracted text a citation was found in and
  * the rendered page can differ in spacing), and to the start when neither is.
  */
+type SpineSection = {
+  load: (loader: unknown) => Promise<unknown>;
+  unload: () => void;
+  document?: Document;
+  cfiFromRange: (range: Range) => string;
+};
+
+/**
+ * Every place `text` is printed in a section, as a whole: "Gen. i. 3" but not
+ * the start of "Gen. i. 31", nor "John i. 1" inside "1 John i. 1". epub.js's
+ * own `find` matches any substring in any case, which counts those too and
+ * throws off which occurrence is which -- the citation index counts only the
+ * reference as printed. Non-breaking spaces read as spaces.
+ */
+const NBSP = String.fromCharCode(0xa0);
+
+function exactHits(section: SpineSection, text: string): { cfi: string }[] {
+  const doc = section.document;
+  if (!doc?.body) return [];
+  const hits: { cfi: string }[] = [];
+  const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT);
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    const value = (node.textContent ?? "").split(NBSP).join(" ");
+    for (let pos = value.indexOf(text); pos >= 0; pos = value.indexOf(text, pos + 1)) {
+      const before = value.slice(Math.max(0, pos - 2), pos);
+      const after = value.charAt(pos + text.length);
+      if (/[\p{L}\p{N}]$/u.test(before) || /\d\s$/.test(before) || /[\p{L}\p{N}]/u.test(after)) continue;
+      const range = doc.createRange();
+      range.setStart(node, pos);
+      range.setEnd(node, pos + text.length);
+      try {
+        hits.push({ cfi: section.cfiFromRange(range) });
+      } catch {
+        // A range epub.js cannot name is one it could not show either.
+      }
+    }
+  }
+  return hits;
+}
+
 async function findAndShow(book: Book, rendition: Rendition, find: { text: string; occurrence: number; fallback?: string }, disposed: () => boolean): Promise<void> {
   const search = async (text: string, occurrence: number): Promise<string | null> => {
     let seen = 0;
-    const items: { load: (loader: unknown) => Promise<unknown>; find: (q: string) => { cfi: string }[]; unload: () => void }[] = [];
+    const items: SpineSection[] = [];
     book.spine.each((item: unknown) => {
-      items.push(item as (typeof items)[number]);
+      items.push(item as SpineSection);
     });
     for (const item of items) {
       if (disposed()) return null;
       try {
         await item.load(book.load.bind(book));
-        const hits = item.find(text);
+        const hits = exactHits(item, text);
         item.unload();
         if (seen + hits.length > occurrence) return hits[occurrence - seen].cfi;
         seen += hits.length;

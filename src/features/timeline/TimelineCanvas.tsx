@@ -381,7 +381,7 @@ export function TimelineCanvas({
       {hover && (
         <div
           className="pointer-events-none absolute z-10 max-w-xs rounded-md border border-line bg-surface px-2 py-1 text-xs text-ink shadow"
-          style={{ left: Math.min(hover.x + 12, size.w - 200), top: hover.y + 14 }}
+          style={{ left: Math.max(4, Math.min(hover.x + 12, size.w - 200)), top: hover.y + 14 }}
         >
           {hover.text}
         </div>

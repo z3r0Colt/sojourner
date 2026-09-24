@@ -29,6 +29,7 @@ pub struct CitationHit {
 /// Replaces a reader's book's citations from its text.
 pub fn index_resource(conn: &Connection, resource_id: i64, text: Option<&str>) -> anyhow::Result<usize> {
     conn.execute("DELETE FROM resource_citations WHERE resource_id = ?1", params![resource_id])?;
+    conn.execute("INSERT OR IGNORE INTO resource_citation_scans (resource_id) VALUES (?1)", params![resource_id])?;
     let Some(text) = text else { return Ok(0) };
     let mut insert = conn.prepare_cached(
         "INSERT INTO resource_citations (resource_id, char_offset, label, occurrence, context, book_id, chapter, verse_start, verse_end)
@@ -42,13 +43,13 @@ pub fn index_resource(conn: &Connection, resource_id: i64, text: Option<&str>) -
     Ok(n)
 }
 
-/// The reader's own books with text and no citations yet: one at a time, so
+/// The reader's own books with text not yet scanned: one at a time, so
 /// the caller can release the lock between them. Returns the ids.
 pub fn resources_needing_index(conn: &Connection) -> anyhow::Result<Vec<i64>> {
     let mut stmt = conn.prepare(
         "SELECT r.id FROM resources r
          WHERE r.extracted_text IS NOT NULL AND r.library_key IS NULL
-           AND NOT EXISTS (SELECT 1 FROM resource_citations c WHERE c.resource_id = r.id)",
+           AND NOT EXISTS (SELECT 1 FROM resource_citation_scans s WHERE s.resource_id = r.id)",
     )?;
     let ids = stmt.query_map([], |r| r.get(0))?.collect::<Result<Vec<_>, _>>()?;
     Ok(ids)
@@ -142,4 +143,32 @@ pub fn counts_for_chapter(conn: &Connection, book_id: i64, chapter: i64, schemas
     let mut out: Vec<(i64, i64)> = counts.into_iter().collect();
     out.sort();
     Ok(out)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_book_that_cites_nothing_is_scanned_once() {
+        let dir = std::env::temp_dir().join(format!("sojourner-citescan-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        let conn = crate::db::open(&dir, &dir.join("content.db")).unwrap();
+        let add = |title: &str, text: &str| -> i64 {
+            conn.execute(
+                "INSERT INTO resources (kind, title, file_path, extracted_text, added_at) VALUES ('epub', ?1, 'x.epub', ?2, '2026-01-01')",
+                params![title, text],
+            )
+            .unwrap();
+            conn.last_insert_rowid()
+        };
+        let novel = add("A novel", "It was a dark and stormy night.");
+        let sermon = add("A sermon", "As it is written (Rom. 8:28), all things work together.");
+        assert_eq!(resources_needing_index(&conn).unwrap(), vec![novel, sermon]);
+        assert_eq!(index_resource(&conn, novel, Some("It was a dark and stormy night.")).unwrap(), 0);
+        assert_eq!(index_resource(&conn, sermon, Some("As it is written (Rom. 8:28), all things work together.")).unwrap(), 1);
+        assert!(resources_needing_index(&conn).unwrap().is_empty(), "the book with no citations is not scanned again");
+        drop(conn);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
 }
