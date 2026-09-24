@@ -65,3 +65,39 @@ pub fn pack_books_dir(app: &AppHandle) -> Option<PathBuf> {
 pub fn pack_db_path(app: &AppHandle) -> Option<PathBuf> {
     Some(pack_dir(app)?.join(crate::pack::LIBRARY_DB))
 }
+
+/// Where the pack with this id lives. The Puritan and Reformed pack keeps
+/// the id `library` and the folder it always had, so an installed pack
+/// upgrades in place; every other shelf gets a folder of its own under it,
+/// `library/shelves/<id>/`, laid out the same way.
+pub fn shelf_pack_dir(app: &AppHandle, id: &str) -> Option<PathBuf> {
+    let base = pack_dir(app)?;
+    if id == "library" {
+        return Some(base);
+    }
+    let safe: String = id.chars().filter(|c| c.is_ascii_alphanumeric() || *c == '-' || *c == '_').collect();
+    if safe.is_empty() {
+        return None;
+    }
+    Some(base.join("shelves").join(safe))
+}
+
+/// Every installed pack: (id, folder).
+pub fn installed_packs(app: &AppHandle) -> Vec<(String, PathBuf)> {
+    let mut out = Vec::new();
+    let Some(base) = pack_dir(app) else { return out };
+    if crate::pack::is_installed(&base) {
+        let id = crate::pack::read_installed_manifest(&base).map(|m| m.id).unwrap_or_else(|| "library".into());
+        out.push((id, base.clone()));
+    }
+    if let Ok(dir) = std::fs::read_dir(base.join("shelves")) {
+        let mut shelves: Vec<(String, PathBuf)> = dir
+            .flatten()
+            .filter(|e| e.path().is_dir() && crate::pack::is_installed(&e.path()))
+            .map(|e| (e.file_name().to_string_lossy().to_string(), e.path()))
+            .collect();
+        shelves.sort();
+        out.extend(shelves);
+    }
+    out
+}

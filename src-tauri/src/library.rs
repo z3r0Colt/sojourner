@@ -139,13 +139,23 @@ pub fn collect(source_dir: &Path, library_dir: &Path, catalogue: Option<&Connect
 /// time.
 pub fn import(conn: &Connection, library_dir: &Path) -> anyhow::Result<usize> {
     let entries = read_manifest(library_dir)?;
+    import_entries(conn, library_dir, &entries)
+}
+
+/// [`import`] for a given list of books -- one shelf's (see `Shelf`) -- and
+/// every Scripture reference in each, into `library_citations`.
+pub fn import_entries(conn: &Connection, library_dir: &Path, entries: &[LibraryEntry]) -> anyhow::Result<usize> {
     if entries.is_empty() {
         return Ok(0);
     }
     let tx = conn.unchecked_transaction()?;
     tx.execute("DELETE FROM library_resources", [])?;
+    let has_citations = tx
+        .query_row("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'library_citations'", [], |_| Ok(()))
+        .is_ok();
     let mut imported = 0;
-    for entry in &entries {
+    let mut cited = 0usize;
+    for entry in entries {
         let path = library_dir.join(&entry.file_name);
         if !path.is_file() {
             eprintln!("  [library] missing file, skipped: {}", entry.file_name);
@@ -157,10 +167,68 @@ pub fn import(conn: &Connection, library_dir: &Path) -> anyhow::Result<usize> {
              VALUES (?1, ?2, ?3, ?4, ?5)",
             params![entry.file_name, entry.kind, entry.title, entry.author, text],
         )?;
+        let resource_id = tx.last_insert_rowid();
+        if has_citations {
+            if let Some(text) = text.as_deref() {
+                let mut insert = tx.prepare_cached(
+                    "INSERT INTO library_citations (resource_id, char_offset, label, occurrence, context, book_id, chapter, verse_start, verse_end)
+                     VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9)",
+                )?;
+                for c in crate::citations::extract(text) {
+                    insert.execute(params![resource_id, c.offset as i64, c.label, c.occurrence, c.context, c.book_id, c.chapter, c.verse_start, c.verse_end])?;
+                    cited += 1;
+                }
+            }
+        }
         imported += 1;
     }
     tx.commit()?;
+    if has_citations {
+        println!("  {cited} Scripture citations indexed");
+    }
     Ok(imported)
+}
+
+/// One shelf of the library: its own pack, built from its own list.
+///
+/// `library/shelves/<id>.json` names the books a shelf holds (all of them in
+/// the one flat `library/` folder) and where each came from. The Puritan and
+/// Reformed shelf is `library/manifest.json` itself, as it always was, and
+/// keeps the pack id `library` so a reader's installed pack upgrades in place.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Shelf {
+    pub id: String,
+    pub name: String,
+    #[serde(default)]
+    pub description: String,
+    pub books: Vec<ShelfBook>,
+}
+
+/// A book on a shelf: the manifest entry, and its provenance.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ShelfBook {
+    pub file_name: String,
+    pub kind: String,
+    pub title: String,
+    pub author: Option<String>,
+    /// Where the file was fetched from.
+    #[serde(default)]
+    pub source_url: Option<String>,
+    /// The terms it is here on ("Public domain").
+    #[serde(default)]
+    pub license: Option<String>,
+}
+
+impl ShelfBook {
+    pub fn entry(&self) -> LibraryEntry {
+        LibraryEntry { file_name: self.file_name.clone(), kind: self.kind.clone(), title: self.title.clone(), author: self.author.clone() }
+    }
+}
+
+pub fn read_shelf(library_dir: &Path, id: &str) -> anyhow::Result<Shelf> {
+    let path = library_dir.join("shelves").join(format!("{id}.json"));
+    let text = std::fs::read_to_string(&path).map_err(|e| anyhow::anyhow!("no shelf {id} at {}: {e}", path.display()))?;
+    Ok(serde_json::from_str(&text)?)
 }
 
 /// Whether this connection can see a shipped library at all.
@@ -184,7 +252,8 @@ pub fn is_available(conn: &Connection) -> bool {
             .unwrap_or(None)
             .is_some()
     };
-    has_table("SELECT 1 FROM library.sqlite_master WHERE type = 'table' AND name = 'library_resources'")
+    !crate::db::attached_library_schemas(conn).is_empty()
+        || has_table("SELECT 1 FROM library.sqlite_master WHERE type = 'table' AND name = 'library_resources'")
         || has_table("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'library_resources'")
         || has_table("SELECT 1 FROM content.sqlite_master WHERE type = 'table' AND name = 'library_resources'")
 }
@@ -199,6 +268,15 @@ pub fn list(conn: &Connection) -> anyhow::Result<Vec<LibraryBook>> {
             title: r.get(2)?,
             author: r.get(3)?,
         })
+    })?;
+    Ok(rows.collect::<Result<Vec<_>, _>>()?)
+}
+
+/// The books in one attached pack's schema.
+pub fn list_in(conn: &Connection, schema: &str) -> anyhow::Result<Vec<LibraryBook>> {
+    let mut stmt = conn.prepare(&format!("SELECT file_name, kind, title, author FROM {schema}.library_resources ORDER BY title"))?;
+    let rows = stmt.query_map([], |r| {
+        Ok(LibraryBook { file_name: r.get(0)?, kind: r.get(1)?, title: r.get(2)?, author: r.get(3)? })
     })?;
     Ok(rows.collect::<Result<Vec<_>, _>>()?)
 }
@@ -260,14 +338,47 @@ pub struct SyncOutcome {
 /// * A row for a book no longer shipped keeps its file if the reader has one
 ///   and otherwise stops claiming to be part of the library.
 pub fn sync(conn: &Connection, library_dir: &Path) -> anyhow::Result<SyncOutcome> {
-    let mut outcome = SyncOutcome::default();
     if !is_available(conn) {
-        return Ok(outcome);
+        return Ok(SyncOutcome::default());
     }
-    let books = list(conn)?;
+    let books: Vec<(LibraryBook, PathBuf)> = list(conn)?.into_iter().map(|b| (b, library_dir.to_path_buf())).collect();
+    sync_books(conn, books)
+}
+
+/// [`sync`] across every installed pack at once: each (schema, books folder).
+///
+/// It has to be all of them together. A sync of one pack alone would take
+/// every other pack's books for books "no longer shipped" and retire them.
+pub fn sync_all(conn: &Connection, packs: &[(String, PathBuf)]) -> anyhow::Result<SyncOutcome> {
+    let mut books = Vec::new();
+    for (schema, dir) in packs {
+        for b in list_in(conn, schema)? {
+            books.push((b, dir.clone()));
+        }
+    }
     if books.is_empty() {
+        return Ok(SyncOutcome::default());
+    }
+    sync_books(conn, books)
+}
+
+/// Lets go of the rows for one pack's books, for when that pack alone is
+/// removed (see [`retire_all`], which does it for every row).
+pub fn retire_books(conn: &Connection, file_names: &[String]) -> anyhow::Result<usize> {
+    let mut n = 0;
+    for name in file_names {
+        n += conn.execute("UPDATE resources SET library_key = NULL WHERE library_key = ?1", params![name])?;
+    }
+    Ok(n)
+}
+
+fn sync_books(conn: &Connection, books_with_dirs: Vec<(LibraryBook, PathBuf)>) -> anyhow::Result<SyncOutcome> {
+    let mut outcome = SyncOutcome::default();
+    if books_with_dirs.is_empty() {
         return Ok(outcome);
     }
+    let dir_of: HashMap<String, PathBuf> = books_with_dirs.iter().map(|(b, d)| (b.file_name.clone(), d.clone())).collect();
+    let books: Vec<LibraryBook> = books_with_dirs.into_iter().map(|(b, _)| b).collect();
     let now = chrono::Utc::now().to_rfc3339();
     let tx = conn.unchecked_transaction()?;
 
@@ -296,7 +407,7 @@ pub fn sync(conn: &Connection, library_dir: &Path) -> anyhow::Result<SyncOutcome
     }
 
     for book in &books {
-        let path = library_dir.join(&book.file_name).display().to_string();
+        let path = dir_of[&book.file_name].join(&book.file_name).display().to_string();
         match by_key.get(&book.file_name) {
             Some((id, current_path)) => {
                 if current_path != &path {
@@ -553,6 +664,20 @@ mod tests {
 pub fn extracted_text(conn: &Connection, library_key: &str) -> anyhow::Result<Option<String>> {
     if !is_available(conn) {
         return Ok(None);
+    }
+    // Each attached pack in turn; a pack is keyed by file name alone, and a
+    // file is on one shelf only (build_library_pack checks).
+    for schema in crate::db::attached_library_schemas(conn) {
+        let text = conn
+            .query_row(
+                &format!("SELECT extracted_text FROM {schema}.library_resources WHERE file_name = ?1"),
+                params![library_key],
+                |r| r.get::<_, Option<String>>(0),
+            )
+            .optional()?;
+        if let Some(text) = text {
+            return Ok(text);
+        }
     }
     let text = conn
         .query_row(

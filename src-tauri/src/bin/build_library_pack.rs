@@ -37,10 +37,27 @@ fn main() -> anyhow::Result<()> {
     );
 
     let version = std::env::var("SOJOURNER_PACK_VERSION").unwrap_or_else(|_| env!("CARGO_PKG_VERSION").to_string());
-    let out_path = std::env::args()
-        .nth(1)
-        .map(PathBuf::from)
-        .unwrap_or_else(|| repo_root.join(PACKS_DIR).join(format!("Sojourner-Library-{version}.sjpack")));
+    // `--shelf <id>` builds one shelf's pack from `library/shelves/<id>.json`;
+    // without it, the Puritan and Reformed shelf from `library/manifest.json`,
+    // which keeps the pack id `library` so an installed pack upgrades in place.
+    let args: Vec<String> = std::env::args().skip(1).collect();
+    let shelf_id = args.iter().position(|a| a == "--shelf").and_then(|i| args.get(i + 1)).cloned();
+    let (pack_id, pack_name, entries) = match &shelf_id {
+        Some(id) => {
+            let shelf = library::read_shelf(&library_dir, id)?;
+            let entries: Vec<library::LibraryEntry> = shelf.books.iter().map(|b| b.entry()).collect();
+            (shelf.id, shelf.name, entries)
+        }
+        None => ("library".to_string(), "Sojourner Library".to_string(), library::read_manifest(&library_dir)?),
+    };
+    check_shelves_do_not_overlap(&library_dir)?;
+    let file_stem = pack_name.replace(' ', "-").replace(['(', ')', ','], "");
+    let out_path = args
+        .iter()
+        .enumerate()
+        .find(|(i, a)| !a.starts_with("--") && (*i == 0 || args[i - 1] != "--shelf"))
+        .map(|(_, a)| PathBuf::from(a))
+        .unwrap_or_else(|| repo_root.join(PACKS_DIR).join(format!("{file_stem}-{version}.sjpack")));
 
     // Built fresh every time, in a scratch folder rather than over the top of
     // a previous build: a leftover library.db would be migrated and topped up
@@ -58,7 +75,7 @@ fn main() -> anyhow::Result<()> {
     println!("extracting text (this is the slow part) ...");
     let book_count = {
         let conn = db::open_library_db(&db_path)?;
-        let n = library::import(&conn, &library_dir)?;
+        let n = library::import_entries(&conn, &library_dir, &entries)?;
         // FTS5 keeps its index in shadow tables that grow segment by segment
         // as rows arrive. One merge at the end leaves a smaller file and a
         // faster search than several hundred incremental ones.
@@ -66,7 +83,7 @@ fn main() -> anyhow::Result<()> {
         conn.execute_batch("VACUUM")?;
         n
     };
-    anyhow::ensure!(book_count > 0, "no books were imported -- is library/manifest.json empty?");
+    anyhow::ensure!(book_count > 0, "no books were imported -- is the shelf's list empty?");
     println!("  {book_count} book(s), {} MB of database", std::fs::metadata(&db_path)?.len() / 1_000_000);
 
     // Exactly the books the database has a row for, in the order the
@@ -89,8 +106,8 @@ fn main() -> anyhow::Result<()> {
         &book_files,
         pack::PackManifest {
             format: pack::PACK_FORMAT,
-            id: "library".into(),
-            name: "Sojourner Library".into(),
+            id: pack_id.clone(),
+            name: pack_name.clone(),
             version: version.clone(),
             built_at: chrono::Utc::now().to_rfc3339(),
             library_schema: db::schema::LIBRARY_MIGRATIONS.len(),
@@ -102,5 +119,30 @@ fn main() -> anyhow::Result<()> {
 
     let _ = std::fs::remove_dir_all(&work_dir);
     println!("done: {} MB at {}", bytes / 1_000_000, out_path.display());
+    Ok(())
+}
+
+/// Every book file on at most one shelf. The shelves share one folder and the
+/// installed library keys a book by its file name, so a book on two shelves
+/// would be one row claiming two packs, and removing either would take it.
+fn check_shelves_do_not_overlap(library_dir: &std::path::Path) -> anyhow::Result<()> {
+    let mut owner: std::collections::HashMap<String, String> = std::collections::HashMap::new();
+    for e in library::read_manifest(library_dir)? {
+        owner.insert(e.file_name, "library".into());
+    }
+    let shelves_dir = library_dir.join("shelves");
+    if let Ok(dir) = std::fs::read_dir(&shelves_dir) {
+        for f in dir.flatten() {
+            let Some(id) = f.path().file_stem().and_then(|s| s.to_str()).map(str::to_string) else { continue };
+            if f.path().extension().and_then(|e| e.to_str()) != Some("json") {
+                continue;
+            }
+            for b in library::read_shelf(library_dir, &id)?.books {
+                if let Some(prev) = owner.insert(b.file_name.clone(), id.clone()) {
+                    anyhow::bail!("{} is on two shelves: {prev} and {id}", b.file_name);
+                }
+            }
+        }
+    }
     Ok(())
 }

@@ -286,6 +286,15 @@ export const PANE_KINDS: Registry = {
     acceptsPassage: false,
     listed: true,
   },
+  citations: {
+    kind: "citations",
+    label: "Cited in your library",
+    icon: Library,
+    title: (p, ctx) => passageTitle("Cited", p, ctx),
+    defaultWidth: 460,
+    acceptsPassage: true,
+    listed: true,
+  },
   "factbook-for-passage": {
     kind: "factbook-for-passage",
     label: "People and places",
@@ -329,7 +338,7 @@ export function paneTitle(content: PaneContent, ctx: TitleContext): string {
 export const PANE_KIND_LIST_LISTED: readonly PaneKind[] = (Object.keys(PANE_KINDS) as PaneKind[]).filter((k) => PANE_KINDS[k].listed);
 
 /** The study-panel kinds, in the order the Add pane strip shows them. */
-export const STUDY_STRIP_KINDS: readonly PaneKind[] = ["commentary", "crossrefs", "encyclopedia-for-passage", "factbook-for-passage", "confession-for-passage", "atlas", "metrical", "mine"];
+export const STUDY_STRIP_KINDS: readonly PaneKind[] = ["commentary", "crossrefs", "encyclopedia-for-passage", "factbook-for-passage", "citations", "confession-for-passage", "atlas", "metrical", "mine"];
 
 export { PASSAGE_KINDS };
 
@@ -408,6 +417,8 @@ export function routeFor(content: PaneContent): string {
       return content.params.id ? `/factbook/${encodeURIComponent(content.params.id)}` : "/factbook";
     case "factbook-for-passage":
       return "/study/factbook";
+    case "citations":
+      return "/study/citations";
     case "search":
       return content.params.query ? `/search?q=${encodeURIComponent(content.params.query)}` : "/search";
     case "settings":
@@ -439,6 +450,7 @@ export function parseRoute(pathname: string, search = ""): ContentRequest | null
       if (a === "tunes") return { kind: "tunes", params: {} };
       if (a === "mine") return { kind: "mine", params: {} };
       if (a === "factbook") return { kind: "factbook-for-passage", params: {} };
+      if (a === "citations") return { kind: "citations", params: {} };
       return null;
     case "westminster":
       return { kind: "westminster", params: { docCode: a ?? null, sectionId: num(b) } };

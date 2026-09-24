@@ -1236,6 +1236,11 @@ export function usePackStatus() {
   return useQuery({ queryKey: ["packStatus"], queryFn: api.packStatus });
 }
 
+/** Every installed pack (shelf). */
+export function usePackStatuses() {
+  return useQuery({ queryKey: ["packStatuses"], queryFn: api.packStatuses });
+}
+
 /**
  * Everything a pack install or removal changes.
  *
@@ -1248,6 +1253,9 @@ export function useInvalidateAfterPackChange() {
   return () => {
     for (const key of [
       "packStatus",
+      "packStatuses",
+      "citations",
+      "citationCounts",
       "resources",
       "resource",
       "resourceText",

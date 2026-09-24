@@ -8,6 +8,7 @@ import { CommentaryPanel } from "../../features/commentary/CommentaryPanel";
 import { CrossReferencesPanel } from "../../features/reading/CrossReferencesPanel";
 import { EncyclopediaForPassage } from "../../features/encyclopedia/EncyclopediaForPassage";
 import { FactbookForPassage } from "../../features/factbook/FactbookForPassage";
+import { CitationsForPassage } from "../../features/library/CitationsForPassage";
 import { ConfessionForPassagePanel } from "../../features/reading/ConfessionForPassagePanel";
 import { MetricalPsalmPanel } from "../../features/reading/MetricalPsalmPanel";
 import { MyNotesPane } from "../../features/reading/MyNotesPane";
@@ -102,6 +103,14 @@ export function FactbookForPassagePane() {
   const book = books?.find((b) => b.id === params.bookId);
   if (!book) return <LoadingState className="p-8" />;
   return <FactbookForPassage book={book} chapter={params.chapter} activeVerse={params.verse} />;
+}
+
+export function CitationsPane() {
+  const [params] = usePaneParams("citations");
+  const { data: books } = useBooks();
+  const book = books?.find((b) => b.id === params.bookId);
+  if (!book) return <LoadingState className="p-8" />;
+  return <CitationsForPassage book={book} chapter={params.chapter} activeVerse={params.verse} />;
 }
 
 export function ConfessionPane() {

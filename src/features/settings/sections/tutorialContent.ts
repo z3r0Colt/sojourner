@@ -558,6 +558,18 @@ export const TUTORIAL: TutorialCategory[] = [
         links: [{ label: "Factbook", to: "/factbook" }],
       },
       {
+        id: "citations",
+        title: "Cited in your library",
+        what: "Every book on your installed shelves, and every book of your own, that cites the verse you are reading: Augustine and Chrysostom on it, Josephus beside it, the Puritans preaching it.",
+        steps: [
+          "A small book icon and number after a verse shows how many times your library cites it. Click it to list them.",
+          "Or add the Cited in your library pane beside the text: it follows the passage, grouped by shelf, each with the words around the reference.",
+          "Click a citation to open the book at that place, with the reference marked.",
+          "Install more shelves (Church Fathers, Ancient literature, Nineteenth century) from Settings → Book library. Your own books are indexed too once their text has been read.",
+        ],
+        links: [{ label: "Settings → Book library", to: "/settings?section=books" }],
+      },
+      {
         id: "grammar-search",
         title: "Search by grammar",
         what: "Find every word with a given parsing, such as every aorist imperative in Ephesians, without knowing any code letters.",

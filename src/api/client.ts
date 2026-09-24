@@ -97,6 +97,7 @@ import type {
   PickKind,
   PickedPath,
   PackStatus,
+  CitationHit,
   PackInstallOutcome,
 } from "./types";
 
@@ -135,7 +136,12 @@ export const api = {
   packStatus: () => invoke<PackStatus>("pack_status"),
   /** Long-running. Listen on `pack-install-progress` for a progress bar. */
   installPack: (token: string) => invoke<PackInstallOutcome>("install_pack", { token }),
-  removePack: () => invoke<void>("remove_pack"),
+  removePack: (id?: string) => invoke<void>("remove_pack", { id: id ?? null }),
+  /** Every installed pack, the Puritan and Reformed shelf first. */
+  packStatuses: () => invoke<PackStatus[]>("pack_statuses"),
+  citationsForPassage: (bookId: number, chapter: number, verse: number | null) =>
+    invoke<CitationHit[]>("citations_for_passage", { bookId, chapter, verse }),
+  citationCountsForChapter: (bookId: number, chapter: number) => invoke<[number, number][]>("citation_counts_for_chapter", { bookId, chapter }),
 
   getChapter: (translationId: number, bookId: number, chapter: number) =>
     invoke<Verse[]>("get_chapter", { translationId, bookId, chapter }),

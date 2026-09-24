@@ -1,6 +1,7 @@
 pub mod atlas;
 pub mod bookmarks;
 pub mod catechism_memory;
+pub mod citations;
 pub mod commentary;
 pub mod concordance;
 pub mod crossrefs;

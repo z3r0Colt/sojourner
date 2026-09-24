@@ -1233,7 +1233,29 @@ CREATE TRIGGER library_ad AFTER DELETE ON library_resources BEGIN
 END;
 "#;
 
-pub const LIBRARY_MIGRATIONS: &[&str] = &[LIBRARY_MIGRATION_0001];
+// Every Scripture reference in every book, found at pack build (see
+// `crate::citations`): the passage it cites, where it stands, a stretch of
+// the sentence around it, and the reference as printed with which occurrence
+// of that printing it is, so the reader can open the book at that spot. What
+// "cited in your library" reads beside a verse.
+pub const LIBRARY_MIGRATION_0002: &str = r#"
+CREATE TABLE library_citations (
+  id           INTEGER PRIMARY KEY,
+  resource_id  INTEGER NOT NULL REFERENCES library_resources(id) ON DELETE CASCADE,
+  char_offset  INTEGER NOT NULL,
+  label        TEXT NOT NULL,
+  occurrence   INTEGER NOT NULL,
+  context      TEXT NOT NULL,
+  book_id      INTEGER NOT NULL,
+  chapter      INTEGER NOT NULL,
+  verse_start  INTEGER NOT NULL,
+  verse_end    INTEGER NOT NULL
+);
+CREATE INDEX idx_library_citations_passage ON library_citations(book_id, chapter, verse_start);
+CREATE INDEX idx_library_citations_resource ON library_citations(resource_id);
+"#;
+
+pub const LIBRARY_MIGRATIONS: &[&str] = &[LIBRARY_MIGRATION_0001, LIBRARY_MIGRATION_0002];
 
 pub const USER_MIGRATION_0001: &str = r#"
 CREATE TABLE highlights (
@@ -2244,6 +2266,26 @@ ALTER TABLE sermon_sources_new RENAME TO sermon_sources;
 CREATE INDEX idx_sermon_sources_sermon ON sermon_sources(sermon_id, sort_order);
 "#;
 
+// The same citations for the reader's own books (see LIBRARY_MIGRATION_0002),
+// found when a book's text is extracted, and for books added before this
+// existed, once, in the background at launch.
+pub const USER_MIGRATION_0019: &str = r#"
+CREATE TABLE resource_citations (
+  id           INTEGER PRIMARY KEY,
+  resource_id  INTEGER NOT NULL REFERENCES resources(id) ON DELETE CASCADE,
+  char_offset  INTEGER NOT NULL,
+  label        TEXT NOT NULL,
+  occurrence   INTEGER NOT NULL,
+  context      TEXT NOT NULL,
+  book_id      INTEGER NOT NULL,
+  chapter      INTEGER NOT NULL,
+  verse_start  INTEGER NOT NULL,
+  verse_end    INTEGER NOT NULL
+);
+CREATE INDEX idx_resource_citations_passage ON resource_citations(book_id, chapter, verse_start);
+CREATE INDEX idx_resource_citations_resource ON resource_citations(resource_id);
+"#;
+
 pub const USER_MIGRATIONS: &[&str] = &[
     USER_MIGRATION_0001,
     USER_MIGRATION_0002,
@@ -2263,4 +2305,5 @@ pub const USER_MIGRATIONS: &[&str] = &[
     USER_MIGRATION_0016,
     USER_MIGRATION_0017,
     USER_MIGRATION_0018,
+    USER_MIGRATION_0019,
 ];

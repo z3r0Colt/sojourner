@@ -1,0 +1,311 @@
+{
+  "id": "fathers",
+  "name": "Church Fathers",
+  "description": "The Ante-Nicene Fathers and both series of the Nicene and Post-Nicene Fathers, as Roberts, Donaldson, Schaff and Wace edited them (1885-1900), with Lightfoot's Apostolic Fathers.",
+  "books": [
+    {
+      "file_name": "ANF 01 The Apostolic Fathers with Justin Martyr and Irenaeus.epub",
+      "kind": "epub",
+      "title": "ANF 01: The Apostolic Fathers with Justin Martyr and Irenaeus",
+      "author": "Roberts, Donaldson and Coxe (eds.)",
+      "source_url": "https://ccel.org/ccel/s/schaff/anf01/cache/anf01.epub",
+      "license": "Public domain (text); epub from the Christian Classics Ethereal Library"
+    },
+    {
+      "file_name": "ANF 02 Fathers of the Second Century Hermas, Tatian, Athenagoras, Theophilus.epub",
+      "kind": "epub",
+      "title": "ANF 02: Fathers of the Second Century: Hermas, Tatian, Athenagoras, Theophilus, and Clement of Alexandria (Entire)",
+      "author": "Roberts, Donaldson and Coxe (eds.)",
+      "source_url": "https://ccel.org/ccel/s/schaff/anf02/cache/anf02.epub",
+      "license": "Public domain (text); epub from the Christian Classics Ethereal Library"
+    },
+    {
+      "file_name": "ANF 03 Latin Christianity Its Founder, Tertullian.epub",
+      "kind": "epub",
+      "title": "ANF 03: Latin Christianity: Its Founder, Tertullian",
+      "author": "Roberts, Donaldson and Coxe (eds.)",
+      "source_url": "https://ccel.org/ccel/s/schaff/anf03/cache/anf03.epub",
+      "license": "Public domain (text); epub from the Christian Classics Ethereal Library"
+    },
+    {
+      "file_name": "ANF 04 Fathers of the Third Century Tertullian, Part Fourth; Minucius Felix; Commodian.epub",
+      "kind": "epub",
+      "title": "ANF 04: Fathers of the Third Century: Tertullian, Part Fourth; Minucius Felix; Commodian; Origen, Parts First and Second",
+      "author": "Roberts, Donaldson and Coxe (eds.)",
+      "source_url": "https://ccel.org/ccel/s/schaff/anf04/cache/anf04.epub",
+      "license": "Public domain (text); epub from the Christian Classics Ethereal Library"
+    },
+    {
+      "file_name": "ANF 05 Fathers of the Third Century Hippolytus, Cyprian, Caius, Novatian, Appendix.epub",
+      "kind": "epub",
+      "title": "ANF 05: Fathers of the Third Century: Hippolytus, Cyprian, Caius, Novatian, Appendix",
+      "author": "Roberts, Donaldson and Coxe (eds.)",
+      "source_url": "https://ccel.org/ccel/s/schaff/anf05/cache/anf05.epub",
+      "license": "Public domain (text); epub from the Christian Classics Ethereal Library"
+    },
+    {
+      "file_name": "ANF 06 Fathers of the Third Century Gregory Thaumaturgus, Dionysius the Great.epub",
+      "kind": "epub",
+      "title": "ANF 06: Fathers of the Third Century: Gregory Thaumaturgus, Dionysius the Great, Julius Africanus, Anatolius, and Minor Writers, Methodius, Arnobius",
+      "author": "Roberts, Donaldson and Coxe (eds.)",
+      "source_url": "https://ccel.org/ccel/s/schaff/anf06/cache/anf06.epub",
+      "license": "Public domain (text); epub from the Christian Classics Ethereal Library"
+    },
+    {
+      "file_name": "ANF 07 Fathers of the Third and Fourth Centuries Lactantius, Venantius, Asterius.epub",
+      "kind": "epub",
+      "title": "ANF 07: Fathers of the Third and Fourth Centuries: Lactantius, Venantius, Asterius, Victorinus, Dionysius, Apostolic Teaching and Constitutions, Homily, and Liturgies",
+      "author": "Roberts, Donaldson and Coxe (eds.)",
+      "source_url": "https://ccel.org/ccel/s/schaff/anf07/cache/anf07.epub",
+      "license": "Public domain (text); epub from the Christian Classics Ethereal Library"
+    },
+    {
+      "file_name": "ANF 08 The Twelve Patriarchs, Excerpts and Epistles, The Clementia, Apocrypha, Decretals.epub",
+      "kind": "epub",
+      "title": "ANF 08: The Twelve Patriarchs, Excerpts and Epistles, The Clementia, Apocrypha, Decretals, Memoirs of Edessa and Syriac Documents, Remains of the First Age",
+      "author": "Roberts, Donaldson and Coxe (eds.)",
+      "source_url": "https://ccel.org/ccel/s/schaff/anf08/cache/anf08.epub",
+      "license": "Public domain (text); epub from the Christian Classics Ethereal Library"
+    },
+    {
+      "file_name": "ANF 09 The Gospel of Peter, The Diatessaron of Tatian, The Apocalypse of Peter.epub",
+      "kind": "epub",
+      "title": "ANF 09: The Gospel of Peter, The Diatessaron of Tatian, The Apocalypse of Peter, the Vision of Paul, The Apocalypse of the Virgin and Sedrach, The Testament of Abraham, The Acts of Xanthippe and Polyxena, The Narrative of Zosimus, The Apology of Aristides, The Epistles of Clement (complete text), Origen’s Commentary on John, Books 1–10, and Commentary on Matthew, Books 1, 2, and 10–14.",
+      "author": "Roberts, Donaldson and Coxe (eds.)",
+      "source_url": "https://ccel.org/ccel/s/schaff/anf09/cache/anf09.epub",
+      "license": "Public domain (text); epub from the Christian Classics Ethereal Library"
+    },
+    {
+      "file_name": "NPNF1 01 The Confessions and Letters of St. Augustine, with a Sketch of his Life and Work.epub",
+      "kind": "epub",
+      "title": "NPNF1 01: The Confessions and Letters of St. Augustine, with a Sketch of his Life and Work",
+      "author": "Philip Schaff (ed.)",
+      "source_url": "https://ccel.org/ccel/s/schaff/npnf101/cache/npnf101.epub",
+      "license": "Public domain (text); epub from the Christian Classics Ethereal Library"
+    },
+    {
+      "file_name": "NPNF1 02 St. Augustine's City of God and Christian Doctrine.epub",
+      "kind": "epub",
+      "title": "NPNF1 02: St. Augustine's City of God and Christian Doctrine",
+      "author": "Philip Schaff (ed.)",
+      "source_url": "https://ccel.org/ccel/s/schaff/npnf102/cache/npnf102.epub",
+      "license": "Public domain (text); epub from the Christian Classics Ethereal Library"
+    },
+    {
+      "file_name": "NPNF1 03 On the Holy Trinity; Doctrinal Treatises; Moral Treatises.epub",
+      "kind": "epub",
+      "title": "NPNF1 03: On the Holy Trinity; Doctrinal Treatises; Moral Treatises",
+      "author": "Philip Schaff (ed.)",
+      "source_url": "https://ccel.org/ccel/s/schaff/npnf103/cache/npnf103.epub",
+      "license": "Public domain (text); epub from the Christian Classics Ethereal Library"
+    },
+    {
+      "file_name": "NPNF1 04 Augustine The Writings Against the Manichaeans and Against the Donatists.epub",
+      "kind": "epub",
+      "title": "NPNF1 04: Augustine: The Writings Against the Manichaeans and Against the Donatists",
+      "author": "Philip Schaff (ed.)",
+      "source_url": "https://ccel.org/ccel/s/schaff/npnf104/cache/npnf104.epub",
+      "license": "Public domain (text); epub from the Christian Classics Ethereal Library"
+    },
+    {
+      "file_name": "NPNF1 05 St. Augustine Anti-Pelagian Writings.epub",
+      "kind": "epub",
+      "title": "NPNF1 05: St. Augustine: Anti-Pelagian Writings",
+      "author": "Philip Schaff (ed.)",
+      "source_url": "https://ccel.org/ccel/s/schaff/npnf105/cache/npnf105.epub",
+      "license": "Public domain (text); epub from the Christian Classics Ethereal Library"
+    },
+    {
+      "file_name": "NPNF1 06 St. Augustine Sermon on the Mount; Harmony of the Gospels.epub",
+      "kind": "epub",
+      "title": "NPNF1 06: St. Augustine: Sermon on the Mount; Harmony of the Gospels; Homilies on the Gospels",
+      "author": "Philip Schaff (ed.)",
+      "source_url": "https://ccel.org/ccel/s/schaff/npnf106/cache/npnf106.epub",
+      "license": "Public domain (text); epub from the Christian Classics Ethereal Library"
+    },
+    {
+      "file_name": "NPNF1 07 St. Augustine Homilies on the Gospel of John.epub",
+      "kind": "epub",
+      "title": "NPNF1 07: St. Augustine: Homilies on the Gospel of John; Homilies on the First Epistle of John; Soliloquies",
+      "author": "Philip Schaff (ed.)",
+      "source_url": "https://ccel.org/ccel/s/schaff/npnf107/cache/npnf107.epub",
+      "license": "Public domain (text); epub from the Christian Classics Ethereal Library"
+    },
+    {
+      "file_name": "NPNF1 08 St. Augustine Exposition on the Book of Psalms.epub",
+      "kind": "epub",
+      "title": "NPNF1 08: St. Augustine: Exposition on the Book of Psalms",
+      "author": "Philip Schaff (ed.)",
+      "source_url": "https://ccel.org/ccel/s/schaff/npnf108/cache/npnf108.epub",
+      "license": "Public domain (text); epub from the Christian Classics Ethereal Library"
+    },
+    {
+      "file_name": "NPNF1 09 St. Chrysostom On the Priesthood; Ascetic Treatises; Select Homilies and Letters.epub",
+      "kind": "epub",
+      "title": "NPNF1 09: St. Chrysostom: On the Priesthood; Ascetic Treatises; Select Homilies and Letters; Homilies on the Statutes",
+      "author": "Philip Schaff (ed.)",
+      "source_url": "https://ccel.org/ccel/s/schaff/npnf109/cache/npnf109.epub",
+      "license": "Public domain (text); epub from the Christian Classics Ethereal Library"
+    },
+    {
+      "file_name": "NPNF1 10 St. Chrysostom Homilies on the Gospel of Saint Matthew.epub",
+      "kind": "epub",
+      "title": "NPNF1 10: St. Chrysostom: Homilies on the Gospel of Saint Matthew",
+      "author": "Philip Schaff (ed.)",
+      "source_url": "https://ccel.org/ccel/s/schaff/npnf110/cache/npnf110.epub",
+      "license": "Public domain (text); epub from the Christian Classics Ethereal Library"
+    },
+    {
+      "file_name": "NPNF1 11 Saint Chrysostom Homilies on the Acts of the Apostles and the Epistle to the.epub",
+      "kind": "epub",
+      "title": "NPNF1 11: Saint Chrysostom: Homilies on the Acts of the Apostles and the Epistle to the Romans",
+      "author": "Philip Schaff (ed.)",
+      "source_url": "https://ccel.org/ccel/s/schaff/npnf111/cache/npnf111.epub",
+      "license": "Public domain (text); epub from the Christian Classics Ethereal Library"
+    },
+    {
+      "file_name": "NPNF1 12 Saint Chrysostom Homilies on the Epistles of Paul to the Corinthians.epub",
+      "kind": "epub",
+      "title": "NPNF1 12: Saint Chrysostom: Homilies on the Epistles of Paul to the Corinthians",
+      "author": "Philip Schaff (ed.)",
+      "source_url": "https://ccel.org/ccel/s/schaff/npnf112/cache/npnf112.epub",
+      "license": "Public domain (text); epub from the Christian Classics Ethereal Library"
+    },
+    {
+      "file_name": "NPNF1 13 Saint Chrysostom Homilies on Galatians, Ephesians, Philippians, Colossians.epub",
+      "kind": "epub",
+      "title": "NPNF1 13: Saint Chrysostom: Homilies on Galatians, Ephesians, Philippians, Colossians, Thessalonians, Timothy, Titus, and Philemon",
+      "author": "Philip Schaff (ed.)",
+      "source_url": "https://ccel.org/ccel/s/schaff/npnf113/cache/npnf113.epub",
+      "license": "Public domain (text); epub from the Christian Classics Ethereal Library"
+    },
+    {
+      "file_name": "NPNF1 14 Saint Chrysostom Homilies on the Gospel of St. John and the Epistle to the.epub",
+      "kind": "epub",
+      "title": "NPNF1 14: Saint Chrysostom: Homilies on the Gospel of St. John and the Epistle to the Hebrews",
+      "author": "Philip Schaff (ed.)",
+      "source_url": "https://ccel.org/ccel/s/schaff/npnf114/cache/npnf114.epub",
+      "license": "Public domain (text); epub from the Christian Classics Ethereal Library"
+    },
+    {
+      "file_name": "NPNF2 01 Eusebius Pamphilius Church History, Life of Constantine.epub",
+      "kind": "epub",
+      "title": "NPNF2 01: Eusebius Pamphilius: Church History, Life of Constantine, Oration in Praise of Constantine",
+      "author": "Schaff and Wace (eds.)",
+      "source_url": "https://ccel.org/ccel/s/schaff/npnf201/cache/npnf201.epub",
+      "license": "Public domain (text); epub from the Christian Classics Ethereal Library"
+    },
+    {
+      "file_name": "NPNF2 02 Socrates and Sozomenus Ecclesiastical Histories.epub",
+      "kind": "epub",
+      "title": "NPNF2 02: Socrates and Sozomenus Ecclesiastical Histories",
+      "author": "Schaff and Wace (eds.)",
+      "source_url": "https://ccel.org/ccel/s/schaff/npnf202/cache/npnf202.epub",
+      "license": "Public domain (text); epub from the Christian Classics Ethereal Library"
+    },
+    {
+      "file_name": "NPNF2 03 Theodoret, Jerome, Gennadius, & Rufinus Historical Writings.epub",
+      "kind": "epub",
+      "title": "NPNF2 03: Theodoret, Jerome, Gennadius, & Rufinus: Historical Writings",
+      "author": "Schaff and Wace (eds.)",
+      "source_url": "https://ccel.org/ccel/s/schaff/npnf203/cache/npnf203.epub",
+      "license": "Public domain (text); epub from the Christian Classics Ethereal Library"
+    },
+    {
+      "file_name": "NPNF2 04 Athanasius Select Works and Letters.epub",
+      "kind": "epub",
+      "title": "NPNF2 04: Athanasius: Select Works and Letters",
+      "author": "Schaff and Wace (eds.)",
+      "source_url": "https://ccel.org/ccel/s/schaff/npnf204/cache/npnf204.epub",
+      "license": "Public domain (text); epub from the Christian Classics Ethereal Library"
+    },
+    {
+      "file_name": "NPNF2 05 Gregory of Nyssa Dogmatic Treatises, Etc.epub",
+      "kind": "epub",
+      "title": "NPNF2 05: Gregory of Nyssa: Dogmatic Treatises, Etc.",
+      "author": "Schaff and Wace (eds.)",
+      "source_url": "https://ccel.org/ccel/s/schaff/npnf205/cache/npnf205.epub",
+      "license": "Public domain (text); epub from the Christian Classics Ethereal Library"
+    },
+    {
+      "file_name": "NPNF2 06 Jerome The Principal Works of St. Jerome.epub",
+      "kind": "epub",
+      "title": "NPNF2 06: Jerome: The Principal Works of St. Jerome",
+      "author": "Schaff and Wace (eds.)",
+      "source_url": "https://ccel.org/ccel/s/schaff/npnf206/cache/npnf206.epub",
+      "license": "Public domain (text); epub from the Christian Classics Ethereal Library"
+    },
+    {
+      "file_name": "NPNF2 07 Cyril of Jerusalem, Gregory Nazianzen.epub",
+      "kind": "epub",
+      "title": "NPNF2 07: Cyril of Jerusalem, Gregory Nazianzen",
+      "author": "Schaff and Wace (eds.)",
+      "source_url": "https://ccel.org/ccel/s/schaff/npnf207/cache/npnf207.epub",
+      "license": "Public domain (text); epub from the Christian Classics Ethereal Library"
+    },
+    {
+      "file_name": "NPNF2 08 Basil Letters and Select Works.epub",
+      "kind": "epub",
+      "title": "NPNF2 08: Basil: Letters and Select Works",
+      "author": "Schaff and Wace (eds.)",
+      "source_url": "https://ccel.org/ccel/s/schaff/npnf208/cache/npnf208.epub",
+      "license": "Public domain (text); epub from the Christian Classics Ethereal Library"
+    },
+    {
+      "file_name": "NPNF2 09 Hilary of Poitiers, John of Damascus.epub",
+      "kind": "epub",
+      "title": "NPNF2 09: Hilary of Poitiers, John of Damascus",
+      "author": "Schaff and Wace (eds.)",
+      "source_url": "https://ccel.org/ccel/s/schaff/npnf209/cache/npnf209.epub",
+      "license": "Public domain (text); epub from the Christian Classics Ethereal Library"
+    },
+    {
+      "file_name": "NPNF2 10 Ambrose Selected Works and Letters.epub",
+      "kind": "epub",
+      "title": "NPNF2 10: Ambrose: Selected Works and Letters",
+      "author": "Schaff and Wace (eds.)",
+      "source_url": "https://ccel.org/ccel/s/schaff/npnf210/cache/npnf210.epub",
+      "license": "Public domain (text); epub from the Christian Classics Ethereal Library"
+    },
+    {
+      "file_name": "NPNF2 11 Sulpitius Severus, Vincent of Lerins, John Cassian.epub",
+      "kind": "epub",
+      "title": "NPNF2 11: Sulpitius Severus, Vincent of Lerins, John Cassian",
+      "author": "Schaff and Wace (eds.)",
+      "source_url": "https://ccel.org/ccel/s/schaff/npnf211/cache/npnf211.epub",
+      "license": "Public domain (text); epub from the Christian Classics Ethereal Library"
+    },
+    {
+      "file_name": "NPNF2 12 Leo the Great, Gregory the Great.epub",
+      "kind": "epub",
+      "title": "NPNF2 12: Leo the Great, Gregory the Great",
+      "author": "Schaff and Wace (eds.)",
+      "source_url": "https://ccel.org/ccel/s/schaff/npnf212/cache/npnf212.epub",
+      "license": "Public domain (text); epub from the Christian Classics Ethereal Library"
+    },
+    {
+      "file_name": "NPNF2 13 Gregory the Great (II), Ephraim Syrus, Aphrahat.epub",
+      "kind": "epub",
+      "title": "NPNF2 13: Gregory the Great (II), Ephraim Syrus, Aphrahat",
+      "author": "Schaff and Wace (eds.)",
+      "source_url": "https://ccel.org/ccel/s/schaff/npnf213/cache/npnf213.epub",
+      "license": "Public domain (text); epub from the Christian Classics Ethereal Library"
+    },
+    {
+      "file_name": "NPNF2 14 The Seven Ecumenical Councils.epub",
+      "kind": "epub",
+      "title": "NPNF2 14: The Seven Ecumenical Councils",
+      "author": "Schaff and Wace (eds.)",
+      "source_url": "https://ccel.org/ccel/s/schaff/npnf214/cache/npnf214.epub",
+      "license": "Public domain (text); epub from the Christian Classics Ethereal Library"
+    },
+    {
+      "file_name": "The Apostolic Fathers.epub",
+      "kind": "epub",
+      "title": "The Apostolic Fathers",
+      "author": "J. B. Lightfoot",
+      "source_url": "https://ccel.org/ccel/l/lightfoot/fathers/cache/fathers.epub",
+      "license": "Public domain (text); epub from the Christian Classics Ethereal Library"
+    }
+  ]
+}

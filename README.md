@@ -15,6 +15,7 @@ Get the latest installer and the book library pack from the [releases page](../.
 
 - **Sojourner_x.y.z_x64-setup.exe** installs the app. Windows 10 or 11, 64-bit; per-user, no administrator rights; the WebView2 runtime is bundled, so it installs offline.
 - **Sojourner-Library-x.y.z.sjpack** is the optional library of 270 Puritan and Reformed works. Install it from inside the app: Settings → Book library → Install from file.
+- **Church-Fathers**, **Ancient-literature** and **Nineteenth-century** `.sjpack` files are further shelves, each installed and removed on its own: the Ante-Nicene and Nicene and Post-Nicene Fathers (38 volumes); Josephus, Philo, 1 Enoch, Tacitus, Pliny and Suetonius; Schaff's *History* and *Creeds* and Edersheim.
 
 The installer is not yet code-signed, so Windows SmartScreen warns on first run: choose *More info*, then *Run anyway*.
 
@@ -55,8 +56,12 @@ A desktop application built with Tauri, Rust, and React/TypeScript. The applicat
 The several hundred Puritan and Reformed works the app can carry do **not** ship in the installer. They are built into a separate resource pack the reader downloads from the releases page and installs from a file (Settings → Book library). That keeps the installer to the Bibles, commentaries and reference data — a third smaller than it was — and leaves the library to readers who want it.
 
 ```
-npm run build:pack          # -> packs/Sojourner-Library-<version>.sjpack
+npm run build:pack                      # -> packs/Sojourner-Library-<version>.sjpack
+node tools/fetch-shelves.mjs            # the other shelves' books, from CCEL and Project Gutenberg
+npm run build:pack -- --shelf fathers   # -> packs/Church-Fathers-<version>.sjpack (also ancient, nineteenth)
 ```
+
+Each shelf is listed in `library/shelves/<id>.json` with every book's source and terms; the books share the one `library/` folder, and the build refuses a book listed on two shelves. Installed, each shelf is attached as its own schema (`lib_<id>`) and searched with the rest. Every pack also carries `library_citations`: each chapter-and-verse reference in its books, as printed, which the app counts beside each verse and lists in the *Cited in your library* pane.
 
 A pack is a zip: `pack.json` (a SHA-256 per member), `library.db` (the books' text and its FTS index, prebuilt), and `books/*.epub`. Installing it verifies every checksum into a staging folder and only then swaps it into place, so a truncated download leaves the installed library untouched. The app ATTACHes `library.db` as a third schema beside `user.db` and `content.db`; with no pack installed nothing is attached and every query that reads a shipped book simply returns nothing. See `src-tauri/src/pack.rs`.
 

@@ -136,8 +136,18 @@ export interface AtlasParams extends PassageParams {
   journey: string | null;
 }
 
+/** A place in a book to open at: the words to find there, and which of
+ * their occurrences (a citation's reference as the book prints it). */
+export interface ResourceFind {
+  text: string;
+  occurrence: number;
+  /** Words to try if `text` is not found as printed. */
+  fallback?: string;
+}
+
 export interface ResourceParams {
   id: number;
+  find?: ResourceFind | null;
 }
 
 /** One sermon's manuscript. The pane holds only the id; the document itself
@@ -198,6 +208,7 @@ export type PaneContent =
   | { kind: "wordstudy"; params: WordStudyParams }
   | { kind: "factbook"; params: FactbookParams }
   | { kind: "factbook-for-passage"; params: PassageParams }
+  | { kind: "citations"; params: PassageParams }
   | { kind: "settings"; params: SettingsParams };
 
 export type PaneKind = PaneContent["kind"];
@@ -235,6 +246,7 @@ export const PANE_KIND_LIST: readonly PaneKind[] = [
   "wordstudy",
   "factbook",
   "factbook-for-passage",
+  "citations",
   "settings",
 ];
 
@@ -247,6 +259,7 @@ export const PASSAGE_KINDS: ReadonlySet<PaneKind> = new Set<PaneKind>([
   "confession-for-passage",
   "encyclopedia-for-passage",
   "factbook-for-passage",
+  "citations",
   "metrical",
   "mine",
   "atlas",

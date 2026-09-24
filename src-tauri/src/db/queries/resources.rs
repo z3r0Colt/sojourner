@@ -55,6 +55,11 @@ pub fn create(conn: &Connection, kind: &str, title: &str, author: Option<&str>, 
         params![kind, title, author, file_path, extracted_text, now],
     )?;
     let id = conn.last_insert_rowid();
+    // Where it cites Scripture, for "cited in your library". Best-effort: a
+    // book that cannot be indexed is still a book.
+    if let Err(e) = super::citations::index_resource(conn, id, extracted_text) {
+        eprintln!("[citations] could not index resource {id}: {e:#}");
+    }
     Ok(conn.query_row(&format!("SELECT {RESOURCE_COLS} FROM resources WHERE id = ?1"), params![id], map_resource)?)
 }
 
@@ -64,6 +69,9 @@ pub fn create(conn: &Connection, kind: &str, title: &str, author: Option<&str>, 
 /// book that was "not searchable" becomes findable the moment this returns.
 pub fn set_extracted_text(conn: &Connection, id: i64, extracted_text: Option<&str>) -> anyhow::Result<Resource> {
     conn.execute("UPDATE resources SET extracted_text = ?2 WHERE id = ?1", params![id, extracted_text])?;
+    if let Err(e) = super::citations::index_resource(conn, id, extracted_text) {
+        eprintln!("[citations] could not index resource {id}: {e:#}");
+    }
     Ok(conn.query_row(&format!("SELECT {RESOURCE_COLS} FROM resources WHERE id = ?1"), params![id], map_resource)?)
 }
 
@@ -109,6 +117,8 @@ struct RankedHit {
     /// The row id of that text, which for a shipped book is not the id of
     /// the resource row that names it.
     text_id: i64,
+    /// The pack schema a shipped book's text is in ("" for unqualified).
+    schema: String,
 }
 
 /// Cuts a passage of a book around the word that was found, ready for the
@@ -249,7 +259,7 @@ pub fn search(conn: &Connection, query: &str, limit: i64) -> anyhow::Result<Vec<
     )?;
     let rows = own.query_map(params![match_expr, limit], |r| {
         let resource_id: i64 = r.get(0)?;
-        Ok(RankedHit { resource_id, title: r.get(1)?, kind: r.get(2)?, rank: r.get(3)?, shipped: false, text_id: resource_id })
+        Ok(RankedHit { resource_id, title: r.get(1)?, kind: r.get(2)?, rank: r.get(3)?, shipped: false, text_id: resource_id, schema: String::new() })
     })?;
     for row in rows {
         hits.push(row?);
@@ -257,16 +267,28 @@ pub fn search(conn: &Connection, query: &str, limit: i64) -> anyhow::Result<Vec<
 
     // Only where the attached content.db is new enough to have one: an older
     // one has no such table, and a reader's own books must still be findable.
-    if crate::library::is_available(conn) {
-        let mut shipped = conn.prepare(
-            "SELECT res.id, res.title, res.kind, bm25(library_fts), lib.id
-             FROM library_fts
-             JOIN library_resources lib ON lib.id = library_fts.rowid
+    // Every installed shelf, each its own index. Their bm25 scores are close
+    // enough in kind (the same tokenizer over the same sort of prose) to
+    // merge by rank with the reader's own.
+    let schemas = {
+        let attached = crate::db::attached_library_schemas(conn);
+        if attached.is_empty() && crate::library::is_available(conn) {
+            vec![String::new()]
+        } else {
+            attached
+        }
+    };
+    for schema in &schemas {
+        let q = if schema.is_empty() { String::new() } else { format!("{schema}.") };
+        let mut shipped = conn.prepare(&format!(
+            "SELECT res.id, res.title, res.kind, bm25(f), lib.id
+             FROM {q}library_fts f
+             JOIN {q}library_resources lib ON lib.id = f.rowid
              JOIN resources res ON res.library_key = lib.file_name
-             WHERE library_fts MATCH ?1 ORDER BY bm25(library_fts) LIMIT ?2",
-        )?;
+             WHERE f MATCH ?1 ORDER BY bm25(f) LIMIT ?2"
+        ))?;
         let rows = shipped.query_map(params![match_expr, limit], |r| {
-            Ok(RankedHit { resource_id: r.get(0)?, title: r.get(1)?, kind: r.get(2)?, rank: r.get(3)?, shipped: true, text_id: r.get(4)? })
+            Ok(RankedHit { resource_id: r.get(0)?, title: r.get(1)?, kind: r.get(2)?, rank: r.get(3)?, shipped: true, text_id: r.get(4)?, schema: schema.clone() })
         })?;
         for row in rows {
             hits.push(row?);
@@ -301,18 +323,21 @@ pub fn search(conn: &Connection, query: &str, limit: i64) -> anyhow::Result<Vec<
         "SELECT pos, substr(t, MAX(1, pos - ?3), ?4), length(t)
          FROM (SELECT extracted_text AS t, instr(lower(extracted_text), ?2) AS pos FROM resources WHERE id = ?1)",
     )?;
-    let mut quote_shipped = crate::library::is_available(conn)
-        .then(|| {
-            conn.prepare(
-                "SELECT pos, substr(t, MAX(1, pos - ?3), ?4), length(t)
-                 FROM (SELECT extracted_text AS t, instr(lower(extracted_text), ?2) AS pos FROM library_resources WHERE id = ?1)",
-            )
-        })
-        .transpose()?;
+    // One quoting statement per pack schema, prepared as a book from it
+    // comes up.
+    let mut quote_shipped: std::collections::HashMap<String, rusqlite::Statement> = std::collections::HashMap::new();
 
     let mut out = Vec::with_capacity(hits.len());
     for hit in hits {
-        let stmt = if hit.shipped { quote_shipped.as_mut() } else { Some(&mut quote_own) };
+        if hit.shipped && !quote_shipped.contains_key(&hit.schema) {
+            let q = if hit.schema.is_empty() { String::new() } else { format!("{}.", hit.schema) };
+            let stmt = conn.prepare(&format!(
+                "SELECT pos, substr(t, MAX(1, pos - ?3), ?4), length(t)
+                 FROM (SELECT extracted_text AS t, instr(lower(extracted_text), ?2) AS pos FROM {q}library_resources WHERE id = ?1)"
+            ))?;
+            quote_shipped.insert(hit.schema.clone(), stmt);
+        }
+        let stmt = if hit.shipped { quote_shipped.get_mut(&hit.schema) } else { Some(&mut quote_own) };
         let found = match stmt {
             Some(stmt) => stmt
                 .query_row(params![hit.text_id, needle, SNIPPET_RADIUS, SNIPPET_WINDOW], |r| {

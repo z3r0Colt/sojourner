@@ -121,6 +121,57 @@ pub fn attach_library(conn: &Connection, library_db_path: &Path) -> anyhow::Resu
     Ok(())
 }
 
+/// The schema a pack is attached under: `library` for the Puritan and
+/// Reformed pack (so every query written before there were shelves still
+/// reads it unqualified), `lib_<id>` for each other shelf.
+pub fn pack_schema(id: &str) -> String {
+    if id == "library" {
+        return LIBRARY_SCHEMA.to_string();
+    }
+    let safe: String = id.chars().map(|c| if c.is_ascii_alphanumeric() { c } else { '_' }).collect();
+    format!("lib_{safe}")
+}
+
+/// Every attached pack schema, the Puritan pack's first.
+pub fn attached_library_schemas(conn: &Connection) -> Vec<String> {
+    let mut names: Vec<String> = conn
+        .prepare("PRAGMA database_list")
+        .and_then(|mut stmt| {
+            let rows = stmt.query_map([], |r| r.get::<_, String>(1))?;
+            rows.collect::<Result<Vec<_>, _>>()
+        })
+        .unwrap_or_default()
+        .into_iter()
+        .filter(|n| n == LIBRARY_SCHEMA || n.starts_with("lib_"))
+        .collect();
+    names.sort_by_key(|n| (n != LIBRARY_SCHEMA, n.clone()));
+    names
+}
+
+/// ATTACHes one shelf's pack under [`pack_schema`].
+pub fn attach_pack(conn: &Connection, id: &str, library_db_path: &Path) -> anyhow::Result<()> {
+    if id == "library" {
+        return attach_library(conn, library_db_path);
+    }
+    anyhow::ensure!(library_db_path.is_file(), "no library database at {}", library_db_path.display());
+    let schema = pack_schema(id);
+    conn.execute(&format!("ATTACH DATABASE ?1 AS {schema}"), [library_db_path.to_string_lossy().to_string()])?;
+    let _ = conn.execute_batch(&format!(
+        "PRAGMA {schema}.journal_mode = WAL; PRAGMA {schema}.synchronous = NORMAL; PRAGMA {schema}.mmap_size = 268435456;"
+    ));
+    Ok(())
+}
+
+/// DETACHes one shelf's pack. A no-op when it is not attached.
+pub fn detach_pack(conn: &Connection, id: &str) -> anyhow::Result<()> {
+    let schema = pack_schema(id);
+    if !attached_library_schemas(conn).contains(&schema) {
+        return Ok(());
+    }
+    conn.execute_batch(&format!("DETACH DATABASE {schema}"))?;
+    Ok(())
+}
+
 /// DETACHes the book library, releasing the file so it can be replaced or
 /// deleted. A no-op when no pack is attached.
 pub fn detach_library(conn: &Connection) -> anyhow::Result<()> {

@@ -92,6 +92,9 @@ pub struct PackManifest {
 /// What the page shows in Settings: either no pack, or this one.
 #[derive(Debug, Clone, Serialize)]
 pub struct PackStatus {
+    /// The pack's id: `library` for the Puritan and Reformed shelf, the
+    /// shelf's own id for the others.
+    pub id: Option<String>,
     pub installed: bool,
     pub name: Option<String>,
     pub version: Option<String>,
@@ -103,6 +106,7 @@ pub struct PackStatus {
 impl PackStatus {
     fn none() -> Self {
         PackStatus {
+            id: None,
             installed: false,
             name: None,
             version: None,
@@ -168,6 +172,7 @@ pub fn status(pack_dir: &Path) -> PackStatus {
         return PackStatus::none();
     };
     PackStatus {
+        id: Some(manifest.id.clone()),
         installed: true,
         name: Some(manifest.name),
         version: Some(manifest.version),
@@ -382,6 +387,15 @@ impl StagedPack {
     pub fn manifest(&self) -> &PackManifest {
         &self.manifest
     }
+}
+
+/// The manifest of a pack file, read and checked without extracting
+/// anything -- what an install asks first, to know which shelf's folder the
+/// pack belongs in.
+pub fn peek_manifest(archive_path: &Path) -> anyhow::Result<PackManifest> {
+    let file = std::fs::File::open(archive_path).with_context(|| format!("could not open {}", archive_path.display()))?;
+    let mut archive = zip::ZipArchive::new(file).context("this file is not a readable resource pack")?;
+    read_and_check_manifest(&mut archive)
 }
 
 /// Unpacks and verifies `archive_path` into `pack_dir/.staging/`, touching

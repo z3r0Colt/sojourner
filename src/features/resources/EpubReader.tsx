@@ -137,8 +137,12 @@ export function EpubReader({
   onToc,
   onSelect,
   controllerRef,
+  find,
 }: {
   filePath: string;
+  /** Open at these words instead of where the reader left off -- a
+   * citation's reference, found in the book and marked. Read once, on open. */
+  find?: { text: string; occurrence: number; fallback?: string } | null;
   /** Where to open: the CFI saved last time (F3.4). Read once, on open. */
   initialCfi?: string;
   /** Reported whenever the visible location settles (after each scroll or jump). */
@@ -215,6 +219,7 @@ export function EpubReader({
   const onSelectRef = useRef(onSelect);
   onSelectRef.current = onSelect;
   const initialCfiRef = useRef(initialCfi);
+  const findRef = useRef(find ?? null);
 
   useEffect(() => {
     if (!controllerRef) return;
@@ -460,7 +465,8 @@ export function EpubReader({
         // another edition (or a book that changed on disk) falls back to
         // the beginning rather than an empty view.
         const target = initialCfiRef.current;
-        const shown = target ? rendition.display(target) : rendition.display();
+        const wanted = findRef.current;
+        const shown = wanted ? findAndShow(book, rendition, wanted, () => disposed) : target ? rendition.display(target) : rendition.display();
         shown?.catch?.(() => {
           if (!disposed) void rendition.display();
         });
@@ -693,6 +699,58 @@ export function EpubReader({
       </div>
     </div>
   );
+}
+
+/**
+ * Finds the `occurrence`-th printing of `find.text` in the book, section by
+ * section, and shows it marked. Falls back to `find.fallback` when the words
+ * as printed are not found (the extracted text a citation was found in and
+ * the rendered page can differ in spacing), and to the start when neither is.
+ */
+async function findAndShow(book: Book, rendition: Rendition, find: { text: string; occurrence: number; fallback?: string }, disposed: () => boolean): Promise<void> {
+  const search = async (text: string, occurrence: number): Promise<string | null> => {
+    let seen = 0;
+    const items: { load: (loader: unknown) => Promise<unknown>; find: (q: string) => { cfi: string }[]; unload: () => void }[] = [];
+    book.spine.each((item: unknown) => {
+      items.push(item as (typeof items)[number]);
+    });
+    for (const item of items) {
+      if (disposed()) return null;
+      try {
+        await item.load(book.load.bind(book));
+        const hits = item.find(text);
+        item.unload();
+        if (seen + hits.length > occurrence) return hits[occurrence - seen].cfi;
+        seen += hits.length;
+      } catch {
+        // A section that will not load is skipped, not fatal.
+      }
+    }
+    return null;
+  };
+  let cfi = await search(find.text, find.occurrence);
+  if (!cfi && find.fallback) cfi = await search(find.fallback, 0);
+  if (disposed()) return;
+  if (!cfi) {
+    await rendition.display();
+    return;
+  }
+  await rendition.display(cfi);
+  try {
+    rendition.annotations.highlight(cfi, {}, () => {}, "epub-find-hit", { fill: "var(--color-accent)", "fill-opacity": "0.25" });
+  } catch {
+    // Marking it is a courtesy; the page is already there.
+  }
+  // In the scrolled flow, display(cfi) lands short when the section's layout
+  // settles after it (images, fonts): bring the mark itself into view, once
+  // now and once when things have settled.
+  const container = (rendition as unknown as { manager?: { container?: HTMLElement } }).manager?.container;
+  const reveal = () => {
+    if (disposed()) return;
+    container?.querySelector("g.epub-find-hit")?.scrollIntoView({ block: "center" });
+  };
+  setTimeout(reveal, 150);
+  setTimeout(reveal, 1200);
 }
 
 /** How far through the book a CFI sits, or null before the locations that

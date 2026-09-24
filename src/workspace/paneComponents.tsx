@@ -16,7 +16,7 @@ import { IllustrationsView } from "../features/sermons/IllustrationsView";
 import { SearchPane } from "../features/search/SearchPane";
 import { WordStudyView } from "../features/lexicon/WordStudyView";
 import { FactbookView } from "../features/factbook/FactbookView";
-import { CommentaryPane, ConfessionPane, CrossRefsPane, EncyclopediaForPassagePane, FactbookForPassagePane, InterlinearPane, MetricalPane, MinePane } from "./panes/StudyPanes";
+import { CommentaryPane, ConfessionPane, CrossRefsPane, EncyclopediaForPassagePane, FactbookForPassagePane, CitationsPane, InterlinearPane, MetricalPane, MinePane } from "./panes/StudyPanes";
 import { HarmonyPane, HighlightsPane, MemoryPane, NotesPane, PlansPane, PrayerPane, ResourcesPane, TodayPane } from "./panes/PagePanes";
 
 /** Kind → the component that renders it. Each reads its params from the
@@ -55,5 +55,6 @@ export const PANE_COMPONENTS: Record<PaneKind, ComponentType> = {
   wordstudy: WordStudyView,
   factbook: FactbookView,
   "factbook-for-passage": FactbookForPassagePane,
+  citations: CitationsPane,
   settings: SettingsView,
 };

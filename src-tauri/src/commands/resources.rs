@@ -304,3 +304,69 @@ pub fn suggest_resources_for_topic(db: State<DbState>, topic_id: i64) -> AppResu
     let conn = db.conn();
     Ok(queries::suggest_for_topic(&conn, topic_id)?)
 }
+
+/// The shelves to read citations from: every attached pack's schema with
+/// the name its manifest gives it.
+fn citation_shelves(app: &tauri::AppHandle, conn: &rusqlite::Connection) -> Vec<(String, String)> {
+    let attached = crate::db::attached_library_schemas(conn);
+    crate::paths::installed_packs(app)
+        .into_iter()
+        .filter_map(|(id, dir)| {
+            let schema = crate::db::pack_schema(&id);
+            attached.contains(&schema).then(|| {
+                let name = crate::pack::read_installed_manifest(&dir).map(|m| m.name).unwrap_or_else(|| id.clone());
+                (schema, name)
+            })
+        })
+        .collect()
+}
+
+/// Every book in the reader's library that cites this chapter, or with
+/// `verse`, this verse.
+#[tauri::command]
+pub fn citations_for_passage(
+    app: tauri::AppHandle,
+    db: tauri::State<DbState>,
+    book_id: i64,
+    chapter: i64,
+    verse: Option<i64>,
+) -> AppResult<Vec<crate::db::queries::citations::CitationHit>> {
+    let conn = db.conn();
+    let shelves = citation_shelves(&app, &conn);
+    Ok(crate::db::queries::citations::for_passage(&conn, book_id, chapter, verse, &shelves, 400)?)
+}
+
+/// (verse, citations) for a chapter.
+#[tauri::command]
+pub fn citation_counts_for_chapter(db: tauri::State<DbState>, book_id: i64, chapter: i64) -> AppResult<Vec<(i64, i64)>> {
+    let conn = db.conn();
+    let schemas = crate::db::attached_library_schemas(&conn);
+    Ok(crate::db::queries::citations::counts_for_chapter(&conn, book_id, chapter, &schemas)?)
+}
+
+/// Indexes the citations in the reader's own books added before there was
+/// such an index: once, in the background, a book at a time so the lock is
+/// never held for long.
+pub fn backfill_citations(app: tauri::AppHandle) {
+    std::thread::spawn(move || {
+        use tauri::Manager;
+        let ids = {
+            let db = app.state::<DbState>();
+            let conn = db.conn();
+            crate::db::queries::citations::resources_needing_index(&conn).unwrap_or_default()
+        };
+        if ids.is_empty() {
+            return;
+        }
+        let mut total = 0;
+        for id in &ids {
+            let db = app.state::<DbState>();
+            let conn = db.conn();
+            let text: Option<String> = conn
+                .query_row("SELECT extracted_text FROM resources WHERE id = ?1", [id], |r| r.get(0))
+                .unwrap_or(None);
+            total += crate::db::queries::citations::index_resource(&conn, *id, text.as_deref()).unwrap_or(0);
+        }
+        println!("[citations] indexed {total} citation(s) in {} of your books", ids.len());
+    });
+}

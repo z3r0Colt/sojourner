@@ -188,6 +188,14 @@ export function ReadingPane() {
     }
     return set;
   }, [backlinks]);
+  // "Cited in your library": a small count beside each verse the installed
+  // shelves (and the reader's own books) cite.
+  const { data: citationCountRows } = useQuery({
+    queryKey: ["citationCounts", bookId, chapter],
+    queryFn: () => api.citationCountsForChapter(bookId, chapter),
+    staleTime: 5 * 60_000,
+  });
+  const citationCounts = useMemo(() => new Map(citationCountRows ?? []), [citationCountRows]);
   const extractNoteRefs = useNoteRefExtractor();
   const { data: resourceLinks } = useResourcePassageLinksForChapter(bookId, chapter);
   const { data: allResources } = useResources();
@@ -984,6 +992,13 @@ export function ReadingPane() {
     onNoteSymbolClick: (note: Note) =>
       setNoteTarget({ verseStart: note.verse_start, verseEnd: note.verse_end, highlightId: note.highlight_id ?? undefined, existing: note }),
     onFootnoteClick: (footnote: Footnote, x: number, y: number) => setActiveFootnote({ footnote, x, y }),
+    citationCounts,
+    onCitationsClick: (verseNum: number) => {
+      setActiveVerse(verseNum);
+      // Into the citations pane already open, if there is one, else beside this.
+      const open = useWorkspaceStore.getState().panes.find((p) => p.kind === "citations");
+      openContent("citations", { bookId, chapter, verse: verseNum }, { target: open?.id ?? "new", from: paneId });
+    },
     onContextMenu: (verseNum: number, x: number, y: number) => {
       setActiveVerse(verseNum);
       setVerseMenu({ verseNum, x, y });

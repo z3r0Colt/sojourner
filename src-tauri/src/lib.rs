@@ -1,4 +1,5 @@
 pub mod backup;
+pub mod citations;
 mod commands;
 pub mod crash_log;
 pub mod db;
@@ -199,33 +200,47 @@ pub fn run() {
                 }
             };
 
-            match library_dir.filter(|_| library::is_available(&conn)) {
-                Some(dir) => match library::sync(&conn, &dir) {
+            // Every other shelf's pack, attached beside it, and the rows made
+            // to agree with all of them together (see `sync_all`).
+            let shelves_installed = paths::installed_packs(&handle).iter().any(|(id, _)| id != "library");
+            if shelves_installed {
+                match commands::pack::attach_and_sync_all(&handle, &conn) {
                     Ok(o) if o.added + o.adopted + o.repointed + o.retired > 0 => println!(
                         "[library] {} added, {} adopted, {} repointed, {} retired",
                         o.added, o.adopted, o.repointed, o.retired
                     ),
                     Ok(_) => {}
                     Err(e) => eprintln!("[library] sync failed: {e:#}"),
-                },
-                // No pack, so nothing to sync against -- and deliberately
-                // nothing done to the rows either.
-                //
-                // An earlier version retired them here, which looked tidy and
-                // was wrong: clearing `library_key` is what tells the app a
-                // row was ever one of the shipped books, and without it a
-                // reader upgrading from a build that bundled the library sees
-                // several hundred books that will not open and no reason
-                // given. Left marked, the Resources view can say they are in
-                // the pack and offer to install it, and `sync` repoints every
-                // one of them the moment it arrives.
-                //
-                // Retiring stays what it always should have been: what
-                // happens when the reader *asks* for the books to go.
-                None => {
-                    let marked = library::count_marked(&conn).unwrap_or(0);
-                    if marked > 0 {
-                        println!("[library] no resource pack installed; {marked} book row(s) waiting for one");
+                }
+            } else {
+                match library_dir.filter(|_| library::is_available(&conn)) {
+                    Some(dir) => match library::sync(&conn, &dir) {
+                        Ok(o) if o.added + o.adopted + o.repointed + o.retired > 0 => println!(
+                            "[library] {} added, {} adopted, {} repointed, {} retired",
+                            o.added, o.adopted, o.repointed, o.retired
+                        ),
+                        Ok(_) => {}
+                        Err(e) => eprintln!("[library] sync failed: {e:#}"),
+                    },
+                    // No pack, so nothing to sync against -- and deliberately
+                    // nothing done to the rows either.
+                    //
+                    // An earlier version retired them here, which looked tidy and
+                    // was wrong: clearing `library_key` is what tells the app a
+                    // row was ever one of the shipped books, and without it a
+                    // reader upgrading from a build that bundled the library sees
+                    // several hundred books that will not open and no reason
+                    // given. Left marked, the Resources view can say they are in
+                    // the pack and offer to install it, and `sync` repoints every
+                    // one of them the moment it arrives.
+                    //
+                    // Retiring stays what it always should have been: what
+                    // happens when the reader *asks* for the books to go.
+                    None => {
+                        let marked = library::count_marked(&conn).unwrap_or(0);
+                        if marked > 0 {
+                            println!("[library] no resource pack installed; {marked} book row(s) waiting for one");
+                        }
                     }
                 }
             }
@@ -243,6 +258,9 @@ pub fn run() {
             // The tokens the file dialogs hand back in place of paths, so no
             // path the page could name ever reaches a command.
             app.manage(commands::file_picker::PickedPaths::default());
+            // The Scripture citations in the reader's own books, for any
+            // added before there was an index of them.
+            commands::resources::backfill_citations(app.handle().clone());
 
             // A reader's imported Bibles live in content.db, which an
             // upgrade has just replaced if this is the first launch after
@@ -269,6 +287,9 @@ pub fn run() {
             commands::library::scan_library,
             commands::library::add_file,
             commands::pack::pack_status,
+            commands::pack::pack_statuses,
+            commands::resources::citations_for_passage,
+            commands::resources::citation_counts_for_chapter,
             commands::pack::install_pack,
             commands::pack::remove_pack,
             commands::reading::get_chapter,

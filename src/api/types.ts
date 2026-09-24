@@ -1048,6 +1048,8 @@ export type PickKind = "markdown" | "database" | "pptx" | "resource" | "library_
 
 /** The installed book library pack, or the absence of one. */
 export interface PackStatus {
+  /** "library" for the Puritan and Reformed shelf; each other shelf's own id. */
+  id: string | null;
   installed: boolean;
   name: string | null;
   version: string | null;
@@ -1208,4 +1210,21 @@ export interface FactbookEntry {
 export interface PassageEntity {
   entity: FactbookSummary;
   verses: number[];
+}
+
+/** A book that cites a passage, and where (see `queries::citations`). */
+export interface CitationHit {
+  resource_id: number;
+  title: string;
+  author: string | null;
+  /** The shelf it is on ("Church Fathers"), or "Your books". */
+  shelf: string;
+  /** The reference as the book prints it ("Matt. xvi. 18"). */
+  label: string;
+  /** Which printing of `label` in the book this is (0-based). */
+  occurrence: number;
+  context: string;
+  chapter: number;
+  verse_start: number;
+  verse_end: number;
 }

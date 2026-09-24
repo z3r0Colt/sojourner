@@ -77,7 +77,8 @@ export function ResourceReaderView() {
     >
       {resource.kind === "epub" && posLoaded && (
         <EpubReader
-          key={resource.id}
+          // A new place to find in the same book opens it afresh there.
+          key={`${resource.id}:${params.find?.text ?? ""}:${params.find?.occurrence ?? ""}`}
           filePath={resource.file_path}
           initialCfi={pos.cfi}
           onLocation={(loc) => {
@@ -87,6 +88,7 @@ export function ResourceReaderView() {
           onToc={setToc}
           onSelect={(text, cfi) => setSelection(text ? { text, location: cfi } : null)}
           controllerRef={epubRef}
+          find={params.find ?? null}
         />
       )}
       {resource.kind === "pdf" && posLoaded && <PdfReader key={resource.id} filePath={resource.file_path} initialPage={pos.page} onPageChange={(page) => savePos({ page })} />}

@@ -219,8 +219,9 @@ export function AboutSection() {
           two harmonies of the Gospels, reading plans, and tools for prayer and Scripture memory.
         </p>
         <p>
-          The library of Puritan and Reformed works is a separate download, so the app itself stays small. Install it from Settings → Book library; nothing is
-          fetched from here.
+          The book library is a set of separate downloads, one per shelf, so the app itself stays small: Puritan and Reformed works, the Church Fathers,
+          ancient literature around the Bible, and nineteenth-century histories. Install any of them from Settings → Book library; nothing is fetched from
+          here. Beside every verse, the books on those shelves that cite it are counted and listed.
         </p>
       </div>
 
@@ -256,6 +257,13 @@ export function AboutSection() {
           <ExternalLink href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0</ExternalLink> licence, from{" "}
           <ExternalLink href="https://github.com/STEPBible/STEPBible-Data">STEPBible.org</ExternalLink>. Its identifications, family links and references
           are used; its short descriptions, which it notes were adapted from an AI model's output, are not.
+        </Source>
+        <Source name="Book library shelves">
+          Public domain. The Church Fathers (the Ante-Nicene and Nicene and Post-Nicene series, 1885–1900, and Lightfoot's Apostolic Fathers), Josephus
+          (Whiston), Philo (Yonge), Schaff's History of the Christian Church and Creeds of Christendom, and Edersheim, as epubs from the{" "}
+          <ExternalLink href="https://ccel.org">Christian Classics Ethereal Library</ExternalLink>; 1 Enoch (R. H. Charles, 1917), Tacitus, Pliny and
+          Suetonius from <ExternalLink href="https://www.gutenberg.org">Project Gutenberg</ExternalLink>. Each book's source is listed in the shelf's
+          own file.
         </Source>
         <Source name="Easton's and Smith's Bible dictionaries">Public domain.</Source>
         <Source name="International Standard Bible Encyclopedia (1915)">

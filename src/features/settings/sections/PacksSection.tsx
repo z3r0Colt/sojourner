@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { BookMarked, FilePlus, Trash2 } from "lucide-react";
 import { api } from "../../../api/client";
-import { usePackStatus, useInvalidateAfterPackChange } from "../../../api/queries";
-import type { PackProgress } from "../../../api/types";
+import { usePackStatuses, useInvalidateAfterPackChange } from "../../../api/queries";
+import type { PackProgress, PackStatus } from "../../../api/types";
 import { Button } from "../../../components/ui/Button";
 import { confirmDialog } from "../../../components/ui/confirm";
 import { toast } from "../../../components/ui/toast";
@@ -33,7 +33,8 @@ const STAGE_LABEL: Record<PackProgress["stage"], string> = {
 };
 
 export function PacksSection() {
-  const { data: status, isLoading } = usePackStatus();
+  const { data: packs, isLoading } = usePackStatuses();
+  const installed = (packs ?? []).filter((p) => p.installed);
   const invalidate = useInvalidateAfterPackChange();
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState<PackProgress | null>(null);
@@ -55,23 +56,15 @@ export function PacksSection() {
   async function handleInstall() {
     const picked = await api.pickOpenPath("pack");
     if (!picked) return;
-    if (status?.installed) {
-      const proceed = await confirmDialog({
-        title: "Replace the installed library?",
-        message:
-          `"${status.name}" ${status.version} is installed. Installing this file replaces it. ` +
-          "Your notes, tags and bookmarks on these books are kept either way.",
-        confirmLabel: "Replace",
-      });
-      if (!proceed) return;
-    }
     setBusy(true);
     setProgress(null);
     try {
+      // A pack for a shelf already installed replaces it, keeping everything
+      // the reader wrote about its books; any other shelf is added beside the rest.
       const outcome = await api.installPack(picked.token);
       invalidate();
       toast.success(
-        `${outcome.name} ${outcome.version} installed — ${outcome.book_count} books, searchable in full.`,
+        `${outcome.name} ${outcome.version} ${outcome.replaced ? "updated" : "installed"} — ${outcome.book_count} books, searchable in full.`,
       );
     } catch (e) {
       toast.error(`Install failed: ${e instanceof Error ? e.message : String(e)}`);
@@ -81,21 +74,21 @@ export function PacksSection() {
     }
   }
 
-  async function handleRemove() {
+  async function handleRemove(status: PackStatus) {
     const proceed = await confirmDialog({
-      title: "Remove the book library?",
+      title: `Remove ${status.name ?? "this shelf"}?`,
       message:
-        `This deletes ${status?.book_count ?? 0} books and frees ${formatBytes(status?.bytes_on_disk ?? 0)}. ` +
-        "Any notes, tags, highlights and bookmarks you made on them stay, and come back if you install the library again.",
+        `This deletes ${status.book_count ?? 0} books and frees ${formatBytes(status.bytes_on_disk ?? 0)}. ` +
+        "Any notes, tags, highlights and bookmarks you made on them stay, and come back if you install it again. The other shelves are not touched.",
       confirmLabel: "Remove",
       danger: true,
     });
     if (!proceed) return;
     setBusy(true);
     try {
-      await api.removePack();
+      await api.removePack(status.id ?? undefined);
       invalidate();
-      toast.success("The book library was removed.");
+      toast.success(`${status.name ?? "The shelf"} was removed.`);
     } catch (e) {
       toast.error(`Could not remove it: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
@@ -112,12 +105,13 @@ export function PacksSection() {
     <div>
       <h2 className="mb-1 text-lg font-semibold text-ink">Book library</h2>
       <p className="mb-4 text-sm text-ink-3">
-        The Puritan and Reformed book library is a separate download, so the app itself stays small and installs quickly. Everything
+        The book library comes as separate downloads, one per shelf: Puritan and Reformed, Church Fathers, Ancient literature, Reformers,
+        and Nineteenth century. Install any or all of them; each can be removed on its own. Everything
         else — every Bible translation, every commentary, the lexicons, the encyclopedia, the atlas and the confessions — is already
         here and needs nothing added.
       </p>
       <p className="mb-5 text-sm text-ink-3">
-        Download the library pack from the Sojourner releases page, then install it from the file below. Nothing is fetched over the
+        Download the packs you want from the Sojourner releases page, then install each from the file below. Nothing is fetched over the
         network from here: this app makes no requests of its own, and a pack can just as well arrive on a USB stick.
       </p>
 
@@ -142,11 +136,11 @@ export function PacksSection() {
         </div>
       )}
 
-      {!isLoading && !status?.installed && !busy && (
+      {!isLoading && installed.length === 0 && !busy && (
         <EmptyState
           icon={BookMarked}
           title="No book library installed"
-          description="Install the pack to add several hundred Puritan and Reformed works, searchable down to the sentence and linkable from any passage."
+          description="Install a pack to add its shelf of works, searchable down to the sentence, linkable from any passage, and listed beside every verse they cite."
           action={
             <Button variant="primary" icon={FilePlus} onClick={handleInstall}>
               Install from file…
@@ -155,28 +149,37 @@ export function PacksSection() {
         />
       )}
 
-      {status?.installed && (
-        <div className={cardClass}>
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-sm font-medium text-ink">
-                {status.name} <span className="font-normal text-ink-3">{status.version}</span>
-              </p>
-              <p className="mt-0.5 text-sm text-ink-3">
-                {status.book_count} books · {formatBytes(status.bytes_on_disk ?? 0)} on disk
-                {status.built_at && ` · built ${formatDate(status.built_at)}`}
-              </p>
-            </div>
-            <div className="flex shrink-0 gap-2">
-              <Button icon={FilePlus} onClick={handleInstall} disabled={busy}>
-                Update…
-              </Button>
-              <Button variant="danger-ghost" icon={Trash2} onClick={handleRemove} disabled={busy}>
-                Remove
-              </Button>
-            </div>
-          </div>
-        </div>
+      {installed.length > 0 && (
+        <>
+          <ul className="space-y-2">
+            {installed.map((status) => (
+              <li key={status.id ?? status.name ?? ""} className={cardClass}>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-ink">
+                      {status.name} <span className="font-normal text-ink-3">{status.version}</span>
+                    </p>
+                    <p className="mt-0.5 text-sm text-ink-3">
+                      {status.book_count} books · {formatBytes(status.bytes_on_disk ?? 0)} on disk
+                      {status.built_at && ` · built ${formatDate(status.built_at)}`}
+                    </p>
+                  </div>
+                  <Button variant="danger-ghost" icon={Trash2} onClick={() => handleRemove(status)} disabled={busy}>
+                    Remove
+                  </Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-3 text-sm text-ink-3">
+            {installed.reduce((n, p) => n + (p.book_count ?? 0), 0).toLocaleString()} books on{" "}
+            {installed.length} shelf{installed.length === 1 ? "" : "s"},{" "}
+            {formatBytes(installed.reduce((n, p) => n + (p.bytes_on_disk ?? 0), 0))} in all.
+          </p>
+          <Button className="mt-3" icon={FilePlus} onClick={handleInstall} disabled={busy}>
+            Install or update a shelf…
+          </Button>
+        </>
       )}
     </div>
   );

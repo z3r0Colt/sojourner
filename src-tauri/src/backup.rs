@@ -205,10 +205,8 @@ pub fn apply_pending_import(app_data_dir: &Path) -> anyhow::Result<()> {
 /// means clean; anything else is a description of the corruption found.
 pub fn quick_check(conn: &Connection) -> anyhow::Result<Vec<String>> {
     let mut issues = Vec::new();
-    let mut schemas = vec!["main", "content"];
-    if crate::db::library_is_attached(conn) {
-        schemas.push(crate::db::LIBRARY_SCHEMA);
-    }
+    let mut schemas: Vec<String> = vec!["main".into(), "content".into()];
+    schemas.extend(crate::db::attached_library_schemas(conn));
     for schema in schemas {
         let mut stmt = conn.prepare(&format!("PRAGMA {schema}.quick_check"))?;
         let rows = stmt.query_map([], |r| r.get::<_, String>(0))?;

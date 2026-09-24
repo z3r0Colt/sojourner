@@ -1,4 +1,4 @@
-import { StickyNote } from "lucide-react";
+import { Library, StickyNote } from "lucide-react";
 import type { Highlight, Note, Verse, Footnote } from "../../api/types";
 import { ReadAloudWords } from "../tts/ReadAloudWords";
 import { buildTokens, type Segment } from "./verseTokens";
@@ -36,6 +36,8 @@ export function VerseRow({
   redLetterSpans,
   findRanges,
   hasBacklinks,
+  citationCounts,
+  onCitationsClick,
 }: {
   verse: Verse;
   highlights: Highlight[];
@@ -58,6 +60,9 @@ export function VerseRow({
   redLetterSpans?: RedLetterSpan[];
   /** Find-in-chapter matches within this verse. */
   findRanges?: FindRange[];
+  /** How many times the reader's library cites each verse of the chapter. */
+  citationCounts?: Map<number, number>;
+  onCitationsClick?: (verseNum: number) => void;
   /** A note elsewhere mentions this verse (backlinks): a faint dot by the number. */
   hasBacklinks?: boolean;
 }) {
@@ -184,6 +189,22 @@ export function VerseRow({
             })
           )}
         </span>
+        {showNoteSymbols && onCitationsClick && (citationCounts?.get(verse.verse) ?? 0) > 0 && (
+          <button
+            type="button"
+            className="ml-1 inline-flex -translate-y-px items-center gap-0.5 align-middle font-sans text-ink-4 hover:text-accent"
+            style={{ fontSize: "0.6em" }}
+            title={`Cited ${citationCounts!.get(verse.verse)} times in your library`}
+            aria-label={`Cited ${citationCounts!.get(verse.verse)} times in your library`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onCitationsClick(verse.verse);
+            }}
+          >
+            <Library className="h-[1.1em] w-[1.1em]" aria-hidden="true" />
+            {citationCounts!.get(verse.verse)}
+          </button>
+        )}
       </span>
     </div>
   );

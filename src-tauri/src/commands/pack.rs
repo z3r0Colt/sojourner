@@ -21,6 +21,29 @@ pub fn pack_status(app: AppHandle) -> AppResult<PackStatus> {
     Ok(pack::status(&pack_dir(&app)?))
 }
 
+/// Every installed pack, the Puritan and Reformed one first.
+#[tauri::command]
+pub fn pack_statuses(app: AppHandle) -> AppResult<Vec<PackStatus>> {
+    Ok(crate::paths::installed_packs(&app).iter().map(|(_, dir)| pack::status(dir)).collect())
+}
+
+/// Attaches every installed pack and makes user.db agree with all of them.
+/// At launch, and after any install or removal.
+pub fn attach_and_sync_all(app: &AppHandle, conn: &rusqlite::Connection) -> anyhow::Result<crate::library::SyncOutcome> {
+    let mut packs = Vec::new();
+    for (id, dir) in crate::paths::installed_packs(app) {
+        let schema = crate::db::pack_schema(&id);
+        if !crate::db::attached_library_schemas(conn).contains(&schema) {
+            if let Err(e) = crate::db::attach_pack(conn, &id, &dir.join(pack::LIBRARY_DB)) {
+                eprintln!("[library] could not attach the {id} pack: {e:#}");
+                continue;
+            }
+        }
+        packs.push((schema, dir.join(pack::BOOKS_DIR)));
+    }
+    crate::library::sync_all(conn, &packs)
+}
+
 /// Installs the pack the reader picked.
 ///
 /// Three phases, and the middle one is why this is `async`:
@@ -37,7 +60,10 @@ pub async fn install_pack(app: AppHandle, token: String) -> AppResult<InstallOut
         let picked = app.state::<PickedPaths>();
         take_path(&picked, &token)?
     };
-    let dir = pack_dir(&app)?;
+    // Which shelf this pack is decides where it goes: the Puritan pack
+    // (`library`) where it always went, any other in a folder of its own.
+    let id = pack::peek_manifest(&archive)?.id;
+    let dir = crate::paths::shelf_pack_dir(&app, &id).ok_or_else(|| anyhow::anyhow!("could not resolve a folder for the {id} pack"))?;
 
     tauri::async_runtime::spawn_blocking(move || -> AppResult<InstallOutcome> {
         let mut report = |progress: pack::PackProgress| {
@@ -55,8 +81,8 @@ pub async fn install_pack(app: AppHandle, token: String) -> AppResult<InstallOut
             &dir,
             staged,
             &mut report,
-            &mut || crate::db::detach_library(&conn),
-            &mut || crate::db::attach_library(&conn, &db_path),
+            &mut || crate::db::detach_pack(&conn, &id),
+            &mut || crate::db::attach_pack(&conn, &id, &db_path),
         )?;
 
         report(pack::PackProgress {
@@ -67,8 +93,7 @@ pub async fn install_pack(app: AppHandle, token: String) -> AppResult<InstallOut
             bytes_done: 0,
             bytes_total: 0,
         });
-        let books_dir = dir.join(pack::BOOKS_DIR);
-        let synced = crate::library::sync(&conn, &books_dir)?;
+        let synced = attach_and_sync_all(&app, &conn)?;
         println!(
             "[pack] installed {} {}: {} added, {} adopted, {} repointed, {} retired",
             outcome.name, outcome.version, synced.added, synced.adopted, synced.repointed, synced.retired
@@ -94,17 +119,25 @@ pub async fn install_pack(app: AppHandle, token: String) -> AppResult<InstallOut
 /// them -- keeping every tag, passage link and bookmark -- so installing the
 /// pack again later finds all of it waiting.
 #[tauri::command]
-pub async fn remove_pack(app: AppHandle) -> AppResult<()> {
-    let dir = pack_dir(&app)?;
+pub async fn remove_pack(app: AppHandle, id: Option<String>) -> AppResult<()> {
+    let id = id.unwrap_or_else(|| "library".into());
+    let dir = crate::paths::shelf_pack_dir(&app, &id).ok_or_else(|| anyhow::anyhow!("no {id} pack"))?;
     tauri::async_runtime::spawn_blocking(move || -> AppResult<()> {
         let db = app.state::<DbState>();
         let conn = db.conn();
-        pack::remove(&dir, &mut || crate::db::detach_library(&conn))?;
-        // Not `sync`: with nothing attached it returns before it reaches the
-        // retiring step, because it has no list of shipped books to compare
-        // against. `retire_all` is that case written out.
-        let retired = crate::library::retire_all(&conn)?;
-        println!("[pack] removed: {retired} book row(s) retired");
+        // This pack's books, read before it goes, so that only their rows are
+        // retired: the other shelves' books stay exactly as they were.
+        let schema = crate::db::pack_schema(&id);
+        let books: Vec<String> = crate::library::list_in(&conn, &schema)
+            .map(|b| b.into_iter().map(|b| b.file_name).collect())
+            .unwrap_or_default();
+        pack::remove(&dir, &mut || crate::db::detach_pack(&conn, &id))?;
+        let retired = if crate::paths::installed_packs(&app).is_empty() {
+            crate::library::retire_all(&conn)?
+        } else {
+            crate::library::retire_books(&conn, &books)?
+        };
+        println!("[pack] removed {id}: {retired} book row(s) retired");
         Ok(())
     })
     .await
