@@ -11,7 +11,7 @@ A private, offline study companion for reading Scripture alongside the historic 
 
 ## Download
 
-Get the latest installer and the book library pack from the [releases page](../../releases/latest).
+Get the latest installer and the book library packs from the [releases page](../../releases/latest).
 
 - **Sojourner_x.y.z_x64-setup.exe** installs the app. Windows 10 or 11, 64-bit; per-user, no administrator rights; the WebView2 runtime is bundled, so it installs offline.
 - **Sojourner-Library-x.y.z.sjpack** is the optional library of 270 Puritan and Reformed works. Install it from inside the app: Settings → Book library → Install from file.
@@ -33,15 +33,15 @@ The installer is not yet code-signed, so Windows SmartScreen warns on first run:
 
 ## What it does
 
-**Reading and study.** Split the window into up to eight panes; drag them to dock, stack them as tabs, pick a quick arrangement, and save named workspaces. Linked panes follow each other: click a verse and the commentary, cross references, confession proofs, encyclopedia, and atlas beside it turn to that verse. Compare translations side by side, or one verse across every translation. Highlight in five named colours, underline, bookmark, and write notes on a verse, a highlight, or a chapter. Seven themes including sepia, true black, and high contrast, a dyslexia-friendly font, and reduced motion.
+**Reading and study.** Split the window into up to eight panes; drag them to dock, stack them as tabs, pick a quick arrangement, and save named workspaces. Linked panes follow each other: click a verse and the commentary, cross references, confession proofs, encyclopedia, atlas, the people and places it names, the timeline, and the books in your library that cite it all turn to that verse. Compare translations side by side, or one verse across every translation. Highlight in five named colours, underline, bookmark, and write notes on a verse, a highlight, or a chapter. Seven themes including sepia, true black, and high contrast, a dyslexia-friendly font, and reduced motion.
 
-**Search.** One box covers Scripture, commentary, your notes and prayers, your books, the confessions, the encyclopedia, your sermons, and your illustrations. Search one translation or all of them, one commentary or all, narrow to a testament or book, list results by relevance or in Bible order, and match whole words.
+**Search.** One box covers Scripture, commentary, your notes and prayers, your books, the confessions, the encyclopedia, the lexicons, the Factbook, your sermons, and your illustrations, with the same rules on every tab: "exact phrases", OR, -exclusions, (grouping), words near each other, +exact forms and case (+LORD), prefixes, and regular expressions. Filters can be typed in the box and saved with it (in:psalms, t:kjv, G26, red:, has:note). Older spellings are matched (shew and show), results are counted by book and translation, and a concordance view lines every hit up on its word. Search the Greek and Hebrew by grammar ("every aorist imperative in Ephesians") without knowing a code letter.
 
 **Sermons.** A manuscript editor whose points are its outline, with live passage blocks that render in the sermon's translation. A microphone button on every verse, commentary entry, confession section, lexicon entry, encyclopedia article, and book selection sends it into the open sermon with its source. A six-stage prep track, timed rehearsals, a full-screen preaching mode with a clock, slides generated from the manuscript with PowerPoint export, fill-in handouts, printing, and Markdown export. Sermon series can produce a reading plan for the congregation, and an illustrations file warns when a story has already been told in a series.
 
 **Devotion.** A Today page with where you left off, today's plan, this Sunday's sermon, memory cards due, and people to pray for. Reading plans with catch-up tools and a builder for your own. A prayer journal in the ACTS pattern and a prayer list with a record of when each person was prayed for. Scripture and catechism memory with spaced repetition and three practice modes.
 
-**Your own library.** Add your own EPUB, PDF, and MOBI books and your audio and video files. They are indexed for search and can be linked to passages, down to a moment in a recording.
+**The library.** The book library packs arrive as shelves, and Resources sorts every book by shelf and subject: sermons, theology, commentary, Christian life, the Fathers by series. Beside each verse, a small count shows how many books on your shelves cite it; click it for the list, and click a citation to open the book at that page. Add your own EPUB, PDF, and MOBI books and your audio and video files too: they are indexed for search, scanned for the verses they cite, and can be linked to passages, down to a moment in a recording.
 
 **Your data.** Snapshots, automatic backups, export and import of the whole database, an integrity check, a copy to a folder synced by OneDrive or Dropbox, study stats with a reading heatmap, and a Trash that holds deleted notes for thirty days.
 
@@ -68,6 +68,8 @@ Each shelf is listed in `library/shelves/<id>.json` with every book's source and
 A pack is a zip: `pack.json` (a SHA-256 per member), `library.db` (the books' text and its FTS index, prebuilt), and `books/*.epub`. Installing it verifies every checksum into a staging folder and only then swaps it into place, so a truncated download leaves the installed library untouched. The app ATTACHes `library.db` as a third schema beside `user.db` and `content.db`; with no pack installed nothing is attached and every query that reads a shipped book simply returns nothing. See `src-tauri/src/pack.rs`.
 
 Nothing in the app downloads a pack. The reader fetches it themselves, which is what keeps the promise in Settings → About intact and lets a pack arrive on a USB stick.
+
+Each shipped book's `subject` ("Sermons", "Theology", "Ante-Nicene Fathers") sits beside it in `library/manifest.json` and `library/shelves/*.json`. `build:content` copies them into content.db's `library_catalog`, not into the packs, so a reader gets them with any pack version and they can be corrected in any app update; the build fails on a shipped book with no subject.
 
 To add books to the library the pack is built from:
 
@@ -104,6 +106,11 @@ The rest of `tools/` is the same kind of one-time work, each script's header say
 | `fetch-psalm-tunes.mjs` (`npm run fetch:tunes`), `import-psalm-tunes.mjs` (`npm run import:tunes`) | `reference/psalter/tunes.json` | the Open Hymnal Project's public-domain scores, and tune files you hold yourself |
 | `fetch-voice-model.mjs` (`npm run fetch:voices`) | `models/` (ignored, ~170 MB) | the Kokoro-82M neural voice, Apache-2.0, bundled into the installer as `models/` |
 | `repair-ccel-epub.mjs` | a book in `library/` | refills a CCEL epub whose chapter files came out empty |
+| `fetch-translations.mjs` | `bibles/usfm/<CODE>/` | the BSB, LSV, OEB, ULT and UST, the Septuagint and the Vulgate in USFM, each with a `source.json` of where it came from and how its numbering is adjusted |
+| `fetch-shelves.mjs` | `library/` and `library/shelves/*.json` | the Church Fathers, ancient literature and nineteenth-century shelves, from CCEL and Project Gutenberg |
+| `extract-timeline.mjs` | `reference/timeline/events.json`, `chapter_years.json` | the Theographic Bible Metadata (CC BY-SA 4.0) at a pinned commit; see `reference/timeline/SOURCES.md` |
+
+The lexicons (`reference/lexicons/`), the Hebrew and Greek editions (`reference/morphology/`) and the Factbook's names (`reference/factbook/`) are STEPBible, OpenScriptures and Tyndale House data under CC BY and CC BY-SA. `reference/lexicons/SOURCES.md` and `reference/factbook/SOURCES.md` say where each file came from; the editions are the STEPBible TAHOT and TAGNT files and MorphGNT's SBLGNT, as their file names say, and Settings → About credits every one. The timeline's eras, its fifteen added events and its hand-mapped names are the app's own arranging, kept apart from the source data in `eras.json`, `additions.json` and `overrides.json`, and the importer fails the build on any person or place it cannot resolve.
 
 The region borders are not lines anyone has surveyed. OpenBible publishes each region as a set of nested confidence contours -- "possibly reached this far" out at 10%, "certainly included this" in at 90% -- and the extractor keeps the widest and the middle one. The atlas draws them as a wash inside a dashed line for that reason: a crisp border would claim more than the evidence supports.
 
@@ -152,6 +159,12 @@ npm run tauri dev
 ```
 npm test                                          # the frontend (vitest)
 cargo test --lib --manifest-path src-tauri/Cargo.toml   # the backend
+```
+
+Before a release, the checks against real data: the operator search on the KJV, the word study, migrating a copy of a real user.db, every pack in `packs/` for this version installing and attaching side by side, and the upgrade from the first library pack to the shelves (which needs `packs/Sojourner-Library-0.1.0.sjpack`):
+
+```
+cargo test --release --lib --manifest-path src-tauri/Cargo.toml -- --ignored
 ```
 
 ## Build
