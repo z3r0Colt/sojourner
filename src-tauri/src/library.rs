@@ -46,6 +46,11 @@ pub struct LibraryEntry {
     pub kind: String,
     pub title: String,
     pub author: Option<String>,
+    /// What the book is ("Sermons", "Theology"), for grouping in Resources.
+    /// Kept through `collect`'s rewrite of the manifest; read into content.db
+    /// by `import::library_catalog`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub subject: Option<String>,
 }
 
 /// A shipped book as the app reads it back out of the installed pack.
@@ -125,7 +130,7 @@ pub fn collect(source_dir: &Path, library_dir: &Path, catalogue: Option<&Connect
         std::fs::copy(&path, library_dir.join(&file_name))?;
         let stem = path.file_stem().and_then(|s| s.to_str()).unwrap_or(&file_name).to_string();
         let (title, author) = titles.get(&file_name).cloned().unwrap_or((stem, None));
-        entries.push(LibraryEntry { file_name: file_name.clone(), kind: kind.to_string(), title, author });
+        entries.push(LibraryEntry { file_name: file_name.clone(), kind: kind.to_string(), title, author, subject: None });
         added.push(file_name);
     }
 
@@ -217,11 +222,19 @@ pub struct ShelfBook {
     /// The terms it is here on ("Public domain").
     #[serde(default)]
     pub license: Option<String>,
+    #[serde(default)]
+    pub subject: Option<String>,
 }
 
 impl ShelfBook {
     pub fn entry(&self) -> LibraryEntry {
-        LibraryEntry { file_name: self.file_name.clone(), kind: self.kind.clone(), title: self.title.clone(), author: self.author.clone() }
+        LibraryEntry {
+            file_name: self.file_name.clone(),
+            kind: self.kind.clone(),
+            title: self.title.clone(),
+            author: self.author.clone(),
+            subject: self.subject.clone(),
+        }
     }
 }
 

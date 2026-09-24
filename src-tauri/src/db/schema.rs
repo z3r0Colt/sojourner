@@ -1219,6 +1219,21 @@ CREATE TABLE timeline_chapter_years (
 ) WITHOUT ROWID;
 "#;
 
+// What each shipped book is, for grouping in Resources: its shelf and its
+// subject, from the committed shelf lists (library/manifest.json and
+// library/shelves/*.json). Here rather than in the packs so that it reaches a
+// reader whatever pack version they installed, and can be improved in any app
+// update without rebuilding a pack.
+pub const CONTENT_MIGRATION_0026: &str = r#"
+CREATE TABLE library_catalog (
+  file_name   TEXT PRIMARY KEY,
+  shelf_id    TEXT NOT NULL,
+  shelf_name  TEXT NOT NULL,
+  shelf_order INTEGER NOT NULL,
+  subject     TEXT
+) WITHOUT ROWID;
+"#;
+
 pub const CONTENT_MIGRATIONS: &[&str] = &[
     CONTENT_MIGRATION_0001,
     CONTENT_MIGRATION_0002,
@@ -1245,6 +1260,7 @@ pub const CONTENT_MIGRATIONS: &[&str] = &[
     CONTENT_MIGRATION_0023,
     CONTENT_MIGRATION_0024,
     CONTENT_MIGRATION_0025,
+    CONTENT_MIGRATION_0026,
 ];
 
 // library.db: the books that ship with the app, in a file of their own.

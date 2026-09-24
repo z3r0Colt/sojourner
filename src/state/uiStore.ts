@@ -39,7 +39,7 @@ export const EPUB_WIDTH_OPTIONS: { value: EpubWidth; label: string }[] = [
 /** The Resources page's kind filter: books are epub, pdf, and mobi. */
 export type ResourceKindTab = "all" | "books" | "audio" | "video";
 /** How the Resources page groups what it lists. */
-export type ResourceGroupBy = "author" | "recent" | "topic";
+export type ResourceGroupBy = "shelf" | "author" | "recent" | "topic";
 
 export const EPUB_ZOOM_MIN = 50;
 export const EPUB_ZOOM_MAX = 200;
@@ -191,7 +191,7 @@ export const useUiStore = create<UiState>((set) => ({
   harmonyCode: stored.harmonyCode ?? null,
   epubZoom: typeof stored.epubZoom === "number" ? stored.epubZoom : 100,
   resourcesKindTab: stored.resourcesKindTab ?? "all",
-  resourcesGroupBy: stored.resourcesGroupBy ?? "author",
+  resourcesGroupBy: stored.resourcesGroupBy ?? "shelf",
   searchTranslation:
     stored.searchTranslation === "all" || typeof stored.searchTranslation === "number" ? stored.searchTranslation : "reader",
   searchCommentarySource: typeof stored.searchCommentarySource === "number" ? stored.searchCommentarySource : "all",

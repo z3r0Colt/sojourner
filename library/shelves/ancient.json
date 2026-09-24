@@ -9,7 +9,8 @@
       "title": "The Works of Flavius Josephus",
       "author": "Flavius Josephus (tr. William Whiston)",
       "source_url": "https://ccel.org/ccel/j/josephus/complete/cache/complete.epub",
-      "license": "Public domain (text); epub from the Christian Classics Ethereal Library"
+      "license": "Public domain (text); epub from the Christian Classics Ethereal Library",
+      "subject": "Jewish writings"
     },
     {
       "file_name": "The Works of Philo Judaeus.epub",
@@ -17,7 +18,8 @@
       "title": "The Works of Philo Judaeus",
       "author": "Philo of Alexandria (tr. C. D. Yonge)",
       "source_url": "https://ccel.org/ccel/p/philo/works/cache/works.epub",
-      "license": "Public domain (text); epub from the Christian Classics Ethereal Library"
+      "license": "Public domain (text); epub from the Christian Classics Ethereal Library",
+      "subject": "Jewish writings"
     },
     {
       "file_name": "The Book of Enoch.epub",
@@ -25,7 +27,8 @@
       "title": "The Book of Enoch",
       "author": "R. H. Charles (tr.)",
       "source_url": "https://www.gutenberg.org/ebooks/77935.epub3.images",
-      "license": "Public domain in the USA; Project Gutenberg"
+      "license": "Public domain in the USA; Project Gutenberg",
+      "subject": "Jewish writings"
     },
     {
       "file_name": "The Reign of Tiberius, Out of the First Six Annals of Tacitus.epub",
@@ -33,7 +36,8 @@
       "title": "The Reign of Tiberius, Out of the First Six Annals of Tacitus",
       "author": "Tacitus (tr. Thomas Gordon)",
       "source_url": "https://www.gutenberg.org/ebooks/7959.epub3.images",
-      "license": "Public domain in the USA; Project Gutenberg"
+      "license": "Public domain in the USA; Project Gutenberg",
+      "subject": "Roman historians"
     },
     {
       "file_name": "Letters of Pliny.epub",
@@ -41,7 +45,8 @@
       "title": "Letters of Pliny",
       "author": "Pliny the Younger (tr. William Melmoth)",
       "source_url": "https://www.gutenberg.org/ebooks/2811.epub3.images",
-      "license": "Public domain in the USA; Project Gutenberg"
+      "license": "Public domain in the USA; Project Gutenberg",
+      "subject": "Roman historians"
     },
     {
       "file_name": "The Lives of the Twelve Caesars.epub",
@@ -49,7 +54,8 @@
       "title": "The Lives of the Twelve Caesars",
       "author": "Suetonius (tr. Alexander Thomson)",
       "source_url": "https://www.gutenberg.org/ebooks/6400.epub3.images",
-      "license": "Public domain in the USA; Project Gutenberg"
+      "license": "Public domain in the USA; Project Gutenberg",
+      "subject": "Roman historians"
     }
   ]
 }

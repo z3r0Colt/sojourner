@@ -541,6 +541,15 @@ export function useResources() {
   return useQuery({ queryKey: ["resources"], queryFn: api.listResources });
 }
 
+/** Every shipped book's shelf and subject, by file name. */
+export function useLibraryCatalog() {
+  return useQuery({
+    queryKey: ["libraryCatalog"],
+    queryFn: async () => new Map((await api.libraryCatalog()).map((e) => [e.file_name, e])),
+    staleTime: Infinity,
+  });
+}
+
 export function useResource(id: number | null) {
   return useQuery({
     queryKey: ["resource", id],

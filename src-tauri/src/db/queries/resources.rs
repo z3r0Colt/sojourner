@@ -15,7 +15,29 @@ fn map_resource(r: &rusqlite::Row) -> rusqlite::Result<Resource> {
         file_path: r.get(5)?,
         added_at: r.get(6)?,
         bundled: library_key.is_some(),
+        library_key,
     })
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct CatalogEntry {
+    pub file_name: String,
+    pub shelf_id: String,
+    pub shelf_name: String,
+    pub shelf_order: i64,
+    pub subject: Option<String>,
+}
+
+/// Every shipped book's shelf and subject. Empty from a content.db built
+/// before there was a catalog.
+pub fn library_catalog(conn: &Connection) -> anyhow::Result<Vec<CatalogEntry>> {
+    let Ok(mut stmt) = conn.prepare("SELECT file_name, shelf_id, shelf_name, shelf_order, subject FROM library_catalog") else {
+        return Ok(Vec::new());
+    };
+    let rows = stmt.query_map([], |r| {
+        Ok(CatalogEntry { file_name: r.get(0)?, shelf_id: r.get(1)?, shelf_name: r.get(2)?, shelf_order: r.get(3)?, subject: r.get(4)? })
+    })?;
+    Ok(rows.collect::<Result<Vec<_>, _>>()?)
 }
 const RESOURCE_COLS: &str = "id, kind, title, author, extracted_text, file_path, added_at, library_key";
 

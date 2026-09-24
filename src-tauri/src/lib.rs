@@ -411,6 +411,7 @@ pub fn run() {
             commands::reference::get_word_study,
             commands::reference::get_factbook_entry,
             commands::reference::get_timeline,
+            commands::resources::library_catalog,
             commands::reference::get_timeline_event_verses,
             commands::reference::get_timeline_for_passage,
             commands::reference::get_factbook_for_passage,

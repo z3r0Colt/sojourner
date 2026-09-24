@@ -98,6 +98,7 @@ import type {
   PickedPath,
   PackStatus,
   CitationHit,
+  CatalogEntry,
   Timeline,
   PassageTimeline,
   PackInstallOutcome,
@@ -351,6 +352,7 @@ export const api = {
   getDoctrineTopic: (id: number) => invoke<DoctrineTopic | null>("get_doctrine_topic", { id }),
 
   listResources: () => invoke<Resource[]>("list_resources"),
+  libraryCatalog: () => invoke<CatalogEntry[]>("library_catalog"),
   getResource: (id: number) => invoke<Resource | null>("get_resource", { id }),
   getResourceText: (id: number) => invoke<string | null>("get_resource_text", { id }),
   addResource: (token: string, title: string, author?: string) =>

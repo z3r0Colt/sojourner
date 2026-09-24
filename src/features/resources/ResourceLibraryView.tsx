@@ -7,6 +7,7 @@ import { Book, ChevronDown, FileText, Film, FolderOpen, Headphones, HelpCircle, 
 import { api } from "../../api/client";
 import {
   useResources,
+  useLibraryCatalog,
   useAddResource,
   useDeleteResource,
   useReextractResource,
@@ -32,7 +33,7 @@ import { confirmDelete } from "../../components/ui/confirm";
 import { toast } from "../../components/ui/toast";
 import { cardClass, cx, inputClass } from "../../components/ui/classes";
 import type { Resource, ResourceKind, BulkImportOutcome } from "../../api/types";
-import { fileExtension, filterByKind, formatDuration, groupResources, kindSummary, kindTabOf, knownAuthors, type ResourceGroup } from "./resourceGrouping";
+import { fileExtension, filterByKind, formatDuration, groupResources, kindSummary, kindTabOf, knownAuthors, topicsOf, type ResourceGroup } from "./resourceGrouping";
 
 const KIND_ICON: Record<ResourceKind, LucideIcon> = {
   epub: Book,
@@ -48,6 +49,7 @@ function KindIcon({ kind }: { kind: ResourceKind }) {
 }
 
 const GROUP_BY_OPTIONS: { value: ResourceGroupBy; label: string }[] = [
+  { value: "shelf", label: "Shelf" },
   { value: "author", label: "Author" },
   { value: "recent", label: "Recently added" },
   { value: "topic", label: "Topic" },
@@ -209,6 +211,7 @@ function SetAuthorModal({ items, authors, onClose }: { items: Resource[]; author
 
 export function ResourceLibraryView() {
   const { data: resources } = useResources();
+  const { data: catalog } = useLibraryCatalog();
   const addResource = useAddResource();
   const deleteResource = useDeleteResource();
   const reextractResource = useReextractResource();
@@ -262,9 +265,16 @@ export function ResourceLibraryView() {
 
   const groups: ResourceGroup[] = useMemo(() => {
     const byKind = filterByKind(all, kindTab);
-    const filtered = activeTag ? byKind.filter((r) => (tagsById.get(r.id) ?? []).includes(activeTag)) : byKind;
-    return groupResources(filtered, groupBy, tagsById);
-  }, [all, kindTab, activeTag, tagsById, groupBy]);
+    const filtered = activeTag ? byKind.filter((r) => topicsOf(r, tagsById, catalog).includes(activeTag)) : byKind;
+    return groupResources(filtered, groupBy, tagsById, catalog);
+  }, [all, kindTab, activeTag, tagsById, groupBy, catalog]);
+
+  // The topics to filter by: the subjects of the books on hand, and the reader's own tags.
+  const topics = useMemo(() => {
+    const s = new Set(allTags ?? []);
+    for (const r of all) for (const t of topicsOf(r, new Map(), catalog)) s.add(t);
+    return [...s].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+  }, [all, allTags, catalog]);
 
   const headed = groups.filter((g) => g.label);
   const allExpanded = headed.length > 0 && headed.every((g) => expanded.has(g.key));
@@ -440,7 +450,7 @@ export function ResourceLibraryView() {
         </ul>
       )}
 
-      <TagFilterBar tags={allTags ?? []} activeTag={activeTag} onSelect={setActiveTag} label="Topics" />
+      <TagFilterBar tags={topics} activeTag={activeTag} onSelect={setActiveTag} label="Topics" />
 
       {hasAny && (
         <div className="mb-3 flex flex-wrap items-center gap-2">
@@ -469,10 +479,18 @@ export function ResourceLibraryView() {
       )}
 
       <div className="space-y-4">
-        {groups.map((group) => {
+        {groups.map((group, i) => {
           const isCollapsed = group.label ? !expanded.has(group.key) : false;
+          const newSection = group.section && group.section !== groups[i - 1]?.section;
+          const sectionCount = newSection ? new Set(groups.filter((g) => g.section === group.section).flatMap((g) => g.items.map((x) => x.id))).size : 0;
           return (
             <section key={group.key}>
+              {newSection && (
+                <h2 className={cx("mb-1 flex items-baseline gap-2 border-b border-line pb-1 text-xs font-semibold uppercase tracking-wide text-ink-3", i > 0 && "mt-6")}>
+                  {group.section}
+                  <span className="font-normal normal-case tracking-normal text-ink-4">{sectionCount}</span>
+                </h2>
+              )}
               {group.label && (
                 <div className="mb-1.5 flex items-center gap-1">
                   <button

@@ -808,6 +808,17 @@ export interface Resource {
   /** True for a book that ships with the app: it can be read, searched,
    * tagged and linked like any other, but not removed. */
   bundled: boolean;
+  /** A shipped book's file name in its pack: its key in the library catalog. */
+  library_key: string | null;
+}
+
+/** A shipped book's shelf and subject, for grouping in Resources. */
+export interface CatalogEntry {
+  file_name: string;
+  shelf_id: string;
+  shelf_name: string;
+  shelf_order: number;
+  subject: string | null;
 }
 
 export interface ResourcePassageLink {

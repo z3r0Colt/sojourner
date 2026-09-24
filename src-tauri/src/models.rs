@@ -618,6 +618,9 @@ pub struct Resource {
     /// text lives in content.db and its file beside the executable, so it
     /// cannot be deleted the way a reader's own resource can.
     pub bundled: bool,
+    /// A shipped book's file name in its pack, which keys it in the catalog
+    /// of shelves and subjects (see `queries::resources::library_catalog`).
+    pub library_key: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

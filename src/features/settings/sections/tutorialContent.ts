@@ -700,12 +700,13 @@ export const TUTORIAL: TutorialCategory[] = [
       {
         id: "resources-organize",
         title: "Find your way around the library",
-        what: "The page filters by kind and groups by author, by when things were added, or by topic.",
+        what: "The page filters by kind and groups by shelf, by author, by when things were added, or by topic.",
         steps: [
           "Click All, Books, Audio, or Video across the top; each shows its count.",
-          "Choose Group by: Author (Speaker on the Audio and Video tabs), Recently added, or Topic.",
+          "Group by Shelf (the default) lists each installed shelf, Puritan and Reformed, Church Fathers and the rest, with its books sorted into subjects: Sermons, Theology, Commentary & exposition, Christian life, and so on. Your own books and recordings come last, under your tags.",
+          "The other groupings: Author (Speaker on the Audio and Video tabs), Recently added, or Topic.",
           "Click a group heading to expand it; Expand all opens every group.",
-          "Click a Topic tag above the list to show only resources carrying it. Add tags to any item in its row.",
+          "Every shipped book comes with a subject, so Topic and the Topics row above the list work from the start. Click a topic to show only what carries it; add your own tags to any item in its row.",
           "A recording shows its length and file type; click the play button to open it.",
         ],
         links: [{ label: "Resources", to: "/resources" }],

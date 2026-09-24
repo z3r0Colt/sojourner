@@ -14,6 +14,13 @@ pub fn list_resources(db: State<DbState>) -> AppResult<Vec<Resource>> {
     Ok(queries::list_all(&conn)?)
 }
 
+/// Every shipped book's shelf and subject, for grouping in Resources.
+#[tauri::command]
+pub fn library_catalog(db: State<DbState>) -> AppResult<Vec<queries::CatalogEntry>> {
+    let conn = db.conn();
+    Ok(queries::library_catalog(&conn)?)
+}
+
 #[tauri::command]
 pub fn get_resource(db: State<DbState>, id: i64) -> AppResult<Option<Resource>> {
     let conn = db.conn();

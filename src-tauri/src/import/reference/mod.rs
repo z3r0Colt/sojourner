@@ -6,6 +6,7 @@ pub mod doctrine_topics;
 pub mod editions;
 pub mod factbook;
 pub mod timeline;
+pub mod library_catalog;
 pub mod footnotes;
 pub mod harmony;
 pub mod interlinear;
@@ -247,6 +248,12 @@ pub fn import_all(conn: &mut Connection, reference_dir: &Path) -> anyhow::Result
     // After the Factbook, whose people and places it links to.
     if table_count(conn, "timeline_events") == 0 {
         timeline::import(conn, &reference_dir.join("timeline")).map_err(|e| anyhow::anyhow!("timeline import failed: {e:#}"))?;
+    }
+
+    // The shelf lists live beside reference/, in the repo's library folder.
+    if table_count(conn, "library_catalog") == 0 {
+        let library_dir = reference_dir.parent().map(|p| p.join("library")).unwrap_or_default();
+        library_catalog::import(conn, &library_dir).map_err(|e| anyhow::anyhow!("library catalog import failed: {e:#}"))?;
     }
 
     // After the morphology and the interlinear, which it reads.
