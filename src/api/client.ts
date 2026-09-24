@@ -16,6 +16,9 @@ import type {
   ReadingPosition,
   ReadingLogEntry,
   SearchResults,
+  LexiconSource,
+  LexiconEntry,
+  LexiconHit,
   WordStudy,
   WordOccurrence,
   MorphQuery,
@@ -262,6 +265,12 @@ export const api = {
   getStrongsEntry: (id: string) => invoke<StrongsEntry | null>("get_strongs_entry", { id }),
   getConcordance: (strongsId: string) => invoke<ConcordanceEntry[]>("get_concordance", { strongsId }),
   getStrongsEntries: (ids: string[]) => invoke<StrongsEntry[]>("get_strongs_entries", { ids }),
+  listLexiconSources: () => invoke<LexiconSource[]>("list_lexicon_sources"),
+  getLexiconEntries: (strongsId: string) => invoke<LexiconEntry[]>("get_lexicon_entries", { strongsId }),
+  getLexiconEntry: (id: number) => invoke<LexiconEntry | null>("get_lexicon_entry", { id }),
+  /** [code, name, first entry id] for each lexicon that has the word. */
+  lexiconsForStrongs: (strongsId: string) => invoke<[string, string, number][]>("lexicons_for_strongs", { strongsId }),
+  searchLexicons: (query: string, sources: string[] = [], limit = 50) => invoke<LexiconHit[]>("search_lexicons", { query, sources, limit }),
   getWordStudy: (strongsId: string) => invoke<WordStudy | null>("get_word_study", { strongsId }),
   getWordStudyOccurrences: (strongsId: string, translationId: number | null, gloss: string | null) =>
     invoke<WordOccurrence[]>("get_word_study_occurrences", { strongsId, translationId, gloss }),

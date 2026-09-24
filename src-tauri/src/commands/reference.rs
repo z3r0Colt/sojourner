@@ -222,3 +222,40 @@ pub async fn morph_search(app: tauri::AppHandle, query: crate::db::queries::word
     .await
     .map_err(|e| anyhow::anyhow!("the morphology search did not finish: {e}"))?
 }
+
+#[tauri::command]
+pub fn list_lexicon_sources(db: State<DbState>) -> AppResult<Vec<crate::db::queries::lexicons::LexiconSource>> {
+    let conn = db.conn();
+    Ok(crate::db::queries::lexicons::list_sources(&conn)?)
+}
+
+/// Every lexicon's article on a Strong's number.
+#[tauri::command]
+pub fn get_lexicon_entries(db: State<DbState>, strongs_id: String) -> AppResult<Vec<crate::db::queries::lexicons::LexiconEntry>> {
+    let conn = db.conn();
+    Ok(crate::db::queries::lexicons::entries_for_strongs(&conn, &strongs_id)?)
+}
+
+#[tauri::command]
+pub fn get_lexicon_entry(db: State<DbState>, id: i64) -> AppResult<Option<crate::db::queries::lexicons::LexiconEntry>> {
+    let conn = db.conn();
+    Ok(crate::db::queries::lexicons::get_entry(&conn, id)?)
+}
+
+/// (code, name, first entry id) for each lexicon that has the word.
+#[tauri::command]
+pub fn lexicons_for_strongs(db: State<DbState>, strongs_id: String) -> AppResult<Vec<(String, String, i64)>> {
+    let conn = db.conn();
+    Ok(crate::db::queries::lexicons::sources_for_strongs(&conn, &strongs_id)?)
+}
+
+#[tauri::command]
+pub fn search_lexicons(
+    db: State<DbState>,
+    query: String,
+    sources: Vec<String>,
+    limit: i64,
+) -> AppResult<Vec<crate::db::queries::lexicons::LexiconHit>> {
+    let conn = db.conn();
+    Ok(crate::db::queries::lexicons::search(&conn, &query, &sources, crate::commands::clamp_limit(limit))?)
+}

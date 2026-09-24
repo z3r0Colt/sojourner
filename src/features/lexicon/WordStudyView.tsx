@@ -69,6 +69,20 @@ export function WordStudyView() {
     enabled: !!strongsId,
     placeholderData: (prev) => prev,
   });
+  const { data: shelf } = useQuery({
+    queryKey: ["lexiconsForStrongs", strongsId],
+    queryFn: () => api.lexiconsForStrongs(strongsId!),
+    enabled: !!strongsId,
+    staleTime: Infinity,
+  });
+  const brief = shelf?.find(([code]) => code === "TBESG" || code === "TBESH");
+  const { data: briefEntry } = useQuery({
+    queryKey: ["lexiconEntry", brief?.[2]],
+    queryFn: () => api.getLexiconEntry(brief![2]),
+    enabled: !!brief,
+    staleTime: Infinity,
+  });
+  const briefGloss = briefEntry ? /<p><b>([^<]*)<\/b><\/p>/.exec(briefEntry.html)?.[1] ?? null : null;
   const shown = useMemo(
     () => (occurrences ?? []).filter((o) => bookFilter == null || o.book_id === bookFilter),
     [occurrences, bookFilter],
@@ -155,6 +169,26 @@ export function WordStudyView() {
           <p className="mb-1 text-ink" style={typography}>
             {ws.entry.short_definition ?? ws.entry.definition}
           </p>
+          {briefGloss && (
+            <p className="mb-1 text-sm text-ink-2">
+              <span className="text-ink-3">Brief lexicon:</span> {briefGloss}
+            </p>
+          )}
+          {shelf && shelf.length > 0 && (
+            <p className="mb-1 flex flex-wrap items-center gap-1 text-xs">
+              <span className="text-ink-3">Full entries:</span>
+              {shelf.map(([code, name]) => (
+                <button
+                  key={code}
+                  type="button"
+                  className="rounded-full border border-line-2 px-2 py-0.5 text-ink-2 hover:bg-hover"
+                  onClick={(e) => openContent("lexicon", { id: ws.entry.id, source: code }, { target: targetFor(e, "new"), from: paneId })}
+                >
+                  {name}
+                </button>
+              ))}
+            </p>
+          )}
           <p className="mb-5 text-sm text-ink-3">
             {ws.occurrences.toLocaleString()} occurrence{ws.occurrences === 1 ? "" : "s"} in {ws.verses.toLocaleString()} verse
             {ws.verses === 1 ? "" : "s"} of the {ws.entry.language === "hebrew" ? "Hebrew Old Testament" : "Greek New Testament (Textus Receptus)"}.{" "}

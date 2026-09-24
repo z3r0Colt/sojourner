@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { Check, Download, Globe, Mail, RefreshCw } from "lucide-react";
 import { api } from "../../../api/client";
@@ -157,6 +158,20 @@ function TranslationCredits() {
   );
 }
 
+/** The lexicon shelf, credited from the database like the translations. */
+function LexiconCredits() {
+  const { data: sources } = useQuery({ queryKey: ["lexiconSources"], queryFn: () => api.listLexiconSources(), staleTime: Infinity });
+  return (
+    <>
+      {(sources ?? []).map((l) => (
+        <Source key={l.code} name={`${l.name} (${l.entry_count.toLocaleString()} entries)`}>
+          {l.credit}
+        </Source>
+      ))}
+    </>
+  );
+}
+
 /** One credited source: what it is, and on what terms it is here. */
 function Source({ name, children }: { name: string; children: React.ReactNode }) {
   return (
@@ -219,6 +234,7 @@ export function AboutSection() {
           except where a translation is listed below with its own terms.
         </Source>
         <TranslationCredits />
+        <LexiconCredits />
         <Source name="Strong's lexicon and Thayer's">Public domain.</Source>
         <Source name="Greek New Testament — text, parsing, and Strong's tagging">
           The Translators Amalgamated Greek New Testament and the Translators Brief Lexicon of Extended Strong's for Greek, © Tyndale House Cambridge, used

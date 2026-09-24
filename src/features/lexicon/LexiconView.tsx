@@ -15,7 +15,7 @@ import { strongsRef } from "../sermons/sourceIdentity";
 import { cx, inputSmClass } from "../../components/ui/classes";
 
 export function LexiconView() {
-  const [{ id: paneEntryId, query: paneQuery }] = usePaneParams("lexicon");
+  const [{ id: paneEntryId, query: paneQuery, source: paneSource, entryId: paneLexEntryId }, setParams] = usePaneParams("lexicon");
   const id = paneEntryId ?? undefined;
   const navigate = usePaneNavigate();
   const [query, setQuery] = useState(paneQuery ?? "");
@@ -42,6 +42,27 @@ export function LexiconView() {
   });
 
   const { data: entry } = useStrongsEntry(id ?? directIdMatch ?? null);
+  // The lexicon shelf: which lexicons have this word, and the chosen one's
+  // articles (a Strong's number can have several in one lexicon).
+  const { data: shelf } = useQuery({
+    queryKey: ["lexiconsForStrongs", entry?.id],
+    queryFn: () => api.lexiconsForStrongs(entry!.id),
+    enabled: !!entry,
+    staleTime: Infinity,
+  });
+  const source = paneSource && shelf?.some(([code]) => code === paneSource) ? paneSource : null;
+  const { data: articles } = useQuery({
+    queryKey: ["lexiconEntries", entry?.id],
+    queryFn: () => api.getLexiconEntries(entry!.id),
+    enabled: !!entry && !!source,
+    staleTime: Infinity,
+  });
+  const { data: lone } = useQuery({
+    queryKey: ["lexiconEntry", paneLexEntryId],
+    queryFn: () => api.getLexiconEntry(paneLexEntryId!),
+    enabled: paneLexEntryId != null && !entry,
+    staleTime: Infinity,
+  });
   const { data: books } = useBooks();
 
   function jumpToRef(bookOsisCode: string, chapter: number, verse: number, e?: React.MouseEvent) {
@@ -103,8 +124,40 @@ export function LexiconView() {
       </aside>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-8 py-6">
-        {!entry && <EmptyState icon={Languages} title="Hebrew and Greek lexicon" description="Search on the left, or pick an entry, to see its definition, Thayer's notes, and every verse that uses it." />}
-        {entry && (
+        {!entry && lone && (
+          <div className="mx-auto w-full max-w-[70ch]">
+            <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-3">{lone.source_name}</div>
+            <div className="text-ink" style={typography}>
+              <CommentaryHtml html={lone.html} onJumpToRef={jumpToRef} />
+            </div>
+          </div>
+        )}
+        {!entry && !lone && <EmptyState icon={Languages} title="Hebrew and Greek lexicon" description="Search on the left, or pick an entry, to see its definition, Thayer's notes, and every verse that uses it." />}
+        {entry && shelf && shelf.length > 0 && (
+          <div className="mx-auto mb-4 flex w-full max-w-[70ch] flex-wrap gap-1" role="tablist" aria-label="Lexicon">
+            <Button size="sm" variant="ghost" role="tab" aria-selected={source == null} active={source == null} onClick={() => setParams({ source: null })}>
+              Strong's
+            </Button>
+            {shelf.map(([code, name]) => (
+              <Button key={code} size="sm" variant="ghost" role="tab" aria-selected={source === code} active={source === code} onClick={() => setParams({ source: code })}>
+                {name}
+              </Button>
+            ))}
+          </div>
+        )}
+        {entry && source && (
+          <div className="mx-auto w-full max-w-[70ch]">
+            {(articles ?? [])
+              .filter((a) => a.source_code === source)
+              .map((a) => (
+                <article key={a.id} className="mb-6 text-ink" style={typography}>
+                  <CommentaryHtml html={a.html} onJumpToRef={jumpToRef} />
+                </article>
+              ))}
+            {!articles && <LoadingState />}
+          </div>
+        )}
+        {entry && !source && (
           <div className="mx-auto w-full max-w-[70ch]">
             <div className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-ink-3">
               <span>

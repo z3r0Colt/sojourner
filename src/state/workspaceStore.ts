@@ -111,6 +111,12 @@ export interface LexiconParams {
   id: string | null;
   /** A search to run on open ("Search the lexicon for ‘word’"). */
   query?: string;
+  /** Which lexicon to show the entry in: a lexicon's code ("BDB", "LSJ"),
+   * or none for Strong's and Thayer's. */
+  source?: string | null;
+  /** One lexicon article by id -- for an entry with no Strong's number,
+   * reached from a lexicon search. */
+  entryId?: number | null;
 }
 
 export interface DictionaryParams {

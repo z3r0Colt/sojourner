@@ -518,8 +518,14 @@ export const TUTORIAL: TutorialCategory[] = [
       {
         id: "lexicon",
         title: "Lexicon",
-        what: "Strong's Hebrew and Greek, with Thayer's fuller Greek definitions where available.",
-        steps: ["Open Lexicon in the sidebar.", "Search by English meaning, transliteration, or Strong's number (H1, G25).", "Each entry lists a concordance of the verses that use the word."],
+        what: "Strong's Hebrew and Greek with Thayer's, and behind them the full lexicons: Brown–Driver–Briggs for Hebrew, Abbott-Smith and Liddell–Scott–Jones for Greek, and STEPBible's brief lexicons for both.",
+        steps: [
+          "Open Lexicon in the sidebar.",
+          "Search by English meaning, transliteration, or Strong's number (H1, G25).",
+          "Above an entry, a row of buttons switches between Strong's and each lexicon that has the word. The Strong's popup offers the same buttons.",
+          "To search every lexicon at once, open Search and choose the Lexicons tab. Greek and Hebrew words can be typed without accents or vowel points.",
+          "Each entry lists a concordance of the verses that use the word.",
+        ],
         links: [{ label: "Lexicon", to: "/lexicon" }],
       },
       {

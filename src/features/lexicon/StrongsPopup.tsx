@@ -1,4 +1,6 @@
 import { BookA, Search, X } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "../../api/client";
 import { useBooks, useStrongsEntry } from "../../api/queries";
 import { useViewportClampedPosition } from "../../lib/useViewportClampedPosition";
 import { CommentaryHtml } from "../commentary/CommentaryPanel";
@@ -37,6 +39,12 @@ export function StrongsPopup({
   const { data: entry, isLoading } = useStrongsEntry(id);
   const { ref, style } = useViewportClampedPosition<HTMLDivElement>(x, y);
   const { data: books } = useBooks();
+  const { data: shelf } = useQuery({
+    queryKey: ["lexiconsForStrongs", entry?.id],
+    queryFn: () => api.lexiconsForStrongs(entry!.id),
+    enabled: !!entry,
+    staleTime: Infinity,
+  });
 
   function jumpToRef(bookOsisCode: string, chapter: number, verse: number, e?: React.MouseEvent) {
     const target = books?.find((b) => b.osis_code === bookOsisCode);
@@ -111,6 +119,24 @@ export function StrongsPopup({
             <p className="mb-2 text-xs text-ink-3">
               <span className="font-semibold">KJV usage:</span> {entry.kjv_usage}
             </p>
+          )}
+          {shelf && shelf.length > 0 && (
+            <div className="mb-2 flex flex-wrap items-center gap-1 text-xs">
+              <span className="text-ink-3">In</span>
+              {shelf.map(([code, name]) => (
+                <button
+                  key={code}
+                  type="button"
+                  className="rounded-full border border-line-2 px-2 py-0.5 text-ink-2 hover:bg-hover"
+                  onClick={(e) => {
+                    openContent("lexicon", { id: entry.id, source: code }, { target: targetFor(e, "new") });
+                    onClose();
+                  }}
+                >
+                  {name}
+                </button>
+              ))}
+            </div>
           )}
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
             <Button

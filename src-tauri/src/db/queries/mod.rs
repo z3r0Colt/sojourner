@@ -8,6 +8,7 @@ pub mod doctrine_topics;
 pub mod harmony;
 pub mod highlights;
 pub mod illustrations;
+pub mod lexicons;
 pub mod notes;
 pub mod prayer_journal;
 pub mod prayer_list;

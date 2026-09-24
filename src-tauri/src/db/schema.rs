@@ -1050,6 +1050,52 @@ CREATE TABLE lemma_glosses (
 ) WITHOUT ROWID;
 "#;
 
+// The full lexicons beside Strong's: BDB, Abbott-Smith, LSJ, and the brief
+// lexicons (see `import::reference::lexicons`). Strong's and Thayer's stay
+// where they are, for the popup's short definition; these are the shelf
+// behind them.
+//
+// An entry is keyed three ways: by `strongs_id` (how the popup and the word
+// study reach it), by `headword_plain` (the headword's bare letters, how a
+// Greek or Hebrew word typed without accents or points finds it), and by
+// full text. A Strong's number can have several entries in one lexicon --
+// BDB gives חֶסֶד "goodness" and חֶסֶד "shame" separate articles.
+pub const CONTENT_MIGRATION_0022: &str = r#"
+CREATE TABLE lexicon_sources (
+  id          INTEGER PRIMARY KEY,
+  code        TEXT NOT NULL UNIQUE,
+  name        TEXT NOT NULL,
+  language    TEXT NOT NULL,
+  license     TEXT NOT NULL,
+  credit      TEXT NOT NULL,
+  sort_order  INTEGER NOT NULL
+);
+CREATE TABLE lexicon_entries (
+  id              INTEGER PRIMARY KEY,
+  source_id       INTEGER NOT NULL REFERENCES lexicon_sources(id) ON DELETE CASCADE,
+  headword        TEXT NOT NULL,
+  headword_plain  TEXT NOT NULL,
+  strongs_id      TEXT,
+  html            TEXT NOT NULL,
+  plain_text      TEXT NOT NULL
+);
+CREATE INDEX idx_lexicon_strongs ON lexicon_entries(strongs_id, source_id);
+CREATE INDEX idx_lexicon_plain ON lexicon_entries(headword_plain);
+CREATE VIRTUAL TABLE lexicon_fts USING fts5(
+  headword, headword_plain, plain_text,
+  content='lexicon_entries', content_rowid='id',
+  tokenize='porter unicode61'
+);
+CREATE TRIGGER lexicon_ai AFTER INSERT ON lexicon_entries BEGIN
+  INSERT INTO lexicon_fts(rowid, headword, headword_plain, plain_text)
+  VALUES (new.id, new.headword, new.headword_plain, new.plain_text);
+END;
+CREATE TRIGGER lexicon_ad AFTER DELETE ON lexicon_entries BEGIN
+  INSERT INTO lexicon_fts(lexicon_fts, rowid, headword, headword_plain, plain_text)
+  VALUES ('delete', old.id, old.headword, old.headword_plain, old.plain_text);
+END;
+"#;
+
 pub const CONTENT_MIGRATIONS: &[&str] = &[
     CONTENT_MIGRATION_0001,
     CONTENT_MIGRATION_0002,
@@ -1072,6 +1118,7 @@ pub const CONTENT_MIGRATIONS: &[&str] = &[
     CONTENT_MIGRATION_0019,
     CONTENT_MIGRATION_0020,
     CONTENT_MIGRATION_0021,
+    CONTENT_MIGRATION_0022,
 ];
 
 // library.db: the books that ship with the app, in a file of their own.

@@ -7,6 +7,7 @@ pub mod footnotes;
 pub mod harmony;
 pub mod interlinear;
 pub mod isbe;
+pub mod lexicons;
 pub mod morphology;
 pub mod psalter;
 pub mod reading_plans;
@@ -211,6 +212,10 @@ pub fn import_all(conn: &mut Connection, reference_dir: &Path) -> anyhow::Result
     } else {
         (0, 0)
     };
+
+    if table_count(conn, "lexicon_entries") == 0 {
+        lexicons::import(conn, reference_dir).map_err(|e| anyhow::anyhow!("lexicons import failed: {e:#}"))?;
+    }
 
     // After the morphology and the interlinear, which it reads.
     if table_count(conn, "morph_codes") == 0 {

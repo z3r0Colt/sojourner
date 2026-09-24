@@ -1149,3 +1149,32 @@ export interface MorphSearchPage {
   word_total: number;
   description: string;
 }
+
+export interface LexiconSource {
+  id: number;
+  code: string;
+  name: string;
+  language: "greek" | "hebrew";
+  license: string;
+  credit: string;
+  entry_count: number;
+}
+
+export interface LexiconEntry {
+  id: number;
+  source_code: string;
+  source_name: string;
+  headword: string;
+  strongs_id: string | null;
+  /** Built by the importer from an allowlist; rendered through CommentaryHtml. */
+  html: string;
+}
+
+export interface LexiconHit {
+  id: number;
+  source_code: string;
+  source_name: string;
+  headword: string;
+  strongs_id: string | null;
+  snippet: string;
+}

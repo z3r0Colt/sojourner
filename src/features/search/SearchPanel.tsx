@@ -52,6 +52,7 @@ export type SearchTab =
   | "encyclopedia"
   | "sermons"
   | "illustrations"
+  | "lexicons"
   | "grammar";
 
 /** How many results one page asks for; the last is the server's cap. */
@@ -195,6 +196,13 @@ export function SearchPanel({ query, onQueryChange, docked, onOpenVerse, onOpene
     queryFn: () => api.listIllustrations({ query: effective }),
     enabled: active,
   });
+  const [lexiconFilter, setLexiconFilter] = useState<string>("");
+  const { data: lexiconSources } = useQuery({ queryKey: ["lexiconSources"], queryFn: () => api.listLexiconSources(), staleTime: Infinity });
+  const { data: lexiconResults, isFetching: lexiconsFetching, error: lexiconsError } = useQuery({
+    queryKey: ["lexiconSearch", effective, lexiconFilter],
+    queryFn: () => api.searchLexicons(effective, lexiconFilter ? [lexiconFilter] : [], 50),
+    enabled: active,
+  });
   const facetKind = tab === "commentary" ? "commentary" : "verses";
   const { data: facets } = useQuery({
     queryKey: ["searchFacets", facetKind, effective, translationIds, sourceIds, scope],
@@ -242,7 +250,7 @@ export function SearchPanel({ query, onQueryChange, docked, onOpenVerse, onOpene
   }
 
   const anyFetching =
-    isFetching || resourcesFetching || westminsterFetching || encyclopediaFetching || sermonsFetching || illustrationsFetching;
+    isFetching || resourcesFetching || westminsterFetching || encyclopediaFetching || sermonsFetching || illustrationsFetching || lexiconsFetching;
 
   const opened = () => {
     if (!docked) onOpened?.();
@@ -280,6 +288,21 @@ export function SearchPanel({ query, onQueryChange, docked, onOpenVerse, onOpene
         snippet: r.snippet,
         run: () => {
           openContent("encyclopedia", { slug: r.slug }, docked ? { target: "new" } : {});
+          opened();
+        },
+      }));
+    }
+    if (t === "lexicons") {
+      return (lexiconResults ?? []).map((r) => ({
+        key: `l-${r.id}`,
+        heading: `${r.headword}${r.strongs_id ? ` · ${r.strongs_id}` : ""} · ${r.source_name}`,
+        snippet: r.snippet,
+        run: (e) => {
+          openContent(
+            "lexicon",
+            r.strongs_id ? { id: r.strongs_id, source: r.source_code } : { id: null, entryId: r.id },
+            docked || (e && (e.ctrlKey || e.metaKey)) ? { target: "new" } : {},
+          );
           opened();
         },
       }));
@@ -330,6 +353,7 @@ export function SearchPanel({ query, onQueryChange, docked, onOpenVerse, onOpene
     ["commentary", 4, "Commentary"],
     ["westminster", 3, "Confessions"],
     ["encyclopedia", 3, "Encyclopedia"],
+    ["lexicons", 2, "Lexicons"],
     ["resources", 3, "Books"],
     ["notes", 3, "Notes"],
     ["sermons", 2, "Sermons"],
@@ -345,7 +369,7 @@ export function SearchPanel({ query, onQueryChange, docked, onOpenVerse, onOpene
         .map((r) => ({ ...r, key: `all-${r.key}`, heading: `${label} · ${r.heading}` })),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active, tab, results, resourceResults, westminsterResults, westminsterDocs, encyclopediaResults, sermonResults, illustrationResults, books, docked]);
+  }, [active, tab, results, resourceResults, westminsterResults, westminsterDocs, encyclopediaResults, sermonResults, illustrationResults, lexiconResults, books, docked]);
 
   // The Go-to row sits above the results and is chosen first.
   const goTo: Row | null = reference
@@ -387,6 +411,7 @@ export function SearchPanel({ query, onQueryChange, docked, onOpenVerse, onOpene
     encyclopedia: encyclopediaError,
     sermons: sermonsError,
     illustrations: illustrationsError,
+    lexicons: lexiconsError,
     grammar: null,
   };
   const activeError = tabError[tab];
@@ -408,6 +433,7 @@ export function SearchPanel({ query, onQueryChange, docked, onOpenVerse, onOpene
     { key: "encyclopedia" as const, label: "Encyclopedia", count: count(encyclopediaResults?.length) },
     { key: "sermons" as const, label: "Sermons", count: count(sermonResults?.length) },
     { key: "illustrations" as const, label: "Illustrations", count: count(illustrationResults?.length) },
+    { key: "lexicons" as const, label: "Lexicons", count: count(lexiconResults?.length) },
     { key: "grammar" as const, label: "Grammar" },
   ];
 
@@ -614,6 +640,19 @@ export function SearchPanel({ query, onQueryChange, docked, onOpenVerse, onOpene
         {anyFetching && <LoadingState className="shrink-0 py-1" label="Searching…" />}
       </div>
       {tab === "grammar" && <MorphSearch onOpenVerse={(b, c, v, n) => onOpenVerse(b, c, v, n)} />}
+      {tab === "lexicons" && (
+        <div className="flex flex-wrap items-center gap-2 border-b border-line px-3 py-1.5 text-xs text-ink-3">
+          <select value={lexiconFilter} onChange={(e) => setLexiconFilter(e.target.value)} className={selectSmClass} aria-label="Lexicon">
+            <option value="">Every lexicon</option>
+            {lexiconSources?.map((l) => (
+              <option key={l.code} value={l.code}>
+                {l.name}
+              </option>
+            ))}
+          </select>
+          <span>Greek and Hebrew can be typed without accents or points.</span>
+        </div>
+      )}
       {tab !== "grammar" && showsFilters && (
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 border-b border-line px-3 py-1.5 text-xs text-ink-3">
           {(tab === "verses" || tab === "all") && (
