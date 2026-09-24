@@ -171,6 +171,13 @@ export interface FactbookParams {
   id: string | null;
 }
 
+export interface TimelineParams {
+  /** The selected event. */
+  eventId: number | null;
+  /** An astronomical year to open centred on. */
+  year: number | null;
+}
+
 export interface WordStudyParams {
   /** A Strong's number, "G3056". */
   id: string | null;
@@ -209,6 +216,8 @@ export type PaneContent =
   | { kind: "factbook"; params: FactbookParams }
   | { kind: "factbook-for-passage"; params: PassageParams }
   | { kind: "citations"; params: PassageParams }
+  | { kind: "timeline"; params: TimelineParams }
+  | { kind: "timeline-for-passage"; params: PassageParams }
   | { kind: "settings"; params: SettingsParams };
 
 export type PaneKind = PaneContent["kind"];
@@ -247,6 +256,8 @@ export const PANE_KIND_LIST: readonly PaneKind[] = [
   "factbook",
   "factbook-for-passage",
   "citations",
+  "timeline",
+  "timeline-for-passage",
   "settings",
 ];
 
@@ -260,6 +271,7 @@ export const PASSAGE_KINDS: ReadonlySet<PaneKind> = new Set<PaneKind>([
   "encyclopedia-for-passage",
   "factbook-for-passage",
   "citations",
+  "timeline-for-passage",
   "metrical",
   "mine",
   "atlas",

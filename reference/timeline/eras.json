@@ -1,0 +1,16 @@
+{
+  "note": "Each era runs from the start of one event to the start of another (\"toEnd\": to its end; \"fromEnd\": from the first event's end). The event titles are Theographic's, or additions.json's; the dates are theirs. journey_era names the atlas journeys of the era.",
+  "eras": [
+    { "slug": "primeval", "name": "Creation to Abraham", "from": "Creation of all things", "to": "Lifetime of Abraham" },
+    { "slug": "patriarchs", "name": "The patriarchs", "from": "Lifetime of Abraham", "to": "Joseph's brothers go to Egypt", "journey_era": "The patriarchs" },
+    { "slug": "egypt-exodus", "name": "Egypt and the exodus", "from": "Joseph's brothers go to Egypt", "to": "Crossing the Jordan into Canaan", "journey_era": "The exodus" },
+    { "slug": "conquest", "name": "The conquest", "from": "Crossing the Jordan into Canaan", "to": "Death of Joshua", "journey_era": "The conquest" },
+    { "slug": "judges", "name": "The judges", "from": "Death of Joshua", "to": "Reign of Saul", "journey_era": "The judges" },
+    { "slug": "united-kingdom", "name": "The united kingdom", "from": "United Kingdom", "to": "Death of Solomon", "journey_era": "The united kingdom" },
+    { "slug": "divided-kingdom", "name": "The divided kingdom", "from": "Death of Solomon", "to": "The fall of Jerusalem", "journey_era": "The divided kingdom" },
+    { "slug": "exile-return", "name": "Exile and return", "from": "The fall of Jerusalem", "to": "Prophecies of Malachi", "toEnd": true, "journey_era": "Exile and return" },
+    { "slug": "intertestamental", "name": "Between the testaments", "from": "Prophecies of Malachi", "fromEnd": true, "to": "John's birth predicted" },
+    { "slug": "life-of-christ", "name": "The life of Christ", "from": "John's birth predicted", "to": "Jesus ascends to Heaven", "journey_era": "The life of Christ" },
+    { "slug": "apostolic", "name": "The apostolic church", "from": "Jesus ascends to Heaven", "to": "Paul's Journey to Rome", "toEnd": true, "journey_era": "The apostolic church" }
+  ]
+}

@@ -1167,6 +1167,58 @@ CREATE TABLE factbook_links (
 ) WITHOUT ROWID;
 "#;
 
+// The timeline (0.3 step 6): Theographic's events and eras, resolved to the
+// Factbook's people and places. Years are astronomical and fractional (1 BC
+// is 0; 588 BC is -587), which is what the view lays out on.
+pub const CONTENT_MIGRATION_0025: &str = r#"
+CREATE TABLE timeline_eras (
+  slug        TEXT PRIMARY KEY,
+  name        TEXT NOT NULL,
+  start_year  REAL NOT NULL,
+  end_year    REAL NOT NULL,
+  journey_era TEXT,
+  sort_order  INTEGER NOT NULL
+) WITHOUT ROWID;
+CREATE TABLE timeline_events (
+  id          INTEGER PRIMARY KEY,
+  key         TEXT NOT NULL UNIQUE,
+  title       TEXT NOT NULL,
+  start_year  REAL NOT NULL,
+  end_year    REAL NOT NULL,
+  precision   TEXT NOT NULL CHECK(precision IN ('year','month','day')),
+  parent_key  TEXT,
+  lane        TEXT CHECK(lane IN ('judah','israel')),
+  note        TEXT,
+  source      TEXT NOT NULL CHECK(source IN ('theographic','added')),
+  book_id     INTEGER,
+  chapter     INTEGER,
+  verse       INTEGER
+);
+CREATE INDEX idx_timeline_events_start ON timeline_events(start_year);
+CREATE TABLE timeline_event_verses (
+  event_id INTEGER NOT NULL REFERENCES timeline_events(id),
+  book_id  INTEGER NOT NULL,
+  chapter  INTEGER NOT NULL,
+  verse    INTEGER NOT NULL,
+  PRIMARY KEY (event_id, book_id, chapter, verse)
+) WITHOUT ROWID;
+CREATE INDEX idx_timeline_event_verses_passage ON timeline_event_verses(book_id, chapter);
+CREATE TABLE timeline_event_entities (
+  event_id  INTEGER NOT NULL REFERENCES timeline_events(id),
+  entity_id TEXT NOT NULL REFERENCES factbook_entities(id),
+  role      TEXT NOT NULL CHECK(role IN ('person','place')),
+  PRIMARY KEY (event_id, entity_id)
+) WITHOUT ROWID;
+CREATE INDEX idx_timeline_event_entities_entity ON timeline_event_entities(entity_id);
+CREATE TABLE timeline_chapter_years (
+  book_id    INTEGER NOT NULL,
+  chapter    INTEGER NOT NULL,
+  start_year REAL NOT NULL,
+  end_year   REAL NOT NULL,
+  PRIMARY KEY (book_id, chapter)
+) WITHOUT ROWID;
+"#;
+
 pub const CONTENT_MIGRATIONS: &[&str] = &[
     CONTENT_MIGRATION_0001,
     CONTENT_MIGRATION_0002,
@@ -1192,6 +1244,7 @@ pub const CONTENT_MIGRATIONS: &[&str] = &[
     CONTENT_MIGRATION_0022,
     CONTENT_MIGRATION_0023,
     CONTENT_MIGRATION_0024,
+    CONTENT_MIGRATION_0025,
 ];
 
 // library.db: the books that ship with the app, in a file of their own.

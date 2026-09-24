@@ -266,6 +266,27 @@ pub fn get_factbook_entry(db: State<DbState>, id: String) -> AppResult<Option<cr
     Ok(crate::db::queries::factbook::get_entry(&conn, &id)?)
 }
 
+/// The whole timeline: eras, and every event with its people and places.
+#[tauri::command]
+pub fn get_timeline(db: State<DbState>) -> AppResult<crate::db::queries::timeline::Timeline> {
+    let conn = db.conn();
+    Ok(crate::db::queries::timeline::all(&conn)?)
+}
+
+/// Every verse that records a timeline event.
+#[tauri::command]
+pub fn get_timeline_event_verses(db: State<DbState>, event_id: i64) -> AppResult<Vec<(i64, i64, i64)>> {
+    let conn = db.conn();
+    Ok(crate::db::queries::timeline::event_verses(&conn, event_id)?)
+}
+
+/// Where a chapter falls on the timeline, and the events it records.
+#[tauri::command]
+pub fn get_timeline_for_passage(db: State<DbState>, book_id: i64, chapter: i64) -> AppResult<crate::db::queries::timeline::PassageTimeline> {
+    let conn = db.conn();
+    Ok(crate::db::queries::timeline::for_passage(&conn, book_id, chapter)?)
+}
+
 /// The people, places and things a chapter names.
 #[tauri::command]
 pub fn get_factbook_for_passage(db: State<DbState>, book_id: i64, chapter: i64) -> AppResult<Vec<crate::db::queries::factbook::PassageEntity>> {

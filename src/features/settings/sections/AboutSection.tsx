@@ -214,7 +214,7 @@ export function AboutSection() {
           Your notes, highlights, and prayers stay yours. Back up or export any time from Settings → Data &amp; backups.
         </p>
         <p>
-          Included are multiple Bible translations, classic commentaries (Matthew Henry, Jamieson-Fausset-Brown, Spurgeon's Treasury of David, and others),
+          Included are multiple Bible translations, a timeline of the biblical events, classic commentaries (Matthew Henry, Jamieson-Fausset-Brown, Spurgeon's Treasury of David, and others),
           the Westminster Standards, Strong's lexicon with interlinear Hebrew and Greek, a Bible dictionary and encyclopedia, an atlas of the biblical world,
           two harmonies of the Gospels, reading plans, and tools for prayer and Scripture memory.
         </p>
@@ -257,6 +257,15 @@ export function AboutSection() {
           <ExternalLink href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0</ExternalLink> licence, from{" "}
           <ExternalLink href="https://github.com/STEPBible/STEPBible-Data">STEPBible.org</ExternalLink>. Its identifications, family links and references
           are used; its short descriptions, which it notes were adapted from an AI model's output, are not.
+        </Source>
+        <Source name="Timeline — events, dates and eras">
+          The Theographic Bible Metadata, © Robert Rouse, used under a{" "}
+          <ExternalLink href="https://creativecommons.org/licenses/by-sa/4.0/">Creative Commons Attribution-ShareAlike 4.0</ExternalLink> licence, from{" "}
+          <ExternalLink href="https://github.com/robertrouse/theographic-bible-metadata">theographic-bible-metadata</ExternalLink>: its events, their dates
+          and verses, and the year of each verse. Its chronology is a traditional one, Ussher's for the early ages and later reckonings for the kings and
+          the life of Christ; the dates are approximate and are shown as the source gives them. The eras are bounded by its own events, and the fifteen events
+          Sojourner adds (the fall of Jerusalem, Ezra, Nehemiah and others) are dated by its year for the verse that records them. The timeline data
+          (reference/timeline) is shared under the same licence.
         </Source>
         <Source name="Book library shelves">
           Public domain. The Church Fathers (the Ante-Nicene and Nicene and Post-Nicene series, 1885–1900, and Lightfoot's Apostolic Fathers), Josephus

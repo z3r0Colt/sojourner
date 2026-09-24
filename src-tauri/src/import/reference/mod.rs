@@ -5,6 +5,7 @@ pub mod dictionary;
 pub mod doctrine_topics;
 pub mod editions;
 pub mod factbook;
+pub mod timeline;
 pub mod footnotes;
 pub mod harmony;
 pub mod interlinear;
@@ -230,6 +231,11 @@ pub fn import_all(conn: &mut Connection, reference_dir: &Path) -> anyhow::Result
     // After the encyclopedia, dictionary and atlas, which it links to.
     if table_count(conn, "factbook_entities") == 0 {
         factbook::import(conn, &reference_dir.join("factbook")).map_err(|e| anyhow::anyhow!("factbook import failed: {e:#}"))?;
+    }
+
+    // After the Factbook, whose people and places it links to.
+    if table_count(conn, "timeline_events") == 0 {
+        timeline::import(conn, &reference_dir.join("timeline")).map_err(|e| anyhow::anyhow!("timeline import failed: {e:#}"))?;
     }
 
     // After the morphology and the interlinear, which it reads.

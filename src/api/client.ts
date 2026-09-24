@@ -98,6 +98,8 @@ import type {
   PickedPath,
   PackStatus,
   CitationHit,
+  Timeline,
+  PassageTimeline,
   PackInstallOutcome,
 } from "./types";
 
@@ -274,6 +276,9 @@ export const api = {
   getStrongsEntry: (id: string) => invoke<StrongsEntry | null>("get_strongs_entry", { id }),
   getConcordance: (strongsId: string) => invoke<ConcordanceEntry[]>("get_concordance", { strongsId }),
   getStrongsEntries: (ids: string[]) => invoke<StrongsEntry[]>("get_strongs_entries", { ids }),
+  getTimeline: () => invoke<Timeline>("get_timeline"),
+  getTimelineEventVerses: (eventId: number) => invoke<[number, number, number][]>("get_timeline_event_verses", { eventId }),
+  getTimelineForPassage: (bookId: number, chapter: number) => invoke<PassageTimeline>("get_timeline_for_passage", { bookId, chapter }),
   getFactbookEntry: (id: string) => invoke<FactbookEntry | null>("get_factbook_entry", { id }),
   getFactbookForPassage: (bookId: number, chapter: number) => invoke<PassageEntity[]>("get_factbook_for_passage", { bookId, chapter }),
   getFactbookForWord: (bookId: number, chapter: number, verse: number, word: string, strongsId: string | null) =>

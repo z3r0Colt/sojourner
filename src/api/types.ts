@@ -1228,3 +1228,48 @@ export interface CitationHit {
   verse_start: number;
   verse_end: number;
 }
+
+/** The timeline (see `queries::timeline`). Years are astronomical and
+ * fractional: 588 BC is -587, AD 30 is 30. */
+export interface TimelineEra {
+  slug: string;
+  name: string;
+  start_year: number;
+  end_year: number;
+  /** The atlas journeys of this era, by their `era`. */
+  journey_era: string | null;
+}
+
+export interface TimelineEntity {
+  id: string;
+  name: string;
+  role: "person" | "place";
+  atlas_slug: string | null;
+}
+
+export interface TimelineEvent {
+  id: number;
+  title: string;
+  start_year: number;
+  end_year: number;
+  precision: "year" | "month" | "day";
+  parent_id: number | null;
+  lane: "judah" | "israel" | null;
+  note: string | null;
+  source: "theographic" | "added";
+  book_id: number | null;
+  chapter: number | null;
+  verse: number | null;
+  entities: TimelineEntity[];
+}
+
+export interface Timeline {
+  eras: TimelineEra[];
+  events: TimelineEvent[];
+}
+
+export interface PassageTimeline {
+  start_year: number | null;
+  end_year: number | null;
+  event_ids: number[];
+}

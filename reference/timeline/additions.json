@@ -1,0 +1,20 @@
+{
+  "note": "Events Theographic does not list. Each is dated by Theographic's own year for its first verse; nothing here carries a date of its own. People and places are names, resolved at build against the Factbook by these verses. The year is Theographic's for the first of the verses it dates.",
+  "events": [
+    {"id": "sinai", "title": "The law given at Sinai", "verses": ["Exod.19.20", "Exod.20.1", "Exod.20.2"], "people": ["Moses"], "places": ["Sinai"]},
+    {"id": "david-anointed", "title": "David anointed by Samuel", "verses": ["1Sam.16.13", "1Sam.16.12"], "people": ["David", "Samuel"], "places": ["Bethlehem"]},
+    {"id": "david-jerusalem", "title": "David king over all Israel; Jerusalem taken", "verses": ["2Sam.5.3", "2Sam.5.6", "2Sam.5.7"], "people": ["David"], "places": ["Jerusalem", "Hebron"]},
+    {"id": "temple-dedicated", "title": "Solomon's temple dedicated", "verses": ["1Kgs.8.1", "1Kgs.8.2", "1Kgs.8.63"], "people": ["Solomon"], "places": ["Jerusalem"]},
+    {"id": "carmel", "title": "Elijah on Mount Carmel", "verses": ["1Kgs.18.19", "1Kgs.18.36", "1Kgs.18.38"], "people": ["Elijah", "Ahab"], "places": ["Carmel"]},
+    {"id": "fall-of-samaria", "title": "Samaria falls; Israel carried to Assyria", "verses": ["2Kgs.17.6", "2Kgs.18.10"], "people": ["Hoshea", "Shalmaneser"], "places": ["Samaria"]},
+    {"id": "sennacherib", "title": "Sennacherib's army destroyed", "verses": ["2Kgs.19.35", "2Kgs.19.36", "Isa.37.36"], "people": ["Sennacherib", "Hezekiah"], "places": ["Jerusalem"]},
+    {"id": "book-of-the-law", "title": "The book of the law found in the temple", "verses": ["2Kgs.22.8", "2Chr.34.14"], "people": ["Josiah", "Hilkiah", "Shaphan"], "places": ["Jerusalem"]},
+    {"id": "jehoiachin-to-babylon", "title": "Jehoiachin carried to Babylon", "verses": ["2Kgs.24.12", "2Kgs.24.15"], "people": ["Jehoiachin", "Nebuchadnezzar"], "places": ["Babylon", "Jerusalem"]},
+    {"id": "fall-of-jerusalem", "title": "The fall of Jerusalem", "verses": ["2Kgs.25.8", "2Kgs.25.9", "2Kgs.25.7", "Jer.39.2", "Jer.39.11"], "people": ["Zedekiah", "Nebuchadnezzar", "Nebuzar-adan", "Jeremiah"], "places": ["Jerusalem", "Babylon"]},
+    {"id": "cyrus-decree", "title": "Cyrus's decree; the return under Zerubbabel", "verses": ["2Chr.36.22", "2Chr.36.23", "Ezra.1.1", "Ezra.1.2", "Ezra.2.2"], "people": ["Cyrus", "Zerubbabel"], "places": ["Jerusalem"]},
+    {"id": "second-temple", "title": "The second temple finished", "verses": ["Ezra.6.15", "Ezra.6.14"], "people": ["Darius", "Haggai", "Zechariah"], "places": ["Jerusalem"]},
+    {"id": "esther-queen", "title": "Esther made queen", "verses": ["Esth.2.17", "Esth.2.16"], "people": ["Esther", "Ahasuerus", "Mordecai"], "places": ["Shushan"]},
+    {"id": "ezra-comes", "title": "Ezra comes to Jerusalem", "verses": ["Ezra.7.8", "Ezra.7.1"], "people": ["Ezra", "Artaxerxes"], "places": ["Jerusalem"]},
+    {"id": "wall-rebuilt", "title": "Nehemiah rebuilds the wall", "verses": ["Neh.6.15", "Neh.2.1"], "people": ["Nehemiah", "Artaxerxes"], "places": ["Jerusalem"]}
+  ]
+}

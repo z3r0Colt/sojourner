@@ -9,6 +9,7 @@ import { CrossReferencesPanel } from "../../features/reading/CrossReferencesPane
 import { EncyclopediaForPassage } from "../../features/encyclopedia/EncyclopediaForPassage";
 import { FactbookForPassage } from "../../features/factbook/FactbookForPassage";
 import { CitationsForPassage } from "../../features/library/CitationsForPassage";
+import { TimelineForPassage } from "../../features/timeline/TimelineForPassage";
 import { ConfessionForPassagePanel } from "../../features/reading/ConfessionForPassagePanel";
 import { MetricalPsalmPanel } from "../../features/reading/MetricalPsalmPanel";
 import { MyNotesPane } from "../../features/reading/MyNotesPane";
@@ -111,6 +112,14 @@ export function CitationsPane() {
   const book = books?.find((b) => b.id === params.bookId);
   if (!book) return <LoadingState className="p-8" />;
   return <CitationsForPassage book={book} chapter={params.chapter} activeVerse={params.verse} />;
+}
+
+export function TimelineForPassagePane() {
+  const [params] = usePaneParams("timeline-for-passage");
+  const { data: books } = useBooks();
+  const book = books?.find((b) => b.id === params.bookId);
+  if (!book) return <LoadingState className="p-8" />;
+  return <TimelineForPassage book={book} chapter={params.chapter} />;
 }
 
 export function ConfessionPane() {

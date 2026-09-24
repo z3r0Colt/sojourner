@@ -5,6 +5,7 @@ import {
   BookOpenText,
   Brain,
   CalendarCheck,
+  CalendarRange,
   Columns3,
   HeartHandshake,
   Highlighter,
@@ -286,6 +287,24 @@ export const PANE_KINDS: Registry = {
     acceptsPassage: false,
     listed: true,
   },
+  timeline: {
+    kind: "timeline",
+    label: "Timeline",
+    icon: CalendarRange,
+    title: () => "Timeline",
+    defaultWidth: 1000,
+    acceptsPassage: false,
+    listed: true,
+  },
+  "timeline-for-passage": {
+    kind: "timeline-for-passage",
+    label: "Timeline for passage",
+    icon: CalendarRange,
+    title: (p, ctx) => passageTitle("Timeline", p, ctx),
+    defaultWidth: 520,
+    acceptsPassage: true,
+    listed: true,
+  },
   citations: {
     kind: "citations",
     label: "Cited in your library",
@@ -338,7 +357,7 @@ export function paneTitle(content: PaneContent, ctx: TitleContext): string {
 export const PANE_KIND_LIST_LISTED: readonly PaneKind[] = (Object.keys(PANE_KINDS) as PaneKind[]).filter((k) => PANE_KINDS[k].listed);
 
 /** The study-panel kinds, in the order the Add pane strip shows them. */
-export const STUDY_STRIP_KINDS: readonly PaneKind[] = ["commentary", "crossrefs", "encyclopedia-for-passage", "factbook-for-passage", "citations", "confession-for-passage", "atlas", "metrical", "mine"];
+export const STUDY_STRIP_KINDS: readonly PaneKind[] = ["commentary", "crossrefs", "encyclopedia-for-passage", "factbook-for-passage", "citations", "timeline-for-passage", "confession-for-passage", "atlas", "metrical", "mine"];
 
 export { PASSAGE_KINDS };
 
@@ -419,6 +438,10 @@ export function routeFor(content: PaneContent): string {
       return "/study/factbook";
     case "citations":
       return "/study/citations";
+    case "timeline-for-passage":
+      return "/study/timeline";
+    case "timeline":
+      return content.params.eventId != null ? `/timeline/${content.params.eventId}` : "/timeline";
     case "search":
       return content.params.query ? `/search?q=${encodeURIComponent(content.params.query)}` : "/search";
     case "settings":
@@ -451,6 +474,7 @@ export function parseRoute(pathname: string, search = ""): ContentRequest | null
       if (a === "mine") return { kind: "mine", params: {} };
       if (a === "factbook") return { kind: "factbook-for-passage", params: {} };
       if (a === "citations") return { kind: "citations", params: {} };
+      if (a === "timeline") return { kind: "timeline-for-passage", params: {} };
       return null;
     case "westminster":
       return { kind: "westminster", params: { docCode: a ?? null, sectionId: num(b) } };
@@ -493,6 +517,8 @@ export function parseRoute(pathname: string, search = ""): ContentRequest | null
       return { kind: "wordstudy", params: { id: a ?? null } };
     case "factbook":
       return { kind: "factbook", params: { id: a ?? null } };
+    case "timeline":
+      return { kind: "timeline", params: { eventId: num(a) ?? null, year: null } };
     case "search":
       return { kind: "search", params: { query: new URLSearchParams(search).get("q") ?? "" } };
     case "settings": {

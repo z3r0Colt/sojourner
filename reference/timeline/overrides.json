@@ -1,0 +1,38 @@
+{
+  "note": "exclude: Theographic events left out, with the reason. people / places: a Theographic key (or an addition's name) mapped by hand to a Factbook entry id, or to null for one the Factbook does not carry. God is the Factbook's LORD entry; the Holy Spirit and the unnamed (Lot's daughters, Peter's mother-in-law) have none. Rehoboth-Ir (Gen 10:11) is neither of the Factbook's two Rehoboths.",
+  "exclude": {
+    "Judgeship of Jair": "dated 1991 BC in the source, before Abraham, where the judges are near 1200 BC; left out rather than re-dated"
+  },
+  "people": {
+    "god_1324": "LORD@Gen.1.1-Rev",
+    "holy_spirit_7400": null,
+    "satan_2476": "Satan@Deu.13.13-Rev",
+    "herod_1506": "Herod@Act.12.1-",
+    "pharaoh-nechoh_2337": "Neco@2Ki.23.29-Jer",
+    "sergius_2502": "Sergius_Paulus@Act.13.7",
+    "barsabas_1720": "Joseph@Act.1.23",
+    "candace_916": "Candace@Act.8.27",
+    "daughter_of_lot_younger_984": null,
+    "mother_of_the_wife_of_simon_2111": null,
+    "mother_of_zebedees_children_2112": null,
+    "Ahab": "Ahab@1Ki.16.28-Mic",
+    "Hezekiah": "Hezekiah@2Ki.16.20-Mat",
+    "Josiah": "Josiah@1Ki.13.2-Mat",
+    "Mordecai": "Mordecai@Est.2.5-",
+    "Nehemiah": "Nehemiah@Neh.1.1-"
+  },
+  "places": {
+    "Bethlehem": "Bethlehem@Gen.35.16-Jhn",
+    "Shushan": "Susa@Ezr.4.9-Dan",
+    "adria_30": "Adriatic_Sea@Act.27.27",
+    "appii_forum_427": "Forum_of_Appius@Act.28.15",
+    "babel_150": "Babylon@Gen.10.10-Rev",
+    "ephrath_403": "Bethlehem@Gen.35.16-Jhn",
+    "horeb_576": "Sinai@Exo.3.1-Gal",
+    "olivet_907": "Olives_Mount@2Sa.15.30-Act",
+    "phenice_945": "Phoenix@Act.27.12",
+    "plain_of_jordan_654": "Jordan@Gen.13.10-Jhn",
+    "rehoboth-ir_992": null,
+    "shechem_1069": "Shechem@Gen.12.6-Act"
+  }
+}
