@@ -925,4 +925,76 @@ mod tests {
         let _ = std::fs::remove_dir_all(&root);
     }
 
+
+    /// The upgrade a reader of 0.1 or 0.2 makes: the first library pack
+    /// already installed (library schema 1, no citations), then the new
+    /// shelves beside it, then the new Puritan pack over the old one. Needs
+    /// `packs/Sojourner-Library-0.1.0.sjpack` and this version's packs.
+    /// `cargo test --release --lib upgrade_from_the_first_pack -- --ignored --nocapture`
+    #[test]
+    #[ignore]
+    fn upgrade_from_the_first_pack() {
+        let repo = Path::new(env!("CARGO_MANIFEST_DIR")).join("..");
+        let packs = repo.join("packs");
+        let version = env!("CARGO_PKG_VERSION");
+        let app_data = scratch("upgrade");
+        let lib = app_data.join("library");
+        let conn = crate::db::open(&app_data, &repo.join("content").join("content.db")).unwrap();
+        let shelves_of = |conn: &rusqlite::Connection| -> Vec<(String, String)> {
+            crate::db::attached_library_schemas(conn).into_iter().map(|s| (s.clone(), s)).collect()
+        };
+        let dirs = |ids: &[&str]| -> Vec<(String, PathBuf)> {
+            ids.iter()
+                .map(|id| (crate::db::pack_schema(id), if *id == "library" { lib.clone() } else { lib.join("shelves").join(id) }))
+                .collect()
+        };
+
+        // 1. As 0.2.7 left it: the first pack at the root.
+        install(&packs.join("Sojourner-Library-0.1.0.sjpack"), &lib, &mut |_| {}, &mut noop, &mut noop).unwrap();
+        crate::db::attach_pack(&conn, "library", &lib.join(LIBRARY_DB)).unwrap();
+        let first = crate::library::sync_all(&conn, &dirs(&["library"])).unwrap();
+        println!("first pack: {first:?}");
+        let before: i64 = conn.query_row("SELECT COUNT(*) FROM resources WHERE library_key IS NOT NULL", [], |r| r.get(0)).unwrap();
+        // A note on one of its books, which must survive everything below.
+        let (res_id, key): (i64, String) = conn
+            .query_row("SELECT id, library_key FROM resources WHERE library_key IS NOT NULL ORDER BY id LIMIT 1", [], |r| Ok((r.get(0)?, r.get(1)?)))
+            .unwrap();
+
+        // 2. The new shelves beside it, the old pack untouched.
+        for (file, id) in [("Church-Fathers", "fathers"), ("Ancient-literature", "ancient"), ("Nineteenth-century", "nineteenth")] {
+            let dir = lib.join("shelves").join(id);
+            install(&packs.join(format!("{file}-{version}.sjpack")), &dir, &mut |_| {}, &mut noop, &mut noop).unwrap();
+            crate::db::attach_pack(&conn, id, &dir.join(LIBRARY_DB)).unwrap();
+        }
+        let added = crate::library::sync_all(&conn, &dirs(&["library", "fathers", "ancient", "nineteenth"])).unwrap();
+        println!("with the new shelves: {added:?}");
+        assert_eq!(added.retired, 0, "adding shelves retired books of the first pack");
+        assert!(is_installed(&lib), "the first pack is still installed");
+        // Citations read the new shelves and skip the old pack, which has none.
+        let hits = crate::db::queries::citations::for_passage(&conn, 40, 16, Some(18), &shelves_of(&conn), 500).unwrap();
+        println!("Matt 16:18 with the old pack: {} citations", hits.len());
+        assert!(hits.iter().all(|h| h.shelf != "library"));
+        assert!(!hits.is_empty());
+
+        // 3. The new Puritan pack over the old one: the shelves stay.
+        crate::db::detach_pack(&conn, "library").unwrap();
+        let outcome = install(&packs.join(format!("Sojourner-Library-{version}.sjpack")), &lib, &mut |_| {}, &mut noop, &mut noop).unwrap();
+        assert!(outcome.replaced);
+        crate::db::attach_pack(&conn, "library", &lib.join(LIBRARY_DB)).unwrap();
+        let replaced = crate::library::sync_all(&conn, &dirs(&["library", "fathers", "ancient", "nineteenth"])).unwrap();
+        println!("after replacing the first pack: {replaced:?}");
+        for id in ["fathers", "ancient", "nineteenth"] {
+            assert!(is_installed(&lib.join("shelves").join(id)), "{id} survived the Puritan pack's replacement");
+        }
+        let after: i64 = conn.query_row("SELECT COUNT(*) FROM resources WHERE library_key IS NOT NULL", [], |r| r.get(0)).unwrap();
+        assert_eq!(after, before + 58, "the first pack's books kept, the shelves' 58 added");
+        let same: String = conn.query_row("SELECT library_key FROM resources WHERE id = ?1", [res_id], |r| r.get(0)).unwrap();
+        assert_eq!(same, key, "a book's row, and what the reader wrote on it, is the same row");
+        let hits = crate::db::queries::citations::for_passage(&conn, 40, 16, Some(18), &shelves_of(&conn), 500).unwrap();
+        println!("Matt 16:18 after: {} citations", hits.len());
+        assert!(hits.iter().any(|h| h.shelf == "library"));
+        drop(conn);
+        let _ = std::fs::remove_dir_all(&app_data);
+    }
+
 }
