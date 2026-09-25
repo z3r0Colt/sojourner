@@ -133,7 +133,7 @@ function mapSpanByFraction(span: RedLetterSpan, refLength: number, targetText: s
  * verse.
  *
  * Several bundled translations don't punctuate dialogue at all (KJV, ASV,
- * Darby, Geneva, Tyndale, Webster's, Wycliffe, YLT, Douay-Rheims), so there
+ * Darby, Geneva, Tyndale, Webster's, YLT, Douay-Rheims), so there
  * are no quote marks in their text to find a span with. When `referenceVerses`
  * is supplied -- the same chapter in a translation that *does* use quotes,
  * e.g. WEB, the very source the red-letter ranges were derived from -- a

@@ -35,6 +35,7 @@ import type {
   PrayerEntryMode,
   PrayerListPerson,
   MemoryVerse,
+  MemoryPassage,
   MemoryMode,
   CatechismMemory,
   ReadingPlan,
@@ -501,7 +502,35 @@ export const api = {
     verseEnd: number,
     translationId: number | undefined,
     mode: MemoryMode,
-  ) => invoke<MemoryVerse>("create_memory_verse", { bookId, chapter, verseStart, verseEnd, translationId: translationId ?? null, mode }),
+    setName?: string | null,
+    askReference?: boolean,
+  ) =>
+    invoke<MemoryVerse>("create_memory_verse", {
+      bookId,
+      chapter,
+      verseStart,
+      verseEnd,
+      translationId: translationId ?? null,
+      mode,
+      setName: setName ?? null,
+      askReference: askReference ?? false,
+    }),
+  setMemoryVerseAskReference: (id: number, askReference: boolean) => invoke<void>("set_memory_verse_ask_reference", { id, askReference }),
+  createMemoryPassage: (input: {
+    bookId: number;
+    chapter: number;
+    verseStart: number;
+    verseEnd: number;
+    translationId: number | null;
+    chunkSize: number;
+    mode: MemoryMode;
+    setName: string | null;
+  }) => invoke<MemoryPassage>("create_memory_passage", input),
+  listMemoryPassages: () => invoke<MemoryPassage[]>("list_memory_passages"),
+  addNextMemoryPassagePart: (id: number) => invoke<boolean>("add_next_memory_passage_part", { id }),
+  deleteMemoryPassage: (id: number) => invoke<void>("delete_memory_passage", { id }),
+  /** When each review of either deck since `since` happened (RFC 3339). */
+  listMemoryReviewTimes: (since: string) => invoke<string[]>("list_memory_review_times", { since }),
   setMemoryVerseMode: (id: number, mode: MemoryMode) =>
     invoke<void>("set_memory_verse_mode", { id, mode }),
   setMemoryVerseTranslation: (id: number, translationId: number | null) =>

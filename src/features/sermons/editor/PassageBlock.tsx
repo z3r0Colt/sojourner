@@ -46,7 +46,10 @@ export function PassageBlock({ node, updateAttributes, deleteNode, editor }: Nod
   const { data: translations } = useTranslations();
   const [footnote, setFootnote] = useState<{ note: Footnote; x: number; y: number } | null>(null);
 
-  const pinned = node.attrs.translationId as number | null;
+  // A block pinned to a translation the app no longer carries (Wycliffe and
+  // the OEB left in 0.3.1) renders in the sermon's own, as if unpinned.
+  const pinnedAttr = node.attrs.translationId as number | null;
+  const pinned = pinnedAttr != null && translations && !translations.some((t) => t.id === pinnedAttr) ? null : pinnedAttr;
   const translationId = pinned ?? sermonTranslationId ?? readerTranslationId;
   const ref = passageRefOf(node.attrs);
   // The shared query already holds every block rendering in the sermon's own

@@ -211,7 +211,7 @@ export function ReadingPane() {
   // red_letter.rs), and it punctuates dialogue with quotes -- so it stands in
   // as a reference for sub-verse span position when the translation actually
   // being read doesn't use quotation marks at all (KJV, ASV, Darby, Geneva,
-  // Tyndale, Webster's, Wycliffe, YLT, Douay-Rheims). Skipped entirely for
+  // Tyndale, Webster's, YLT, Douay-Rheims). Skipped entirely for
   // WEB itself, since it needs no help locating its own quotes.
   const webTranslationId = translations?.find((t) => t.code === "WEB")?.id ?? null;
   const needsRedLetterReference = redLetterMode && webTranslationId != null && webTranslationId !== translationId;

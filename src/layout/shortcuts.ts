@@ -125,7 +125,7 @@ export const SHORTCUT_GROUPS: ShortcutGroup[] = [
   {
     title: "Memory practice",
     rows: [
-      { keys: ["Space"], label: "Reveal the hidden verse or answer (first-letter and blank-word modes)" },
+      { keys: ["Space"], label: "Reveal the hidden verse or answer (first-letter and blank-word modes), or where a verse is when the card asks" },
       { keys: ["Enter"], label: "Check what you typed (type-it mode; Shift+Enter adds a line)" },
       { keys: ["1"], label: "Grade the card: 1 Again, 2 Hard, 3 Good, 4 Easy" },
       { keys: ["Backspace"], label: "Back to the previous card" },

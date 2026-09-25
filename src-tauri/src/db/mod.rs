@@ -243,8 +243,35 @@ pub fn open(app_data_dir: &Path, content_db_path: &Path) -> anyhow::Result<Conne
          PRAGMA content.mmap_size = 268435456;
          PRAGMA content.temp_store = MEMORY;",
     );
+    forget_missing_translations(&conn);
 
     Ok(conn)
+}
+
+/// A translation can leave the app (Wycliffe and the Open English Bible did
+/// in 0.3.1), or a reader's own can be removed. What pointed at it -- a
+/// sermon, a memory card or passage, the reading position -- goes back to
+/// following the reader's translation (NULL) rather than asking for words
+/// that are no longer there. Highlights keep their id: their word positions
+/// only mean anything in the text they were made on, and they come back if
+/// it does. Best-effort, as a content.db still being built may not have its
+/// translations yet.
+pub fn forget_missing_translations(conn: &Connection) {
+    let has_any: bool = conn
+        .query_row("SELECT EXISTS(SELECT 1 FROM content.translations)", [], |r| r.get(0))
+        .unwrap_or(false);
+    if !has_any {
+        return;
+    }
+    for table in ["sermons", "memory_verses", "memory_passages", "reading_position"] {
+        let _ = conn.execute(
+            &format!(
+                "UPDATE main.{table} SET translation_id = NULL
+                 WHERE translation_id IS NOT NULL AND translation_id NOT IN (SELECT id FROM content.translations)"
+            ),
+            [],
+        );
+    }
 }
 
 /// Puts `html_text(x)` on the connection: the words of a rich-text body,
@@ -402,11 +429,11 @@ mod tests {
                 .map(|t| (t, conn.query_row(&format!("SELECT COUNT(*) FROM {t}"), [], |r| r.get(0)).unwrap_or(-1)))
                 .collect()
         }
-        let before = {
+        let (before, before_version) = {
             let raw = Connection::open(dir.join("user.db")).unwrap();
             let version: i64 = raw.query_row("PRAGMA user_version", [], |r| r.get(0)).unwrap();
             eprintln!("before: user_version={version}");
-            counts(&raw)
+            (counts(&raw), version)
         };
 
         let content_db_path = dir.join("content.db");
@@ -418,8 +445,10 @@ mod tests {
         eprintln!("after: user_version={version}\n{before:?}\n{after:?}");
         assert_eq!(before, after, "row counts changed across migration");
 
-        // The new column exists and every surviving row is live.
-        for t in ["notes", "chapter_notes", "prayer_entries"] {
+        // USER_MIGRATION_0011 added deleted_at: coming from before it, every
+        // surviving row is live. (A database already past it may well have
+        // something in the Trash.)
+        for t in ["notes", "chapter_notes", "prayer_entries"].into_iter().filter(|_| before_version < 11) {
             let deleted: i64 = conn.query_row(&format!("SELECT COUNT(*) FROM {t} WHERE deleted_at IS NOT NULL"), [], |r| r.get(0)).unwrap();
             assert_eq!(deleted, 0, "{t} should have no deleted rows right after migrating");
         }

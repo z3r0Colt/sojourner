@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, ArrowRight, BookOpen, Check, HandHeart, Maximize2, Minimize2, Minus, Music, Plus, ScrollText, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, BookOpen, Brain, Check, HandHeart, Maximize2, Minimize2, Minus, Music, Plus, ScrollText, X } from "lucide-react";
 import { useBooks, useCreatePrayerListPerson, usePassages } from "../../api/queries";
 import type { WestminsterSectionSummary } from "../../api/types";
 import { Button, IconButton } from "../../components/ui/Button";
@@ -11,13 +11,14 @@ import { openContent } from "../../workspace/openContent";
 import { refKey } from "../../lib/passage";
 import { MetricalPsalmPanel } from "../reading/MetricalPsalmPanel";
 import { ReadAloudButton } from "../tts/ReadAloudButton";
-import { TALK_QUESTIONS, logSummary } from "./familyWorship";
+import { TALK_QUESTIONS, logSummary, memoryHint, type FamilyMemory } from "./familyWorship";
+import { applyMemoryMode, memoryWords } from "../memory/memoryText";
 import { useFamilySession } from "./sessionStore";
 import { readingRefs, useCatechismQuestions, useFamilyWorship, type Tonight } from "./useFamilyWorship";
 
-type StepId = "read" | "sing" | "catechism" | "pray";
+type StepId = "read" | "sing" | "catechism" | "memorize" | "pray";
 
-const STEP_LABEL: Record<StepId, string> = { read: "Read", sing: "Sing", catechism: "Catechism", pray: "Pray" };
+const STEP_LABEL: Record<StepId, string> = { read: "Read", sing: "Sing", catechism: "Catechism", memorize: "Memorize", pray: "Pray" };
 
 /** The Lord's Prayer as Matthew 6:9-13 gives it (KJV), for a family that
  * does not yet know what to pray. */
@@ -33,11 +34,12 @@ const PRAYER_PROMPTS = [
   "Ask for what the family needs, and pray for the church and for the people below.",
 ];
 
-export function familySteps(tonight: Tonight | null, hasPlan: boolean, hasCatechism: boolean): StepId[] {
+export function familySteps(tonight: Tonight | null, hasPlan: boolean, hasCatechism: boolean, hasMemory = false): StepId[] {
   const steps: StepId[] = [];
   if (hasPlan) steps.push("read");
   if (tonight?.psalm != null) steps.push("sing");
   if (hasCatechism) steps.push("catechism");
+  if (hasMemory) steps.push("memorize");
   steps.push("pray");
   return steps;
 }
@@ -53,7 +55,7 @@ export function FamilySession({ large }: { large: boolean }) {
   const familyFontSize = useUiStore((s) => s.familyFontSize);
   const setFamilyFontSize = useUiStore((s) => s.setFamilyFontSize);
 
-  const steps = familySteps(tonight, !!state?.plan, !!state?.catechism);
+  const steps = familySteps(tonight, !!state?.plan, !!state?.catechism, !!state?.memory);
   const index = Math.min(session.step, steps.length - 1);
   const step = steps[index];
   const last = index === steps.length - 1;
@@ -175,6 +177,8 @@ export function FamilySession({ large }: { large: boolean }) {
             <SingStep psalm={tonight.psalm} large={large} fontSize={large ? familyFontSize : undefined} />
           ) : step === "catechism" ? (
             <CatechismStep tonight={tonight} />
+          ) : step === "memorize" && state.memory ? (
+            <MemorizeStep memory={state.memory} large={large} />
           ) : (
             <PrayStep tonight={tonight} prayerCategory={state.prayerCategory} />
           )}
@@ -349,6 +353,44 @@ function CatechismStep({ tonight }: { tonight: Tonight }) {
             ))}
           </div>
         </>
+      )}
+    </div>
+  );
+}
+
+/** The family's verse, said together: whole at first, then with words
+ * hidden a few more each time they gather (memoryHint), and "show the
+ * words" for when it will not come. */
+function MemorizeStep({ memory, large }: { memory: FamilyMemory; large: boolean }) {
+  const { data: books } = useBooks();
+  const typography = useReadingTypography(1);
+  const ref = { book_id: memory.bookId, chapter: memory.chapter, verse_start: memory.verseStart, verse_end: memory.verseEnd };
+  const { byKey } = usePassages([ref]);
+  const text = byKey.get(refKey(ref))?.verses.map((v) => memoryWords(v.text)).join(" ");
+  const hint = memoryHint(memory.times);
+  const [shown, setShown] = useState(hint === "full");
+  const name = books?.find((b) => b.id === memory.bookId)?.name ?? "";
+  const label = `${name} ${memory.chapter}:${memory.verseStart}${memory.verseEnd !== memory.verseStart ? `-${memory.verseEnd}` : ""}`;
+  return (
+    <div>
+      <StepHeading
+        icon={Brain}
+        kicker="Memorize"
+        title={label}
+        sub={
+          hint === "full"
+            ? "Read it together, then say it together. Each time you gather, a few more words are hidden."
+            : "Say it together. Only the first letters of some words are left; show the words if it will not come."
+        }
+      />
+      <div className="mb-[0.6em]">
+        <ReadAloudButton title={`Family worship: ${label}`} sourceKind="scripture" segments={text ? [{ id: "family-memory", text: `${label}. ${text}` }] : []} />
+      </div>
+      <p className="reading-font mb-[0.8em] text-ink" style={large ? { lineHeight: 1.55 } : typography}>
+        {text == null ? "Loading…" : shown || hint === "full" ? text : applyMemoryMode(text, hint)}
+      </p>
+      {hint !== "full" && (
+        <Button onClick={() => setShown((v) => !v)}>{shown ? "Hide the words again" : "Show the words"}</Button>
       )}
     </div>
   );

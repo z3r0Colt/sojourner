@@ -1,4 +1,4 @@
-use super::scripture_memory::compute_sm2;
+use super::scripture_memory::{compute_sm2, log_review};
 use crate::models::CatechismMemory;
 use rusqlite::{params, Connection};
 
@@ -68,5 +68,6 @@ pub fn review(conn: &Connection, id: i64, quality: i64) -> anyhow::Result<Catech
         "UPDATE catechism_memory SET ease_factor=?1, interval_days=?2, repetitions=?3, due_at=?4, last_reviewed_at=?5 WHERE id=?6",
         params![new_ease, new_interval, new_repetitions, due_at, now.to_rfc3339(), id],
     )?;
+    log_review(conn, "catechism", id, quality, &now.to_rfc3339())?;
     Ok(conn.query_row(&format!("SELECT {SELECT_COLS} FROM catechism_memory WHERE id = ?1"), params![id], map_row)?)
 }

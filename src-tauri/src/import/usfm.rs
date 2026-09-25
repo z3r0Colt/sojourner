@@ -647,10 +647,11 @@ pub fn import_dir(dir: &Path, conn: &mut Connection) -> anyhow::Result<ImportOut
         )?;
         id
     } else {
+        let id = crate::import::new_translation_id(&tx, &meta.code)?;
         tx.execute(
-            "INSERT INTO translations (code, name, language, source_path, source_format, imported_at, checksum,
+            "INSERT INTO translations (id, code, name, language, source_path, source_format, imported_at, checksum,
                                        license, credit, scope, script, direction)
-             VALUES (?1,?2,?3,?4,'usfm',?5,?6,?7,?8,?9,?10,?11)",
+             VALUES (?12,?1,?2,?3,?4,'usfm',?5,?6,?7,?8,?9,?10,?11)",
             params![
                 meta.code,
                 meta.name,
@@ -663,9 +664,10 @@ pub fn import_dir(dir: &Path, conn: &mut Connection) -> anyhow::Result<ImportOut
                 meta.scope,
                 meta.script.as_deref().unwrap_or("latin"),
                 meta.direction.as_deref().unwrap_or("ltr"),
+                id,
             ],
         )?;
-        tx.last_insert_rowid()
+        id
     };
 
     let chapter_counts: HashMap<i64, i64> = {

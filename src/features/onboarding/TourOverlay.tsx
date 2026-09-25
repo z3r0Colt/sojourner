@@ -22,6 +22,8 @@ interface Step {
   missing: string;
   /** This step points at a pane header, so a second pane must be open. */
   needsSecondPane?: boolean;
+  /** This step points into the Bible, so one must be open. */
+  needsBible?: boolean;
 }
 
 export const TOUR_STEPS: Step[] = [
@@ -44,6 +46,7 @@ export const TOUR_STEPS: Step[] = [
       </>
     ),
     missing: "Open the Bible to see this in place.",
+    needsBible: true,
   },
   {
     target: "add-pane",
@@ -54,6 +57,7 @@ export const TOUR_STEPS: Step[] = [
       </>
     ),
     missing: "The Add pane strip sits on the right edge of the Bible page.",
+    needsBible: true,
   },
   {
     target: "pane-header",
@@ -195,6 +199,14 @@ export function TourOverlay({ onFinish }: { onFinish: () => void }) {
     stop();
     onFinish();
   }
+
+  // A new install opens on Today, so the steps inside the Bible open one
+  // beside it -- at Genesis 1, and left open when the tour ends.
+  useEffect(() => {
+    if (!active || !current?.needsBible) return;
+    if (useWorkspaceStore.getState().panes.some((p) => p.kind === "bible")) return;
+    openContent("bible", { bookId: 1, chapter: 1 }, { target: "new" });
+  }, [active, current]);
 
   // The header step has nothing to point at on a fresh install's single
   // pane, so the tour opens a commentary pane beside the Bible for it.

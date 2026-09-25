@@ -716,6 +716,35 @@ pub struct MemoryVerse {
     pub created_at: String,
     pub westminster_section_id: Option<i64>,
     pub doctrinal_note: Option<String>,
+    /// The passage this card is a part of, if it was added as one.
+    pub passage_id: Option<i64>,
+    /// The named set it came in with: "The Romans Road", "Family".
+    pub set_name: Option<String>,
+    /// Also practised the other way round: shown the words, say where.
+    pub ask_reference: bool,
+}
+
+/// A passage learned a part at a time (USER_MIGRATION_0021), with how far
+/// along it is. Its parts are `MemoryVerse` cards; `parts` is how many it
+/// will have, `added` how many are in the deck, `learned` how many have
+/// been recalled twice running, and `whole_card_id` the card for saying it
+/// all through, once every part is learned.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MemoryPassage {
+    pub id: i64,
+    pub book_id: i64,
+    pub chapter: i64,
+    pub verse_start: i64,
+    pub verse_end: i64,
+    pub translation_id: Option<i64>,
+    pub chunk_size: i64,
+    pub mode: String,
+    pub set_name: Option<String>,
+    pub created_at: String,
+    pub parts: i64,
+    pub added: i64,
+    pub learned: i64,
+    pub whole_card_id: Option<i64>,
 }
 
 /// Catechism Study mode's spaced-repetition card: same shape and SM-2 state

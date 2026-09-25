@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { CalendarCheck, ChevronDown, ChevronRight, Layers, Pencil, Plus, Trash2 } from "lucide-react";
+import { Brain, CalendarCheck, ChevronDown, ChevronRight, Layers, Pencil, Plus, Trash2 } from "lucide-react";
+import { SeriesMemoryModal } from "./SeriesMemory";
 import {
   useBooks,
   useCreateSermonSeries,
@@ -101,6 +102,7 @@ function SeriesRow({
   const newSermon = useNewSermon();
   const [editing, setEditing] = useState(false);
   const [planning, setPlanning] = useState(false);
+  const [memorizing, setMemorizing] = useState(false);
 
   const inOrder = [...(sermons ?? [])].sort(
     (a, b) => (a.series_order ?? 999) - (b.series_order ?? 999) || (a.preach_date ?? "").localeCompare(b.preach_date ?? ""),
@@ -126,6 +128,9 @@ function SeriesRow({
         <span className="ml-auto flex shrink-0 items-center gap-0.5">
           <Button size="sm" variant="ghost" icon={CalendarCheck} onClick={() => setPlanning(true)}>
             {plan ? "Rebuild the reading plan" : "Make a reading plan"}
+          </Button>
+          <Button size="sm" variant="ghost" icon={Brain} onClick={() => setMemorizing(true)}>
+            Memory verses
           </Button>
           <IconButton icon={Pencil} label={`Rename “${series.title}”`} size="sm" onClick={() => setEditing(true)} />
           <IconButton
@@ -180,6 +185,7 @@ function SeriesRow({
       )}
 
       {planning && <SeriesPlanModal series={series} onClose={() => setPlanning(false)} />}
+      {memorizing && <SeriesMemoryModal series={series} onClose={() => setMemorizing(false)} />}
     </div>
   );
 }

@@ -2365,6 +2365,56 @@ CREATE TABLE resource_citation_scans (
 INSERT OR IGNORE INTO resource_citation_scans (resource_id) SELECT DISTINCT resource_id FROM resource_citations;
 "#;
 
+// Memory, grown up:
+//
+// - memory_passages: a psalm or a chapter learned a part at a time. Its
+//   parts are ordinary memory_verses rows carrying its id; the next part is
+//   added once the one before is learned, and the whole passage last, to
+//   say through. A card that was in the deck before is not taken over by a
+//   passage (it keeps passage_id NULL), and deleting a passage deletes its
+//   parts, which is why the reference is SET NULL rather than CASCADE:
+//   delete_passage removes them itself.
+// - set_name: a named set a card came in with ("The Romans Road",
+//   "Family", "Series: Romans"), to filter and practise by.
+// - ask_reference: also practise where the verse is -- shown the words,
+//   say the reference -- on alternate reviews of the same card.
+// - memory_reviews: one row per review, for either deck. Until now the only
+//   record was each card's last_reviewed_at, so a day's reviews vanished
+//   from the history as soon as those cards were reviewed again. Seeded
+//   with those last reviews, the one record there is of the past.
+pub const USER_MIGRATION_0021: &str = r#"
+CREATE TABLE memory_passages (
+  id             INTEGER PRIMARY KEY,
+  book_id        INTEGER NOT NULL,
+  chapter        INTEGER NOT NULL,
+  verse_start    INTEGER NOT NULL,
+  verse_end      INTEGER NOT NULL,
+  translation_id INTEGER,
+  chunk_size     INTEGER NOT NULL DEFAULT 2 CHECK(chunk_size BETWEEN 1 AND 8),
+  mode           TEXT NOT NULL DEFAULT 'first-letter' CHECK(mode IN ('first-letter','blank-word','type-it')),
+  set_name       TEXT,
+  created_at     TEXT NOT NULL
+);
+
+ALTER TABLE memory_verses ADD COLUMN passage_id INTEGER REFERENCES memory_passages(id) ON DELETE SET NULL;
+ALTER TABLE memory_verses ADD COLUMN set_name TEXT;
+ALTER TABLE memory_verses ADD COLUMN ask_reference INTEGER NOT NULL DEFAULT 0;
+CREATE INDEX idx_memory_verses_passage ON memory_verses(passage_id);
+
+CREATE TABLE memory_reviews (
+  id          INTEGER PRIMARY KEY,
+  deck        TEXT NOT NULL CHECK(deck IN ('scripture','catechism')),
+  card_id     INTEGER NOT NULL,
+  quality     INTEGER NOT NULL,
+  reviewed_at TEXT NOT NULL
+);
+CREATE INDEX idx_memory_reviews_at ON memory_reviews(reviewed_at);
+INSERT INTO memory_reviews (deck, card_id, quality, reviewed_at)
+  SELECT 'scripture', id, 4, last_reviewed_at FROM memory_verses WHERE last_reviewed_at IS NOT NULL;
+INSERT INTO memory_reviews (deck, card_id, quality, reviewed_at)
+  SELECT 'catechism', id, 4, last_reviewed_at FROM catechism_memory WHERE last_reviewed_at IS NOT NULL;
+"#;
+
 pub const USER_MIGRATIONS: &[&str] = &[
     USER_MIGRATION_0001,
     USER_MIGRATION_0002,
@@ -2386,4 +2436,5 @@ pub const USER_MIGRATIONS: &[&str] = &[
     USER_MIGRATION_0018,
     USER_MIGRATION_0019,
     USER_MIGRATION_0020,
+    USER_MIGRATION_0021,
 ];

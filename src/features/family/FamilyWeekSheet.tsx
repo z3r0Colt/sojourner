@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { useMetricalPsalm, useReadingPlanDays } from "../../api/queries";
+import { useBooks, useMetricalPsalm, usePassages, useReadingPlanDays } from "../../api/queries";
+import { refKey } from "../../lib/passage";
+import { memoryWords } from "../memory/memoryText";
 import { STARTER_PLAN, STARTER_TITLES, TALK_QUESTIONS, upcomingDays, upcomingQuestions } from "./familyWorship";
 import { useCatechismQuestions, useFamilyWorship } from "./useFamilyWorship";
 
@@ -31,6 +33,15 @@ export function FamilyWeekSheet({ onDone }: { onDone: () => void }) {
   const full = useCatechismQuestions(ids);
 
   const dayNumbers = state ? upcomingDays(state, tonight?.plan?.length_days, 7) : [];
+  // The verse being learned, whole: the sheet is for learning from.
+  const memory = state?.memory ?? null;
+  const memoryRef = memory ? [{ book_id: memory.bookId, chapter: memory.chapter, verse_start: memory.verseStart, verse_end: memory.verseEnd }] : [];
+  const { byKey: memoryPassage } = usePassages(memoryRef);
+  const { data: books } = useBooks();
+  const memoryText = memoryRef[0] ? memoryPassage.get(refKey(memoryRef[0]))?.verses.map((v) => memoryWords(v.text)).join(" ") : undefined;
+  const memoryLabel = memory
+    ? `${books?.find((b) => b.id === memory.bookId)?.name ?? ""} ${memory.chapter}:${memory.verseStart}${memory.verseEnd !== memory.verseStart ? `-${memory.verseEnd}` : ""}`
+    : "";
   // A catechism or plan missing from an older content.db never loads; print
   // what there is rather than wait for it forever.
   const [waited, setWaited] = useState(false);
@@ -43,6 +54,7 @@ export function FamilyWeekSheet({ onDone }: { onDone: () => void }) {
     (!!state &&
     (!state.plan || days != null) &&
     (psalmNumber == null || psalmVersions != null) &&
+    (!memory || memoryText != null) &&
     (!state.catechism || (questions != null && full.size === ids.length)));
 
   useEffect(() => {
@@ -135,6 +147,13 @@ export function FamilyWeekSheet({ onDone }: { onDone: () => void }) {
                 </div>
               );
             })}
+          </section>
+        )}
+
+        {memory && (
+          <section style={{ breakInside: "avoid" }}>
+            <h2 style={h2}>Memorize · {memoryLabel}</h2>
+            <p style={{ margin: 0 }}>{memoryText ?? ""}</p>
           </section>
         )}
 

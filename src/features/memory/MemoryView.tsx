@@ -1,57 +1,62 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Brain, Flame, Play, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Brain, MapPin, Play, Plus, Trash2 } from "lucide-react";
+import { MemoryPracticeCard } from "./MemoryPracticeCard";
+import { MemoryModeSelect } from "./MemoryModeSelect";
+import { TranslationPick } from "./TranslationPick";
+import { MemorySetsPanel } from "./MemorySetsPanel";
+import { PassageList } from "./PassageList";
+import { ListenToCards } from "./ListenToCards";
+import { useAddToMemory } from "./useAddToMemory";
+import { daysPractised, reviewDays } from "./memorySets";
+import { Button, IconButton } from "../../components/ui/Button";
+import { DayGrid } from "../../components/ui/DayGrid";
+import { EmptyState } from "../../components/ui/EmptyState";
+import { cardClass, checkboxClass, cx, inputClass, selectClass } from "../../components/ui/classes";
+import { confirmDelete } from "../../components/ui/confirm";
+import { toast } from "../../components/ui/toast";
+import { useReaderTranslationId } from "../../state/workspaceStore";
+import type { MemoryMode, MemoryVerse } from "../../api/types";
 import {
   useBooks,
   useMemoryVerses,
   useDueMemoryVerses,
-  useCreateMemoryVerse,
+  useMemoryPassages,
+  useMemoryReviewTimes,
   useSetMemoryVerseMode,
   useSetMemoryVerseTranslation,
+  useSetMemoryVerseAskReference,
   useDeleteMemoryVerse,
   useSetMemoryVerseDoctrinalLink,
   useTranslations,
 } from "../../api/queries";
-import { useReaderTranslationId } from "../../state/workspaceStore";
-import { parseReference, useBookLookup } from "../../hooks/useReferenceParser";
-import { MemoryPracticeCard } from "./MemoryPracticeCard";
-import { MemoryModeSelect } from "./MemoryModeSelect";
-import { TranslationPick } from "./TranslationPick";
-import type { MemoryMode, MemoryVerse } from "../../api/types";
-import { Button, IconButton } from "../../components/ui/Button";
-import { EmptyState } from "../../components/ui/EmptyState";
-import { confirmDelete } from "../../components/ui/confirm";
-import { toast } from "../../components/ui/toast";
-import { cardClass, cx, inputClass, selectClass } from "../../components/ui/classes";
 
-/** Counts consecutive calendar days with at least one review, working
- * backward from today (a day is still "current" if the streak's last day
- * was yesterday -- it isn't broken until a full day passes with no review). */
-function computeStreak(reviewDates: string[]): number {
-  const days = new Set(reviewDates.map((d) => new Date(d).toDateString()));
-  if (days.size === 0) return 0;
-  let streak = 0;
-  const cursor = new Date();
-  if (!days.has(cursor.toDateString())) {
-    cursor.setDate(cursor.getDate() - 1);
-    if (!days.has(cursor.toDateString())) return 0;
-  }
-  while (days.has(cursor.toDateString())) {
-    streak++;
-    cursor.setDate(cursor.getDate() - 1);
-  }
-  return streak;
+/** How to learn a new reference: decided by its length, all at once, or in
+ * parts of so many verses. */
+type LearnAs = "auto" | "whole" | "1" | "2" | "3" | "4";
+
+/** "No set", as a filter. */
+const NO_SET = "\u0000";
+
+/** Where the review calendar starts: far enough back for five weeks. */
+function calendarSince(): string {
+  const d = new Date();
+  d.setDate(d.getDate() - 40);
+  return d.toISOString();
 }
 
 export function MemoryView() {
   const { data: books } = useBooks();
   const { data: all } = useMemoryVerses();
   const { data: due } = useDueMemoryVerses();
-  const createVerse = useCreateMemoryVerse();
+  const { data: passages } = useMemoryPassages();
+  const [since] = useState(calendarSince);
+  const { data: reviewTimes } = useMemoryReviewTimes(since);
   const setMode = useSetMemoryVerseMode();
   const deleteVerse = useDeleteMemoryVerse();
   const setDoctrinalLink = useSetMemoryVerseDoctrinalLink();
   const setTranslation = useSetMemoryVerseTranslation();
-  const lookup = useBookLookup();
+  const setAskReference = useSetMemoryVerseAskReference();
+  const addToMemory = useAddToMemory();
   const { data: translations } = useTranslations();
   const readerTranslationId = useReaderTranslationId();
 
@@ -61,6 +66,8 @@ export function MemoryView() {
   const [sessionSet, setSessionSet] = useState<MemoryVerse[]>([]);
   const [reference, setReference] = useState("");
   const [newMode, setNewMode] = useState<MemoryMode>("first-letter");
+  const [learnAs, setLearnAs] = useState<LearnAs>("auto");
+  const [askWhere, setAskWhere] = useState(false);
   // The translation a new card is learned in. Starts on the one being
   // read, and follows it until the reader picks one here by hand.
   const [newTranslationId, setNewTranslationId] = useState<number | null>(readerTranslationId);
@@ -69,28 +76,34 @@ export function MemoryView() {
     if (!translationTouched) setNewTranslationId(readerTranslationId);
   }, [readerTranslationId, translationTouched]);
   const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState<string | null>(null);
 
-  const streak = useMemo(
-    () => computeStreak((all ?? []).map((v) => v.last_reviewed_at).filter((d): d is string => d != null)),
-    [all],
-  );
+  const log = useMemo(() => reviewDays(reviewTimes ?? []), [reviewTimes]);
+  const practisedDays = daysPractised(log, 30);
   const mastered = (all ?? []).filter((v) => v.repetitions >= 5).length;
+
+  // The sets in the deck, from its cards and its passages.
+  const setNames = useMemo(() => {
+    const names = new Set<string>();
+    for (const c of all ?? []) if (c.set_name) names.add(c.set_name);
+    for (const p of passages ?? []) if (p.set_name) names.add(p.set_name);
+    return names;
+  }, [all, passages]);
+  const hasUnset = (all ?? []).some((c) => !c.set_name);
+  const inFilter = (setName: string | null) => filter == null || (filter === NO_SET ? !setName : setName === filter);
+  const shownPassages = (passages ?? []).filter((p) => inFilter(p.set_name));
+  // A passage's parts are listed under it, not again among the cards.
+  const shownCards = (all ?? []).filter((c) => c.passage_id == null && inFilter(c.set_name));
+  const dueHere = (due ?? []).filter((c) => inFilter(c.set_name));
 
   function bookName(id: number) {
     return books?.find((b) => b.id === id)?.name ?? `#${id}`;
   }
 
-  function startPractice() {
-    if (!due || due.length === 0) return;
-    setSessionSet(due);
-    setQueue(due);
-    setHistory([]);
-    setPracticing(true);
-  }
-
-  function practiceOne(v: MemoryVerse) {
-    setSessionSet([v]);
-    setQueue([v]);
+  function practise(cards: MemoryVerse[]) {
+    if (cards.length === 0) return;
+    setSessionSet(cards);
+    setQueue(cards);
     setHistory([]);
     setPracticing(true);
   }
@@ -118,30 +131,22 @@ export function MemoryView() {
     setHistory([]);
   }
 
-  function addVerse() {
+  async function addVerse() {
     setError(null);
-    const parsed = parseReference(reference, lookup);
-    if (!parsed) {
-      setError("Couldn't read that reference. Try something like “Philippians 4:6-7”.");
+    const result = await addToMemory(reference, {
+      translationId: newTranslationId,
+      mode: newMode,
+      askReference: askWhere,
+      asPassage: learnAs === "auto" ? undefined : learnAs !== "whole",
+      chunkSize: learnAs === "auto" || learnAs === "whole" ? undefined : Number(learnAs),
+      setName: filter && filter !== NO_SET ? filter : null,
+    });
+    if (!result.ok) {
+      setError(result.error === "Couldn't read that reference." ? "Couldn't read that reference. Try something like “Philippians 4:6-7” or “Psalm 23”." : result.error);
       return;
     }
-    createVerse.mutate(
-      {
-        bookId: parsed.book.id,
-        chapter: parsed.chapter,
-        verseStart: parsed.verse ?? 1,
-        verseEnd: parsed.verseEnd ?? parsed.verse ?? 1,
-        translationId: newTranslationId ?? undefined,
-        mode: newMode,
-      },
-      {
-        onSuccess: () => {
-          const code = translations?.find((t) => t.id === newTranslationId)?.code;
-          toast.success(`Added ${parsed.book.name} ${parsed.chapter}:${parsed.verse ?? 1}${code ? ` (${code})` : ""}`);
-        },
-        onError: (e) => setError(e instanceof Error ? e.message : String(e)),
-      },
-    );
+    const code = translations?.find((t) => t.id === newTranslationId)?.code;
+    toast.success(`Added ${result.label}${code ? ` (${code})` : ""}${result.passage ? ", a part at a time" : ""}`);
     setReference("");
   }
 
@@ -171,7 +176,7 @@ export function MemoryView() {
       <div className="py-10 text-center">
         <h2 className="mb-2 text-xl font-semibold text-ink">Session complete</h2>
         <p className="mb-6 text-sm text-ink-3">
-          You reviewed {sessionSet.length} verse{sessionSet.length === 1 ? "" : "s"}.
+          You reviewed {sessionSet.length} card{sessionSet.length === 1 ? "" : "s"}.
         </p>
         <div className="flex justify-center gap-2">
           <Button variant="primary" onClick={replaySession}>
@@ -183,36 +188,37 @@ export function MemoryView() {
     );
   }
 
-  const hasAny = (all?.length ?? 0) > 0;
+  const hasAny = (all?.length ?? 0) > 0 || (passages?.length ?? 0) > 0;
 
   return (
     <div>
       {hasAny && (
-        <div className="mb-5 grid grid-cols-3 gap-3">
-          {[
-            { value: streak, label: "day streak", icon: streak > 0 ? Flame : undefined },
-            { value: all?.length ?? 0, label: "verses in your deck" },
-            { value: mastered, label: "mastered (5+ reviews)" },
-          ].map((s) => (
-            <div key={s.label} className="rounded-lg border border-line bg-surface p-3 text-center">
-              <div className="flex items-center justify-center gap-1 text-2xl font-semibold text-ink">
-                {s.icon && <s.icon className="h-5 w-5 text-amber-500" aria-hidden="true" />}
-                {s.value}
+        <div className="mb-5 flex flex-wrap items-start gap-4">
+          <div className="grid min-w-64 flex-1 grid-cols-3 gap-3">
+            {[
+              { value: practisedDays, label: "days practised in the last 30" },
+              { value: all?.length ?? 0, label: "cards in your deck" },
+              { value: mastered, label: "mastered (5+ reviews)" },
+            ].map((s) => (
+              <div key={s.label} className="rounded-lg border border-line bg-surface p-3 text-center">
+                <div className="text-2xl font-semibold text-ink">{s.value}</div>
+                <div className="text-xs text-ink-3">{s.label}</div>
               </div>
-              <div className="text-xs text-ink-3">{s.label}</div>
-            </div>
-          ))}
+            ))}
+          </div>
+          {/* A calendar, not a streak: a missed day is just a day. */}
+          <DayGrid log={log} label="Days you practised, the last five weeks" did="practised" />
         </div>
       )}
 
       <div className="mb-5 flex flex-wrap items-end gap-2 rounded-lg border border-line bg-surface-2 p-3">
         <label className="min-w-48 flex-1">
-          <span className="mb-1 block text-xs font-medium text-ink-3">Add a verse or passage</span>
+          <span className="mb-1 block text-xs font-medium text-ink-3">Add a verse, a passage, or a whole psalm</span>
           <input
             value={reference}
             onChange={(e) => setReference(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && addVerse()}
-            placeholder="e.g. Philippians 4:6-7"
+            onKeyDown={(e) => e.key === "Enter" && void addVerse()}
+            placeholder="e.g. Philippians 4:6-7, or Psalm 23"
             className={cx(inputClass, "w-full")}
           />
         </label>
@@ -239,17 +245,61 @@ export function MemoryView() {
           <span className="mb-1 block text-xs font-medium text-ink-3">Practice mode</span>
           <MemoryModeSelect value={newMode} onChange={setNewMode} />
         </label>
-        <Button variant="primary" icon={Plus} onClick={addVerse}>
+        <label>
+          <span className="mb-1 block text-xs font-medium text-ink-3">Learn it</span>
+          <select value={learnAs} onChange={(e) => setLearnAs(e.target.value as LearnAs)} className={selectClass} aria-label="How to learn it">
+            <option value="auto">As suits its length</option>
+            <option value="whole">All at once</option>
+            <option value="1">A verse at a time</option>
+            <option value="2">Two verses at a time</option>
+            <option value="3">Three verses at a time</option>
+            <option value="4">Four verses at a time</option>
+          </select>
+        </label>
+        <Button variant="primary" icon={Plus} onClick={() => void addVerse()}>
           Add
         </Button>
-        <p className="w-full text-xs text-ink-4">The words you learn are the words of that translation. "Reader's translation" follows whichever Bible you have open.</p>
+        <label className="flex w-full items-center gap-2 text-xs text-ink-2">
+          <input type="checkbox" className={checkboxClass} checked={askWhere} onChange={(e) => setAskWhere(e.target.checked)} />
+          Also practise where it is: every other time, see the words and say the reference
+        </label>
+        <p className="w-full text-xs text-ink-4">
+          The words you learn are the words of that translation. Four verses or more, or a whole chapter, are learned a part at a time: the next part comes
+          once you have the one before, and the whole passage last.
+        </p>
         {error && <p className="w-full text-sm text-danger">{error}</p>}
       </div>
 
+      <MemorySetsPanel setsInDeck={setNames} translationId={newTranslationId} deckEmpty={all == null || passages == null ? null : !hasAny} />
+
+      {hasAny && (setNames.size > 0 || filter != null) && (
+        <div className="mb-3 flex flex-wrap items-center gap-1.5" role="group" aria-label="Show a set">
+          {[
+            { key: null as string | null, label: "Everything" },
+            ...[...setNames].sort().map((n) => ({ key: n as string | null, label: n })),
+            ...(hasUnset ? [{ key: NO_SET as string | null, label: "Not in a set" }] : []),
+          ].map((f) => (
+            <button
+              key={f.label}
+              type="button"
+              aria-pressed={filter === f.key}
+              onClick={() => setFilter(f.key)}
+              className={cx(
+                "rounded-full border px-2.5 py-0.5 text-xs",
+                filter === f.key ? "border-accent bg-accent-soft text-accent" : "border-line text-ink-2 hover:bg-hover",
+              )}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+      )}
+
       {hasAny && (
-        <div className="mb-3 flex items-center justify-between">
-          <p className="text-sm text-ink-3">{due && due.length > 0 ? `${due.length} due for review today` : "Nothing due today"}</p>
-          <Button variant="primary" icon={Play} onClick={startPractice} disabled={!due || due.length === 0}>
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <p className="mr-auto text-sm text-ink-3">{dueHere.length > 0 ? `${dueHere.length} due for review today` : "Nothing due today"}</p>
+          {dueHere.length > 0 && <ListenToCards cards={dueHere} title="Memory: what's due" />}
+          <Button variant="primary" icon={Play} onClick={() => practise(dueHere)} disabled={dueHere.length === 0}>
             Practice what's due
           </Button>
         </div>
@@ -259,12 +309,14 @@ export function MemoryView() {
         <EmptyState
           icon={Brain}
           title="Nothing to memorize yet"
-          description="Add a reference above, or right-click any verse while reading and choose “Add to Scripture memory”. Verses come due on a schedule that spaces out as you get them right."
+          description="Add a reference above, pick a ready-made set, or right-click any verse while reading and choose “Add to Scripture memory”. Verses come due on a schedule that spaces out as you get them right."
         />
       )}
 
+      <PassageList passages={shownPassages} cards={all ?? []} onPractise={practise} />
+
       <ul className="space-y-2">
-        {all?.map((v) => (
+        {shownCards.map((v) => (
           <li key={v.id} className={cardClass}>
             <div className="flex flex-wrap items-center gap-2">
               <div className="min-w-0 flex-1">
@@ -272,9 +324,12 @@ export function MemoryView() {
                   {bookName(v.book_id)} {v.chapter}:{v.verse_start}
                   {v.verse_end !== v.verse_start ? `-${v.verse_end}` : ""}
                 </span>
-                <span className="ml-2 text-xs text-ink-3">
-                  due {new Date(v.due_at).toLocaleDateString()} · {v.repetitions} review{v.repetitions === 1 ? "" : "s"}
-                </span>
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-ink-3">
+                  {v.set_name && <span className="whitespace-nowrap rounded-full bg-surface-2 px-2 py-0.5">{v.set_name}</span>}
+                  <span>
+                    due {new Date(v.due_at).toLocaleDateString()} · {v.repetitions} review{v.repetitions === 1 ? "" : "s"}
+                  </span>
+                </div>
               </div>
               <TranslationPick
                 value={v.translation_id}
@@ -282,10 +337,23 @@ export function MemoryView() {
                   setTranslation.mutate({ id: v.id, translationId }, { onError: (e) => toast.error(e instanceof Error ? e.message : String(e)) })
                 }
               />
-              <Button size="sm" variant="secondary" icon={Play} onClick={() => practiceOne(v)}>
+              <Button size="sm" variant="secondary" icon={Play} onClick={() => practise([v])}>
                 Practice
               </Button>
               <MemoryModeSelect small value={v.mode} onChange={(mode) => setMode.mutate({ id: v.id, mode })} />
+              <button
+                type="button"
+                aria-pressed={v.ask_reference}
+                onClick={() => setAskReference.mutate({ id: v.id, askReference: !v.ask_reference })}
+                title={v.ask_reference ? "Also practising where it is: click to stop" : "Also practise where it is: every other time, see the words and say the reference"}
+                className={cx(
+                  "inline-flex h-7 items-center gap-1 rounded-md border px-2 text-xs",
+                  v.ask_reference ? "border-accent bg-accent-soft text-accent" : "border-line text-ink-3 hover:bg-hover",
+                )}
+              >
+                <MapPin className="h-3.5 w-3.5" aria-hidden="true" />
+                Where
+              </button>
               <IconButton
                 icon={Trash2}
                 label="Remove from deck"

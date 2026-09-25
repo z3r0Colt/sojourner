@@ -500,6 +500,15 @@ function legacyUiPrefs(): Record<string, unknown> {
 
 function defaultWorkspace(): { panes: Pane[]; focusedPaneId: string; tree: LayoutNode } {
   const prefs = legacyUiPrefs();
+  // A new install opens on Today, the page that says where to begin; the
+  // first Bible pane comes with the first reference opened (or the tour's
+  // verse step). An upgrade from before workspaces keeps the Bible it had.
+  if (Object.keys(prefs).length === 0) {
+    // In group A, as the Bible pane was: the Bible it becomes on "Continue"
+    // leads the study panes opened beside it.
+    const today: Pane = { id: newId(), kind: "today", params: {}, linkGroup: "A", history: [], future: [] } as Pane;
+    return { panes: [today], focusedPaneId: today.id, tree: treeFromTemplate(defaultLayoutFor(1), [{ id: today.id, width: 1000 }]) };
+  }
   const bible: Pane = {
     id: newId(),
     kind: "bible",

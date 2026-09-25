@@ -14,6 +14,7 @@ import {
 import { useReadingTypography } from "../../state/uiStore";
 import { applyMemoryMode, diffTyped, diffAccuracy } from "./memoryText";
 import { MemoryModeSelect } from "./MemoryModeSelect";
+import { AddProofTexts } from "./AddProofTexts";
 import { GradeButtons } from "./GradeButtons";
 import { usePracticeKeys } from "./practiceKeys";
 import type { CatechismMemory, MemoryMode } from "../../api/types";
@@ -165,8 +166,9 @@ export function CatechismMemoryView() {
       </div>
 
       {hasAny && (
-        <div className="mb-3 flex items-center justify-between">
-          <p className="text-sm text-ink-3">{due && due.length > 0 ? `${due.length} due for review today` : "Nothing due today"}</p>
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <p className="mr-auto text-sm text-ink-3">{due && due.length > 0 ? `${due.length} due for review today` : "Nothing due today"}</p>
+          <AddProofTexts cards={all ?? []} />
           <Button variant="primary" icon={Play} onClick={startPractice} disabled={!due || due.length === 0}>
             Practice what's due
           </Button>

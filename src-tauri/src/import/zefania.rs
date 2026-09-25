@@ -68,12 +68,13 @@ impl BibleImporter for ZefaniaImporter {
             tx.execute("DELETE FROM verses WHERE translation_id = ?1", params![id])?;
             id
         } else {
+            let id = super::new_translation_id(&tx, &parsed.code)?;
             tx.execute(
-                "INSERT INTO translations (code, name, language, source_path, source_format, imported_at, checksum)
-                 VALUES (?1,?2,?3,?4,'zefania',?5,?6)",
-                params![parsed.code, parsed.name, parsed.language, path.display().to_string(), now, new_checksum],
+                "INSERT INTO translations (id, code, name, language, source_path, source_format, imported_at, checksum)
+                 VALUES (?7,?1,?2,?3,?4,'zefania',?5,?6)",
+                params![parsed.code, parsed.name, parsed.language, path.display().to_string(), now, new_checksum, id],
             )?;
-            tx.last_insert_rowid()
+            id
         };
 
         let mut skipped_unknown_book = 0usize;
@@ -273,13 +274,22 @@ fn derive_code_and_name(biblename_attr: &str, info_title: Option<&str>, filename
         ""
     };
 
-    let name = if !info_title.unwrap_or("").is_empty() {
-        info_title.unwrap().to_string()
+    // A title that is only an abbreviation or a single word ("YLT",
+    // "Webster") names the translation less well than a file called "Young's
+    // Literal Translation (1898)": the file's name, then, when it has more
+    // to say.
+    let title = info_title.unwrap_or("").trim();
+    let bare_title = !title.contains(' ') && filename_stem.trim().contains(' ');
+    let name = if !title.is_empty() && !bare_title {
+        title.to_string()
     } else if !filename_stem.is_empty() {
         filename_stem.to_string()
     } else {
         biblename_attr.to_string()
     };
+
+    // A slip in a bundled file's own title ("Willam Tyndale Bible").
+    let name = name.replace("Willam ", "William ");
 
     let code = if !code.is_empty() {
         code.to_string()
@@ -483,4 +493,21 @@ fn parse_zefania_file(path: &Path) -> anyhow::Result<ParsedBible> {
         book_aliases,
         placeholder_skipped,
     })
+}
+
+#[cfg(test)]
+mod name_tests {
+    use super::derive_code_and_name;
+
+    #[test]
+    fn a_bare_title_gives_way_to_the_files_fuller_name() {
+        assert_eq!(
+            derive_code_and_name("YLT", Some("YLT"), "Young's Literal Translation (1898)"),
+            ("YLT".to_string(), "Young's Literal Translation (1898)".to_string())
+        );
+        assert_eq!(derive_code_and_name("WBS", Some("Webster"), "Webster's Bible (1833)").1, "Webster's Bible (1833)");
+        // A real title is kept.
+        assert_eq!(derive_code_and_name("DBY", Some("Darby Bible"), "Darby Bible (1890)").1, "Darby Bible");
+        assert_eq!(derive_code_and_name("TYN", Some("Willam Tyndale Bible"), "Tyndale Bible").1, "William Tyndale Bible");
+    }
 }

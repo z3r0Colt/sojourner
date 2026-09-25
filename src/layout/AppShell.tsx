@@ -40,6 +40,15 @@ export function AppShell() {
   const translationsQuery = useTranslations();
   const books = booksQuery.data;
   const translations = translationsQuery.data;
+  // "The reader's translation" is the one last read in. A new install opens
+  // on Today, with no Bible yet to have chosen one, so choose as the Bible
+  // would -- the KJV, or the first -- for everything that follows it (Today's
+  // verse, a memory card, a family reading) until a Bible is opened.
+  useEffect(() => {
+    if (!translations?.length || useWorkspaceStore.getState().lastTranslationId != null) return;
+    const preferred = translations.find((t) => t.code === "KJV") ?? translations[0];
+    useWorkspaceStore.getState().setLastTranslation(preferred.id);
+  }, [translations]);
   const { data: bookmarks } = useBookmarks();
   const createBookmark = useCreateBookmark();
   const deleteBookmark = useDeleteBookmark();

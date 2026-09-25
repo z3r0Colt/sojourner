@@ -254,3 +254,74 @@ fn refuse_licensed_translations(conn: &Connection) -> anyhow::Result<()> {
     );
     Ok(())
 }
+
+/// The id each bundled translation has always had. A reader's memory cards,
+/// sermons, reading position and open Bibles keep translation ids in user.db
+/// and the workspace, so a rebuilt content.db must give every translation
+/// the id it had before -- ids handed out in import order would renumber
+/// every translation after one that was added or taken away. Ids of
+/// translations no longer shipped are retired, never reused: 9 was
+/// Wycliffe, 14 the Open English Bible. A new bundled translation takes the
+/// next unused number below 1000.
+const TRANSLATION_IDS: &[(&str, i64)] = &[
+    ("ASV", 1),
+    ("DBY", 2),
+    ("DRA", 3),
+    ("GNV", 4),
+    ("KJV", 5),
+    ("TYN", 6),
+    ("WBS", 7),
+    ("WEB", 8),
+    ("YLT", 10),
+    ("BSB", 11),
+    ("LSV", 12),
+    ("LXX", 13),
+    ("ULT", 15),
+    ("UST", 16),
+    ("VUL", 17),
+    ("WLC", 18),
+    ("TR", 19),
+    ("BYZ", 20),
+    ("WH", 21),
+    ("TREG", 22),
+    ("SBLGNT", 23),
+];
+
+/// Translations a reader adds themselves are numbered from here up, clear of
+/// every bundled one.
+const FIRST_READER_TRANSLATION_ID: i64 = 1000;
+
+/// The id a new translations row takes: its bundled id when it has one and
+/// that id is free, else the next id from FIRST_READER_TRANSLATION_ID up (a
+/// reader's own copy of the KJV, say, beside the bundled one).
+pub(crate) fn new_translation_id(conn: &rusqlite::Connection, code: &str) -> anyhow::Result<i64> {
+    if let Some(&(_, id)) = TRANSLATION_IDS.iter().find(|(c, _)| *c == code) {
+        let taken: bool = conn.query_row("SELECT EXISTS(SELECT 1 FROM translations WHERE id = ?1)", [id], |r| r.get(0))?;
+        if !taken {
+            return Ok(id);
+        }
+    }
+    let max: i64 = conn.query_row("SELECT COALESCE(MAX(id), 0) FROM translations", [], |r| r.get(0))?;
+    Ok(max.max(FIRST_READER_TRANSLATION_ID - 1) + 1)
+}
+
+#[cfg(test)]
+mod translation_id_tests {
+    use super::new_translation_id;
+    use rusqlite::Connection;
+
+    #[test]
+    fn a_bundled_translation_keeps_its_id_and_a_readers_own_is_numbered_apart() {
+        let conn = Connection::open_in_memory().unwrap();
+        conn.execute_batch("CREATE TABLE translations (id INTEGER PRIMARY KEY, code TEXT);").unwrap();
+        assert_eq!(new_translation_id(&conn, "YLT").unwrap(), 10);
+        conn.execute("INSERT INTO translations (id, code) VALUES (5, 'KJV')", []).unwrap();
+        // A reader's own KJV beside the bundled one, and a translation the
+        // app never shipped, both go from 1000 up.
+        assert_eq!(new_translation_id(&conn, "KJV").unwrap(), 1000);
+        conn.execute("INSERT INTO translations (id, code) VALUES (1000, 'KJV')", []).unwrap();
+        assert_eq!(new_translation_id(&conn, "NASB").unwrap(), 1001);
+        // Retired ids are never handed out again.
+        assert_eq!(new_translation_id(&conn, "WYC").unwrap(), 1001);
+    }
+}

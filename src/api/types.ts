@@ -300,6 +300,32 @@ export interface MemoryVerse {
   created_at: string;
   westminster_section_id: number | null;
   doctrinal_note: string | null;
+  /** The passage this card is a part of, if it was added as one. */
+  passage_id: number | null;
+  /** The named set it came in with: "The Romans Road", "Family". */
+  set_name: string | null;
+  /** Also practised the other way round: shown the words, say where. */
+  ask_reference: boolean;
+}
+
+/** A passage learned a part at a time; its parts are MemoryVerse cards. */
+export interface MemoryPassage {
+  id: number;
+  book_id: number;
+  chapter: number;
+  verse_start: number;
+  verse_end: number;
+  translation_id: number | null;
+  chunk_size: number;
+  mode: MemoryMode;
+  set_name: string | null;
+  created_at: string;
+  /** How many parts it has, how many are in the deck, how many learned. */
+  parts: number;
+  added: number;
+  learned: number;
+  /** The card for saying it all through, once every part is learned. */
+  whole_card_id: number | null;
 }
 
 export interface CatechismMemory {

@@ -47,15 +47,6 @@ const SOURCES = [
     url: "https://ebible.org/Scriptures/englsv_usfm.zip",
   },
   {
-    code: "OEB",
-    name: "Open English Bible",
-    year: 2023,
-    license: "Public domain",
-    credit: "Open English Bible, U.S. spelling edition, by OpenEnglishBible.org. Public domain.",
-    url: "https://ebible.org/Scriptures/engoebus_usfm.zip",
-    scope: "New Testament and part of the Old",
-  },
-  {
     code: "ULT",
     name: "Literal Text (ULT)",
     year: 2022,

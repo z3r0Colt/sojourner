@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
-import { BookOpen, HandHeart, HouseHeart, Maximize2, Music, Play, Printer, ScrollText } from "lucide-react";
+import { BookOpen, Brain, HandHeart, HouseHeart, Maximize2, Music, Play, Printer, ScrollText } from "lucide-react";
 import { useBooks, usePrayerListPeople, useReadingPlanDays, useReadingPlans } from "../../api/queries";
 import { Page } from "../../components/ui/Page";
 import { Button } from "../../components/ui/Button";
@@ -10,9 +10,16 @@ import { openContent, openPassage, targetFor } from "../../workspace/openContent
 import { ReadingRefs } from "../plans/ReadingPlansView";
 import { FamilySession } from "./FamilySession";
 import { FamilyWeekSheet } from "./FamilyWeekSheet";
+import { DayGrid } from "../../components/ui/DayGrid";
 import { FamilyGuide, FurtherReading } from "./FamilyGuide";
 import { useFamilySession } from "./sessionStore";
 import { useFamilyWorship } from "./useFamilyWorship";
+import { toast } from "../../components/ui/toast";
+import { parseReference, useBookLookup } from "../../hooks/useReferenceParser";
+import { MEMORY_SETS } from "../memory/memorySets";
+import { useAddToMemory } from "../memory/useAddToMemory";
+import { api } from "../../api/client";
+import { useReaderTranslationId } from "../../state/workspaceStore";
 import {
   FAMILY_CATECHISMS,
   PACES,
@@ -23,7 +30,6 @@ import {
   guessPrayerCategory,
   localDate,
   logSummary,
-  logWeeks,
   nextPsalm,
   psalmWeekDue,
   starterState,
@@ -171,7 +177,7 @@ function Overview({ fw }: { fw: FW }) {
 
       <section className="mb-7">
         <h2 className={cx(sectionLabelClass, "mb-2")}>The last five weeks</h2>
-        <LogGrid log={log} />
+        <DayGrid log={log} label="Days gathered in the last five weeks" did="gathered" />
         <p className="mt-1.5 text-xs text-ink-3">A dot for each day the family gathered. Missed days are just days; begin again whenever you can.</p>
       </section>
 
@@ -217,6 +223,7 @@ function Overview({ fw }: { fw: FW }) {
 /** Tonight at a glance: each part on a line of its own. */
 export function TonightSummary({ fw, compact }: { fw: FW; compact?: boolean }) {
   const { state, tonight } = fw;
+  const { data: books } = useBooks();
   if (!state || !tonight) return null;
   const reading = tonight.planDone
     ? `${tonight.plan?.title ?? "The plan"} is finished`
@@ -227,6 +234,11 @@ export function TonightSummary({ fw, compact }: { fw: FW; compact?: boolean }) {
   if (state.plan && reading) rows.push({ icon: BookOpen, label: "Read", text: reading });
   if (tonight.psalm != null) rows.push({ icon: Music, label: "Sing", text: `Psalm ${tonight.psalm}` });
   if (tonight.learning) rows.push({ icon: ScrollText, label: "Catechism", text: `${tonight.learning.heading} of the ${tonight.catechismTitle}` });
+  if (state.memory) {
+    const m = state.memory;
+    const book = books?.find((b) => b.id === m.bookId)?.name ?? "";
+    rows.push({ icon: Brain, label: "Memorize", text: `${book} ${m.chapter}:${m.verseStart}${m.verseEnd !== m.verseStart ? `-${m.verseEnd}` : ""}` });
+  }
   rows.push({
     icon: HandHeart,
     label: "Pray",
@@ -349,39 +361,6 @@ function WeekAhead({ fw }: { fw: FW }) {
         })}
       </ul>
     </section>
-  );
-}
-
-function LogGrid({ log }: { log: string[] }) {
-  const today = localDate();
-  const rows = useMemo(() => logWeeks(log, 5, today), [log, today]);
-  const dayNames = ["S", "M", "T", "W", "T", "F", "S"];
-  return (
-    <div className="inline-grid grid-cols-7 gap-1.5" role="table" aria-label="Days gathered in the last five weeks">
-      {dayNames.map((d, i) => (
-        <span key={i} className="text-center text-[10px] text-ink-4" aria-hidden="true">
-          {d}
-        </span>
-      ))}
-      {rows.flat().map((cell, i) =>
-        cell ? (
-          <span
-            key={cell.date}
-            role="cell"
-            title={`${new Date(cell.date + "T12:00").toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}${cell.count ? `: gathered${cell.count > 1 ? ` ${cell.count} times` : ""}` : ""}`}
-            className={cx(
-              "flex h-6 w-6 items-center justify-center rounded-md border text-[10px]",
-              cell.date === today ? "border-accent/50" : "border-line",
-              cell.count ? "bg-accent-soft text-accent" : "text-ink-4",
-            )}
-          >
-            {cell.count ? "●" : Number(cell.date.slice(8))}
-          </span>
-        ) : (
-          <span key={`empty-${i}`} className="h-6 w-6" />
-        ),
-      )}
-    </div>
   );
 }
 
@@ -518,6 +497,8 @@ function FamilySettings({ fw }: { fw: FW }) {
         <p className="-mt-2 text-xs text-ink-4 sm:pl-[10rem]">{FAMILY_CATECHISMS.find((c) => c.code === state.catechism!.code)?.note}</p>
       )}
 
+      <FamilyMemoryRow state={state} setState={setState} row={row} label={label} />
+
       <div className={row}>
         <span className={label}>Pray for</span>
         <div className="flex flex-wrap items-center gap-2">
@@ -576,5 +557,110 @@ function DraftNumber({ value, min, max, onCommit }: { value: number; min: number
         }
       }}
     />
+  );
+}
+
+/** The family's memory verse: chosen here, said at every gathering (see
+ * MemorizeStep), and kept in the Family set of the Memory deck once it is
+ * learned, so it is not forgotten when the next one comes. */
+function FamilyMemoryRow({
+  state,
+  setState,
+  row,
+  label,
+}: {
+  state: FamilyWorship;
+  setState: (s: FamilyWorship) => void;
+  row: string;
+  label: string;
+}) {
+  const { data: books } = useBooks();
+  const lookup = useBookLookup();
+  const addToMemory = useAddToMemory();
+  const readerTranslationId = useReaderTranslationId();
+  const [draft, setDraft] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const memory = state.memory ?? null;
+  const name = (id: number) => books?.find((b) => b.id === id)?.name ?? "";
+  const current = memory ? `${name(memory.bookId)} ${memory.chapter}:${memory.verseStart}${memory.verseEnd !== memory.verseStart ? `-${memory.verseEnd}` : ""}` : null;
+  const suggestions = MEMORY_SETS.find((s) => s.name === "For little ones")?.refs ?? [];
+
+  async function choose(reference: string) {
+    const parsed = parseReference(reference, lookup);
+    if (!parsed || parsed.verse == null) {
+      setError("Give a verse, like “Psalm 119:105” or “Proverbs 3:5-6”.");
+      return;
+    }
+    // A verse past the chapter's end would be a Memorize step with no words.
+    const verses = readerTranslationId != null ? await api.getChapter(readerTranslationId, parsed.book.id, parsed.chapter) : [];
+    const last = verses.reduce((m, v) => Math.max(m, v.verse), 0);
+    if (last && parsed.verse > last) {
+      setError(`${parsed.book.name} ${parsed.chapter} has ${last} verses.`);
+      return;
+    }
+    const verseEnd = Math.min(parsed.verseEnd ?? parsed.verse, last || Infinity);
+    if (verseEnd - parsed.verse > 3) {
+      setError("Keep it to a few verses; a longer passage is better learned on the Memory page, a part at a time.");
+      return;
+    }
+    setError(null);
+    setDraft("");
+    setState({ ...state, memory: { bookId: parsed.book.id, chapter: parsed.chapter, verseStart: parsed.verse, verseEnd, since: localDate(), times: 0 } });
+  }
+
+  async function keep() {
+    if (!current) return;
+    const result = await addToMemory(current, { setName: "Family", asPassage: false });
+    if (result.ok) toast.success(`${current} is in the Family set on the Memory page`);
+    else toast.info(result.error);
+  }
+
+  return (
+    <>
+      <div className={row}>
+        <span className={label}>Memory verse</span>
+        <div className="flex flex-wrap items-center gap-2">
+          {current && (
+            <>
+              <span className="text-sm font-medium text-ink">{current}</span>
+              <span className="text-xs text-ink-4">
+                said {memory!.times} time{memory!.times === 1 ? "" : "s"}
+              </span>
+              <Button size="sm" variant="ghost" onClick={() => void keep()} title="Put it in the Memory deck, in the Family set, so it keeps coming round">
+                Keep it in the Memory deck
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => setState({ ...state, memory: null })}>
+                Stop
+              </Button>
+            </>
+          )}
+          <input
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && void choose(draft)}
+            placeholder={current ? "Next verse, e.g. John 3:16" : "A verse to learn together, e.g. Psalm 119:105"}
+            aria-label="Memory verse"
+            className={cx(inputClass, "min-w-56 flex-1")}
+          />
+          <Button size="sm" onClick={() => void choose(draft)} disabled={!draft.trim()}>
+            {current ? "Move on to it" : "Learn it"}
+          </Button>
+        </div>
+      </div>
+      <div className="-mt-2 flex flex-wrap items-center gap-1.5 text-xs text-ink-4 sm:pl-[10rem]">
+        {error ? (
+          <span className="text-danger">{error}</span>
+        ) : (
+          <>
+            Said at every gathering, with a few more words hidden each time. For little ones:
+            {suggestions.map((r) => (
+              <button key={r} type="button" className={linkClass} onClick={() => void choose(r)}>
+                {r}
+              </button>
+            ))}
+          </>
+        )}
+      </div>
+    </>
   );
 }

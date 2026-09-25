@@ -32,6 +32,26 @@ export interface FamilyCatechism {
   timesOnCurrent: number;
 }
 
+/** A verse to learn together: said every time the family gathers, with a
+ * few more words hidden as the gatherings go by (see memoryHint). */
+export interface FamilyMemory {
+  bookId: number;
+  chapter: number;
+  verseStart: number;
+  verseEnd: number;
+  /** The day it was chosen. */
+  since: string;
+  /** Gatherings it has been said at. */
+  times: number;
+}
+
+/** How much of the verse to show, by how often the family has said it:
+ * all of it the first two times, then with words blanked, then only the
+ * first letters -- and at any point "show the words" puts it all back. */
+export function memoryHint(times: number): "full" | "blank-word" | "first-letter" {
+  return times < 2 ? "full" : times < 4 ? "blank-word" : "first-letter";
+}
+
 export interface FamilyWorship {
   /** The plan the family reads and the next day of it to read. */
   plan: { code: string; nextDay: number } | null;
@@ -43,6 +63,9 @@ export interface FamilyWorship {
   prayerCategory: string | null;
   /** On the first four weeks, whose psalm moves on with the reading. */
   starter: boolean;
+  /** The verse the family is learning by heart, if any (absent in a setup
+   * saved before there was one). */
+  memory?: FamilyMemory | null;
   /** When the family set this up. */
   started: string;
 }
@@ -214,7 +237,9 @@ export function afterGathering(
     if (opts.lengthDays != null && plan.nextDay > opts.lengthDays) starter = false;
   }
 
-  return { ...state, plan, catechism, psalm, starter };
+  const memory = state.memory ? { ...state.memory, times: state.memory.times + 1 } : (state.memory ?? null);
+
+  return { ...state, plan, catechism, psalm, starter, memory };
 }
 
 /** The plan days the next `count` gatherings will read, for the week's sheet. */

@@ -59,3 +59,45 @@ export function diffAccuracy(tokens: WordDiffToken[]): number {
   if (tokens.length === 0) return 1;
   return tokens.filter((t) => t.status === "correct").length / tokens.length;
 }
+
+/** Which way a card is asked this time. A card that also practises its
+ * reference alternates: the words to recall first, then (once recalled)
+ * shown the words, say where they are -- so each is asked every other time. */
+export function askWhere(card: { ask_reference: boolean; repetitions: number }): boolean {
+  return card.ask_reference && card.repetitions % 2 === 1;
+}
+
+/** Whether a typed reference names the card's passage: book, chapter and
+ * the verse it starts on ("John 3:16" for John 3:16-17; the end of a range
+ * need not be spelled out, but "John 3" alone is not enough). */
+export function referenceMatches(
+  typed: { bookId: number; chapter: number; verse?: number } | null,
+  card: { book_id: number; chapter: number; verse_start: number },
+): boolean {
+  return !!typed && typed.bookId === card.book_id && typed.chapter === card.chapter && typed.verse === card.verse_start;
+}
+
+/** The Hebrew letters that head the stanzas of Psalm 119 (and the other
+ * acrostics): "NUN." in capitals in the KJV and Geneva, "[Nun.]" in
+ * Young's. Capitals or brackets only, so a verse that begins "He." is not
+ * taken for the letter HE. */
+const LETTERS = "ALEPH|BETH|GIMEL|DALETH|HE|VAU|ZAIN|CHETH|TETH|JOD|CAPH|LAMED|MEM|NUN|SAMECH|AIN|PE|TZADDI|KOPH|RESH|SCHIN|SHIN|TAU";
+const ACROSTIC_CAPS = new RegExp(String.raw`^\s*(?:${LETTERS})\.\s+`);
+const ACROSTIC_BRACKETED = new RegExp(String.raw`^\s*\[(?:${LETTERS})\.\]\s+`, "i");
+
+/**
+ * A verse's words as they are learned by heart: without a psalm title the
+ * translation folds into verse 1 («A Psalm of David.»), without the
+ * acrostic letter over a stanza of Psalm 119 ("NUN."), and with the
+ * brackets that mark supplied words taken off the words themselves
+ * ("[is]" -> "is").
+ */
+export function memoryWords(text: string): string {
+  return text
+    .replace(/«[^»]*»\s*/g, "")
+    .replace(ACROSTIC_CAPS, "")
+    .replace(ACROSTIC_BRACKETED, "")
+    .replace(/\[([^\]]*)\]/g, "$1")
+    .replace(/\s+/g, " ")
+    .trim();
+}

@@ -6,7 +6,7 @@ export interface TranslationGroup {
 }
 
 /** English translations made after 1901, whatever their source format. */
-const MODERN_CODES = new Set(["BSB", "LSV", "OEB", "ULT", "UST", "WEB", "NASB", "NKJV", "NLT", "ESV", "NIV"]);
+const MODERN_CODES = new Set(["BSB", "LSV", "ULT", "UST", "WEB", "NASB", "NKJV", "NLT", "ESV", "NIV"]);
 
 /** Greek, Hebrew and Latin: the texts the English ones were made from. */
 export function isOriginalLanguage(t: Translation): boolean {

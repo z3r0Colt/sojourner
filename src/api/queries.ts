@@ -942,6 +942,46 @@ export function useDeletePrayerListPerson() {
   });
 }
 
+/** Everything a change to a memory card can touch: both decks, what is due,
+ * the passages a review can move on, and the review calendar. */
+function invalidateMemory(qc: ReturnType<typeof useQueryClient>) {
+  for (const key of ["memoryVerses", "dueMemoryVerses", "memoryPassages", "memoryReviewTimes", "catechismMemory", "dueCatechismMemory"]) {
+    qc.invalidateQueries({ queryKey: [key] });
+  }
+}
+
+export function useMemoryPassages() {
+  return useQuery({ queryKey: ["memoryPassages"], queryFn: api.listMemoryPassages });
+}
+
+export function useCreateMemoryPassage() {
+  const qc = useQueryClient();
+  return useMutation({ mutationFn: api.createMemoryPassage, onSuccess: () => invalidateMemory(qc) });
+}
+
+export function useAddNextMemoryPassagePart() {
+  const qc = useQueryClient();
+  return useMutation({ mutationFn: api.addNextMemoryPassagePart, onSuccess: () => invalidateMemory(qc) });
+}
+
+export function useDeleteMemoryPassage() {
+  const qc = useQueryClient();
+  return useMutation({ mutationFn: api.deleteMemoryPassage, onSuccess: () => invalidateMemory(qc) });
+}
+
+export function useSetMemoryVerseAskReference() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { id: number; askReference: boolean }) => api.setMemoryVerseAskReference(input.id, input.askReference),
+    onSuccess: () => invalidateMemory(qc),
+  });
+}
+
+/** Reviews of either deck since `since` (RFC 3339), for the calendar. */
+export function useMemoryReviewTimes(since: string) {
+  return useQuery({ queryKey: ["memoryReviewTimes", since], queryFn: () => api.listMemoryReviewTimes(since) });
+}
+
 export function useMemoryVerses() {
   return useQuery({ queryKey: ["memoryVerses"], queryFn: api.listMemoryVerses });
 }
@@ -960,11 +1000,11 @@ export function useCreateMemoryVerse() {
       verseEnd: number;
       translationId?: number;
       mode: MemoryMode;
-    }) => api.createMemoryVerse(input.bookId, input.chapter, input.verseStart, input.verseEnd, input.translationId, input.mode),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["memoryVerses"] });
-      qc.invalidateQueries({ queryKey: ["dueMemoryVerses"] });
-    },
+      setName?: string | null;
+      askReference?: boolean;
+    }) =>
+      api.createMemoryVerse(input.bookId, input.chapter, input.verseStart, input.verseEnd, input.translationId, input.mode, input.setName, input.askReference),
+    onSuccess: () => invalidateMemory(qc),
   });
 }
 
@@ -992,10 +1032,7 @@ export function useDeleteMemoryVerse() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: api.deleteMemoryVerse,
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["memoryVerses"] });
-      qc.invalidateQueries({ queryKey: ["dueMemoryVerses"] });
-    },
+    onSuccess: () => invalidateMemory(qc),
   });
 }
 
@@ -1003,10 +1040,8 @@ export function useReviewMemoryVerse() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: { id: number; quality: number }) => api.reviewMemoryVerse(input.id, input.quality),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["memoryVerses"] });
-      qc.invalidateQueries({ queryKey: ["dueMemoryVerses"] });
-    },
+    // A review can bring on a passage's next part, and goes in the calendar.
+    onSuccess: () => invalidateMemory(qc),
   });
 }
 
@@ -1065,10 +1100,7 @@ export function useReviewCatechismMemory() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: { id: number; quality: number }) => api.reviewCatechismMemory(input.id, input.quality),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["catechismMemory"] });
-      qc.invalidateQueries({ queryKey: ["dueCatechismMemory"] });
-    },
+    onSuccess: () => invalidateMemory(qc),
   });
 }
 

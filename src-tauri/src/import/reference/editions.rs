@@ -301,13 +301,13 @@ fn insert_edition(tx: &Connection, meta: &EditionMeta, source_path: &str, verses
     // built before is cleared by hand.
     tx.execute("DELETE FROM verses WHERE translation_id IN (SELECT id FROM translations WHERE code = ?1)", params![meta.code])?;
     tx.execute("DELETE FROM translations WHERE code = ?1", params![meta.code])?;
+    let tid = crate::import::new_translation_id(tx, &meta.code)?;
     tx.execute(
-        "INSERT INTO translations (code, name, language, source_path, source_format, imported_at, checksum,
+        "INSERT INTO translations (id, code, name, language, source_path, source_format, imported_at, checksum,
                                    license, credit, scope, script, direction)
-         VALUES (?1,?2,?3,?4,'tagged',?5,'',?6,?7,?8,?9,?10)",
-        params![meta.code, meta.name, meta.language, source_path, now, meta.license, meta.credit, meta.scope, meta.script, meta.direction],
+         VALUES (?11,?1,?2,?3,?4,'tagged',?5,'',?6,?7,?8,?9,?10)",
+        params![meta.code, meta.name, meta.language, source_path, now, meta.license, meta.credit, meta.scope, meta.script, meta.direction, tid],
     )?;
-    let tid = tx.last_insert_rowid();
     let mut stmt = tx.prepare("INSERT OR IGNORE INTO verses (translation_id, book_id, chapter, verse, text) VALUES (?1,?2,?3,?4,?5)")?;
     let mut n = 0;
     for ((b, c, v), text) in verses {
