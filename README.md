@@ -3,6 +3,8 @@
   <img src="public/brand/sojourner-lockup-dark.png#gh-dark-mode-only" alt="Sojourner" width="360">
 </p>
 
+<p align="center"><a href="https://gentleking.org">gentleking.org</a></p>
+
 # Sojourner
 
 *Bible Study Companion for Windows*
