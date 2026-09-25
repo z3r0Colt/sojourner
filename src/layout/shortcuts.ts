@@ -23,6 +23,7 @@ export const SHORTCUT_GROUPS: ShortcutGroup[] = [
       { keys: ["Ctrl", "K"], label: "Go to a reference, Strong's number, or term" },
       { keys: ["Ctrl", "K", ">"], label: "List every command in the Go to box: panes, layouts, workspaces, paragraph mode, theme, text size, start a reading plan, new prayer entry, new sermon, open a sermon, preach or rehearse one, back up now, Settings sections" },
       { keys: ["Ctrl", "F"], label: "Search everything: Scripture, commentary, notes, prayers, resources, confessions, sermons, and illustrations, each in its own tab" },
+      { keys: ["Tab"], label: "In the search box: take the suggested word (↑ and ↓ move through the results, Enter opens one)" },
       { keys: ["Ctrl", "G"], label: "Find in the chapter you are reading (Enter next match, Shift+Enter previous, Esc closes)" },
       { keys: ["Ctrl", "["], label: "Previous chapter in the pane you are reading" },
       { keys: ["Ctrl", "]"], label: "Next chapter in the pane you are reading" },
@@ -36,14 +37,16 @@ export const SHORTCUT_GROUPS: ShortcutGroup[] = [
       { keys: ["Ctrl", "1"], label: "Focus the first pane (Ctrl+2 to Ctrl+8 for the others, in reading order: left to right, top to bottom)" },
       { keys: ["Ctrl", "B"], label: "Add a study pane, or focus the one that is open" },
       { keys: ["Ctrl", "T"], label: "Open a copy of the focused pane as a new tab beside it (the + in a pane header opens any kind of pane as a tab)" },
+      { keys: ["←"], label: "With a pane's tab focused: the previous tab (→ the next)" },
       { keys: ["Ctrl", "\\"], label: "Split the focused pane to the right, leaving an empty slot that offers to add content (Ctrl+Shift+\\ splits it downward)" },
       { keys: ["Ctrl", "click"], label: "Open a link, a sidebar item, or a reference in a new pane (middle-click does the same)" },
       { keys: ["Click the letter"], label: "In a pane header: move the pane to link group A, B, or C, or unlink it. Panes in one group follow each other's passage" },
       { keys: ["Double-click a header"], label: "Maximize that pane; double-click again (or Esc) to bring the others back" },
       { keys: ["Drag the grip"], label: "The dotted grip at the left of a header (or a tab) moves the pane: drop it on another pane's edge to split that pane, on its middle to add it as a tab, or between tabs to reorder. Esc cancels" },
-      { keys: ["Drag a side panel's edge"], label: "Resize the list beside a page (Atlas, Encyclopedia, Lexicon, a book's contents...); double-click the edge to reset it, or click the round button on the edge to fold the panel to a strip" },
+      { keys: ["Drag a divider"], label: "Resize the panes either side of it; with the divider focused, the arrow keys move it" },
+      { keys: ["Drag a side panel's edge"], label: "Resize the list beside a page (Atlas, Encyclopedia, Lexicon, a book's contents...), or focus the edge and use ← and →; double-click the edge to reset it, or click the round button on the edge to fold the panel to a strip" },
       { keys: ["Layout button"], label: "Top bar: a quick arrangement (one, two, two plus one, three, three plus one, two by two, two by three) applied to the panes you have; extra panes become tabs" },
-      { keys: ["Workspaces"], label: "Top bar: switch to a preset (Devotion, Sermon prep, Word study) or a saved arrangement; save, rename, or delete your own" },
+      { keys: ["Workspaces"], label: "Top bar: switch to a preset (Devotion, Sermon prep, Word study, Family worship) or a saved arrangement; save, rename, or delete your own" },
       { keys: ["F11"], label: "Focus mode: maximize the focused pane and hide everything else" },
       { keys: ["Esc"], label: "Leave focus mode or restore a maximized pane; close any panel, menu, or dialog" },
     ],
@@ -69,8 +72,15 @@ export const SHORTCUT_GROUPS: ShortcutGroup[] = [
   {
     title: "Books",
     rows: [
-      { keys: ["Ctrl", "scroll"], label: "Over a book in Resources: zoom the page (Ctrl+= and Ctrl+- do the same while the book has focus)" },
+      { keys: ["Ctrl", "scroll"], label: "Over a book in Resources: zoom the page (Ctrl+= and Ctrl+- do the same while the book has focus, and Ctrl+0 resets it)" },
       { keys: ["Space"], label: "Page down through a book, running on into the next chapter at the end (PageUp goes back; ← and → jump a chapter)" },
+    ],
+  },
+  {
+    title: "Timeline",
+    rows: [
+      { keys: ["+"], label: "With the timeline focused: zoom in (- zooms out; the scroll wheel zooms about the pointer)" },
+      { keys: ["←"], label: "With the timeline focused: move back in time (→ forward; drag, or scroll sideways, to do the same)" },
     ],
   },
   {

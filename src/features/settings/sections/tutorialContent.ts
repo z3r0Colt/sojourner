@@ -577,6 +577,7 @@ export const TUTORIAL: TutorialCategory[] = [
         what: "Every major event of the Bible on one line, from Creation to Paul in Rome: the eras, the kings of Judah and Israel side by side, and where the chapter you are reading falls.",
         steps: [
           "Open Timeline in the sidebar. Wheel to zoom, drag to move along it, or pick an era from the list. Zoomed out, the larger events show first; zoom in for the rest.",
+          "With the timeline focused (click it, or Tab to it), [+] and [-] zoom and [←] and [→] move along it.",
           "Click an event for the verses that record it, the people (to the Factbook) and places (to the atlas), and the atlas journeys of its era.",
           "Beside the text, add the Timeline for passage pane: it follows the chapter, marks its years, and lists the events it records.",
           "Dates are approximate, as the Theographic Bible Metadata gives them (a traditional chronology, Ussher's for the early ages).",
