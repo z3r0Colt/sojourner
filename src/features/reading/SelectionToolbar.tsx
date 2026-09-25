@@ -1,4 +1,4 @@
-import { Copy, Lightbulb, Mic, StickyNote, Underline, X } from "lucide-react";
+import { Copy, Lightbulb, Mic, NotebookPen, StickyNote, Underline, X } from "lucide-react";
 import { useViewportClampedPosition } from "../../lib/useViewportClampedPosition";
 import { HIGHLIGHT_COLORS, UNDERLINE_COLOR, highlightColorLabel, useHighlightLabels } from "./highlightColors";
 import { IconButton } from "../../components/ui/Button";
@@ -15,6 +15,7 @@ export function SelectionToolbar({
   onCopy,
   onSendToSermon,
   onSaveAsIllustration,
+  onSaveAsIdea,
   onClose,
 }: {
   x: number;
@@ -27,6 +28,8 @@ export function SelectionToolbar({
   onSendToSermon?: () => void;
   /** Keeps the selected words in the illustrations library. */
   onSaveAsIllustration?: () => void;
+  /** Starts a sermon idea from the selected verses. */
+  onSaveAsIdea?: () => void;
   onClose: () => void;
 }) {
   const { ref, style } = useViewportClampedPosition<HTMLDivElement>(x, y, { align: "above-center" });
@@ -61,6 +64,7 @@ export function SelectionToolbar({
       {onCopy && <IconButton icon={Copy} label="Copy (in the format chosen in Settings)" size="sm" onClick={onCopy} />}
       {onSendToSermon && <IconButton icon={Mic} label="Send to sermon" size="sm" onClick={onSendToSermon} />}
       {onSaveAsIllustration && <IconButton icon={Lightbulb} label="Save as illustration" size="sm" onClick={onSaveAsIllustration} />}
+      {onSaveAsIdea && <IconButton icon={NotebookPen} label="Catch a sermon idea on these verses (Ctrl+Alt+I)" size="sm" onClick={onSaveAsIdea} />}
       <IconButton icon={X} label="Close" size="sm" onClick={onClose} />
     </div>
   );

@@ -71,8 +71,9 @@ export interface SermonDraftHandle {
   isLoading: boolean;
   /** Merge a change and schedule a save. */
   patch: (fields: Partial<SermonDraft>) => void;
-  /** Write anything pending at once (pane close, sermon switch, blur). */
-  flush: () => void;
+  /** Write anything pending at once (pane close, sermon switch, blur, an
+   * export); resolves once that write, or one already under way, lands. */
+  flush: () => Promise<void>;
   savedAt: Date | null;
   isSaving: boolean;
   /** True when the last save failed and the edit is still only on screen. */
@@ -92,6 +93,8 @@ export function useSermonDraft(sermonId: number): SermonDraftHandle {
   const draftRef = useRef<SermonDraft | null>(null);
   const dirtyRef = useRef(false);
   const savingRef = useRef(false);
+  /** The write under way, so a flush can wait for one it did not start. */
+  const inFlightRef = useRef<Promise<void> | null>(null);
   const timerRef = useRef<number | null>(null);
   const loadedIdRef = useRef<number | null>(null);
   const seenUpdatedAtRef = useRef<string | null>(null);
@@ -120,7 +123,12 @@ export function useSermonDraft(sermonId: number): SermonDraftHandle {
   // only wants to start a save has to await it.
   const save = useCallback(async (): Promise<void> => {
     const current = draftRef.current;
-    if (!current || !dirtyRef.current || loadedIdRef.current == null) return;
+    if (!current || !dirtyRef.current || loadedIdRef.current == null) {
+      // Nothing new to write -- but an export reading the saved sermon back
+      // still has to wait for the write already on its way.
+      await inFlightRef.current;
+      return;
+    }
     dirtyRef.current = false;
     if (timerRef.current != null) {
       window.clearTimeout(timerRef.current);
@@ -155,7 +163,7 @@ export function useSermonDraft(sermonId: number): SermonDraftHandle {
     // `mutateAsync` rather than `mutate` for the promise alone; the callbacks
     // are unchanged. It rejects on failure, which `onError` has already dealt
     // with, so the rejection is swallowed here rather than left unhandled.
-    await update.mutateAsync(
+    const write = update.mutateAsync(
       { sermonId: loadedIdRef.current, input },
       {
         onSuccess: (saved) => {
@@ -175,7 +183,13 @@ export function useSermonDraft(sermonId: number): SermonDraftHandle {
           savingRef.current = false;
         },
       },
-    ).catch(() => {});
+    ).then(
+      () => {},
+      () => {},
+    );
+    inFlightRef.current = write;
+    await write;
+    if (inFlightRef.current === write) inFlightRef.current = null;
   }, [extractRefs, update]);
 
   saveRef.current = save;
@@ -194,7 +208,9 @@ export function useSermonDraft(sermonId: number): SermonDraftHandle {
     }, SAVE_DEBOUNCE_MS);
   }, []);
 
-  const flush = useCallback(() => saveRef.current(), []);
+  const flush = useCallback(async () => {
+    await saveRef.current();
+  }, []);
 
   // Flushing on the way out, in every direction: the pane closing or the
   // sermon changing (the cleanup), the window losing focus, and the app

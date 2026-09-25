@@ -4,6 +4,7 @@ import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
 import {
+  Blocks,
   Bold,
   BookOpen,
   ChevronDown,
@@ -17,6 +18,7 @@ import {
   List,
   ListOrdered,
   Minus,
+  MonitorUp,
   Quote,
   SquareDashedBottom,
   Underline as UnderlineIcon,
@@ -25,12 +27,14 @@ import { useResources } from "../../api/queries";
 import { parseReference, useBookLookup } from "../../hooks/useReferenceParser";
 import { verseHref, resourceHref } from "../../lib/noteLinks";
 import { IconButton, Button } from "../../components/ui/Button";
+import { toast } from "../../components/ui/toast";
 import { Popover, PopoverItem, PopoverLabel } from "../../components/ui/Popover";
 import { cx, inputSmClass, selectSmClass } from "../../components/ui/classes";
 import { NodeSelection, TextSelection, type EditorState, type Transaction } from "@tiptap/pm/state";
 import { applyTemplate, useNoteTemplates, type NoteTemplate } from "./noteTemplates";
-import { SERMON_EXTENSIONS } from "../sermons/editor/extensions";
+import { SERMON_EXTENSIONS, setCallout, unsetCallout } from "../sermons/editor/extensions";
 import { passageBlockHtml } from "../sermons/editor/documentModel";
+import { CALLOUT_KINDS, CALLOUT_LABEL } from "../sermons/editor/callouts";
 import type { PassageRef, SermonSourceInput } from "../../api/types";
 
 /** What "Send to sermon" and the illustration picker hand the editor. */
@@ -45,6 +49,8 @@ export interface RichTextEditorHandle {
   editor: Editor | null;
   insertPassage: (ref: PassageRef) => void;
   insertSource: (item: SourceInsert) => void;
+  /** Drops ready-made manuscript markup (a sermon idea) at the cursor. */
+  insertHtml: (html: string) => void;
   focus: () => void;
 }
 
@@ -135,6 +141,11 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
           .insertContent(sourceBlockHtml(item))
           .command(caretBelowInsertedBlock)
           .run();
+      },
+      insertHtml: (html) => {
+        if (!editor) return;
+        editor.view.focus();
+        editor.chain().focus().command(insertAfterNodeSelection).insertContent(html).command(caretBelowInsertedBlock).run();
       },
     }),
     [editor],
@@ -354,6 +365,48 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
               }
               {...stop}
             />
+            <Popover
+              width="w-56"
+              trigger={({ toggle, open }) => (
+                <IconButton
+                  icon={Blocks}
+                  label="Typed block (Ctrl+Alt+3)"
+                  size="sm"
+                  active={open || editor.isActive("callout")}
+                  onClick={toggle}
+                  {...stop}
+                />
+              )}
+            >
+              {(close) => (
+                <>
+                  <PopoverLabel>{editor.isActive("callout") ? "Change this block to" : "Set apart as"}</PopoverLabel>
+                  {CALLOUT_KINDS.map((kind) => (
+                    <PopoverItem
+                      key={kind}
+                      onClick={() => {
+                        close();
+                        if (!setCallout(editor, kind)) toast.info("A point or sub-point can't go inside a block. Select only the paragraphs under it.");
+                      }}
+                    >
+                      <span className="sermon-callout-swatch" data-kind={kind} aria-hidden="true" />
+                      {CALLOUT_LABEL[kind]}
+                    </PopoverItem>
+                  ))}
+                  {editor.isActive("callout") && (
+                    <PopoverItem
+                      onClick={() => {
+                        close();
+                        unsetCallout(editor);
+                      }}
+                    >
+                      <span className="w-2.5" aria-hidden="true" />
+                      Back to plain text
+                    </PopoverItem>
+                  )}
+                </>
+              )}
+            </Popover>
             {onPickIllustration && (
               <IconButton icon={Lightbulb} label="Insert an illustration" size="sm" onClick={onPickIllustration} {...stop} />
             )}
@@ -363,6 +416,14 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
               size="sm"
               active={editor.isActive("blank")}
               onClick={() => editor.chain().focus().toggleMark("blank").run()}
+              {...stop}
+            />
+            <IconButton
+              icon={MonitorUp}
+              label="Put these words on a slide (Ctrl+Shift+L)"
+              size="sm"
+              active={editor.isActive("slide")}
+              onClick={() => editor.chain().focus().toggleMark("slide").run()}
               {...stop}
             />
           </>

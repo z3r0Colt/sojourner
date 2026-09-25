@@ -59,6 +59,7 @@ fn filters_for(kind: &str) -> AppResult<&'static [(&'static str, &'static [&'sta
         "markdown" => &[("Markdown", &["md"])],
         "database" => &[("Database", &["db"])],
         "pptx" => &[("PowerPoint", &["pptx"])],
+        "html" => &[("Web page", &["html"])],
         "resource" => &[(
             "Resources",
             &["epub", "pdf", "mobi", "azw", "azw3", "mp4", "mkv", "webm", "mov", "mp3", "m4a", "wav", "ogg", "flac"],
@@ -196,7 +197,7 @@ mod tests {
 
     #[test]
     fn every_kind_the_frontend_asks_for_has_filters() {
-        for kind in ["markdown", "database", "pptx", "resource", "library_xml"] {
+        for kind in ["markdown", "database", "pptx", "html", "resource", "library_xml", "pack"] {
             assert!(!filters_for(kind).unwrap().is_empty(), "{kind} has no filters");
         }
         assert!(filters_for("exe").is_err());

@@ -29,8 +29,10 @@ import { htmlToText } from "./excerpt";
 import { SlideShow } from "./SlideShow";
 import { buildSlides } from "./slides";
 import { useSermonDraft } from "./sermonDraft";
-import { useRecordIllustrationUse, useSetSermonStage } from "../../api/queries";
+import { useFileSermonIdea, useRecordIllustrationUse, useSetSermonStage } from "../../api/queries";
+import { IDEA_MIME } from "./sermonIdeas";
 import { passageAtCursor } from "./cursorPassage";
+import { headingAtCursor, moveSectionBy, moveSectionTo } from "./editor/moveSection";
 import { refKey } from "../../lib/passage";
 import type { PassageRef } from "../../api/types";
 
@@ -51,7 +53,7 @@ function savedLabel(at: Date | null, saving: boolean, unsaved: boolean): string 
 export function SermonPane() {
   const [params] = usePaneParams("sermon");
   const { id: paneId, width: paneWidth, height: paneHeight } = usePane();
-  const { sermon, draft, isLoading, patch, savedAt, isSaving, isUnsaved, passageRefs } = useSermonDraft(params.id);
+  const { sermon, draft, isLoading, patch, flush, savedAt, isSaving, isUnsaved, passageRefs } = useSermonDraft(params.id);
   const readerTranslationId = useReaderTranslationId();
   const { data: books } = useBooks();
   const publishPassage = useWorkspaceStore((s) => s.publishPassage);
@@ -69,6 +71,7 @@ export function SermonPane() {
   /** The slide the deck opens on, or null when it is closed. */
   const [presenting, setPresenting] = useState<number | null>(null);
   const recordUse = useRecordIllustrationUse();
+  const fileIdea = useFileSermonIdea();
   // Above 720 px the panel sits beside the manuscript; below, it is a
   // popover behind a header button, so a narrow column keeps its text.
   const panelBeside = paneWidth >= 720;
@@ -141,15 +144,7 @@ export function SermonPane() {
       // top-level blocks so it means the same thing as the panel's list
       // (documentModel's sectionsOf) -- null while the cursor is still in the
       // prose above the first point.
-      const cursor = editor.state.selection.from;
-      let headingIndex = 0;
-      let activeHeading: number | null = null;
-      editor.state.doc.forEach((node, offset) => {
-        if (node.type.name !== "heading") return;
-        if (offset <= cursor) activeHeading = headingIndex;
-        headingIndex += 1;
-      });
-      setActiveSection(activeHeading);
+      setActiveSection(headingAtCursor(editor));
 
       if (!followsCursor || linkGroup == null) return;
       const ref: PassageRef | null = passageAtCursor(editor);
@@ -203,6 +198,15 @@ export function SermonPane() {
       paneId={paneId}
       sermon={sermon}
       onPresent={(startIndex) => setPresenting(startIndex)}
+      onMoveSection={(from, target, side) => {
+        const editor = editorRef.current?.editor;
+        if (editor) moveSectionTo(editor, from, target, side);
+      }}
+      onStepSection={(from, direction) => {
+        const editor = editorRef.current?.editor;
+        if (editor) moveSectionBy(editor, from, direction);
+      }}
+      onInsertIdea={(html) => editorRef.current?.insertHtml(html)}
     />
   );
 
@@ -214,7 +218,7 @@ export function SermonPane() {
           <RehearsalButtons sermon={sermon} />
           <MarkPreachedButton sermon={sermon} wordCount={words.total} />
           <span className="ml-auto" />
-          <SermonActionsMenu sermon={sermon} passages={byKey} onPresent={() => setPresenting(0)} />
+          <SermonActionsMenu sermon={sermon} flush={flush} onPresent={() => setPresenting(0)} />
           {!panelBeside && (
             <Popover
               width="w-72"
@@ -227,7 +231,21 @@ export function SermonPane() {
           )}
         </div>
         <div className="flex min-h-0 flex-1">
-        <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto">
+        <div
+          ref={scrollRef}
+          className="min-h-0 flex-1 overflow-y-auto"
+          // An idea dragged from the Ideas tab: the editor inserts its markup
+          // itself, and this files it -- here, where the drop is known to
+          // have landed in this manuscript, rather than guessing from the
+          // drag's end.
+          onDropCapture={(e) => {
+            // Only a drop on the manuscript itself: the title and text boxes
+            // above it take a dropped idea as plain words.
+            if (!(e.target as Element).closest?.(".ProseMirror")) return;
+            const ideaId = Number(e.dataTransfer.getData(IDEA_MIME));
+            if (ideaId) fileIdea.mutate({ ideaId, sermonId: sermon.id });
+          }}
+        >
           <div className="mx-auto w-full max-w-3xl px-6 py-5">
             <PrepTrack
               stage={sermon.stage}

@@ -25,6 +25,7 @@ pub mod reference;
 pub mod resources;
 pub mod scripture_memory;
 pub mod search;
+pub mod sermon_ideas;
 pub mod sermons;
 pub mod settings;
 pub mod stats;

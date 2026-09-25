@@ -71,6 +71,7 @@ import { stepChapter } from "../reading/chapterStep";
 import { resetZoom, zoomText } from "../reading/zoom";
 import { requestNewPrayerEntry } from "../prayer/prayerActions";
 import { startRun } from "../sermons/preachingSession";
+import { captureSermonIdea } from "../sermons/sermonIdeas";
 import { nextSunday } from "../sermons/sermonFormat";
 import { localToday } from "../plans/planSchedule";
 
@@ -667,6 +668,16 @@ export function appCommands(ctx: CommandContext): Command[] {
     icon: Mic,
     keywords: "list page every sermon series",
     run: () => openContent("sermons", {}),
+  });
+
+  out.push({
+    id: "capture-sermon-idea",
+    group: "Sermons",
+    label: "Catch a sermon idea",
+    keys: ["Ctrl", "Alt", "I"],
+    icon: Lightbulb,
+    keywords: "idea inbox thought note later capture jot",
+    run: () => captureSermonIdea(),
   });
 
   out.push({

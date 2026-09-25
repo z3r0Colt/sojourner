@@ -40,6 +40,12 @@ export function TemplatesEditor({
   const [editing, setEditing] = useState<{ index: number | null; template: NoteTemplate } | null>(null);
   const isDefault =
     templates.length === defaults.length && templates.every((t, i) => t.name === defaults[i].name && t.html === defaults[i].html);
+  // A saved list is the reader's own and is never rewritten, so templates
+  // shipped after it was saved would stay out of sight for good. These are
+  // the shipped ones it has no template of the same name for -- offered, not
+  // added, since one of them may have been deleted on purpose.
+  const names = new Set(templates.map((t) => t.name));
+  const missing = defaults.filter((d) => !names.has(d.name));
 
   function save(next: NoteTemplate[], message = `${noun}s saved`) {
     setTemplates(next);
@@ -86,6 +92,17 @@ export function TemplatesEditor({
         <Button size="sm" icon={Plus} onClick={() => setEditing({ index: null, template: { name: "", html: newTemplateHtml } })}>
           Add template
         </Button>
+        {!isDefault && missing.length > 0 && templates.length > 0 && (
+          <Button
+            size="sm"
+            variant="ghost"
+            icon={Plus}
+            title={missing.map((t) => t.name).join(", ")}
+            onClick={() => save([...templates, ...missing], missing.length === 1 ? "Template added" : `${missing.length} templates added`)}
+          >
+            Add {missing.length === 1 ? `“${missing[0].name}”` : `${missing.length} shipped templates you don't have`}
+          </Button>
+        )}
         {!isDefault && (
           <Button size="sm" variant="ghost" onClick={() => save([...defaults], `${noun}s reset`)}>
             Reset to defaults

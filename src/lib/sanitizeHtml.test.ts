@@ -21,6 +21,14 @@ describe("sanitizeHtml", () => {
     );
   });
 
+  it("keeps a sermon's typed blocks and slide marks, and still strips handlers from them", () => {
+    const block = '<aside data-type="callout" data-kind="custom" data-label="Gospel"><p><span data-slide="">Look</span></p></aside>';
+    expect(sanitizeHtml(block)).toBe(block);
+    expect(sanitizeHtml('<aside data-kind="application" onclick="alert(1)" style="position:fixed"><p>x</p></aside>')).toBe(
+      '<aside data-kind="application"><p>x</p></aside>',
+    );
+  });
+
   it("deletes a script, its source, and anything else that can run", () => {
     expect(sanitizeHtml('<p>before</p><script>alert(1)</script><p>after</p>')).toBe("<p>before</p><p>after</p>");
     expect(sanitizeHtml('<style>body{display:none}</style><p>x</p>')).toBe("<p>x</p>");

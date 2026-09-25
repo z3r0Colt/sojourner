@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { useSetting } from "../../hooks/useSetting";
 import { sanitizeTemplates, type NoteTemplate } from "../notes/noteTemplates";
+import { calloutBlockHtml, type CalloutKind } from "./editor/callouts";
 
 /**
  * Sermon templates (SB1.6): the shapes a manuscript starts from. Same
@@ -15,6 +16,18 @@ export const SERMON_TEMPLATES_SETTING = "sermon_templates";
 function point(heading: string, ...subs: string[]): string {
   return `<h2>${heading}</h2><p></p>${subs.map((s) => `<h3>${s}</h3><p></p>`).join("")}`;
 }
+
+/** A point whose body is typed blocks rather than one empty paragraph. */
+function blockPoint(heading: string, ...kinds: CalloutKind[]): string {
+  return `<h2>${heading}</h2>${kinds.map((k) => calloutBlockHtml(k)).join("")}`;
+}
+
+/** A point with a one-line prompt under it, in italics, to be written over. */
+function promptPoint(heading: string, prompt: string): string {
+  return `<h2>${heading}</h2><p><em>${prompt}</em></p>`;
+}
+
+const EIA: CalloutKind[] = ["explanation", "illustration", "application"];
 
 export const DEFAULT_SERMON_TEMPLATES: readonly NoteTemplate[] = [
   {
@@ -52,6 +65,54 @@ export const DEFAULT_SERMON_TEMPLATES: readonly NoteTemplate[] = [
   {
     name: "Bible study",
     html: [point("The passage"), point("Observations"), point("Questions from the text"), point("What it teaches"), point("Discussion questions"), point("Prayer")].join(""),
+  },
+  // Appended, never inserted: the "Add new shipped templates" button in the
+  // templates editor finds what a reader's saved list is missing by name.
+  {
+    name: "Three points",
+    html: [point("Introduction"), blockPoint("I.", ...EIA), blockPoint("II.", ...EIA), blockPoint("III.", ...EIA), point("Conclusion")].join(""),
+  },
+  {
+    name: "Me · We · God · You · We",
+    html: [
+      promptPoint("Me", "Where I have met this myself: the tension, told honestly."),
+      promptPoint("We", "Where all of us meet it: the common ground."),
+      `<h2>God</h2><p><em>What the text says about it.</em></p>`,
+      promptPoint("You", "What to do about it this week: one step, plainly put."),
+      promptPoint("We", "What it would look like if all of us did."),
+    ].join(""),
+  },
+  {
+    name: "Verse by verse",
+    html: [
+      point("Introduction"),
+      blockPoint("v. 1", "explanation", "application"),
+      blockPoint("v. 2", "explanation", "application"),
+      blockPoint("v. 3", "explanation", "application"),
+      point("Conclusion"),
+    ].join(""),
+  },
+  {
+    name: "Defender's outline",
+    html: [
+      point("The question"),
+      point("The objection, stated fairly"),
+      point("What Scripture says"),
+      point("The answer"),
+      point("Answering the answer"),
+      blockPoint("The call", "application"),
+    ].join(""),
+  },
+  {
+    name: "Children and youth",
+    html: [
+      promptPoint("The big question", "One question the whole lesson answers."),
+      blockPoint("The story", "illustration"),
+      point("The Bible truth"),
+      promptPoint("Say it together", "One line to remember, short enough to repeat."),
+      blockPoint("Do it this week", "application"),
+      point("Prayer"),
+    ].join(""),
   },
 ];
 

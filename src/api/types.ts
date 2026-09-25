@@ -1038,6 +1038,33 @@ export interface SpeakingRate {
   preachings: number;
 }
 
+/** A sermon idea (USER_MIGRATION_0022). `sermon_id` is set while it is
+ * filed into a live sermon; with none, it is in the inbox. */
+export interface SermonIdea {
+  id: number;
+  body: string;
+  book_id: number | null;
+  chapter: number | null;
+  verse_start: number | null;
+  verse_end: number | null;
+  source_label: string | null;
+  sermon_id: number | null;
+  sermon_title: string | null;
+  filed_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** A new idea or an edit; the reference is replaced whole. */
+export interface SermonIdeaInput {
+  body: string;
+  book_id?: number | null;
+  chapter?: number | null;
+  verse_start?: number | null;
+  verse_end?: number | null;
+  source_label?: string | null;
+}
+
 export interface Illustration {
   id: number;
   title: string;
@@ -1083,7 +1110,7 @@ export interface IllustrationUse {
 /** Which dialog filters `pickSavePath`/`pickOpenPath` should use. The page
  * names a kind rather than a set of extensions, because the dialog itself is
  * described on the Rust side (see `commands::file_picker`). */
-export type PickKind = "markdown" | "database" | "pptx" | "resource" | "library_xml" | "pack";
+export type PickKind = "markdown" | "database" | "pptx" | "html" | "resource" | "library_xml" | "pack";
 
 /** The installed book library pack, or the absence of one. */
 export interface PackStatus {

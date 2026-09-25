@@ -19,7 +19,7 @@ const ALLOWED_TAGS = new Set([
   "P", "BR", "STRONG", "B", "EM", "I", "U", "S", "SUP", "SUB",
   "UL", "OL", "LI", "BLOCKQUOTE",
   "H1", "H2", "H3", "H4", "H5", "H6",
-  "CODE", "PRE", "HR", "SPAN", "DIV", "A", "MARK",
+  "CODE", "PRE", "HR", "SPAN", "DIV", "A", "MARK", "ASIDE",
 ]);
 
 /**
@@ -37,12 +37,18 @@ const DROP_WITH_CONTENTS = new Set([
  * app's own stylesheets key off; `data-osis` is how an imported commentary
  * states which verse a reference points at, and `data-ref` is what the
  * hover-preview decorator writes. `data-blank` marks a word the handout
- * leaves blank, and is what `.sermon-html [data-blank]` underlines.
+ * leaves blank, and is what `.sermon-html [data-blank]` underlines;
+ * `data-slide` marks words for the screen. `data-type`, `data-kind` and
+ * `data-label` say what a sermon block is (a typed block's kind and custom
+ * name, a citation's kind), which the `.sermon-html` rules color and label.
+ * All of them are inert strings: nothing reads them as markup or as code.
  *
  * Nothing else survives -- including `style` (an inline rule can cover the
  * window with an invisible overlay) and every `on*` handler.
  */
-const ALLOWED_ATTRS = new Set(["class", "data-osis", "data-ref", "data-blank"]);
+const ALLOWED_ATTRS = new Set([
+  "class", "data-osis", "data-ref", "data-blank", "data-slide", "data-type", "data-kind", "data-label",
+]);
 
 /** Link schemes a displayed `href` may use: the web, and the app's own. */
 const ALLOWED_SCHEMES = new Set(["http:", "https:", "bsapp:"]);

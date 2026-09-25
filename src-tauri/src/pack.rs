@@ -987,7 +987,10 @@ mod tests {
             assert!(is_installed(&lib.join("shelves").join(id)), "{id} survived the Puritan pack's replacement");
         }
         let after: i64 = conn.query_row("SELECT COUNT(*) FROM resources WHERE library_key IS NOT NULL", [], |r| r.get(0)).unwrap();
-        assert_eq!(after, before + 58, "the first pack's books kept, the shelves' 58 added");
+        // The new pack may carry books the first did not (it has 271 to the
+        // first's 270), but it retires none of the first's.
+        assert_eq!(replaced.retired, 0, "the new Puritan pack retired books of the first");
+        assert_eq!(after, before + 58 + replaced.added as i64, "the first pack's books kept, the shelves' 58 added");
         let same: String = conn.query_row("SELECT library_key FROM resources WHERE id = ?1", [res_id], |r| r.get(0)).unwrap();
         assert_eq!(same, key, "a book's row, and what the reader wrote on it, is the same row");
         let hits = crate::db::queries::citations::for_passage(&conn, 40, 16, Some(18), &shelves_of(&conn), 500).unwrap();

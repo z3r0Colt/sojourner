@@ -19,7 +19,8 @@ function rootOf(html: string): HTMLElement {
   return parseManuscript(html).getElementById("sermon-root") as HTMLElement;
 }
 
-function refOfElement(el: Element): PassageRef | null {
+/** A passage block's reference, read from its data attributes. */
+export function refOfElement(el: Element): PassageRef | null {
   const bookId = Number(el.getAttribute("data-book-id"));
   const chapter = Number(el.getAttribute("data-chapter"));
   if (!bookId || !chapter) return null;
@@ -33,6 +34,19 @@ export function passageBlocks(html: string): PassageRef[] {
   return Array.from(rootOf(html).querySelectorAll('[data-type="passage"]'))
     .map(refOfElement)
     .filter((r): r is PassageRef => r !== null);
+}
+
+/** The passage blocks pinned to a translation of their own (a comparison),
+ * with that translation: their words are not the sermon translation's, so
+ * every read-only view has to fetch them separately. */
+export function pinnedPassageBlocks(html: string): { ref: PassageRef; translationId: number }[] {
+  const out: { ref: PassageRef; translationId: number }[] = [];
+  for (const el of Array.from(rootOf(html).querySelectorAll('[data-type="passage"][data-translation-id]'))) {
+    const ref = refOfElement(el);
+    const translationId = Number(el.getAttribute("data-translation-id"));
+    if (ref && translationId) out.push({ ref, translationId });
+  }
+  return out;
 }
 
 /** Every citation in the manuscript, in document order. */
@@ -181,4 +195,132 @@ export function derivePassages(
   for (const ref of passageBlocks(html)) add("supporting", ref, exact);
   for (const ref of mentioned) add("mentioned", ref, exact);
   return out;
+}
+
+// --- Moving a point ---------------------------------------------------------
+//
+// The outline is the headings (Q3), so moving a point is moving blocks of the
+// manuscript itself: the heading and everything under it, up to the next
+// heading of the same rank or higher. These functions work on the top-level
+// blocks as a list of heading levels, so they can be tested without an
+// editor; editor/moveSection.ts applies what they return as one transaction.
+
+/** A top-level block: 2 or 3 for a point or sub-point, null for anything else. */
+export type BlockLevel = 2 | 3 | null;
+
+/** Where to drop a section, relative to the heading it is dropped on. */
+export type DropSide = "before" | "after";
+
+export interface SectionMove {
+  /** The moving blocks, as `[start, end)` block indexes. */
+  start: number;
+  end: number;
+  /** The block index it goes in front of, counted before anything moves. */
+  insertAt: number;
+}
+
+/** The manuscript's top-level blocks as heading levels, the list the
+ * functions below take. */
+export function blockLevels(html: string): BlockLevel[] {
+  return Array.from(rootOf(html).children).map((el) => (el.tagName === "H2" ? 2 : el.tagName === "H3" ? 3 : null));
+}
+
+/**
+ * Where a move's drop line belongs in the Outline: before the heading the
+ * section will land in front of, or after the last heading when it lands at
+ * the end. Drawn from the move rather than the pointer, because a point
+ * dropped on the lower half of another point's row lands after that point's
+ * sub-points, not under its heading.
+ */
+export function dropLineFor(blocks: readonly BlockLevel[], move: SectionMove): { index: number; side: DropSide } {
+  let headingIndex = 0;
+  let last = -1;
+  for (let i = 0; i < blocks.length; i++) {
+    if (blocks[i] == null) continue;
+    if (i >= move.insertAt) return { index: headingIndex, side: "before" };
+    last = headingIndex;
+    headingIndex += 1;
+  }
+  return { index: last, side: "after" };
+}
+
+/** Block index of the `headingIndex`-th heading, or -1. */
+function blockOfHeading(blocks: readonly BlockLevel[], headingIndex: number): number {
+  let seen = -1;
+  for (let i = 0; i < blocks.length; i++) {
+    if (blocks[i] != null && ++seen === headingIndex) return i;
+  }
+  return -1;
+}
+
+/** The end (exclusive) of the section starting at block `at`: the next
+ * heading at `stopLevel` or higher rank, or the end of the document. */
+function sectionEnd(blocks: readonly BlockLevel[], at: number, stopLevel: 2 | 3): number {
+  for (let i = at + 1; i < blocks.length; i++) {
+    const level = blocks[i];
+    if (level != null && level <= stopLevel) return i;
+  }
+  return blocks.length;
+}
+
+/**
+ * The move that puts heading `from`'s section before or after heading
+ * `target`, or null when it would change nothing or cannot be done (a
+ * section dropped inside itself).
+ *
+ * A point only moves among points: dropped on a sub-point, it lands before
+ * or after the point that sub-point belongs to, so it can never split
+ * another point's sub-points off from it. A sub-point may go anywhere; after
+ * a point, it becomes that point's first sub-point, which is where the drop
+ * line is drawn.
+ */
+export function sectionMove(blocks: readonly BlockLevel[], from: number, target: number, side: DropSide): SectionMove | null {
+  const start = blockOfHeading(blocks, from);
+  let targetBlock = blockOfHeading(blocks, target);
+  if (start < 0 || targetBlock < 0) return null;
+  const level = blocks[start] as 2 | 3;
+  const end = sectionEnd(blocks, start, level);
+
+  if (level === 2 && blocks[targetBlock] === 3) {
+    // The sub-point's own point, when it has one.
+    for (let i = targetBlock - 1; i >= 0; i--) {
+      if (blocks[i] === 2) {
+        targetBlock = i;
+        break;
+      }
+    }
+  }
+  const targetLevel = blocks[targetBlock] as 2 | 3;
+  const insertAt = side === "before" ? targetBlock : sectionEnd(blocks, targetBlock, Math.max(targetLevel, level) as 2 | 3);
+  if (insertAt >= start && insertAt <= end) return null;
+  return { start, end, insertAt };
+}
+
+/**
+ * Where "move up" or "move down" takes heading `from`: past the neighboring
+ * section of the same rank, for a point; past the neighboring heading of any
+ * rank, for a sub-point -- so a sub-point steps through its own point's
+ * sub-points and then over into the next point. Null at either end.
+ */
+export function neighborMove(blocks: readonly BlockLevel[], from: number, direction: -1 | 1): SectionMove | null {
+  const start = blockOfHeading(blocks, from);
+  if (start < 0) return null;
+  const level = blocks[start] as 2 | 3;
+  const headings = blocks.flatMap((l, i) => (l == null ? [] : [{ level: l, block: i }]));
+  let at = from + direction;
+  // A point skips over sub-points to the next point.
+  while (level === 2 && at >= 0 && at < headings.length && headings[at].level !== 2) at += direction;
+  if (at < 0 || at >= headings.length) return null;
+  // Moving down means going after the next section, not merely after its
+  // heading: for a point that is the next point's whole section.
+  return sectionMove(blocks, from, at, direction < 0 ? "before" : "after");
+}
+
+/** Applies a move to a list, for tests and for anything that holds the
+ * blocks as an array. */
+export function applySectionMove<T>(items: readonly T[], move: SectionMove): T[] {
+  const moving = items.slice(move.start, move.end);
+  const rest = [...items.slice(0, move.start), ...items.slice(move.end)];
+  const at = move.insertAt > move.start ? move.insertAt - (move.end - move.start) : move.insertAt;
+  return [...rest.slice(0, at), ...moving, ...rest.slice(at)];
 }

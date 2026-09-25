@@ -1,12 +1,13 @@
 use crate::commands::clamp_limit;
 use crate::commands::file_picker::{take_path, PickedPaths};
-use crate::db::queries::{illustrations, sermons, verses};
+use crate::db::queries::{illustrations, sermon_ideas, sermons, verses};
 use crate::db::DbState;
 use crate::error::AppResult;
 use crate::export;
 use crate::models::{
     Illustration, IllustrationFilter, IllustrationInput, IllustrationUse, PassageRef, Sermon,
-    SermonEvent, SermonFilter, SermonForChapter, SermonInput, SermonSeries, SpeakingRate,
+    SermonEvent, SermonFilter, SermonForChapter, SermonIdea, SermonIdeaInput, SermonInput, SermonSeries,
+    SpeakingRate,
 };
 use std::collections::HashMap;
 use tauri::{AppHandle, Manager, State};
@@ -156,6 +157,39 @@ pub fn delete_sermon_series(db: State<DbState>, series_id: i64) -> AppResult<boo
     Ok(sermons::delete_series(&conn, series_id)?)
 }
 
+// Sermon ideas --------------------------------------------------------------
+
+#[tauri::command]
+pub fn list_sermon_ideas(db: State<DbState>) -> AppResult<Vec<SermonIdea>> {
+    let conn = db.conn();
+    Ok(sermon_ideas::list(&conn)?)
+}
+
+#[tauri::command]
+pub fn create_sermon_idea(db: State<DbState>, input: SermonIdeaInput) -> AppResult<SermonIdea> {
+    let conn = db.conn();
+    Ok(sermon_ideas::create(&conn, &input)?)
+}
+
+#[tauri::command]
+pub fn update_sermon_idea(db: State<DbState>, idea_id: i64, input: SermonIdeaInput) -> AppResult<SermonIdea> {
+    let conn = db.conn();
+    Ok(sermon_ideas::update(&conn, idea_id, &input)?)
+}
+
+/// Files an idea into a sermon, or with no sermon puts it back in the inbox.
+#[tauri::command]
+pub fn file_sermon_idea(db: State<DbState>, idea_id: i64, sermon_id: Option<i64>) -> AppResult<SermonIdea> {
+    let conn = db.conn();
+    Ok(sermon_ideas::file(&conn, idea_id, sermon_id)?)
+}
+
+#[tauri::command]
+pub fn delete_sermon_idea(db: State<DbState>, idea_id: i64) -> AppResult<()> {
+    let conn = db.conn();
+    Ok(sermon_ideas::delete(&conn, idea_id)?)
+}
+
 // Illustrations -------------------------------------------------------------
 
 #[tauri::command]
@@ -224,6 +258,23 @@ pub fn list_illustration_uses(db: State<DbState>, illustration_id: Option<i64>) 
 /// there is not bounded by anything this app controls.
 #[tauri::command]
 pub async fn export_sermon_slides(app: AppHandle, token: String, data: Vec<u8>) -> AppResult<()> {
+    write_picked(app, token, data, "slide").await
+}
+
+/// Writes the podium file -- the manuscript as one self-contained web page
+/// for a phone or tablet -- to the file `pick_save_path` chose. Built in the
+/// webview for the same reason as the deck: it is the manuscript view's own
+/// markup, already rendered there.
+///
+/// The page comes over as a string: sent as bytes it would cross the bridge
+/// as a JSON array of numbers several times its size.
+#[tauri::command]
+pub async fn export_sermon_podium(app: AppHandle, token: String, html: String) -> AppResult<()> {
+    write_picked(app, token, html.into_bytes(), "podium").await
+}
+
+/// The bytes-from-the-webview write both exports above share.
+async fn write_picked(app: AppHandle, token: String, data: Vec<u8>, what: &'static str) -> AppResult<()> {
     tauri::async_runtime::spawn_blocking(move || -> AppResult<()> {
         let picked = app.state::<PickedPaths>();
         let dest_path = take_path(&picked, &token)?;
@@ -231,7 +282,7 @@ pub async fn export_sermon_slides(app: AppHandle, token: String, data: Vec<u8>) 
         Ok(())
     })
     .await
-    .map_err(|e| anyhow::anyhow!("the slide export did not finish: {e}"))?
+    .map_err(|e| anyhow::anyhow!("the {what} export did not finish: {e}"))?
 }
 
 /// Writes the manuscript as Markdown to the file `pick_save_path` chose.

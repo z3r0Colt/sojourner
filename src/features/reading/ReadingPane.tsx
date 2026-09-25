@@ -59,6 +59,7 @@ import { computeRedLetterSpans } from "./redLetterSpans";
 import { groupTranslations } from "./translationGroups";
 import { sendToSermon } from "../sermons/sendToSermon";
 import { captureIllustration } from "../sermons/illustrationCapture";
+import { captureSermonIdea } from "../sermons/sermonIdeas";
 import { crossrefRef } from "../sermons/sourceIdentity";
 import { SermonChipsForChapter } from "../sermons/SermonsForChapter";
 import { closestWithAttr, textOffsetWithin } from "../../lib/domOffsets";
@@ -1178,6 +1179,13 @@ export function ReadingPane() {
               sourceRef: crossrefRef(book.id, chapter, pending.verseStart, pending.verseEnd),
               kind: "quote",
             });
+            window.getSelection()?.removeAllRanges();
+            setPending(null);
+          }}
+          onSaveAsIdea={() => {
+            // The verses go on as the idea's passage; the words are the
+            // reader's to write.
+            captureSermonIdea({ ref: toPassageRef(book.id, chapter, pending.verseStart, pending.verseEnd) });
             window.getSelection()?.removeAllRanges();
             setPending(null);
           }}

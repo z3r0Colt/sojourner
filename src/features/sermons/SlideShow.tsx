@@ -129,6 +129,10 @@ function SlideBody({ slide }: { slide: Slide }) {
     );
   }
 
+  if (slide.kind === "line") {
+    return <p className="reading-font max-w-[26ch] text-[clamp(1.6rem,4.2vw,3.2rem)] font-semibold leading-snug">{slide.heading}</p>;
+  }
+
   if (slide.kind === "quote") {
     return (
       <>

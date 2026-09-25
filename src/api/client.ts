@@ -92,6 +92,8 @@ import type {
   SermonSeries,
   SpeakingRate,
   Illustration,
+  SermonIdea,
+  SermonIdeaInput,
   IllustrationFilter,
   IllustrationInput,
   IllustrationUse,
@@ -663,6 +665,11 @@ export const api = {
     invoke<SermonSeries>("update_sermon_series", { seriesId, title, description, planCode }),
   deleteSermonSeries: (seriesId: number) => invoke<boolean>("delete_sermon_series", { seriesId }),
 
+  listSermonIdeas: () => invoke<SermonIdea[]>("list_sermon_ideas"),
+  createSermonIdea: (input: SermonIdeaInput) => invoke<SermonIdea>("create_sermon_idea", { input }),
+  updateSermonIdea: (ideaId: number, input: SermonIdeaInput) => invoke<SermonIdea>("update_sermon_idea", { ideaId, input }),
+  fileSermonIdea: (ideaId: number, sermonId: number | null) => invoke<SermonIdea>("file_sermon_idea", { ideaId, sermonId }),
+  deleteSermonIdea: (ideaId: number) => invoke<void>("delete_sermon_idea", { ideaId }),
   listIllustrations: (filter: IllustrationFilter = {}) => invoke<Illustration[]>("list_illustrations", { filter }),
   getIllustration: (illustrationId: number) => invoke<Illustration | null>("get_illustration", { illustrationId }),
   createIllustration: (input: IllustrationInput) => invoke<Illustration>("create_illustration", { input }),
@@ -682,4 +689,5 @@ export const api = {
    * arbitrary path. */
   exportSermonSlides: (token: string, data: Uint8Array) =>
     invoke<void>("export_sermon_slides", { token, data: Array.from(data) }),
+  exportSermonPodium: (token: string, html: string) => invoke<void>("export_sermon_podium", { token, html }),
 };

@@ -127,6 +127,14 @@
   --color-group-b: #3f6b3a;
   --color-group-c: #8a5a12;
 
+  /* Typed sermon blocks (callouts.ts): one hue per kind, so a preacher can
+     find "the application for this point" by color alone. */
+  --color-callout-explanation: #2f5f8f;
+  --color-callout-illustration: #9a6412;
+  --color-callout-application: #3f6b3a;
+  --color-callout-transition: #6b7280;
+  --color-callout-custom: #6d4a8f;
+
   /* 13px metadata instead of 12px: the smallest size in the app, used for
      timestamps, counts, and section labels. Everything interactive is sm+. */
   --text-xs: 0.8125rem;
@@ -272,6 +280,16 @@ html[data-theme="contrast-dark"] {
   --color-group-a: #9ecbff;
   --color-group-b: #a6f0a6;
   --color-group-c: #ffd27a;
+}
+/* The typed blocks' hues, lifted for the dark grounds. */
+html[data-theme="dark"],
+html[data-theme="oled"],
+html[data-theme="contrast-dark"] {
+  --color-callout-explanation: #8fb4de;
+  --color-callout-illustration: #e0b56a;
+  --color-callout-application: #9fcb96;
+  --color-callout-transition: #9aa1ad;
+  --color-callout-custom: #c3a6e0;
 }
 /* Anything that used a translucent black border for a swatch outline has
    no contrast on black; the strong line token covers it. */
@@ -827,6 +845,135 @@ mark.find-current {
 }
 .sermon-source-open:hover {
   background: var(--color-accent-soft);
+}
+
+/* A typed block (callouts.ts): a rule and a wash in the kind's own hue, and
+   a small chip naming it. The editor draws the chip as a select; the
+   read-only views (preaching mode, print, the handout) draw it from the
+   saved attributes. */
+.sermon-callout,
+.sermon-html aside[data-type="callout"] {
+  --callout: var(--color-callout-explanation);
+  margin: 0.85rem 0;
+  padding: 0.45rem 0.85rem 0.5rem;
+  border-left: 3px solid var(--callout);
+  background: color-mix(in srgb, var(--callout) 8%, transparent);
+  border-radius: 0 0.375rem 0.375rem 0;
+}
+.sermon-callout[data-kind="illustration"],
+.sermon-html aside[data-kind="illustration"] {
+  --callout: var(--color-callout-illustration);
+}
+.sermon-callout[data-kind="application"],
+.sermon-html aside[data-kind="application"] {
+  --callout: var(--color-callout-application);
+}
+.sermon-callout[data-kind="transition"],
+.sermon-html aside[data-kind="transition"] {
+  --callout: var(--color-callout-transition);
+}
+.sermon-callout[data-kind="custom"],
+.sermon-html aside[data-kind="custom"] {
+  --callout: var(--color-callout-custom);
+}
+.sermon-callout-body p,
+.sermon-html aside[data-type="callout"] p {
+  margin: 0.25rem 0;
+}
+.sermon-callout-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.1rem;
+}
+.sermon-callout-kind,
+.sermon-html aside[data-type="callout"]::before {
+  font-family: var(--font-reading-sans);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--callout);
+}
+.sermon-callout-kind {
+  border: 0;
+  border-radius: 0.25rem;
+  background: transparent;
+  padding: 0.05rem 0.1rem;
+  cursor: pointer;
+}
+.sermon-callout-kind:hover {
+  background: color-mix(in srgb, var(--callout) 14%, transparent);
+}
+.sermon-callout-kind option {
+  color: var(--color-ink);
+  background: var(--color-surface);
+  text-transform: none;
+}
+.sermon-callout-label {
+  min-width: 0;
+  flex: 1 1 auto;
+  border: 0;
+  background: transparent;
+  font-size: 0.75rem;
+  color: var(--color-ink-2);
+  padding: 0.05rem 0;
+}
+.sermon-callout-label:focus {
+  outline: none;
+  border-bottom: 1px solid var(--color-line-2);
+}
+.sermon-html aside[data-type="callout"]::before {
+  display: block;
+  content: "Explanation";
+}
+.sermon-html aside[data-kind="illustration"]::before {
+  content: "Illustration";
+}
+.sermon-html aside[data-kind="application"]::before {
+  content: "Application";
+}
+.sermon-html aside[data-kind="transition"]::before {
+  content: "Transition";
+}
+.sermon-html aside[data-kind="custom"]::before {
+  content: attr(data-label);
+}
+.sermon-html aside[data-kind="custom"]:not([data-label])::before {
+  content: "Note";
+}
+
+/* The kind's color, as a dot in the toolbar's Block menu. */
+.sermon-callout-swatch {
+  display: inline-block;
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 999px;
+  background: var(--color-callout-explanation);
+}
+.sermon-callout-swatch[data-kind="illustration"] {
+  background: var(--color-callout-illustration);
+}
+.sermon-callout-swatch[data-kind="application"] {
+  background: var(--color-callout-application);
+}
+.sermon-callout-swatch[data-kind="transition"] {
+  background: var(--color-callout-transition);
+}
+.sermon-callout-swatch[data-kind="custom"] {
+  background: var(--color-callout-custom);
+}
+
+/* Words marked for the screen (SlideMark): a projector's worth of accent,
+   enough to see what will be shown without shouting over the prose. */
+.sermon-richtext [data-slide] {
+  background: var(--color-accent-soft);
+  border-radius: 0.2rem;
+  box-shadow: 0 0 0 1px var(--color-accent-soft-2);
+  padding: 0 0.1rem;
+}
+.sermon-html [data-slide] {
+  font-weight: 600;
 }
 
 /* A word the handout will leave blank. */

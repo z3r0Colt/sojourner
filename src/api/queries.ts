@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import { useQuery, useQueries, useQueryClient, useMutation } from "@tanstack/react-query";
 import { api } from "./client";
 import type {
   Verse,
@@ -16,10 +16,11 @@ import type {
   SermonStage,
   IllustrationFilter,
   IllustrationInput,
+  SermonIdeaInput,
 } from "./types";
 import { toast } from "../components/ui/toast";
 import { useReaderTranslationId } from "../state/workspaceStore";
-import { refKey } from "../lib/passage";
+import { pinnedKey, refKey } from "../lib/passage";
 
 export function useBooks() {
   return useQuery({ queryKey: ["books"], queryFn: api.listBooks, staleTime: Infinity });
@@ -94,6 +95,32 @@ export function usePassagesIn(translationId: number | null, refs: PassageRef[]) 
     return m;
   }, [query.data]);
   return { ...query, byKey };
+}
+
+/** The words of passage blocks pinned to translations of their own, keyed
+ * by `pinnedKey(translationId, ref)` -- one query per translation, each the
+ * same cached query `usePassagesIn` would make for it. */
+export function usePinnedPassages(blocks: { ref: PassageRef; translationId: number }[]) {
+  const byTranslation = new Map<number, PassageRef[]>();
+  for (const b of blocks) byTranslation.set(b.translationId, [...(byTranslation.get(b.translationId) ?? []), b.ref]);
+  const groups = [...byTranslation.entries()];
+  const results = useQueries({
+    queries: groups.map(([translationId, refs]) => ({
+      queryKey: ["passages", translationId, refs.map(refKey).join(",")],
+      queryFn: () => api.getPassages(translationId, refs),
+      staleTime: PASSAGE_STALE_MS,
+    })),
+  });
+  const stamp = results.map((r) => r.dataUpdatedAt).join(",");
+  return useMemo(() => {
+    const m = new Map<string, Passage>();
+    results.forEach((r, i) => {
+      for (const p of r.data ?? []) m.set(pinnedKey(groups[i][0], p.ref), p);
+    });
+    return m;
+    // `results` is a new array every render; the stamp says when any changed.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stamp, groups.map(([t]) => t).join(",")]);
 }
 
 /** Text for a single verse range in the reader's primary translation.
@@ -263,7 +290,9 @@ const TRASH_KIND_LISTS: Record<TrashKind, string[][]> = {
   note: [["notes"], ["allNotes"], ["allNoteTags"], ["allNoteTagsByNote"], ["backlinks"]],
   chapter_note: [["chapterNotes"], ["allChapterNotes"], ["allChapterNoteTags"], ["allChapterNoteTagsByNote"], ["backlinks"]],
   prayer_entry: [["prayerEntries"], ["prayerEntrySearch"], ["allPrayerEntryTags"], ["allPrayerEntryTagsByEntry"]],
-  sermon: [["sermons"], ["sermon"], ["sermonSeries"], ["sermonsForChapter"], ["sermonTags"], ["speakingRate"]],
+  // An idea filed in a sermon is back in the inbox while that sermon is in
+  // the Trash, so restoring one moves its ideas too.
+  sermon: [["sermons"], ["sermon"], ["sermonSeries"], ["sermonsForChapter"], ["sermonTags"], ["speakingRate"], ["sermonIdeas"]],
   illustration: [["illustrations"], ["illustration"], ["illustrationUses"], ["illustrationTags"]],
 };
 
@@ -1424,7 +1453,12 @@ export function useDeleteSermon() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (sermonId: number) => api.deleteSermon(sermonId),
-    onSuccess: (_data, sermonId) => invalidateSermons(qc, sermonId),
+    onSuccess: (_data, sermonId) => {
+      invalidateSermons(qc, sermonId);
+      // Its ideas go back to the inbox while it is in the Trash. Not in
+      // invalidateSermons, which every autosave runs.
+      qc.invalidateQueries({ queryKey: ["sermonIdeas"] });
+    },
   });
 }
 
@@ -1433,7 +1467,10 @@ export function useRestoreSermon() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (sermonId: number) => api.restoreTrashItem("sermon", sermonId),
-    onSuccess: (_data, sermonId) => invalidateSermons(qc, sermonId),
+    onSuccess: (_data, sermonId) => {
+      invalidateSermons(qc, sermonId);
+      qc.invalidateQueries({ queryKey: ["sermonIdeas"] });
+    },
   });
 }
 
@@ -1505,6 +1542,44 @@ export function useDeleteSermonSeries() {
   return useMutation({
     mutationFn: (seriesId: number) => api.deleteSermonSeries(seriesId),
     onSuccess: () => invalidateSermons(qc),
+  });
+}
+
+// --- Sermon ideas (USER_MIGRATION_0022) -------------------------------------
+
+export function useSermonIdeas() {
+  return useQuery({ queryKey: ["sermonIdeas"], queryFn: api.listSermonIdeas });
+}
+
+export function useCreateSermonIdea() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: SermonIdeaInput) => api.createSermonIdea(input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["sermonIdeas"] }),
+  });
+}
+
+export function useUpdateSermonIdea() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { ideaId: number; input: SermonIdeaInput }) => api.updateSermonIdea(input.ideaId, input.input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["sermonIdeas"] }),
+  });
+}
+
+export function useFileSermonIdea() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { ideaId: number; sermonId: number | null }) => api.fileSermonIdea(input.ideaId, input.sermonId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["sermonIdeas"] }),
+  });
+}
+
+export function useDeleteSermonIdea() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (ideaId: number) => api.deleteSermonIdea(ideaId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["sermonIdeas"] }),
   });
 }
 

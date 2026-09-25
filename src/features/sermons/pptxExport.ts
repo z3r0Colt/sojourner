@@ -47,6 +47,11 @@ export async function exportSlidesToPptx(slides: Slide[], title: string, token: 
       continue;
     }
 
+    if (slide.kind === "line") {
+      page.addText(slide.heading, { x: 0.8, y: 1.0, w: 8.4, h: 3.6, fontSize: 32, bold: true, color: INK, align: "center", valign: "middle" });
+      continue;
+    }
+
     if (slide.kind === "quote") {
       page.addText(`“${slide.heading}”`, { x: 0.8, y: 1.2, w: 8.4, h: 3.0, fontSize: 26, color: INK, align: "center", valign: "middle", italic: true });
       if (slide.subheading) {

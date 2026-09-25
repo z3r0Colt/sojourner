@@ -88,8 +88,12 @@ export const SHORTCUT_GROUPS: ShortcutGroup[] = [
     rows: [
       { keys: ["Ctrl", "Alt", "1"], label: "Make the line a point (Ctrl+Alt+2 makes it a sub-point)" },
       { keys: ["Ctrl", "Shift", "P"], label: "Insert a passage: type a reference and the block renders it live in the sermon's translation" },
+      { keys: ["Ctrl", "Alt", "3"], label: "Set the selection apart as a typed block (explanation, illustration, application, transition, or your own); press again inside one to change its kind" },
       { keys: ["Ctrl", "Shift", "B"], label: "Mark the selected words as a blank for the fill-in handout" },
+      { keys: ["Ctrl", "Shift", "L"], label: "Put the selected words on a slide of their own, where they fall in the sermon" },
+      { keys: ["Alt", "Shift", "↑"], label: "Move the point the cursor is in (with its sub-points) above the one before it; Alt+Shift+↓ moves it down. The Outline panel's rows drag too" },
       { keys: ["Ctrl", "U"], label: "Underline (bold and italic are Ctrl+B and Ctrl+I, as everywhere)" },
+      { keys: ["Ctrl", "Alt", "I"], label: "Catch a sermon idea from anywhere; it waits in the Ideas tab beside every sermon until you drag it into one" },
       { keys: ["Rehearse"], label: "Runs the manuscript with the clock going; finishing offers to log the run with its minutes and a note" },
     ],
   },

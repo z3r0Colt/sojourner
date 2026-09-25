@@ -11,6 +11,8 @@ import { ShortcutsModal } from "./ShortcutsModal";
 import { RefPreviewHost } from "../components/RefPreview";
 import { SendToSermonHost } from "../features/sermons/SendToSermonHost";
 import { IllustrationCaptureHost } from "../features/sermons/IllustrationCaptureHost";
+import { IdeaCaptureHost } from "../features/sermons/IdeaCaptureHost";
+import { captureSermonIdea } from "../features/sermons/sermonIdeas";
 import { PreachingMode } from "../features/sermons/PreachingMode";
 import { GatherRound } from "../features/family/GatherRound";
 import { RunLogHost } from "../features/sermons/Rehearsal";
@@ -138,6 +140,16 @@ export function AppShell() {
     } else if (ctrl && key === "f") {
       e.preventDefault();
       setSearchOpen(true);
+    } else if (ctrl && e.altKey && !e.shiftKey && key === "i") {
+      // Anywhere, even mid-sentence in a note: an idea is caught when it
+      // comes. AltGr reports Ctrl+Alt too, but with the character it types
+      // as the key, so it never lands here. Not while anything modal is up,
+      // though: preaching, slides, family worship, and the tour sit above
+      // every dialog, so the idea box would open unseen beneath them and take
+      // the keyboard; over a dialog -- the idea box's own included -- it would
+      // stack a second one, or throw away what the first was holding.
+      e.preventDefault();
+      if (!document.querySelector('[aria-modal="true"]')) captureSermonIdea();
     } else if (ctrl && key === "/") {
       e.preventDefault();
       setShortcutsOpen((v) => !v);
@@ -267,6 +279,7 @@ export function AppShell() {
       <WorkspaceDialogs />
       <SendToSermonHost />
       <IllustrationCaptureHost />
+      <IdeaCaptureHost />
       <PreachingMode />
       <GatherRound />
       <RunLogHost />

@@ -2415,6 +2415,29 @@ INSERT INTO memory_reviews (deck, card_id, quality, reviewed_at)
   SELECT 'catechism', id, 4, last_reviewed_at FROM catechism_memory WHERE last_reviewed_at IS NOT NULL;
 "#;
 
+// The sermon idea inbox: a thought caught before there is a sermon for it,
+// filed into one later. Its own table rather than a kind of illustration,
+// because `illustrations` has children (tags, uses) and a CHECK on `kind`,
+// and changing that CHECK means the rebuild `run_migrations` warns against.
+// `sermon_id` is where the idea was filed; a deleted sermon lets it go back
+// to the inbox rather than taking it along.
+pub const USER_MIGRATION_0022: &str = r#"
+CREATE TABLE sermon_ideas (
+  id            INTEGER PRIMARY KEY,
+  body          TEXT NOT NULL,
+  book_id       INTEGER,
+  chapter       INTEGER,
+  verse_start   INTEGER,
+  verse_end     INTEGER,
+  source_label  TEXT,
+  sermon_id     INTEGER REFERENCES sermons(id) ON DELETE SET NULL,
+  filed_at      TEXT,
+  created_at    TEXT NOT NULL,
+  updated_at    TEXT NOT NULL
+);
+CREATE INDEX idx_sermon_ideas_sermon ON sermon_ideas(sermon_id);
+"#;
+
 pub const USER_MIGRATIONS: &[&str] = &[
     USER_MIGRATION_0001,
     USER_MIGRATION_0002,
@@ -2437,4 +2460,5 @@ pub const USER_MIGRATIONS: &[&str] = &[
     USER_MIGRATION_0019,
     USER_MIGRATION_0020,
     USER_MIGRATION_0021,
+    USER_MIGRATION_0022,
 ];

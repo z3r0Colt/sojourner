@@ -1119,6 +1119,38 @@ pub struct SpeakingRate {
     pub preachings: i64,
 }
 
+/// A sermon idea (USER_MIGRATION_0022): a thought kept in the inbox until it
+/// is filed into a sermon. `sermon_id` and `sermon_title` are only set while
+/// that sermon is live, so an idea filed into a deleted sermon is back in the
+/// inbox.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SermonIdea {
+    pub id: i64,
+    pub body: String,
+    pub book_id: Option<i64>,
+    pub chapter: Option<i64>,
+    pub verse_start: Option<i64>,
+    pub verse_end: Option<i64>,
+    pub source_label: Option<String>,
+    pub sermon_id: Option<i64>,
+    pub sermon_title: Option<String>,
+    pub filed_at: Option<String>,
+    pub created_at: String,
+    pub updated_at: String,
+}
+
+/// A new idea, or an edit to one. The reference is replaced whole: all four
+/// fields are written, so leaving them out clears it.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct SermonIdeaInput {
+    pub body: String,
+    pub book_id: Option<i64>,
+    pub chapter: Option<i64>,
+    pub verse_start: Option<i64>,
+    pub verse_end: Option<i64>,
+    pub source_label: Option<String>,
+}
+
 /// One story or quotation in the library, with where it came from and how
 /// often it has been used.
 #[derive(Debug, Clone, Serialize, Deserialize)]

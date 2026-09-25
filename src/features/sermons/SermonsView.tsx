@@ -31,6 +31,7 @@ import {
   STATUS_LABEL,
 } from "./sermonFormat";
 import { countWords, manuscriptText } from "./editor/documentModel";
+import { IdeasPanel } from "./IdeasPanel";
 import type { Sermon, SermonStage, SermonStatus } from "../../api/types";
 
 /** Creates the row first and opens it, so there is never an unsaved
@@ -248,6 +249,13 @@ export function SermonsView() {
               ))}
             </ul>
           )}
+
+      <section aria-labelledby="sermon-ideas" className="mt-8 border-t border-line pt-5">
+        <h2 id="sermon-ideas" className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-3">
+          Ideas
+        </h2>
+        <IdeasPanel paneId={paneId} />
+      </section>
 
       <SeriesSection paneId={paneId} />
     </Page>

@@ -1,10 +1,11 @@
 import { useMemo } from "react";
-import { useBooks, useTranslations } from "../../api/queries";
-import { formatRef, refKey } from "../../lib/passage";
-import { parseManuscript } from "./editor/documentModel";
+import { useBooks, usePinnedPassages, useTranslations } from "../../api/queries";
+import { formatRef, pinnedKey, refKey } from "../../lib/passage";
+import { escapeHtml } from "../../lib/escapeHtml";
+import { parseManuscript, pinnedPassageBlocks, refOfElement } from "./editor/documentModel";
 import { cx } from "../../components/ui/classes";
 import { sanitizeHtml } from "../../lib/sanitizeHtml";
-import type { Passage, PassageRef } from "../../api/types";
+import type { Book, Passage, PassageRef, Translation } from "../../api/types";
 
 /**
  * The manuscript, read-only (SB4.1, SB4.2, SB4.3).
@@ -31,20 +32,32 @@ export function ManuscriptView({
 }) {
   const { data: books } = useBooks();
   const { data: translations } = useTranslations();
+  // A block pinned to another translation (a comparison) carries its own
+  // words, which the caller's map -- the sermon's translation -- does not.
+  const pinnedBlocks = useMemo(() => pinnedPassageBlocks(html), [html]);
+  const pinned = usePinnedPassages(pinnedBlocks);
+  const wordsFor = useMemo(
+    () => (ref: PassageRef, translationId: number | null) =>
+      translationId != null ? pinned.get(pinnedKey(translationId, ref)) : passages.get(refKey(ref)),
+    [passages, pinned],
+  );
 
   const parts = useMemo(() => {
     const root = parseManuscript(html).getElementById("sermon-root");
     if (!root) return [];
     return Array.from(root.children).map((child, i) => {
       if (child.getAttribute("data-type") === "passage") {
-        const ref = refOf(child);
+        const ref = refOfElement(child);
         return { key: `p${i}`, kind: "passage" as const, ref, translationId: numAttr(child, "data-translation-id") };
       }
       // Sanitized here rather than at the `dangerouslySetInnerHTML` below so
-      // a long manuscript is not walked again on every render.
-      return { key: `h${i}`, kind: "html" as const, html: sanitizeHtml(renderBlanks(child, blanksAs ?? "word")) };
+      // a long manuscript is not walked again on every render. A passage
+      // written inside a typed block or a citation is not a child of the
+      // root, so it is filled in as markup here rather than as a PassagePart.
+      const withPassages = inlinePassages(child, wordsFor, books, translations);
+      return { key: `h${i}`, kind: "html" as const, html: sanitizeHtml(renderBlanks(withPassages, blanksAs ?? "word")) };
     });
-  }, [html, blanksAs]);
+  }, [html, blanksAs, wordsFor, books, translations]);
 
   return (
     <div className={cx("sermon-html", className)}>
@@ -53,7 +66,7 @@ export function ManuscriptView({
           <PassagePart
             key={part.key}
             ref_={part.ref}
-            passage={part.ref ? passages.get(refKey(part.ref)) : undefined}
+            passage={part.ref ? wordsFor(part.ref, part.translationId) : undefined}
             label={part.ref ? formatRef(books, part.ref) : "A passage"}
             code={translations?.find((t) => t.id === part.translationId)?.code}
           />
@@ -99,19 +112,42 @@ function PassagePart({
   );
 }
 
+/** `el`, or a copy of it with every passage block inside it replaced by the
+ * same markup PassagePart draws. */
+function inlinePassages(
+  el: Element,
+  wordsFor: (ref: PassageRef, translationId: number | null) => Passage | undefined,
+  books: Book[] | undefined,
+  translations: Translation[] | undefined,
+): Element {
+  if (!el.querySelector('[data-type="passage"]')) return el;
+  const clone = el.cloneNode(true) as Element;
+  for (const block of Array.from(clone.querySelectorAll('[data-type="passage"]'))) {
+    const ref = refOfElement(block);
+    if (!ref) {
+      block.remove();
+      continue;
+    }
+    const translationId = numAttr(block, "data-translation-id");
+    const passage = wordsFor(ref, translationId);
+    const words = passage?.verses.length
+      ? passage.verses.map((v) => `<span><sup class="sermon-passage-number">${v.verse}</sup>${escapeHtml(v.text)} </span>`).join("")
+      : escapeHtml(passage?.text || "…");
+    const code = translations?.find((t) => t.id === translationId)?.code;
+    const caption = escapeHtml(formatRef(books, ref) + (code ? ` · ${code}` : ""));
+    const holder = clone.ownerDocument.createElement("div");
+    holder.innerHTML =
+      `<div class="sermon-passage"><p class="sermon-passage-text">${words}</p>` +
+      `<div class="sermon-passage-caption"><span>${caption}</span></div></div>`;
+    block.replaceWith(holder.firstElementChild!);
+  }
+  return clone;
+}
+
 function numAttr(el: Element, name: string): number | null {
   const raw = el.getAttribute(name);
   const n = raw == null ? NaN : Number(raw);
   return Number.isFinite(n) ? n : null;
-}
-
-function refOf(el: Element): PassageRef | null {
-  const bookId = numAttr(el, "data-book-id");
-  const chapter = numAttr(el, "data-chapter");
-  if (!bookId || !chapter) return null;
-  const start = numAttr(el, "data-verse-start") ?? 1;
-  const end = numAttr(el, "data-verse-end") ?? start;
-  return { book_id: bookId, chapter, verse_start: start, verse_end: Math.max(start, end) };
 }
 
 /** Rewrites the blanks inside one block for the way this view shows them:

@@ -1040,11 +1040,31 @@ export const TUTORIAL: TutorialCategory[] = [
         steps: [
           "Open Sermons in the sidebar and click New sermon (or type new sermon in the Go to box).",
           "Press [Ctrl]+[Alt]+[1] to make a line a point and [Ctrl]+[Alt]+[2] a sub-point. The toolbar adds quotations, a rule, and underline ([Ctrl]+[U]) alongside bold and italic.",
-          "An empty manuscript offers Start from…: Expository, Textual, Topical, Evangelistic, Funeral, Wedding, and Bible study. Edit the templates under Settings → Reading → Sermon templates.",
+          "An empty manuscript offers Start from…: Expository, Textual, Topical, Evangelistic, Funeral, Wedding, Bible study, Three points (explanation, illustration, and application under each), Me · We · God · You · We, Verse by verse, Defender's outline, and Children and youth. Edit the templates under Settings → Reading → Sermon templates; if you had changed yours before the newer ones shipped, a button there adds the ones you don't have.",
         ],
         links: [
           { label: "Sermons", to: "/sermons" },
           { label: "Settings → Reading", to: "/settings?section=preferences" },
+        ],
+      },
+      {
+        id: "sermon-blocks",
+        title: "Typed blocks",
+        what: "Part of a point can be set apart as its explanation, illustration, application, a transition, or a kind you name, each with its own color.",
+        steps: [
+          "Select the paragraphs and press [Ctrl]+[Alt]+[3], or choose a kind from the toolbar's Block button. Press [Ctrl]+[Alt]+[3] again inside a block to step it to the next kind.",
+          "The chip at the top of a block changes its kind; a Custom block takes its own name. Back to plain text on the Block button undoes it.",
+          "The colors carry into preaching mode, print, and the podium file, so the application for a point can be found at a glance.",
+        ],
+      },
+      {
+        id: "sermon-reorder",
+        title: "Rearrange the points",
+        what: "A point moves with its sub-points and everything under it, in the manuscript itself.",
+        steps: [
+          "Drag a row in the side panel's Outline tab above or below another; a line shows where it will land. The arrows on a row step it up or down.",
+          "In the manuscript, [Alt]+[Shift]+[↑] and [Alt]+[Shift]+[↓] move the point the cursor is in.",
+          "A point dropped on a sub-point lands beside that sub-point's point, so it never splits one. [Ctrl]+[Z] undoes a move in one step.",
         ],
       },
       {
@@ -1115,8 +1135,9 @@ export const TUTORIAL: TutorialCategory[] = [
       {
         id: "sermon-slides",
         title: "Slides, without building any",
-        what: "Slides are generated from the manuscript: a title slide, one per point with sub-points as bullets, one per passage, and one per short quotation or illustration.",
+        what: "Slides are generated from the manuscript: a title slide, one per point with sub-points as bullets, one per passage, one per short quotation or illustration, and one for any words you mark.",
         steps: [
+          "Select a line and press [Ctrl]+[Shift]+[L] (or the screen button in the toolbar) to give it a slide of its own, where it falls in the sermon.",
           "Open the side panel's Slides tab to preview them and start from any slide.",
           "Present the slides shows them full screen on a dark ground: [→] and [Space] advance, [←] goes back, [Home] and End jump to the ends, [Esc] leaves.",
           "Export slides as .pptx writes the same deck for PowerPoint.",
@@ -1154,7 +1175,12 @@ export const TUTORIAL: TutorialCategory[] = [
         id: "sermon-print",
         title: "Print, hand out, export",
         what: "The Print & export menu prints the manuscript, the outline, or the handout, and exports Markdown.",
-        steps: ["Click Print & export on a sermon.", "Choose the manuscript, the outline, or the fill-in handout with or without the answer key; every passage's words are printed, not only the references.", "Export as Markdown writes the whole sermon to a file. Printing to PDF is the print dialog's own choice."],
+        steps: [
+          "Click Print & export on a sermon.",
+          "Choose the manuscript, the outline, or the fill-in handout with or without the answer key; every passage's words are printed, not only the references.",
+          "Export as Markdown writes the whole sermon to a file. Printing to PDF is the print dialog's own choice.",
+          "Podium file for a phone or tablet writes the manuscript as one web page with every passage in it: a tap on either side or a swipe turns the page, the clock runs against your target, and the text size is yours. It opens in any browser without the internet, so email, AirDrop, or copy it to the device.",
+        ],
       },
       {
         id: "illustrations",
@@ -1165,6 +1191,17 @@ export const TUTORIAL: TutorialCategory[] = [
           "In a manuscript, click the bulb in the toolbar to insert one as a citation; the use is recorded, and you are warned when a story has already been told in this series.",
         ],
         links: [{ label: "Illustrations", to: "/illustrations" }],
+      },
+      {
+        id: "sermon-ideas",
+        title: "Sermon ideas",
+        what: "A thought caught before there is a sermon for it waits in an inbox until you put it in one.",
+        steps: [
+          "Press [Ctrl]+[Alt]+[I] anywhere (or type idea in the Go to box), write it, and add a passage if it has one. A selection in the Bible can start one from its verses.",
+          "The Ideas tab beside every manuscript lists the inbox: drag an idea into the text, or put it at the cursor, and it is filed in that sermon.",
+          "The Sermons page lists the inbox too, where an idea can start a sermon of its own, with its passage as the text.",
+        ],
+        links: [{ label: "Sermons", to: "/sermons" }],
       },
     ],
   },
