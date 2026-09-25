@@ -234,6 +234,16 @@ export function AboutSection() {
           The King James Version, the American Standard Version, and the other translations and classic works included here are in the public domain,
           except where a translation is listed below with its own terms.
         </Source>
+        <Source name="The creeds and the Three Forms of Unity">
+          Public domain, from Philip Schaff's <i>The Creeds of Christendom</i> (1877): the received English of the Apostles', Nicene and Athanasian
+          creeds; the Heidelberg Catechism in the Tercentenary translation (1863); and the Belgic Confession and the Canons of Dort in the English of
+          the Reformed (Dutch) Church in America. That English leaves out the Canons' Rejection of Errors, which is given in Thomas Scott's
+          translation (<i>The Articles of the Synod of Dort</i>, 1818).
+        </Source>
+        <Source name="Calvin's Commentaries">
+          The Calvin Translation Society's edition (Edinburgh, 1843–55). Its translators' and editors' footnotes are shown after the paragraph they
+          belong to and marked <i>Editor's note</i>, apart from Calvin's own words.
+        </Source>
         <TranslationCredits />
         <LexiconCredits />
         <Source name="Strong's lexicon and Thayer's">Public domain.</Source>

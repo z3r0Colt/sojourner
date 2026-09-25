@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { BookA, BookMarked, BookOpen, Brain, CalendarCheck, CalendarRange, Columns3, HeartHandshake, Highlighter, Languages, Library, Lightbulb, MapPin, Mic, NotebookPen, PanelLeftClose, PanelLeftOpen, ScrollText, Settings, Sunrise, Users, type LucideIcon } from "lucide-react";
+import { BookA, BookMarked, BookOpen, Brain, CalendarCheck, CalendarRange, Columns3, HeartHandshake, Highlighter, HouseHeart, Languages, Library, Lightbulb, MapPin, Mic, NotebookPen, PanelLeftClose, PanelLeftOpen, ScrollText, Settings, Sunrise, Users, type LucideIcon } from "lucide-react";
 import { useDueCatechismMemory, useDueMemoryVerses } from "../api/queries";
 import { useUiStore } from "../state/uiStore";
 import { cx } from "../components/ui/classes";
@@ -70,6 +70,7 @@ const GROUPS: { label: string; items: NavItem[] }[] = [
       { to: "/plans", label: "Reading plans", icon: CalendarCheck },
       { to: "/prayer", label: "Prayer", icon: HeartHandshake },
       { to: "/memory", label: "Memory", icon: Brain },
+      { to: "/family", label: "Family worship", icon: HouseHeart },
     ],
   },
 ];

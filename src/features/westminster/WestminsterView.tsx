@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { snippetHtml } from "../../lib/snippet";
 import { useQuery } from "@tanstack/react-query";
 import { BookA, ChevronDown, ChevronLeft, ChevronRight, ListTree, Search } from "lucide-react";
@@ -15,6 +15,7 @@ import {
   useDictionaryEntryByTerm,
 } from "../../api/queries";
 import { usePaneNavigate, usePaneParams } from "../../workspace/PaneContext";
+import { SidePanel } from "../../components/ui/SidePanel";
 import { PaneLink as Link } from "../../workspace/PaneLink";
 import { openPassage, targetFor } from "../../workspace/openContent";
 import { useReadingTypography } from "../../state/uiStore";
@@ -183,7 +184,7 @@ export function WestminsterView() {
 
   return (
     <div className="flex h-full">
-      <aside className="flex w-72 shrink-0 flex-col border-r border-line bg-surface-2/60">
+      <SidePanel id="confessions-contents" label="Contents" defaultWidth={288} className="flex flex-col">
         <Tabs
           size="sm"
           stretch
@@ -229,15 +230,30 @@ export function WestminsterView() {
                       />
                     </button>
                   ))
-                : sections?.map((s) => (
-                    <Link
-                      key={s.id}
-                      to={`/westminster/${doc?.code}/${s.id}`}
-                      className={cx(sidebarItemClass, s.id === sectionId ? "bg-accent-soft font-medium text-accent" : "text-ink-2")}
-                    >
-                      {s.heading}
-                    </Link>
-                  ))}
+                : sections?.map((s, i) => {
+                    // The Confession's prompt is its chapter's title, shown once
+                    // above the chapter's paragraphs; a catechism's is the
+                    // question, shown under its number.
+                    const chapterTitle = doc?.code === "wcf" && s.prompt && s.prompt !== sections[i - 1]?.prompt ? s.prompt : null;
+                    const chapter = chapterTitle ? parseChapterHeading(s.heading)?.chapter : null;
+                    return (
+                      <Fragment key={s.id}>
+                        {chapterTitle && (
+                          <div className="border-b border-line bg-surface-2 px-3 pb-1 pt-3 text-xs font-semibold uppercase tracking-wide text-ink-3">
+                            {chapter != null ? `${chapter}. ` : ""}
+                            {chapterTitle}
+                          </div>
+                        )}
+                        <Link
+                          to={`/westminster/${doc?.code}/${s.id}`}
+                          className={cx(sidebarItemClass, s.id === sectionId ? "bg-accent-soft font-medium text-accent" : "text-ink-2")}
+                        >
+                          {s.heading}
+                          {doc?.code !== "wcf" && s.prompt && <span className="mt-0.5 block truncate text-xs font-normal text-ink-3">{s.prompt}</span>}
+                        </Link>
+                      </Fragment>
+                    );
+                  })}
             </div>
           </>
         )}
@@ -270,7 +286,7 @@ export function WestminsterView() {
             ))}
           </div>
         )}
-      </aside>
+      </SidePanel>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-8 py-6">
         {!section && sections && sections.length === 0 && <EmptyState title="Nothing to show" />}
@@ -295,7 +311,8 @@ export function WestminsterView() {
                 </Link>
               )}
             </div>
-            {section.prompt && (
+            {section.prompt && doc?.code === "wcf" && <p className="-mt-2 mb-4 text-sm font-medium text-ink-2">{section.prompt}</p>}
+            {section.prompt && doc?.code !== "wcf" && (
               <p className="reading-font mb-3 font-medium italic text-ink" style={typography}>
                 {section.prompt}
               </p>

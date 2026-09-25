@@ -18,13 +18,14 @@ pub fn list_documents(conn: &Connection) -> anyhow::Result<Vec<WestminsterDocume
 
 pub fn list_sections(conn: &Connection, document_id: i64) -> anyhow::Result<Vec<WestminsterSectionSummary>> {
     let mut stmt = conn.prepare(
-        "SELECT id, sort_order, heading FROM westminster_sections WHERE document_id = ?1 ORDER BY sort_order",
+        "SELECT id, sort_order, heading, prompt FROM westminster_sections WHERE document_id = ?1 ORDER BY sort_order",
     )?;
     let rows = stmt.query_map(params![document_id], |r| {
         Ok(WestminsterSectionSummary {
             id: r.get(0)?,
             sort_order: r.get(1)?,
             heading: r.get(2)?,
+            prompt: r.get(3)?,
         })
     })?;
     Ok(rows.collect::<Result<Vec<_>, _>>()?)

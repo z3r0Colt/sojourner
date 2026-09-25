@@ -24,6 +24,7 @@ import { Kbd } from "../../components/ui/Page";
 import { LoadingState } from "../../components/ui/EmptyState";
 import { toast } from "../../components/ui/toast";
 import { checkboxClass, cx, inputClass, selectSmClass } from "../../components/ui/classes";
+import { SidePanel } from "../../components/ui/SidePanel";
 import { htmlToText } from "../sermons/excerpt";
 import { sendToSermon } from "../sermons/sendToSermon";
 import { snippetHtml, snippetText, splitAtFirstMatch } from "../../lib/snippet";
@@ -823,7 +824,7 @@ export function SearchPanel({ query, onQueryChange, docked, onOpenVerse, onOpene
       )}
       <div className={cx("flex min-h-0 flex-1", tab === "grammar" && "hidden")}>
         {showFacets && facetRows && (tab === "verses" || tab === "commentary") && active && (
-          <aside className="hidden w-40 shrink-0 overflow-y-auto border-r border-line p-2 text-xs sm:block" aria-label="Counts by book">
+          <SidePanel id="search-counts" label="Counts by book" defaultWidth={160} minWidth={120} maxShare={0.4} collapseBelow={560} className="overflow-y-auto p-2 text-xs">
             {facetRows.sources.length > 1 && (
               <>
                 <div className="mb-1 font-semibold uppercase tracking-wide text-ink-4">{tab === "commentary" ? "Commentary" : "Translation"}</div>
@@ -850,7 +851,7 @@ export function SearchPanel({ query, onQueryChange, docked, onOpenVerse, onOpene
                 </li>
               ))}
             </ul>
-          </aside>
+          </SidePanel>
         )}
         <div className="min-h-0 flex-1 overflow-y-auto p-2">
           {activeError != null && (

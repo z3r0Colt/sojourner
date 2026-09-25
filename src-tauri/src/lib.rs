@@ -348,6 +348,7 @@ pub fn run() {
             commands::prayer_list::update_prayer_list_person,
             commands::prayer_list::set_prayer_list_person_active,
             commands::prayer_list::mark_prayer_list_person_prayed,
+            commands::prayer_list::restore_prayer_list_person_prayed,
             commands::prayer_list::mark_prayer_list_person_answered,
             commands::prayer_list::delete_prayer_list_person,
             commands::scripture_memory::list_memory_verses,

@@ -7,6 +7,7 @@ import { ReadingPlansView } from "../../features/plans/ReadingPlansView";
 import { HarmonyView } from "../../features/harmony/HarmonyView";
 import { ResourceLibraryView } from "../../features/resources/ResourceLibraryView";
 import { TodayView } from "../../features/today/TodayView";
+import { FamilyWorshipView } from "../../features/family/FamilyWorshipView";
 
 /** List-style pages scroll inside their pane; the shell's main area no
  * longer scrolls for them. */
@@ -74,6 +75,14 @@ export function ResourcesPane() {
   return (
     <PageScroll>
       <ResourceLibraryView />
+    </PageScroll>
+  );
+}
+
+export function FamilyPane() {
+  return (
+    <PageScroll>
+      <FamilyWorshipView />
     </PageScroll>
   );
 }

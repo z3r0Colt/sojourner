@@ -67,6 +67,15 @@ export function CommentaryPanel({
     overscan: 5,
   });
 
+  // Bring the verse being read into view: the entry that starts on it, or
+  // else the first whose range covers it. Only when the verse (or the list
+  // under it) changes, so reading down the commentary isn't yanked back.
+  const landingIndex = useMemo(() => verseLandingIndex(entries ?? [], activeVerse), [entries, activeVerse]);
+  useEffect(() => {
+    if (landingIndex >= 0) rowVirtualizer.scrollToIndex(landingIndex, { align: "start" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [landingIndex, entries]);
+
   return (
     <div className="flex h-full w-full flex-col">
       <div className="flex items-center gap-1.5 border-b border-line px-2 py-1.5">
@@ -116,6 +125,10 @@ export function CommentaryPanel({
           <div style={{ position: "relative", height: rowVirtualizer.getTotalSize() }}>
             {rowVirtualizer.getVirtualItems().map((item) => {
               const e = entries[item.index];
+              const prev = item.index > 0 ? entries[item.index - 1] : null;
+              // A run of paragraphs on one passage (all of Calvin on 8:28-30)
+              // carries its verse label once, at the top of the run.
+              const showVerseLabel = e.verse_start != null && !(prev && prev.verse_start === e.verse_start && prev.verse_end === e.verse_end);
               const isCurrent =
                 activeVerse != null && e.verse_start != null && activeVerse >= e.verse_start && activeVerse <= (e.verse_end ?? e.verse_start);
               return (
@@ -127,7 +140,7 @@ export function CommentaryPanel({
                   className={cx("mb-3 rounded-md p-2 -mx-1", isCurrent && "bg-amber-50 ring-1 ring-amber-200 dark:bg-amber-950/30 dark:ring-amber-900")}
                 >
                   <div className="mb-1 flex items-start gap-1">
-                    {e.verse_start != null && (
+                    {showVerseLabel && (
                       <button
                         type="button"
                         className="block text-xs font-semibold text-accent hover:underline"
@@ -167,6 +180,15 @@ export function CommentaryPanel({
       </div>
     </div>
   );
+}
+
+/** Where a verse lands in a chapter's entries: the first entry that starts
+ * on it, else the first whose range covers it, else -1. */
+export function verseLandingIndex(entries: { verse_start: number | null; verse_end: number | null }[], verse: number | null): number {
+  if (verse == null) return -1;
+  const starts = entries.findIndex((e) => e.verse_start === verse);
+  if (starts >= 0) return starts;
+  return entries.findIndex((e) => e.verse_start != null && verse >= e.verse_start && verse <= (e.verse_end ?? e.verse_start));
 }
 
 /** A click on a Scripture reference inside commentary HTML. The event is

@@ -207,6 +207,7 @@ export type PaneContent =
   | { kind: "prayer"; params: EmptyParams }
   | { kind: "memory"; params: EmptyParams }
   | { kind: "plans"; params: EmptyParams }
+  | { kind: "family"; params: EmptyParams }
   | { kind: "harmony"; params: EmptyParams }
   | { kind: "sermons"; params: EmptyParams }
   | { kind: "sermon"; params: SermonParams }
@@ -247,6 +248,7 @@ export const PANE_KIND_LIST: readonly PaneKind[] = [
   "prayer",
   "memory",
   "plans",
+  "family",
   "harmony",
   "sermons",
   "sermon",

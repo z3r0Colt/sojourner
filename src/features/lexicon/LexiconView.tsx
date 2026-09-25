@@ -6,6 +6,7 @@ import { useBooks, useStrongsEntry } from "../../api/queries";
 import { ConcordancePanel } from "./ConcordancePanel";
 import { CommentaryHtml } from "../commentary/CommentaryPanel";
 import { usePaneNavigate, usePaneParams } from "../../workspace/PaneContext";
+import { SidePanel } from "../../components/ui/SidePanel";
 import { openContent, openPassage, targetFor } from "../../workspace/openContent";
 import { useReadingTypography } from "../../state/uiStore";
 import { Button } from "../../components/ui/Button";
@@ -72,7 +73,7 @@ export function LexiconView() {
 
   return (
     <div className="flex h-full">
-      <aside className="flex w-80 shrink-0 flex-col border-r border-line bg-surface-2/60">
+      <SidePanel id="lexicon-list" label="Lexicon search" defaultWidth={320} autoCollapse={!!(paneEntryId || paneLexEntryId)} className="flex flex-col">
         <div className="border-b border-line p-3">
           <div className="relative">
             <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-4" aria-hidden="true" />
@@ -121,7 +122,7 @@ export function LexiconView() {
             <p className="p-3 text-xs text-ink-3">Search by English meaning, transliteration, or Strong's number. Or click any word in interlinear view while reading.</p>
           )}
         </div>
-      </aside>
+      </SidePanel>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-8 py-6">
         {!entry && lone && (

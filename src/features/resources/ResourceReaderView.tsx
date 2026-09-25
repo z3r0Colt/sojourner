@@ -26,6 +26,7 @@ import { toast } from "../../components/ui/toast";
 import { StudyActions } from "../sermons/StudyActions";
 import { resourceRef } from "../sermons/sourceIdentity";
 import { cx, selectSmClass } from "../../components/ui/classes";
+import { SidePanel } from "../../components/ui/SidePanel";
 import type { Resource } from "../../api/types";
 
 /** Below this pane width the reader's sidebar folds into a header menu. */
@@ -128,9 +129,9 @@ export function ResourceReaderView() {
   return (
     <div className="flex h-full">
       {reader}
-      <aside className="flex w-72 shrink-0 flex-col border-l border-line bg-surface-2/60">
+      <SidePanel id="reader-sidebar" label="Contents and details" side="right" defaultWidth={288} autoCollapse={false} className="flex flex-col">
         <ReaderSidebar resource={resource} mediaRef={mediaRef} contents={contents} selection={selection} />
-      </aside>
+      </SidePanel>
     </div>
   );
 }

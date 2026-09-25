@@ -84,6 +84,9 @@ interface UiState {
   /** Preaching mode's text size in pixels (SB4.1); the pulpit wants a much
    * larger face than the study does, so it is its own setting. */
   pulpitFontSize: number;
+  /** Family worship's gather-round text size in pixels: read across a room,
+   * so larger again than the study, and kept apart from the pulpit's. */
+  familyFontSize: number;
   /** How wide an EPUB's text column runs. Size, spacing and font are the
    * shared reading preferences above; only the measure is the book's own,
    * because a book is read in a pane of its own width. */
@@ -145,6 +148,7 @@ interface UiState {
   toggleSidebar: () => void;
   setSermonFollowsCursor: (on: boolean) => void;
   setPulpitFontSize: (px: number) => void;
+  setFamilyFontSize: (px: number) => void;
   setEpubWidth: (w: EpubWidth) => void;
   setEpubUseBookStyles: (on: boolean) => void;
   setHarmonyCode: (code: string | null) => void;
@@ -186,6 +190,7 @@ export const useUiStore = create<UiState>((set) => ({
   sidebarCollapsed: stored.sidebarCollapsed ?? false,
   sermonFollowsCursor: stored.sermonFollowsCursor ?? true,
   pulpitFontSize: stored.pulpitFontSize ?? 28,
+  familyFontSize: stored.familyFontSize ?? 30,
   epubWidth: stored.epubWidth ?? "medium",
   epubUseBookStyles: stored.epubUseBookStyles ?? false,
   harmonyCode: stored.harmonyCode ?? null,
@@ -263,6 +268,12 @@ export const useUiStore = create<UiState>((set) => ({
     const pulpitFontSize = Math.max(16, Math.min(72, Math.round(px)));
     persist({ pulpitFontSize });
     set({ pulpitFontSize });
+  },
+
+  setFamilyFontSize: (px) => {
+    const familyFontSize = Math.max(18, Math.min(72, Math.round(px)));
+    persist({ familyFontSize });
+    set({ familyFontSize });
   },
 
   setSermonFollowsCursor: (sermonFollowsCursor) => {

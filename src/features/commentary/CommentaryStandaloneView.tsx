@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, MessageSquareText } from "lucide-react";
 import { api } from "../../api/client";
 import { useBooks, useCommentarySources } from "../../api/queries";
 import { usePane, usePaneNavigate, usePaneParams } from "../../workspace/PaneContext";
+import { SidePanel } from "../../components/ui/SidePanel";
 import { PaneLink as Link } from "../../workspace/PaneLink";
 import { openPassage, targetFor } from "../../workspace/openContent";
 import { useTtsReadingHere, useTtsStore } from "../../state/ttsStore";
@@ -54,7 +55,7 @@ export function CommentaryStandaloneView() {
 
   return (
     <div className="flex h-full">
-      <aside className="w-60 shrink-0 overflow-y-auto border-r border-line bg-surface-2/60 p-2">
+      <SidePanel id="commentary-contents" label="Contents" defaultWidth={240} autoCollapse={sectionId != null} className="overflow-y-auto p-2">
         <select aria-label="Commentary" className={cx(selectSmClass, "mb-3 w-full")} value={sourceId ?? ""} onChange={(e) => navigate(`/commentary/${e.target.value}`)}>
           {sources?.map((s) => (
             <option key={s.id} value={s.id}>
@@ -91,7 +92,7 @@ export function CommentaryStandaloneView() {
             </ul>
           </>
         )}
-      </aside>
+      </SidePanel>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-8 py-6">
         {!source && <EmptyState icon={MessageSquareText} title="Choose a commentary" />}

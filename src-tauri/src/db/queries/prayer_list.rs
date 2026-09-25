@@ -69,6 +69,19 @@ pub fn mark_prayed(conn: &Connection, id: i64) -> anyhow::Result<()> {
     Ok(())
 }
 
+/// Puts back when someone was last prayed for, as it stood before a
+/// `mark_prayed` that is being undone (family worship's Undo). `None` means
+/// they had never been prayed for. `updated_at` moves on regardless: the row
+/// did change, twice.
+pub fn restore_prayed(conn: &Connection, id: i64, last_prayed_at: Option<String>) -> anyhow::Result<()> {
+    let now = chrono::Utc::now().to_rfc3339();
+    conn.execute(
+        "UPDATE prayer_list_people SET last_prayed_at=?1, updated_at=?2 WHERE id=?3",
+        params![last_prayed_at, now, id],
+    )?;
+    Ok(())
+}
+
 /// Marks a request answered: archives it (active=0, same as `set_active`)
 /// and records when/how, for the "record answers to prayer as a means of
 /// strengthening faith" use -- distinct from an ordinary archive, which

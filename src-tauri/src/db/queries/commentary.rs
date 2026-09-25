@@ -55,7 +55,7 @@ pub fn get_commentary_for_passage(
          FROM commentary_entries ce
          JOIN commentary_sections cs ON cs.id = ce.section_id
          WHERE cs.commentary_source_id = ?1 AND ce.book_id = ?2 AND ce.chapter = ?3
-         ORDER BY ce.sort_order",
+         ORDER BY cs.sort_order, ce.sort_order",
     )?;
     let rows = stmt
         .query_map(params![source_id, book_id, chapter], |r| {

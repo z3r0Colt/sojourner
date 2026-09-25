@@ -5,6 +5,7 @@ pub mod dictionary;
 pub mod doctrine_topics;
 pub mod editions;
 pub mod factbook;
+pub mod family_worship;
 pub mod timeline;
 pub mod library_catalog;
 pub mod footnotes;
@@ -158,6 +159,12 @@ pub fn import_all(conn: &mut Connection, reference_dir: &Path) -> anyhow::Result
     } else {
         0
     };
+
+    // Beside the confessions in the same tables, so gated on its own code.
+    if !document_exists(conn, "cyc") {
+        family_worship::import(conn, &reference_dir.join("family_worship"))
+            .map_err(|e| anyhow::anyhow!("family worship import failed: {e:#}"))?;
+    }
 
     let doctrine_topics = if table_count(conn, "doctrine_topics") == 0 {
         doctrine_topics::import(conn).map_err(|e| anyhow::anyhow!("doctrine topics import failed: {e:#}"))?

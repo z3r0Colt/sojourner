@@ -70,6 +70,20 @@ fn unique_name(raw: &str) -> Option<(String, Option<String>)> {
 /// "2Ch.24.20; Mat.23.35; Jos.15.63a" -> verses. Parts that are not a full
 /// reference ("LXX" prefixes, "ff") are skipped; a letter suffix only marks a
 /// second occurrence in the verse.
+/// "Zechariah =ESV,NIV; Zacharias =KJV": every English form, the first as it
+/// is most commonly printed, joined with "; ". "[ ] =ESV" says a translation
+/// leaves the name out there; it is not a form of the name.
+fn english_forms(raw: &str) -> String {
+    let mut english: Vec<String> = Vec::new();
+    for part in raw.split(';') {
+        let form = part.split(" =").next().unwrap_or(part).trim().replace('_', " ");
+        if form.chars().any(char::is_alphanumeric) && !english.contains(&form) {
+            english.push(form);
+        }
+    }
+    english.join("; ")
+}
+
 fn parse_refs(raw: &str) -> Vec<(i64, i64, i64)> {
     let mut out = Vec::new();
     let mut book: Option<i64> = None;
@@ -182,16 +196,7 @@ fn read_tipnr(path: &Path, osis: &HashMap<i64, String>) -> anyhow::Result<Vec<En
                 Some((s, o)) => (s.split('«').next().map(|x| x.trim().to_string()), Some(o.trim().to_string())),
                 None => (None, None),
             };
-            // "Zechariah =ESV,NIV; Zacharias =KJV": every English form, the
-            // first as it is most commonly printed.
-            let mut english: Vec<String> = Vec::new();
-            for part in cols[3].split(';') {
-                let form = part.split(" =").next().unwrap_or(part).trim().replace('_', " ");
-                if !form.is_empty() && !english.contains(&form) {
-                    english.push(form);
-                }
-            }
-            let english = english.join("; ");
+            let english = english_forms(cols[3]);
             e.forms.push(Form { significance: sig.trim().to_string(), english, original, strongs });
             e.refs.extend(parse_refs(cols[4]));
             continue;
@@ -449,5 +454,12 @@ mod tests {
         assert!(html.contains(r#"data-osis="2Chr.24.20""#), "{html}");
         assert!(html.contains("<b>Zechariah</b>"), "{html}");
         assert!(!html.contains("<strong"), "{html}");
+    }
+
+    #[test]
+    fn a_translation_that_omits_the_name_is_not_a_form_of_it() {
+        assert_eq!(english_forms("Zechariah =ESV,NIV; Zacharias =KJV"), "Zechariah; Zacharias");
+        assert_eq!(english_forms("David =NIV,KJV; [ ] =ESV"), "David");
+        assert_eq!(english_forms("Jerusalem_wives"), "Jerusalem wives");
     }
 }

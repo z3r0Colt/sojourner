@@ -5,6 +5,7 @@ import { BookMarked, CornerDownRight, List, Search } from "lucide-react";
 import { api } from "../../api/client";
 import { useBooks, useDictionaryEntryForIsbe, useIsbeEntry, useIsbeIndex } from "../../api/queries";
 import { usePane, usePaneNavigate, usePaneParams } from "../../workspace/PaneContext";
+import { SidePanel } from "../../components/ui/SidePanel";
 import { openContent, openPassage, targetFor } from "../../workspace/openContent";
 import { useReadingTypography } from "../../state/uiStore";
 import { CommentaryHtml } from "../commentary/CommentaryPanel";
@@ -158,7 +159,7 @@ export function EncyclopediaView() {
 
   return (
     <div className="flex h-full">
-      <aside className="flex w-80 shrink-0 flex-col border-r border-line bg-surface-2/60">
+      <SidePanel id="encyclopedia-index" label="Encyclopedia index" defaultWidth={320} autoCollapse={!!slug} className="flex flex-col">
         <div className="border-b border-line p-3">
           <div className="relative">
             <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-4" aria-hidden="true" />
@@ -216,7 +217,7 @@ export function EncyclopediaView() {
             })}
           </div>
         </div>
-      </aside>
+      </SidePanel>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-8 py-6">
         {!entry && (

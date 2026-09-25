@@ -43,7 +43,7 @@ export const TUTORIAL: TutorialCategory[] = [
       {
         id: "sidebar",
         title: "The sidebar",
-        what: "The sidebar on the left lists every page in four groups: Scripture, Library (works others wrote), Notebook (what you write), and Devotion (daily practice), with Today above them and Settings below.",
+        what: "The sidebar on the left lists every page in four groups: Scripture, Library (works others wrote), Notebook (what you write), and Devotion (daily practice, family worship among it), with Today above them and Settings below.",
         steps: [
           "Click a page to open it in the pane you are working in.",
           "[Ctrl]+click (or middle-click) a page to open it in a new pane beside what you have.",
@@ -57,11 +57,12 @@ export const TUTORIAL: TutorialCategory[] = [
       {
         id: "today",
         title: "Start the day from Today",
-        what: "Today is one page over everything: seven blocks in a fixed order, and any block with nothing to show stays hidden.",
+        what: "Today is one page over everything: eight blocks in a fixed order, and any block with nothing to show stays hidden.",
         steps: [
           "Click Today, the first item in the sidebar.",
           "Continue reading shows where you left off, with the first verse as a teaser; click it to carry on.",
           "Today's plan lists the day's reading-plan readings with a checkbox each.",
+          "Family worship shows what the family reads, sings, learns and prays for next, with Begin and Gather round. Until it is set up it is a one-time invitation; Not now puts it away.",
           "This Sunday shows the sermon coming up, its prep stage, and how much of it is written.",
           "Due for review counts the memory cards waiting today.",
           "Pray for names the three people longest unprayed for, each with a Prayed button.",
@@ -379,10 +380,21 @@ export const TUTORIAL: TutorialCategory[] = [
         title: "Tabs in a pane",
         what: "A pane holding several pages shows them as tabs in its header.",
         steps: [
+          "The + beside a pane's title or tabs opens a new tab in that pane: a copy of the pane, or any other kind of pane. [Ctrl]+[T] opens a copy of the focused pane as a new tab. Tabs count toward the workspace's eight panes.",
           "Click a tab to show it; [←] and [→] with a tab focused move between them. Each tab has a × to close it.",
           "Drag a tab by itself: between other tabs to reorder, onto another pane's edge to split it out, or onto a pane's middle to move it there.",
           "Move this tab to its own pane in the ⋯ menu splits it out to the right.",
           "A quick arrangement with fewer slots than panes puts the extra panes in the last slot as tabs.",
+        ],
+      },
+      {
+        id: "panes-side-panels",
+        title: "Side panels in a pane",
+        what: "Pages with a list or contents beside them (the Atlas, Encyclopedia, Dictionary, Lexicon, Factbook, Confessions, a commentary's contents, a book's contents, a sermon's outline, and search's counts by book) keep that list in a side panel you can size and fold away.",
+        steps: [
+          "Drag the panel's inner edge to make it wider or narrower; double-click the edge to put it back to its usual width. Each kind of panel remembers its width.",
+          "The round button on the panel's edge folds it to a thin strip with its name; click the strip to open it again.",
+          "A panel never takes more than half its pane. In a narrow pane it folds itself away once there is something beside it to read, and opening it there applies to that pane only.",
         ],
       },
       {
@@ -403,7 +415,7 @@ export const TUTORIAL: TutorialCategory[] = [
         what: "A workspace is the panes and their arrangement, saved under a name.",
         steps: [
           "Click Workspaces in the top bar.",
-          "Presets: Devotion (the Bible alone), Sermon prep (Bible, Matthew Henry, Sermons, and Mine in a two by two, all in group A), and Word study (Bible, Interlinear, and Lexicon side by side).",
+          "Presets: Devotion (the Bible alone), Sermon prep (Bible, Matthew Henry, Sermons, and Mine in a two by two, all in group A), Word study (Bible, Interlinear, and Lexicon side by side), and Family worship (the family worship page alone).",
           "Click Save current as… to keep what you have open under a name; each saved row has rename and delete buttons.",
           "Switching keeps the chapter you are reading in every Bible pane that shares a link group with one in the new arrangement.",
           "Saved workspaces are stored with your data, so they survive a reinstall and travel with backups. The workspace you have open always comes back on launch.",
@@ -665,7 +677,7 @@ export const TUTORIAL: TutorialCategory[] = [
       {
         id: "westminster",
         title: "Browse the Westminster Standards",
-        what: "The Westminster Confession and the Larger and Shorter Catechisms, with their Scripture proofs.",
+        what: "The Westminster Confession and the Larger and Shorter Catechisms, with their Scripture proofs; the creeds and the Three Forms of Unity; and for families, the Catechism for Young Children (1840) and the Directory for Family-Worship (1647).",
         steps: [
           "Open Confessions in the sidebar.",
           "Pick a document, then a chapter or question, or browse by doctrinal topic on the Topics tab.",
@@ -830,6 +842,51 @@ export const TUTORIAL: TutorialCategory[] = [
     ],
   },
   {
+    title: "Family worship",
+    entries: [
+      {
+        id: "family-start",
+        title: "Set up family worship",
+        what: "Family worship is a guided few minutes for the household: a reading, a psalm to sing, a catechism question, and prayer, one step at a time.",
+        steps: [
+          "Open Family worship in the sidebar (under Devotion), or click Take a look on Today.",
+          "New to it? Choose a catechism (the Catechism for Young Children for little ones, the Shorter Catechism for older children) and click Start the first four weeks: 28 short readings, Psalms 100, 23, 117 and 1 a week each, and a new question every other time.",
+          "Or click Or choose our own reading, psalm and catechism, and set them under What we use.",
+          "The page's New to family worship? section has short counsel for beginners, and Further reading opens the Directory for Family-Worship (1647) and J. W. Alexander's Thoughts on Family-Worship (1847).",
+        ],
+        links: [{ label: "Family worship", to: "/family" }],
+      },
+      {
+        id: "family-gather",
+        title: "Gather",
+        what: "Begin walks the family through the steps; Gather round does the same filling the screen in large type, for the table or a television.",
+        steps: [
+          "Click Begin (or Gather round) on the Family worship page or on Today, or type begin family worship in the Go to box.",
+          "Read shows the passage with Read aloud, and three questions to talk about. Sing shows the psalm from the 1650 Scottish Psalter with its tune: press Play and sing along. Catechism asks tonight's question and goes over the last few; click Show the answer. Pray gives an order to follow, the names to pray for, and the Lord's Prayer.",
+          "Click a step's name to jump to it, or Next and Back. In Gather round, [→] and [←] move, [Ctrl]+[=] and [Ctrl]+[-] change the size, and [Esc] leaves full screen.",
+          "Click Amen at the end: the day is logged, the reading and the catechism move on for next time, and a prayer is logged for each name still ticked. Undo on the notice takes it back.",
+        ],
+        links: [{ label: "Family worship", to: "/family" }],
+      },
+      {
+        id: "family-settings",
+        title: "What the family uses",
+        what: "The family keeps its own place in its reading plan, apart from your own plans, and moves on only when it gathers: a missed day waits where you left it.",
+        steps: [
+          "Under What we use on the Family worship page, choose the reading plan and the next day, the psalm of the week (or turn singing off), the catechism, where you are in it and how often a new question comes, and whose names to pray for: everyone on the prayer list or one category.",
+          "After a week on one psalm the page offers to move on or keep it. When a plan or a catechism is finished it offers what to do next.",
+          "The last five weeks shows a dot for each day the family gathered. There are no streaks.",
+          "Print this week prints one sheet: the next seven readings, the psalm's words, the week's catechism questions and answers, and the names to pray for.",
+          "Start over at the bottom clears the setup; the log is kept.",
+        ],
+        links: [
+          { label: "Family worship", to: "/family" },
+          { label: "Prayer list", to: "/prayer" },
+        ],
+      },
+    ],
+  },
+  {
     title: "Memory",
     entries: [
       {
@@ -861,7 +918,7 @@ export const TUTORIAL: TutorialCategory[] = [
       {
         id: "memory-catechism",
         title: "Catechism",
-        what: "The Catechism tab memorizes Shorter or Larger Catechism answers with the same tools.",
+        what: "The Catechism tab memorizes answers from the Shorter or Larger Catechism, or the Catechism for Young Children, with the same tools.",
         steps: ["Click the Catechism tab on the Memory page.", "Add a question by number; practice and grade it the same way. Read in context opens the question in the Confessions."],
         links: [{ label: "Memory", to: "/memory" }],
       },
@@ -884,13 +941,14 @@ export const TUTORIAL: TutorialCategory[] = [
       {
         id: "plans-bundled",
         title: "The plans that ship",
-        what: "Five plans come with the app; each says where its order comes from.",
+        what: "Six plans come with the app; each says where its order comes from.",
         steps: [
           "M'Cheyne's Reading Plan: Robert Murray M'Cheyne's 1842 calendar, four readings a day; the Old Testament once and the New Testament and Psalms twice in a year.",
           "Chronological in a Year: the Bible in the order the events happened, in George Townsend's arrangement (Old Testament 1821, New Testament 1826, on John Lightfoot's chronicle); the day boundaries are the app's own division of his sections into 365 days.",
           "Canonical (Straight Through): Genesis to Revelation over a year, evenly divided.",
           "90-Day Bible: the same order in three months.",
           "Psalms and Wisdom: a psalm a day with Job, Proverbs, Ecclesiastes, and the Song of Solomon alongside, 150 days.",
+          "Family Worship: The First Four Weeks: 28 short readings, creation to the new creation, chosen by the app for reading aloud with children. Family worship starts on it; it can be read on its own like any plan.",
         ],
         links: [{ label: "Reading plans", to: "/plans" }],
       },

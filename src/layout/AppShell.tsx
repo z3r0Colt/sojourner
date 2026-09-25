@@ -12,11 +12,12 @@ import { RefPreviewHost } from "../components/RefPreview";
 import { SendToSermonHost } from "../features/sermons/SendToSermonHost";
 import { IllustrationCaptureHost } from "../features/sermons/IllustrationCaptureHost";
 import { PreachingMode } from "../features/sermons/PreachingMode";
+import { GatherRound } from "../features/family/GatherRound";
 import { RunLogHost } from "../features/sermons/Rehearsal";
 import { Workspace } from "../workspace/Workspace";
 import { LayoutPicker } from "../workspace/LayoutPicker";
 import { WorkspaceDialogs, WorkspacesMenu, useSavedWorkspaces } from "../workspace/WorkspacesMenu";
-import { openContent, openPassage } from "../workspace/openContent";
+import { openContent, openNewTab, openPassage } from "../workspace/openContent";
 import { Button, IconButton } from "../components/ui/Button";
 import { Kbd } from "../components/ui/Page";
 import { toast } from "../components/ui/toast";
@@ -150,6 +151,10 @@ export function AppShell() {
         e.preventDefault();
         s.focusPane(pane.id);
       }
+    } else if (ctrl && !e.altKey && !e.shiftKey && key === "t" && !isTypingTarget(e.target)) {
+      // A copy of the focused pane as a new tab beside it.
+      e.preventDefault();
+      openNewTab(useWorkspaceStore.getState().focusedPaneId);
     } else if (ctrl && !e.altKey && e.key === "\\" && !isTypingTarget(e.target)) {
       // Ctrl+\ splits the focused pane to the right, Ctrl+Shift+\ downward,
       // each leaving an empty slot that offers to add content.
@@ -254,6 +259,7 @@ export function AppShell() {
       <SendToSermonHost />
       <IllustrationCaptureHost />
       <PreachingMode />
+      <GatherRound />
       <RunLogHost />
       <RefPreviewHost />
       <TourOverlay onFinish={() => setTourDone(true)} />

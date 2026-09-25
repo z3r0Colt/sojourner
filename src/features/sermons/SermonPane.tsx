@@ -9,6 +9,7 @@ import { EmptyState, LoadingState } from "../../components/ui/EmptyState";
 import { IconButton } from "../../components/ui/Button";
 import { Popover } from "../../components/ui/Popover";
 import { cx } from "../../components/ui/classes";
+import { SidePanel } from "../../components/ui/SidePanel";
 import { RichTextEditor, type RichTextEditorHandle } from "../notes/RichTextEditor";
 import { SermonEditorProvider } from "./editor/context";
 import { SermonHeader } from "./SermonHeader";
@@ -49,7 +50,7 @@ function savedLabel(at: Date | null, saving: boolean, unsaved: boolean): string 
  * the Bible must not scroll the manuscript out from under the writer. */
 export function SermonPane() {
   const [params] = usePaneParams("sermon");
-  const { id: paneId, width: paneWidth } = usePane();
+  const { id: paneId, width: paneWidth, height: paneHeight } = usePane();
   const { sermon, draft, isLoading, patch, savedAt, isSaving, isUnsaved, passageRefs } = useSermonDraft(params.id);
   const readerTranslationId = useReaderTranslationId();
   const { data: books } = useBooks();
@@ -238,7 +239,7 @@ export function SermonPane() {
               compact={paneWidth < 640}
             />
             <div className="mt-3" />
-            <SermonHeader key={sermon.id} draft={draft} patch={patch} paneWidth={paneWidth} />
+            <SermonHeader key={sermon.id} draft={draft} patch={patch} paneWidth={paneWidth} paneHeight={paneHeight} />
             <RichTextEditor
               ref={editorRef}
               mode="document"
@@ -256,9 +257,9 @@ export function SermonPane() {
           </div>
         </div>
         {panelBeside && (
-          <aside className="w-64 shrink-0 border-l border-line bg-surface-2/40" aria-label="Outline and sources">
+          <SidePanel id="sermon-outline" label="Outline and sources" side="right" defaultWidth={256} autoCollapse={false}>
             {panel}
-          </aside>
+          </SidePanel>
         )}
         </div>
 

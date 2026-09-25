@@ -5,12 +5,14 @@ import { useReadingTypography } from "../../state/uiStore";
 import { Button } from "../../components/ui/Button";
 import { EmptyState, LoadingState } from "../../components/ui/EmptyState";
 import { TuneStaff } from "../psalter/TuneStaff";
+import { defaultTuneId } from "../psalter/properTunes";
 import { schedule, toMidiFile, TunePlayer, type ScheduledNote } from "../psalter/tuneEngine";
 import type { MetricalPsalmLine, MetricalPsalmStanza, PsalmTune } from "../../api/types";
 import { toast } from "../../components/ui/toast";
 
-/** Remembers the tune chosen for a metre, so the psalter keeps singing the
- *  tune you last picked rather than resetting psalm by psalm. */
+/** Remembers the tune chosen, both for the psalm ("psalm:23") and for its
+ *  metre, so the psalter keeps singing the tune you last picked rather than
+ *  resetting psalm by psalm -- see defaultTuneId for which wins. */
 const TUNE_PREFERENCE = "psalter.tune";
 
 function readTunePreference(): Record<string, string> {
@@ -21,9 +23,9 @@ function readTunePreference(): Record<string, string> {
   }
 }
 
-function writeTunePreference(metre: string, tuneId: string) {
+function writeTunePreference(psalm: number, metre: string, tuneId: string) {
   try {
-    localStorage.setItem(TUNE_PREFERENCE, JSON.stringify({ ...readTunePreference(), [metre]: tuneId }));
+    localStorage.setItem(TUNE_PREFERENCE, JSON.stringify({ ...readTunePreference(), [metre]: tuneId, [`psalm:${psalm}`]: tuneId }));
   } catch {
     // A psalter that cannot remember the tune still sings it.
   }
@@ -50,11 +52,14 @@ function MetricalLine({ line }: { line: MetricalPsalmLine }) {
   );
 }
 
-export function MetricalPsalmPanel({ psalm }: { psalm: number }) {
+/** `fontSize` sets the words' size outright, for family worship's gather-round
+ *  view; without it they follow the reading preferences. */
+export function MetricalPsalmPanel({ psalm, fontSize }: { psalm: number; fontSize?: number }) {
   const { data: versions } = useMetricalPsalm(psalm);
   const [versionIdx, setVersionIdx] = useState(0);
   const version = versions?.[Math.min(versionIdx, (versions?.length ?? 1) - 1)];
-  const typography = useReadingTypography(0.9);
+  const readingTypography = useReadingTypography(0.9);
+  const typography = fontSize ? { ...readingTypography, fontSize } : readingTypography;
 
   const { data: tunes } = usePsalmTunes(version?.metre ?? null);
   const [tuneId, setTuneId] = useState<string | null>(null);
@@ -91,12 +96,11 @@ export function MetricalPsalmPanel({ psalm }: { psalm: number }) {
     setStanzaIdx(0);
   }, [psalm, versionIdx, tuneId]);
 
-  // Fall back to the tune the metre last used, then to the first offered.
   useEffect(() => {
     if (!version || !tunes?.length) return;
-    const remembered = readTunePreference()[version.metre];
-    setTuneId(tunes.some((t) => t.id === remembered) ? remembered : tunes[0].id);
-  }, [version?.metre, tunes]);
+    const prefs = readTunePreference();
+    setTuneId(defaultTuneId(psalm, version.metre, tunes, { psalm: prefs[`psalm:${psalm}`], metre: prefs[version.metre] }));
+  }, [psalm, version?.metre, tunes]);
 
   const beat = tempo ?? tune?.tempo ?? 92;
 
@@ -169,13 +173,14 @@ export function MetricalPsalmPanel({ psalm }: { psalm: number }) {
                 value={tune?.id ?? ""}
                 onChange={(e) => {
                   setTuneId(e.target.value);
-                  writeTunePreference(version.metre, e.target.value);
+                  writeTunePreference(psalm, version.metre, e.target.value);
                 }}
                 aria-label="Tune"
               >
                 {tunes.map((t) => (
                   <option key={t.id} value={t.id}>
-                    {t.name}
+                    {/* A doubled tune sings two stanzas at a time. */}
+                    {t.metre === version.metre ? t.name : `${t.name} (${t.metre})`}
                   </option>
                 ))}
               </select>
@@ -236,7 +241,7 @@ export function MetricalPsalmPanel({ psalm }: { psalm: number }) {
                   <Download className="h-3.5 w-3.5" />
                 </Button>
               )}
-              {tune?.composer && <span className="truncate text-ink-4">{tune.composer}</span>}
+              {tune?.composer && <span className="truncate text-ink-4">{tune.composer.replace(/;\s*/g, "; ")}</span>}
             </>
           ) : (
             <span className="text-ink-4">No tune carried for {version.metre}</span>

@@ -88,10 +88,14 @@ pub fn get_metrical_psalm(conn: &Connection, psalm: i64) -> anyhow::Result<Vec<M
 }
 
 /// The tunes that fit a metre. A psalm is sung to any tune in its own metre,
-/// which is what naming metres is for, so this is the whole choice offered
-/// for a given psalm.
+/// which is what naming metres is for, or to the doubled form of it two
+/// stanzas at a time (Old 137th, C.M.D., for the common-metre Psalm 137) --
+/// so this is the whole choice offered for a given psalm, its own metre first.
 pub fn list_tunes_for_metre(conn: &Connection, metre: &str) -> anyhow::Result<Vec<PsalmTune>> {
-    let sql = format!("SELECT {TUNE_COLUMNS} FROM psalm_tunes WHERE metre = ?1 ORDER BY name");
+    let sql = format!(
+        "SELECT {TUNE_COLUMNS} FROM psalm_tunes WHERE metre = ?1 OR metre = ?1 || 'D.'
+         ORDER BY metre <> ?1, name"
+    );
     let mut stmt = conn.prepare(&sql)?;
     let rows = stmt.query_map(params![metre], tune)?;
     Ok(rows.collect::<Result<Vec<_>, _>>()?)

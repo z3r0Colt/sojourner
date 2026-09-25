@@ -24,7 +24,7 @@
   "use strict";
 
   /** The splash shows for at least this long. */
-  var MIN_MS = 10000;
+  var MIN_MS = 3000;
   /** ...and never for longer than this, ready or not. */
   var MAX_MS = 60000;
   /** How long the fade out runs; must match the transition in index.html. */

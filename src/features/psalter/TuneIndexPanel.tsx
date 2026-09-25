@@ -89,7 +89,7 @@ export function TuneIndexPanel() {
                       aria-expanded={openId === tune.id}
                     >
                       <span className="text-sm text-ink">{tune.name}</span>
-                      {tune.composer && <span className="ml-2 text-xs text-ink-4">{tune.composer}</span>}
+                      {tune.composer && <span className="ml-2 text-xs text-ink-4">{tune.composer.replace(/;\s*/g, "; ")}</span>}
                     </button>
                   </div>
                   {openId === tune.id && (

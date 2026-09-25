@@ -485,6 +485,9 @@ export const api = {
     }),
   setPrayerListPersonActive: (id: number, active: boolean) => invoke<void>("set_prayer_list_person_active", { id, active }),
   markPrayerListPersonPrayed: (id: number) => invoke<void>("mark_prayer_list_person_prayed", { id }),
+  /** Undoes a mark: `lastPrayedAt` is what it was before (null = never). */
+  restorePrayerListPersonPrayed: (id: number, lastPrayedAt: string | null) =>
+    invoke<void>("restore_prayer_list_person_prayed", { id, lastPrayedAt }),
   markPrayerListPersonAnswered: (id: number, answerNote?: string) =>
     invoke<void>("mark_prayer_list_person_answered", { id, answerNote: answerNote ?? null }),
   deletePrayerListPerson: (id: number) => invoke<void>("delete_prayer_list_person", { id }),

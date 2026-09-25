@@ -1,0 +1,372 @@
+{
+ "code": "family_starter",
+ "title": "Family Worship: The First Four Weeks",
+ "description": "A short reading for each time the family gathers, telling the Bible's story from creation to the new creation: the beginnings and the patriarchs, the exodus and the law, David, the prophets, and then Christ's birth, teaching, death and resurrection, Pentecost, and the promise of all things made new. Most readings are ten to twenty verses, a comfortable length to read aloud with young children. Arranged for this app.",
+ "length_days": 28,
+ "days": [
+  {
+   "day": 1,
+   "readings": [
+    {
+     "book": "Genesis",
+     "chapter_start": 1,
+     "verse_start": 1,
+     "chapter_end": 2,
+     "verse_end": 3,
+     "label": "Genesis 1:1-2:3"
+    }
+   ]
+  },
+  {
+   "day": 2,
+   "readings": [
+    {
+     "book": "Genesis",
+     "chapter_start": 3,
+     "verse_start": 1,
+     "chapter_end": 3,
+     "verse_end": 24,
+     "label": "Genesis 3:1-24"
+    }
+   ]
+  },
+  {
+   "day": 3,
+   "readings": [
+    {
+     "book": "Genesis",
+     "chapter_start": 6,
+     "verse_start": 5,
+     "chapter_end": 6,
+     "verse_end": 22,
+     "label": "Genesis 6:5-22"
+    }
+   ]
+  },
+  {
+   "day": 4,
+   "readings": [
+    {
+     "book": "Genesis",
+     "chapter_start": 12,
+     "verse_start": 1,
+     "chapter_end": 12,
+     "verse_end": 9,
+     "label": "Genesis 12:1-9"
+    }
+   ]
+  },
+  {
+   "day": 5,
+   "readings": [
+    {
+     "book": "Genesis",
+     "chapter_start": 22,
+     "verse_start": 1,
+     "chapter_end": 22,
+     "verse_end": 19,
+     "label": "Genesis 22:1-19"
+    }
+   ]
+  },
+  {
+   "day": 6,
+   "readings": [
+    {
+     "book": "Exodus",
+     "chapter_start": 3,
+     "verse_start": 1,
+     "chapter_end": 3,
+     "verse_end": 15,
+     "label": "Exodus 3:1-15"
+    }
+   ]
+  },
+  {
+   "day": 7,
+   "readings": [
+    {
+     "book": "Exodus",
+     "chapter_start": 12,
+     "verse_start": 21,
+     "chapter_end": 12,
+     "verse_end": 32,
+     "label": "Exodus 12:21-32"
+    }
+   ]
+  },
+  {
+   "day": 8,
+   "readings": [
+    {
+     "book": "Exodus",
+     "chapter_start": 14,
+     "verse_start": 10,
+     "chapter_end": 14,
+     "verse_end": 31,
+     "label": "Exodus 14:10-31"
+    }
+   ]
+  },
+  {
+   "day": 9,
+   "readings": [
+    {
+     "book": "Exodus",
+     "chapter_start": 20,
+     "verse_start": 1,
+     "chapter_end": 20,
+     "verse_end": 17,
+     "label": "Exodus 20:1-17"
+    }
+   ]
+  },
+  {
+   "day": 10,
+   "readings": [
+    {
+     "book": "1 Samuel",
+     "chapter_start": 17,
+     "verse_start": 32,
+     "chapter_end": 17,
+     "verse_end": 51,
+     "label": "1 Samuel 17:32-51"
+    }
+   ]
+  },
+  {
+   "day": 11,
+   "readings": [
+    {
+     "book": "Psalms",
+     "chapter_start": 23,
+     "verse_start": null,
+     "chapter_end": 23,
+     "verse_end": null,
+     "label": "Psalm 23"
+    }
+   ]
+  },
+  {
+   "day": 12,
+   "readings": [
+    {
+     "book": "Isaiah",
+     "chapter_start": 53,
+     "verse_start": 1,
+     "chapter_end": 53,
+     "verse_end": 12,
+     "label": "Isaiah 53:1-12"
+    }
+   ]
+  },
+  {
+   "day": 13,
+   "readings": [
+    {
+     "book": "Daniel",
+     "chapter_start": 6,
+     "verse_start": 10,
+     "chapter_end": 6,
+     "verse_end": 23,
+     "label": "Daniel 6:10-23"
+    }
+   ]
+  },
+  {
+   "day": 14,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 2,
+     "verse_start": 1,
+     "chapter_end": 2,
+     "verse_end": 20,
+     "label": "Luke 2:1-20"
+    }
+   ]
+  },
+  {
+   "day": 15,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 2,
+     "verse_start": 41,
+     "chapter_end": 2,
+     "verse_end": 52,
+     "label": "Luke 2:41-52"
+    }
+   ]
+  },
+  {
+   "day": 16,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 3,
+     "verse_start": 13,
+     "chapter_end": 4,
+     "verse_end": 11,
+     "label": "Matthew 3:13-4:11"
+    }
+   ]
+  },
+  {
+   "day": 17,
+   "readings": [
+    {
+     "book": "Mark",
+     "chapter_start": 4,
+     "verse_start": 35,
+     "chapter_end": 4,
+     "verse_end": 41,
+     "label": "Mark 4:35-41"
+    }
+   ]
+  },
+  {
+   "day": 18,
+   "readings": [
+    {
+     "book": "Matthew",
+     "chapter_start": 6,
+     "verse_start": 5,
+     "chapter_end": 6,
+     "verse_end": 15,
+     "label": "Matthew 6:5-15"
+    }
+   ]
+  },
+  {
+   "day": 19,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 10,
+     "verse_start": 25,
+     "chapter_end": 10,
+     "verse_end": 37,
+     "label": "Luke 10:25-37"
+    }
+   ]
+  },
+  {
+   "day": 20,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 15,
+     "verse_start": 11,
+     "chapter_end": 15,
+     "verse_end": 32,
+     "label": "Luke 15:11-32"
+    }
+   ]
+  },
+  {
+   "day": 21,
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 3,
+     "verse_start": 1,
+     "chapter_end": 3,
+     "verse_end": 21,
+     "label": "John 3:1-21"
+    }
+   ]
+  },
+  {
+   "day": 22,
+   "readings": [
+    {
+     "book": "John",
+     "chapter_start": 11,
+     "verse_start": 17,
+     "chapter_end": 11,
+     "verse_end": 44,
+     "label": "John 11:17-44"
+    }
+   ]
+  },
+  {
+   "day": 23,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 22,
+     "verse_start": 7,
+     "chapter_end": 22,
+     "verse_end": 20,
+     "label": "Luke 22:7-20"
+    }
+   ]
+  },
+  {
+   "day": 24,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 23,
+     "verse_start": 32,
+     "chapter_end": 23,
+     "verse_end": 49,
+     "label": "Luke 23:32-49"
+    }
+   ]
+  },
+  {
+   "day": 25,
+   "readings": [
+    {
+     "book": "Luke",
+     "chapter_start": 24,
+     "verse_start": 1,
+     "chapter_end": 24,
+     "verse_end": 12,
+     "label": "Luke 24:1-12"
+    }
+   ]
+  },
+  {
+   "day": 26,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 1,
+     "verse_start": 1,
+     "chapter_end": 1,
+     "verse_end": 11,
+     "label": "Acts 1:1-11"
+    }
+   ]
+  },
+  {
+   "day": 27,
+   "readings": [
+    {
+     "book": "Acts",
+     "chapter_start": 2,
+     "verse_start": 1,
+     "chapter_end": 2,
+     "verse_end": 21,
+     "label": "Acts 2:1-21"
+    }
+   ]
+  },
+  {
+   "day": 28,
+   "readings": [
+    {
+     "book": "Revelation",
+     "chapter_start": 21,
+     "verse_start": 1,
+     "chapter_end": 21,
+     "verse_end": 7,
+     "label": "Revelation 21:1-7"
+    }
+   ]
+  }
+ ]
+}

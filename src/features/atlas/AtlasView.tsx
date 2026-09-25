@@ -13,6 +13,7 @@ import {
 } from "../../api/queries";
 import type { AtlasConfidence, AtlasPlace } from "../../api/types";
 import { usePane, usePaneParams } from "../../workspace/PaneContext";
+import { SidePanel } from "../../components/ui/SidePanel";
 import { openContent, openPassage, targetFor } from "../../workspace/openContent";
 import { useSetting } from "../../hooks/useSetting";
 import { bookName, toPassageRef } from "../../lib/passage";
@@ -159,7 +160,7 @@ export function AtlasView() {
   return (
     <div className="flex h-full">
       {showList && (
-      <aside className="flex w-80 shrink-0 flex-col border-r border-line bg-surface-2/60">
+      <SidePanel id="atlas-list" label="Places and journeys" defaultWidth={320} maxShare={0.35} className="flex flex-col">
         <div className="flex border-b border-line">
           {(["places", "journeys"] as Tab[]).map((t) => (
             <button
@@ -291,7 +292,7 @@ export function AtlasView() {
             </label>
           )}
         </div>
-      </aside>
+      </SidePanel>
       )}
 
       <div className="min-w-0 flex-1">
@@ -315,7 +316,7 @@ export function AtlasView() {
       </div>
 
       {showDetail && (
-      <aside className="w-80 shrink-0 overflow-y-auto border-l border-line bg-surface-2/60 p-4">
+      <SidePanel id="atlas-detail" label="Place details" side="right" defaultWidth={320} maxShare={0.35} autoCollapse={false} className="overflow-y-auto p-4">
         {compact && hasDetail && (
           <button
             type="button"
@@ -340,7 +341,7 @@ export function AtlasView() {
             }
           />
         )}
-      </aside>
+      </SidePanel>
       )}
     </div>
   );

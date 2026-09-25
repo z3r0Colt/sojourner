@@ -10,6 +10,7 @@ import { useReadingTypography } from "../../state/uiStore";
 import { EmptyState, LoadingState } from "../../components/ui/EmptyState";
 import { Button } from "../../components/ui/Button";
 import { cx, inputSmClass } from "../../components/ui/classes";
+import { SidePanel } from "../../components/ui/SidePanel";
 import { CommentaryHtml } from "../commentary/CommentaryPanel";
 import { StudyActions } from "../sermons/StudyActions";
 import { factbookRef } from "../sermons/sourceIdentity";
@@ -46,10 +47,7 @@ function describe(e: FactbookSummary): string {
 export function FactbookView() {
   const { id: paneId, width } = usePane();
   const [params, setParams] = usePaneParams("factbook");
-  // In a narrow pane the list gives way to the entry once one is chosen.
   const narrow = width > 0 && width < 700;
-  const [browsing, setBrowsing] = useState(false);
-  const showList = !narrow || !params.id || browsing;
   const [query, setQuery] = useState("");
   const [debounced, setDebounced] = useState("");
   const typography = useReadingTypography(0.95);
@@ -79,7 +77,7 @@ export function FactbookView() {
 
   return (
     <div className="flex h-full">
-      <aside className={cx("flex shrink-0 flex-col border-r border-line bg-surface-2/60", narrow ? "w-full" : "w-72", !showList && "hidden")}>
+      <SidePanel id="factbook-list" label="Find a person or place" defaultWidth={288} collapseBelow={700} autoCollapse={!!params.id} className="flex flex-col">
         <div className="border-b border-line p-3">
           <div className="relative">
             <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-4" aria-hidden="true" />
@@ -97,10 +95,7 @@ export function FactbookView() {
             <li key={r.id}>
               <button
                 type="button"
-                onClick={() => {
-                  setParams({ id: r.id });
-                  setBrowsing(false);
-                }}
+                onClick={() => setParams({ id: r.id })}
                 className={cx("block w-full border-b border-line px-3 py-2 text-left text-sm hover:bg-hover", r.id === params.id && "bg-accent-soft")}
               >
                 <div className="flex items-center gap-1.5 text-ink">
@@ -117,13 +112,8 @@ export function FactbookView() {
             <li className="p-3 text-xs text-ink-3">Type a name. Each person and place the Bible names has its own page: which Zechariah, whose son, every verse.</li>
           )}
         </ul>
-      </aside>
-      <div className={cx("min-h-0 flex-1 overflow-y-auto", narrow ? "px-4 py-4" : "px-8 py-6", narrow && showList && "hidden")}>
-        {narrow && params.id && (
-          <button type="button" className="mb-3 flex items-center gap-1 text-xs text-accent hover:underline" onClick={() => setBrowsing(true)}>
-            <Search className="h-3 w-3" aria-hidden="true" /> Find another
-          </button>
-        )}
+      </SidePanel>
+      <div className={cx("min-h-0 min-w-0 flex-1 overflow-y-auto", narrow ? "px-4 py-4" : "px-8 py-6")}>
         {!params.id && <EmptyState icon={Users} title="Factbook" description="Find a person or place on the left, or double-click a name in the text." />}
         {params.id && isLoading && <LoadingState />}
         {params.id && !isLoading && !entry && <EmptyState icon={Users} title="Not in the Factbook" />}

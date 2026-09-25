@@ -502,6 +502,9 @@ pub struct WestminsterSectionSummary {
     pub id: i64,
     pub sort_order: i64,
     pub heading: String,
+    /// A catechism's question, or the Confession's chapter title -- what
+    /// the contents list shows beside the bare "Question 21" / "Chapter 1, 1".
+    pub prompt: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]

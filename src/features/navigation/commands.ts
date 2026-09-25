@@ -15,6 +15,7 @@ import {
   GraduationCap,
   HardDrive,
   HeartHandshake,
+  HouseHeart,
   Highlighter,
   Info,
   Keyboard,
@@ -42,6 +43,7 @@ import {
   Mic,
   Presentation,
   Timer,
+  CopyPlus,
 } from "lucide-react";
 import type { QueryClient } from "@tanstack/react-query";
 import type { CommentarySource, ReadingPlan, ReadingPlanProgress, Sermon } from "../../api/types";
@@ -49,6 +51,7 @@ import { api } from "../../api/client";
 import { toast } from "../../components/ui/toast";
 import { PRESET_WORKSPACES, applyWorkspace, type SavedWorkspace } from "../../workspace/presets";
 import { useWorkspaceDialog } from "../../workspace/WorkspacesMenu";
+import { beginFamilyWorship } from "../family/sessionStore";
 import {
   LINK_GROUPS,
   MAX_PANES,
@@ -61,7 +64,7 @@ import {
 } from "../../state/workspaceStore";
 import { READING_FONT_OPTIONS, THEME_OPTIONS, useUiStore, type LineSpacing } from "../../state/uiStore";
 import { PANE_KINDS, paneTitle, type TitleContext } from "../../workspace/paneKinds";
-import { openContent, openPassage } from "../../workspace/openContent";
+import { openContent, openNewTab, openPassage } from "../../workspace/openContent";
 import { LAYOUTS, arrangementFor, detectTemplate } from "../../workspace/layouts";
 import { leafOfPane, placeholderLeaf } from "../../workspace/layoutTree";
 import { stepChapter } from "../reading/chapterStep";
@@ -240,6 +243,15 @@ export function paneCommands(ctx: CommandContext): Command[] {
         run: () => useWorkspaceStore.getState().splitPane(focused.id, "bottom"),
       });
     }
+    out.push({
+      id: "new-tab",
+      group: PANES,
+      label: "New tab: a copy of this pane",
+      icon: CopyPlus,
+      keys: ["Ctrl", "T"],
+      keywords: "tab duplicate copy open another",
+      run: () => openNewTab(focused.id),
+    });
     const home = leafOfPane(s.tree, focused.id);
     if (home && home.paneIds.length > 1) {
       out.push({
@@ -676,6 +688,27 @@ export function appCommands(ctx: CommandContext): Command[] {
       openContent("prayer", {});
       requestNewPrayerEntry();
     },
+  });
+
+  out.push({
+    id: "begin-family-worship",
+    group: "Family worship",
+    label: "Begin family worship",
+    icon: HouseHeart,
+    keywords: "household children catechism psalm sing gather",
+    run: () => {
+      openContent("family", {});
+      beginFamilyWorship(false);
+    },
+  });
+
+  out.push({
+    id: "gather-round",
+    group: "Family worship",
+    label: "Gather round (family worship, full screen)",
+    icon: Maximize2,
+    keywords: "family worship large television tv table",
+    run: () => beginFamilyWorship(true),
   });
 
   out.push({

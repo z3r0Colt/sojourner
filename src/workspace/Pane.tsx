@@ -6,12 +6,12 @@ import { PANE_COMPONENTS } from "./paneComponents";
 import { ErrorBoundary, PaneCrashCard } from "../layout/ErrorBoundary";
 
 /** One pane: an optional header, then the view for its kind. Clicking (or
- * focusing a control) anywhere inside focuses the pane. Width is measured
- * so views can fold their toolbars when narrow. The pane fills the leaf
+ * focusing a control) anywhere inside focuses the pane. Its size is
+ * measured so views can fold their toolbars when narrow or short. The pane fills the leaf
  * the tree gives it; moving it is the header's business (see paneDrag). */
 export function Pane({ pane, showHeader, tabs, leafId, maximized }: { pane: PaneModel; showHeader: boolean; tabs?: PaneModel[]; leafId?: string; maximized?: boolean }) {
   const ref = useRef<HTMLElement>(null);
-  const [width, setWidth] = useState(0);
+  const [size, setSize] = useState({ width: 0, height: 0 });
   const focused = useWorkspaceStore((s) => s.focusedPaneId === pane.id);
   const focusPane = useWorkspaceStore((s) => s.focusPane);
   const title = usePaneTitle(pane);
@@ -20,14 +20,18 @@ export function Pane({ pane, showHeader, tabs, leafId, maximized }: { pane: Pane
     const el = ref.current;
     if (!el) return;
     const observer = new ResizeObserver((entries) => {
-      const w = entries[0]?.contentRect.width ?? 0;
-      setWidth(Math.round(w));
+      const rect = entries[0]?.contentRect;
+      const next = { width: Math.round(rect?.width ?? 0), height: Math.round(rect?.height ?? 0) };
+      setSize((s) => (s.width === next.width && s.height === next.height ? s : next));
     });
     observer.observe(el);
     return () => observer.disconnect();
   }, []);
 
-  const ctx = useMemo<PaneContextValue>(() => ({ id: pane.id, isFocused: focused, width }), [pane.id, focused, width]);
+  const ctx = useMemo<PaneContextValue>(
+    () => ({ id: pane.id, isFocused: focused, width: size.width, height: size.height }),
+    [pane.id, focused, size],
+  );
   const Component = PANE_COMPONENTS[pane.kind];
 
   return (

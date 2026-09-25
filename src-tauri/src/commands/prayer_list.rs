@@ -46,6 +46,12 @@ pub fn mark_prayer_list_person_prayed(db: State<DbState>, id: i64) -> AppResult<
 }
 
 #[tauri::command]
+pub fn restore_prayer_list_person_prayed(db: State<DbState>, id: i64, last_prayed_at: Option<String>) -> AppResult<()> {
+    let conn = db.conn();
+    Ok(queries::restore_prayed(&conn, id, last_prayed_at)?)
+}
+
+#[tauri::command]
 pub fn mark_prayer_list_person_answered(db: State<DbState>, id: i64, answer_note: Option<String>) -> AppResult<()> {
     let conn = db.conn();
     Ok(queries::mark_answered(&conn, id, answer_note)?)

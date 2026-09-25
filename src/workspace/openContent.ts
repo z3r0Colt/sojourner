@@ -17,6 +17,7 @@ import {
 } from "../state/workspaceStore";
 import { PANE_KINDS } from "./paneKinds";
 import { DIVIDER_PX, PANE_MIN_PX, type Side } from "./layoutTree";
+import { toast } from "../components/ui/toast";
 
 /**
  * The one way to jump anywhere.
@@ -48,6 +49,9 @@ export interface OpenOptions {
   link?: boolean;
   /** With target "new": fill this empty slot rather than splitting. */
   intoLeaf?: string;
+  /** With target "new": add the pane as a tab beside its origin rather than
+   * splitting the origin's slot. */
+  asTab?: boolean;
 }
 
 /** "new" for Ctrl+click, Cmd+click, or a middle-click; otherwise `fallback`. */
@@ -201,11 +205,23 @@ function openInNewPane(content: PaneContent, opts: OpenOptions) {
   const store = useWorkspaceStore.getState();
   const origin = findPane(store.panes, opts.from ?? store.focusedPaneId);
   const linkGroup = groupForNewPane(content, origin, opts);
-  const placement = opts.intoLeaf ? { side: "right" as Side, asTab: false } : placementBeside(origin?.id);
+  const placement = opts.intoLeaf
+    ? { side: "right" as Side, asTab: false }
+    : opts.asTab
+      ? { side: "right" as Side, asTab: true }
+      : placementBeside(origin?.id);
   const id = store.addPane(content, { after: origin?.id, linkGroup, intoLeaf: opts.intoLeaf, ...placement, ratio: ratioBeside(origin, content.kind) });
   if (!id) return;
   const passage = passageOf(content);
   if (passage && content.kind !== "bible") useWorkspaceStore.getState().publishPassage(id, passage);
+}
+
+/** Whether opening `kind` in this pane would replace work in progress -- a
+ * sermon manuscript -- with something else. Opening that same sermon again
+ * is not a replacement. */
+export function keepsItsPlace(pane: Pane, kind: PaneKind, params: Partial<ParamsOf<PaneKind>>): boolean {
+  if (pane.kind !== "sermon") return false;
+  return !(kind === "sermon" && (params as { id?: number }).id === pane.params.id);
 }
 
 export function openContent<K extends PaneKind>(kind: K, params: Partial<ParamsOf<K>>, opts: OpenOptions = {}): void {
@@ -233,6 +249,16 @@ export function openContent<K extends PaneKind>(kind: K, params: Partial<ParamsO
       paneId = resolveBiblePane(store)?.id ?? store.focusedPaneId;
     } else {
       paneId = store.focusedPaneId;
+      // A sermon being written is not a page to navigate away from: a jump
+      // from the sidebar, a link or the command bar opens beside it as a
+      // tab, and the manuscript stays one click away rather than vanishing
+      // from the screen. (Its own links -- back to the list -- name the
+      // pane, and still replace it.)
+      const focused = findPane(store.panes, paneId);
+      if (focused && keepsItsPlace(focused, kind, params) && store.panes.length < MAX_PANES) {
+        openContent(kind, params, { ...opts, target: "new", from: focused.id, asTab: true });
+        return;
+      }
     }
   } else {
     paneId = target;
@@ -247,4 +273,24 @@ export function openContent<K extends PaneKind>(kind: K, params: Partial<ParamsO
  * selected verse, as the old `goTo` did. */
 export function openPassage(pos: Position, opts: OpenOptions = {}): void {
   openContent("bible", { bookId: pos.bookId, chapter: pos.chapter, verse: pos.verse, activeVerse: pos.verse ?? null }, opts);
+}
+
+/** A new tab beside `fromId`, in the same slot: `kind` opened fresh, or a
+ * copy of the pane itself when no kind is given (Ctrl+T), which keeps its
+ * link group so the copy follows the same passage until it is moved on.
+ * Tabs count toward the workspace's panes, so a full workspace says so
+ * rather than quietly replacing what is on screen. */
+export function openNewTab(fromId: string, kind?: PaneKind): void {
+  const store = useWorkspaceStore.getState();
+  const origin = findPane(store.panes, fromId);
+  if (!origin) return;
+  if (store.panes.length >= MAX_PANES) {
+    toast.info(`The workspace holds ${MAX_PANES} panes and tabs. Close one to open another tab.`);
+    return;
+  }
+  if (!kind) {
+    store.addPane({ kind: origin.kind, params: origin.params } as PaneContent, { after: origin.id, linkGroup: origin.linkGroup, asTab: true });
+    return;
+  }
+  openContent(kind, {}, { target: "new", from: origin.id, asTab: true });
 }

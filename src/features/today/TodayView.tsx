@@ -31,13 +31,15 @@ import { CatchUpBanner } from "../plans/CatchUpBanner";
 import { isFinished, todaysDays } from "../plans/planSchedule";
 import { longestUnprayed, timeAgo } from "../prayer/prayerListTime";
 import { ThisSunday } from "./ThisSunday";
+import { FamilyToday } from "./FamilyToday";
 
 /**
- * The Today page (F3.1): one place to start the day from. Seven blocks in a
- * fixed order -- Continue reading, Today's plan, This Sunday, Due for
- * review, Pray for, Bookmarks, Recent chapters -- and every block but the
- * first hides when
- * it has nothing to show, so a fresh install sees only Continue reading.
+ * The Today page (F3.1): one place to start the day from. Eight blocks in a
+ * fixed order -- Continue reading, Today's plan, Family worship, This
+ * Sunday, Due for review, Pray for, Bookmarks, Recent chapters -- and every
+ * block but the first hides when it has nothing to show, so a fresh install
+ * sees only Continue reading (and, until put away, the family worship
+ * invitation).
  * A pane kind, so it can sit beside the text; every jump lands in the
  * pane the reader is working in (Ctrl+click for a new pane).
  */
@@ -315,6 +317,7 @@ export function TodayView() {
     <Page title="Today" lead={lead}>
       <ContinueReading />
       <TodaysPlan />
+      <FamilyToday />
       <ThisSunday />
       <DueForReview />
       <PrayFor />

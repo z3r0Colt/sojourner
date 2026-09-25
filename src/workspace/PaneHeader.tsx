@@ -1,12 +1,12 @@
 import { useMemo } from "react";
-import { ArrowLeftToLine, ArrowRightToLine, Check, Columns2, GripVertical, Maximize2, Minimize2, MoreHorizontal, PanelRight, Rows2, X } from "lucide-react";
+import { ArrowLeftToLine, ArrowRightToLine, Check, Columns2, Copy, GripVertical, Maximize2, Minimize2, MoreHorizontal, PanelRight, Plus, Rows2, X } from "lucide-react";
 import { useAtlasPlaces, useBooks, useCommentarySources, useDictionaryIndex, useIsbeIndex, useResources, useSermons, useTranslations, useWestminsterDocuments } from "../api/queries";
 import { useWorkspaceStore, LEADING_KINDS, LINK_GROUPS, MAX_PANES, PANE_KIND_LIST, PASSAGE_KINDS, type LinkGroup, type Pane } from "../state/workspaceStore";
 import { IconButton } from "../components/ui/Button";
 import { Popover, PopoverItem, PopoverLabel } from "../components/ui/Popover";
 import { cx } from "../components/ui/classes";
 import { PANE_KINDS, paneTitle, type TitleContext } from "./paneKinds";
-import { openContent } from "./openContent";
+import { openContent, openNewTab } from "./openContent";
 import { placeholderLeaf } from "./layoutTree";
 import { useDragHandle } from "./paneDrag";
 
@@ -170,7 +170,7 @@ function SlotTabs({ panes, activeId, leafId }: { panes: Pane[]; activeId: string
       role="tablist"
       aria-label="Panes in this slot"
       data-tab-strip=""
-      className="flex min-w-0 flex-1 items-end self-stretch overflow-hidden"
+      className="flex min-w-0 items-end self-stretch overflow-hidden"
       onKeyDown={(e) => {
         if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
         const at = panes.findIndex((p) => p.id === activeId);
@@ -185,6 +185,54 @@ function SlotTabs({ panes, activeId, leafId }: { panes: Pane[]; activeId: string
         <Tab key={p.id} pane={p} active={p.id === activeId} title={paneTitle(p, ctx)} onSelect={() => setActiveTab(leafId, p.id)} onClose={() => closePane(p.id)} />
       ))}
     </div>
+  );
+}
+
+/** "+" beside a pane's title or tabs: a new tab in the same slot, either a
+ * copy of this pane (Ctrl+T does the same) or any other kind of pane. */
+function NewTabButton({ pane }: { pane: Pane }) {
+  const full = useWorkspaceStore((s) => s.panes.length >= MAX_PANES);
+  return (
+    <Popover
+      width="w-64"
+      trigger={({ toggle, open }) => (
+        <IconButton icon={Plus} label={full ? `New tab (the workspace is full at ${MAX_PANES})` : "New tab"} size="sm" active={open} onClick={toggle} className={cx("shrink-0", full && "opacity-45")} />
+      )}
+    >
+      {(close) => (
+        <>
+          <PopoverItem
+            onClick={() => {
+              openNewTab(pane.id);
+              close();
+            }}
+          >
+            <Copy className="h-4 w-4 text-ink-3" aria-hidden="true" /> A copy of this pane
+            <span className="ml-auto text-xs text-ink-4">Ctrl+T</span>
+          </PopoverItem>
+          <div className="my-1 h-px bg-line" aria-hidden="true" />
+          <PopoverLabel>New tab with</PopoverLabel>
+          <div className="max-h-64 overflow-y-auto">
+            {PANE_KIND_LIST.filter((k) => PANE_KINDS[k].listed).map((k) => {
+              const meta = PANE_KINDS[k];
+              const KindIcon = meta.icon;
+              return (
+                <PopoverItem
+                  key={k}
+                  onClick={() => {
+                    openNewTab(pane.id, k);
+                    close();
+                  }}
+                >
+                  <KindIcon className="h-4 w-4 text-ink-3" aria-hidden="true" />
+                  {meta.label}
+                </PopoverItem>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </Popover>
   );
 }
 
@@ -227,16 +275,19 @@ export function PaneHeader({ pane, focused, tabs, leafId, maximized }: { pane: P
     >
       {!maximized && <Grip pane={pane} title={title} />}
       <LinkGroupToggle pane={pane} />
-      {inTabs && leafId ? (
-        <SlotTabs panes={tabs} activeId={pane.id} leafId={leafId} />
-      ) : (
-        <>
-          <Icon className="h-3.5 w-3.5 shrink-0 text-ink-3" aria-hidden="true" />
-          <span className={cx("min-w-0 flex-1 truncate text-xs font-medium", focused ? "text-ink" : "text-ink-2")} title={title}>
-            {title}
-          </span>
-        </>
-      )}
+      <div className="flex min-w-0 flex-1 items-center gap-1 self-stretch">
+        {inTabs && leafId ? (
+          <SlotTabs panes={tabs} activeId={pane.id} leafId={leafId} />
+        ) : (
+          <>
+            <Icon className="h-3.5 w-3.5 shrink-0 text-ink-3" aria-hidden="true" />
+            <span className={cx("min-w-0 truncate text-xs font-medium", focused ? "text-ink" : "text-ink-2")} title={title}>
+              {title}
+            </span>
+          </>
+        )}
+        {!maximized && <NewTabButton pane={pane} />}
+      </div>
       {count > 1 && (
         <IconButton
           icon={maximized ? Minimize2 : Maximize2}

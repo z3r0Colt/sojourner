@@ -4,12 +4,13 @@ import { openContent, targetFor, type OpenTarget } from "./openContent";
 import { parseRoute } from "./paneKinds";
 
 /** What a view inside a pane can learn about its pane: which one it is,
- * whether it is the focused pane, and how wide it currently is (pixels,
- * measured -- toolbars fold below about 520px). */
+ * whether it is the focused pane, and how big it currently is (pixels,
+ * measured -- toolbars fold below about 520px wide). */
 export interface PaneContextValue {
   id: string;
   isFocused: boolean;
   width: number;
+  height: number;
 }
 
 export const PaneContext = createContext<PaneContextValue | null>(null);

@@ -18,17 +18,29 @@ export const PREACHER_NAME_SETTING = "preacher_name";
 
 const STATUSES: SermonStatus[] = ["draft", "ready", "preached", "archived"];
 
-/** Title, text, big idea, and the details row (SB1.2). Below 640 px of pane
- * width the details fold behind a disclosure, so a narrow manuscript column
- * keeps its writing space. */
+/** What the folded details hold, on one line: "Sun, Sep 27 · Grace Church ·
+ * Romans · Draft". */
+function detailsSummary(draft: SermonDraft, series: { id: number; title: string }[] | undefined): string {
+  const date = draft.preachDate ? new Date(`${draft.preachDate}T00:00`).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }) : null;
+  const seriesTitle = series?.find((s) => s.id === draft.seriesId)?.title ?? null;
+  const status = draft.status[0].toUpperCase() + draft.status.slice(1);
+  return [date, draft.venue, seriesTitle, status].filter(Boolean).join(" · ");
+}
+
+/** Title, text, big idea, and the details row (SB1.2). In a pane under
+ * 640 px wide or 700 px tall -- a quarter of the screen in the Sermon prep
+ * arrangement -- the details fold behind a one-line summary, so the
+ * manuscript keeps its writing space. */
 export function SermonHeader({
   draft,
   patch,
   paneWidth,
+  paneHeight,
 }: {
   draft: SermonDraft;
   patch: (fields: Partial<SermonDraft>) => void;
   paneWidth: number;
+  paneHeight: number;
 }) {
   const { data: books } = useBooks();
   const lookup = useBookLookup();
@@ -41,7 +53,8 @@ export function SermonHeader({
   const [textInput, setTextInput] = useState("");
   const [textError, setTextError] = useState<string | null>(null);
   const [tagInput, setTagInput] = useState("");
-  const narrow = paneWidth < 640;
+  // A height of 0 is a pane not yet measured, not a short one.
+  const cramped = paneWidth < 640 || (paneHeight > 0 && paneHeight < 700);
   const [detailsOpen, setDetailsOpen] = useState(false);
 
   // The title and big idea inputs own their text while typing; the pane
@@ -291,16 +304,17 @@ export function SermonHeader({
         {textError && <span className="text-xs text-danger">{textError}</span>}
       </div>
 
-      {narrow ? (
+      {cramped ? (
         <div className="mt-2">
           <button
             type="button"
             onClick={() => setDetailsOpen((v) => !v)}
             aria-expanded={detailsOpen}
-            className="inline-flex items-center gap-1 text-xs text-ink-3 hover:text-ink"
+            className="inline-flex max-w-full items-center gap-1 text-xs text-ink-3 hover:text-ink"
           >
-            {detailsOpen ? <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" /> : <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />}
-            Details
+            {detailsOpen ? <ChevronDown className="h-3.5 w-3.5 shrink-0" aria-hidden="true" /> : <ChevronRight className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />}
+            <span className="shrink-0">Details</span>
+            {!detailsOpen && <span className="truncate text-ink-4">· {detailsSummary(draft, series)}</span>}
           </button>
           {detailsOpen && <div className="mt-2">{details}</div>}
         </div>

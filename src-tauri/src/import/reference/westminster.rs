@@ -28,6 +28,8 @@ struct ConfessionFile {
 struct ConfessionChapter {
     #[serde(rename = "Chapter")]
     chapter: String,
+    #[serde(rename = "Title")]
+    title: Option<String>,
     #[serde(rename = "Sections")]
     sections: Vec<ConfessionSection>,
 }
@@ -77,6 +79,42 @@ pub(super) struct ParsedSection {
     pub proofs: Vec<(i64, Vec<String>)>,
 }
 
+/// Each document's range of westminster_sections ids, first to last. A
+/// reader's catechism memory cards and their sermon and outline links keep
+/// these ids in user.db, so a rebuilt content.db must give every section the
+/// id it had before -- ids handed out in insertion order would renumber every
+/// document after one whose length changed. These are the ids the releases
+/// so far have shipped; a new document takes a range after the last.
+const SECTION_ID_RANGES: &[(&str, i64, i64)] = &[
+    ("wcf", 1, 172),
+    ("wlc", 173, 368),
+    ("wsc", 369, 475),
+    ("apostles", 476, 476),
+    ("nicene", 477, 477),
+    ("athanasian", 478, 478),
+    ("chalcedon", 479, 479),
+    // 480 was the introduction the earlier translation carried, so Article N
+    // keeps the id 480 + N it had.
+    ("belgic", 481, 517),
+    ("heidelberg", 518, 646),
+    ("dort", 647, 749),
+    ("cyc", 750, 894),
+    ("dfw", 895, 911),
+];
+
+fn section_id_range(code: &str, count: usize) -> anyhow::Result<i64> {
+    let &(_, first, last) = SECTION_ID_RANGES
+        .iter()
+        .find(|(c, ..)| *c == code)
+        .ok_or_else(|| anyhow::anyhow!("no section id range for document '{code}': add one to SECTION_ID_RANGES"))?;
+    anyhow::ensure!(
+        count as i64 <= last - first + 1,
+        "document '{code}' has {count} sections but its id range {first}..={last} holds {}",
+        last - first + 1
+    );
+    Ok(first)
+}
+
 pub(super) fn import_document(
     conn: &mut Connection,
     code: &str,
@@ -84,6 +122,7 @@ pub(super) fn import_document(
     sections: Vec<ParsedSection>,
     book_lookup: &std::collections::HashMap<String, i64>,
 ) -> anyhow::Result<usize> {
+    let first_id = section_id_range(code, sections.len())?;
     let tx = conn.transaction()?;
     let doc_id: i64 = {
         tx.execute(
@@ -98,8 +137,8 @@ pub(super) fn import_document(
     let mut count = 0usize;
     {
         let mut section_stmt = tx.prepare(
-            "INSERT INTO westminster_sections (document_id, sort_order, heading, prompt, body, body_with_proofs)
-             VALUES (?1,?2,?3,?4,?5,?6)",
+            "INSERT INTO westminster_sections (id, document_id, sort_order, heading, prompt, body, body_with_proofs)
+             VALUES (?1,?2,?3,?4,?5,?6,?7)",
         )?;
         let mut proof_stmt = tx.prepare(
             "INSERT INTO westminster_proofs (section_id, marker, sort_order, book_id, chapter, verse_start, verse_end)
@@ -107,8 +146,8 @@ pub(super) fn import_document(
         )?;
 
         for (idx, s) in sections.iter().enumerate() {
-            section_stmt.execute(params![doc_id, idx as i64, s.heading, s.prompt, s.body, s.body_with_proofs])?;
-            let section_id = tx.last_insert_rowid();
+            let section_id = first_id + idx as i64;
+            section_stmt.execute(params![section_id, doc_id, idx as i64, s.heading, s.prompt, s.body, s.body_with_proofs])?;
             let mut sort_order = 0i64;
             for (marker, refs) in &s.proofs {
                 for r in refs {
@@ -135,13 +174,17 @@ fn parse_confession(dir: &Path) -> anyhow::Result<(String, Vec<ParsedSection>)> 
         .into_iter()
         .flat_map(|ch| {
             let chapter_num = ch.chapter.clone();
+            // The chapter's title ("Of the Holy Scripture") rides in `prompt`,
+            // the column a catechism's question uses: the heading stays
+            // "Chapter N, M", which the topic index and sermon labels parse.
+            let title = ch.title.clone();
             ch.sections.into_iter().map(move |s| ParsedSection {
                 heading: format!(
                     "Chapter {}{}",
                     chapter_num,
                     s.section.map(|n| format!(", {n}")).unwrap_or_default()
                 ),
-                prompt: None,
+                prompt: title.clone(),
                 body: s.content,
                 body_with_proofs: s.content_with_proofs,
                 proofs: s.proofs.into_iter().map(|p| (p.id, p.references)).collect(),
@@ -151,7 +194,7 @@ fn parse_confession(dir: &Path) -> anyhow::Result<(String, Vec<ParsedSection>)> 
     Ok((confession.metadata.title, sections))
 }
 
-fn parse_catechism(dir: &Path, file: &str) -> anyhow::Result<(String, Vec<ParsedSection>)> {
+pub(super) fn parse_catechism(dir: &Path, file: &str) -> anyhow::Result<(String, Vec<ParsedSection>)> {
     let text = std::fs::read_to_string(dir.join(file))?;
     let catechism: CatechismFile = serde_json::from_str(&text)?;
     let sections = catechism

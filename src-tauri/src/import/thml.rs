@@ -68,6 +68,9 @@ impl CommentaryImporter for ThmlCommentaryImporter {
         // anything else falls back to the file's own ThML/DC metadata title.
         let source_id: i64 = if let Some((id, _)) = existing_source {
             tx.execute("UPDATE commentary_sources SET imported_at = ?1 WHERE id = ?2", params![now, id])?;
+            if let Some(title) = curated_source_title(&source_code) {
+                tx.execute("UPDATE commentary_sources SET title = ?1 WHERE id = ?2", params![title, id])?;
+            }
             id
         } else {
             let title = curated_source_title(&source_code)
@@ -225,7 +228,10 @@ impl CommentaryImporter for ThmlCommentaryImporter {
 /// a drop-in commentary the user adds later still gets a reasonable name.
 fn curated_source_title(source_code: &str) -> Option<&'static str> {
     match source_code {
-        "mhc" => Some("Matthew Henry's Concise Commentary"),
+        // CCEL's mhc1-6 are the complete Commentary on the Whole Bible (Romans
+        // to Revelation finished by his fellow ministers after his death), not
+        // the one-volume Concise abridgment.
+        "mhc" => Some("Matthew Henry's Commentary on the Whole Bible"),
         "calcom" => Some("Calvin's Commentaries"),
         "ntnotes" => Some("Barnes' Notes on the New Testament"),
         "jfb" => Some("Jamieson, Fausset & Brown Commentary"),
@@ -533,11 +539,24 @@ fn insert_section(
 /// Deuteronomy's chapter/verse while leaving them filed under Exodus's
 /// book_id. Stops at the nearest div1 so a match never crosses book div1
 /// boundaries either.
-fn ancestor_chapter_verse(p: roxmltree::Node, book_id: i64, book_map: &HashMap<String, i64>) -> Option<(i64, Option<i64>, Option<i64>)> {
+fn ancestor_chapter_verse(p: roxmltree::Node, book_id: i64, book_osis: &str, book_map: &HashMap<String, i64>) -> Option<(i64, Option<i64>, Option<i64>)> {
     let mut node = p.parent();
     while let Some(n) = node {
         if n.is_element() {
             let tag = n.tag_name().name();
+            // Matthew Henry (and Calvin) wrap each passage's exposition in
+            // `<div class="Commentary" id="Bible:Rom.8.29-Rom.8.30">`, so a
+            // paragraph that cites no verse of its own ("1. The character of
+            // the saints...") still belongs to the passage it expounds.
+            if tag == "div" {
+                if let Some(id) = n.attribute("id").filter(|id| id.starts_with("Bible:")) {
+                    if let Some((_, ch, vs, ve)) = parse_osis_ref(id).into_iter().find(|r| r.0 == book_osis) {
+                        // A range running into the next chapter ends past
+                        // this one; keep it to this chapter's opening verse.
+                        return Some((ch, Some(vs), Some(ve.max(vs))));
+                    }
+                }
+            }
             if matches!(tag, "div2" | "div3") {
                 if let Some(title) = n.attribute("title") {
                     if let Some((ref_book_id, chapter, vs, ve)) = chapter_heading_match(title, book_map) {
@@ -575,14 +594,19 @@ fn insert_entries_for_section(
     entries_inserted: &mut usize,
 ) -> anyhow::Result<()> {
     let mut entry_sort = 0i64;
-    for p in container.descendants().filter(|n| n.is_element() && n.tag_name().name() == "p") {
+    for p in container
+        .descendants()
+        .filter(|n| n.is_element() && n.tag_name().name() == "p" && !inside_note(*n))
+    {
         let mut html = String::new();
         let mut plain = String::new();
-        render_node(p, &mut html, &mut plain);
+        let mut notes = Vec::new();
+        render_node(p, &mut html, &mut plain, &mut notes);
         let plain_trimmed = plain.trim();
-        if plain_trimmed.is_empty() {
+        if plain_trimmed.is_empty() || is_heading_stub(plain_trimmed, book_map) {
             continue;
         }
+        append_editor_notes(&mut html, &notes);
 
         let refs: Vec<(i64, i64, i64)> = collect_verse_refs(p)
             .into_iter()
@@ -610,7 +634,7 @@ fn insert_entries_for_section(
             let vs = same_chapter_refs.iter().map(|r| r.1).min();
             let ve = same_chapter_refs.iter().map(|r| r.2).max();
             (Some(first_chapter), vs, ve)
-        } else if let Some((ch, vs, ve)) = ancestor_chapter_verse(p, book_id, book_map) {
+        } else if let Some((ch, vs, ve)) = ancestor_chapter_verse(p, book_id, book_osis, book_map) {
             (Some(ch), vs, ve)
         } else {
             // A known section chapter exists but nothing in `refs` lands in
@@ -706,7 +730,7 @@ fn parse_osis_ref(osis: &str) -> Vec<(String, i64, i64, i64)> {
 /// plain-text-only rendition for FTS indexing. Unknown tags are unwrapped
 /// (their text/children are kept, the tag itself is dropped) rather than
 /// rejected, so unexpected markup never breaks an import.
-fn render_node(node: roxmltree::Node, html: &mut String, plain: &mut String) {
+fn render_node(node: roxmltree::Node, html: &mut String, plain: &mut String, notes: &mut Vec<EditorNote>) {
     for child in node.children() {
         if child.is_text() {
             let t = child.text().unwrap_or("");
@@ -715,33 +739,88 @@ fn render_node(node: roxmltree::Node, html: &mut String, plain: &mut String) {
         } else if child.is_element() {
             let tag = child.tag_name().name();
             match tag {
+                "note" => {
+                    // A footnote (Calvin's: the Calvin Translation Society's
+                    // editors, quoting Stuart, Hammond, Turretin...). It is not
+                    // the author's text, so it stays out of the paragraph's
+                    // prose and its plain text -- search, read-aloud and the
+                    // sermon excerpt all take the author's words only -- and is
+                    // shown after the paragraph, labelled as the editor's.
+                    let n = child.attribute("n").map(|s| s.to_string()).unwrap_or_else(|| (notes.len() + 1).to_string());
+                    html.push_str(&format!("<sup class=\"ed-fn\">{}</sup>", escape_html(&n)));
+                    let mut note_html = String::new();
+                    let mut note_plain = String::new();
+                    let mut nested = Vec::new();
+                    render_node(child, &mut note_html, &mut note_plain, &mut nested);
+                    if !note_plain.trim().is_empty() {
+                        notes.push(EditorNote { n, html: note_html.trim().to_string() });
+                    }
+                }
                 "scripRef" => {
                     let osis = child.attribute("osisRef").unwrap_or("");
                     html.push_str(&format!(
                         "<a class=\"scripref\" data-osis=\"{}\">",
                         escape_html(osis)
                     ));
-                    render_node(child, html, plain);
+                    render_node(child, html, plain, notes);
                     html.push_str("</a>");
                 }
                 "i" | "b" | "sup" | "sub" | "em" | "strong" => {
                     html.push_str(&format!("<{tag}>"));
-                    render_node(child, html, plain);
+                    render_node(child, html, plain, notes);
                     html.push_str(&format!("</{tag}>"));
                 }
                 "br" => {
                     html.push_str("<br/>");
                     plain.push(' ');
                 }
-                "p" | "div" if plain.len() > 0 => {
-                    // nested block inside a paragraph (rare) - keep content, add a separator
+                "p" | "div" if !plain.is_empty() => {
+                    // nested block inside a paragraph (a footnote's second
+                    // paragraph, say) - keep content, add a separator
+                    html.push_str("<br/>");
                     plain.push(' ');
-                    render_node(child, html, plain);
+                    render_node(child, html, plain, notes);
                 }
-                _ => render_node(child, html, plain),
+                _ => render_node(child, html, plain, notes),
             }
         }
     }
+}
+
+/// A footnote lifted out of a paragraph by `render_node`: its printed number
+/// and its rendered HTML.
+struct EditorNote {
+    n: String,
+    html: String,
+}
+
+/// Appends a paragraph's footnotes after it, each marked as the editor's so
+/// that nobody reads (or preaches) an 1840s translator's note as the
+/// commentator's own words.
+fn append_editor_notes(html: &mut String, notes: &[EditorNote]) {
+    for note in notes {
+        html.push_str(&format!(
+            "<div class=\"ed-note\"><span class=\"ed-note-label\">Editor's note {}</span> {}</div>",
+            escape_html(&note.n),
+            note.html
+        ));
+    }
+}
+
+/// True for a paragraph inside a `<note>`: `render_node` has already placed
+/// it with the paragraph that cites it, so it is not an entry of its own.
+fn inside_note(p: roxmltree::Node) -> bool {
+    p.ancestors().skip(1).any(|a| a.is_element() && a.tag_name().name() == "note")
+}
+
+/// A paragraph that only repeats its section's heading -- Calvin's volumes
+/// open each chapter with a list of "Romans 8:1-4", "Romans 8:5-8"... and
+/// start every section with its own reference again, and some chapters with a
+/// bare "CHAPTER 8". Kept as entries they fill the pane with headings and
+/// become the first thing a verse lands on, ahead of the comment itself.
+fn is_heading_stub(text: &str, book_map: &HashMap<String, i64>) -> bool {
+    static CHAPTER_ONLY: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?i)^(chapter|psalm)\s+[0-9ivxlc]+\.?$").unwrap());
+    text.len() <= 40 && (chapter_heading_match(text, book_map).is_some() || CHAPTER_ONLY.is_match(text))
 }
 
 fn escape_html(s: &str) -> String {
@@ -843,4 +922,48 @@ fn html_entity_map() -> HashMap<&'static str, char> {
         ("ensp", '\u{2002}'), ("emsp", '\u{2003}'), ("thinsp", '\u{2009}'),
         ("sbquo", '\u{201A}'), ("bdquo", '\u{201E}'), ("lsaquo", '\u{2039}'), ("rsaquo", '\u{203A}'), ("euro", '\u{20AC}'),
     ])
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn book_map() -> HashMap<String, i64> {
+        HashMap::from([("romans".to_string(), 45), ("rom".to_string(), 45)])
+    }
+
+    #[test]
+    fn a_footnote_is_lifted_out_of_the_prose_and_labelled_the_editors() {
+        let xml = r#"<div><p>I take the righteousness of God to mean that which is approved;<note place="foot" n="40"><p class="Super">Stuart, Barnes and Haldane take this view.</p><p class="Super">So Hammond.</p></note> before his tribunal.</p></div>"#;
+        let doc = roxmltree::Document::parse(xml).unwrap();
+        let ps: Vec<_> = doc.descendants().filter(|n| n.has_tag_name("p")).collect();
+        assert!(!inside_note(ps[0]));
+        assert!(inside_note(ps[1]) && inside_note(ps[2]), "the note's own paragraphs are not entries");
+
+        let (mut html, mut plain, mut notes) = (String::new(), String::new(), Vec::new());
+        render_node(ps[0], &mut html, &mut plain, &mut notes);
+        append_editor_notes(&mut html, &notes);
+        assert!(!plain.contains("Stuart"), "the author's text carries none of the note: {plain}");
+        assert!(plain.contains("approved;") && plain.contains("before his tribunal."));
+        assert!(html.contains("<sup class=\"ed-fn\">40</sup>"));
+        assert!(html.contains("<div class=\"ed-note\"><span class=\"ed-note-label\">Editor's note 40</span>"));
+        assert!(html.contains("Stuart, Barnes and Haldane") && html.contains("So Hammond."));
+    }
+
+    #[test]
+    fn a_paragraph_that_only_repeats_a_heading_is_a_stub() {
+        let map = book_map();
+        assert!(is_heading_stub("Romans 8:28-30", &map));
+        assert!(is_heading_stub("CHAPTER 8", &map));
+        assert!(!is_heading_stub("28. And we know that all things work together for good", &map));
+    }
+
+    #[test]
+    fn a_paragraph_without_a_verse_takes_its_passage_wrapper() {
+        let xml = r#"<div1 title="Romans"><div2 title="Chapter VIII"><div class="Commentary" id="Bible:Rom.8.29-Rom.8.30"><p>1. The character of the saints.</p></div></div2></div1>"#;
+        let doc = roxmltree::Document::parse(xml).unwrap();
+        let p = doc.descendants().find(|n| n.has_tag_name("p")).unwrap();
+        assert_eq!(ancestor_chapter_verse(p, 45, "Rom", &book_map()), Some((8, Some(29), Some(30))));
+        assert_eq!(ancestor_chapter_verse(p, 45, "Gen", &book_map()), None, "another book's wrapper is not this one's");
+    }
 }

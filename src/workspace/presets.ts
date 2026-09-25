@@ -101,6 +101,12 @@ export const PRESET_WORKSPACES: readonly SavedWorkspace[] = [
       { kind: "lexicon", params: {}, linkGroup: A },
     ],
   },
+  {
+    name: "Family worship",
+    description: "The family worship page alone: begin, or gather round.",
+    tree: indexTree("one", [1000]),
+    panes: [{ kind: "family", params: {}, linkGroup: A }],
+  },
 ];
 
 export function isPresetName(name: string): boolean {

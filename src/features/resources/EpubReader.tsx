@@ -10,6 +10,7 @@ import { Button, IconButton } from "../../components/ui/Button";
 import { Popover } from "../../components/ui/Popover";
 import { LoadingState } from "../../components/ui/EmptyState";
 import { checkboxClass, cx, selectSmClass } from "../../components/ui/classes";
+import { flatten, printedAt } from "./findPrinted";
 import {
   EPUB_WIDTH_OPTIONS,
   EPUB_ZOOM_MAX,
@@ -715,33 +716,30 @@ type SpineSection = {
 };
 
 /**
- * Every place `text` is printed in a section, as a whole: "Gen. i. 3" but not
- * the start of "Gen. i. 31", nor "John i. 1" inside "1 John i. 1". epub.js's
- * own `find` matches any substring in any case, which counts those too and
- * throws off which occurrence is which -- the citation index counts only the
- * reference as printed. Non-breaking spaces read as spaces.
+ * Every place `text` is printed in a section, as a whole and counted the way
+ * the citation index counts it (see findPrinted.ts). epub.js's own `find`
+ * matches any substring in any case and within one text node, which throws
+ * off which occurrence is which.
  */
-const NBSP = String.fromCharCode(0xa0);
-
 function exactHits(section: SpineSection, text: string): { cfi: string }[] {
   const doc = section.document;
   if (!doc?.body) return [];
-  const hits: { cfi: string }[] = [];
+  const nodes: Text[] = [];
   const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT);
-  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
-    const value = (node.textContent ?? "").split(NBSP).join(" ");
-    for (let pos = value.indexOf(text); pos >= 0; pos = value.indexOf(text, pos + 1)) {
-      const before = value.slice(Math.max(0, pos - 2), pos);
-      const after = value.charAt(pos + text.length);
-      if (/[\p{L}\p{N}]$/u.test(before) || /\d\s$/.test(before) || /[\p{L}\p{N}]/u.test(after)) continue;
-      const range = doc.createRange();
-      range.setStart(node, pos);
-      range.setEnd(node, pos + text.length);
-      try {
-        hits.push({ cfi: section.cfiFromRange(range) });
-      } catch {
-        // A range epub.js cannot name is one it could not show either.
-      }
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) nodes.push(node as Text);
+  const flat = flatten(nodes.map((n) => n.data));
+  const length = text.replace(/[\s ]+/g, " ").trim().length;
+  const hits: { cfi: string }[] = [];
+  for (const pos of printedAt(flat.text, text)) {
+    const [startNode, startOffset] = flat.at[pos];
+    const [endNode, endOffset] = flat.at[pos + length - 1];
+    const range = doc.createRange();
+    range.setStart(nodes[startNode], startOffset);
+    range.setEnd(nodes[endNode], endOffset + 1);
+    try {
+      hits.push({ cfi: section.cfiFromRange(range) });
+    } catch {
+      // A range epub.js cannot name is one it could not show either.
     }
   }
   return hits;

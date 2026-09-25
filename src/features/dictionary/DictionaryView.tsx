@@ -4,6 +4,7 @@ import { BookA, Search } from "lucide-react";
 import { api } from "../../api/client";
 import { useDictionaryIndex, useDictionaryEntry, useIsbeEntryByTerm } from "../../api/queries";
 import { usePaneNavigate, usePaneParams } from "../../workspace/PaneContext";
+import { SidePanel } from "../../components/ui/SidePanel";
 import { openContent, openPassage, targetFor } from "../../workspace/openContent";
 import { useReadingTypography } from "../../state/uiStore";
 import { scanScriptureRefs, useBookLookup } from "../../hooks/useReferenceParser";
@@ -119,7 +120,7 @@ export function DictionaryView() {
 
   return (
     <div className="flex h-full">
-      <aside className="flex w-80 shrink-0 flex-col border-r border-line bg-surface-2/60">
+      <SidePanel id="dictionary-index" label="Dictionary index" defaultWidth={320} autoCollapse={!!slug} className="flex flex-col">
         <div className="border-b border-line p-3">
           <div className="relative">
             <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-4" aria-hidden="true" />
@@ -172,7 +173,7 @@ export function DictionaryView() {
           ))}
           {list.length === 0 && <EmptyState compact title={showingSearch ? "No entries match" : `No entries under ${activeLetter}`} />}
         </div>
-      </aside>
+      </SidePanel>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-8 py-6">
         {!entry && <EmptyState icon={BookA} title="Bible dictionary" description="Browse by letter or search on the left. Scripture references inside an entry are clickable." />}

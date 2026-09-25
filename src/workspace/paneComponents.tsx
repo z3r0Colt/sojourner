@@ -18,7 +18,7 @@ import { WordStudyView } from "../features/lexicon/WordStudyView";
 import { FactbookView } from "../features/factbook/FactbookView";
 import { TimelineView } from "../features/timeline/TimelineView";
 import { CommentaryPane, ConfessionPane, CrossRefsPane, EncyclopediaForPassagePane, FactbookForPassagePane, CitationsPane, TimelineForPassagePane, InterlinearPane, MetricalPane, MinePane } from "./panes/StudyPanes";
-import { HarmonyPane, HighlightsPane, MemoryPane, NotesPane, PlansPane, PrayerPane, ResourcesPane, TodayPane } from "./panes/PagePanes";
+import { FamilyPane, HarmonyPane, HighlightsPane, MemoryPane, NotesPane, PlansPane, PrayerPane, ResourcesPane, TodayPane } from "./panes/PagePanes";
 
 /** Kind → the component that renders it. Each reads its params from the
  * pane (see `usePaneParams`), never from the URL. Kept apart from the
@@ -48,6 +48,7 @@ export const PANE_COMPONENTS: Record<PaneKind, ComponentType> = {
   prayer: PrayerPane,
   memory: MemoryPane,
   plans: PlansPane,
+  family: FamilyPane,
   harmony: HarmonyPane,
   sermons: SermonsView,
   sermon: SermonPane,

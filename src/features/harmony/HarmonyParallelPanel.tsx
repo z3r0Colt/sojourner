@@ -45,13 +45,28 @@ function GospelColumn({ reading }: { reading: HarmonyReading }) {
 /** Side-by-side reading of every Gospel's account of one harmony event,
  * expanded in place under its row in the list. The readings arrive in the
  * order the harmonist printed his columns in, so a harmony that leads with
- * Mark keeps leading with Mark here. */
+ * Mark keeps leading with Mark here.
+ *
+ * The columns follow the pane's width, not the window's: a harmony in a
+ * narrow pane beside the Bible stacks, and one given the whole window shows
+ * all four Gospels across. Four readings go two by two before they go four
+ * across, so John is never left alone on a row of his own. */
+function columnsFor(count: number): string {
+  // 52rem: four columns of about thirteen each, which the harmony page's
+  // own width (max-w-5xl, less its padding) just clears.
+  if (count >= 4) return "@md:grid-cols-2 @min-[52rem]:grid-cols-4";
+  if (count === 3) return "@md:grid-cols-2 @2xl:grid-cols-3";
+  return "@md:grid-cols-2";
+}
+
 export function HarmonyParallelPanel({ readings }: { readings: HarmonyReading[] }) {
   return (
-    <div className={cx("mt-3 grid gap-2", readings.length >= 3 ? "sm:grid-cols-2 lg:grid-cols-3" : "sm:grid-cols-2")}>
-      {readings.map((r, i) => (
-        <GospelColumn key={i} reading={r} />
-      ))}
+    <div className="@container mt-3">
+      <div className={cx("grid gap-2", columnsFor(readings.length))}>
+        {readings.map((r, i) => (
+          <GospelColumn key={i} reading={r} />
+        ))}
+      </div>
     </div>
   );
 }

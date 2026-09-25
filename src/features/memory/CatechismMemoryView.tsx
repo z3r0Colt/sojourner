@@ -25,13 +25,17 @@ import { toast } from "../../components/ui/toast";
 import { cardClass, cx, selectClass, textareaClass } from "../../components/ui/classes";
 import { usePaneNavigate } from "../../workspace/PaneContext";
 
-/** Catechism Study mode: pairs a Shorter (or Larger) Catechism question with
- * its answer for spaced-repetition memorization, the same SM-2 engine and
- * three practice modes as Scripture Memory, just keyed to a Westminster
- * question instead of a Bible passage. */
+/** Catechism Study mode: pairs a question from the Shorter or Larger
+ * Catechism, the Heidelberg Catechism, or the Catechism for Young Children
+ * with its answer for
+ * spaced-repetition memorization, the same SM-2 engine and three practice
+ * modes as Scripture Memory, just keyed to a Westminster question instead of
+ * a Bible passage. */
+const CATECHISM_CODES = ["wsc", "wlc", "heidelberg", "cyc"];
+
 export function CatechismMemoryView() {
   const { data: docs } = useWestminsterDocuments();
-  const catechismDocs = useMemo(() => docs?.filter((d) => d.code === "wsc" || d.code === "wlc") ?? [], [docs]);
+  const catechismDocs = useMemo(() => docs?.filter((d) => CATECHISM_CODES.includes(d.code)) ?? [], [docs]);
   const [addDocId, setAddDocId] = useState<number | "">("");
   const [addSectionId, setAddSectionId] = useState<number | "">("");
   const [newMode, setNewMode] = useState<MemoryMode>("type-it");
@@ -146,7 +150,7 @@ export function CatechismMemoryView() {
             <option value="">Choose…</option>
             {sectionsForAdd?.map((s) => (
               <option key={s.id} value={s.id}>
-                {s.heading}
+                {s.prompt ? `${s.heading} — ${s.prompt}` : s.heading}
               </option>
             ))}
           </select>

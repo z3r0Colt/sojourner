@@ -3,13 +3,16 @@
 // WestminsterView.tsx is already generic over "any document in that table",
 // so these need no frontend changes to show up alongside WCF/WLC/WSC.
 //
-// Source text: the Christian Reformed Church in North America's official
-// translations for the Three Forms of Unity and for the Nicene/Athanasian
-// creeds (https://www.crcna.org/welcome/beliefs/), and Philip Schaff's
-// translation of the Chalcedonian Definition (Creeds of Christendom, vol.
-// II). None of these bundled editions include inline Scripture proof-text
-// markers, so body_with_proofs is identical to body and proofs is empty for
-// all of them -- unlike the Westminster Standards' JSON, which does.
+// Source text: all public domain, from Philip Schaff's Creeds of Christendom
+// (1877) -- the received English of the Apostles', Nicene and Athanasian
+// creeds and his translation of the Chalcedonian Definition (vol. II); the
+// Heidelberg Catechism in the Tercentenary translation, and the Belgic
+// Confession and Canons of Dort in the English of the Reformed (Dutch)
+// Church in America (vol. III) -- with the Canons' Rejection of Errors, which
+// that English omits, from Thomas Scott's translation (1818). See
+// tools/extract-schaff-confessions.py. None of these include inline
+// Scripture proof-text markers, so body_with_proofs is identical to body and
+// proofs is empty for all of them -- unlike the Westminster Standards' JSON.
 use super::crossrefs::load_book_lookup;
 use super::westminster::{import_document, ParsedSection};
 use rusqlite::Connection;
@@ -28,9 +31,10 @@ struct ArticleUnit {
     paragraphs: Vec<String>,
 }
 
+/// One of the catechism's parts; its title ("Part II: Of Man's Redemption")
+/// is in the JSON for anyone reading it, but no heading carries it.
 #[derive(Deserialize)]
 struct HeidelbergPart {
-    title: String,
     lords_days: Vec<HeidelbergLordsDay>,
 }
 #[derive(Deserialize)]
@@ -40,6 +44,7 @@ struct HeidelbergLordsDay {
 }
 #[derive(Deserialize)]
 struct HeidelbergQa {
+    number: i64,
     q: String,
     a_paragraphs: Vec<String>,
 }
@@ -86,11 +91,11 @@ fn parse_heidelberg(dir: &Path) -> anyhow::Result<(String, Vec<ParsedSection>)> 
     let mut sections = Vec::new();
     for part in parts {
         for ld in part.lords_days {
-            for (i, qa) in ld.qas.into_iter().enumerate() {
+            for qa in ld.qas {
                 let body = qa.a_paragraphs.join("\n\n");
-                let base_heading = format!("{} \u{2014} {}", part.title, ld.title);
+                // Cited as "Q&A 21"; the Lord's Day is where it is preached.
                 sections.push(ParsedSection {
-                    heading: if i == 0 { base_heading } else { format!("{base_heading} (cont'd)") },
+                    heading: format!("Q&A {} \u{b7} {}", qa.number, ld.title),
                     prompt: Some(qa.q),
                     body: body.clone(),
                     body_with_proofs: body,

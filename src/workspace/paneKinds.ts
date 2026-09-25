@@ -8,6 +8,7 @@ import {
   CalendarRange,
   Columns3,
   HeartHandshake,
+  HouseHeart,
   Highlighter,
   Languages,
   Library,
@@ -264,6 +265,7 @@ export const PANE_KINDS: Registry = {
   prayer: { kind: "prayer", label: "Prayer", icon: HeartHandshake, title: () => "Prayer", defaultWidth: 900, acceptsPassage: false, listed: true },
   memory: { kind: "memory", label: "Memory", icon: Brain, title: () => "Memory", defaultWidth: 900, acceptsPassage: false, listed: true },
   plans: { kind: "plans", label: "Reading plans", icon: CalendarCheck, title: () => "Reading plans", defaultWidth: 900, acceptsPassage: false, listed: true },
+  family: { kind: "family", label: "Family worship", icon: HouseHeart, title: () => "Family worship", defaultWidth: 900, acceptsPassage: false, listed: true },
   harmony: { kind: "harmony", label: "Harmony", icon: Columns3, title: () => "Harmony of the Gospels", defaultWidth: 900, acceptsPassage: false, listed: true },
   sermons: { kind: "sermons", label: "Sermons", icon: Mic, title: () => "Sermons", defaultWidth: 900, acceptsPassage: false, listed: true },
   // The title is the sermon's own; the pane fills it in through the title
@@ -422,6 +424,8 @@ export function routeFor(content: PaneContent): string {
       return "/memory";
     case "plans":
       return "/plans";
+    case "family":
+      return "/family";
     case "harmony":
       return "/harmony";
     case "sermons":
@@ -505,6 +509,8 @@ export function parseRoute(pathname: string, search = ""): ContentRequest | null
       return { kind: "memory", params: {} };
     case "plans":
       return { kind: "plans", params: {} };
+    case "family":
+      return { kind: "family", params: {} };
     case "harmony":
       return { kind: "harmony", params: {} };
     case "sermons": {

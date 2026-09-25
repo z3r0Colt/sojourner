@@ -24,6 +24,9 @@
 //   psalms_wisdom.json   A psalm a day through the Psalter with Job,
 //       Proverbs, Ecclesiastes and the Song alongside, 150 days. See
 //       tools/build-psalms-and-wisdom.mjs.
+//   family_starter.json   Twenty-eight short readings for a family's first
+//       four weeks of family worship, from creation to the new creation. The
+//       choice of passages is the app's own; see src/features/family.
 //
 // Townsend's own Old and New Testament arrangements are not plans here. They
 // run 469 days and 388 -- the same order as chronological_year at four times
@@ -112,6 +115,7 @@ const PLAN_FILES: &[&str] = &[
     "canonical.json",
     "ninety_day.json",
     "psalms_wisdom.json",
+    "family_starter.json",
 ];
 
 fn existing_codes(conn: &Connection) -> anyhow::Result<std::collections::HashSet<String>> {

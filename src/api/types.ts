@@ -723,6 +723,8 @@ export interface WestminsterSectionSummary {
   id: number;
   sort_order: number;
   heading: string;
+  /** A catechism's question, or the Confession's chapter title. */
+  prompt: string | null;
 }
 
 export interface WestminsterProofRef {
