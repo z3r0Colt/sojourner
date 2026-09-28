@@ -1,22 +1,23 @@
-import { Fragment, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
-import { Languages, X } from "lucide-react";
-import { useInterlinearForChapter, useMorphologyForChapter } from "../../api/queries";
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type ButtonHTMLAttributes, type MouseEvent as ReactMouseEvent } from "react";
+import { Check, Languages, X } from "lucide-react";
+import { useChapter, useInterlinearForChapter, useMorphologyForChapter, useTranslations } from "../../api/queries";
 import { useUiStore, type InterlinearLayout } from "../../state/uiStore";
 import { StrongsPopup } from "../lexicon/StrongsPopup";
 import { ParsingHoverCard } from "../lexicon/ParsingHoverCard";
 import { parsedWordOrNull, type ParsedWord } from "../lexicon/ParsingSection";
-import { compactParsingPieces } from "../lexicon/parsingDisplay";
-import type { Book, InterlinearWord, MorphologyWord, MorphParsing } from "../../api/types";
+import type { Book, InterlinearWord, MorphologyWord } from "../../api/types";
 import { Button } from "../../components/ui/Button";
 import { EmptyState, LoadingState } from "../../components/ui/EmptyState";
 import { cx } from "../../components/ui/classes";
 import { readerIsScrolling } from "../../lib/useViewportClampedPosition";
 import { taggedWordForStrongs } from "./wordLookup";
 import { alignVerse, phraseWord, type VerseAlignment } from "./interlinearAlign";
+import { englishOrderRows, originalOrderRows, rowNumber, type InterlinearRow } from "./interlinearRows";
+import { InterlinearTable } from "./InterlinearTable";
 
-/** How long the pointer rests on a word before its parsing card shows, so
- * that running the pointer along a line does not flash a card for every
- * word it crosses. Reaching a word with the keyboard shows it at once. */
+/** How long the pointer rests on a row before its parsing card shows, so
+ * that running the pointer down the table does not flash a card for every
+ * row it crosses. Reaching a row with the keyboard shows it at once. */
 const HOVER_CARD_DELAY_MS = 250;
 
 export function InterlinearView({
@@ -34,11 +35,12 @@ export function InterlinearView({
 }) {
   const { data, isLoading } = useInterlinearForChapter(book.id, chapter);
   const { data: morphology } = useMorphologyForChapter(book.id, chapter);
-  const { showMorphology, toggleShowMorphology, interlinearLayout, setInterlinearLayout } = useUiStore();
-  /** Which of the three ways the pane shows the verse: the English alone,
-   * or with the original under each phrase or in its own order. "English
-   * only" is the Settings switch for the original words, which the pane's
-   * old checkbox was too. */
+  const { showMorphology, toggleShowMorphology, interlinearLayout, setInterlinearLayout, showCantillation, toggleShowCantillation } =
+    useUiStore();
+  /** Which of the three ways the pane shows the verse: the table in the
+   * English's order, the table in the original's order, or the English
+   * alone. "English only" is the Settings switch for the original words,
+   * which the pane's old checkbox was too. */
   const layout: LayoutChoice = showMorphology ? interlinearLayout : "english";
   function chooseLayout(choice: LayoutChoice) {
     if (choice === "english") {
@@ -60,15 +62,46 @@ export function InterlinearView({
   const scrollerRef = useRef<HTMLDivElement>(null);
   /** The word the Strong's card was opened from, for the focus to go back to. */
   const popupOpener = useRef<HTMLElement | null>(null);
-  const [hoverCard, setHoverCard] = useState<{ word: ParsedWord; x: number; y: number; flipY: number; fromKeyboard: boolean } | null>(null);
-  /** The word the parsing card is over, to find it again when the chapter moves. */
+  const [hoverCard, setHoverCard] = useState<{
+    word: ParsedWord;
+    /** The row it is for: a word can have two, where the KJV gives it two phrases. */
+    rowKey: string;
+    /** Which of the row's words it is over. */
+    wordId: number;
+    x: number;
+    y: number;
+    flipY: number;
+    fromKeyboard: boolean;
+  } | null>(null);
+  /** The row the parsing card is over, to find it again when the chapter moves. */
   const hoverAnchor = useRef<HTMLElement | null>(null);
+  /** The row and word the pointer last called a parsing card up for, shown
+   * or waiting: the pointer moving about inside one word does not start it
+   * over. */
+  const hoverFor = useRef<string | null>(null);
+  /** The word of a row the keyboard has moved to with the arrow keys, which
+   * Enter opens rather than the head. */
+  const keyboardWord = useRef<{ rowKey: string; wordId: number } | null>(null);
+  /** The same, for the table to mark the word in its row: the parsing card
+   * showed which word the arrows were on, but a word with no parsing has no
+   * card, and Enter opened a word nothing showed. */
+  const [keyboardMark, setKeyboardMark] = useState<{ rowKey: string; wordId: number } | null>(null);
   const hoverTimer = useRef<number | null>(null);
   const hoverCardId = useId();
 
   const verseNumbers = Object.keys(data ?? {})
     .map(Number)
     .sort((a, b) => a - b);
+
+  // The verse in the KJV, for the line over its rows. The phrases are the
+  // KJV too, but without its punctuation, and a psalm's title comes after
+  // its first verse in them ("The LORD is my shepherd ... of David A
+  // Psalm"); the chapter itself is one query, and usually cached from the
+  // Bible pane beside this one.
+  const { data: translations } = useTranslations();
+  const kjvId = translations?.find((t) => t.code === "KJV")?.id ?? null;
+  const { data: kjvChapter } = useChapter(kjvId, book.id, chapter);
+  const kjvText = useMemo(() => new Map((kjvChapter ?? []).map((v) => [v.verse, v.text])), [kjvChapter]);
 
   /** Each verse's phrases with the words they translate. Worked out for
    * every layout: the Strong's card of an English phrase shows the parsing
@@ -97,9 +130,11 @@ export function InterlinearView({
     e.stopPropagation();
     hideHoverCard();
     if (!id) return;
-    const opener = e.currentTarget as HTMLElement;
-    popupOpener.current = opener;
-    const rect = opener.getBoundingClientRect();
+    // Under the word or number pressed; the focus goes back to its row, the
+    // button, a word inside it having none of its own.
+    const anchor = e.currentTarget as HTMLElement;
+    popupOpener.current = anchor.closest<HTMLElement>("button") ?? anchor;
+    const rect = anchor.getBoundingClientRect();
     // A click with no pointer behind it (`detail` 0) is Enter or Space on
     // the word.
     setPopup({ id, x: rect.left, y: rect.bottom + 4, anchorTop: rect.top, word, fromKeyboard: e.detail === 0 });
@@ -107,9 +142,12 @@ export function InterlinearView({
 
   /** Closes the Strong's card. A focus that was in it goes back to the word
    * it was opened from, rather than to the top of the window when the
-   * button it was on goes. */
+   * button it was on goes. So does a focus the card had lost to the page: a
+   * click on the card's text (not a button) leaves the focus on nothing, and
+   * Escape then left the keyboard at the top of the window, not at the row. */
   const closePopup = useCallback(() => {
-    const focusWasInCard = !!cardRef.current?.contains(document.activeElement);
+    const active = document.activeElement;
+    const focusWasInCard = !!cardRef.current?.contains(active) || !active || active === document.body;
     const opener = popupOpener.current;
     popupOpener.current = null;
     setPopup(null);
@@ -164,13 +202,18 @@ export function InterlinearView({
   function hideHoverCard() {
     cancelHoverCard();
     hoverAnchor.current = null;
+    hoverFor.current = null;
     setHoverCard(null);
   }
-  function showHoverCard(word: ParsedWord, el: HTMLElement, fromKeyboard = false) {
+  /** Shows the parsing card for one of a row's words, over that word
+   * (`[data-original]`) rather than the middle of a row the width of the
+   * pane. */
+  function showHoverCard(word: ParsedWord, rowKey: string, wordId: number, el: HTMLElement, fromKeyboard = false) {
     cancelHoverCard();
     hoverAnchor.current = el;
-    const rect = el.getBoundingClientRect();
-    setHoverCard({ word, x: rect.left + rect.width / 2, y: rect.top, flipY: rect.bottom, fromKeyboard });
+    const over = el.querySelector<HTMLElement>(`[data-original][data-word-id="${wordId}"]`) ?? el.querySelector<HTMLElement>("[data-original]") ?? el;
+    const rect = over.getBoundingClientRect();
+    setHoverCard({ word, rowKey, wordId, x: rect.left + rect.width / 2, y: rect.top, flipY: rect.bottom, fromKeyboard });
   }
   /** The chapter moved under the parsing card. A card the pointer called up
    * goes: the word has moved out from under the pointer. A card the keyboard
@@ -183,16 +226,16 @@ export function InterlinearView({
   function followOrHideHoverCard(e: React.UIEvent<HTMLElement>) {
     const anchor = hoverAnchor.current;
     if (hoverCard?.fromKeyboard && anchor?.isConnected && anchor === document.activeElement && !readerIsScrolling(e.currentTarget)) {
-      showHoverCard(hoverCard.word, anchor, true);
+      showHoverCard(hoverCard.word, hoverCard.rowKey, hoverCard.wordId, anchor, true);
     } else {
       hideHoverCard();
     }
   }
-  function scheduleHoverCard(word: ParsedWord, el: HTMLElement) {
+  function scheduleHoverCard(word: ParsedWord, rowKey: string, wordId: number, el: HTMLElement) {
     cancelHoverCard();
     hoverTimer.current = window.setTimeout(() => {
       hoverTimer.current = null;
-      if (el.isConnected) showHoverCard(word, el);
+      if (el.isConnected) showHoverCard(word, rowKey, wordId, el);
     }, HOVER_CARD_DELAY_MS);
   }
   useEffect(() => cancelHoverCard, []);
@@ -226,53 +269,103 @@ export function InterlinearView({
     if (!scroller || !row) return;
     scrolledTo.current = place;
     const top = row.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop;
-    scroller.scrollTo({ top: Math.max(0, top - 16) });
+    // Clear of the table's heading, which stays at the top as it scrolls.
+    const head = scroller.querySelector<HTMLElement>("[data-table-head]")?.offsetHeight ?? 0;
+    scroller.scrollTo({ top: Math.max(0, top - 8 - head) });
   }, [book.id, chapter, verse, hasVerses]);
 
   /**
-   * A Greek or Hebrew word, as a button: the word, its parsing under it (or
-   * its code, where it has no parsing), the parsing card when the pointer
-   * rests on it or the keyboard reaches it, and the Strong's card, with its
-   * parsing, when it is pressed. `muted` sets a word the English leaves
-   * untranslated in a lighter ink; `echo` is a word shown in full under
-   * another phrase, which stands here as the word alone.
+   * What a row of the table does, as a button: a press opens the Strong's
+   * card on the row's number, with its head word's parsing (or, for a
+   * phrase with no word, the word the phrase's number stands on); the
+   * pointer resting on one of its words shows the parsing card over that
+   * word, and anywhere else on the row over the head. The keyboard reaching
+   * the row shows the head's card, and the arrow keys move it along the
+   * row's words -- the way the eye reads them, right to left in the Hebrew
+   * -- Enter then opening the Strong's card of the word the card is over. A
+   * word with no parsing has no parsing card.
    */
-  function originalWord(w: MorphologyWord, { muted = false, echo = false }: { muted?: boolean; echo?: boolean } = {}) {
-    const parsed = parsedWordOrNull(w);
-    // Only a word with a Strong's number can be clicked, and a disabled
-    // button hears no pointer, so only such a word has the hover card; the
-    // few without one keep their label.
-    const withCard = parsed && w.strongs_id ? parsed : null;
-    return (
-      <button
-        key={w.id}
-        type="button"
-        disabled={!w.strongs_id}
-        onClick={(e) => showStrongsPopup(w.strongs_id, e, w)}
-        onMouseEnter={withCard ? (e) => scheduleHoverCard(withCard, e.currentTarget) : undefined}
-        onMouseLeave={withCard ? hideHoverCard : undefined}
-        onFocus={withCard ? (e) => focusedFromKeyboard(e.currentTarget) && showHoverCard(withCard, e.currentTarget, true) : undefined}
-        onBlur={withCard ? hideHoverCard : undefined}
-        onKeyDown={withCard ? (e) => e.key === "Escape" && hideHoverCard() : undefined}
-        aria-describedby={hoverCard?.word.id === w.id ? hoverCardId : undefined}
-        className={cx(
-          "flex flex-col items-center rounded-md px-1 py-0.5 text-center",
-          w.strongs_id ? "hover:bg-amber-50 dark:hover:bg-amber-950/30" : "cursor-default",
-        )}
-        title={echo ? "The same word, parsed under the phrase beside this one" : parsed ? undefined : (w.lemma ?? undefined)}
-      >
-        <span className={cx("leading-tight", echo ? "text-base text-ink-4" : muted ? "text-lg text-ink-3" : "text-lg text-ink")} dir="auto">
-          {w.original_word}
-        </span>
-        {!echo &&
-          (parsed ? (
-            <CompactParsing parsing={parsed.parsing} />
-          ) : (
-            w.morph_code && <span className="mt-0.5 font-mono text-[10px] text-ink-3">{w.morph_code}</span>
-          ))}
-      </button>
-    );
+  function rowProps(row: InterlinearRow, vn: number): ButtonHTMLAttributes<HTMLButtonElement> {
+    const headWord = row.word ?? (row.phrase && row.phraseIndex != null ? wordForPhrase(vn, row.phraseIndex, row.phrase) : null);
+    const key = `${vn}:${row.key}`;
+    const hoverOver = (word: MorphologyWord | null, el: HTMLElement) => {
+      const at = word ? `${key}:${word.id}` : key;
+      if (hoverFor.current === at) return;
+      hoverFor.current = at;
+      const parsed = word ? parsedWordOrNull(word) : null;
+      if (parsed && word) scheduleHoverCard(parsed, key, word.id, el);
+      else {
+        cancelHoverCard();
+        if (hoverCard?.rowKey === key) setHoverCard(null);
+      }
+    };
+    const wordUnder = (target: EventTarget) => {
+      const id = target instanceof Element ? target.closest("[data-word-id]")?.getAttribute("data-word-id") : null;
+      return row.words.find((w) => String(w.word.id) === id)?.word ?? row.word;
+    };
+    const showFromKeyboard = (word: MorphologyWord | null, el: HTMLElement) => {
+      const parsed = word ? parsedWordOrNull(word) : null;
+      keyboardWord.current = word ? { rowKey: key, wordId: word.id } : null;
+      setKeyboardMark(keyboardWord.current);
+      if (parsed && word) showHoverCard(parsed, key, word.id, el, true);
+      else hideHoverCard();
+    };
+    const hebrew = (row.word?.strongs_id ?? "").startsWith("H");
+    return {
+      onClick: (e) => {
+        const chosen = e.detail === 0 && keyboardWord.current?.rowKey === key ? row.words.find((w) => w.word.id === keyboardWord.current!.wordId)?.word : null;
+        if (chosen && chosen !== row.word) showStrongsPopup(rowNumber(chosen), e, chosen);
+        else showStrongsPopup(row.strongs, e, headWord);
+      },
+      onMouseOver: (e) => hoverOver(wordUnder(e.target), e.currentTarget),
+      onMouseLeave: hideHoverCard,
+      onFocus: (e) => focusedFromKeyboard(e.currentTarget) && showFromKeyboard(row.word, e.currentTarget),
+      onBlur: () => {
+        keyboardWord.current = null;
+        setKeyboardMark(null);
+        hideHoverCard();
+      },
+      onKeyDown: (e) => {
+        if (e.key === "Escape") return hideHoverCard();
+        if ((e.key !== "ArrowRight" && e.key !== "ArrowLeft") || row.words.length < 2) return;
+        e.preventDefault();
+        const at = row.words.findIndex((w) => w.word.id === (keyboardWord.current?.rowKey === key ? keyboardWord.current.wordId : row.word?.id));
+        const step = (e.key === "ArrowRight" ? 1 : -1) * (hebrew ? -1 : 1);
+        const next = row.words[Math.min(row.words.length - 1, Math.max(0, at + step))];
+        showFromKeyboard(next.word, e.currentTarget);
+      },
+      "aria-describedby": hoverCard?.rowKey === key ? hoverCardId : undefined,
+    };
   }
+
+  /** A press on one of a row's other words, or on its number: that word's
+   * Strong's card, with its parsing, not the head's. */
+  function wordClick(e: ReactMouseEvent<HTMLElement>, word: MorphologyWord) {
+    showStrongsPopup(rowNumber(word), e, word);
+  }
+
+  /** Each verse's rows, in the order the layout reads them. Until the
+   * chapter's Greek or Hebrew has come, the English's order, with the
+   * phrases and their numbers alone. Kept from one drawing to the next, as
+   * the table works out its columns' widths from them: the parsing card
+   * coming and going draws the pane again, and the chapter is the same. */
+  const tableVerses = useMemo(
+    () =>
+      Object.keys(data ?? {})
+        .map(Number)
+        .sort((a, b) => a - b)
+        .map((vn) => {
+          const aligned = alignment.get(vn);
+          const words = morphology?.[vn] ?? [];
+          const rows: InterlinearRow[] = !aligned
+            ? []
+            : layout === "original" && words.length > 0
+              ? originalOrderRows(aligned, words)
+              : englishOrderRows(aligned, words);
+          return { verse: vn, text: kjvText.get(vn) ?? data![vn].map((p) => p.text).join(" "), rows };
+        }),
+    [data, alignment, morphology, layout, kjvText],
+  );
 
   /** An English phrase, as a button: the phrase and its Strong's number,
    * for the Strong's card. A word the KJV supplied, in italics, has no
@@ -295,33 +388,36 @@ export function InterlinearView({
     );
   }
 
-  const originalDir = book.testament === "OT" ? "rtl" : "ltr";
   const originalName = book.testament === "OT" ? "Hebrew" : "Greek";
 
   return (
-    // The gutter widens with the pane rather than the window: a thin pane
-    // beside a wide one keeps its width for the verses and the switch.
+    // One gutter, the scroller's, and none inside it: the table has four
+    // columns to find room for, and the second gutter a wide pane added
+    // took 32px of it at the width a pane has beside the Bible.
     <div
       ref={scrollerRef}
-      className="@container min-h-0 flex-1 overflow-y-auto px-4 py-6"
+      className="@container min-h-0 flex-1 overflow-y-auto px-4 pb-6"
       onClick={closeCardOnClickOutside}
       onScroll={followOrHideHoverCard}
     >
-      <div className="@container mx-auto w-full max-w-4xl @md:px-4">
+      <div className="@container mx-auto w-full max-w-4xl">
         {/* The explanation asks for a line of its own before it will share
             one: with no width of its own it shrank to one or two words a
             line beside the layout switch rather than letting the switch and
             Exit wrap under it. */}
-        <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm text-ink-2">
+        <div className="mt-6 mb-4 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm text-ink-2">
           <Languages className="h-4 w-4 shrink-0 text-ink-3" aria-hidden="true" />
           <span className="min-w-0 flex-[1_1_18rem]">
-            {layout === "aligned"
-              ? `Interlinear: each KJV phrase with its Strong's number and, under it, the ${originalName} it translates. Click any word for its lexicon entry; rest on a ${originalName} word for its parsing.`
+            {layout === "table"
+              ? `Interlinear: a row for each KJV phrase, with the ${originalName} words it translates, the Strong's number, root and parsing of its chief word, and the little words with it muted. Click a row or a word for its lexicon entry; rest on a word for its full parsing.`
               : layout === "original"
-                ? `Interlinear: KJV phrases tagged with Strong's numbers, and the ${originalName} in its own order. Click any word for its lexicon entry; rest on a ${originalName} word for its parsing.`
+                ? `Interlinear: the ${originalName} words in their own order, each with the KJV phrase that translates it. Click a row for its lexicon entry; rest on it for the full parsing.`
                 : `Interlinear: KJV phrases tagged with Strong's numbers. Click any word for the original ${originalName}.`}
           </span>
           <LayoutSwitch value={layout} originalName={originalName} onChange={chooseLayout} />
+          {originalName === "Hebrew" && layout !== "english" && (
+            <CantillationSwitch on={showCantillation} onToggle={toggleShowCantillation} />
+          )}
           <Button size="sm" variant="secondary" icon={X} onClick={onExit}>
             Exit interlinear
           </Button>
@@ -331,67 +427,22 @@ export function InterlinearView({
         </h1>
         {isLoading && <LoadingState />}
         {!isLoading && verseNumbers.length === 0 && <EmptyState title="No interlinear data for this chapter" />}
-        {verseNumbers.map((vn) => {
-          const aligned = layout === "aligned" && morphology?.[vn] ? alignment.get(vn) : undefined;
-          return (
-            <div key={vn} data-verse-row={vn} className="mb-5">
-              {aligned ? (
-                // Each phrase and the words under it make one card, and the
-                // cards wrap as the pane narrows. They hang from a common top
-                // line, so a card whose parsing runs to three lines leaves its
-                // neighbours where they were.
-                <div className="flex flex-wrap items-start gap-x-2 gap-y-3">
-                  <span className="mt-1.5 font-sans text-xs font-semibold text-ink-4">{vn}</span>
-                  {aligned.phrases.map(({ phrase, words }, i) => (
-                    <div key={phrase.id} data-phrase-card="" className="flex flex-col items-center">
-                      {englishPhrase(vn, i, phrase)}
-                      {words.length > 0 && (
-                        <div dir={originalDir} className="flex flex-wrap items-start justify-center gap-x-1 border-t border-line pt-0.5">
-                          {words.map(({ word, echo }) => originalWord(word, { echo }))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                  {aligned.untranslated.length > 0 && (
-                    // What the English does not translate, set apart: the
-                    // article, the object marker, a conjunction the KJV let
-                    // go. Still words of the verse, so still to be looked up
-                    // and parsed.
-                    //
-                    // "Not matched" rather than "Not translated": the words
-                    // are matched to the English only by Strong's number and
-                    // the little words beside them (`alignVerse`), and a
-                    // word the KJV does render, folded into a phrase numbered
-                    // for another, can still land here.
-                    <div
-                      data-untranslated=""
-                      title="Words not matched to an English phrase: mostly ones the KJV leaves untranslated, such as an article or the object marker, and now and then one it folds into a phrase numbered for another word"
-                      className="flex flex-col items-center rounded-md border border-dashed border-line-2 px-1 pt-1"
-                    >
-                      <span className="px-1 font-sans text-[11px] text-ink-4">Not matched</span>
-                      <div dir={originalDir} className="flex flex-wrap items-start justify-center gap-x-1">
-                        {aligned.untranslated.map((w) => originalWord(w, { muted: true }))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="flex flex-wrap items-end gap-x-3 gap-y-2">
-                  <span className="mb-1 self-start font-sans text-xs font-semibold text-ink-4">{vn}</span>
-                  {data![vn].map((w, i) => englishPhrase(vn, i, w))}
-                </div>
-              )}
-              {layout === "original" && morphology?.[vn] && (
-                // The original words hang from a common top line, so a word
-                // whose parsing runs to two or three lines leaves its
-                // neighbours' words where they were rather than lowering them.
-                <div dir={originalDir} className="mt-1 flex flex-wrap items-start gap-x-3 gap-y-2 border-l-2 border-line-2 pl-3">
-                  {morphology[vn].map((w) => originalWord(w))}
-                </div>
-              )}
-            </div>
-          );
-        })}
+        {layout === "english"
+          ? verseNumbers.map((vn) => (
+              <div key={vn} data-verse-row={vn} className="mb-5 flex flex-wrap items-end gap-x-3 gap-y-2">
+                <span className="mb-1 self-start font-sans text-xs font-semibold text-ink-4">{vn}</span>
+                {data![vn].map((w, i) => englishPhrase(vn, i, w))}
+              </div>
+            ))
+          : verseNumbers.length > 0 && (
+              <InterlinearTable
+                verses={tableVerses}
+                originalName={originalName}
+                rowProps={rowProps}
+                onWordClick={wordClick}
+                keyboardWord={keyboardMark ? keyboardRowWord(keyboardMark.rowKey, keyboardMark.wordId) : null}
+              />
+            )}
 
         <div ref={cardRef} className="contents">
           {popup && (
@@ -416,13 +467,13 @@ export function InterlinearView({
 type LayoutChoice = InterlinearLayout | "english";
 
 /**
- * How the verse is laid out, as three buttons side by side: the original
- * under each English phrase, the original on a line of its own in its own
- * order, or the English alone. A radio group, one of the three always
- * chosen. In a thin pane the labels shorten ("Under English", "Greek
- * order", "English") and the switch takes its row's width, so the three
- * still sit on one row and read as one control; the buttons wrap under one
- * another only in a pane thinner still, rather than running out of it.
+ * How the verse is laid out, as three buttons side by side: the table in
+ * the English's order, the table in the original's order, or the English
+ * alone. A radio group, one of the three always chosen. In a thin pane the
+ * labels shorten ("Table", "Greek order", "English") and the switch takes
+ * its row's width, so the three still sit on one row and read as one
+ * control; the buttons wrap under one another only in a pane thinner still,
+ * rather than running out of it.
  */
 function LayoutSwitch({
   value,
@@ -434,7 +485,7 @@ function LayoutSwitch({
   onChange: (choice: LayoutChoice) => void;
 }) {
   const choices: { key: LayoutChoice; label: string; short: string }[] = [
-    { key: "aligned", label: "Under each English word", short: "Under English" },
+    { key: "table", label: "Table", short: "Table" },
     { key: "original", label: `In ${originalName} order`, short: `${originalName} order` },
     { key: "english", label: "English only", short: "English" },
   ];
@@ -468,6 +519,44 @@ function LayoutSwitch({
   );
 }
 
+/**
+ * Whether the Hebrew shows its cantillation marks, as the Blue Letter
+ * Bible's "Show Cantillation Marks" does: the accents that chant the verse
+ * and mark its pauses, which crowd the vowel points for a reader learning
+ * to read them. The points always stay. On by default, the text as it is;
+ * the choice holds wherever the app shows a Hebrew word from the text.
+ */
+function CantillationSwitch({ on, onToggle }: { on: boolean; onToggle: () => void }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={on}
+      title="Show the Hebrew cantillation marks (the accents). The vowel points always show."
+      onClick={onToggle}
+      className="flex items-center gap-1.5 whitespace-nowrap rounded-md border border-line-2 bg-surface px-2 py-0.5 text-sm text-ink-2 hover:bg-hover hover:text-ink @max-[26rem]:text-[12px]"
+    >
+      <span
+        aria-hidden="true"
+        className={cx(
+          "flex h-3.5 w-3.5 items-center justify-center rounded-sm border",
+          on ? "border-accent bg-accent text-on-accent" : "border-line-2 bg-surface",
+        )}
+      >
+        {on && <Check className="h-3 w-3" strokeWidth={3} />}
+      </span>
+      Cantillation
+    </button>
+  );
+}
+
+/** The word the keyboard is on, by its verse and its row's own key, from the
+ * "verse:row" key `rowProps` keeps it by. */
+function keyboardRowWord(rowKey: string, wordId: number): { verse: number; rowKey: string; wordId: number } {
+  const at = rowKey.indexOf(":");
+  return { verse: Number(rowKey.slice(0, at)), rowKey: rowKey.slice(at + 1), wordId };
+}
+
 /** Whether a modal dialog is open that the Strong's card is not inside: the
  * dialog is then the layer the reader is in, and a key is its own. The same
  * test the other popups' Escape makes (`useViewportClampedPosition`). */
@@ -485,41 +574,4 @@ function focusedFromKeyboard(el: HTMLElement): boolean {
   } catch {
     return true;
   }
-}
-
-/**
- * The parsing under an interlinear word, short: "Verb · aorist active
- * imperative · 2nd sg", "and + Noun · fem sg abs". English, so it runs left
- * to right under a Hebrew word too. Each piece is kept whole where the line
- * breaks, so a long label wraps between "aorist active imperative" and
- * "2nd sg" rather than inside either, and the mark joining two pieces ends
- * the first one's line instead of opening the next; the part of speech
- * leads in a stronger ink, as the word's name.
- *
- * The label, not the word's button, is what is held to a width, so that it
- * wraps rather than spreading its word's neighbours apart. Held on the
- * button, the cap held the word too, and a Greek word can be longer than a
- * label -- Acts 10:41's προκεχειροτονημένοις is some 185 pixels at this size
- * -- and cannot wrap: it ran out of its button both sides, over the gap and
- * into the next word. The button is as wide as the wider of the two.
- */
-function CompactParsing({ parsing }: { parsing: MorphParsing }) {
-  const pieces = compactParsingPieces(parsing);
-  if (pieces.length === 0) return null;
-  return (
-    <span dir="ltr" className="mt-0.5 max-w-[10rem] font-sans text-[11px] leading-snug text-ink-3">
-      {pieces.map((p, i) => {
-        const joiner = pieces[i + 1]?.joiner;
-        return (
-          <Fragment key={i}>
-            {i > 0 && " "}
-            <span className={cx("inline-block", p.part === "head" && "text-ink-2")}>
-              {p.text}
-              {joiner && <span className="text-ink-4">{`\u00a0${joiner}`}</span>}
-            </span>
-          </Fragment>
-        );
-      })}
-    </span>
-  );
 }

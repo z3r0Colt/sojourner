@@ -926,6 +926,18 @@ pub struct MorphologyWord {
     /// better reading of a code reaches every word without a rebuild. None
     /// when the word has no code.
     pub parsing: Option<crate::morph::MorphInfo>,
+    /// The headword of the word's Strong's entry (`strongs_entries.
+    /// original_word`), joined in at query time: the root the interlinear
+    /// shows beside the number, so that number, root and transliteration are
+    /// always one entry's. Not `lemma`, which is the tagged text's own
+    /// lexical form and can be another word's spelling (TAHOT gives פָּנִים,
+    /// H6440, as פָּנֶה). Exactly as stored, points and accents and all.
+    /// None where the number has no entry (TAHOT's suffix numbers, H9030 and
+    /// on) or the entry no headword.
+    pub headword: Option<String>,
+    /// The headword's transliteration, from the same entry ("archḗ" for
+    /// ἀρχή). None where the number has no entry or the entry none.
+    pub headword_transliteration: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]

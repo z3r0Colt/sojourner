@@ -8,6 +8,7 @@ import { Button } from "../../components/ui/Button";
 import { cx, inputSmClass, selectSmClass } from "../../components/ui/classes";
 import type { MorphQuery } from "../../api/types";
 import { morphFieldOptions, searchExample, type MorphSearchField } from "./morphFieldOptions";
+import { useHebrewDisplay } from "../lexicon/originalText";
 
 /** The order the fields appear in, and what the form calls them. Each
  *  field's values, their order and their names are `morphFieldOptions`'. */
@@ -74,6 +75,9 @@ export function MorphSearch({ onOpenVerse }: { onOpenVerse: (bookId: number, cha
   const bookName = (id: number) => books?.find((b) => b.id === id)?.name ?? `#${id}`;
   const testamentBooks = books?.filter((b) => (language === "greek" ? b.testament === "NT" : b.testament === "OT")) ?? [];
   const lang = language === "hebrew" ? "he" : "el";
+  // With the cantillation taken off where the reader has asked for it, as
+  // everywhere a Hebrew word from the text is shown.
+  const hebrew = useHebrewDisplay();
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -169,7 +173,7 @@ export function MorphSearch({ onOpenVerse }: { onOpenVerse: (bookId: number, cha
                   {h.words.map((w) => (
                     <span key={w.sort_order} className="text-ink-3">
                       <span className="text-sm text-ink" lang={lang}>
-                        {w.original_word}
+                        {hebrew(w.original_word)}
                       </span>{" "}
                       {w.description}
                     </span>

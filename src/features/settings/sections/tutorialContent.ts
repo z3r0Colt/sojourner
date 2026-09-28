@@ -517,14 +517,15 @@ export const TUTORIAL: TutorialCategory[] = [
       {
         id: "interlinear",
         title: "Interlinear",
-        what: "The Hebrew or Greek under the English it translates, word by word, in its own pane.",
+        what: "The Hebrew or Greek beside the English it translates, word by word, as a table in its own pane.",
         steps: [
           "Click Interlinear in the reading toolbar.",
-          "Each KJV phrase carries its Strong's number, and under it the Hebrew or Greek words it translates, each with its parsing in words beneath it (Verb · aorist active imperative · 2nd sg). Words matched to no phrase, mostly ones the English leaves untranslated such as an article, are set apart under Not matched.",
-          "The switch at the top chooses the layout: Under each English word; In Greek order (In Hebrew order in the Old Testament), which runs the original on a line of its own as it was written; or English only.",
-          "Click any tagged word to see its lexicon entry in a popup; Full lexicon entry opens the Lexicon page with a concordance of every verse using that word.",
-          "Rest the pointer on an original word, or reach it with [Tab], for the whole parsing and the prefixes and suffixes written on it.",
-          "Click an original word and the popup has a Parsing section: the word as written, its parsing, and a row for each term (aorist, piel, construct). Click a term for what it means.",
+          "Each verse is a line of the KJV and a table under it, as on the Blue Letter Bible: a row for each Hebrew or Greek word, with the KJV phrase that translates it, its Strong's number, the word with its root and the root in letters (ἀρχῇ ἀρχή archḗ), and its parsing in words (Verb · aorist active imperative · 2nd sg). Where one phrase translates several words, the rows after its first show an arrow up to it. Words matched to no phrase, mostly ones the English leaves untranslated such as an article, come at the foot of the verse with a dash for the English.",
+          "The switch at the top chooses the layout: Table, in the English's order; In Greek order (In Hebrew order in the Old Testament), the same table in the order the original was written; or English only.",
+          "The root beside each word is its Strong's entry's headword, so the number, the root and its letters always agree. Every word is shown as the text has it, with its vowel points and accents. In the Old Testament, the Cantillation switch beside the layout takes the Hebrew accents off (as the Blue Letter Bible's Show Cantillation Marks does) and leaves the vowel points; it holds wherever the app shows a Hebrew word.",
+          "Click a row to see its word's lexicon entry in a popup; Full lexicon entry opens the Lexicon page with a concordance of every verse using that word.",
+          "Rest the pointer on a row, or reach it with [Tab], for the whole parsing and the prefixes and suffixes written on the word.",
+          "The popup has a Parsing section: the word as written, its parsing, and a row for each term (aorist, piel, construct). Click a term for what it means.",
           "English only is the same choice as turning off Settings → Reading → Bible text → Show original words and parsing in interlinear view.",
         ],
         links: [

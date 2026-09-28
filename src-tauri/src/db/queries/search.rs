@@ -211,14 +211,17 @@ fn verse_conditions(q: &ParsedQuery, scope: &VerseSearchScope) -> (String, Vec<B
             params.push(Box::new(s.clone()));
         }
     }
+    // The lemma as typed, or a Strong's headword by its bare letters: the
+    // query reaches here with its Greek and Hebrew already reduced to them
+    // (`query_lang::parse`), and `original_word` is pointed and accented.
     for lemma in &f.lemmas {
         sql.push_str(
             " AND EXISTS (SELECT 1 FROM morphology_words m WHERE m.book_id = v.book_id AND m.chapter = v.chapter
                           AND m.verse = v.verse
-                          AND (m.lemma = ? OR m.strongs_id IN (SELECT id FROM strongs_entries WHERE original_word = ?)))",
+                          AND (m.lemma = ? OR m.strongs_id IN (SELECT id FROM strongs_entries WHERE headword_plain = ?)))",
         );
         params.push(Box::new(lemma.clone()));
-        params.push(Box::new(lemma.clone()));
+        params.push(Box::new(crate::plain::plain(lemma)));
     }
     if f.red {
         sql.push_str(

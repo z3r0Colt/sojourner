@@ -88,3 +88,74 @@ BDB: "adv", "prep", "conj"), and only where its code is the one above: `decode_w
 the interlinear, the word study and the grammar search. Of the 6,310 words coded `Ac`, 3,733
 are numbers. The glossary's "kind:existence" entry is for יֵשׁ, which no code names so; its
 examples, Genesis 28:16 and Job 14:7, are coded `HAcbsa` in TAHOT.
+
+## How TAHOT and TAGNT are read (2026-09-28)
+
+The words are shown exactly as the two files write them; what follows is where reading them
+takes more than splitting a column. Code: `src-tauri/src/import/reference/editions.rs`
+(`tahot_words`) and `morphology.rs` (`edition_row`, `edition_verse`, `GreekImport::resolve`).
+
+**TAHOT, the marks after a word.** A row writes the marks that follow its word after a
+backslash: `עַל\־`, `אֱלֹהִ֤ים\׀`, `הָ/אָֽרֶץ\׃\ \ס`. The maqaf (42,509 words) and the paseq
+(2,273, which with a munah or mahpakh makes the disjunctive legarmeh) are the word's as the
+text writes it and are kept; so is the rest of a word written across one (Genesis 14:17
+`כְּדָרְ\־לָעֹ֔מֶר`, Chedorlaomer). The verse's end (׃), the paragraph marks (פ, ס) and the
+inverted nun (׆) are the verse's: the WLC text has them, the word does not.
+
+**TAHOT, a Qere of two words.** Where the scribes' reading is two words for one written word,
+the row holds both, parted by `//` (Genesis 30:11 `בָּ֣א//גָ֑ד`, "a troop cometh", Deuteronomy
+33:2, Judges 20:13), `/ /` (Ruth 3:5 `תֹּאמְרִ֥י/ /אֵלַ֖/י`, 1 Chronicles 27:12, Nehemiah 2:13,
+2 Kings 19:31 and eleven more) or a maqaf (Exodus 4:2 `מַה/־/זֶּ֣ה`). Each word with a root
+braced of its own is a word of its own, with its own number, lemma (the row's matching
+braced entry) and parsing (the parsing column parts the words with `//`, the language letter
+written on the first alone). One name written in two parts under one number (Numbers 7:59,
+Pedahzur) stays one word, and so does one written word with two roots (Isaiah 9:6 אֲבִי/עַ֖ד,
+`אַחֲרֵי/כֵן`, twelve rows), under its first. The WLC text reads `//` as a space.
+
+**TAHOT, "written but not read".** Fourteen Qere rows have no Hebrew: the Ketiv's word is not
+read (Judges 16:25, Ruth 3:12, 1 Samuel 9:1 ...). As the WLC reads the Qere throughout, such a
+row has no word.
+
+**TAHOT's own numbers.** A preposition's pronoun suffix is braced with a number of TAHOT's
+own above Strong's (H9030-H9039, 6,079 words: לָנוּ, בּוֹ); Strong's numbered none of them. The
+number is kept -- the interlinear finds the "us" such a word is folded into by it -- and the
+table shows no Strong's number for it.
+
+**TAGNT, the TR's spelling.** TAGNT prints the Nestle-Aland's spelling and gives another
+edition's in its spelling-variants column ("TR: ἀνελήφθη ; ", "Tyn+WH: Δαυεὶδ ; +TR: Δαβὶδ ;
+"). Each edition is read in its own spelling -- 1,168 words of the TR, among them every
+λήμψεσθε (TR λήψεσθε) and Δαυίδ (TR Δαβίδ) -- with the printed word's punctuation, as TAGNT
+prints one punctuation for all.
+
+**TAGNT, a reading of several words.** A reading in the variants column can be several words
+where the printed text has one ("ὁμοιώσω αὐτὸν", Matthew 7:24, "I will liken him"; "ἐν τοῖς
+οὐρανοῖς"), tagged `G0846=P-ASM + G3666=V-FAI-1S`. Each word is a row with its own number and
+parsing; TAGNT does not always list the tags in the words' order, so each word takes the tag
+whose Strong's headword shares most of its first letters with it. The printed word's
+punctuation goes on the last. A reading of one word tagged as several (κἀκεῖθεν,
+`G2532=CONJ + G1564=ADV`) is one word with the whole code, as a printed κἀγώ is.
+
+**TAGNT, word order.** An edition that has a word elsewhere is marked with how far: "TR»2",
+two places later, "TR«3", three earlier ("moved »2", TAGNT's own notes). Each edition's words
+are in its own order: 1,410 words of the TR stood in the Nestle-Aland's (Matthew 7:24 read
+"ᾠκοδόμησεν αὐτοῦ τὴν οἰκίαν" for Scrivener's "ᾠκοδόμησε τὴν οἰκίαν αὐτοῦ"). A mark counts
+the printed words a word passes; two words moved to the same place keep the order in which
+the later-starting one stands first (Luke 3:16, "ὁ Ἰωάννης ἅπασι λέγων"). A word moved onto
+the word the edition writes it into is that word's already, and has no place of its own: καί
+onto κἀκείνοις (Matthew 20:4), μεγάλα onto μεγαλαυχεῖ (James 3:5), κατά onto καταμόνας, 32
+such in the TR, the written word beginning with the moved one (all but its last letter) or
+ending with it; and the spelled-out numbers onto the TR's letter numerals, χ̅ξ̅ς᾽ (Revelation
+13:18) and ρμδ (7:4), which printed 666 and 144 twice.
+
+**TAGNT, the word's own Strong's entry.** TAGNT files every oblique and plural form of "I"
+under G3165, μέ, "me" (ἡμῶν, ἡμῖν, ἡμᾶς, ἡμεῖς, μου, μοι: 1,963 words), and words merged or
+compounded from two under their first part (κἀγώ under ἐγώ, μήποτε under μή, σεαυτοῦ under
+σύ, κἀκεῖνος under καί). Where the entry's headword is neither the word nor TAGNT's own
+dictionary form of it, and TAGNT's column of classic Strong's numbers has one whose headword
+is (ἡμῶν G2257, μου G3450, κἀγώ G2504, μήποτε G3379), that is the word's entry, and the number
+the KJV's phrase above it carries. A merged word with no such number takes Strong's entry
+spelled as it is (κἀκεῖθεν, G2547); a word with no number in the dictionary takes the first
+classic number TAGNT gives (κατωτέρω, Matthew 2:16, G2736, whose entry prints it). The σύ
+forms keep σύ, their own lexeme. Left untagged: γενήματά (Luke 12:18), which TAGNT numbers
+G6013, a number TBESG maps to nothing (Strong's G1081 is γέννημα, with two nus), and the TR's
+letter numerals ρμδ and ιβ, which Strong's did not number.

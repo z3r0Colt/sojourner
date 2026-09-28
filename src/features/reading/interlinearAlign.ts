@@ -1,13 +1,16 @@
 import type { InterlinearWord, MorphologyWord } from "../../api/types";
 
 /**
- * The interlinear laid out under the English: each KJV phrase with the Greek
- * or Hebrew word it translates hanging beneath it, in the manner of the Blue
- * Letter Bible's reverse interlinear, and the words no phrase translates --
- * the Greek article before a name, the Hebrew object marker, a καί the KJV
- * left out -- gathered at the end of the verse as "Not matched" (named for
- * what is known of them: mostly untranslated, but now and then a word the
- * KJV folded into a phrase this cannot find it in).
+ * The interlinear matched to the English: each KJV phrase with the Greek or
+ * Hebrew words it translates, for the table that sets them out in the
+ * manner of the Blue Letter Bible's interlinear (`interlinearRows`), a row
+ * to a phrase with all its words, and the words no phrase translates -- the
+ * Greek article before a name, the Hebrew object marker, a καί the KJV left
+ * out. The table sets each of those little words in the row of the word it
+ * goes with, muted, and gives only a word of weight no phrase translates a
+ * row of its own at the foot of the verse, with a dash for its English
+ * (`untranslatedHomes`): mostly untranslated, but now and then a word the
+ * KJV folded into a phrase this cannot find it in.
  *
  * The two texts meet only by Strong's number. The KJV phrases carry the
  * numbers of the KJV-with-Strong's (the TR and the Leningrad Codex as Strong
@@ -45,6 +48,7 @@ import type { InterlinearWord, MorphologyWord } from "../../api/types";
  * same verses nearly every time.
  */
 const I = ["G3165", "G1473"];
+const EMPHATIC_I = ["G1473", "G3165"];
 const YOU = ["G4771"];
 const THIS = ["G3778"];
 const BE = ["G1510"];
@@ -56,13 +60,29 @@ export const STRONGS_EQUIVALENTS: Record<string, string[][]> = {
   ),
   // ἐγώ and ἡμεῖς in each case, ἐμός, ἐμαυτοῦ, ἡμέτερος, κἀγώ.
   ...Object.fromEntries(
-    ["G3450", "G2257", "G3427", "G2254", "G2248", "G2249", "G1700", "G1698", "G1691", "G1699", "G1683", "G2251", "G2504"].map((n) => [n, [I]]),
+    ["G3450", "G2257", "G3427", "G2254", "G2248", "G2249", "G1699", "G1683", "G2251", "G2504"].map((n) => [n, [I]]),
   ),
+  // The emphatic ἐμοῦ, ἐμοί and ἐμέ, which the tagged text files under ἐγώ
+  // (G1473) and never under the enclitic με (G3165). Looked for under με
+  // first, Galatians 2:20's three "me" all claimed its one με, two of them
+  // as echoes, and "I" was left the verse's ἐγώ, ἐμοί and ἐμοῦ together, with
+  // ἐμοί, nearest its place, as the word it translated.
+  ...Object.fromEntries(["G1700", "G1698", "G1691"].map((n) => [n, [EMPHATIC_I]])),
   // σύ and ὑμεῖς in each case, σεαυτοῦ, σός, ὑμέτερος.
   ...Object.fromEntries(["G4571", "G4671", "G4675", "G5209", "G5210", "G5213", "G5216", "G4572", "G4674", "G5212"].map((n) => [n, [YOU]])),
   // οὗτος in each case.
   ...Object.fromEntries(["G5124", "G5023", "G5026", "G5129", "G5127", "G5130", "G5126", "G5128", "G5025", "G5125"].map((n) => [n, [THIS]])),
   G848: [["G846"]], // αὑτοῦ, "his", which the tagged text reads αὐτοῦ
+  // ὁ ὢν καὶ ὁ ἦν καὶ ὁ ἐρχόμενος, "which is, and which was, and which is
+  // to come" (Revelation 1:4, 1:8, 4:8, 11:17, 16:5): the KJV numbers its
+  // "is" for the whole phrase, and the ὤν it translates is under G1510,
+  // before the ἦν its "was" does.
+  G3801: [BE],
+  // "Six hundred threescore and six" (Revelation 13:18), which the TR
+  // writes as the one numeral χ̅ξ̅ς᾽, G5516.
+  G1812: [["G5516"]],
+  G1835: [["G5516"]],
+  G1803: [["G5516"]],
   G5123: [THIS, BE], // τουτέστι, "that is"
   G3603: [["G3739"], BE], // ὅ ἐστι, "which is"
   G3363: [["G2443"], ["G3361"]], // ἵνα μή, "lest"
@@ -204,6 +224,12 @@ export const FOLDED_RENDERINGS: Record<string, string[]> = {
  */
 const MARKERS = new Set(["G3588", "H853"]);
 
+/** Whether a word is a marker (`MARKERS`): the Greek article or the Hebrew
+ * object marker, each of which goes with the word after it. */
+export function isMarker(word: MorphologyWord): boolean {
+  return !!word.strongs_id && MARKERS.has(word.strongs_id);
+}
+
 /** A Greek or Hebrew word under an English phrase. */
 export interface AlignedWord {
   word: MorphologyWord;
@@ -288,7 +314,7 @@ export function alignVerse(phrases: InterlinearWord[], words: MorphologyWord[]):
   // all the earth" takes כָּל from הָאָרֶץ beside it, and then a וְעַל from כָּל.
   const english = phrases.map((p) => new Set(englishWords(p.text)));
   const renderings = words.map((w, j) => {
-    const own = (w.strongs_id && FOLDED_RENDERINGS[w.strongs_id]) || [];
+    const own = foldedRenderings(w);
     const phrase = over.get(j);
     return phrase === undefined ? own : [...own, ...[...english[phrase]].filter((e) => !COMMON.has(e))];
   });
@@ -342,6 +368,22 @@ export function alignVerse(phrases: InterlinearWord[], words: MorphologyWord[]):
     untranslated: words.filter((_, j) => !owner.has(j)),
   };
 }
+
+/**
+ * A little word's renderings (`FOLDED_RENDERINGS`), for this word as it is
+ * parsed. A verb in the sequential imperfect -- וַיְהִי, "and it was", "and it
+ * came to pass" -- tells what happened, and is never the English's present
+ * "is" or "are": that is the KJV's own, in italics, for a Hebrew clause with
+ * no verb. Genesis 1:11's closing וַיְהִי כֵן, "and it was so", which the
+ * KJV-with-Strong's has no phrase for, went under "is in itself upon the
+ * earth" for its "is".
+ */
+function foldedRenderings(word: MorphologyWord): string[] {
+  const own = (word.strongs_id && FOLDED_RENDERINGS[word.strongs_id]) || [];
+  return word.parsing?.tense === "sequential imperfect" ? own.filter((r) => !PRESENT_TENSE.has(r)) : own;
+}
+
+const PRESENT_TENSE = new Set(["is", "are", "am"]);
 
 /** The English words too common to find a word over by: Psalm 23:6's second
  * יָמִים, "days", is not "of the LORD" beside it for the "the" it shares with

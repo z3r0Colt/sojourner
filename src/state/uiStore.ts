@@ -67,10 +67,12 @@ export type CopyFormat = "text" | "text-ref" | "ref-text" | "markdown";
 
 export type SearchTranslation = "all" | "reader" | number;
 
-/** How the interlinear sets out the Greek or Hebrew: each word under the
- * English phrase that translates it ("aligned", the default), or the verse's
- * words on a line of their own in the original's order ("original"). */
-export type InterlinearLayout = "aligned" | "original";
+/** How the interlinear sets out the Greek or Hebrew: as a table in the
+ * English's order, a row to each word with the phrase that translates it
+ * ("table", the default, as the Blue Letter Bible has it), or the same table
+ * in the original's order ("original"). The old "aligned", each word under
+ * its phrase in a card, is the table now. */
+export type InterlinearLayout = "table" | "original";
 
 /**
  * Global, window-level preferences (local storage). Anything about *what*
@@ -88,6 +90,10 @@ interface UiState {
   showNoteSymbols: boolean;
   showMorphology: boolean;
   interlinearLayout: InterlinearLayout;
+  /** Hebrew shown with its cantillation marks (the accents), as the text has
+   * it, or without them, the vowel points kept either way. On by default;
+   * switched in the interlinear's bar (see features/lexicon/originalText). */
+  showCantillation: boolean;
   copyFormat: CopyFormat;
   /** Append the translation code to the reference when copying ("John 3:16 KJV"). */
   copyIncludeTranslation: boolean;
@@ -172,6 +178,7 @@ interface UiState {
   toggleShowNoteSymbols: () => void;
   toggleShowMorphology: () => void;
   setInterlinearLayout: (layout: InterlinearLayout) => void;
+  toggleShowCantillation: () => void;
   toggleDistractionFreeMode: () => void;
   setDistractionFreeMode: (on: boolean) => void;
   toggleSidebar: () => void;
@@ -213,7 +220,8 @@ export const useUiStore = create<UiState>((set) => ({
   showHighlights: stored.showHighlights ?? true,
   showNoteSymbols: stored.showNoteSymbols ?? true,
   showMorphology: stored.showMorphology ?? true,
-  interlinearLayout: stored.interlinearLayout === "original" ? "original" : "aligned",
+  interlinearLayout: stored.interlinearLayout === "original" ? "original" : "table",
+  showCantillation: stored.showCantillation ?? true,
   copyFormat: stored.copyFormat ?? "text-ref",
   copyIncludeTranslation: stored.copyIncludeTranslation ?? false,
   reduceMotion: stored.reduceMotion ?? false,
@@ -382,6 +390,11 @@ export const useUiStore = create<UiState>((set) => ({
     persist({ interlinearLayout });
     set({ interlinearLayout });
   },
+  toggleShowCantillation: () =>
+    set((s) => {
+      persist({ showCantillation: !s.showCantillation });
+      return { showCantillation: !s.showCantillation };
+    }),
   toggleDistractionFreeMode: () => set((s) => ({ distractionFreeMode: !s.distractionFreeMode })),
   setDistractionFreeMode: (distractionFreeMode) => set({ distractionFreeMode }),
   toggleSidebar: () =>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { InterlinearWord, MorphologyWord } from "../../api/types";
+import type { InterlinearWord, MorphologyWord, MorphParsing } from "../../api/types";
 import { alignVerse, pairInOrder, phraseWord } from "./interlinearAlign";
 
 /** The verse's KJV phrases, from [text, Strong's] pairs. */
@@ -286,10 +286,70 @@ describe("alignVerse", () => {
     expect(under[3]).toEqual(["of the LORD", "יְ֝הוָ֗ה"]);
   });
 
+  it("finds ὤν for the \"is\" the KJV numbers for the whole of \"which is, and which was\" (Revelation 1:8)", () => {
+    const { under } = shown(
+      phrases(["I", "G1473"], ["am", "G1510"], ["the Lord", "G2962"], ["which", "G3588"], ["is", "G3801"], ["and", "G2532"], ["which", "G3588"], ["was", "G2258"], ["and", "G2532"], ["which", "G3588"], ["is", "G3801"], ["to come", "G2064"]),
+      words(["ἐγώ", "G1473"], ["εἰμι", "G1510"], ["ὁ", "G3588"], ["κύριος,", "G2962"], ["ὁ", "G3588"], ["ὢν", "G1510"], ["καὶ", "G2532"], ["ὁ", "G3588"], ["ἦν", "G1510"], ["καὶ", "G2532"], ["ὁ", "G3588"], ["ἐρχόμενος,", "G2064"]),
+    );
+    expect(under[1]).toEqual(["am", "εἰμι"]);
+    expect(under[4]).toEqual(["is", "ὢν"]);
+    expect(under[7]).toEqual(["was", "ἦν"]);
+  });
+
   it("leaves every word untranslated when the verse has no phrases", () => {
     expect(shown([], words(["ὁ", "G3588"], ["λόγος", "G3056"])).untranslated).toBe("ὁ λόγος");
   });
+
+  it("finds the emphatic ἐμοί and ἐμοῦ under ἐγώ, not the enclitic με: Galatians 2:20's \"I\" and three \"me\"", () => {
+    const en = phrases(["not", "G3765"], ["I", "G1473"], ["liveth", "G2198"], ["in", "G1722"], ["me", "G1698"], ["loved", "G25"], ["me", "G3165"], ["for", "G5228"], ["me", "G1700"]);
+    const gk = words(["οὐκέτι", "G3765"], ["ἐγώ,", "G1473"], ["ζῇ", "G2198"], ["ἐν", "G1722"], ["ἐμοὶ", "G1473"], ["ἀγαπήσαντός", "G25"], ["με", "G3165"], ["ὑπὲρ", "G5228"], ["ἐμοῦ.", "G1473"]);
+    // Each "me" its own word, and "I" the ἐγώ alone: looked for under με
+    // first, all three "me" had claimed the one με, and "I" all three of
+    // ἐγώ, ἐμοί and ἐμοῦ.
+    expect(shown(en, gk).under).toEqual([
+      ["not", "οὐκέτι"],
+      ["I", "ἐγώ,"],
+      ["liveth", "ζῇ"],
+      ["in", "ἐν"],
+      ["me", "ἐμοὶ"],
+      ["loved", "ἀγαπήσαντός"],
+      ["me", "με"],
+      ["for", "ὑπὲρ"],
+      ["me", "ἐμοῦ."],
+    ]);
+  });
+
+  it("does not find a וַיְהִי, \"and it was\", in the KJV's present \"is\": Genesis 1:11's closing וַיְהִי כֵן", () => {
+    const en = phrases(["seed", "H2233"], ["is in itself upon the earth", "H776"]);
+    const [seed, on, earth, was, so] = words(["זַרְעוֹ", "H2233"], ["עַל", "H5921"], ["הָאָרֶץ", "H776"], ["וַיְהִי", "H1961"], ["כֵן", "H3651"]);
+    const sequential = { ...was, parsing: { ...parsing("verb"), tense: "sequential imperfect" } };
+    const a = alignVerse(en, [seed, on, earth, sequential, so]);
+    expect(a.untranslated.map((w) => w.original_word)).toEqual(["וַיְהִי", "כֵן"]);
+    // A הָיָה of another tense still finds its "is", as a הָיוּ does the KJV's
+    // "are" in "we are no spies".
+    const perfect = { ...was, parsing: { ...parsing("verb"), tense: "perfect" } };
+    expect(alignVerse(en, [seed, on, earth, perfect, so]).untranslated.map((w) => w.original_word)).toEqual(["כֵן"]);
+  });
 });
+
+function parsing(part_of_speech: string): MorphParsing {
+  return {
+    language: "hebrew",
+    part_of_speech,
+    tense: null,
+    voice: null,
+    mood: null,
+    person: null,
+    number: null,
+    gender: null,
+    case: null,
+    state: null,
+    stem: null,
+    kind: null,
+    description: part_of_speech,
+    affixes: [],
+  };
+}
 
 describe("pairInOrder", () => {
   it("pairs in turn when the counts agree", () => {

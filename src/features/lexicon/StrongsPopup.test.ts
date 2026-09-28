@@ -212,7 +212,7 @@ describe("StrongsPopup's Webster 1828 section", () => {
 });
 
 describe("StrongsPopup's definition", () => {
-  it("reads θεός's as Strong's wrote it, not the tail the imported file left there", () => {
+  it("reads θεός's as the importer stored it, where Strong's has the line", () => {
     entryQuery = {
       data: {
         ...AGAPAO,
@@ -221,8 +221,8 @@ describe("StrongsPopup's definition", () => {
         transliteration: "theós",
         pronunciation: "theh'-os",
         short_definition: null,
-        definition: "figuratively, a magistrate; by Hebraism, very",
-        derivation: "of uncertain affinity; a deity, especially (with G3588) the supreme Divinity;",
+        definition: "a deity, especially (with G3588) the supreme Divinity; figuratively, a magistrate; by Hebraism, very",
+        derivation: "of uncertain affinity;",
         kjv_usage: ":--X exceeding, God, god(-ly, -ward).",
       },
       isLoading: false,

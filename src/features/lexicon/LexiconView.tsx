@@ -14,6 +14,7 @@ import { EmptyState, LoadingState } from "../../components/ui/EmptyState";
 import { StudyActions } from "../sermons/StudyActions";
 import { strongsRef } from "../sermons/sourceIdentity";
 import { strongsText } from "./strongsText";
+import { useHebrewDisplay } from "./originalText";
 import { cx, inputSmClass } from "../../components/ui/classes";
 
 export function LexiconView() {
@@ -24,6 +25,7 @@ export function LexiconView() {
   const [debounced, setDebounced] = useState(paneQuery ?? "");
   const [language, setLanguage] = useState<"hebrew" | "greek" | undefined>(undefined);
   const typography = useReadingTypography(0.95);
+  const hebrew = useHebrewDisplay();
 
   // A search handed to the pane ("Search the lexicon for ‘word’") fills the box.
   useEffect(() => {
@@ -110,8 +112,8 @@ export function LexiconView() {
             >
               <div className="flex items-baseline gap-2">
                 <span className="font-mono text-xs text-ink-3">{r.id}</span>
-                <span className="text-base text-ink" lang={r.language === "hebrew" ? "he" : "el"}>
-                  {r.original_word}
+                <span className="text-base text-ink" lang={r.language === "hebrew" ? "he" : "el"} dir="auto">
+                  {hebrew(r.original_word)}
                 </span>
                 {r.transliteration && <span className="italic text-ink-3">{r.transliteration}</span>}
               </div>
@@ -176,14 +178,13 @@ export function LexiconView() {
               />
             </div>
             <div className="mb-2 flex items-baseline gap-3">
-              <span className="text-4xl text-ink" lang={entry.language === "hebrew" ? "he" : "el"}>
-                {entry.original_word}
+              <span className="text-4xl text-ink" lang={entry.language === "hebrew" ? "he" : "el"} dir="auto">
+                {hebrew(entry.original_word)}
               </span>
               {entry.transliteration && <span className="text-lg italic text-ink-3">{entry.transliteration}</span>}
             </div>
             {entry.pronunciation && <div className="mb-4 text-sm text-ink-3">pronounced {entry.pronunciation}</div>}
-            {/* As Strong's wrote it: see strongsText for θεός and the seven
-                other Greek entries whose meaning the imported file split. */}
+            {/* As Strong's wrote it (see strongsText). */}
             <p className="mb-4 text-ink" style={typography}>
               {strongsText(entry).definition}
             </p>

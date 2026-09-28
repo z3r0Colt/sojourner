@@ -14,6 +14,7 @@ import { cx, inputSmClass, selectSmClass } from "../../components/ui/classes";
 import { StudyActions } from "../sermons/StudyActions";
 import { strongsRef } from "../sermons/sourceIdentity";
 import { strongsText } from "./strongsText";
+import { useHebrewDisplay } from "./originalText";
 import { ParsingTerms } from "./ParsingSection";
 import { codedAsNote, parsingSentence } from "./parsingDisplay";
 import { occurrenceParsing, parsingLine, parsingsByCode } from "./wordStudyParsing";
@@ -58,6 +59,7 @@ export function WordStudyView() {
   const effectiveTranslation = translationId ?? readerTranslationId;
   const { data: translations } = useTranslations();
   const { data: books } = useBooks();
+  const hebrew = useHebrewDisplay();
   const typography = useReadingTypography(0.92);
   const bookName = (id: number) => books?.find((b) => b.id === id)?.name ?? `#${id}`;
 
@@ -166,8 +168,8 @@ export function WordStudyView() {
             />
           </div>
           <div className="mb-1 flex items-baseline gap-3">
-            <span className="text-4xl text-ink" lang={lang}>
-              {ws.entry.original_word}
+            <span className="text-4xl text-ink" lang={lang} dir="auto">
+              {hebrew(ws.entry.original_word)}
             </span>
             {ws.entry.transliteration && <span className="text-lg italic text-ink-3">{ws.entry.transliteration}</span>}
           </div>
@@ -273,8 +275,8 @@ export function WordStudyView() {
                     <button type="button" className="font-mono text-xs text-accent hover:underline" onClick={() => open(r.id)}>
                       {r.id}
                     </button>
-                    <span className="text-ink" lang={lang}>
-                      {r.original_word}
+                    <span className="text-ink" lang={lang} dir="auto">
+                      {hebrew(r.original_word)}
                     </span>
                     {r.transliteration && <span className="italic text-ink-3">{r.transliteration}</span>}
                     <span className="truncate text-ink-3">{r.short_definition}</span>
@@ -418,7 +420,10 @@ function FormRow({ form: f, lang }: { form: WordStudy["forms"][number]; lang: st
   const line = parsingLine(f.parsing, f.description, f.morph_code);
   return (
     <li className="col-span-3 grid grid-cols-subgrid items-baseline border-b border-line py-1 last:border-0">
-      <span className="text-base text-ink" lang={lang}>
+      {/* The form as its occurrences spell it, every letter and point;
+          a Hebrew form without the cantillation, which is each
+          occurrence's own and not the form's (word_study.rs). */}
+      <span className="text-base text-ink" lang={lang} dir="auto">
         {f.form}
       </span>
       <span className="min-w-0">
@@ -452,6 +457,7 @@ function OccurrenceList({
   typography: React.CSSProperties;
 }) {
   const listRef = useRef<HTMLDivElement>(null);
+  const hebrew = useHebrewDisplay();
   // One occurrence's parsing open at a time, by its place in the list: kept
   // here, not in the row, so it stays open when the row scrolls out of the
   // virtual window and back.
@@ -496,8 +502,8 @@ function OccurrenceList({
                 >
                   {bookName(o.book_id)} {o.chapter}:{o.verse}
                 </button>
-                <span className="text-sm text-ink" lang={lang}>
-                  {o.original_word}
+                <span className="text-sm text-ink" lang={lang} dir="auto">
+                  {hebrew(o.original_word)}
                 </span>
                 {parsing ? (
                   <ParsingToggle

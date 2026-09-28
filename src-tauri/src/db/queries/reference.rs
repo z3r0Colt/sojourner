@@ -378,8 +378,17 @@ pub fn get_morphology_for_chapter(
     chapter: i64,
 ) -> anyhow::Result<HashMap<i64, Vec<MorphologyWord>>> {
     let mut stmt = conn.prepare(
-        "SELECT id, verse, sort_order, original_word, lemma, morph_code, strongs_id FROM morphology_words
-         WHERE book_id = ?1 AND chapter = ?2 ORDER BY verse, sort_order",
+        // The Strong's entry's headword and its transliteration come with
+        // each word, for the interlinear to show the root beside the word
+        // and write it out in letters as the Blue Letter Bible does ("ἀρχή
+        // archḗ"). Both are the entry's, not the tagged text's lemma, so the
+        // number, the root and its letters always agree. A join on the
+        // primary key, a few hundred rows a chapter; the suffix numbers
+        // TAHOT gives a pronoun ending (H9030 and on) have no entry, and no
+        // root.
+        "SELECT m.id, m.verse, m.sort_order, m.original_word, m.lemma, m.morph_code, m.strongs_id, s.original_word, s.transliteration
+         FROM morphology_words m LEFT JOIN strongs_entries s ON s.id = m.strongs_id
+         WHERE m.book_id = ?1 AND m.chapter = ?2 ORDER BY m.verse, m.sort_order",
     )?;
     let rows = stmt.query_map(params![book_id, chapter], |r| {
         let morph_code: Option<String> = r.get(5)?;
@@ -399,6 +408,8 @@ pub fn get_morphology_for_chapter(
                 morph_code,
                 strongs_id,
                 parsing,
+                headword: r.get::<_, Option<String>>(7)?.filter(|t| !t.trim().is_empty()),
+                headword_transliteration: r.get::<_, Option<String>>(8)?.filter(|t| !t.trim().is_empty()),
             },
         ))
     })?;
@@ -442,4 +453,44 @@ pub fn get_footnotes_for_chapter(
         map.entry(verse).or_default().push(note);
     }
     Ok(map)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn morphology_words_carry_their_strongs_headword_and_its_transliteration() {
+        let conn = Connection::open_in_memory().unwrap();
+        conn.execute_batch(
+            "CREATE TABLE morphology_words (id INTEGER PRIMARY KEY, book_id INTEGER, chapter INTEGER, verse INTEGER,
+               sort_order INTEGER, original_word TEXT, lemma TEXT, morph_code TEXT, strongs_id TEXT);
+             CREATE TABLE strongs_entries (id TEXT PRIMARY KEY, original_word TEXT, transliteration TEXT);
+             INSERT INTO strongs_entries VALUES ('G746', 'ἀρχή', 'archḗ'), ('G1722', 'ἐν', ''),
+               ('H6440', 'פָּנִים', 'pânîym');
+             INSERT INTO morphology_words VALUES
+               (1, 43, 1, 1, 0, 'Ἐν', 'ἐν', 'PREP', 'G1722'),
+               (2, 43, 1, 1, 1, 'ἀρχῇ', 'ἀρχή', 'N-DSF', 'G746'),
+               (3, 43, 1, 1, 2, 'x', NULL, NULL, 'H9033'),
+               (4, 43, 1, 1, 3, 'פְּנֵ֣י', 'פָּנֶה', 'HNcmpc', 'H6440');",
+        )
+        .unwrap();
+        let words = &get_morphology_for_chapter(&conn, 43, 1).unwrap()[&1];
+        let root: Vec<(Option<&str>, Option<&str>)> =
+            words.iter().map(|w| (w.headword.as_deref(), w.headword_transliteration.as_deref())).collect();
+        assert_eq!(
+            root,
+            vec![
+                // An empty transliteration is none.
+                (Some("ἐν"), None),
+                (Some("ἀρχή"), Some("archḗ")),
+                // A number with no entry has no root at all.
+                (None, None),
+                // The entry's headword, exactly as stored, not the tagged
+                // text's lemma, which spells another word.
+                (Some("פָּנִים"), Some("pânîym")),
+            ]
+        );
+        assert_eq!(words[3].lemma.as_deref(), Some("פָּנֶה"));
+    }
 }

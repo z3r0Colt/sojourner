@@ -76,9 +76,21 @@ pub struct Occurrence {
     pub text: Option<String>,
 }
 
-/// Punctuation the tagged texts print on a word, removed for grouping forms.
+/// A word as the list of forms shows it: the punctuation the tagged texts
+/// print after it removed -- a Greek comma or stop, a Hebrew sof pasuq, and
+/// the maqaf that joins a Hebrew word to the next (אֶת־ is the form אֶת,
+/// joined to its neighbour in one verse and not in another, as θεόν, is
+/// θεόν) -- and a Hebrew word's cantillation (its accents, meteg/silluq and
+/// paseq), which belong to the word's place in its verse rather than to the
+/// form: one form's hundred occurrences carry a dozen different accents. The
+/// letters and every vowel point, dagesh, shin and sin dot are kept exactly
+/// as the text has them, and so is the Greek elision mark: δ᾽ and ἀλλ᾽ are
+/// those words cut short, not δ and ἀλλ.
 fn bare_form(word: &str) -> String {
-    word.trim_matches(|c: char| !c.is_alphabetic() && !is_mark_char(c))
+    let own = |c: char| {
+        (c.is_alphabetic() || is_mark_char(c) || matches!(c, '\u{1fbd}' | '\u{2019}')) && !matches!(c, '\u{5be}' | '\u{5c0}' | '\u{5c3}')
+    };
+    word.trim_matches(|c: char| !own(c))
         .chars()
         .filter(|c| !matches!(*c as u32, 0x0591..=0x05AF | 0x05BD | 0x05C0 | 0x05C3) && *c != '/')
         .collect()
@@ -86,6 +98,20 @@ fn bare_form(word: &str) -> String {
 
 fn is_mark_char(c: char) -> bool {
     matches!(c as u32, 0x0300..=0x036F | 0x0591..=0x05C7)
+}
+
+/// What forms are grouped by. A Hebrew form is its vowelled letters
+/// (`bare_form`): two vowellings are two forms, a pausal אָרֶץ beside אֶרֶץ,
+/// and neither is shown under the other's points. A Greek form is its bare
+/// letters (`plain`), its accents being its place too -- θεόν and θεὸν,
+/// before a pause and within a clause, are one form -- and it is shown as
+/// most of its occurrences spell it.
+fn form_key(form: &str) -> String {
+    if form.chars().any(|c| ('א'..='ת').contains(&c)) {
+        form.to_string()
+    } else {
+        crate::plain::plain(form)
+    }
 }
 
 pub fn word_study(conn: &Connection, strongs_id: &str) -> anyhow::Result<Option<WordStudy>> {
@@ -109,7 +135,9 @@ pub fn word_study(conn: &Connection, strongs_id: &str) -> anyhow::Result<Option<
         .query_map(params![strongs_id], |r| Ok((r.get(0)?, r.get(1)?)))?
         .collect::<Result<Vec<_>, _>>()?;
 
-    let mut forms: BTreeMap<(String, String), (String, i64)> = BTreeMap::new();
+    // Each group's spellings with their counts, for the one most of its
+    // occurrences have.
+    let mut spellings: BTreeMap<(String, String), BTreeMap<String, i64>> = BTreeMap::new();
     {
         let mut stmt = conn.prepare("SELECT original_word, COALESCE(morph_code, '') FROM morphology_words WHERE strongs_id = ?1")?;
         let mut rows = stmt.query(params![strongs_id])?;
@@ -117,9 +145,18 @@ pub fn word_study(conn: &Connection, strongs_id: &str) -> anyhow::Result<Option<
             let word: String = r.get(0)?;
             let code: String = r.get(1)?;
             let form = bare_form(&word);
-            forms.entry((crate::plain::plain(&form), code)).or_insert((form, 0)).1 += 1;
+            *spellings.entry((form_key(&form), code)).or_default().entry(form).or_insert(0) += 1;
         }
     }
+    let forms: BTreeMap<(String, String), (String, i64)> = spellings
+        .into_iter()
+        .map(|(key, spelt)| {
+            let total = spelt.values().sum();
+            // The most common spelling; of two as common, the first in order.
+            let form = spelt.iter().max_by(|a, b| a.1.cmp(b.1).then(b.0.cmp(a.0))).map(|(f, _)| f.clone()).unwrap_or_default();
+            (key, (form, total))
+        })
+        .collect();
     let descriptions: HashMap<String, String> = conn
         .prepare("SELECT code, description FROM morph_codes")?
         .query_map([], |r| Ok((r.get(0)?, r.get(1)?)))?
@@ -930,6 +967,30 @@ mod tests {
         assert_eq!(ask("מְאֹד"), "מְאֹד (H3966)");
         assert_eq!(typed_strongs_number("G0026"), Some("G26".to_string()));
         assert_eq!(typed_strongs_number("Gad"), None);
+    }
+
+    #[test]
+    fn a_form_keeps_its_letters_and_points_and_is_grouped_by_them() {
+        // Hebrew: the cantillation goes (tipha, silluq, sof pasuq, paseq);
+        // every vowel, dagesh and shin dot stays. The maqaf after a word
+        // joins it to the next and is the verse's, not the form's; a maqaf
+        // inside one (Chedorlaomer) is its own.
+        assert_eq!(bare_form("הַשָּׁמַ֖יִם"), "הַשָּׁמַיִם");
+        assert_eq!(bare_form("הָאָֽרֶץ׃"), "הָאָרֶץ");
+        assert_eq!(bare_form("עַל־"), "עַל");
+        assert_eq!(bare_form("אֱלֹהִ֤ים׀"), "אֱלֹהִים");
+        assert_eq!(bare_form("כְּדָרְ־לָעֹ֔מֶר"), "כְּדָרְ־לָעֹמֶר");
+        // The Greek elision mark is the word's.
+        assert_eq!(bare_form("δ᾽"), "δ᾽");
+        assert_eq!(bare_form("ἀλλ᾽"), "ἀλλ᾽");
+        // Two vowellings are two forms; two accents on one are one.
+        assert_ne!(form_key(&bare_form("אֶ֫רֶץ")), form_key(&bare_form("אָ֫רֶץ")));
+        assert_eq!(form_key(&bare_form("אֶ֥רֶץ")), form_key(&bare_form("אֶ֫רֶץ")));
+        // Greek: its accents and breathings stay on the form shown, and an
+        // acute and a grave are one form.
+        assert_eq!(bare_form("θεὸν,"), "θεὸν");
+        assert_eq!(bare_form("τῇ"), "τῇ");
+        assert_eq!(form_key("θεὸν"), form_key("θεόν"));
     }
 
     #[test]

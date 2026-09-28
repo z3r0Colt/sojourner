@@ -14,15 +14,15 @@
 //! - **Greek (TR, Byzantine, Westcott–Hort, Tregelles)**: STEPBible's TAGNT
 //!   prints each word once with the editions that contain it, and each
 //!   edition's different spelling of it in a variants column. An edition's
-//!   text is every word it contains, in its own spelling -- the same
-//!   reading `morphology::import_greek` does for the TR alone. Word order
-//!   follows TAGNT's printed text where editions differ only in order.
+//!   text is every word it contains, in its own spelling and its own word
+//!   order -- the same reading `morphology::import_greek` does for the TR
+//!   alone (`morphology::edition_row`, `morphology::edition_verse`).
 //! - **Greek (SBLGNT)**: MorphGNT, which is the SBL Greek New Testament
 //!   itself, word for word.
 //!
 //! See `crate::morph` and `morphology` for the parsing these share.
 
-use super::morphology::{greek_word, lists_edition, normalize_tagnt_strongs, parse_tagnt_ref, variant_reading, Reading, GREEK_BOOK_ALIASES};
+use super::morphology::{edition_row, edition_verse, normalize_tagnt_strongs, parse_tagnt_ref, EditionWord, GREEK_BOOK_ALIASES};
 use rusqlite::{params, Connection};
 use std::collections::{BTreeMap, HashMap};
 use std::path::Path;
@@ -62,7 +62,7 @@ const GREEK_EDITIONS: &[(&str, EditionMeta)] = &[
             script: "greek",
             direction: "ltr",
             license: "Public domain",
-            credit: "The New Testament in the Original Greek: Byzantine Textform, ed. M. A. Robinson and W. G. Pierpont (2005), released to the public domain. Text read from STEPBible's Translators Amalgamated Greek NT, © Tyndale House Cambridge, CC BY 4.0; word order follows that edition's printed text where the two differ only in order.",
+            credit: "The New Testament in the Original Greek: Byzantine Textform, ed. M. A. Robinson and W. G. Pierpont (2005), released to the public domain. Text read from STEPBible's Translators Amalgamated Greek NT, © Tyndale House Cambridge, CC BY 4.0.",
             scope: Some("New Testament"),
         },
     ),
@@ -75,7 +75,7 @@ const GREEK_EDITIONS: &[(&str, EditionMeta)] = &[
             script: "greek",
             direction: "ltr",
             license: "Public domain",
-            credit: "B. F. Westcott and F. J. A. Hort, The New Testament in the Original Greek (1881). Public domain. Text read from STEPBible's Translators Amalgamated Greek NT, © Tyndale House Cambridge, CC BY 4.0; word order follows that edition's printed text where the two differ only in order.",
+            credit: "B. F. Westcott and F. J. A. Hort, The New Testament in the Original Greek (1881). Public domain. Text read from STEPBible's Translators Amalgamated Greek NT, © Tyndale House Cambridge, CC BY 4.0.",
             scope: Some("New Testament"),
         },
     ),
@@ -88,7 +88,7 @@ const GREEK_EDITIONS: &[(&str, EditionMeta)] = &[
             script: "greek",
             direction: "ltr",
             license: "Public domain; digitisation CC BY 4.0",
-            credit: "S. P. Tregelles, The Greek New Testament (1857–1879), in the edition of D. Jongkind et al. (Tyndale House, 2009). Text read from STEPBible's Translators Amalgamated Greek NT, © Tyndale House Cambridge, CC BY 4.0; word order follows that edition's printed text where the two differ only in order.",
+            credit: "S. P. Tregelles, The Greek New Testament (1857–1879), in the edition of D. Jongkind et al. (Tyndale House, 2009). Text read from STEPBible's Translators Amalgamated Greek NT, © Tyndale House Cambridge, CC BY 4.0.",
             scope: Some("New Testament"),
         },
     ),
@@ -146,10 +146,10 @@ fn tahot_ref(cell: &str) -> Option<(i64, i64, i64, &str)> {
     Some((book, chapter, verse, kind))
 }
 
-/// The Hebrew lemma in TAHOT's expanded-tags column: the entry in braces,
-/// "{H7225G=רֵאשִׁית=: beginning»...}" -> "רֵאשִׁית".
-fn tahot_lemma(expanded: &str) -> Option<String> {
-    let start = expanded.find('{')?;
+/// The Hebrew lemma in TAHOT's expanded-tags column: the `nth` entry in
+/// braces, "{H7225G=רֵאשִׁית=: beginning»...}" -> "רֵאשִׁית".
+fn tahot_lemma(expanded: &str, nth: usize) -> Option<String> {
+    let start = expanded.match_indices('{').nth(nth).or_else(|| expanded.match_indices('{').next())?.0;
     let inner = &expanded[start + 1..];
     let mut fields = inner.split('=');
     let _strongs = fields.next()?;
@@ -163,6 +163,102 @@ fn tahot_strongs(d_strongs: &str) -> Option<String> {
     let start = d_strongs.find('{')?;
     let end = d_strongs[start..].find('}')? + start;
     normalize_tagnt_strongs(&d_strongs[start + 1..end])
+}
+
+/// One word of a TAHOT row: its Hebrew as the table shows it, and its own
+/// share of the row's tagging.
+#[derive(Debug, PartialEq)]
+struct TahotWord {
+    hebrew: String,
+    d_strongs: String,
+    morph_code: String,
+    /// Which braced entry of the row's expanded tags is this word's.
+    lemma_index: usize,
+}
+
+/// The words of one TAHOT row.
+///
+/// A row is one written word, its morphemes parted by "/" and each with its
+/// tag in the same place of the Strong's column ("וַֽ/יְהִי" beside
+/// "H9001/{H1961}"). Where the scribes' reading (Qere) is two words for one
+/// written one, the row holds both: "בָּ֣א//גָ֑ד" (Genesis 30:11, "a troop
+/// cometh", H935 and H1409), "תֹּאמְרִ֥י/ /אֵלַ֖/י" (Ruth 3:5), "מַה/־/זֶּ֣ה"
+/// (Exodus 4:2, joined by a maqaf). Each such word, with a root braced of its
+/// own, is a word here, with its own number and parsing (the parsing column
+/// parts the words with "//", the language letter written on the first
+/// alone). Read as one, Genesis 30:11 showed בָּ֣אגָ֑ד, a word in neither
+/// reading, and "A troop" found no Hebrew. A name written in two parts under
+/// one number (Numbers 7:59, פְּדָה/ /צוּר, Pedahzur) stays one word.
+///
+/// After "\" come the marks that follow the word. The maqaf that joins it to
+/// the next ("עַל\־") and the paseq after it ("אֱלֹהִ֤ים\׀", which with a
+/// munah makes the disjunctive legarmeh) are the word's as the text writes
+/// it, and are kept: they were dropped, from 42,500 and 2,273 words. So is
+/// the rest of a word written across one (Genesis 14:17 "כְּדָרְ\־לָעֹ֔מֶר",
+/// Chedorlaomer, cut to כְּדָרְ). The verse's end (׃), the paragraph marks
+/// (פ, ס) and the inverted nun (׆) are the verse's, not the word's.
+fn tahot_words(hebrew: &str, d_strongs: &str, morph: &str) -> Vec<TahotWord> {
+    let whole = |text: String| TahotWord {
+        hebrew: word_marks(&text),
+        d_strongs: d_strongs.to_string(),
+        morph_code: morph.to_string(),
+        lemma_index: 0,
+    };
+    let hs: Vec<&str> = hebrew.split('/').collect();
+    let ds: Vec<&str> = d_strongs.split('/').collect();
+    let morphs: Vec<&str> = morph.split("//").collect();
+    if hs.len() != ds.len() || morphs.len() < 2 {
+        return vec![whole(hebrew.replace('/', ""))];
+    }
+    let braced = |range: &[&str]| range.iter().find(|d| d.contains('{')).and_then(|d| tahot_strongs(d));
+    // (first segment, end segment, joined by a maqaf)
+    let mut groups: Vec<(usize, usize, bool)> = Vec::new();
+    let mut start = 0;
+    for i in 0..hs.len() {
+        let maqaf = hs[i] == "\u{5be}" && ds[i].starts_with("H9014");
+        if !(hs[i].is_empty() || hs[i] == " " || maqaf) || i + 1 >= hs.len() {
+            continue;
+        }
+        let (before, after) = (braced(&ds[start..i]), braced(&ds[i + 1..]));
+        if before.is_some() && after.is_some() && before != after {
+            groups.push((start, i, maqaf));
+            start = i + 1;
+        }
+    }
+    groups.push((start, hs.len(), false));
+    if groups.len() != morphs.len() {
+        return vec![whole(hebrew.replace('/', ""))];
+    }
+    let language = &morphs[0][..morphs[0].chars().next().map_or(0, char::len_utf8)];
+    groups
+        .iter()
+        .enumerate()
+        .map(|(k, &(a, b, maqaf))| {
+            let mut text: String = hs[a..b].concat();
+            if maqaf {
+                text.push('\u{5be}');
+            }
+            TahotWord {
+                hebrew: word_marks(&text),
+                d_strongs: ds[a..b].join("/"),
+                morph_code: if k == 0 { morphs[0].to_string() } else { format!("{language}{}", morphs[k]) },
+                lemma_index: ds[..a].iter().filter(|d| d.contains('{')).count(),
+            }
+        })
+        .collect()
+}
+
+/// A word with the marks after its "\" that are its own (see `tahot_words`).
+fn word_marks(text: &str) -> String {
+    let mut parts = text.split('\\');
+    let mut word = parts.next().unwrap_or("").to_string();
+    for mark in parts {
+        let own = mark == "\u{5be}" || mark == "\u{5c0}" || (mark.starts_with('\u{5be}') && mark.chars().any(|c| ('\u{5d0}'..='\u{5ea}').contains(&c)));
+        if own {
+            word.push_str(mark);
+        }
+    }
+    word
 }
 
 pub fn read_tahot(dir: &Path) -> anyhow::Result<Tahot> {
@@ -204,8 +300,9 @@ pub fn read_tahot(dir: &Path) -> anyhow::Result<Tahot> {
                 last = Some(key);
             }
             // "מָֽה\־": the word, then attached punctuation after "\".
-            // Morpheme boundaries ("/") are not printed.
-            let raw = cols[1].trim().replace('/', "");
+            // Morpheme boundaries ("/") are not printed; a Qere's two words
+            // ("בָּ֣א//גָ֑ד") are two.
+            let raw = cols[1].trim().replace("//", "/ /").replace('/', "");
             let (word, attached) = match raw.split_once('\\') {
                 Some((w, p)) => (w.to_string(), p.to_string()),
                 None => (raw.clone(), String::new()),
@@ -217,17 +314,24 @@ pub fn read_tahot(dir: &Path) -> anyhow::Result<Tahot> {
             v.push_str(&word);
             v.push_str(&attached.replace('\\', ""));
 
-            words.push(HebrewWord {
-                book_id,
-                chapter,
-                verse,
-                sort_order,
-                original_word: word,
-                lemma: tahot_lemma(cols[11]),
-                morph_code: cols[5].trim().to_string(),
-                strongs_id: tahot_strongs(cols[4]),
-            });
-            sort_order += 1;
+            // A Qere with no word -- the scribes' "written but not read"
+            // (Judges 16:25, Ruth 3:12) -- has nothing to read, and no row.
+            if cols[1].trim().is_empty() {
+                continue;
+            }
+            for w in tahot_words(cols[1].trim(), cols[4].trim(), cols[5].trim()) {
+                words.push(HebrewWord {
+                    book_id,
+                    chapter,
+                    verse,
+                    sort_order,
+                    original_word: w.hebrew,
+                    lemma: tahot_lemma(cols[11], w.lemma_index),
+                    morph_code: w.morph_code,
+                    strongs_id: tahot_strongs(&w.d_strongs),
+                });
+                sort_order += 1;
+            }
         }
     }
     Ok(Tahot { words, verses })
@@ -243,8 +347,18 @@ fn read_tagnt_editions(dir: &Path, book_lookup: &HashMap<String, i64>) -> anyhow
         .filter(|p| p.file_name().and_then(|n| n.to_str()).is_some_and(|n| n.starts_with("TAGNT ")))
         .collect();
     paths.sort();
+    let flush = |out: &mut Vec<BTreeMap<(i64, i64, i64), Vec<String>>>, key: (i64, i64, i64), rows: &mut Vec<Vec<Vec<EditionWord>>>| {
+        for (i, edition_rows) in rows.iter_mut().enumerate() {
+            let words: Vec<String> = edition_verse(std::mem::take(edition_rows)).into_iter().map(|w| w.word).filter(|w| !w.is_empty()).collect();
+            if !words.is_empty() {
+                out[i].entry(key).or_default().extend(words);
+            }
+        }
+    };
     for path in paths {
         let text = std::fs::read_to_string(&path)?;
+        let mut current: Option<(i64, i64, i64)> = None;
+        let mut rows: Vec<Vec<Vec<EditionWord>>> = GREEK_EDITIONS.iter().map(|_| Vec::new()).collect();
         for line in text.lines() {
             let cols: Vec<&str> = line.split('\t').collect();
             if cols.len() < 6 {
@@ -253,19 +367,22 @@ fn read_tagnt_editions(dir: &Path, book_lookup: &HashMap<String, i64>) -> anyhow
             let Some((book, chapter, verse)) = parse_tagnt_ref(cols[0]) else { continue };
             let Some(&osis) = alias.get(book) else { continue };
             let Some(&book_id) = book_lookup.get(osis) else { continue };
+            let key = (book_id, chapter, verse);
+            if current != Some(key) {
+                if let Some(done) = current.take() {
+                    flush(&mut out, done, &mut rows);
+                }
+                current = Some(key);
+            }
             for (i, (edition, _)) in GREEK_EDITIONS.iter().enumerate() {
-                let reading: Option<Reading> = if lists_edition(cols[5], edition) {
-                    Some(Reading { word: cols[1], d_strongs: "", morph_code: "" })
-                } else {
-                    cols.get(6).and_then(|c| variant_reading(c, edition))
-                };
-                if let Some(r) = reading {
-                    let w = greek_word(r.word);
-                    if !w.is_empty() {
-                        out[i].entry((book_id, chapter, verse)).or_default().push(w);
-                    }
+                let words = edition_row(&cols, edition, &|_| None);
+                if !words.is_empty() {
+                    rows[i].push(words);
                 }
             }
+        }
+        if let Some(done) = current.take() {
+            flush(&mut out, done, &mut rows);
         }
     }
     Ok(out)
@@ -353,7 +470,54 @@ mod tests {
         assert_eq!(tahot_ref("Psa.3.1(3.2)#01=L"), Some((19, 3, 1, "L")));
         assert_eq!(tahot_ref("Psa.3.0(3.1)#01=L"), Some((19, 3, 0, "L")));
         assert_eq!(tahot_ref("Gen.9.21#07=Q(K)"), Some((1, 9, 21, "Q(K)")));
-        assert_eq!(tahot_lemma("H9003=ב=in/{H7225G=רֵאשִׁית=: beginning»first}").as_deref(), Some("רֵאשִׁית"));
+        assert_eq!(tahot_lemma("H9003=ב=in/{H7225G=רֵאשִׁית=: beginning»first}", 0).as_deref(), Some("רֵאשִׁית"));
+        assert_eq!(tahot_lemma("{H0935G=בּוֹא=: come»to come (in)}//{H1409=גָּד=fortune}", 1).as_deref(), Some("גָּד"));
         assert_eq!(tahot_strongs("H9003/{H7225G}").as_deref(), Some("H7225"));
+    }
+
+    fn word(hebrew: &str, d: &str, m: &str, lemma_index: usize) -> TahotWord {
+        TahotWord { hebrew: hebrew.to_string(), d_strongs: d.to_string(), morph_code: m.to_string(), lemma_index }
+    }
+
+    #[test]
+    fn a_word_keeps_its_maqaf_and_paseq_and_the_rest_of_its_letters() {
+        // Genesis 1:2 עַל־, 1:3 וַֽיְהִי־, 1:5 אֱלֹהִ֤ים׀, the verse's end left out.
+        assert_eq!(tahot_words("עַל\\־", "{H5921A}\\H9014", "HR"), vec![word("עַל־", "{H5921A}\\H9014", "HR", 0)]);
+        assert_eq!(tahot_words("וַֽ/יְהִי\\־", "H9001/{H1961}\\H9014", "Hc/Vqw3ms")[0].hebrew, "וַֽיְהִי־");
+        assert_eq!(tahot_words("אֱלֹהִ֤ים\\׀", "{H0430G}\\H9015", "HNcmpa")[0].hebrew, "אֱלֹהִ֤ים׀");
+        assert_eq!(tahot_words("הָ/אָֽרֶץ\\׃\\ \\ס", "H9009/{H0776G}\\H9016\\ \\H9018", "HTd/Ncbsa")[0].hebrew, "הָאָֽרֶץ");
+        // Genesis 14:17: Chedorlaomer, written across the maqaf.
+        assert_eq!(tahot_words("כְּדָרְ\\־לָעֹ֔מֶר", "{H3540}\\H9014", "HNpm")[0].hebrew, "כְּדָרְ־לָעֹ֔מֶר");
+    }
+
+    #[test]
+    fn a_qere_of_two_words_is_two_words() {
+        // Genesis 30:11: "a troop cometh", two words under one written one.
+        assert_eq!(
+            tahot_words("בָּ֣א//גָ֑ד", "{H0935G}//{H1409}", "HVqp3ms//Ncmsa"),
+            vec![word("בָּ֣א", "{H0935G}", "HVqp3ms", 0), word("גָ֑ד", "{H1409}", "HNcmsa", 1)]
+        );
+        // Ruth 3:5, "unto me", with its suffix.
+        assert_eq!(
+            tahot_words("תֹּאמְרִ֥י/ /אֵלַ֖/י", "{H0559}/ /{H0413}/H9030", "HVqi2fs//Rd/Sp1bs"),
+            vec![word("תֹּאמְרִ֥י", "{H0559}", "HVqi2fs", 0), word("אֵלַ֖י", "{H0413}/H9030", "HRd/Sp1bs", 1)]
+        );
+        // Exodus 4:2, joined by a maqaf, which stays with the first.
+        assert_eq!(
+            tahot_words("מַה/־/זֶּ֣ה", "{H4100}/H9014/{H2088}", "HPi//Tm"),
+            vec![word("מַה־", "{H4100}", "HPi", 0), word("זֶּ֣ה", "{H2088}", "HTm", 1)]
+        );
+        // 1 Chronicles 27:12: the paseq stays with its word, and the second
+        // word keeps its own number.
+        let ben = tahot_words("לַ/בֵּ֣ן\\׀/ /יְמִינִ֑י", "H9005/{H1121G}\\H9015/ /{H3227B}", "HRd/Ncmsa//Ngmsa");
+        assert_eq!(ben.iter().map(|w| w.hebrew.as_str()).collect::<Vec<_>>(), ["לַבֵּ֣ן׀", "יְמִינִ֑י"]);
+        assert_eq!(tahot_strongs(&ben[1].d_strongs).as_deref(), Some("H3227"));
+        // Numbers 7:59: Pedahzur, one name in two parts under one number.
+        let pedahzur = tahot_words("פְּדָה/ /צֽוּר\\׃\\ \\פ", "{H6301}+/ /{H6301}\\H9016\\ \\H9017", "HNpm//Npm");
+        assert_eq!(pedahzur.len(), 1);
+        assert_eq!(pedahzur[0].hebrew, "פְּדָה צֽוּר");
+        // One written word with two roots (Isaiah 9:6, "everlasting Father")
+        // is still one word.
+        assert_eq!(tahot_words("אֲבִי/עַ֖ד", "{H0001G}/{H5703}", "HNcmsc/Ncmsa").len(), 1);
     }
 }

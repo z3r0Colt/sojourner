@@ -227,6 +227,89 @@ export function compactParsingLabel(parsing: MorphParsing | null | undefined): s
     .join("");
 }
 
+/**
+ * The verb's forms and the endings as the grammars write them in a parsing
+ * table ("aor act ind", "qal seq impf", "1st com sg"), for the interlinear's
+ * table: one line to a word, beside three other columns, and the compact
+ * label ran out of room on every finite verb, losing its person and number
+ * to an ellipsis ("Verb · imperfect active indicative…"). Nouns were already
+ * short ("dat fem sg"); this brings the verbs down to them. The word's name
+ * stays whole, and so does a Hebrew stem, which has no shorter form a reader
+ * would know; the parsing card over the row has everything in full.
+ */
+const SHORTER_FORMS: Record<string, string> = {
+  present: "pres",
+  imperfect: "impf",
+  aorist: "aor",
+  perfect: "perf",
+  pluperfect: "plupf",
+  future: "fut",
+  sequential: "seq",
+  conjunctive: "conj",
+  active: "act",
+  passive: "pass",
+  middle: "mid",
+  deponent: "dep",
+  indicative: "ind",
+  subjunctive: "subj",
+  imperative: "impv",
+  optative: "opt",
+  infinitive: "inf",
+  participle: "ptc",
+  jussive: "juss",
+  cohortative: "coh",
+  common: "com",
+};
+
+/** The kinds shown in brackets after the word's name, shorter: "Particle
+ *  (object marker)", "Noun (name)". */
+const SHORTER_KINDS: Record<string, string> = {
+  "direct object marker": "object marker",
+  "personal name": "name",
+  "place name": "place",
+  "proper name": "name",
+  "cardinal number": "number",
+  "ordinal number": "ordinal",
+};
+
+/** "middle or passive deponent indicative" as "mid/pass dep ind". The
+ *  common gender keeps its "gender" and its whole word ("common gender
+ *  dual"): shortened, it is two letters away from meaning nothing. */
+function shorter(phrase: string): string {
+  const words = phrase.replace(/\bmiddle or passive\b/g, "mid/pass").split(" ");
+  return words.map((w, i) => (w === "common" && words[i + 1] === "gender" ? w : (SHORTER_FORMS[w] ?? w))).join(" ");
+}
+
+/**
+ * The compact label shorter still, for the interlinear's table: the verb's
+ * form and every ending in the grammars' abbreviations, and a suffix as
+ * "suff" -- "Verb · aor act impv · 2nd sg", "and + Verb · qal seq impf · 3rd
+ * masc sg", "Noun · masc pl constr + suff 3rd masc sg". The prefixes are
+ * already a word each ("and", "prep") and stay as they are.
+ */
+export function shortParsingPieces(parsing: MorphParsing | null | undefined): CompactPiece[] {
+  return compactParsingPieces(parsing).map((p) => {
+    switch (p.part) {
+      case "head":
+        return { ...p, text: p.text.replace(/\(([^)]+)\)/, (m, kind: string) => (SHORTER_KINDS[kind.toLowerCase()] ? `(${SHORTER_KINDS[kind.toLowerCase()]})` : m)) };
+      case "form":
+      case "endings":
+        return { ...p, text: shorter(p.text) };
+      case "suffix":
+        return { ...p, text: shorter(p.text.replace(/^suffix\b/, "suff")) };
+      default:
+        return p;
+    }
+  });
+}
+
+/** The shorter label as one line: "and + Verb · qal seq impf · 3rd masc sg". */
+export function shortParsingLabel(parsing: MorphParsing | null | undefined): string {
+  return shortParsingPieces(parsing)
+    .map((p) => (p.joiner ? ` ${p.joiner} ${p.text}` : p.text))
+    .join("");
+}
+
 /** The description as a sentence starts: "Verb, aorist active imperative, …". */
 export function parsingSentence(parsing: MorphParsing): string {
   return capitalise(parsing.description.trim());

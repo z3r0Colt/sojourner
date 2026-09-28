@@ -9,6 +9,8 @@ import {
   displayForm,
   langFor,
   parsingSentence,
+  shortParsingLabel,
+  shortParsingPieces,
   wordTermRows,
 } from "./parsingDisplay";
 
@@ -248,6 +250,53 @@ describe("compactParsingPieces", () => {
       ["·", "form"],
       ["·", "endings"],
     ]);
+  });
+});
+
+describe("shortParsingLabel", () => {
+  it("writes a verb's form and its endings as the grammars abbreviate them, keeping the word's name", () => {
+    expect(shortParsingLabel(COMMAND)).toBe("Verb · aor act impv · 2nd sg");
+    expect(
+      shortParsingLabel(
+        parsing({ language: "greek", part_of_speech: "verb", tense: "present", voice: "middle or passive deponent", mood: "indicative", person: "3rd", number: "singular" }),
+      ),
+    ).toBe("Verb · pres mid/pass dep ind · 3rd sg");
+    expect(
+      shortParsingLabel(
+        parsing({ language: "greek", part_of_speech: "verb", tense: "present", voice: "active", mood: "participle", case: "nominative", gender: "masculine", number: "plural" }),
+      ),
+    ).toBe("Verb · pres act ptc · nom masc pl");
+    // Nouns were short already.
+    expect(shortParsingLabel(parsing({ language: "greek", part_of_speech: "noun", case: "dative", gender: "feminine", number: "singular" }))).toBe("Noun · dat fem sg");
+  });
+
+  it("shortens a Hebrew verb's form but not its stem, and a suffix to suff", () => {
+    expect(shortParsingLabel(AND_HE_SAID)).toBe("and + Verb · qal seq impf · 3rd masc sg");
+    expect(shortParsingLabel(HIS_WORDS)).toBe("Noun · masc pl constr + suff 3rd masc sg");
+    expect(
+      shortParsingLabel(parsing({ language: "hebrew", part_of_speech: "verb", stem: "hiphil", tense: "imperfect", mood: "jussive", person: "3rd", gender: "feminine", number: "singular" })),
+    ).toBe("Verb · hiphil impf juss · 3rd fem sg");
+    expect(
+      shortParsingLabel(parsing({ language: "hebrew", part_of_speech: "verb", stem: "qal", tense: "perfect", person: "1st", gender: "common", number: "singular" })),
+    ).toBe("Verb · qal perf · 1st com sg");
+  });
+
+  it("keeps the common gender whole where no person comes before it", () => {
+    expect(
+      shortParsingLabel(parsing({ language: "hebrew", part_of_speech: "noun", kind: "common", gender: "common", number: "singular", state: "construct" })),
+    ).toBe("Noun · common gender sg constr");
+  });
+
+  it("shortens the kind in brackets after the word's name", () => {
+    expect(shortParsingLabel(parsing({ language: "hebrew", part_of_speech: "particle", kind: "direct object marker" }))).toBe("Particle (object marker)");
+    expect(shortParsingLabel(parsing({ language: "greek", part_of_speech: "noun", kind: "personal name", case: "genitive", gender: "masculine", number: "singular" }))).toBe(
+      "Noun (name) · gen masc sg",
+    );
+  });
+
+  it("keeps the pieces and their joiners", () => {
+    expect(shortParsingPieces(HIS_WORDS).map((p) => [p.joiner, p.part])).toEqual(compactParsingPieces(HIS_WORDS).map((p) => [p.joiner, p.part]));
+    expect(shortParsingPieces(null)).toEqual([]);
   });
 });
 

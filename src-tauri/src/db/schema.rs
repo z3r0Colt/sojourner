@@ -1416,6 +1416,44 @@ CREATE TRIGGER webster_ad AFTER DELETE ON webster_entries BEGIN
 END;
 "#;
 
+// Strong's headwords as Strong's prints them. `original_word` held the
+// Hebrew stripped to its consonants ("פנים" for פָּנִים), because the importer
+// read the source's unpointed copy of each word rather than its pointed
+// `lemma`; it now holds the pointed form (see `import::reference::strongs`),
+// and a Greek or Hebrew form is never stripped for display again.
+//
+// What search compares moves to columns of its own. `headword_plain` is the
+// headword by its bare letters (`crate::plain::plain`: "פנים", "θεοσ"), which
+// is what a typed Greek or Hebrew query is reduced to before it reaches the
+// index, and what `lemma:` looks a Strong's entry up by.
+// `transliteration_plain` is the transliteration as a reader types it
+// ("elohiym elohim" for ʼĕlôhîym). `strongs_fts` is rebuilt over those two
+// in place of `original_word` and `transliteration`: an index of the pointed
+// word would hold "פָּנִים" as its token, which no query can reach.
+//
+// The rows are deleted so the importer, which runs only into an empty table,
+// imports them again on a `build_content_db --update` -- with their points,
+// and with the Greek definitions split where Strong's meaning begins. A clean
+// build creates the table empty and loses nothing. Nothing refers to a row by
+// its rowid, and the ids are the same Strong's numbers on the way back in.
+pub const CONTENT_MIGRATION_0029: &str = r#"
+DROP TRIGGER strongs_ai;
+DROP TABLE strongs_fts;
+DELETE FROM strongs_entries;
+ALTER TABLE strongs_entries ADD COLUMN headword_plain TEXT NOT NULL DEFAULT '';
+ALTER TABLE strongs_entries ADD COLUMN transliteration_plain TEXT NOT NULL DEFAULT '';
+CREATE INDEX idx_strongs_headword_plain ON strongs_entries(headword_plain);
+
+CREATE VIRTUAL TABLE strongs_fts USING fts5(
+  headword_plain, transliteration_plain, definition, kjv_usage,
+  content='strongs_entries', content_rowid='rowid'
+);
+CREATE TRIGGER strongs_ai AFTER INSERT ON strongs_entries BEGIN
+  INSERT INTO strongs_fts(rowid, headword_plain, transliteration_plain, definition, kjv_usage)
+  VALUES (new.rowid, new.headword_plain, new.transliteration_plain, new.definition, new.kjv_usage);
+END;
+"#;
+
 pub const CONTENT_MIGRATIONS: &[&str] = &[
     CONTENT_MIGRATION_0001,
     CONTENT_MIGRATION_0002,
@@ -1445,6 +1483,7 @@ pub const CONTENT_MIGRATIONS: &[&str] = &[
     CONTENT_MIGRATION_0026,
     CONTENT_MIGRATION_0027,
     CONTENT_MIGRATION_0028,
+    CONTENT_MIGRATION_0029,
 ];
 
 // library.db: the books that ship with the app, in a file of their own.

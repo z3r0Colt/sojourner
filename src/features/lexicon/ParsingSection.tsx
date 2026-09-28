@@ -3,6 +3,7 @@ import { ChevronRight } from "lucide-react";
 import type { MorphologyWord, MorphParsing } from "../../api/types";
 import { cx, sectionLabelClass } from "../../components/ui/classes";
 import { affixRows, codedAsNote, displayForm, langFor, parsingSentence, wordTermRows } from "./parsingDisplay";
+import { useHebrewDisplay } from "./originalText";
 
 /** A word occurrence known to have a parsing. */
 export type ParsedWord = MorphologyWord & { parsing: MorphParsing };
@@ -30,6 +31,7 @@ export function parsedWordOrNull(word: MorphologyWord | null | undefined): Parse
 export function ParsingSection({ word }: { word: ParsedWord }) {
   const { parsing } = word;
   const lang = langFor(parsing);
+  const hebrew = useHebrewDisplay();
   // Said only where the code is on show to be read against the parsing.
   const codeNote = word.morph_code ? codedAsNote(parsing) : null;
   return (
@@ -45,7 +47,7 @@ export function ParsingSection({ word }: { word: ParsedWord }) {
       {codeNote && <p className="mb-1 text-[11px] leading-snug text-ink-3">{codeNote}</p>}
       <p className="mb-1 text-sm leading-snug text-ink">
         <span className="mr-1.5 text-base" lang={lang} dir="auto">
-          {displayForm(word)}
+          {hebrew(displayForm(word))}
         </span>
         <span className="text-ink-2">{parsingSentence(parsing)}</span>
       </p>

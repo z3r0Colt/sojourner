@@ -764,6 +764,16 @@ export interface MorphologyWord {
   strongs_id: string | null;
   /** `morph_code` decoded at query time; null when the word has no code. */
   parsing: MorphParsing | null;
+  /** The headword of the word's Strong's entry, exactly as the entry has
+   * it, joined in at query time: the root the interlinear shows beside the
+   * number, so number, root and transliteration are one entry's. Not
+   * `lemma`, the tagged text's own lexical form, which can spell another
+   * word (TAHOT has פָּנֶה for פָּנִים, H6440). Null where the number has
+   * no entry (TAHOT's suffix numbers, H9030 and on). */
+  headword?: string | null;
+  /** The headword's transliteration, from the same entry ("archḗ" for
+   * ἀρχή); null where the entry has none. */
+  headword_transliteration?: string | null;
 }
 
 export interface Footnote {

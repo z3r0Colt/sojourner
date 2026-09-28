@@ -5,6 +5,7 @@ import { useBooks, useStrongsEntry } from "../../api/queries";
 import type { FactbookSummary, MorphologyWord } from "../../api/types";
 import { CAPPED_POPUP_CLASS, useViewportClampedPosition } from "../../lib/useViewportClampedPosition";
 import { CommentaryHtml } from "../commentary/CommentaryPanel";
+import { useHebrewDisplay } from "./originalText";
 import { PaneLink as Link } from "../../workspace/PaneLink";
 import { openContent, openPassage, targetFor } from "../../workspace/openContent";
 import { Button, IconButton } from "../../components/ui/Button";
@@ -65,6 +66,7 @@ export function StrongsPopup({
   englishWord?: { word: string; place: ReadingPlace | null } | null;
 }) {
   const { data: entry, isLoading } = useStrongsEntry(id);
+  const hebrew = useHebrewDisplay();
   const { ref, style, capped, scrolled } = useViewportClampedPosition<HTMLDivElement>(x, y, { flipY: anchorTop, onDismiss: onClose });
   const { data: books } = useBooks();
   const { data: shelf } = useQuery({
@@ -83,9 +85,7 @@ export function StrongsPopup({
   }
 
   const heading = id ?? (word ? `‘${word}’` : "Word lookup");
-  // The definition as Strong's wrote it: for θεός and seven other Greek
-  // entries the imported file left the start of the meaning in the
-  // derivation (see strongsText).
+  // The definition as Strong's wrote it (see strongsText).
   const text = entry ? strongsText(entry) : null;
   const parsed = parsedWordOrNull(parsedWord);
   // Keyed by the word, so its rows start closed again for another word.
@@ -168,8 +168,8 @@ export function StrongsPopup({
       {entry && (
         <div className="text-sm">
           <div className="mb-1 flex items-baseline gap-2">
-            <span className="text-2xl text-ink" lang={entry.language === "hebrew" ? "he" : "el"}>
-              {entry.original_word}
+            <span className="text-2xl text-ink" lang={entry.language === "hebrew" ? "he" : "el"} dir="auto">
+              {hebrew(entry.original_word)}
             </span>
             {entry.transliteration && <span className="italic text-ink-3">{entry.transliteration}</span>}
           </div>

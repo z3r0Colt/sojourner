@@ -399,9 +399,13 @@ export function AboutSection() {
         <Source name="Bible atlas — coastlines and rivers">
           Made with Natural Earth. Free vector and raster map data at naturalearthdata.com. Public domain.
         </Source>
-        <Source name="Noto Serif and Noto Serif Hebrew">
-          The fonts the Greek and Hebrew texts are set in, © The Noto Project Authors, used under the SIL Open Font License; the licence ships beside the
-          fonts.
+        <Source name="Ezra SIL">
+          The font the Hebrew is set in, with its vowel points and cantillation: Ezra SIL 2.51, © SIL International, used under the SIL Open Font
+          License, its Hebrew layout © Ralph Hancock and John Hudson under the MIT licence. SIL's web font, unmodified; the licences ship beside it.
+        </Source>
+        <Source name="Noto Serif">
+          The font the Greek is set in, with its accents and breathings, © The Noto Project Authors, used under the SIL Open Font License; the licence
+          ships beside the fonts.
         </Source>
         <Source name="OpenDyslexic">
           Used under the SIL Open Font License; the licence text ships beside the font.

@@ -1,6 +1,7 @@
 import { useViewportClampedPosition } from "../../lib/useViewportClampedPosition";
 import { affixRows, codedAsNote, displayForm, langFor, parsingSentence } from "./parsingDisplay";
 import type { ParsedWord } from "./ParsingSection";
+import { rootToShow, useHebrewDisplay } from "./originalText";
 
 /**
  * The small card over an interlinear word the pointer rests on or the
@@ -17,6 +18,11 @@ import type { ParsedWord } from "./ParsingSection";
 export function ParsingHoverCard({ id, word, x, y, flipY }: { id: string; word: ParsedWord; x: number; y: number; flipY: number }) {
   const { ref, style } = useViewportClampedPosition<HTMLDivElement>(x, y, { align: "above-center", gap: 6, flipY });
   const { parsing } = word;
+  const hebrew = useHebrewDisplay();
+  const lang = langFor(parsing);
+  // The root, unless it is the word as shown ("עַל from עַל").
+  const form = displayForm(word);
+  const root = rootToShow(word.headword, form, hebrew);
   const affixes = affixRows(parsing, word.original_word);
   // The code is beside the word; where it names something the parsing does
   // not, the card says why, as the Strong's card's Parsing section does.
@@ -30,12 +36,17 @@ export function ParsingHoverCard({ id, word, x, y, flipY }: { id: string; word: 
       className="pointer-events-none z-40 w-72 max-w-[calc(100vw-16px)] rounded-lg border border-line bg-surface px-3 py-2 text-left text-sm shadow-xl"
     >
       <div className="mb-0.5 flex items-baseline gap-2">
-        <span className="text-lg leading-tight text-ink" lang={langFor(parsing)} dir="auto">
-          {displayForm(word)}
+        <span className="text-lg leading-tight text-ink" lang={lang} dir="auto">
+          {hebrew(form)}
         </span>
-        {word.lemma && (
-          <span className="min-w-0 truncate text-xs text-ink-3" lang={langFor(parsing)}>
-            from {word.lemma}
+        {/* The root is the Strong's entry's headword, as the table's is,
+            not the tagged text's lemma, which can spell another word. */}
+        {root && (
+          <span className="min-w-0 truncate text-xs text-ink-3">
+            from{" "}
+            <span lang={lang} dir="auto">
+              {hebrew(root)}
+            </span>
           </span>
         )}
         {word.morph_code && <span className="ml-auto shrink-0 font-mono text-[11px] text-ink-3">{word.morph_code}</span>}

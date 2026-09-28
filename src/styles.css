@@ -12,52 +12,62 @@
 /* OpenDyslexic (F3.6), the "Dyslexia-friendly" reading font. Bundled under
    the SIL Open Font License, version 1.1; the license text sits beside the
    files in assets/fonts/OFL.txt. */
-/* The Greek and Hebrew texts: Noto Serif Hebrew, and Noto Serif's Greek and
-   Greek Extended (polytonic) ranges, under the SIL Open Font License (the
-   licence ships beside them as NotoSerif-OFL.txt). One family,
-   "Sojourner Original", split by unicode-range so Latin punctuation and
-   numbers keep the reading font. */
+/* The Greek and Hebrew texts, in two families, "Sojourner Hebrew" and
+   "Sojourner Greek" (--font-original has both), each limited by
+   unicode-range to its own script so that Latin punctuation and numbers
+   keep the reading font. Two families and not one: in one, a bold Hebrew
+   word found the family's bold faces -- the Greek's -- and none of them
+   had Hebrew, and it was set in Times New Roman.
+
+   The Hebrew is Ezra SIL 2.51, SIL's font after the Biblia Hebraica
+   Stuttgartensia, made for the pointed and accented biblical text: SIL's
+   own web font (SILEOT.woff from EzraSIL-2.51-web.zip), unmodified. Noto
+   Serif Hebrew, which set it before, stacked a meteg under the vowel it
+   goes with, so that וַֽיְהִי's patah and meteg drew as a qamats; Ezra SIL
+   sets the meteg beside it. Ezra SIL is under the SIL Open Font License,
+   its Hebrew layout under the MIT licence; both ship beside it in
+   EzraSIL-Licenses.txt, with its FONTLOG. It has one weight, declared as
+   400 alone so that bold Hebrew is drawn bold by the browser from it.
+
+   The Greek is Noto Serif's Greek and Greek Extended (polytonic) ranges,
+   each with the combining marks (U+0300-036F), under the SIL Open Font
+   License (NotoSerif-OFL.txt beside them). Without the marks a letter with
+   one the text writes apart -- the TR's χ̅ξ̅ς᾽, 666, with its combining
+   overlines -- was drawn in Times New Roman, its ς᾽ in Noto Serif. */
 @font-face {
-  font-family: "Sojourner Original";
+  font-family: "Sojourner Hebrew";
   font-weight: 400;
   font-display: swap;
-  src: url("./assets/fonts/NotoSerifHebrew-Regular.woff2") format("woff2");
+  src: url("./assets/fonts/SILEOT.woff") format("woff");
   unicode-range: U+0590-05FF, U+FB1D-FB4F;
 }
 @font-face {
-  font-family: "Sojourner Original";
-  font-weight: 700;
-  font-display: swap;
-  src: url("./assets/fonts/NotoSerifHebrew-Bold.woff2") format("woff2");
-  unicode-range: U+0590-05FF, U+FB1D-FB4F;
-}
-@font-face {
-  font-family: "Sojourner Original";
+  font-family: "Sojourner Greek";
   font-weight: 400;
   font-display: swap;
   src: url("./assets/fonts/NotoSerifGreek-Regular.woff2") format("woff2");
-  unicode-range: U+0370-03FF;
+  unicode-range: U+0300-036F, U+0370-03FF;
 }
 @font-face {
-  font-family: "Sojourner Original";
+  font-family: "Sojourner Greek";
   font-weight: 700;
   font-display: swap;
   src: url("./assets/fonts/NotoSerifGreek-Bold.woff2") format("woff2");
-  unicode-range: U+0370-03FF;
+  unicode-range: U+0300-036F, U+0370-03FF;
 }
 @font-face {
-  font-family: "Sojourner Original";
+  font-family: "Sojourner Greek";
   font-weight: 400;
   font-display: swap;
   src: url("./assets/fonts/NotoSerifGreekExt-Regular.woff2") format("woff2");
-  unicode-range: U+1F00-1FFF;
+  unicode-range: U+0300-036F, U+1F00-1FFF;
 }
 @font-face {
-  font-family: "Sojourner Original";
+  font-family: "Sojourner Greek";
   font-weight: 700;
   font-display: swap;
   src: url("./assets/fonts/NotoSerifGreekExt-Bold.woff2") format("woff2");
-  unicode-range: U+1F00-1FFF;
+  unicode-range: U+0300-036F, U+1F00-1FFF;
 }
 @font-face {
   font-family: "OpenDyslexic";
@@ -148,7 +158,7 @@
 
   --font-reading: Georgia, "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif;
   /* Greek and Hebrew first, then the reading font for everything else. */
-  --font-original: "Sojourner Original", Georgia, "Palatino Linotype", serif;
+  --font-original: "Sojourner Hebrew", "Sojourner Greek", Georgia, "Palatino Linotype", serif;
   --font-reading-sans: ui-sans-serif, system-ui, "Segoe UI", sans-serif;
   --font-reading-dyslexic: "OpenDyslexic", "Comic Sans MS", ui-sans-serif, system-ui, sans-serif;
 }
@@ -1142,4 +1152,16 @@ html[data-reading-font] .text-original .reading-font {
 .text-original[dir="rtl"] {
   font-size: 1.15em;
   line-height: 1.9;
+}
+
+/* Any Greek or Hebrew marked as such -- a Strong's headword, the word a
+   parsing card is about, a word study's forms -- in the bundled font, not
+   whatever the system falls back to: Segoe UI drew the Strong's card's
+   Hebrew, its points and accents set by another font's rules than the
+   table's beside it. In the base layer, so a utility on the element (a
+   monospace number) still has its say. */
+@layer base {
+  :where([lang|="he"], [lang|="hbo"], [lang|="arc"], [lang|="el"], [lang|="grc"]) {
+    font-family: var(--font-original);
+  }
 }
