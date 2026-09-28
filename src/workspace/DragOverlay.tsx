@@ -50,7 +50,7 @@ export function DragOverlay() {
           className={cx("absolute rounded-md border-2 border-accent bg-accent/15", !reduceMotion && "transition-[left,top,width,height] duration-100")}
           style={{ left: zone.left, top: zone.top, width: zone.width, height: zone.height }}
         >
-          <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-md bg-accent px-2 py-1 text-xs font-medium text-white shadow">{zone.label}</span>
+          <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-md bg-accent px-2 py-1 text-xs font-medium text-on-accent shadow">{zone.label}</span>
         </div>
       )}
       {target?.kind === "tab" && <TabCaret target={target} />}

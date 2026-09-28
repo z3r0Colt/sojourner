@@ -1,21 +1,35 @@
 import { describe, expect, it } from "vitest";
 import {
+  DEFAULT_TALK_QUESTIONS,
+  MAX_TALK_QUESTIONS,
+  MAX_TALK_QUESTION_LENGTH,
   STARTER_PLAN,
   STARTER_TITLES,
+  addTalkQuestion,
   afterGathering,
   catechismFinished,
   catechismPlan,
+  cleanTalkQuestions,
   customState,
+  editTalkQuestion,
   guessPrayerCategory,
+  insertTalkQuestion,
+  hasOwnTalkQuestions,
   logSummary,
   logWeeks,
+  moveTalkQuestion,
   nextPsalm,
   planFinished,
   psalmWeekDue,
+  removeTalkQuestion,
+  repeatedTalkQuestion,
   starterPsalm,
   starterState,
+  talkQuestionTag,
+  talkQuestions,
   upcomingDays,
   upcomingQuestions,
+  withTalkQuestions,
   type FamilyWorship,
 } from "./familyWorship";
 
@@ -102,6 +116,120 @@ describe("the week ahead", () => {
     expect(psalmWeekDue(s, "2026-09-08")).toBe(true);
     expect(psalmWeekDue({ ...s, starter: true }, "2026-09-20")).toBe(false);
     expect(nextPsalm(150)).toBe(1);
+  });
+});
+
+describe("the talk questions", () => {
+  it("asks faith, love and hope when the family has written none", () => {
+    expect(DEFAULT_TALK_QUESTIONS).toEqual([
+      "What does this passage teach us to believe about God?",
+      "How does it call us to love God and our neighbour?",
+      "What does it give us to hope for?",
+    ]);
+    // A setup saved before the questions could be changed has no list at all.
+    const older = customState(null);
+    expect("talkQuestions" in older).toBe(false);
+    expect(talkQuestions(older)).toEqual(DEFAULT_TALK_QUESTIONS);
+    expect(talkQuestions(null)).toEqual(DEFAULT_TALK_QUESTIONS);
+    expect(talkQuestions({ talkQuestions: [] })).toEqual(DEFAULT_TALK_QUESTIONS);
+    expect(talkQuestions({ talkQuestions: ["  ", ""] })).toEqual(DEFAULT_TALK_QUESTIONS);
+    expect(hasOwnTalkQuestions(older)).toBe(false);
+    expect(hasOwnTalkQuestions({ talkQuestions: [" "] })).toBe(false);
+  });
+
+  it("asks the family's own, trimmed, with the blanks and repeats left out", () => {
+    const own = { talkQuestions: ["  Who is in this story? ", "", "What did God do?", "Who is in this story?"] };
+    expect(talkQuestions(own)).toEqual(["Who is in this story?", "What did God do?"]);
+    expect(hasOwnTalkQuestions(own)).toBe(true);
+  });
+
+  it("does not trust a hand-edited setting", () => {
+    expect(cleanTalkQuestions("What?")).toEqual([]);
+    expect(cleanTalkQuestions([1, null, "Why?"])).toEqual(["Why?"]);
+    const many = Array.from({ length: 12 }, (_, i) => `Question ${i + 1}?`);
+    expect(cleanTalkQuestions(many)).toHaveLength(MAX_TALK_QUESTIONS);
+    expect(cleanTalkQuestions(["x".repeat(500)])[0]).toHaveLength(MAX_TALK_QUESTION_LENGTH);
+  });
+
+  it("names the defaults by their one word, and the family's own by none", () => {
+    expect(DEFAULT_TALK_QUESTIONS.map(talkQuestionTag)).toEqual(["Faith", "Love", "Hope"]);
+    expect(talkQuestionTag("What does it give us to hope for, children?")).toBeNull();
+    expect(talkQuestionTag("Who is in this story?")).toBeNull();
+  });
+
+  it("keeps the family's list, and drops it when reset or edited back to the defaults", () => {
+    const base = customState(null);
+    const own = withTalkQuestions(base, ["Who is in this story?", " "]);
+    expect(own.talkQuestions).toEqual(["Who is in this story?"]);
+    expect("talkQuestions" in withTalkQuestions(own, null)).toBe(false);
+    expect("talkQuestions" in withTalkQuestions(own, [])).toBe(false);
+    expect("talkQuestions" in withTalkQuestions(own, [...DEFAULT_TALK_QUESTIONS])).toBe(false);
+    // The same three in another order are the family's own.
+    const reordered = [DEFAULT_TALK_QUESTIONS[2], DEFAULT_TALK_QUESTIONS[0], DEFAULT_TALK_QUESTIONS[1]];
+    expect(withTalkQuestions(base, reordered).talkQuestions).toEqual(reordered);
+  });
+
+  it("keeps the family's questions when the rest of the setup moves on", () => {
+    const s = withTalkQuestions(starterState("cyc", null), ["What did God do?"]);
+    const after = afterGathering(s, { lengthDays: 28, catechismTotal: 145 });
+    expect(after.talkQuestions).toEqual(["What did God do?"]);
+  });
+
+  it("adds a question at the end, and not a blank, a repeat, or one too many", () => {
+    const list = ["A?", "B?"];
+    expect(addTalkQuestion(list, "  C? ")).toEqual(["A?", "B?", "C?"]);
+    expect(addTalkQuestion(list, "   ")).toBe(list);
+    expect(addTalkQuestion(list, "A?")).toBe(list);
+    const full = Array.from({ length: MAX_TALK_QUESTIONS }, (_, i) => `${i}?`);
+    expect(addTalkQuestion(full, "One more?")).toBe(full);
+    expect(addTalkQuestion(list, "y".repeat(300))[2]).toHaveLength(MAX_TALK_QUESTION_LENGTH);
+  });
+
+  it("rewords a question, keeping the old words when cleared or repeated", () => {
+    const list = ["A?", "B?", "C?"];
+    expect(editTalkQuestion(list, 1, " Bee? ")).toEqual(["A?", "Bee?", "C?"]);
+    expect(editTalkQuestion(list, 1, "  ")).toBe(list);
+    expect(editTalkQuestion(list, 1, "B?")).toBe(list);
+    expect(editTalkQuestion(list, 1, "C?")).toBe(list);
+    expect(editTalkQuestion(list, 5, "D?")).toBe(list);
+  });
+
+  it("puts a removed question back where it was, but not as a repeat or past the limit", () => {
+    const list = ["A?", "C?"];
+    expect(insertTalkQuestion(list, 1, " B? ")).toEqual(["A?", "B?", "C?"]);
+    expect(insertTalkQuestion(list, 0, "Z?")).toEqual(["Z?", "A?", "C?"]);
+    expect(insertTalkQuestion(list, 9, "D?")).toEqual(["A?", "C?", "D?"]);
+    expect(insertTalkQuestion(list, 1, "C?")).toBe(list);
+    expect(insertTalkQuestion(list, 1, " ")).toBe(list);
+    const full = Array.from({ length: MAX_TALK_QUESTIONS }, (_, i) => `${i}?`);
+    expect(insertTalkQuestion(full, 0, "One more?")).toBe(full);
+  });
+
+  it("names the question an edit or an addition would repeat", () => {
+    const list = ["A?", "B?", "C?"];
+    expect(repeatedTalkQuestion(list, " B? ")).toBe(1);
+    expect(repeatedTalkQuestion(list, "B?", 2)).toBe(1);
+    // A question left as it was does not repeat itself.
+    expect(repeatedTalkQuestion(list, "B?", 1)).toBe(-1);
+    expect(repeatedTalkQuestion(list, "D?")).toBe(-1);
+    expect(repeatedTalkQuestion(list, "   ")).toBe(-1);
+  });
+
+  it("removes a question, but never the last", () => {
+    const list = ["A?", "B?", "C?"];
+    expect(removeTalkQuestion(list, 1)).toEqual(["A?", "C?"]);
+    expect(removeTalkQuestion(list, 3)).toBe(list);
+    const one = ["A?"];
+    expect(removeTalkQuestion(one, 0)).toBe(one);
+  });
+
+  it("moves a question up or down a place, and no further than the ends", () => {
+    const list = ["A?", "B?", "C?"];
+    expect(moveTalkQuestion(list, 1, -1)).toEqual(["B?", "A?", "C?"]);
+    expect(moveTalkQuestion(list, 1, 1)).toEqual(["A?", "C?", "B?"]);
+    expect(moveTalkQuestion(list, 0, -1)).toBe(list);
+    expect(moveTalkQuestion(list, 2, 1)).toBe(list);
+    expect(list).toEqual(["A?", "B?", "C?"]);
   });
 });
 

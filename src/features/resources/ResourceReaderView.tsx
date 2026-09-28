@@ -1,12 +1,6 @@
 import { useEffect, useRef, useState, type RefObject } from "react";
 import { ArrowLeft, ChevronDown, Info, Link2, ListTree, Paperclip } from "lucide-react";
-import {
-  useResource,
-  useResources,
-  useBooks,
-  useResourcePassageLinksForResource,
-  useResourceText,
-} from "../../api/queries";
+import { useResource, useResources, useBooks, useResourcePassageLinksForResource } from "../../api/queries";
 import { useQueryClient } from "@tanstack/react-query";
 import { api } from "../../api/client";
 import { resolveBiblePane, useWorkspaceStore } from "../../state/workspaceStore";
@@ -17,8 +11,8 @@ import { PdfReader } from "./PdfReader";
 import { useResourcePosition } from "./resourcePosition";
 import { MobiTextReader } from "./MobiTextReader";
 import { MediaPlayer } from "./MediaPlayer";
-import { ReadAloudButton } from "../tts/ReadAloudButton";
-import { splitIntoParagraphs } from "../tts/textUtils";
+import { ReadAloudControls } from "./ReadAloudControls";
+import type { ReadAloudFrom, ResourceReadAloudHandle } from "./readAloudText";
 import { Button, IconButton } from "../../components/ui/Button";
 import { Popover } from "../../components/ui/Popover";
 import { LoadingState } from "../../components/ui/EmptyState";
@@ -55,9 +49,15 @@ export function ResourceReaderView() {
   /** What the reader has selected in the book, for "Send to sermon". */
   const [selection, setSelection] = useState<{ text: string; location: string | null } | null>(null);
   const epubRef = useRef<EpubController | null>(null);
+  /** The book reader on screen, for the sidebar's read-aloud buttons: each
+   * reader works out where to start from what it shows. */
+  const readAloudRef = useRef<ResourceReadAloudHandle | null>(null);
   useEffect(() => {
     setToc([]);
     setCurrentHref(null);
+    // Words selected in the last book are not a selection in this one --
+    // not to quote, and not to read aloud from.
+    setSelection(null);
   }, [id]);
 
   if (!resource) {
@@ -65,8 +65,15 @@ export function ResourceReaderView() {
   }
 
   const folded = width > 0 && width < SIDEBAR_FOLD_WIDTH;
+  // The reader is keyed, as are its neighbours in both layouts, so a pane
+  // resized across the fold keeps the book it has open. Unkeyed, the reader
+  // was the second child of the folded layout and the first of the wide one,
+  // and React took it for a different element each time: the book closed
+  // and opened again at its saved place, the page being read aloud lost its
+  // mark, and the rest of the book stopped loading for the voice.
   const reader = (
     <div
+      key="reader"
       className="min-h-0 min-w-0 flex-1"
       // A text or PDF reader renders in this document, so its selection is
       // read here; an EPUB reports its own (see EpubReader's onSelect).
@@ -90,20 +97,46 @@ export function ResourceReaderView() {
           onSelect={(text, cfi) => setSelection(text ? { text, location: cfi } : null)}
           controllerRef={epubRef}
           find={params.find ?? null}
+          readAloudTitle={resource.title}
+          readAloudRef={readAloudRef}
         />
       )}
-      {resource.kind === "pdf" && posLoaded && <PdfReader key={resource.id} filePath={resource.file_path} initialPage={pos.page} onPageChange={(page) => savePos({ page })} />}
+      {resource.kind === "pdf" && posLoaded && (
+        <PdfReader
+          key={resource.id}
+          filePath={resource.file_path}
+          initialPage={pos.page}
+          onPageChange={(page) => savePos({ page })}
+          readAloudTitle={resource.title}
+          readAloudRef={readAloudRef}
+        />
+      )}
       {(resource.kind === "epub" || resource.kind === "pdf") && !posLoaded && <LoadingState className="p-8" label="Opening…" />}
-      {resource.kind === "mobi" && <MobiTextReader resourceId={resource.id} />}
+      {resource.kind === "mobi" && <MobiTextReader resourceId={resource.id} readAloudTitle={resource.title} readAloudRef={readAloudRef} />}
       {(resource.kind === "video" || resource.kind === "audio") && <MediaPlayer ref={mediaRef} filePath={resource.file_path} kind={resource.kind} />}
     </div>
   );
   const contents: Contents | undefined = toc.length > 0 ? { items: toc, currentHref, onOpen: (href) => epubRef.current?.display(href) } : undefined;
+  // Read aloud comes from what the reader shows -- an EPUB's page, a PDF's
+  // page, a MOBI's text -- so a book too big to have been indexed can be
+  // read aloud all the same. A MOBI is shown from its extracted text and
+  // needs some.
+  const readAloud =
+    resource.kind === "epub" || resource.kind === "pdf" || (resource.kind === "mobi" && resource.has_text)
+      ? {
+          onRead: (from: ReadAloudFrom) => {
+            if (readAloudRef.current) readAloudRef.current.readAloud(from);
+            else toast.info("The book is still opening.");
+          },
+          // A PDF is drawn, with no words in it to select.
+          hasSelection: resource.kind !== "pdf" && !!selection?.text,
+        }
+      : undefined;
 
   if (folded) {
     return (
       <div className="flex h-full flex-col">
-        <div className="flex h-9 shrink-0 items-center gap-1 border-b border-line bg-surface-2/60 pl-1 pr-1">
+        <div key="header" className="flex h-9 shrink-0 items-center gap-1 border-b border-line bg-surface-2/60 pl-1 pr-1">
           <IconButton icon={ArrowLeft} label="All resources" size="sm" onClick={(e) => navigate("/resources", e)} />
           <span className="min-w-0 flex-1 truncate text-xs font-medium text-ink" title={resource.title}>
             {resource.title}
@@ -117,7 +150,7 @@ export function ResourceReaderView() {
           )}
           <Popover width="w-72" trigger={({ toggle, open }) => <IconButton icon={Info} label="Details, read aloud, and links" size="sm" active={open} onClick={toggle} />}>
             <div className="-m-2 max-h-[70vh] overflow-y-auto">
-              <ReaderSidebar resource={resource} mediaRef={mediaRef} folded selection={selection} />
+              <ReaderSidebar resource={resource} mediaRef={mediaRef} folded selection={selection} readAloud={readAloud} />
             </div>
           </Popover>
         </div>
@@ -129,8 +162,8 @@ export function ResourceReaderView() {
   return (
     <div className="flex h-full">
       {reader}
-      <SidePanel id="reader-sidebar" label="Contents and details" side="right" defaultWidth={288} autoCollapse={false} className="flex flex-col">
-        <ReaderSidebar resource={resource} mediaRef={mediaRef} contents={contents} selection={selection} />
+      <SidePanel key="sidebar" id="reader-sidebar" label="Contents and details" side="right" defaultWidth={288} autoCollapse={false} className="flex flex-col">
+        <ReaderSidebar resource={resource} mediaRef={mediaRef} contents={contents} selection={selection} readAloud={readAloud} />
       </SidePanel>
     </div>
   );
@@ -176,12 +209,15 @@ function ReaderSidebar({
   folded,
   contents,
   selection,
+  readAloud,
 }: {
   resource: Resource;
   mediaRef: RefObject<HTMLVideoElement | HTMLAudioElement | null>;
   folded?: boolean;
   contents?: Contents;
   selection?: { text: string; location: string | null } | null;
+  /** Read aloud from the book on screen; absent for what cannot be read. */
+  readAloud?: { onRead: (from: ReadAloudFrom) => void; hasSelection: boolean };
 }) {
   const id = resource.id;
   const navigate = usePaneNavigate();
@@ -189,7 +225,6 @@ function ReaderSidebar({
   const { data: allResources } = useResources();
   const { data: books } = useBooks();
   const { data: passageLinks } = useResourcePassageLinksForResource(id);
-  const { data: resourceText } = useResourceText(resource.has_text ? id : null);
   // The passage to link to is whatever the Bible pane beside this one is on.
   const bible = useWorkspaceStore((s) => resolveBiblePane(s));
   const position = bible ? { bookId: bible.params.bookId, chapter: bible.params.chapter, verse: bible.params.activeVerse ?? undefined } : null;
@@ -249,9 +284,9 @@ function ReaderSidebar({
             })}
           />
         </div>
-        {resource.has_text && (
+        {readAloud && (
           <div className="mt-2">
-            <ReadAloudButton title={resource.title} sourceKind="resource" segments={splitIntoParagraphs(resourceText ?? "").map((p, i) => ({ id: i, text: p }))} />
+            <ReadAloudControls title={resource.title} onRead={readAloud.onRead} hasSelection={readAloud.hasSelection} />
           </div>
         )}
       </div>

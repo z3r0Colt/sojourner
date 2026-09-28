@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import * as pdfjsLib from "pdfjs-dist";
 import type { TextItem } from "pdfjs-dist/types/src/display/api";
@@ -7,6 +7,25 @@ import workerSrc from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, MoveHorizontal, X, ZoomIn, ZoomOut } from "lucide-react";
 import { Button, IconButton } from "../../components/ui/Button";
 import { cx, inputSmClass } from "../../components/ui/classes";
+import { toast } from "../../components/ui/toast";
+import { useTtsStore, type TtsSegment } from "../../state/ttsStore";
+import { usePaneOptional } from "../../workspace/PaneContext";
+import { ReadAloudControls } from "./ReadAloudControls";
+import { endLoading, isReadingHere, letGoOfLoading, takeOverLoading, whenMoreWanted } from "./readAloudLoading";
+import {
+  fractionThroughBlock,
+  nextAfterReading,
+  paragraphAt,
+  parseSpeechId,
+  pdfParagraphs,
+  pdfSegments,
+  revealOffset,
+  segmentIndexAtBlock,
+  startIndexForView,
+  type PdfParagraph,
+  type PdfTextRun,
+  type ResourceReadAloudHandle,
+} from "./readAloudText";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc;
 
@@ -32,10 +51,81 @@ interface Rect {
 }
 
 interface RenderedPage {
+  /** Which page this is: the page number moves before the page is drawn. */
+  page: number;
   scale: number;
   viewport: pdfjsLib.PageViewport;
-  items: Array<{ str: string; transform: number[]; width: number }>;
+  items: PageTextItem[];
 }
+
+type PageTextItem = { str: string; transform: number[]; width: number; height: number; hasEOL: boolean };
+
+function textItemsOf(items: ReadonlyArray<TextItem | object>): PageTextItem[] {
+  return items
+    .filter((it): it is TextItem => "str" in it)
+    .map((it) => ({ str: it.str, transform: it.transform as number[], width: it.width, height: it.height, hasEOL: it.hasEOL }));
+}
+
+/** A page's text runs as the paragraph builder takes them, in PDF units. */
+function runsOf(items: readonly PageTextItem[]): PdfTextRun[] {
+  return items.map((it) => ({
+    str: it.str,
+    x: it.transform[4],
+    y: it.transform[5],
+    width: it.width,
+    height: it.height > 0 ? it.height : Math.hypot(it.transform[2], it.transform[3]),
+    hasEOL: it.hasEOL,
+  }));
+}
+
+/** A paragraph's box in CSS pixels over the canvas. */
+function paragraphRect(viewport: pdfjsLib.PageViewport, p: PdfParagraph): Rect {
+  const [x1, y1] = viewport.convertToViewportPoint(p.left, p.top) as number[];
+  const [x2, y2] = viewport.convertToViewportPoint(p.right, p.bottom) as number[];
+  return { left: Math.min(x1, x2), top: Math.min(y1, y2), width: Math.abs(x2 - x1), height: Math.abs(y2 - y1) };
+}
+
+/** Each open PDF's pages as paragraphs, as they are asked for. A page is
+ * read with a look at the pages either side of it (for a sentence that runs
+ * over the break), so each is asked for up to three times. */
+const pageTextCache = new WeakMap<pdfjsLib.PDFDocumentProxy, Map<number, Promise<string[]>>>();
+
+/** A page's paragraphs. A page that will not give up its text (damaged, or a
+ * scan with no text layer) has none. */
+function pageParagraphTexts(doc: pdfjsLib.PDFDocumentProxy, page: number): Promise<string[]> {
+  if (page < 1 || page > doc.numPages) return Promise.resolve([]);
+  let pages = pageTextCache.get(doc);
+  if (!pages) {
+    pages = new Map();
+    pageTextCache.set(doc, pages);
+  }
+  let found = pages.get(page);
+  if (!found) {
+    found = doc
+      .getPage(page)
+      .then((pdfPage) => pdfPage.getTextContent())
+      .then((text) => pdfParagraphs(runsOf(textItemsOf(text.items))).map((p) => p.text))
+      .catch(() => []);
+    pages.set(page, found);
+  }
+  return found;
+}
+
+/** A page as the voice reads it: its paragraphs, or `own` when they are in
+ * hand already, with a sentence broken over either page break read whole
+ * with the page it began on. */
+async function pageSegments(doc: pdfjsLib.PDFDocumentProxy, page: number, own?: string[]): Promise<TtsSegment[]> {
+  const [before, here, after] = await Promise.all([
+    pageParagraphTexts(doc, page - 1),
+    own ?? pageParagraphTexts(doc, page),
+    pageParagraphTexts(doc, page + 1),
+  ]);
+  return pdfSegments(here, page, { lastOfPrevious: before[before.length - 1], firstOfNext: after[0] });
+}
+
+/** How many pages past one with no text a reading looks for somewhere to
+ * begin, before deciding this is a scan with nothing to read. */
+const MAX_SILENT_PAGES = 20;
 
 /** Where each occurrence of `query` sits on the rendered page, in CSS
  * pixels over the canvas. A match inside a text run is placed by its
@@ -67,11 +157,18 @@ export function PdfReader({
   filePath,
   initialPage,
   onPageChange,
+  readAloudTitle,
+  readAloudRef,
 }: {
   filePath: string;
   /** The page saved last time (F3.4); read once, on open. */
   initialPage?: number;
   onPageChange?: (page: number) => void;
+  /** The book's title, which reading it aloud goes by. Without it the PDF
+   * has no read-aloud controls. */
+  readAloudTitle?: string;
+  /** Filled in with this PDF's read-aloud, for the reader sidebar. */
+  readAloudRef?: MutableRefObject<ResourceReadAloudHandle | null>;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -87,6 +184,16 @@ export function PdfReader({
   const [current, setCurrent] = useState(0);
   const onPageChangeRef = useRef(onPageChange);
   onPageChangeRef.current = onPageChange;
+  const paneId = usePaneOptional()?.id ?? null;
+  const title = readAloudTitle ?? "";
+  /** The title and pane a reading of this PDF goes by, for the loader that
+   * runs on long after the render that started it. */
+  const readingRef = useRef({ title, paneId });
+  readingRef.current = { title, paneId };
+  /** Bumped by every reading this reader starts; a loader from an earlier
+   * one sees it has been replaced and stops. */
+  const readGenRef = useRef(0);
+  const speakingRef = useRef<HTMLSpanElement>(null);
 
   // A PDF that will not open is an ordinary thing for a file someone dragged
   // in: pdf.js rejects with PasswordException on an encrypted one and
@@ -103,6 +210,12 @@ export function PdfReader({
     let cancelled = false;
     const url = convertFileSrc(filePath);
     setLoadError(null);
+    // A reading of this PDF that the reader before this one, in this pane,
+    // was still loading is this one's to carry on with once the PDF is open
+    // (see `takeOverLoading`). It is claimed now, in the same pass that
+    // closed that reader, or the reading would be told nothing more is coming.
+    const reading = readingRef.current;
+    let takingOver = reading.title !== "" && takeOverLoading(reading.title, reading.paneId);
     const task = pdfjsLib.getDocument({ url });
     task.promise
       .then((doc) => {
@@ -110,14 +223,28 @@ export function PdfReader({
         docRef.current = doc;
         setNumPages(doc.numPages);
         setPage((p) => Math.min(Math.max(1, p), doc.numPages));
+        if (takingOver) {
+          takingOver = false;
+          carryOnRef.current(doc);
+        }
       })
       .catch((e) => {
-        if (!cancelled) setLoadError(e instanceof Error ? e.message : String(e));
+        if (cancelled) return;
+        setLoadError(e instanceof Error ? e.message : String(e));
+        // A PDF that will not open has nothing more to give a reading.
+        if (takingOver) {
+          takingOver = false;
+          endLoading(readingRef.current.title, readingRef.current.paneId);
+        }
       });
     return () => {
       cancelled = true;
       docRef.current = null;
       void task.destroy();
+      // A reading this reader was loading (or had claimed) is let go of: the
+      // reader that replaces this one takes it over if it is the same PDF in
+      // the same pane, and otherwise it goes on with what it has.
+      if (readGenRef.current > 0 || takingOver) letGoOfLoading(readingRef.current.title, readingRef.current.paneId);
     };
   }, [filePath]);
 
@@ -134,6 +261,15 @@ export function PdfReader({
     const doc = docRef.current;
     if (!doc || !canvasRef.current || numPages === 0) return;
     let cancelled = false;
+    // The drawing under way, so that the next one can stop it. pdf.js will not
+    // draw on a canvas that another render still holds: it throws "Cannot use
+    // the same canvas during multiple render() operations", and that landed in
+    // the catch below as a PDF that "could not be opened" -- one open in three,
+    // in the dev build, where every effect runs twice, and whenever a resize or
+    // a zoom came in while a page was drawing. Cancelling hands the canvas back
+    // at once, and the cancelled render's rejection is ignored like any other
+    // from an effect that has been replaced.
+    let renderTask: ReturnType<pdfjsLib.PDFPageProxy["render"]> | null = null;
     // Same gap as the load: a page that will not render (a damaged object
     // stream, a font the worker chokes on) rejected into nothing and left the
     // canvas blank.
@@ -154,27 +290,187 @@ export function PdfReader({
         canvas.style.height = `${Math.round(viewport.height)}px`;
         const ctx = canvas.getContext("2d");
         if (!ctx) return;
-        const [render, text] = await Promise.all([
-          pdfPage.render({ canvasContext: ctx, viewport, canvas, transform: dpr !== 1 ? [dpr, 0, 0, dpr, 0, 0] : undefined }).promise,
-          pdfPage.getTextContent(),
-        ]);
-        void render;
+        renderTask = pdfPage.render({ canvasContext: ctx, viewport, canvas, transform: dpr !== 1 ? [dpr, 0, 0, dpr, 0, 0] : undefined });
+        const [, text] = await Promise.all([renderTask.promise, pdfPage.getTextContent()]);
+        renderTask = null;
         if (cancelled) return;
-        const items = text.items
-          .filter((it): it is TextItem => "str" in it)
-          .map((it) => ({ str: it.str, transform: it.transform as number[], width: it.width }));
-        setRendered({ scale, viewport, items });
+        setRendered({ page, scale, viewport, items: textItemsOf(text.items) });
       })
       .catch((e) => {
-        if (!cancelled) setLoadError(e instanceof Error ? e.message : String(e));
+        if (cancelled || e instanceof pdfjsLib.RenderingCancelledException) return;
+        setLoadError(e instanceof Error ? e.message : String(e));
       });
     onPageChangeRef.current?.(page);
     return () => {
       cancelled = true;
+      renderTask?.cancel();
+      renderTask = null;
     };
   }, [page, numPages, zoom, areaWidth]);
 
   const matches = useMemo(() => (rendered ? findOnPage(rendered, query) : []), [rendered, query]);
+  /** The page on screen as paragraphs: what the voice reads, and what a
+   * click while it reads is matched against. */
+  const paragraphs = useMemo(() => (rendered ? pdfParagraphs(runsOf(rendered.items)) : []), [rendered]);
+
+  // -------------------------------------------------------------------
+  // Read aloud, from the page on screen: its paragraphs from the first in
+  // view, then the pages after it as the voice gets to them. Pieces are
+  // named "p:<page>:<paragraph>:<piece>".
+
+  const highlightColor = useTtsStore((s) => s.highlightColor);
+  const autoScroll = useTtsStore((s) => s.autoScroll);
+  const readingHere = useTtsStore((s) => isReadingHere(s, title, paneId));
+  const speakingId = useTtsStore((s) =>
+    s.isPlaying && s.sourceKind === "resource" && s.title === title && s.paneId === paneId ? String(s.segments[s.currentSegmentIndex]?.id ?? "") : "",
+  );
+  const speaking = parseSpeechId(speakingId);
+  const speakingPage = speaking?.kind === "p" ? speaking.parts[0] : null;
+  const speakingParagraph = speaking?.kind === "p" ? speaking.parts[1] : null;
+  const speakingRect =
+    rendered && rendered.page === speakingPage && speakingParagraph != null && paragraphs[speakingParagraph]
+      ? paragraphRect(rendered.viewport, paragraphs[speakingParagraph])
+      : null;
+
+  // The page turns with the voice -- if the reader was following along,
+  // that is: the page on screen was the one just read. A reader who has
+  // gone to another page to look something up is left there.
+  const lastSpeakingPage = useRef<number | null>(null);
+  useEffect(() => {
+    const previous = lastSpeakingPage.current;
+    lastSpeakingPage.current = speakingPage;
+    if (speakingPage == null || previous == null || previous === speakingPage) return;
+    setPage((p) => (p === previous ? speakingPage : p));
+  }, [speakingPage]);
+
+  // And the paragraph being read is kept in view, with auto-scroll on.
+  useEffect(() => {
+    if (!autoScroll) return;
+    const mark = speakingRef.current;
+    const scroller = scrollRef.current;
+    if (!mark || !scroller) return;
+    const rect = mark.getBoundingClientRect();
+    const view = scroller.getBoundingClientRect();
+    const s = useTtsStore.getState();
+    const delta = revealOffset({ top: rect.top, bottom: rect.bottom }, { top: view.top, bottom: view.bottom }, fractionThroughBlock(s.segments, s.currentSegmentIndex));
+    if (Math.abs(delta) > 1) scroller.scrollBy({ top: delta, behavior: "smooth" });
+  }, [speakingId, rendered, autoScroll]);
+
+  /** Hands the pages after `from` to the reading as the voice nears the end
+   * of what it has, until the PDF ends or the reading is no longer this one. */
+  const keepLoading = async (doc: pdfjsLib.PDFDocumentProxy, gen: number, from: number) => {
+    const { title: reading, paneId: pane } = readingRef.current;
+    const ours = (s: ReturnType<typeof useTtsStore.getState>) =>
+      docRef.current === doc && readGenRef.current === gen && s.sourceKind === "resource" && s.title === reading && s.paneId === pane && s.segments.length > 0;
+    for (let next = from; next <= doc.numPages; next++) {
+      if (!(await whenMoreWanted(ours))) return;
+      const segments = await pageSegments(doc, next);
+      if (!ours(useTtsStore.getState())) return;
+      const done = next >= doc.numPages;
+      if (segments.length > 0 || done) useTtsStore.getState().appendSegments(reading, pane, segments, { done });
+    }
+  };
+
+  /** Carries on loading a reading of this PDF that the reader before this
+   * one was loading, from the page after the last one it holds (see
+   * `takeOverLoading`). */
+  const carryOnLoading = (doc: pdfjsLib.PDFDocumentProxy) => {
+    const { title: reading, paneId: pane } = readingRef.current;
+    const from = nextAfterReading(useTtsStore.getState().segments, "p");
+    if (from == null || from > doc.numPages) {
+      endLoading(reading, pane);
+      return;
+    }
+    void keepLoading(doc, ++readGenRef.current, from);
+  };
+  const carryOnRef = useRef(carryOnLoading);
+  carryOnRef.current = carryOnLoading;
+
+  /** Starts a fresh reading at paragraph `paragraph` of page `startPage`,
+   * the whole page being its opening. A page with nothing to say from there
+   * on (a plate, a blank, the foot of a chapter) begins at the next page
+   * that has something. */
+  const startReading = async (startPage: number, paragraph: number) => {
+    const doc = docRef.current;
+    if (!doc) {
+      toast.info("The PDF is still opening.");
+      return;
+    }
+    const gen = ++readGenRef.current;
+    const { title: reading, paneId: pane } = readingRef.current;
+    // The page on screen is read from the paragraphs it was drawn with, so a
+    // click on one of them finds the same paragraph in the reading.
+    let segments = await pageSegments(
+      doc,
+      startPage,
+      rendered && rendered.page === startPage ? paragraphs.map((p) => p.text) : undefined,
+    );
+    if (docRef.current !== doc || readGenRef.current !== gen) return;
+    let startIndex = segmentIndexAtBlock(segments, "p", startPage, paragraph);
+    let next = startPage + 1;
+    for (let tries = 0; startIndex < 0 && next <= doc.numPages && tries < MAX_SILENT_PAGES; tries++) {
+      const more = await pageSegments(doc, next);
+      next += 1;
+      if (docRef.current !== doc || readGenRef.current !== gen) return;
+      if (more.length > 0) {
+        startIndex = segments.length;
+        segments = segments.concat(more);
+      }
+    }
+    if (startIndex < 0) {
+      toast.info("There is no text on these pages for the voice to read. The PDF may be a scan: pictures of its pages rather than text.");
+      return;
+    }
+    useTtsStore.getState().start(reading, "resource", segments, { startIndex, paneId: pane, more: next <= doc.numPages });
+    const first = parseSpeechId(segments[startIndex].id);
+    if (first && first.parts[0] !== startPage) setPage(first.parts[0]);
+    if (next <= doc.numPages) void keepLoading(doc, gen, next);
+  };
+
+  /** Read aloud from the page on screen, at the first paragraph in view. A
+   * PDF is drawn, not typeset -- there are no words to select in it -- so
+   * this is also what "from the selection" comes to. */
+  const readAloud = () => {
+    let paragraph = 0;
+    const canvas = canvasRef.current;
+    const scroller = scrollRef.current;
+    if (rendered && rendered.page === page && canvas && scroller) {
+      const top = canvas.getBoundingClientRect().top;
+      const view = scroller.getBoundingClientRect();
+      const rects = paragraphs.map((p) => {
+        const r = paragraphRect(rendered.viewport, p);
+        return { top: r.top, bottom: r.top + r.height };
+      });
+      paragraph = startIndexForView(rects, view.top - top, view.bottom - top);
+    }
+    void startReading(page, paragraph);
+  };
+  const readAloudFnRef = useRef(readAloud);
+  readAloudFnRef.current = readAloud;
+
+  useEffect(() => {
+    if (!readAloudRef) return;
+    readAloudRef.current = { readAloud: () => readAloudFnRef.current() };
+    return () => {
+      readAloudRef.current = null;
+    };
+  }, [readAloudRef]);
+
+  /** While this pane is reading the PDF, a click on a paragraph of the page
+   * reads from there: a move within the reading when it holds that page, a
+   * fresh reading otherwise. */
+  function readFromClick(event: { button: number; clientX: number; clientY: number }) {
+    const canvas = canvasRef.current;
+    if (!readingHere || event.button !== 0 || !canvas || !rendered || rendered.page !== page) return;
+    const box = canvas.getBoundingClientRect();
+    const [x, y] = rendered.viewport.convertToPdfPoint(event.clientX - box.left, event.clientY - box.top) as number[];
+    const paragraph = paragraphAt(paragraphs, x, y);
+    if (paragraph < 0) return;
+    const s = useTtsStore.getState();
+    const at = segmentIndexAtBlock(s.segments, "p", page, paragraph);
+    if (at >= 0) s.readFrom(title, "resource", s.segments, at, { paneId, more: s.more });
+    else void startReading(page, paragraph);
+  }
   useEffect(() => setCurrent(0), [query, page]);
 
   // The current match is kept in view.
@@ -217,6 +513,7 @@ export function PdfReader({
             Fit width
           </Button>
         </div>
+        {readAloudTitle && <ReadAloudControls compact title={readAloudTitle} onRead={() => readAloudFnRef.current()} />}
         <div className="ml-auto flex items-center gap-1">
           <input
             value={query}
@@ -257,8 +554,26 @@ export function PdfReader({
             <p className="mt-2 break-words font-mono text-xs text-ink-4">{loadError}</p>
           </div>
         ) : (
-          <div className="relative mx-auto w-fit shadow-lg">
+          <div className={cx("relative mx-auto w-fit shadow-lg", readingHere && "cursor-pointer")} onClick={readFromClick}>
             <canvas ref={canvasRef} className="block" />
+            {/* The paragraph being read aloud; an overlay of its own, since the
+                find overlay's children are counted to find its current match. */}
+            <div className="pointer-events-none absolute inset-0" aria-hidden="true">
+              {speakingRect && (
+                <span
+                  ref={speakingRef}
+                  className="absolute rounded-sm mix-blend-multiply"
+                  style={{
+                    left: speakingRect.left - 3,
+                    top: speakingRect.top - 3,
+                    width: speakingRect.width + 6,
+                    height: speakingRect.height + 6,
+                    backgroundColor: highlightColor,
+                    opacity: 0.45,
+                  }}
+                />
+              )}
+            </div>
             <div ref={overlayRef} className="pointer-events-none absolute inset-0" aria-hidden="true">
               {matches.map((m, i) => (
                 <span

@@ -6,18 +6,28 @@ import type { Book, TimelineEvent } from "../../api/types";
 import { EmptyState, LoadingState } from "../../components/ui/EmptyState";
 import { usePane } from "../../workspace/PaneContext";
 import { openContent, targetFor } from "../../workspace/openContent";
-import { TimelineCanvas, type TimelineViewRange } from "./TimelineCanvas";
+import { bibleOnly, eraAt, lineOf } from "./churchHistory";
+import { TimelineCanvas } from "./TimelineCanvas";
 import { EventDetail, rangeAround, useTimeline } from "./TimelineView";
 import { spanLabel } from "./timelineLayout";
+import { openFromTimeline } from "./timelineLinks";
+import type { TimelineViewRange } from "./timelineRange";
 
 /**
  * Where the open chapter falls: a slim strip of the timeline around its
  * years, the chapter marked as a band and the events it records in the
  * accent, with the eras either side -- and those events listed below.
+ * Only the Bible's line: church history has no verses for a chapter to
+ * record, and its eras would crowd the strip's last years (Acts runs into
+ * Schaff's apostolic age), so the whole timeline is where it is seen.
  */
 export function TimelineForPassage({ book, chapter }: { book: Book; chapter: number }) {
   const { id: paneId } = usePane();
-  const { data: timeline, isLoading } = useTimeline();
+  const { data: allOfIt, isLoading } = useTimeline();
+  const timeline = useMemo(() => (allOfIt ? bibleOnly(allOfIt) : undefined), [allOfIt]);
+  // The line the strip's canvas holds its drags to, Creation to a little after
+  // Acts: the strip's own jumps are kept within it too, as the full view's are.
+  const line = useMemo(() => (timeline ? lineOf(timeline) : undefined), [timeline]);
   const { data: here } = useQuery({
     queryKey: ["timelineForPassage", book.id, chapter],
     queryFn: () => api.getTimelineForPassage(book.id, chapter),
@@ -35,9 +45,9 @@ export function TimelineForPassage({ book, chapter }: { book: Book; chapter: num
   const [range, setRange] = useState<TimelineViewRange | null>(null);
   const [selected, setSelected] = useState<TimelineEvent | null>(null);
   useEffect(() => {
-    setRange(span ? rangeAround(span.start, span.end, 120) : null);
+    setRange(span ? rangeAround(span.start, span.end, 120, line) : null);
     setSelected(null);
-  }, [span?.start, span?.end, book.id, chapter]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [span?.start, span?.end, book.id, chapter, line]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (isLoading || !here) return <LoadingState className="p-8" />;
   if (!timeline || !span || !range) {
@@ -48,26 +58,32 @@ export function TimelineForPassage({ book, chapter }: { book: Book; chapter: num
         title={`${book.name} ${chapter} is not dated`}
         description="Psalms, the wisdom books and the letters are mostly left undated by the source the timeline follows. Open the full timeline to browse it."
         action={
-          <button type="button" className="text-sm text-accent hover:underline" onClick={(e) => openContent("timeline", {}, { target: targetFor(e, "new"), from: paneId })}>
+          <button type="button" className="text-sm text-accent hover:underline" onClick={(e) => openFromTimeline(() => openContent("timeline", {}, { target: targetFor(e, "new"), from: paneId }))}>
             Open the timeline
           </button>
         }
       />
     );
   }
-  const era = timeline.eras.find((e) => e.start_year <= span.start && e.end_year > span.start);
+  const era = eraAt(timeline.eras, span.start);
   return (
     <div className="flex h-full min-h-0 flex-col">
+      {/* The heading wraps in a narrow pane; the button beside it stays on
+          one line. */}
       <div className="flex items-baseline gap-2 px-3 pb-1 pt-2">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-3">
+        <h2 className="min-w-0 text-xs font-semibold uppercase tracking-wide text-ink-3">
           {book.name} {chapter} · {spanLabel(span.start, span.end === span.start ? span.start : span.end)}
           {era && ` · ${era.name}`}
         </h2>
         <button
           type="button"
-          className="ml-auto inline-flex items-center gap-1 rounded px-1.5 text-xs text-ink-3 hover:bg-hover hover:text-ink"
+          className="ml-auto inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded px-1.5 text-xs text-ink-3 hover:bg-hover hover:text-ink"
           title="Open the full timeline here"
-          onClick={(e) => openContent("timeline", { year: (span.start + span.end) / 2, eventId: selected?.id ?? events[0]?.id ?? null }, { target: targetFor(e, "new"), from: paneId })}
+          onClick={(e) =>
+            openFromTimeline(() =>
+              openContent("timeline", { year: (span.start + span.end) / 2, eventId: selected?.id ?? events[0]?.id ?? null }, { target: targetFor(e, "new"), from: paneId }),
+            )
+          }
         >
           <Maximize2 className="h-3 w-3" aria-hidden="true" /> Full timeline
         </button>
@@ -82,7 +98,12 @@ export function TimelineForPassage({ book, chapter }: { book: Book; chapter: num
         here={span}
         hereEventIds={hereIds}
         maxRows={6}
-        onEraClick={(e) => setRange(rangeAround(e.start_year, e.end_year, 60))}
+        onEraClick={(e) => setRange(rangeAround(e.start_year, e.end_year, 60, line))}
+        // No overview strip here: the strip is a close look at one chapter's
+        // years, held to 200px beside the passage, and the overview would take
+        // one of its rows under the kings' lanes to show a whole line the
+        // "Full timeline" button already opens.
+        overview={false}
       />
       <div className="min-h-0 flex-1 overflow-y-auto">
         {selected ? (

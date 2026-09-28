@@ -11,8 +11,9 @@ import { openContent } from "../../workspace/openContent";
 import { refKey } from "../../lib/passage";
 import { MetricalPsalmPanel } from "../reading/MetricalPsalmPanel";
 import { ReadAloudButton } from "../tts/ReadAloudButton";
-import { TALK_QUESTIONS, logSummary, memoryHint, type FamilyMemory } from "./familyWorship";
+import { logSummary, memoryHint, talkQuestionTag, type FamilyMemory } from "./familyWorship";
 import { applyMemoryMode, memoryWords } from "../memory/memoryText";
+import { cardVerses, memorySegments } from "../memory/memorySpeech";
 import { useFamilySession } from "./sessionStore";
 import { readingRefs, useCatechismQuestions, useFamilyWorship, type Tonight } from "./useFamilyWorship";
 
@@ -58,6 +59,7 @@ export function FamilySession({ large }: { large: boolean }) {
   const steps = familySteps(tonight, !!state?.plan, !!state?.catechism, !!state?.memory);
   const index = Math.min(session.step, steps.length - 1);
   const step = steps[index];
+  const singing = !session.finished && step === "sing" && tonight?.psalm != null;
   const last = index === steps.length - 1;
 
   function amen() {
@@ -167,8 +169,10 @@ export function FamilySession({ large }: { large: boolean }) {
         <IconButton icon={X} label="Close family worship" size="sm" onClick={() => session.end()} />
       </div>
 
-      <div className={cx("min-h-0 flex-1", large && "overflow-y-auto px-[6vw] py-[4vh]")}>
-        <div className={cx("mx-auto", large ? "max-w-[46em]" : "max-w-none pt-4")}>
+      {/* Singing in gather round, the psalm fills the screen down to the
+          buttons, so its staff can be drawn as large as the room allows. */}
+      <div className={cx("min-h-0 flex-1", large && "overflow-y-auto px-[6vw] py-[4vh]", large && singing && "flex flex-col")}>
+        <div className={cx("mx-auto", large ? "max-w-[46em]" : "max-w-none pt-4", large && singing && "flex min-h-[30rem] w-full flex-1 flex-col")}>
           {session.finished ? (
             <Finished log={log} large={large} />
           ) : step === "read" ? (
@@ -280,12 +284,20 @@ function ReadStep({ tonight, large }: { tonight: Tonight; large: boolean }) {
           );
         })}
       </div>
+      {/* The family's own questions, or faith, love and hope, each default
+          led by its one word so a child can say which one is being asked. */}
       <section className="mt-[1em] rounded-lg border border-line bg-surface-2 p-[0.8em]">
         <h3 className="mb-[0.3em] text-[0.75em] font-semibold uppercase tracking-wide text-ink-3">Talk about it</h3>
         <ol className="list-decimal space-y-[0.2em] pl-[1.3em] text-[0.95em] text-ink-2">
-          {TALK_QUESTIONS.map((q) => (
-            <li key={q}>{q}</li>
-          ))}
+          {tonight.talkQuestions.map((q) => {
+            const tag = talkQuestionTag(q);
+            return (
+              <li key={q}>
+                {tag && <span className="font-medium text-ink">{tag}: </span>}
+                {q}
+              </li>
+            );
+          })}
         </ol>
       </section>
     </div>
@@ -294,10 +306,17 @@ function ReadStep({ tonight, large }: { tonight: Tonight; large: boolean }) {
 
 function SingStep({ psalm, large, fontSize }: { psalm: number; large: boolean; fontSize?: number }) {
   return (
-    <div>
+    <div className={cx(large && "flex min-h-0 flex-1 flex-col")}>
       <StepHeading icon={Music} kicker="Sing" title={`Psalm ${psalm}`} sub="Press Play to hear the tune, then sing along. A new tune? Sing the first stanza twice." />
-      <div className={cx("overflow-hidden rounded-lg border border-line bg-surface", large ? "h-[62vh]" : "h-[30rem]")}>
-        <MetricalPsalmPanel psalm={psalm} fontSize={fontSize} />
+      {/* As tall as the window leaves room for, so a stanza's whole staff can
+          be sung from without scrolling; the staff is drawn to fit it. */}
+      <div
+        className={cx(
+          "overflow-hidden rounded-lg border border-line bg-surface",
+          large ? "min-h-0 flex-1" : "h-[max(30rem,calc(100vh-19rem))]",
+        )}
+      >
+        <MetricalPsalmPanel psalm={psalm} fontSize={fontSize} singing />
       </div>
     </div>
   );
@@ -366,11 +385,20 @@ function MemorizeStep({ memory, large }: { memory: FamilyMemory; large: boolean 
   const typography = useReadingTypography(1);
   const ref = { book_id: memory.bookId, chapter: memory.chapter, verse_start: memory.verseStart, verse_end: memory.verseEnd };
   const { byKey } = usePassages([ref]);
-  const text = byKey.get(refKey(ref))?.verses.map((v) => memoryWords(v.text)).join(" ");
+  const loaded = byKey.get(refKey(ref))?.verses;
+  const text = loaded?.map((v) => memoryWords(v.text)).join(" ");
   const hint = memoryHint(memory.times);
   const [shown, setShown] = useState(hint === "full");
   const name = books?.find((b) => b.id === memory.bookId)?.name ?? "";
   const label = `${name} ${memory.chapter}:${memory.verseStart}${memory.verseEnd !== memory.verseStart ? `-${memory.verseEnd}` : ""}`;
+  // Read as a memory card is: the reference, then a verse at a time, so a
+  // family verse that runs to a passage is not one long wait for the voice.
+  const listen = memorySegments({
+    key: "family-memory",
+    reference: label,
+    verses: cardVerses(loaded, memory.verseStart, memory.verseEnd),
+    askWhere: false,
+  });
   return (
     <div>
       <StepHeading
@@ -384,7 +412,7 @@ function MemorizeStep({ memory, large }: { memory: FamilyMemory; large: boolean 
         }
       />
       <div className="mb-[0.6em]">
-        <ReadAloudButton title={`Family worship: ${label}`} sourceKind="scripture" segments={text ? [{ id: "family-memory", text: `${label}. ${text}` }] : []} />
+        <ReadAloudButton title={`Family worship: ${label}`} sourceKind="scripture" segments={listen} />
       </div>
       <p className="reading-font mb-[0.8em] text-ink" style={large ? { lineHeight: 1.55 } : typography}>
         {text == null ? "Loading…" : shown || hint === "full" ? text : applyMemoryMode(text, hint)}

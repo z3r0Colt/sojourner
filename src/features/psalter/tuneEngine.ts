@@ -34,17 +34,22 @@ export interface ScheduleOptions {
   gapBeats?: number;
   /** A longer pause between stanzas than between lines. */
   stanzaGapBeats?: number;
+  /** How many of the tune's lines the last pass sings -- fewer than all
+   *  where a doubled tune's last pass has only one stanza left for it. */
+  lastPassLines?: number;
 }
 
 /** Lays a tune out in time: one pass per stanza, at the given tempo. */
 export function schedule(tune: PsalmTune, tempo: number, options: ScheduleOptions = {}): ScheduledNote[] {
-  const { transpose = 0, passes = 1, gapBeats = 1, stanzaGapBeats = 2 } = options;
+  const { transpose = 0, passes = 1, gapBeats = 1, stanzaGapBeats = 2, lastPassLines } = options;
   const beat = SECONDS_PER_MINUTE / tempo;
   const notes: ScheduledNote[] = [];
   let at = 0;
 
-  for (let pass = 0; pass < Math.max(passes, 1); pass++) {
-    tune.lines.forEach((line, lineIndex) => {
+  const total = Math.max(passes, 1);
+  for (let pass = 0; pass < total; pass++) {
+    const lines = pass === total - 1 && lastPassLines ? tune.lines.slice(0, lastPassLines) : tune.lines;
+    lines.forEach((line, lineIndex) => {
       line.forEach((syllable, syllableIndex) => {
         syllable.forEach((note) => {
           notes.push({
@@ -58,7 +63,7 @@ export function schedule(tune: PsalmTune, tempo: number, options: ScheduleOption
           at += note.beats * beat;
         });
       });
-      if (lineIndex < tune.lines.length - 1) at += gapBeats * beat;
+      if (lineIndex < lines.length - 1) at += gapBeats * beat;
     });
     if (pass < passes - 1) at += stanzaGapBeats * beat;
   }

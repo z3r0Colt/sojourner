@@ -1,7 +1,10 @@
 import { create } from "zustand";
 import { ttsEngines } from "../features/tts/ttsEngine";
-import { tokenizeWords, findWordIndexAtChar, type TtsWordToken } from "../features/tts/textUtils";
+import { tokenizeWords, findWordIndexAtChar, hasSpeakableText, type TtsWordToken } from "../features/tts/textUtils";
 import { buildSpoken, loadPronunciationLexicon, toSourceIndex, type SpokenChunk } from "../features/tts/pronunciation";
+import { speakReferences } from "../features/tts/speakReferences";
+import { speakNumerals } from "../features/tts/speakNumerals";
+import { speakCapitals } from "../features/tts/speakCapitals";
 import { toast } from "../components/ui/toast";
 
 export interface TtsSegment {
@@ -59,6 +62,13 @@ interface TtsState {
   fadeLevel: number;
   /** True between a chapter finishing and its pane starting the next one. */
   continuing: boolean;
+  /** True while the source is still finding more of this reading (a book's
+   * later sections loading). Running off the end then waits for them rather
+   * than ending the reading. */
+  more: boolean;
+  /** True when the reading ran out while `more` was set: the next segments
+   * to arrive carry straight on. */
+  waitingForMore: boolean;
 
   setEngineId: (id: string) => void;
   setVoiceId: (id: string | null) => void;
@@ -72,13 +82,39 @@ interface TtsState {
   setUsePronunciations: (b: boolean) => void;
   setSleepMinutes: (minutes: number) => void;
 
-  start: (title: string, sourceKind: TtsSourceKind, segments: TtsSegment[], opts?: { startIndex?: number; paneId?: string | null }) => void;
+  /** Read `segments` from `startIndex` (an index into this same list). A
+   * passage with nothing a voice can say in it is left out, and a list with
+   * nothing sayable at all does not start: the reader is told so instead. */
+  start: (
+    title: string,
+    sourceKind: TtsSourceKind,
+    segments: TtsSegment[],
+    opts?: { startIndex?: number; paneId?: string | null; more?: boolean },
+  ) => void;
   pause: () => void;
   resume: () => void;
   stop: () => void;
   next: () => void;
   prev: () => void;
   seek: (segmentIndex: number) => void;
+  /** Read `segments` from `index`: a move within the reading when this pane
+   * is already reading `title`, a fresh start otherwise. What "Read aloud
+   * from here" and a click on a paragraph being read both come down to.
+   * `index` is into the caller's own list; the passage it names is found in
+   * the reading by id. A reading that has finished starts again. */
+  readFrom: (
+    title: string,
+    sourceKind: TtsSourceKind,
+    segments: TtsSegment[],
+    index: number,
+    opts?: { paneId?: string | null; more?: boolean },
+  ) => void;
+  /** More of the same reading, found after it started: a book reads the page
+   * on screen at once and the sections after it as they load. Ignored unless
+   * this pane is still reading `title`. `done` says nothing more is coming.
+   * Ids should be unique across the whole reading, appended passages too:
+   * the list in the player and `readFrom` find passages by id. */
+  appendSegments: (title: string, paneId: string | null, segments: TtsSegment[], opts?: { done?: boolean }) => void;
 }
 
 const STORAGE_KEY = "bsa-tts-prefs";
@@ -105,6 +141,82 @@ let speakOnResume = false;
 let failures = 0;
 const GIVE_UP_AFTER = 3;
 
+/** Passages the voice found nothing to say in, since the last sound. These do
+ * not count toward GIVE_UP_AFTER: a stray "iv." or "(p. 23)" left over from a
+ * book's page furniture is simply unsayable, and three of them in a row in an
+ * old index is no sign the voice is broken. But a voice that says nothing about
+ * everything is broken too, and a book of thousands of passages should not be
+ * skipped through one silence at a time, so a long enough run still stops. */
+let silences = 0;
+const GIVE_UP_AFTER_SILENCES = 12;
+
+/** Every passage handed to the engine gets a number, and so does every cancel.
+ * A callback from a passage the reader has since moved away from carries an old
+ * number and is ignored. Web Speech can report the end of an utterance it was
+ * told to drop, and with nothing to tell the two apart, a jump from the list
+ * could land and then be carried one passage further by the passage it left. */
+let utterance = 0;
+
+/** Bumped by every start and stop, and by everything that settles what the
+ * voice does next -- a passage spoken, a hold for more of a book -- so a start
+ * still waiting on the pronunciation lexicon speaks only if nothing has
+ * replaced it or moved it meanwhile. Before the last of these, a verse clicked
+ * while the first lexicon load of the session was still out was said, and
+ * then said again from the top when the load came back. */
+let startTurn = 0;
+
+/** Set when the reading ran all the way to its end. Play then reads it again
+ * from the top: before, it asked the engine to resume a passage that had
+ * already finished, and a player showing a Play button did nothing at all. */
+let ranToEnd = false;
+
+/** Set when the voice was changed while the reading waited for more of a book.
+ * The passage it was on had been said already, so Play goes on to the next one
+ * -- or back to waiting, if it has not come yet -- instead of saying the last
+ * paragraph over again in the new voice. */
+let waitedWhenVoiceChanged = false;
+
+/** Quiet whatever the engine is saying, and disown its callbacks. */
+function hush() {
+  utterance += 1;
+  engine().cancel();
+}
+
+/**
+ * The segments a voice can say something for, and where to start among them.
+ *
+ * A caller's list is whatever its source holds: a heading that is all Greek, a
+ * row of asterisks between sections, a scrap of Hebrew in a lexicon entry.
+ * Handed to the neural voice, each was half a second of silence at best and a
+ * failure counted against the reading at worst. `startIndex` refers to the
+ * caller's own list, so it moves to the first passage kept at or after it --
+ * or, when everything after it was dropped, to the last one kept, and
+ * `pastEnd` says so. That last one is *before* the place the reader chose, so
+ * a reading with more of its book on the way waits for it rather than going
+ * back over text above that place.
+ */
+export function speakableFrom(
+  segments: TtsSegment[],
+  startIndex: number,
+): { segments: TtsSegment[]; startIndex: number; pastEnd: boolean } {
+  const kept: TtsSegment[] = [];
+  let start = -1;
+  segments.forEach((segment, i) => {
+    if (!hasSpeakableText(segment.text)) return;
+    if (start < 0 && i >= startIndex) start = kept.length;
+    kept.push(segment);
+  });
+  if (start >= 0) return { segments: kept, startIndex: start, pastEnd: false };
+  return { segments: kept, startIndex: Math.max(kept.length - 1, 0), pastEnd: true };
+}
+
+/** Whether an engine's failure means it found nothing to say in the passage,
+ * rather than that it could not work. The neural voice says so in these words
+ * (src-tauri/src/tts.rs, `speak_piece`) when every attempt came back silent. */
+export function nothingToSay(message: string): boolean {
+  return /returned silence/i.test(message);
+}
+
 function persist(partial: Record<string, unknown>) {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -116,9 +228,9 @@ function persist(partial: Record<string, unknown>) {
 }
 
 let currentTokens: TtsWordToken[] = [];
-/** How the text handed to the engine lines up with the text on screen; null
- * when nothing was rewritten and the two are the same string. */
-let currentChunks: SpokenChunk[] | null = null;
+/** How a place in the text handed to the engine maps to the text on screen;
+ * null when nothing was rewritten and the two are the same string. */
+let currentToSource: ((spokenIndex: number) => number) | null = null;
 
 function engine() {
   return ttsEngines[useTtsStore.getState().engineId] ?? ttsEngines.webspeech;
@@ -146,93 +258,212 @@ export function registerQueueEndHandler(paneId: string, handler: QueueEndHandler
  * `end` event alone, which Web Speech sometimes drops). */
 function finishQueue(get: () => TtsState, set: (partial: Partial<TtsState>) => void) {
   const cur = get();
+  if (cur.more) {
+    // The reader is ahead of the loading: hold here, still "reading", and let
+    // the next segments to arrive pick it up.
+    set({ preparing: true, currentWordIndex: -1, waitingForMore: true });
+    return;
+  }
   const handler = cur.paneId != null ? queueEndHandlers.get(cur.paneId) : undefined;
   if (cur.autoContinue && cur.sourceKind === "scripture" && handler && handler()) {
     set({ isPlaying: false, isPaused: false, preparing: false, currentWordIndex: -1, continuing: true });
     return;
   }
-  set({ isPlaying: false, isPaused: false, preparing: false, currentWordIndex: -1 });
+  ranToEnd = true;
+  set({ isPlaying: false, isPaused: false, preparing: false, currentWordIndex: -1, waitingForMore: false });
 }
 
-function speakCurrentSegment(get: () => TtsState, set: (partial: Partial<TtsState>) => void) {
+/** Hold the reading at passage `index`, the last there is so far, until more
+ * of the book arrives: still "reading", saying nothing, and the next segments
+ * to be appended carry straight on from it. */
+function holdForMore(set: (partial: Partial<TtsState>) => void, index: number) {
+  hush();
+  startTurn += 1;
   speakOnResume = false;
+  waitedWhenVoiceChanged = false;
+  set({ currentSegmentIndex: index, isPlaying: true, isPaused: false, preparing: true, currentWordIndex: -1, waitingForMore: true });
+}
+
+/** What the engine is given for a passage: the text as written, with its
+ * headings in capitals in a title's case ("OF AN ANGRY GOD", whose "AN" the
+ * neural voice spelled, is "of an Angry God"; the length is kept, so no map
+ * back is needed), its Scripture references in words ("John viii. 23" is "John 8, verse 23"), its
+ * other Roman numerals as numbers ("SERMON II." is "SERMON 2.", which the
+ * neural voice otherwise says as "Sermon Roman") and, when asked for, the
+ * names respelled. The prefetch and the speaking must agree to the letter, or
+ * the render waiting for a passage is of a different string and thrown away. */
+export function spokenFor(
+  s: Pick<TtsState, "usePronunciations">,
+  text: string,
+): { spoken: string; toSource: ((spokenIndex: number) => number) | null } {
+  const refs = speakReferences(speakCapitals(text));
+  const numerals = speakNumerals(refs.spoken);
+  if (!s.usePronunciations) return { spoken: numerals.spoken, toSource: mapThrough([numerals.chunks, refs.chunks]) };
+  // A voice with its own pronunciation dictionary is handed the names as they
+  // are written -- rewriting them is how "Jacob" became "ja-kub" and then
+  // K, U, B -- and only the reader's own corrections are applied to it.
+  const rendered = buildSpoken(numerals.spoken, { correctionsOnly: !engine().readsRespellings });
+  return {
+    spoken: rendered.spoken,
+    toSource: mapThrough([rendered.changed > 0 ? rendered.chunks : null, numerals.chunks, refs.chunks]),
+  };
+}
+
+/** The rewrites mapped back in turn, last made first: from what the engine
+ * says, through the names, the numerals and the references, to the text on
+ * screen. */
+function mapThrough(layers: (SpokenChunk[] | null)[]): ((spokenIndex: number) => number) | null {
+  const maps = layers.filter((layer): layer is SpokenChunk[] => layer != null);
+  if (maps.length === 0) return null;
+  return (spokenIndex) => maps.reduce((index, chunks) => toSourceIndex(chunks, index), spokenIndex);
+}
+
+function speakOptions(s: TtsState) {
+  return { voiceId: s.voiceId, rate: s.rate, pitch: s.pitch, volume: s.volume * s.fadeLevel };
+}
+
+/**
+ * Start the passage after the current one rendering while this one plays. An
+ * engine that has to synthesize a whole passage before it can play a note of it
+ * would otherwise leave a few seconds of silence at every break; the neural
+ * voice renders in well under the time a passage takes to say, so given this
+ * head start it is ready by the time it is wanted. Called as each passage
+ * starts, and again when a book's next section arrives while its last passage
+ * so far is playing -- the one moment there was no "next" to ask for.
+ */
+function prefetchNext(s: TtsState) {
+  const current = engine();
+  const next = s.segments[s.currentSegmentIndex + 1];
+  if (!next || !current.prefetch) return;
+  current.prefetch(spokenFor(s, next.text).spoken, speakOptions(s));
+}
+
+/** Web Speech fixes rate and pitch when an utterance starts, so a change is
+ * heard by saying the current passage again. Not out loud while paused -- it is
+ * said again when Play is pressed -- and not while waiting for more of a book,
+ * when the current passage has already been said and saying it again would be
+ * the reader hearing a paragraph twice for moving a slider. */
+function sayAgainForNewSettings(get: () => TtsState, set: (partial: Partial<TtsState>) => void) {
+  const s = get();
+  if (!s.isPlaying || s.waitingForMore) return;
+  if (s.isPaused) {
+    hush();
+    speakOnResume = true;
+    return;
+  }
+  speakCurrentSegment(get, set);
+}
+
+/**
+ * How long a passage the reader moved to themselves -- a jump from the list, a
+ * click on a paragraph, Next -- is heard before the one after it is asked for.
+ *
+ * A reader who has just moved often moves again, and the voice renders one
+ * thing at a time: the passage after the one they jumped to, asked for at
+ * once, was what the next jump found under way and had to wait out (see
+ * `RenderQueue`). Reading straight on, the next passage is asked for at once,
+ * as before; a passage takes far longer to say than this, so the head start
+ * is still there when it is wanted.
+ */
+const PREFETCH_AFTER_A_MOVE_MS = 2500;
+
+function speakCurrentSegment(get: () => TtsState, set: (partial: Partial<TtsState>) => void, reached: "in-turn" | "moved" = "in-turn") {
+  speakOnResume = false;
+  ranToEnd = false;
+  waitedWhenVoiceChanged = false;
+  startTurn += 1;
+  const turn = ++utterance;
   const s = get();
   const segment = s.segments[s.currentSegmentIndex];
   if (!segment) {
-    set({ isPlaying: false, isPaused: false, preparing: false });
+    set({ isPlaying: false, isPaused: false, preparing: false, waitingForMore: false });
     return;
   }
   // The tokens stay those of the displayed verse. What the engine is given may
   // be a rewritten one -- "me-fib-o-sheth" for Mephibosheth -- so the boundary
   // events it reports are mapped back before they move the highlight.
   currentTokens = tokenizeWords(segment.text);
-  // A voice with its own pronunciation dictionary is handed the names as they
-  // are written -- rewriting them is how "Jacob" became "ja-kub" and then
-  // K, U, B -- and only the reader's own corrections are applied to it.
-  const rendered = s.usePronunciations
-    ? buildSpoken(segment.text, { correctionsOnly: !engine().readsRespellings })
-    : null;
-  currentChunks = rendered && rendered.changed > 0 ? rendered.chunks : null;
-  set({ currentWordIndex: -1, isPlaying: true, isPaused: false, preparing: true, error: null });
+  const { spoken, toSource } = spokenFor(s, segment.text);
+  currentToSource = toSource;
+  set({ currentWordIndex: -1, isPlaying: true, isPaused: false, preparing: true, error: null, waitingForMore: false });
 
-  const current = engine();
-  const opts = { voiceId: s.voiceId, rate: s.rate, pitch: s.pitch, volume: s.volume * s.fadeLevel };
-
-  current.speak(
-    rendered ? rendered.spoken : segment.text,
-    opts,
-    {
-      onSpeakingStart: () => {
-        failures = 0;
-        set({ preparing: false });
-      },
-      onWordBoundary: (charIndex) => {
-        const sourceIndex = currentChunks ? toSourceIndex(currentChunks, charIndex) : charIndex;
-        const idx = findWordIndexAtChar(currentTokens, sourceIndex);
-        set({ currentWordIndex: idx });
-      },
-      onEnd: () => {
-        const cur = get();
-        if (!cur.isPlaying) return; // stopped/cancelled externally
-        if (cur.currentSegmentIndex + 1 < cur.segments.length) {
-          set({ currentSegmentIndex: cur.currentSegmentIndex + 1 });
-          speakCurrentSegment(get, set);
-        } else {
-          finishQueue(get, set);
-        }
-      },
-      onError: (message) => {
-        // A passage the voice cannot speak should cost that passage, not the
-        // reading. Before this, one failure part-way through a commentary left
-        // a player that had simply gone quiet, with no way on but to start
-        // again -- and the reader had no idea which passage had done it.
-        const cur = get();
-        failures += 1;
-        if (failures < GIVE_UP_AFTER && cur.isPlaying && !cur.isPaused && cur.currentSegmentIndex + 1 < cur.segments.length) {
-          const skipped = cur.segments[cur.currentSegmentIndex]?.label;
-          set({ currentSegmentIndex: cur.currentSegmentIndex + 1 });
-          speakCurrentSegment(get, set);
-          // After the next one has started, which clears the error as it goes.
-          set({ error: `Could not read ${skipped ?? "one passage"}` });
+  // Each callback first checks that this is still the passage being read. See
+  // `utterance`: one the reader has moved away from has no say any more.
+  const stale = () => turn !== utterance;
+  engine().speak(spoken, speakOptions(s), {
+    onSpeakingStart: () => {
+      if (stale()) return;
+      failures = 0;
+      silences = 0;
+      set({ preparing: false });
+      if (reached === "moved") {
+        window.setTimeout(() => {
+          if (!stale()) prefetchNext(get());
+        }, PREFETCH_AFTER_A_MOVE_MS);
+      }
+    },
+    onWordBoundary: (charIndex) => {
+      if (stale()) return;
+      const sourceIndex = currentToSource ? currentToSource(charIndex) : charIndex;
+      const idx = findWordIndexAtChar(currentTokens, sourceIndex);
+      set({ currentWordIndex: idx });
+    },
+    onEnd: () => {
+      if (stale()) return;
+      const cur = get();
+      if (!cur.isPlaying) return; // stopped/cancelled externally
+      if (cur.currentSegmentIndex + 1 < cur.segments.length) {
+        set({ currentSegmentIndex: cur.currentSegmentIndex + 1 });
+        speakCurrentSegment(get, set);
+      } else {
+        finishQueue(get, set);
+      }
+    },
+    onError: (message) => {
+      if (stale()) return;
+      // A passage the voice cannot speak should cost that passage, not the
+      // reading. Before this, one failure part-way through a commentary left
+      // a player that had simply gone quiet, with no way on but to start
+      // again -- and the reader had no idea which passage had done it.
+      const cur = get();
+      const unsayable = nothingToSay(message);
+      if (unsayable) silences += 1;
+      else failures += 1;
+      const carryOn = failures < GIVE_UP_AFTER && silences < GIVE_UP_AFTER_SILENCES && cur.isPlaying && !cur.isPaused;
+      const note = `Could not read ${cur.segments[cur.currentSegmentIndex]?.label ?? "one passage"}`;
+      if (carryOn && cur.currentSegmentIndex + 1 < cur.segments.length) {
+        set({ currentSegmentIndex: cur.currentSegmentIndex + 1 });
+        speakCurrentSegment(get, set);
+        // After the next one has started, which clears the error as it goes --
+        // unless that one failed on the spot and has said why itself.
+        if (get().isPlaying) set({ error: note });
+        return;
+      }
+      // The last passage there is. It is passed over like any other, and the
+      // reading goes wherever its end would have taken it: waiting for more
+      // of a book, or on into the next chapter. Before, a bad last verse
+      // ended a whole evening's listening at the chapter break, when a bad
+      // verse anywhere else in the chapter cost only itself.
+      if (carryOn) {
+        finishQueue(get, set);
+        const after = get();
+        if (after.waitingForMore || after.continuing || unsayable) {
+          // Waiting, continuing, or -- a last line with nothing in it to
+          // say -- ended just as its end would have ended it.
+          set({ error: note });
           return;
         }
-        set({ isPlaying: false, isPaused: false, preparing: false, error: message });
-      },
+        // Simply ended, on a real failure: say what went wrong, and let Play
+        // try that passage again rather than read everything from the top.
+        ranToEnd = false;
+        set({ error: message });
+        return;
+      }
+      set({ isPlaying: false, isPaused: false, preparing: false, error: message });
     },
-  );
+  });
 
-  // Start the next verse rendering while this one plays. An engine that has to
-  // synthesize a whole verse before it can play a note of it would otherwise
-  // leave a few seconds of silence at every verse break; the neural voice
-  // renders in well under the time a verse takes to say, so given this head
-  // start it is ready by the time it is wanted.
-  const next = s.segments[s.currentSegmentIndex + 1];
-  if (next && current.prefetch) {
-    // The same text the next verse will be spoken from, or the render waiting
-    // for it would be of a different string and thrown away unused.
-    const nextRendered = s.usePronunciations ? buildSpoken(next.text, { correctionsOnly: !current.readsRespellings }) : null;
-    current.prefetch(nextRendered ? nextRendered.spoken : next.text, opts);
-  }
+  if (reached === "in-turn") prefetchNext(s);
 }
 
 // ---------------------------------------------------------------------------
@@ -299,14 +530,18 @@ export const useTtsStore = create<TtsState>((set, get) => ({
   sleepUntil: null,
   fadeLevel: 1,
   continuing: false,
+  more: false,
+  waitingForMore: false,
 
   setEngineId: (engineId) => {
     engineChosen = true;
-    engine().cancel();
+    waitedWhenVoiceChanged = get().waitingForMore;
+    hush();
     // Voice ids belong to the engine that issued them, so carrying one across
-    // a switch would name a voice the new engine has never heard of.
+    // a switch would name a voice the new engine has never heard of. The
+    // reading stays where it was; Play picks it up with the new voice.
     persist({ engineId, voiceId: null });
-    set({ engineId, voiceId: null, isPlaying: false, isPaused: false });
+    set({ engineId, voiceId: null, isPlaying: false, isPaused: false, preparing: false, waitingForMore: false });
   },
   setVoiceId: (voiceId) => {
     persist({ voiceId });
@@ -323,14 +558,12 @@ export const useTtsStore = create<TtsState>((set, get) => ({
       return;
     }
     // Web Speech can't change rate mid-utterance; restart current segment at the new rate.
-    const s = get();
-    if (s.isPlaying) speakCurrentSegment(get, set);
+    sayAgainForNewSettings(get, set);
   },
   setPitch: (pitch) => {
     persist({ pitch });
     set({ pitch });
-    const s = get();
-    if (s.isPlaying) speakCurrentSegment(get, set);
+    sayAgainForNewSettings(get, set);
   },
   setVolume: (volume) => {
     persist({ volume });
@@ -371,24 +604,60 @@ export const useTtsStore = create<TtsState>((set, get) => ({
   },
 
   start: (title, sourceKind, segments, opts) => {
-    const startIndex = opts?.startIndex ?? 0;
+    const paneId = opts?.paneId ?? null;
+    const more = opts?.more ?? false;
+    const speakable = speakableFrom(segments, opts?.startIndex ?? 0);
+    if (speakable.segments.length === 0) {
+      // Nothing to start. What this pane was reading is let go all the same --
+      // the pane has moved on to something the voice cannot read, and carrying
+      // on would be reading what is no longer on the screen. That includes a
+      // chapter of this pane's that ended waiting for this one to start (its
+      // segments are still there), which would otherwise say "Continuing into
+      // the next chapter" for ever. Another pane's reading is left alone, even
+      // mid-page-turn: stopping it would also have cleared its sleep timer.
+      const s = get();
+      if (s.segments.length > 0 && s.paneId === paneId) s.stop();
+      toast.info("There is nothing here the voice can read aloud.");
+      return;
+    }
     failures = 0;
-    engine().cancel();
+    silences = 0;
+    ranToEnd = false;
+    speakOnResume = false;
+    waitedWhenVoiceChanged = false;
+    const turn = ++startTurn;
+    hush();
     set({
       title,
       sourceKind,
-      paneId: opts?.paneId ?? null,
-      segments,
-      currentSegmentIndex: Math.min(startIndex, Math.max(segments.length - 1, 0)),
+      paneId,
+      segments: speakable.segments,
+      currentSegmentIndex: speakable.startIndex,
       currentWordIndex: -1,
       error: null,
       continuing: false,
+      more,
+      waitingForMore: false,
     });
+    if (speakable.pastEnd && more) {
+      // Nothing from the chosen place on, of what has loaded so far, can be
+      // said -- a page ending in a picture or a line of Greek. The last passage
+      // that can is above that place, and reading it would be going back over
+      // what the reader chose to start after; the reading waits for the next
+      // section of the book instead. The names can load while it does.
+      holdForMore(set, speakable.startIndex);
+      if (get().usePronunciations) void loadPronunciationLexicon();
+      return;
+    }
     if (get().usePronunciations) {
       // One query, once a session. The first chapter waits a few milliseconds
       // for it rather than mispronouncing its way through verse one. If Stop
-      // lands first the queue is empty by then and nothing is spoken.
-      void loadPronunciationLexicon().then(() => speakCurrentSegment(get, set));
+      // or another start lands first, this one has been replaced and says
+      // nothing; and if the reader has already moved the reading on (a verse
+      // clicked, a jump from the list), that move did the speaking.
+      void loadPronunciationLexicon().then(() => {
+        if (turn === startTurn) speakCurrentSegment(get, set);
+      });
     } else {
       speakCurrentSegment(get, set);
     }
@@ -403,6 +672,33 @@ export const useTtsStore = create<TtsState>((set, get) => ({
     if (speakOnResume) {
       speakOnResume = false;
       set({ isPaused: false });
+      speakCurrentSegment(get, set, "moved");
+      return;
+    }
+    const s = get();
+    if (!s.isPlaying && !s.isPaused && s.segments.length > 0 && !s.continuing) {
+      // Nothing is half-spoken: the reading came to its end, or stopped on a
+      // failure, or the voice was changed under it. Play reads again -- from
+      // the top when it had finished, from the passage it stopped on
+      // otherwise, which is a second try at the one that failed.
+      failures = 0;
+      silences = 0;
+      if (waitedWhenVoiceChanged) {
+        // Except that a reading changed over while it waited for more of a
+        // book had already said the passage it is on. It goes on to the next
+        // one if that has come meanwhile; back to waiting if it has not; and
+        // from the top, like any finished reading, if the book turned out to
+        // have nothing more.
+        waitedWhenVoiceChanged = false;
+        if (s.currentSegmentIndex + 1 < s.segments.length) set({ currentSegmentIndex: s.currentSegmentIndex + 1 });
+        else if (s.more) {
+          holdForMore(set, s.currentSegmentIndex);
+          return;
+        } else set({ currentSegmentIndex: 0 });
+        speakCurrentSegment(get, set);
+        return;
+      }
+      if (ranToEnd) set({ currentSegmentIndex: 0 });
       speakCurrentSegment(get, set);
       return;
     }
@@ -410,9 +706,12 @@ export const useTtsStore = create<TtsState>((set, get) => ({
     set({ isPaused: false });
   },
   stop: () => {
-    engine().cancel();
+    hush();
+    startTurn += 1;
     stopSleepTicker();
     speakOnResume = false;
+    ranToEnd = false;
+    waitedWhenVoiceChanged = false;
     set({
       isPlaying: false,
       isPaused: false,
@@ -427,13 +726,22 @@ export const useTtsStore = create<TtsState>((set, get) => ({
       sleepUntil: null,
       fadeLevel: 1,
       continuing: false,
+      more: false,
+      waitingForMore: false,
     });
   },
   next: () => {
     const s = get();
     if (s.currentSegmentIndex + 1 < s.segments.length) {
       set({ currentSegmentIndex: s.currentSegmentIndex + 1 });
-      speakCurrentSegment(get, set);
+      speakCurrentSegment(get, set, "moved");
+    } else if (s.more) {
+      // The last passage found so far, with more of the book on its way.
+      // Stopping here ended a reading the reader was in the middle of only
+      // because the next section had not loaded yet; it waits for it instead,
+      // as reaching this point on its own does.
+      if (s.waitingForMore) return;
+      holdForMore(set, s.currentSegmentIndex);
     } else {
       s.stop();
     }
@@ -442,7 +750,7 @@ export const useTtsStore = create<TtsState>((set, get) => ({
     const s = get();
     if (s.currentSegmentIndex > 0) {
       set({ currentSegmentIndex: s.currentSegmentIndex - 1 });
-      speakCurrentSegment(get, set);
+      speakCurrentSegment(get, set, "moved");
     }
   },
   seek: (segmentIndex) => {
@@ -450,15 +758,78 @@ export const useTtsStore = create<TtsState>((set, get) => ({
     if (segmentIndex < 0 || segmentIndex >= s.segments.length) return;
     // Choosing a verse while the reading is paused moves the place without
     // breaking the pause -- the reader is reading, not listening, and a
-    // sentence of speech out of a paused player would be a fright.
+    // sentence of speech out of a paused player would be a fright. Nor is it
+    // waiting for more of the book any longer: the next section to arrive
+    // must not snatch the place back from where the reader put it.
     if (s.isPaused) {
-      engine().cancel();
+      hush();
       speakOnResume = true;
-      set({ currentSegmentIndex: segmentIndex, currentWordIndex: -1, preparing: false });
+      set({ currentSegmentIndex: segmentIndex, currentWordIndex: -1, preparing: false, waitingForMore: false });
       return;
     }
     set({ currentSegmentIndex: segmentIndex });
-    speakCurrentSegment(get, set);
+    speakCurrentSegment(get, set, "moved");
+  },
+  readFrom: (title, sourceKind, segments, index, opts) => {
+    const s = get();
+    const paneId = opts?.paneId ?? null;
+    // Only a reading still under way is "the same": one that has finished is
+    // started afresh, or a click on its first paragraph would seek within a
+    // reading that is over and say nothing.
+    const inProgress = s.isPlaying || s.isPaused;
+    if (inProgress && s.segments.length > 0 && s.title === title && s.sourceKind === sourceKind && s.paneId === paneId) {
+      // The caller's index is into its own list, which may hold passages the
+      // store dropped, and the store's list may have grown past the caller's
+      // as later sections arrived -- so the place is found by id, not position.
+      const wanted = speakableFrom(segments, index);
+      const target = wanted.segments[wanted.startIndex];
+      const at = target ? s.segments.findIndex((segment) => segment.id === target.id) : -1;
+      if (at >= 0) {
+        // When nothing in the caller's list from `index` on could be said,
+        // `target` is the last passage before it that could -- above the
+        // place chosen. The reading goes on from the passage after that one
+        // if it holds one (it may have grown past the caller's list), waits
+        // for more of the book if that is still coming, and only when there
+        // is neither falls back to `target`, as a start would.
+        const from = wanted.pastEnd ? at + 1 : at;
+        if (from < s.segments.length) s.seek(from);
+        else if (s.more) holdForMore(set, at);
+        else s.seek(at);
+        return;
+      }
+    }
+    s.start(title, sourceKind, segments, { startIndex: index, paneId, more: opts?.more });
+  },
+  appendSegments: (title, paneId, segments, opts) => {
+    const s = get();
+    if (s.segments.length === 0 || s.title !== title || s.paneId !== paneId) return;
+    const more = !opts?.done;
+    const added = segments.filter((segment) => hasSpeakableText(segment.text));
+    if (added.length === 0) {
+      set({ more });
+      // Nothing more is coming and the reading was waiting on it: it is over,
+      // and ends the way any reading does at its last passage.
+      if (!more && s.waitingForMore) {
+        set({ waitingForMore: false });
+        finishQueue(get, set);
+      }
+      return;
+    }
+    const wasLast = s.currentSegmentIndex === s.segments.length - 1;
+    set({ segments: [...s.segments, ...added], more, waitingForMore: false });
+    if (s.waitingForMore && s.isPlaying) {
+      set({ currentSegmentIndex: s.segments.length });
+      if (!s.isPaused) speakCurrentSegment(get, set);
+      else {
+        speakOnResume = true;
+        set({ preparing: false });
+      }
+      return;
+    }
+    // The passage playing was the last one there was, so nothing was asked
+    // for ahead of it. Ask now, or the neural voice meets the break with the
+    // next passage not yet rendered.
+    if (s.isPlaying && wasLast) prefetchNext(get());
   },
 }));
 

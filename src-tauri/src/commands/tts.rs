@@ -36,10 +36,31 @@ pub async fn kokoro_can_say(text: String) -> bool {
 ///
 /// The work runs on a blocking thread. Synthesis is seconds of CPU, and on the
 /// async runtime's own threads it would stall everything else the app is doing.
+///
+/// A panic in that thread used to come back to the reader word for word: "the
+/// voice task did not finish: task 86 panicked with message called
+/// `Result::unwrap()` on an `Err` value: RuntimeError(BacktrackLimitExceeded)".
+/// `synthesize` now catches the panics it knows the voice can throw, and skips
+/// the text that threw them, so one reaching here is one nobody has met yet.
+/// The reader is told plainly that this passage could not be read; the detail
+/// goes to the crash log, where the panic hook has already written it, and to
+/// the console.
+///
+/// `turn` is the reading's turn when the request was sent: a request with a
+/// later one overtakes it, and it stops at the next place it can (see
+/// `LATEST_TURN` in tts.rs). Left out, the request is never overtaken.
 #[tauri::command]
-pub async fn kokoro_synthesize(app: AppHandle, text: String, voice: String, speed: f32) -> AppResult<Response> {
-    let bytes = tauri::async_runtime::spawn_blocking(move || crate::tts::synthesize(&app, &text, &voice, speed))
+pub async fn kokoro_synthesize(app: AppHandle, text: String, voice: String, speed: f32, turn: Option<u64>) -> AppResult<Response> {
+    let bytes = tauri::async_runtime::spawn_blocking(move || crate::tts::synthesize(&app, &text, &voice, speed, turn))
         .await
-        .map_err(|e| anyhow::anyhow!("the voice task did not finish: {e}"))??;
+        .map_err(|e| {
+            eprintln!("[voice] the voice task did not finish: {e}");
+            match e {
+                tauri::Error::JoinError(join) if join.is_panic() => {
+                    anyhow::anyhow!("the voice stopped on this passage and could not read it")
+                }
+                other => anyhow::anyhow!("the voice task did not finish: {other}"),
+            }
+        })??;
     Ok(Response::new(bytes))
 }

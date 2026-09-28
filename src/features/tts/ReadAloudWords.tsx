@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
-import { useTtsStore } from "../../state/ttsStore";
+import { useTtsStore, type TtsHighlightStyle } from "../../state/ttsStore";
 import { tokenizeWords } from "./textUtils";
+import { ttsEngines } from "./ttsEngine";
 
 /**
  * Renders `text` as plain content, UNLESS this exact segment is the one
@@ -14,6 +15,11 @@ export function ReadAloudWords({ text, active, className }: { text: string; acti
   const highlightColor = useTtsStore((s) => s.highlightColor);
   const highlightStyle = useTtsStore((s) => s.highlightStyle);
   const autoScroll = useTtsStore((s) => s.autoScroll);
+  // The neural voice hands back finished audio and never says which word it
+  // is on, so there is no word to light up. Left at that, a commentary
+  // paragraph or a memory verse being read looked exactly like one that was
+  // not: the passage itself is marked instead, softly.
+  const followsWords = useTtsStore((s) => ttsEngines[s.engineId]?.reportsWordBoundaries !== false);
   const activeRef = useRef<HTMLSpanElement | null>(null);
   const containerRef = useRef<HTMLSpanElement | null>(null);
 
@@ -51,9 +57,21 @@ export function ReadAloudWords({ text, active, className }: { text: string; acti
   });
   if (cursor < text.length) parts.push(text.slice(cursor));
 
+  const passageStyle: React.CSSProperties | undefined = followsWords ? undefined : passageMarkStyle(highlightColor, highlightStyle);
+
   return (
-    <span ref={containerRef} className={className}>
+    <span ref={containerRef} className={className} style={passageStyle}>
       {parts}
     </span>
   );
+}
+
+/** How a passage being read is marked when there is no word to mark: a soft
+ * wash of the reader's highlight colour, or an underline if that is their
+ * style. Shared with the other places a passage is marked (a memory card's
+ * verse, a commentary entry). */
+export function passageMarkStyle(highlightColor: string, highlightStyle: TtsHighlightStyle): React.CSSProperties {
+  return highlightStyle === "underline"
+    ? { textDecoration: "underline", textDecorationColor: highlightColor, textDecorationThickness: 2 }
+    : { backgroundColor: `${highlightColor}40`, borderRadius: 2, boxDecorationBreak: "clone", WebkitBoxDecorationBreak: "clone" };
 }

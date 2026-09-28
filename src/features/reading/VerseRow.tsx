@@ -5,6 +5,7 @@ import { buildTokens, type Segment } from "./verseTokens";
 import type { RedLetterSpan } from "./redLetterSpans";
 import type { FindRange } from "./findMatches";
 import { cx } from "../../components/ui/classes";
+import { lineBoxAt } from "../../lib/popupPosition";
 
 /** A segment's text, wrapped in a find mark when it is inside a match. The
  * current match carries `data-find-current` so the pane can scroll to it. */
@@ -48,9 +49,9 @@ export function VerseRow({
   showHighlights: boolean;
   showNoteSymbols: boolean;
   onSelectVerse: (verseNum: number) => void;
-  onHighlightClick: (highlightId: number, x: number, y: number) => void;
+  onHighlightClick: (highlightId: number, x: number, y: number, flipY: number) => void;
   onNoteSymbolClick: (note: Note) => void;
-  onFootnoteClick?: (footnote: Footnote, x: number, y: number) => void;
+  onFootnoteClick?: (footnote: Footnote, x: number, y: number, anchorTop: number) => void;
   onContextMenu?: (verseNum: number, x: number, y: number) => void;
   /** True while this verse is the one currently being read aloud -- swaps to word-by-word highlighting. */
   ttsActive?: boolean;
@@ -140,7 +141,7 @@ export function VerseRow({
                     onClick={(e) => {
                       e.stopPropagation();
                       const rect = (e.target as HTMLElement).getBoundingClientRect();
-                      onFootnoteClick?.(f, rect.left, rect.bottom + 4);
+                      onFootnoteClick?.(f, rect.left, rect.bottom + 4, rect.top);
                     }}
                   >
                     [{f.marker}]
@@ -164,8 +165,11 @@ export function VerseRow({
                   onClick={(e) => {
                     if (seg.highlightId != null) {
                       e.stopPropagation();
-                      const rect = (e.target as HTMLElement).getBoundingClientRect();
-                      onHighlightClick(seg.highlightId, rect.left + rect.width / 2, rect.top);
+                      // Beside the line of the highlight that was clicked: the top of
+                      // a highlight running over several lines may be out of view.
+                      const mark = e.currentTarget;
+                      const line = lineBoxAt(mark.getClientRects(), e.clientY) ?? mark.getBoundingClientRect();
+                      onHighlightClick(seg.highlightId, (line.left + line.right) / 2, line.top, line.bottom);
                     }
                   }}
                 >

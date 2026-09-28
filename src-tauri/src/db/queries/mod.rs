@@ -32,6 +32,7 @@ pub mod stats;
 pub mod trash;
 pub mod verses;
 pub mod versification;
+pub mod webster;
 pub mod westminster;
 pub mod word_study;
 

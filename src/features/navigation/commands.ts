@@ -23,6 +23,7 @@ import {
   LayoutGrid,
   Library,
   Link2,
+  ListMusic,
   Maximize2,
   Minimize2,
   MessageSquareText,
@@ -52,6 +53,7 @@ import { toast } from "../../components/ui/toast";
 import { PRESET_WORKSPACES, applyWorkspace, type SavedWorkspace } from "../../workspace/presets";
 import { useWorkspaceDialog } from "../../workspace/WorkspacesMenu";
 import { beginFamilyWorship } from "../family/sessionStore";
+import { PSALMS_BOOK_ID, isPsalmNumber, psalmShown, stepPsalm } from "../psalter/psalterParams";
 import {
   LINK_GROUPS,
   MAX_PANES,
@@ -395,6 +397,39 @@ export function navigationCommands(ctx: CommandContext): Command[] {
   const s = useWorkspaceStore.getState();
   const bible = resolveBiblePane(s);
   const books = ctx.titles.books;
+  // While the Psalter is the pane being read, Ctrl+[ and Ctrl+] turn its
+  // psalm rather than the Bible's chapter (the Psalter answers them first),
+  // so the keys are shown beside the psalm steps and left off the chapter
+  // steps -- which the palette still offers, by name, for the Bible beside it.
+  const focused = findPane(s.panes, s.focusedPaneId);
+  const psalter = focused?.kind === "psalter" ? focused : null;
+  if (psalter) {
+    const psalm = psalmShown(psalter.params);
+    const nextPsalm = stepPsalm(psalm, 1);
+    const prevPsalm = stepPsalm(psalm, -1);
+    if (nextPsalm != null) {
+      out.push({
+        id: "next-psalm",
+        group,
+        label: `Next psalm: Psalm ${nextPsalm}`,
+        icon: ChevronRight,
+        keys: ["Ctrl", "]"],
+        keywords: "forward turn psalter sing",
+        run: () => openContent("psalter", { psalm: nextPsalm }, { target: psalter.id }),
+      });
+    }
+    if (prevPsalm != null) {
+      out.push({
+        id: "prev-psalm",
+        group,
+        label: `Previous psalm: Psalm ${prevPsalm}`,
+        icon: ChevronLeft,
+        keys: ["Ctrl", "["],
+        keywords: "back turn psalter sing",
+        run: () => openContent("psalter", { psalm: prevPsalm }, { target: psalter.id }),
+      });
+    }
+  }
   if (bible && books) {
     const here = { bookId: bible.params.bookId, chapter: bible.params.chapter };
     const next = stepChapter(books, here, 1);
@@ -406,7 +441,7 @@ export function navigationCommands(ctx: CommandContext): Command[] {
         group,
         label: `Next chapter: ${name(next)}`,
         icon: ChevronRight,
-        keys: ["Ctrl", "]"],
+        keys: psalter ? undefined : ["Ctrl", "]"],
         keywords: "forward turn page",
         run: () => openPassage(next, { target: bible.id }),
       });
@@ -417,7 +452,7 @@ export function navigationCommands(ctx: CommandContext): Command[] {
         group,
         label: `Previous chapter: ${name(prev)}`,
         icon: ChevronLeft,
-        keys: ["Ctrl", "["],
+        keys: psalter ? undefined : ["Ctrl", "["],
         keywords: "back turn page",
         run: () => openPassage(prev, { target: bible.id }),
       });
@@ -701,6 +736,37 @@ export function appCommands(ctx: CommandContext): Command[] {
     },
   });
 
+  // The Psalter, as a page of its own. Commands are built from the
+  // workspace, not from what is typed (a typed "Psalm 23" is read as a
+  // reference and answered by the palette's passage row and the Psalter row
+  // under it), so the psalm
+  // offered here is the one the Bible is open at -- the psalm you are
+  // looking at is the one you would ask for. It turns a Psalter that is
+  // already open, else opens one beside the Bible rather than over it.
+  out.push({
+    id: "open-psalter",
+    group: "Psalter",
+    label: "Open the Psalter",
+    icon: ListMusic,
+    keywords: "metrical psalms sing singing tune tunes scottish 1650 praise precentor",
+    run: () => openContent("psalter", {}),
+  });
+  const reading = resolveBiblePane(useWorkspaceStore.getState());
+  if (reading && reading.params.bookId === PSALMS_BOOK_ID && isPsalmNumber(reading.params.chapter)) {
+    const psalm = reading.params.chapter;
+    out.push({
+      id: "psalm-in-psalter",
+      group: "Psalter",
+      label: `Open Psalm ${psalm} in the Psalter`,
+      icon: ListMusic,
+      keywords: "metrical psalm sing singing tune beside",
+      run: () => {
+        const open = useWorkspaceStore.getState().panes.find((p) => p.kind === "psalter");
+        openContent("psalter", { psalm }, { target: open ? open.id : "new", from: reading.id });
+      },
+    });
+  }
+
   out.push({
     id: "begin-family-worship",
     group: "Family worship",
@@ -767,23 +833,49 @@ export function commandQueryText(query: string): string {
   return query.trimStart().replace(/^>/, "").trim();
 }
 
-/** Commands whose label, group, or keywords contain every typed word.
- * Commands matched by their label alone come first, so "layout two by"
- * offers "Layout: Two by two" before anything that only mentions "by" in
- * its keywords. */
+const typedWords = (text: string) => text.toLowerCase().split(/\s+/).filter(Boolean);
+const nameWords = (text: string) => text.toLowerCase().split(/[^a-z0-9']+/).filter(Boolean);
+
+/** How closely a command answers what was typed, best first: 0 when every
+ * typed word is a whole word of its label ("psalter" and "Open the
+ * Psalter"), 1 when each begins one ("psalt"), 2 when each is only somewhere
+ * in its label or group, 3 when only its keywords have them. Null when it
+ * does not match at all. */
+function commandMatch(c: Command, words: string[]): number | null {
+  const label = nameWords(c.label);
+  if (words.every((w) => label.includes(w))) return 0;
+  if (words.every((w) => label.some((l) => l.startsWith(w)))) return 1;
+  const named = `${c.label} ${c.group}`.toLowerCase();
+  if (words.every((w) => named.includes(w))) return 2;
+  const hay = `${named} ${c.keywords ?? ""}`.toLowerCase();
+  if (words.every((w) => hay.includes(w))) return 3;
+  return null;
+}
+
+/** True when every typed word is a whole word of the command's name -- the
+ * reader has, in effect, typed the command. The palette puts these above
+ * the dictionary and encyclopedia entries that merely contain the text. */
+export function commandNamedBy(c: Command, text: string): boolean {
+  const words = typedWords(text);
+  return words.length > 0 && commandMatch(c, words) === 0;
+}
+
+/** Commands whose label, group, or keywords contain every typed word, the
+ * closest first (see `commandMatch`), so "layout two by" offers "Layout: Two
+ * by two" before anything that only mentions "by" in its keywords. Among
+ * equally close ones, a command of the section the words name comes first
+ * -- "psalter" offers "Open the Psalter" before "Open Psalter in a new
+ * pane" -- and otherwise the registry's own order stands. */
 export function filterCommands(commands: Command[], text: string): Command[] {
-  const words = text.toLowerCase().split(/\s+/).filter(Boolean);
+  const words = typedWords(text);
   if (words.length === 0) return commands;
-  const byLabel: Command[] = [];
-  const byKeywords: Command[] = [];
-  for (const c of commands) {
-    const label = `${c.label} ${c.group}`.toLowerCase();
-    if (words.every((w) => label.includes(w))) {
-      byLabel.push(c);
-      continue;
-    }
-    const hay = `${label} ${c.keywords ?? ""}`.toLowerCase();
-    if (words.every((w) => hay.includes(w))) byKeywords.push(c);
-  }
-  return [...byLabel, ...byKeywords];
+  const ranked: { c: Command; rank: number; home: boolean; at: number }[] = [];
+  commands.forEach((c, at) => {
+    const rank = commandMatch(c, words);
+    if (rank == null) return;
+    const group = nameWords(c.group);
+    ranked.push({ c, rank, home: words.every((w) => group.includes(w)), at });
+  });
+  ranked.sort((a, b) => a.rank - b.rank || Number(b.home) - Number(a.home) || a.at - b.at);
+  return ranked.map((r) => r.c);
 }

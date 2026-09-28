@@ -106,7 +106,7 @@ export function TagFilterBar({
           aria-pressed={activeTag === t}
           className={cx(
             "rounded-full border px-2.5 py-0.5",
-            activeTag === t ? "border-accent bg-accent text-white" : "border-line bg-surface-2 text-ink-2 hover:bg-hover",
+            activeTag === t ? "border-accent bg-accent text-on-accent" : "border-line bg-surface-2 text-ink-2 hover:bg-hover",
           )}
         >
           #{t}

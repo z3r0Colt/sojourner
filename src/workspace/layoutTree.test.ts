@@ -5,6 +5,7 @@ import {
   addToLeaf,
   branch,
   leaf,
+  leafBox,
   leafOfPane,
   leaves,
   minSize,
@@ -224,5 +225,15 @@ describe("reading order and sizes", () => {
     const col = branch("column", leaf(["a"]), leaf(["b"]));
     expect(minSize(col)).toEqual({ width: PANE_MIN_PX, height: PANE_MIN_PX * 2 + DIVIDER_PX });
     expect(setRatio(row, row.id, 0).type === "branch" && (setRatio(row, row.id, 0) as { ratio: number }).ratio).toBe(0.1);
+  });
+
+  it("gives a leaf its share of the space, less the dividers", () => {
+    // Family worship | (Psalter over the timeline), the right column 40%.
+    const timeline = leaf(["t"]);
+    const t = branch("row", leaf(["f"]), branch("column", leaf(["p"]), timeline, 0.5), 0.6);
+    const box = leafBox(t, timeline.id, 1006, 906)!;
+    expect(box.width).toBeCloseTo(400);
+    expect(box.height).toBeCloseTo(450);
+    expect(leafBox(t, "nowhere", 1006, 906)).toBeNull();
   });
 });

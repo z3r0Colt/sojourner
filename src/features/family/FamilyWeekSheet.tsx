@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { useBooks, useMetricalPsalm, usePassages, useReadingPlanDays } from "../../api/queries";
 import { refKey } from "../../lib/passage";
 import { memoryWords } from "../memory/memoryText";
-import { STARTER_PLAN, STARTER_TITLES, TALK_QUESTIONS, upcomingDays, upcomingQuestions } from "./familyWorship";
+import { STARTER_PLAN, STARTER_TITLES, talkQuestionTag, upcomingDays, upcomingQuestions } from "./familyWorship";
 import { useCatechismQuestions, useFamilyWorship } from "./useFamilyWorship";
 
 const h2: React.CSSProperties = {
@@ -99,8 +99,20 @@ export function FamilyWeekSheet({ onDone }: { onDone: () => void }) {
                 })}
               </tbody>
             </table>
+            {/* A dot between the questions: a family's own may not end in a
+                question mark, and run together they would read as one. */}
             <p style={{ margin: "6pt 0 0", fontSize: "10pt" }}>
-              <em>Talk about it:</em> {TALK_QUESTIONS.join(" ")}
+              <em>Talk about it:</em>{" "}
+              {tonight.talkQuestions.map((q, i) => {
+                const tag = talkQuestionTag(q);
+                return (
+                  <span key={q}>
+                    {i > 0 && " · "}
+                    {tag && <strong>{tag}: </strong>}
+                    {q}
+                  </span>
+                );
+              })}
             </p>
           </section>
         )}

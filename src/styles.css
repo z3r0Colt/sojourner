@@ -117,6 +117,12 @@
   --color-accent-soft-2: #d5e2f0;
   --color-danger: #b3261e;
   --color-danger-soft: #fbeae9;
+  /* Text set on a solid accent or danger fill (the primary button). White
+     only works on the light themes' deep accents; the dark themes lift the
+     accent to a pale blue, where white falls to about 2:1, so the text there
+     takes the ground's own near-black instead. Following the ground keeps
+     every theme at 6:1 or better without a value per theme. */
+  --color-on-accent: var(--color-bg);
   /* Attention without alarm: overdue prayer nudges, "due" counts. */
   --color-warn: #8a5a12;
   --color-warn-soft: #f6ecd8;

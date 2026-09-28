@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { Bookmark, BookmarkCheck, Columns2, Languages, Maximize2, MoreHorizontal, Paperclip, Printer, SlidersHorizontal, Sparkles, Square, StickyNote, TextSearch, Type, Volume2 } from "lucide-react";
@@ -38,10 +38,19 @@ import {
 import { useNoteRefExtractor } from "../../lib/noteLinks";
 import { useSetting } from "../../hooks/useSetting";
 import { StrongsPopup } from "../lexicon/StrongsPopup";
-import { matchOriginalStrongs, matchStrongs, wordFromSelection, type WordAtPoint } from "./wordLookup";
+import {
+  englishLookupWord,
+  isEnglishText,
+  matchOriginalStrongs,
+  matchStrongs,
+  taggedWordForStrongs,
+  wordFromSelection,
+  type WordAtPoint,
+} from "./wordLookup";
 import { api } from "../../api/client";
 import { VerseRow } from "./VerseRow";
 import { SelectionToolbar } from "./SelectionToolbar";
+import { noteSelection, restoreSelection, sameSelection, type NotedSelection } from "../tts/keepSelection";
 import { HighlightPopup } from "./HighlightPopup";
 import { VerseContextMenu } from "./VerseContextMenu";
 import { CompareVerseModal } from "./CompareVerseModal";
@@ -62,7 +71,7 @@ import { captureIllustration } from "../sermons/illustrationCapture";
 import { captureSermonIdea } from "../sermons/sermonIdeas";
 import { crossrefRef } from "../sermons/sourceIdentity";
 import { SermonChipsForChapter } from "../sermons/SermonsForChapter";
-import { closestWithAttr, textOffsetWithin } from "../../lib/domOffsets";
+import { closestWithAttr, verseTextLength, verseTextOffset } from "../../lib/domOffsets";
 import { useCopyPassage } from "../../lib/clipboard";
 import { ReadAloudButton } from "../tts/ReadAloudButton";
 import { registerQueueEndHandler, useTtsReadingHere, useTtsStore } from "../../state/ttsStore";
@@ -79,7 +88,12 @@ import { checkboxClass, cx, selectSmClass } from "../../components/ui/classes";
 import { formatRef, joinVerses, toPassageRef } from "../../lib/passage";
 import { usePane, usePaneNavigate, usePaneParams } from "../../workspace/PaneContext";
 import { openContent, openPassage, targetFor } from "../../workspace/openContent";
-import type { Note, Footnote } from "../../api/types";
+import type { Note, Footnote, Translation } from "../../api/types";
+
+/** How long after a click on the text a second click still makes it a
+ * double-click: Windows' default double-click time. A click steers the voice
+ * only once this has passed with no second click (see setActiveVerse). */
+const DOUBLE_CLICK_MS = 500;
 
 interface PendingSelection {
   verseStart: number;
@@ -90,14 +104,21 @@ interface PendingSelection {
   charEnd: number | null;
   x: number;
   y: number;
+  /** The selection's bottom, which the toolbar drops under when there is no
+   * room over its top. */
+  flipY: number;
 }
 
 interface ActiveHighlight {
   id: number;
   verseStart: number;
   verseEnd: number;
+  /** The middle of the top of the highlighted line that was clicked. */
   x: number;
   y: number;
+  /** That line's bottom, which the bar drops under when there is no room
+   * over it. */
+  flipY: number;
 }
 
 interface NoteTarget {
@@ -107,6 +128,16 @@ interface NoteTarget {
   existing?: Note;
 }
 
+/** Below this pane width the reading toolbar folds its tools into one
+ * overflow menu, and below the second the Compare and Interlinear buttons
+ * drop their labels. Measured, not guessed: the full row -- the chapter
+ * controls at their floor (see `toolbar`), the translation dropdown and the
+ * nine tools -- is some 675px wide with the tools as icons and 810px with
+ * the two labels. At the 520px this once was, a pane between 520 and 740px
+ * wide cut off its last four or five tools. */
+const TOOLBAR_COMPACT_BELOW_PX = 690;
+const TOOLBAR_NARROW_BELOW_PX = 820;
+
 /** The Bible chapter view, living in a pane. Everything about *what* is
  * shown (translation, chapter, selected verse, paragraph and red-letter
  * modes) is the pane's; everything about *how* it is shown (text size,
@@ -114,8 +145,9 @@ interface NoteTarget {
 export function ReadingPane() {
   const { id: paneId, isFocused, width: paneWidth } = usePane();
   const queryClient = useQueryClient();
-  const compact = paneWidth > 0 && paneWidth < 520;
-  const narrow = paneWidth > 0 && paneWidth < 820;
+  // The toolbar's widths: see `toolbar` below.
+  const compact = paneWidth > 0 && paneWidth < TOOLBAR_COMPACT_BELOW_PX;
+  const narrow = paneWidth > 0 && paneWidth < TOOLBAR_NARROW_BELOW_PX;
   const [params, setParams] = usePaneParams("bible");
   const { translationId, bookId, chapter, verse: scrollTarget, activeVerse, paragraphMode, redLetterMode, findQuery } = params;
   const paneNavigate = usePaneNavigate();
@@ -247,7 +279,7 @@ export function ReadingPane() {
   const [noteTarget, setNoteTarget] = useState<NoteTarget | null>(null);
   const [chapterNoteOpen, setChapterNoteOpen] = useState(false);
   const [showAllSuggested, setShowAllSuggested] = useState(false);
-  const [activeFootnote, setActiveFootnote] = useState<{ footnote: Footnote; x: number; y: number } | null>(null);
+  const [activeFootnote, setActiveFootnote] = useState<{ footnote: Footnote; x: number; y: number; anchorTop: number } | null>(null);
   const [verseMenu, setVerseMenu] = useState<{ verseNum: number; x: number; y: number } | null>(null);
   const [compareVerse, setCompareVerse] = useState<number | null>(null);
   const [printing, setPrinting] = useState(false);
@@ -267,23 +299,26 @@ export function ReadingPane() {
   // fetched only once a word has been asked for, then matched by wording;
   // outside the KJV a miss shows a one-time hint (a setting, so dismissing
   // it survives a reinstall).
-  const [wordLookup, setWordLookup] = useState<(WordAtPoint & { x: number; y: number }) | null>(null);
+  const [wordLookup, setWordLookup] = useState<(WordAtPoint & { x: number; y: number; anchorTop: number }) | null>(null);
   // An English text is matched through the KJV-tagged interlinear; a Greek
-  // or Hebrew one through the tagged words of the text itself.
+  // or Hebrew one through the tagged words of the text itself. Either way
+  // the tagged words are fetched, for the parsing of the one Greek or
+  // Hebrew word the lookup settles on, when it settles on one.
   const lookupEnglish = !!wordLookup && !originalText;
   const lookupOriginal = !!wordLookup && originalText;
   const { data: interlinear, isLoading: interlinearLoading } = useInterlinearForChapter(lookupEnglish ? bookId : null, lookupEnglish ? chapter : null);
-  const { data: morphology, isLoading: morphologyLoading } = useMorphologyForChapter(lookupOriginal ? bookId : null, lookupOriginal ? chapter : null);
+  const { data: morphology, isLoading: morphologyLoading } = useMorphologyForChapter(wordLookup ? bookId : null, wordLookup ? chapter : null);
   const [kjvHintDismissed, setKjvHintDismissed] = useSetting<boolean>("word_lookup_kjv_hint_dismissed", false);
+  const verseWords = wordLookup && morphology ? (morphology[wordLookup.verse] ?? []) : null;
+  const originalMatch = lookupOriginal && verseWords ? matchOriginalStrongs(wordLookup.word, wordLookup.occurrence, verseWords) : null;
   const wordStrongs = !wordLookup
     ? null
     : lookupOriginal
-      ? morphology
-        ? matchOriginalStrongs(wordLookup.word, wordLookup.occurrence, morphology[wordLookup.verse] ?? [])
-        : null
+      ? (originalMatch?.strongsId ?? null)
       : interlinear
         ? matchStrongs(wordLookup.word, wordLookup.occurrence, interlinear[wordLookup.verse] ?? [])
         : null;
+  const wordParsed = lookupOriginal ? (originalMatch?.word ?? null) : verseWords ? taggedWordForStrongs(wordStrongs, verseWords) : null;
   // A proper name: who the verse means by it, from the Factbook.
   const looksLikeName = !!wordLookup && /^\p{Lu}/u.test(wordLookup.word.trim().replace(/^[^\p{L}]+/u, ""));
   const { data: factbookHit } = useQuery({
@@ -293,7 +328,21 @@ export function ReadingPane() {
   });
   const translationCode = translations?.find((t) => t.id === translationId)?.code;
   const showKjvHint = lookupEnglish && !!interlinear && !wordStrongs && translationCode !== "KJV" && !kjvHintDismissed;
+  // A word of an English text is looked up in Webster 1828 as well, with
+  // the chapter it was read in (see WebsterWordSection). Not the Vulgate's
+  // Latin, which is in the Latin alphabet but not English.
+  const websterWord = wordLookup && isEnglishText(currentTranslation) ? englishLookupWord(wordLookup.word) : null;
+  const englishWord = useMemo(
+    () => (websterWord ? { word: websterWord, place: book ? { book: book.osis_code, chapter } : null } : null),
+    [websterWord, book, chapter],
+  );
 
+  // Escape closes the word card -- unless a dialog is open over it (the Go
+  // to palette, opened with Ctrl K while the card was up), which is the top
+  // layer and has the key to itself. Both listen on the window as it
+  // captures, and the card, opened first, heard it first: one Escape closed
+  // the palette and the card under it. The interlinear card makes the same
+  // test (`modalAboveCard` there).
   useEffect(() => {
     if (!wordLookup) return;
     function onMouseDown() {
@@ -301,6 +350,8 @@ export function ReadingPane() {
     }
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") {
+        const modal = document.querySelector('[aria-modal="true"]');
+        if (modal && !(containerRef.current && modal.contains(containerRef.current))) return;
         e.stopPropagation();
         setWordLookup(null);
       }
@@ -317,12 +368,20 @@ export function ReadingPane() {
   }, [bookId, chapter, translationId]);
 
   function handleDoubleClick() {
+    // A double-click is a word lookup, never a move of the voice (see
+    // setActiveVerse).
+    cancelSteer();
     const at = wordFromSelection(window.getSelection());
     if (!at) return;
     const rect = window.getSelection()!.getRangeAt(0).getBoundingClientRect();
     window.getSelection()?.removeAllRanges();
+    // Only the word card: not also the highlight bar the first click of the
+    // double-click opened on a highlighted word, or a note or menu left up.
     setPending(null);
-    setWordLookup({ ...at, x: rect.left, y: rect.bottom + 4 });
+    setActiveHighlight(null);
+    setActiveFootnote(null);
+    setVerseMenu(null);
+    setWordLookup({ ...at, x: rect.left, y: rect.bottom + 4, anchorTop: rect.top });
   }
 
   /** "Search the lexicon for ‘word’": in the lexicon pane if one is open,
@@ -339,24 +398,67 @@ export function ReadingPane() {
   // verse row -- with highlights, note markers, and footnotes each row can be
   // non-trivial -- at once. Rows vary in height (wrapped text, highlight
   // spans), so sizes are measured after render rather than assumed fixed.
+  //
+  // Not re-rendered synchronously: a row is measured from its ref callback,
+  // in the middle of React's commit, and a new height above the scroll
+  // position made the virtualizer call flushSync from there -- React's
+  // "flushSync was called from inside a lifecycle method", in bursts, each
+  // time the verse being read aloud changed and was re-drawn and scrolled to.
   const rowVirtualizer = useVirtualizer({
     count: verses?.length ?? 0,
     getScrollElement: () => containerRef.current,
     estimateSize: () => 56,
     overscan: 8,
+    useFlushSync: false,
   });
 
-  const setActiveVerse = (v: number | null) => {
-    setParams({ activeVerse: v });
-    // Choosing a verse while this pane is reading aloud moves the reader to
-    // it, so the voice can be steered by pointing at the text rather than by
-    // tapping Next as many times as it takes.
-    if (v == null) return;
+  // Choosing a verse while this pane is reading aloud moves the reader to
+  // it, so the voice can be steered by pointing at the text rather than by
+  // tapping Next as many times as it takes.
+  //
+  // But not every press on a verse is pointing the voice at it. A click on
+  // the text may be the first half of a double-click, which is a word lookup;
+  // so a click steers only once it is plain that no second click is coming,
+  // and not if it ended a selection being made. Opening the verse menu --
+  // right-click, or the verse number -- selects the verse but leaves the
+  // voice be: the menu has its own "Read aloud from here".
+  const steerTimer = useRef<number | null>(null);
+  function cancelSteer() {
+    if (steerTimer.current != null) window.clearTimeout(steerTimer.current);
+    steerTimer.current = null;
+  }
+  useEffect(() => cancelSteer, []);
+  function steerReadingTo(v: number) {
     const tts = useTtsStore.getState();
     if (tts.sourceKind !== "scripture" || tts.paneId !== paneId || tts.segments.length === 0) return;
     const index = tts.segments.findIndex((segment) => segment.id === v);
     if (index >= 0 && index !== tts.currentSegmentIndex) tts.seek(index);
+  }
+  const setActiveVerse = (v: number | null, steer: "now" | "after-click" | "no" = "now") => {
+    setParams({ activeVerse: v });
+    cancelSteer();
+    if (v == null || steer === "no") return;
+    if (steer === "now") {
+      steerReadingTo(v);
+      return;
+    }
+    // The click that ends a drag across words is the end of a selection, not
+    // a choice of verse, and it never steers -- whatever becomes of the
+    // selection in the half-second the timer waits. A highlight colour picked
+    // that quickly takes the selection away, and the voice then jumped to the
+    // verse just highlighted.
+    if (selectionInText()) return;
+    steerTimer.current = window.setTimeout(() => {
+      steerTimer.current = null;
+      if (selectionInText()) return;
+      steerReadingTo(v);
+    }, DOUBLE_CLICK_MS);
   };
+  /** Words are selected in this pane's text. */
+  function selectionInText(): boolean {
+    const selection = window.getSelection();
+    return !!selection && !selection.isCollapsed && !!containerRef.current?.contains(selection.anchorNode);
+  }
 
   const matches = useMemo(() => (findOpen && verses && !printing ? findMatches(verses, findQuery, findWholeWord) : []), [findOpen, verses, findQuery, findWholeWord, printing]);
   const currentFind = matches.length === 0 ? -1 : Math.min(findIndex, matches.length - 1);
@@ -507,6 +609,37 @@ export function ReadingPane() {
     }
   }, [ttsHere, ttsCurrentSegmentId, setParams]);
 
+  // Read-aloud draws the verse being read a word to a span, so as the voice
+  // moves on, the verse it leaves and the verse it enters are drawn afresh --
+  // and words the reader had selected in either went with the old text, while
+  // the selection toolbar stayed up over nothing selected (Chromium does not
+  // count that as a change of selection). The selection is noted, as verse
+  // and characters, whenever it changes, and put back once the verses are
+  // redrawn. Where it cannot be -- the verse scrolled out of the list -- the
+  // toolbar goes with it.
+  const notedSelection = useRef<NotedSelection | null>(null);
+  useEffect(() => {
+    const onChange = () => {
+      const container = containerRef.current;
+      notedSelection.current = container ? noteSelection(container, window.getSelection(), "data-verse-text") : null;
+    };
+    document.addEventListener("selectionchange", onChange);
+    return () => document.removeEventListener("selectionchange", onChange);
+  }, []);
+  useLayoutEffect(() => {
+    const noted = notedSelection.current;
+    const container = containerRef.current;
+    const selection = window.getSelection();
+    // No ranges at all is a selection cleared on purpose (a toolbar button, a
+    // highlight made), not one lost to a redraw, which leaves a collapsed one.
+    if (!noted || !container || !selection || selection.rangeCount === 0) return;
+    if (sameSelection(noteSelection(container, selection, "data-verse-text"), noted)) return;
+    if (!restoreSelection(container, noted, selection, "data-verse-text")) {
+      notedSelection.current = null;
+      setPending(null);
+    }
+  }, [ttsHere, ttsCurrentSegmentId]);
+
   // Auto-continue (F1.9). When the chapter this pane is reading aloud runs
   // out and "Continue into the next chapter" is on, the store asks this pane
   // (and only this pane: the handler is keyed by pane id) to turn the page.
@@ -632,17 +765,36 @@ export function ReadingPane() {
     const sel = window.getSelection();
     if (!sel || sel.isCollapsed || sel.rangeCount === 0) return;
     const range = sel.getRangeAt(0);
-    const startVerseEl = closestWithAttr(range.startContainer, "data-verse-text");
-    const endVerseEl = closestWithAttr(range.endContainer, "data-verse-text");
-    if (!startVerseEl || !endVerseEl) return;
+    const container = containerRef.current;
+    // A drag begun in the verse text is a selection of it wherever it ends.
+    // Let go past the last line, on a "cited" badge, or below the verses
+    // drawn -- easy near the foot of the pane, where the pane scrolls under
+    // the pointer as it goes -- and it used to bring no toolbar at all. Its
+    // ends are taken back to the verse text it covers: the start of the
+    // first verse, the end of the last.
+    const anchorVerseEl = closestWithAttr(sel.anchorNode, "data-verse-text");
+    if (!container || !anchorVerseEl || !container.contains(anchorVerseEl)) return;
+    const covered = Array.from(container.querySelectorAll<HTMLElement>("[data-verse-text]")).filter((el) => range.intersectsNode(el));
+    if (covered.length === 0) return;
+    const inStart = closestWithAttr(range.startContainer, "data-verse-text");
+    const inEnd = closestWithAttr(range.endContainer, "data-verse-text");
+    const startVerseEl = inStart ?? covered[0];
+    const endVerseEl = inEnd ?? covered[covered.length - 1];
     const verseA = Number(startVerseEl.getAttribute("data-verse-text"));
     const verseB = Number(endVerseEl.getAttribute("data-verse-text"));
-    const rect = range.getBoundingClientRect();
+    const clamped = document.createRange();
+    if (inStart) clamped.setStart(range.startContainer, range.startOffset);
+    else clamped.setStart(startVerseEl, 0);
+    if (inEnd) clamped.setEnd(range.endContainer, range.endOffset);
+    else clamped.setEnd(endVerseEl, endVerseEl.childNodes.length);
+    const rect = clamped.getBoundingClientRect();
     if (verseA === verseB) {
-      const charStart = textOffsetWithin(startVerseEl, range.startContainer, range.startOffset);
-      const charEnd = textOffsetWithin(endVerseEl, range.endContainer, range.endOffset);
+      // Characters of the verse's own words, as a highlight is kept and
+      // drawn: a footnote marker before the selection is not counted.
+      const charStart = inStart ? verseTextOffset(startVerseEl, range.startContainer, range.startOffset) : 0;
+      const charEnd = inEnd ? verseTextOffset(endVerseEl, range.endContainer, range.endOffset) : verseTextLength(endVerseEl);
       if (charEnd <= charStart) return;
-      setPending({ verseStart: verseA, verseEnd: verseA, charStart, charEnd, x: rect.left + rect.width / 2, y: rect.top });
+      setPending({ verseStart: verseA, verseEnd: verseA, charStart, charEnd, x: rect.left + rect.width / 2, y: rect.top, flipY: rect.bottom });
     } else {
       // A selection spanning verses highlights those verses whole.
       setPending({
@@ -652,6 +804,7 @@ export function ReadingPane() {
         charEnd: null,
         x: rect.left + rect.width / 2,
         y: rect.top,
+        flipY: rect.bottom,
       });
     }
   }
@@ -806,20 +959,46 @@ export function ReadingPane() {
   }
 
   // Everything right of the translation picker folds into one overflow menu
-  // below about 520px of pane width; between that and about 820px the two
-  // labelled buttons drop their labels so the row still fits.
+  // below TOOLBAR_COMPACT_BELOW_PX of pane width; between that and
+  // TOOLBAR_NARROW_BELOW_PX the two labelled buttons drop their labels.
+  //
+  // Within a row, what gives way is the book dropdown: it starts from a
+  // floor wide enough for a short name (the chapter controls' `basis`),
+  // grows into the room the row has, up to a cap, and never pushes the
+  // translation dropdown or the tools after it out of the pane. A native
+  // dropdown is as wide as its longest option, and in a translation that
+  // lacks some books every one of those reads "1 Thessalonians (not in this
+  // translation)": a New Testament chapter switched to WLC made the book
+  // dropdown 275px wide, and in a 490px pane the translation dropdown -- the
+  // one the page's "Pick another translation in the toolbar" points to --
+  // and the overflow menu were pushed out of the pane, with no way back.
+  // Only in a pane too narrow for even the floor does the row wrap, the
+  // translation and the menu going to a line of their own, rather than off
+  // the edge.
+  //
+  // The translation dropdown gives way before the book does. It too is as
+  // wide as its longest option ("WLC (OT)", "OEB (partial)"), and kept whole
+  // it held 129px for "KJV" at 360px while the book beside it read "Psalm".
+  // It now starts from a floor just wide enough for the translation chosen
+  // (translationSelectFloor), and takes back its full width only from what
+  // the book, which grows a hundred times as fast, leaves over.
   const toolbar = !distractionFreeMode && books && (
-    <div className="flex h-11 shrink-0 items-center gap-1 border-b border-line bg-surface px-2">
-      <ChapterNav books={books} position={{ bookId, chapter }} translationId={translationId} onNavigate={(p) => openPassage(p, { target: paneId })} />
-      <span className="mx-1 h-5 w-px bg-line" aria-hidden="true" />
+    <div className="flex min-h-11 shrink-0 flex-wrap items-center gap-1 border-b border-line bg-surface px-2 py-1">
+      <div className="flex min-w-0 max-w-fit grow-[100] basis-[11.5rem] items-center [&>div]:min-w-0 [&_select[aria-label=Book]]:min-w-0 [&_select[aria-label=Book]]:max-w-[12rem]">
+        <ChapterNav books={books} position={{ bookId, chapter }} translationId={translationId} onNavigate={(p) => openPassage(p, { target: paneId })} />
+      </div>
+      <span className="mx-1 h-5 w-px shrink-0 bg-line" aria-hidden="true" />
       {translations && (
-        <select aria-label="Translation" className={selectSmClass} value={translationId ?? ""} onChange={(e) => setParams({ translationId: Number(e.target.value) })}>
+        <select
+          aria-label="Translation"
+          className={cx(selectSmClass, "min-w-0 max-w-fit grow shrink")}
+          style={translationSelectFloor(currentTranslation)}
+          value={translationId ?? ""} onChange={(e) => setParams({ translationId: Number(e.target.value) })}>
           {groupTranslations(translations).map((g) => (
             <optgroup key={g.label} label={g.label}>
               {g.translations.map((t) => (
                 <option key={t.id} value={t.id} title={t.scope ? `${t.name} (${t.scope})` : t.name}>
-                  {t.code}
-                  {t.scope === "Old Testament" ? " (OT)" : t.scope === "New Testament" ? " (NT)" : t.scope ? " (partial)" : ""}
+                  {translationOptionLabel(t)}
                 </option>
               ))}
             </optgroup>
@@ -960,7 +1139,7 @@ export function ReadingPane() {
           <div className="relative">
             <IconButton icon={StickyNote} label={chapterNoteCount > 0 ? `Chapter notes (${chapterNoteCount})` : "Chapter notes"} onClick={() => setChapterNoteOpen(true)} />
             {chapterNoteCount > 0 && (
-              <span className="pointer-events-none absolute -right-0.5 -top-0.5 min-w-4 rounded-full bg-accent px-1 text-center text-[10px] font-semibold leading-4 text-white">
+              <span className="pointer-events-none absolute -right-0.5 -top-0.5 min-w-4 rounded-full bg-accent px-1 text-center text-[10px] font-semibold leading-4 text-on-accent">
                 {chapterNoteCount}
               </span>
             )}
@@ -985,23 +1164,23 @@ export function ReadingPane() {
     showVerseNumbers,
     showHighlights,
     showNoteSymbols,
-    onSelectVerse: setActiveVerse,
-    onHighlightClick: (id: number, x: number, y: number) => {
+    onSelectVerse: (verseNum: number) => setActiveVerse(verseNum, "after-click"),
+    onHighlightClick: (id: number, x: number, y: number, flipY: number) => {
       const h = highlights?.find((hl) => hl.id === id);
-      if (h) setActiveHighlight({ id, verseStart: h.verse_start, verseEnd: h.verse_end, x, y });
+      if (h) setActiveHighlight({ id, verseStart: h.verse_start, verseEnd: h.verse_end, x, y, flipY });
     },
     onNoteSymbolClick: (note: Note) =>
       setNoteTarget({ verseStart: note.verse_start, verseEnd: note.verse_end, highlightId: note.highlight_id ?? undefined, existing: note }),
-    onFootnoteClick: (footnote: Footnote, x: number, y: number) => setActiveFootnote({ footnote, x, y }),
+    onFootnoteClick: (footnote: Footnote, x: number, y: number, anchorTop: number) => setActiveFootnote({ footnote, x, y, anchorTop }),
     citationCounts,
     onCitationsClick: (verseNum: number) => {
-      setActiveVerse(verseNum);
+      setActiveVerse(verseNum, "no");
       // Into the citations pane already open, if there is one, else beside this.
       const open = useWorkspaceStore.getState().panes.find((p) => p.kind === "citations");
       openContent("citations", { bookId, chapter, verse: verseNum }, { target: open?.id ?? "new", from: paneId });
     },
     onContextMenu: (verseNum: number, x: number, y: number) => {
-      setActiveVerse(verseNum);
+      setActiveVerse(verseNum, "no");
       setVerseMenu({ verseNum, x, y });
     },
   };
@@ -1135,6 +1314,7 @@ export function ReadingPane() {
         <SelectionToolbar
           x={pending.x}
           y={pending.y}
+          flipY={pending.flipY}
           onPickColor={(c) => commitHighlight("highlight", c)}
           onUnderline={(c) => commitHighlight("underline", c)}
           onAddNote={() => {
@@ -1189,6 +1369,22 @@ export function ReadingPane() {
             window.getSelection()?.removeAllRanges();
             setPending(null);
           }}
+          onReadAloudFromHere={
+            readAloudSegments.length > 0
+              ? () => {
+                  // From the verse the selection starts in: a move within the
+                  // reading when this pane is already reading the chapter, a
+                  // start otherwise. Asked for in so many words, so a paused
+                  // player is set going again rather than only moved.
+                  const index = Math.max(0, readAloudSegments.findIndex((s) => s.id === pending.verseStart));
+                  useTtsStore.getState().readFrom(`${book.name} ${chapter}`, "scripture", readAloudSegments, index, { paneId });
+                  const tts = useTtsStore.getState();
+                  if (tts.isPaused) tts.resume();
+                  window.getSelection()?.removeAllRanges();
+                  setPending(null);
+                }
+              : undefined
+          }
           onClose={() => setPending(null)}
         />
       )}
@@ -1279,10 +1475,13 @@ export function ReadingPane() {
         <StrongsPopup
           id={wordStrongs}
           word={wordLookup.word}
-          loading={lookupOriginal ? morphologyLoading : interlinearLoading}
+          loading={morphologyLoading || (lookupEnglish && interlinearLoading)}
           factbook={factbookHit ?? null}
+          parsedWord={wordParsed}
+          englishWord={englishWord}
           x={wordLookup.x}
           y={wordLookup.y}
+          anchorTop={wordLookup.anchorTop}
           onClose={() => setWordLookup(null)}
           onSearchLexicon={searchLexicon}
           hint={
@@ -1302,6 +1501,7 @@ export function ReadingPane() {
           text={activeFootnote.footnote.text}
           x={activeFootnote.x}
           y={activeFootnote.y}
+          anchorTop={activeFootnote.anchorTop}
           onClose={() => setActiveFootnote(null)}
         />
       )}
@@ -1310,6 +1510,7 @@ export function ReadingPane() {
         <HighlightPopup
           x={activeHighlight.x}
           y={activeHighlight.y}
+          flipY={activeHighlight.flipY}
           hasNote={!!activeHighlightNote}
           onPickColor={(color) => {
             updateHighlight.mutate({ id: activeHighlight.id, color, style: "highlight" });
@@ -1399,6 +1600,24 @@ export function ReadingPane() {
       )}
     </div>
   );
+}
+
+/** A translation as the toolbar's dropdown names it: its code, and which
+ * Testament it covers when it lacks the other. */
+function translationOptionLabel(t: Pick<Translation, "code" | "scope">): string {
+  const scope = t.scope === "Old Testament" ? " (OT)" : t.scope === "New Testament" ? " (NT)" : t.scope ? " (partial)" : "";
+  return `${t.code}${scope}`;
+}
+
+/** The narrowest the translation dropdown may be: the name of the
+ * translation chosen, in `ch` with one to spare for capitals wider than a
+ * digit, and room for the padding and the arrow. The toolbar starts the
+ * dropdown there and lets it grow into what the book leaves (see the
+ * toolbar). */
+function translationSelectFloor(t: Pick<Translation, "code" | "scope"> | undefined): React.CSSProperties | undefined {
+  if (!t) return undefined;
+  const width = `calc(${translationOptionLabel(t).length + 1}ch + 1.75rem)`;
+  return { minWidth: width, flexBasis: width };
 }
 
 function ChapterNoteItem({

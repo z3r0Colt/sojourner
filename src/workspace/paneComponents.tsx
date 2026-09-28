@@ -1,6 +1,7 @@
 import type { ComponentType } from "react";
 import type { PaneKind } from "../state/workspaceStore";
 import { TuneIndexPanel } from "../features/psalter/TuneIndexPanel";
+import { PsalterView } from "../features/psalter/PsalterView";
 import { ReadingPane } from "../features/reading/ReadingPane";
 import { WestminsterView } from "../features/westminster/WestminsterView";
 import { LexiconView } from "../features/lexicon/LexiconView";
@@ -48,6 +49,7 @@ export const PANE_COMPONENTS: Record<PaneKind, ComponentType> = {
   prayer: PrayerPane,
   memory: MemoryPane,
   plans: PlansPane,
+  psalter: PsalterView,
   family: FamilyPane,
   harmony: HarmonyPane,
   sermons: SermonsView,

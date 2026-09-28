@@ -39,7 +39,7 @@ export function VerseContextMenu({
   onReadFromHere?: () => void;
   onClose: () => void;
 }) {
-  const { ref, style } = useViewportClampedPosition<HTMLDivElement>(x, y);
+  const { ref, style } = useViewportClampedPosition<HTMLDivElement>(x, y, { onDismiss: onClose });
   const [labels] = useHighlightLabels();
 
   useEffect(() => {
@@ -60,17 +60,36 @@ export function VerseContextMenu({
     };
   }
 
+  // The backdrop that closes the menu on a click elsewhere also stands
+  // between the wheel and the text, so the text cannot scroll while the menu
+  // is up. A turn of the wheel or a swipe over it is the reader reaching to
+  // scroll, and closes the menu as scrolling closes the other popups. (Over
+  // the menu itself it is left to scroll the menu, when that is held short.)
+  function closeOnReachToScroll(e: React.UIEvent) {
+    if (e.target === e.currentTarget) onClose();
+  }
+
   return (
-    <div className="fixed inset-0 z-40" onMouseDown={onClose} onContextMenu={(e) => e.preventDefault()}>
+    <div
+      className="fixed inset-0 z-40"
+      onMouseDown={onClose}
+      onWheel={closeOnReachToScroll}
+      onTouchMove={closeOnReachToScroll}
+      onContextMenu={(e) => e.preventDefault()}
+    >
       <div
         ref={ref}
         role="menu"
         aria-label={`${verseLabel} actions`}
-        className="w-60 rounded-lg border border-line bg-surface p-1.5 text-sm shadow-xl"
+        className="w-60 rounded-lg border border-line bg-surface px-1.5 pb-1.5 text-sm shadow-xl"
         style={style}
         onMouseDown={(e) => e.stopPropagation()}
       >
-        <div className="px-2 pb-1.5 pt-1 text-xs font-semibold text-ink-3">{verseLabel}</div>
+        {/* Stays put when a short window holds the menu to a scrolling
+            height, so the verse it acts on stays named. It carries the menu's
+            top padding, so there is no strip above it for items to show
+            through. */}
+        <div className="sticky top-0 z-10 bg-surface px-2 pb-1.5 pt-2.5 text-xs font-semibold text-ink-3">{verseLabel}</div>
         <div className="mb-1 flex items-center gap-1.5 px-2 pb-1.5">
           {HIGHLIGHT_COLORS.map((c) => {
             const name = `Highlight verse: ${highlightColorLabel(c, labels)}`;

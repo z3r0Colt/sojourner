@@ -14,9 +14,12 @@ import {
   type ParamsOf,
   type PassageParams,
   type Position,
+  type PsalterParams,
 } from "../state/workspaceStore";
+import { useUiStore } from "../state/uiStore";
+import { completePsalterParams } from "../features/psalter/psalterParams";
 import { PANE_KINDS } from "./paneKinds";
-import { DIVIDER_PX, PANE_MIN_PX, type Side } from "./layoutTree";
+import { DIVIDER_PX, PANE_MIN_PX, leafBox, leafOfPane, type Side } from "./layoutTree";
 import { toast } from "../components/ui/toast";
 
 /**
@@ -133,6 +136,13 @@ export function completeParams<K extends PaneKind>(kind: K, partial: Partial<Par
       return { eventId: null, year: null, ...partial } as unknown as ParamsOf<K>;
     case "settings":
       return { section: null, ...partial } as unknown as ParamsOf<K>;
+    case "psalter":
+      // The psalm asked for, else where this Psalter (or the last one) was.
+      return completePsalterParams(
+        partial as Partial<PsalterParams>,
+        target?.kind === "psalter" ? target.params : null,
+        useUiStore.getState().psalterPsalm,
+      ) as unknown as ParamsOf<K>;
     default:
       return {} as ParamsOf<K>;
   }
@@ -182,12 +192,19 @@ function groupForNewPane(content: PaneContent, origin: Pane | undefined, opts: O
 /** Where a new pane goes beside its origin: to the right, or below when
  * the origin is already too narrow to halve; as a tab when there is no
  * room either way. Measured from the DOM, so outside the app (tests) it
- * is simply "right". */
+ * is simply "right". A maximized origin fills the whole workspace on the
+ * screen, but the split is made in its own leaf, which the maximize will
+ * give back (a link from a maximized timeline lets it go to show the new
+ * pane): so its size is the leaf's share of that space, not what shows. */
 function placementBeside(originId: string | undefined): { side: Side; asTab: boolean } {
   if (!originId || typeof document === "undefined") return { side: "right", asTab: false };
   const el = document.querySelector<HTMLElement>(`[data-pane-id="${originId}"]`);
   if (!el) return { side: "right", asTab: false };
-  const { width, height } = el.getBoundingClientRect();
+  let { width, height } = el.getBoundingClientRect();
+  const { tree, maximizedPaneId } = useWorkspaceStore.getState();
+  const home = maximizedPaneId === originId ? leafOfPane(tree, originId) : null;
+  const box = home && leafBox(tree, home.id, width, height);
+  if (box) ({ width, height } = box);
   if (width >= PANE_MIN_PX * 2 + DIVIDER_PX) return { side: "right", asTab: false };
   if (height >= PANE_MIN_PX * 2 + DIVIDER_PX) return { side: "bottom", asTab: false };
   return { side: "right", asTab: true };

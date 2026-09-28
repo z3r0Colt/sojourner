@@ -45,12 +45,32 @@ export const EPUB_ZOOM_MIN = 50;
 export const EPUB_ZOOM_MAX = 200;
 export const EPUB_ZOOM_STEP = 10;
 
+/** The Psalter page's zoom, in percent: the staff and the psalm's words
+ * together, like a book's page zoom. Not below 70, where the words under
+ * the notes (about ten pixels there) would stop being readable. */
+export const PSALTER_ZOOM_MIN = 70;
+export const PSALTER_ZOOM_MAX = 200;
+export const PSALTER_ZOOM_STEP = 10;
+
+/** A Psalter zoom brought to a whole step within its range; anything that is
+ * not a number (a damaged saved preference) is 100. */
+export function clampPsalterZoom(percent: number): number {
+  if (!Number.isFinite(percent)) return 100;
+  const stepped = Math.round(percent / PSALTER_ZOOM_STEP) * PSALTER_ZOOM_STEP;
+  return Math.max(PSALTER_ZOOM_MIN, Math.min(PSALTER_ZOOM_MAX, stepped));
+}
+
 /** How a copied passage is laid out: text alone, "text (John 3:16)",
  * "John 3:16 — text", or a Markdown blockquote with the reference on its
  * own line. See `lib/clipboard.ts`. */
 export type CopyFormat = "text" | "text-ref" | "ref-text" | "markdown";
 
 export type SearchTranslation = "all" | "reader" | number;
+
+/** How the interlinear sets out the Greek or Hebrew: each word under the
+ * English phrase that translates it ("aligned", the default), or the verse's
+ * words on a line of their own in the original's order ("original"). */
+export type InterlinearLayout = "aligned" | "original";
 
 /**
  * Global, window-level preferences (local storage). Anything about *what*
@@ -67,6 +87,7 @@ interface UiState {
   showHighlights: boolean;
   showNoteSymbols: boolean;
   showMorphology: boolean;
+  interlinearLayout: InterlinearLayout;
   copyFormat: CopyFormat;
   /** Append the translation code to the reference when copying ("John 3:16 KJV"). */
   copyIncludeTranslation: boolean;
@@ -99,6 +120,13 @@ interface UiState {
    * means the first bundled one. Harmonists divide and date the life of
    * Christ differently, so a reader who has settled on one keeps it. */
   harmonyCode: string | null;
+  /** The psalm the Psalter page last showed, so opening the Psalter again
+   * (the sidebar, the palette) comes back to the psalm being learned rather
+   * than to Psalm 1. Null until one is opened; see `completePsalterParams`. */
+  psalterPsalm: number | null;
+  /** The Psalter page's zoom, in percent (100 is the app's text size and the
+   * staff's own size). One for every Psalter pane, remembered. */
+  psalterZoom: number;
   /** Page zoom of a book in Resources, in percent (100 is the app's text size). */
   epubZoom: number;
   resourcesKindTab: ResourceKindTab;
@@ -143,6 +171,7 @@ interface UiState {
   toggleShowHighlights: () => void;
   toggleShowNoteSymbols: () => void;
   toggleShowMorphology: () => void;
+  setInterlinearLayout: (layout: InterlinearLayout) => void;
   toggleDistractionFreeMode: () => void;
   setDistractionFreeMode: (on: boolean) => void;
   toggleSidebar: () => void;
@@ -152,6 +181,8 @@ interface UiState {
   setEpubWidth: (w: EpubWidth) => void;
   setEpubUseBookStyles: (on: boolean) => void;
   setHarmonyCode: (code: string | null) => void;
+  setPsalterPsalm: (psalm: number) => void;
+  setPsalterZoom: (percent: number) => void;
 }
 
 const stored = (() => {
@@ -182,6 +213,7 @@ export const useUiStore = create<UiState>((set) => ({
   showHighlights: stored.showHighlights ?? true,
   showNoteSymbols: stored.showNoteSymbols ?? true,
   showMorphology: stored.showMorphology ?? true,
+  interlinearLayout: stored.interlinearLayout === "original" ? "original" : "aligned",
   copyFormat: stored.copyFormat ?? "text-ref",
   copyIncludeTranslation: stored.copyIncludeTranslation ?? false,
   reduceMotion: stored.reduceMotion ?? false,
@@ -194,6 +226,8 @@ export const useUiStore = create<UiState>((set) => ({
   epubWidth: stored.epubWidth ?? "medium",
   epubUseBookStyles: stored.epubUseBookStyles ?? false,
   harmonyCode: stored.harmonyCode ?? null,
+  psalterPsalm: typeof stored.psalterPsalm === "number" ? stored.psalterPsalm : null,
+  psalterZoom: typeof stored.psalterZoom === "number" ? clampPsalterZoom(stored.psalterZoom) : 100,
   epubZoom: typeof stored.epubZoom === "number" ? stored.epubZoom : 100,
   resourcesKindTab: stored.resourcesKindTab ?? "all",
   resourcesGroupBy: stored.resourcesGroupBy ?? "shelf",
@@ -252,6 +286,17 @@ export const useUiStore = create<UiState>((set) => ({
   setHarmonyCode: (harmonyCode) => {
     set({ harmonyCode });
     persist({ harmonyCode });
+  },
+
+  setPsalterPsalm: (psalterPsalm) => {
+    set({ psalterPsalm });
+    persist({ psalterPsalm });
+  },
+
+  setPsalterZoom: (percent) => {
+    const psalterZoom = clampPsalterZoom(percent);
+    persist({ psalterZoom });
+    set({ psalterZoom });
   },
 
   setEpubWidth: (epubWidth) => {
@@ -333,6 +378,10 @@ export const useUiStore = create<UiState>((set) => ({
       persist({ showMorphology: !s.showMorphology });
       return { showMorphology: !s.showMorphology };
     }),
+  setInterlinearLayout: (interlinearLayout) => {
+    persist({ interlinearLayout });
+    set({ interlinearLayout });
+  },
   toggleDistractionFreeMode: () => set((s) => ({ distractionFreeMode: !s.distractionFreeMode })),
   setDistractionFreeMode: (distractionFreeMode) => set({ distractionFreeMode }),
   toggleSidebar: () =>

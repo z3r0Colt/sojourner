@@ -71,11 +71,14 @@ fn main() -> anyhow::Result<()> {
     let place_count: i64 = conn.query_row("SELECT COUNT(*) FROM atlas_places", [], |r| r.get(0))?;
     let journey_count: i64 = conn.query_row("SELECT COUNT(*) FROM atlas_journeys", [], |r| r.get(0))?;
     let pronunciation_count: i64 = conn.query_row("SELECT COUNT(*) FROM pronunciations", [], |r| r.get(0))?;
+    let webster_count: i64 = conn.query_row("SELECT COUNT(*) FROM webster_entries", [], |r| r.get(0))?;
+    let webster_alias_count: i64 = conn.query_row("SELECT COUNT(*) FROM webster_aliases", [], |r| r.get(0))?;
     println!(
         "done: {translation_count} translation(s), {commentary_count} commentary source(s), {strongs_count} strongs entries, {failed} failure(s)"
     );
     println!("  encyclopedia: {isbe_count} article(s); atlas: {place_count} place(s), {journey_count} journey(s)");
     println!("  pronunciations: {pronunciation_count} word(s)");
+    println!("  Webster 1828: {webster_count} entries, {webster_alias_count} alias(es)");
 
     if failed > 0 {
         anyhow::bail!("{failed} source file(s) failed to import -- see log above");

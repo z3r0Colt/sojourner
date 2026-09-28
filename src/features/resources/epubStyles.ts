@@ -25,6 +25,15 @@ import { READING_LINE_HEIGHTS, type EpubWidth, type LineSpacing, type ReadingFon
 /** The key epub.js replaces rather than duplicates when re-injecting. */
 export const EPUB_STYLE_KEY = "sojourner-reader";
 
+/** Marks the block being read aloud (see EpubReader's follow-along). An
+ * attribute and a rule here rather than an inline style, so taking the mark
+ * off leaves the book's own styling exactly as it was. */
+export const SPEAKING_ATTR = "data-reader-speaking";
+
+/** The same mark for loose text that shares its element with other blocks,
+ * as a named highlight over its range (CSS Custom Highlight API). */
+export const SPEAKING_HIGHLIGHT = "reader-speaking";
+
 /** Marks the run-out appended after the last paragraph (see `addRunOut`). */
 const RUN_OUT_ATTR = "data-reader-run-out";
 
@@ -84,6 +93,8 @@ export interface EpubStyleSettings {
    * as CSS `zoom` on the root so text, images and an OCR layer scale
    * together and selection stays under the pointer (see `fitScannedPage`). */
   zoom: number;
+  /** The read-aloud highlight colour, for the block being read. */
+  speakingColor?: string;
 }
 
 /** OpenDyslexic has to be declared again inside the book's frame: an
@@ -109,6 +120,7 @@ export function buildEpubCss(settings: EpubStyleSettings): string {
   const desk = token("--color-surface-2", "#f1f1ee");
   const sheet = settings.useBookStyles ? "#ffffff" : token("--color-surface", "#ffffff");
   const rule = token("--color-line", "#e4e4df");
+  const speaking = settings.speakingColor ?? "#fde047";
 
   // Always: undo the page-sized boxes, and keep wide content inside the
   // pane instead of pushing a sideways scrollbar under the text. The body
@@ -166,6 +178,19 @@ body :where(pre) { white-space: pre-wrap !important; overflow-wrap: break-word !
 /* Important, or the rule above that opens every div to "height: auto"
    flattens the run-out to nothing. */
 body [${RUN_OUT_ATTR}] { display: block !important; height: 96px !important; min-height: 0 !important; }
+/* The block being read aloud: a wash of the reader's highlight colour, spread
+   a little past the text so a one-line heading is marked as clearly as a
+   paragraph. It outranks the theme's "every element is transparent" rule by
+   its attribute, and is part of the layout so the book's own styling shows
+   it too. */
+html [${SPEAKING_ATTR}] {
+  background-color: color-mix(in srgb, ${speaking} 32%, transparent) !important;
+  box-shadow: 0 0 0 4px color-mix(in srgb, ${speaking} 32%, transparent) !important;
+  border-radius: 2px !important;
+}
+::highlight(${SPEAKING_HIGHLIGHT}) {
+  background-color: color-mix(in srgb, ${speaking} 32%, transparent);
+}
 /* The frame is as wide as the pane, so a book squeezed into a narrow pane
    gives its gutters back to the text. */
 @media (max-width: 460px) {
@@ -211,11 +236,14 @@ body {
   -webkit-hyphens: auto;
 }
 body *${NOT_DRAWN}${NOT_CODE} { font-family: inherit !important; }
-body *${NOT_DRAWN}:not(a):not(a *) {
+/* Only an anchor with an href is a link. CCEL wraps a sermon's opening
+   sentence in <a id="..."> as a target for its table of contents, and
+   colouring every <a> painted that sentence in link blue. */
+body *${NOT_DRAWN}:not(a[href]):not(a[href] *) {
   color: inherit !important;
   background-color: transparent !important;
 }
-body a${NOT_DRAWN}, body a *${NOT_DRAWN} {
+body a[href]${NOT_DRAWN}, body a[href] *${NOT_DRAWN} {
   color: ${accent} !important;
   background-color: transparent !important;
 }

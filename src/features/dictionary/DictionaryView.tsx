@@ -16,6 +16,9 @@ import { useSetting } from "../../hooks/useSetting";
 import { StudyActions } from "../sermons/StudyActions";
 import { dictionaryRef } from "../sermons/sourceIdentity";
 import { firstParagraph, selectionWithin } from "../sermons/excerpt";
+import { Tabs } from "../../components/ui/Tabs";
+import { WebsterDictionary } from "./WebsterDictionary";
+import { dictionaryWorkShown, type DictionaryWork } from "./websterDisplay";
 
 const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
@@ -28,9 +31,81 @@ const SOURCES = [
   { code: "SMI", label: "Smith's only" },
 ];
 
+/** The switch at the head of the index. */
+const WORKS: { key: DictionaryWork; label: string; title: string }[] = [
+  { key: "bible", label: "Bible dictionaries", title: "Easton's and Smith's: the Bible's people, places and things" },
+  { key: "webster", label: "Webster 1828", title: "Webster's American Dictionary of the English Language (1828): the English of the King James Bible" },
+];
+
+/**
+ * The Dictionary page, which binds two works of different kinds: the Bible
+ * dictionaries, which explain what the Bible names, and Webster's 1828,
+ * which explains the English it is translated into. They are not searched
+ * together -- Easton's CHARITY is a note on 1 Corinthians 13, Webster's the
+ * senses of a word, "love" first among them -- so a switch at the head of
+ * the index says which one is open. The choice is written into the pane (so the route
+ * and a saved workspace keep it) and remembered as a setting, like the
+ * choice between Easton's and Smith's, for the next Dictionary opened with
+ * nothing in it.
+ */
 export function DictionaryView() {
-  const [{ slug: paneSlug }] = usePaneParams("dictionary");
-  const slug = paneSlug ?? undefined;
+  const [params, setParams] = usePaneParams("dictionary");
+  const [remembered, setRemembered, { isLoaded }] = useSetting<DictionaryWork>("dictionary.work", "bible");
+  // Null for a bare pane until the setting has loaded (see
+  // dictionaryWorkShown).
+  const work = dictionaryWorkShown(params, isLoaded ? remembered : undefined);
+  // A bare pane that opens on the reader's last choice takes it for its own,
+  // as the switch would write it: its tab and route then say which work it
+  // shows ("Webster 1828", #/dictionary/webster), not "Dictionary" over
+  // Webster's page. The pane says nothing of its own only while it is bare.
+  const bare = params.work == null && !params.slug && params.webster == null;
+  useEffect(() => {
+    if (bare && work != null) setParams({ work });
+  }, [bare, work, setParams]);
+
+  function choose(next: DictionaryWork) {
+    setParams({ work: next });
+    setRemembered(next);
+  }
+
+  // The index can be as narrow as its 180px least, beside an entry in a
+  // middle pane, where the two labels on one line each are wider than it and
+  // ran on over the entry. There a label wraps between its words instead
+  // ("Bible / dictionaries"), and each tab is never narrower than its
+  // longest word.
+  const switcher = (
+    <Tabs<DictionaryWork | "undecided">
+      items={WORKS}
+      value={work ?? "undecided"}
+      onChange={(next) => next !== "undecided" && choose(next)}
+      size="sm"
+      stretch
+      className="shrink-0 [&>button]:whitespace-normal [&>button]:text-center [&>button]:leading-snug"
+    />
+  );
+  // Neither work until the reader's last choice is known: mounting the Bible
+  // dictionaries meanwhile would fetch their index and take the focus, only
+  // to give way to Webster a moment later. The index keeps its place and
+  // its switch, so a reader can still choose, should the setting never come.
+  if (work == null) {
+    return (
+      <div className="flex h-full">
+        <SidePanel id="dictionary-index" label="Dictionary index" defaultWidth={320} className="flex flex-col">
+          {switcher}
+          <LoadingState />
+        </SidePanel>
+      </div>
+    );
+  }
+  return work === "webster" ? (
+    <WebsterDictionary entryId={params.webster ?? null} switcher={switcher} />
+  ) : (
+    <BibleDictionaries slug={params.slug ?? undefined} switcher={switcher} />
+  );
+}
+
+/** Easton's and Smith's, one article per headword. */
+function BibleDictionaries({ slug, switcher }: { slug: string | undefined; switcher: ReactNode }) {
   const navigate = usePaneNavigate();
   const { data: index } = useDictionaryIndex();
   const { data: entry } = useDictionaryEntry(slug ?? null);
@@ -121,6 +196,7 @@ export function DictionaryView() {
   return (
     <div className="flex h-full">
       <SidePanel id="dictionary-index" label="Dictionary index" defaultWidth={320} autoCollapse={!!slug} className="flex flex-col">
+        {switcher}
         <div className="border-b border-line p-3">
           <div className="relative">
             <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-4" aria-hidden="true" />
@@ -176,7 +252,13 @@ export function DictionaryView() {
       </SidePanel>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-8 py-6">
-        {!entry && <EmptyState icon={BookA} title="Bible dictionary" description="Browse by letter or search on the left. Scripture references inside an entry are clickable." />}
+        {!entry && (
+          <EmptyState
+            icon={BookA}
+            title="Bible dictionary"
+            description="Browse by letter or search on the left. Scripture references inside an entry are clickable. For what an English word of the King James Bible meant, switch the index to Webster 1828."
+          />
+        )}
         {entry && (
           <div className="mx-auto w-full max-w-[70ch]">
             <div className="mb-2 flex items-start gap-2">

@@ -13,6 +13,7 @@ import { Button } from "../../components/ui/Button";
 import { EmptyState, LoadingState } from "../../components/ui/EmptyState";
 import { StudyActions } from "../sermons/StudyActions";
 import { strongsRef } from "../sermons/sourceIdentity";
+import { strongsText } from "./strongsText";
 import { cx, inputSmClass } from "../../components/ui/classes";
 
 export function LexiconView() {
@@ -114,7 +115,7 @@ export function LexiconView() {
                 </span>
                 {r.transliteration && <span className="italic text-ink-3">{r.transliteration}</span>}
               </div>
-              <div className="truncate text-xs text-ink-3">{r.definition}</div>
+              <div className="truncate text-xs text-ink-3">{strongsText(r).definition}</div>
             </button>
           ))}
           {!results?.length && debounced.trim().length > 1 && !directIdMatch && !isFetching && <EmptyState compact title="No matches" />}
@@ -124,7 +125,7 @@ export function LexiconView() {
         </div>
       </SidePanel>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-8 py-6">
+      <div className="min-h-0 min-w-0 flex-1 overflow-y-auto px-8 py-6">
         {!entry && lone && (
           <div className="mx-auto w-full max-w-[70ch]">
             <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-3">{lone.source_name}</div>
@@ -170,7 +171,7 @@ export function LexiconView() {
                   kind: "strongs",
                   refId: strongsRef(entry.id),
                   label: `${entry.original_word}${entry.transliteration ? ` (${entry.transliteration})` : ""}, ${entry.id}`,
-                  excerpt: entry.definition ?? null,
+                  excerpt: strongsText(entry).definition || null,
                 })}
               />
             </div>
@@ -181,8 +182,10 @@ export function LexiconView() {
               {entry.transliteration && <span className="text-lg italic text-ink-3">{entry.transliteration}</span>}
             </div>
             {entry.pronunciation && <div className="mb-4 text-sm text-ink-3">pronounced {entry.pronunciation}</div>}
+            {/* As Strong's wrote it: see strongsText for θεός and the seven
+                other Greek entries whose meaning the imported file split. */}
             <p className="mb-4 text-ink" style={typography}>
-              {entry.definition}
+              {strongsText(entry).definition}
             </p>
             {entry.thayers_definition && (
               <div className="mb-4 rounded-lg border-l-2 border-line-2 bg-surface-2 p-3 text-ink-2" style={typography}>
@@ -190,9 +193,9 @@ export function LexiconView() {
                 <CommentaryHtml html={entry.thayers_definition} onJumpToRef={jumpToRef} />
               </div>
             )}
-            {entry.derivation && (
+            {strongsText(entry).derivation && (
               <p className="mb-2 text-sm text-ink-2">
-                <span className="font-semibold">Derivation:</span> {entry.derivation}
+                <span className="font-semibold">Derivation:</span> {strongsText(entry).derivation}
               </p>
             )}
             {entry.kjv_usage && (
@@ -200,8 +203,12 @@ export function LexiconView() {
                 <span className="font-semibold">KJV usage:</span> {entry.kjv_usage}
               </p>
             )}
+            {/* Its label wraps in a narrow pane. Kept on one line, as a
+                button's is, it was wider than the entry in a 330px pane:
+                cut off at "where it occur…", with the whole entry
+                scrolling sideways under it. */}
             <Button
-              className="mt-4"
+              className="mt-4 h-auto! min-h-8 max-w-full py-1.5 text-left whitespace-normal! [&>svg]:shrink-0"
               variant="secondary"
               icon={BookA}
               onClick={(e) => openContent("wordstudy", { id: entry.id }, { target: targetFor(e, "new") })}

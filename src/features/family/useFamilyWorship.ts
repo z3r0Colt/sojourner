@@ -23,6 +23,7 @@ import {
   catechismPlan,
   localDate,
   planFinished,
+  talkQuestions,
   type FamilyWorship,
 } from "./familyWorship";
 
@@ -66,6 +67,9 @@ export interface Tonight {
   planDone: boolean;
   /** The starter reading's heading ("The burning bush"), if it has one. */
   readingTitle: string | null;
+  /** The questions to talk over after the reading: the family's own, or
+   * faith, love and hope (see talkQuestions). */
+  talkQuestions: string[];
   psalm: number | null;
   questions: WestminsterSectionSummary[] | undefined;
   learning: WestminsterSectionSummary | undefined;
@@ -114,6 +118,7 @@ export function useFamilyWorship() {
       day,
       planDone,
       readingTitle,
+      talkQuestions: talkQuestions(state),
       psalm: state.singing ? (state.psalm?.number ?? null) : null,
       questions,
       learning,

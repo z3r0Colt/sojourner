@@ -1,0 +1,450 @@
+# Builds the Windows installer on GitHub's own runners, so that what a reader
+# downloads can be traced back to a commit in this repository -- which is what
+# code signing through the SignPath Foundation asks for: it signs only files
+# built by GitHub Actions from the public repo, and checks that origin itself.
+#
+# Three jobs:
+#   build    the installer, exactly as `npm run tauri build` makes it locally
+#   sign     SignPath, only once the repository variables for it are set;
+#            release runs are release-signed, any other run test-signed
+#   release  a DRAFT GitHub release with the installer attached; never published
+#
+# How to cut a release, and how to switch signing on: .github/RELEASING.md.
+
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      draft_release:
+        description: "Also create or update the draft release for this version's tag (the tag must already point at the commit being built)"
+        type: boolean
+        default: false
+
+# Each job asks for what it needs below; nothing gets write access by default.
+permissions:
+  contents: read
+
+# One release build per ref at a time. Never cancel a running one: a half-made
+# draft or an abandoned signing request is worse than a wait.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build the Windows installer
+    runs-on: windows-latest
+    timeout-minutes: 180
+    permissions:
+      contents: read
+    env:
+      # ort-sys (the ONNX runtime behind the neural voice) downloads a prebuilt,
+      # hash-checked onnxruntime while compiling and links to it where it lies.
+      # Kept at a fixed path so it can be cached beside target/: a restored
+      # target/ whose onnxruntime.lib is missing fails to link.
+      ORT_CACHE_DIR: C:\ort-cache
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      installer: ${{ steps.installer.outputs.name }}
+      sha256: ${{ steps.installer.outputs.sha256 }}
+      size-mib: ${{ steps.installer.outputs.size-mib }}
+      artifact-name: ${{ steps.installer.outputs.artifact-name }}
+      artifact-id: ${{ steps.upload.outputs.artifact-id }}
+    steps:
+      # The runner's Git turns LF into CRLF on checkout. Build from the bytes
+      # that were committed instead, so the installer does not depend on how
+      # one machine's Git happens to be set up.
+      - name: Check out files exactly as committed
+        run: git config --global core.autocrlf false
+
+      - name: Check out the repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Read the version and check it against the tag
+        id: version
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DRAFT_RELEASE: ${{ inputs.draft_release }}
+        run: |
+          $pkg   = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          $tauri = (Get-Content src-tauri/tauri.conf.json -Raw | ConvertFrom-Json).version
+          $cargo = (Select-String -Path src-tauri/Cargo.toml -Pattern '^version\s*=\s*"([^"]+)"' | Select-Object -First 1).Matches[0].Groups[1].Value
+          Write-Host "package.json $pkg, tauri.conf.json $tauri, Cargo.toml $cargo"
+          if ($pkg -ne $tauri -or $pkg -ne $cargo) {
+            Write-Host "::error::The three version numbers disagree: package.json $pkg, tauri.conf.json $tauri, Cargo.toml $cargo"
+            exit 1
+          }
+          if ($env:GITHUB_REF_TYPE -eq 'tag' -and $env:GITHUB_REF_NAME -ne "v$pkg") {
+            Write-Host "::error::Tag $env:GITHUB_REF_NAME does not match version $pkg (expected v$pkg)"
+            exit 1
+          }
+          # A manual run that is to draft the release needs v<version> to point
+          # at this very commit. Find out now rather than after an hour's build.
+          # (The release job checks again before it touches the draft.)
+          if ($env:DRAFT_RELEASE -eq 'true') {
+            $tagCommit = gh api "repos/$env:GITHUB_REPOSITORY/commits/v$pkg" --jq .sha 2>$null
+            if ($tagCommit -notmatch '^[0-9a-f]{40}$') {
+              Write-Host "::error::Tag v$pkg does not exist on GitHub. Push the tag first, or run without the draft box ticked."
+              exit 1
+            }
+            if ($tagCommit -ne $env:GITHUB_SHA) {
+              Write-Host "::error::Tag v$pkg points at $tagCommit, but this run is building $env:GITHUB_SHA."
+              exit 1
+            }
+          }
+          "version=$pkg" >> $env:GITHUB_OUTPUT
+
+      - name: Show free disk space
+        shell: pwsh
+        run: Get-PSDrive -PSProvider FileSystem | Format-Table Name, @{n='Free GB';e={[math]::Round($_.Free/1GB,1)}}, @{n='Used GB';e={[math]::Round($_.Used/1GB,1)}}
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          # The version local releases have been built with.
+          node-version: 24
+          cache: npm
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust builds
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "src-tauri -> target"
+          cache-directories: ${{ env.ORT_CACHE_DIR }}
+          # A cache saved under a tag can only ever be read by that same tag,
+          # so saving one per release would spend the repository's 10 GB for
+          # nothing. Runs on master (workflow_dispatch) keep it warm instead.
+          save-if: ${{ github.ref == 'refs/heads/master' }}
+
+      - name: Install npm packages
+        run: npm ci
+
+      # models/ is gitignored: ~170 MB of Apache-2.0 Kokoro weights, fetched
+      # from Hugging Face and bundled into the installer.
+      - name: Restore the voice model
+        id: voices
+        uses: actions/cache@v6
+        with:
+          path: models/kokoro
+          key: voice-model-${{ hashFiles('.github/voice-model.sha256', 'tools/fetch-voice-model.mjs') }}
+
+      # Anonymous downloads from a shared runner can meet a 429 or a dropped
+      # connection. The fetcher skips files it already has, so a second try
+      # only fetches what is missing.
+      - name: Fetch the voice model
+        if: steps.voices.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          for attempt in 1 2 3; do
+            npm run fetch:voices && exit 0
+            if [ "$attempt" -lt 3 ]; then
+              echo "::warning::Fetching the voice model failed (try $attempt of 3); trying again in $((attempt * 30)) seconds."
+              sleep $((attempt * 30))
+            fi
+          done
+          echo "::error::Could not fetch the voice model from Hugging Face after three tries."
+          exit 1
+
+      # The fetcher reads Hugging Face's `main`, which could change under us.
+      # These hashes are the files every release so far has shipped (Hugging
+      # Face revision 1939ad2a, February 2025); anything else stops the build.
+      - name: Check the voice model against its pinned hashes
+        shell: bash
+        run: sha256sum --check --strict .github/voice-model.sha256
+
+      # The same command as a local release. tauri.conf.json's
+      # beforeBuildCommand rebuilds content/content.db from bibles/,
+      # commentaries/, reference/ and library/ (build:content), then the
+      # frontend (tsc && vite build); the NSIS bundler downloads NSIS and the
+      # WebView2 offline installer it embeds.
+      - name: Build the installer
+        run: npm run tauri build
+
+      - name: Describe the installer
+        id: installer
+        shell: pwsh
+        run: |
+          $v = '${{ steps.version.outputs.version }}'
+          $name = "Sojourner_${v}_x64-setup.exe"
+          $path = "src-tauri/target/release/bundle/nsis/$name"
+          if (-not (Test-Path $path)) {
+            Write-Host "::error::No installer at $path"
+            Get-ChildItem src-tauri/target/release/bundle -Recurse -ErrorAction SilentlyContinue | Select-Object FullName, Length | Format-Table -AutoSize
+            exit 1
+          }
+          $sha = (Get-FileHash $path -Algorithm SHA256).Hash.ToLower()
+          $mib = [math]::Round((Get-Item $path).Length / 1MB, 1)
+          $content = [math]::Round((Get-Item content/content.db).Length / 1MB, 1)
+          "name=$name" >> $env:GITHUB_OUTPUT
+          "path=$path" >> $env:GITHUB_OUTPUT
+          "sha256=$sha" >> $env:GITHUB_OUTPUT
+          "size-mib=$mib" >> $env:GITHUB_OUTPUT
+          "artifact-name=Sojourner-$v-installer-unsigned" >> $env:GITHUB_OUTPUT
+          @(
+            "### Sojourner $v installer (unsigned)"
+            ""
+            "| | |"
+            "|---|---|"
+            "| File | ``$name`` |"
+            "| Size | $mib MiB |"
+            "| SHA-256 | ``$sha`` |"
+            "| content.db | $content MiB |"
+            "| Commit | ``$env:GITHUB_SHA`` |"
+          ) -join "`n" >> $env:GITHUB_STEP_SUMMARY
+
+      - name: Upload the unsigned installer
+        id: upload
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.installer.outputs.artifact-name }}
+          path: ${{ steps.installer.outputs.path }}
+          if-no-files-found: error
+          # An installer is already compressed; zipping it again only costs time.
+          compression-level: 0
+          retention-days: 30
+
+      - name: Show free disk space after the build
+        if: always()
+        shell: pwsh
+        run: Get-PSDrive -PSProvider FileSystem | Format-Table Name, @{n='Free GB';e={[math]::Round($_.Free/1GB,1)}}, @{n='Used GB';e={[math]::Round($_.Used/1GB,1)}}
+
+  sign:
+    name: Sign with SignPath
+    needs: build
+    # Off until SignPath is set up: see .github/RELEASING.md.
+    if: vars.SIGNPATH_ORGANIZATION_ID != ''
+    # Windows, to check the signature with Windows' own verifier afterwards.
+    runs-on: windows-latest
+    timeout-minutes: 330
+    permissions:
+      # SignPath reads this run's job details and downloads the artifact with
+      # the workflow's token.
+      actions: read
+      contents: read
+    env:
+      # Only a release run (a tag push, or a manual run drafting the release)
+      # goes to the policy in SIGNPATH_SIGNING_POLICY_SLUG, which for releases
+      # is `release-signing` and waits for a person to approve it. Every other
+      # run -- a test build, a run to warm the cache -- is test-signed, so it
+      # never files a release-signing request nobody meant to make.
+      IS_RELEASE: ${{ github.event_name == 'push' || inputs.draft_release == true }}
+      POLICY: ${{ (github.event_name == 'push' || inputs.draft_release == true) && vars.SIGNPATH_SIGNING_POLICY_SLUG || 'test-signing' }}
+    outputs:
+      artifact-name: ${{ steps.signed.outputs.artifact-name }}
+      trusted: ${{ steps.signed.outputs.trusted }}
+    steps:
+      - name: Submit the installer to SignPath
+        uses: signpath/github-action-submit-signing-request@v3
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ env.POLICY }}
+          github-artifact-id: ${{ needs.build.outputs.artifact-id }}
+          # The artifact configuration requires the product version to be the
+          # one being released (see .github/RELEASING.md).
+          parameters: |
+            version: "${{ needs.build.outputs.version }}"
+          wait-for-completion: true
+          # A release-signing policy waits for a person to approve the request
+          # in SignPath. Allow most of a working session for that; the default
+          # is ten minutes.
+          wait-for-completion-timeout-in-seconds: 18000
+          # The artifact is a zip (upload-artifact's default), so the signed
+          # zip comes back extracted: signed/Sojourner_<v>_x64-setup.exe.
+          output-artifact-directory: signed
+
+      - name: Check the signature
+        id: signed
+        shell: pwsh
+        run: |
+          $v = '${{ needs.build.outputs.version }}'
+          $path = "signed/${{ needs.build.outputs.installer }}"
+          if (-not (Test-Path $path)) {
+            Write-Host "::error::SignPath returned no $path"
+            Get-ChildItem signed -Recurse | Select-Object FullName, Length | Format-Table -AutoSize
+            exit 1
+          }
+          $sig = Get-AuthenticodeSignature $path
+          Write-Host "Policy $env:POLICY. Signature: $($sig.Status) -- $($sig.SignerCertificate.Subject)"
+          # 'Valid' means Windows trusts the certificate's chain, as it will on
+          # a reader's machine. A test-signing certificate is self-signed, so
+          # its signature reads 'UnknownError' (a root Windows does not know):
+          # acceptable for a test run, never for a release.
+          $trusted = $sig.Status -eq 'Valid'
+          if (-not $trusted) {
+            $testSigned = $env:IS_RELEASE -ne 'true' -and $sig.Status -eq 'UnknownError' -and $sig.SignerCertificate
+            if (-not $testSigned) {
+              Write-Host "::error::The signed installer does not carry a signature Windows trusts ($($sig.Status): $($sig.StatusMessage)). A release must be signed under the release-signing policy."
+              exit 1
+            }
+            Write-Host "::warning::Test-signed ($($sig.StatusMessage)). Fine for a test run; this file must never be published."
+          }
+          $sha = (Get-FileHash $path -Algorithm SHA256).Hash.ToLower()
+          $mib = [math]::Round((Get-Item $path).Length / 1MB, 1)
+          $kind = if ($trusted) { 'signed' } else { 'test-signed' }
+          "path=$path" >> $env:GITHUB_OUTPUT
+          "trusted=$($trusted.ToString().ToLower())" >> $env:GITHUB_OUTPUT
+          "artifact-name=Sojourner-$v-installer-$kind" >> $env:GITHUB_OUTPUT
+          @(
+            ""
+            "### Sojourner $v installer ($kind, policy ``$env:POLICY``)"
+            ""
+            "| | |"
+            "|---|---|"
+            "| Signer | $($sig.SignerCertificate.Subject) |"
+            "| Signature | $($sig.Status) |"
+            "| Size | $mib MiB |"
+            "| SHA-256 | ``$sha`` |"
+          ) -join "`n" >> $env:GITHUB_STEP_SUMMARY
+
+      - name: Upload the signed installer
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.signed.outputs.artifact-name }}
+          path: ${{ steps.signed.outputs.path }}
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 30
+
+  release:
+    name: Draft the GitHub release
+    needs: [build, sign]
+    # Tag pushes always; a manual run only when asked. `sign` is skipped while
+    # SignPath is off, and a skipped job would skip this one too unless the
+    # condition says otherwise -- hence `!cancelled()` and the explicit results.
+    if: >-
+      !cancelled()
+      && needs.build.result == 'success'
+      && (needs.sign.result == 'success' || needs.sign.result == 'skipped')
+      && (github.event_name == 'push' || inputs.draft_release)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # Two runs can build the same version (a tag push and a manual run with the
+    # box ticked). They take turns at the drafts, so neither creates a second
+    # draft while the other is still making the first.
+    concurrency:
+      group: release-draft
+      cancel-in-progress: false
+    permissions:
+      contents: write
+    steps:
+      # A test-signed installer (self-signed certificate) must never reach a
+      # draft that says it was signed. The sign job already refuses one on a
+      # release run; this is the last guard.
+      - name: Refuse an installer that is not release-signed
+        if: needs.sign.result == 'success' && needs.sign.outputs.trusted != 'true'
+        run: |
+          echo "::error::The sign job returned an installer Windows does not trust (test-signed?). Nothing was drafted."
+          exit 1
+
+      - name: Download the installer
+        uses: actions/download-artifact@v8
+        with:
+          name: ${{ needs.sign.result == 'success' && needs.sign.outputs.artifact-name || needs.build.outputs.artifact-name }}
+          path: installer
+
+      - name: Create or update the draft release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          VERSION: ${{ needs.build.outputs.version }}
+          INSTALLER: ${{ needs.build.outputs.installer }}
+          SIGNED: ${{ needs.sign.result == 'success' && needs.sign.outputs.trusted == 'true' }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          tag="v$VERSION"
+          file="installer/$INSTALLER"
+          test -f "$file" || { echo "::error::Downloaded artifact has no $INSTALLER"; ls -la installer; exit 1; }
+
+          # The draft always belongs to the commit that was built. A manual run
+          # on a branch may only attach to a tag that already points at it.
+          # (On an HTTP error gh prints the error's JSON, not nothing, so the
+          # answer is checked for the shape of a commit hash.)
+          tag_commit=$(gh api "repos/$GH_REPO/commits/$tag" --jq .sha 2>/dev/null || true)
+          if ! [[ "$tag_commit" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::Tag $tag does not exist on GitHub. Push the tag (or run this workflow from it)."
+            exit 1
+          fi
+          if [ "$tag_commit" != "$GITHUB_SHA" ]; then
+            echo "::error::Tag $tag points at $tag_commit, but this run built $GITHUB_SHA."
+            exit 1
+          fi
+
+          sha=$(sha256sum "$file" | cut -d' ' -f1)
+          mib=$(awk -v b="$(stat -c %s "$file")" 'BEGIN { printf "%.1f", b / 1048576 }')
+          if [ "$SIGNED" = "true" ]; then
+            signing="Signed through the SignPath Foundation."
+          else
+            signing="Not code-signed yet: Windows SmartScreen may warn before it runs."
+          fi
+
+          placeholder="Release notes will follow."
+          cat > notes.md <<EOF
+          $placeholder
+
+          - **Installer:** \`$INSTALLER\` ($mib MiB)
+          - **SHA-256:** \`$sha\`
+
+          $signing Built by GitHub Actions from commit $GITHUB_SHA ([build log]($RUN_URL)).
+          EOF
+
+          # Only "release not found" means there is no draft yet. Any other
+          # failure stops here rather than risk a second draft for the tag.
+          if view=$(gh release view "$tag" --json isDraft,body 2>view.err); then
+            state=$(jq -r .isDraft <<<"$view")
+            body=$(jq -r .body <<<"$view")
+          elif grep -qi "release not found" view.err; then
+            state=missing
+          else
+            echo "::error::Could not look up the release for $tag: $(cat view.err)"
+            exit 1
+          fi
+
+          case "$state" in
+            missing)
+              gh release create "$tag" "$file" --draft --verify-tag \
+                --title "Sojourner: Bible Study Companion" --notes-file notes.md
+              echo "Created a draft release for $tag." ;;
+            true)
+              gh release upload "$tag" "$file" --clobber
+              # Every build is a new file with its own SHA-256 (timestamps in
+              # content.db and the executable), so the figures in the notes
+              # must follow the file. Notes still as generated are rewritten;
+              # notes a person has written are left alone, with a warning.
+              if [[ "$body" == "$placeholder"* ]]; then
+                gh release edit "$tag" --notes-file notes.md
+                echo "Replaced the installer on the existing draft for $tag and rewrote its generated notes."
+              else
+                echo "::warning::Replaced the installer on the draft for $tag, whose notes were written by hand and were left alone. Correct them to the new file: $mib MiB, SHA-256 $sha. $signing"
+                {
+                  echo "### The draft's notes need correcting"
+                  echo ""
+                  echo "The installer on the draft for $tag was replaced, but its notes were written by hand and were not changed. Put these figures in them:"
+                  echo ""
+                  echo "- Size: $mib MiB"
+                  echo "- SHA-256: \`$sha\`"
+                  echo "- $signing"
+                  echo ""
+                } >> "$GITHUB_STEP_SUMMARY"
+              fi ;;
+            *)
+              echo "::error::$tag is already published. A published release is never changed from here."
+              exit 1 ;;
+          esac
+
+          {
+            echo "### Draft release $tag"
+            echo ""
+            cat notes.md
+          } >> "$GITHUB_STEP_SUMMARY"

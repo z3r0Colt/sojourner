@@ -121,6 +121,13 @@ export interface LexiconParams {
 
 export interface DictionaryParams {
   slug: string | null;
+  /** Which of the page's two works is showing: the Bible dictionaries
+   * (Easton's and Smith's) or Webster's 1828 dictionary of English. Unset,
+   * the page shows the work of whatever it was opened on, or else the one
+   * the reader chose last (see dictionaryWorkShown). */
+  work?: "bible" | "webster";
+  /** A Webster 1828 entry, by id. */
+  webster?: number | null;
 }
 
 export interface EncyclopediaParams {
@@ -183,6 +190,19 @@ export interface WordStudyParams {
   id: string | null;
 }
 
+/** Which tab of the Psalter page is showing: a psalm's words set to its
+ * tune, or the index of every tune. */
+export type PsalterTab = "psalm" | "tunes";
+
+/** The Psalter as a page of its own, reached without a Bible open beside
+ * it. The psalm is chosen here rather than followed from a linked pane --
+ * the metrical study pane (`metrical`) is the one that follows. */
+export interface PsalterParams {
+  /** 1 to 150. */
+  psalm: number;
+  view: PsalterTab;
+}
+
 export type PaneContent =
   | { kind: "bible"; params: BibleParams }
   | { kind: "interlinear"; params: PassageParams }
@@ -207,6 +227,7 @@ export type PaneContent =
   | { kind: "prayer"; params: EmptyParams }
   | { kind: "memory"; params: EmptyParams }
   | { kind: "plans"; params: EmptyParams }
+  | { kind: "psalter"; params: PsalterParams }
   | { kind: "family"; params: EmptyParams }
   | { kind: "harmony"; params: EmptyParams }
   | { kind: "sermons"; params: EmptyParams }
@@ -248,6 +269,7 @@ export const PANE_KIND_LIST: readonly PaneKind[] = [
   "prayer",
   "memory",
   "plans",
+  "psalter",
   "family",
   "harmony",
   "sermons",
@@ -775,7 +797,16 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
         const target = passage.verse ?? undefined;
         const sameChapter = p.params.bookId === passage.bookId && p.params.chapter === passage.chapter;
         if (sameChapter) {
-          if (p.params.activeVerse === passage.verse && p.params.verse === target) return p;
+          // A Bible pane that already has this verse selected is left alone,
+          // its scroll target included. That is always so of the pane the
+          // reader chose the verse in: every Bible pane that follows it
+          // publishes the verse it was given in turn, so the verse comes
+          // straight back. Taken as a scroll target there, it centred the
+          // verse under the reader's pointer, and the second click of a
+          // double-click looked up a word they had not pointed at, and the
+          // verse menu opened beside the wrong verse. Only the other panes
+          // follow.
+          if (p.params.activeVerse === passage.verse) return p;
           changed = true;
           return { ...p, params: { ...p.params, activeVerse: passage.verse, verse: target } } as Pane;
         }

@@ -1,12 +1,14 @@
-import { useEffect, useState } from "react";
-import { Moon, Pause, Play, Settings2, SkipBack, SkipForward, X } from "lucide-react";
+import { useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
+import { ListOrdered, Moon, Pause, Play, Settings2, SkipBack, SkipForward, X } from "lucide-react";
 import { SLEEP_MINUTE_OPTIONS, useTtsStore } from "../../state/ttsStore";
 import { useWorkspaceStore } from "../../state/workspaceStore";
 import { ttsEngines, type TtsEngine, type TtsVoice } from "./ttsEngine";
 import { PronunciationOverrides } from "./PronunciationOverrides";
+import { findPassages, fitAtWord, labelParts, passagePreview } from "./jumpList";
 import { IconButton, Button } from "../../components/ui/Button";
 import { Popover } from "../../components/ui/Popover";
-import { selectClass, checkboxClass, cx } from "../../components/ui/classes";
+import { selectClass, checkboxClass, inputSmClass, cx } from "../../components/ui/classes";
 
 const HIGHLIGHT_COLORS = ["#fde047", "#86efac", "#93c5fd", "#f9a8d4", "#fdba74"];
 
@@ -238,6 +240,187 @@ function TtsSettings() {
   );
 }
 
+/** One canvas for measuring text, made on first use. */
+let measuringContext: CanvasRenderingContext2D | null | undefined;
+
+/**
+ * A name that gives way when its line is too narrow, cut after a whole word
+ * with an ellipsis (`fitAtWord`) and so ending where its text does -- the
+ * place after it (", paragraph 12") following straight on, not across the gap
+ * a browser's ellipsis left. Refitted when the line changes width, and when
+ * `refit` changes: what shares the line ("15 of 137") takes more or less room
+ * as the reading goes on.
+ *
+ * Each fitting starts from the whole name, which the line shrinks to the room
+ * there is; that width is what the name is fitted to, before anything is
+ * painted.
+ */
+function FittedName({ name, refit }: { name: string; refit?: unknown }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const [fitted, setFitted] = useState<string | null>(null);
+  const [lineWidth, setLineWidth] = useState(0);
+
+  useEffect(() => {
+    const line = ref.current?.parentElement;
+    if (!line || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(() => setLineWidth(line.clientWidth));
+    observer.observe(line);
+    return () => observer.disconnect();
+  }, []);
+
+  useLayoutEffect(() => setFitted(null), [name, refit, lineWidth]);
+
+  useLayoutEffect(() => {
+    const span = ref.current;
+    if (fitted != null || !span || span.scrollWidth <= span.clientWidth) return;
+    if (measuringContext === undefined) measuringContext = document.createElement("canvas").getContext("2d");
+    const context = measuringContext;
+    if (!context) return;
+    context.font = getComputedStyle(span).font;
+    // A pixel's grace: the canvas and the page round differently.
+    setFitted(fitAtWord(name, span.clientWidth - 1, (text) => context.measureText(text).width));
+  });
+
+  return (
+    <span ref={ref} className="truncate">
+      {fitted ?? name}
+    </span>
+  );
+}
+
+/**
+ * A passage's label on one line, cut short in its name and never in its place
+ * ("…an angry God, paragraph 11"), with the whole of it on hover.
+ */
+function PassageLabel({ label, className }: { label: string; className?: string }) {
+  const { name, place } = labelParts(label);
+  return (
+    <span className={cx("flex min-w-0", className)} title={label}>
+      <FittedName name={name} refit={place} />
+      {place && <span className="shrink-0 whitespace-pre">{place}</span>}
+    </span>
+  );
+}
+
+/**
+ * Every passage of the reading, to start from wherever the reader likes.
+ *
+ * Before this a reading could only be sat through from where it began -- and a
+ * library book began at its first word, so the only way to chapter nine was
+ * Next, pressed a few thousand times. A whole book is that many rows, so the
+ * list is virtualized, and it opens on the passage being read.
+ */
+function JumpToPassage({ onDone }: { onDone: () => void }) {
+  const segments = useTtsStore((s) => s.segments);
+  const currentSegmentIndex = useTtsStore((s) => s.currentSegmentIndex);
+  const more = useTtsStore((s) => s.more);
+  const seek = useTtsStore((s) => s.seek);
+  const [query, setQuery] = useState("");
+  // Searching a book's worth of passages takes a moment; the box keeps up with
+  // the typing and the list catches up behind it.
+  const deferredQuery = useDeferredValue(query);
+  const matches = useMemo(() => findPassages(segments, deferredQuery), [segments, deferredQuery]);
+  const count = matches ? matches.length : segments.length;
+  const passageAt = (row: number) => (matches ? matches[row] : row);
+
+  const listRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const rowVirtualizer = useVirtualizer({
+    count,
+    getScrollElement: () => listRef.current,
+    estimateSize: () => 44,
+    overscan: 8,
+    // Rows are measured from their ref callbacks, during React's commit,
+    // where a synchronous re-render is an error (see ReadingPane).
+    useFlushSync: false,
+  });
+
+  // Opened on the passage being read, so "a little further back" is a short
+  // scroll rather than a trip from the top of the book. Only on opening:
+  // following the reading as it moves would pull the list out from under a
+  // reader who is scrolling it. The focus waits a frame, because the panel is
+  // hidden until it has been placed and a hidden box cannot take the focus.
+  useEffect(() => {
+    rowVirtualizer.scrollToIndex(currentSegmentIndex, { align: "center" });
+    const frame = window.requestAnimationFrame(() => inputRef.current?.focus());
+    return () => window.cancelAnimationFrame(frame);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const jump = (index: number) => {
+    seek(index);
+    onDone();
+  };
+
+  return (
+    <div className="p-1">
+      <div className="mb-2 flex items-baseline justify-between gap-2">
+        <h3 className="text-sm font-semibold text-ink">Jump to a passage</h3>
+        <span className="text-xs text-ink-3">
+          {segments.length} {segments.length === 1 ? "passage" : "passages"}
+          {more ? " so far" : ""}
+        </span>
+      </div>
+      <input
+        ref={inputRef}
+        type="search"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        onKeyDown={(e) => {
+          // Enter takes the first passage found, for a reader who typed the
+          // words they were after and would rather not reach for the mouse.
+          if (e.key !== "Enter") return;
+          const first = findPassages(segments, query)?.[0];
+          if (first != null) jump(first);
+        }}
+        placeholder="Find words or a heading"
+        aria-label="Find a passage by its words"
+        className={cx(inputSmClass, "mb-2 w-full")}
+      />
+      {count === 0 ? (
+        <p className="px-1 py-3 text-center text-xs text-ink-3">Nothing in this reading matches “{deferredQuery.trim()}”.</p>
+      ) : (
+        <div ref={listRef} role="group" aria-label="Passages in this reading" className="overflow-y-auto overscroll-contain" style={{ maxHeight: "min(22rem, 55vh)" }}>
+          <div style={{ position: "relative", height: rowVirtualizer.getTotalSize() }}>
+            {rowVirtualizer.getVirtualItems().map((item) => {
+              const index = passageAt(item.index);
+              const segment = segments[index];
+              if (!segment) return null;
+              const current = index === currentSegmentIndex;
+              return (
+                <div
+                  key={item.key}
+                  ref={rowVirtualizer.measureElement}
+                  data-index={item.index}
+                  style={{ position: "absolute", top: 0, left: 0, right: 0, transform: `translateY(${item.start}px)` }}
+                >
+                  <button
+                    type="button"
+                    aria-current={current ? "true" : undefined}
+                    onClick={() => jump(index)}
+                    className={cx(
+                      "flex w-full items-start gap-2 rounded-md px-2 py-1.5 text-left",
+                      current ? "bg-accent-soft text-accent" : "text-ink-2 hover:bg-hover hover:text-ink",
+                    )}
+                  >
+                    <span className={cx("w-10 shrink-0 pt-px text-right text-xs tabular-nums", current ? "text-accent" : "text-ink-4")}>
+                      {index + 1}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      {segment.label && <PassageLabel label={segment.label} className="text-xs font-semibold" />}
+                      <span className={cx("block text-xs", segment.label ? "truncate" : "line-clamp-2")}>{passagePreview(segment.text)}</span>
+                    </span>
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function TtsPlayerBar() {
   const title = useTtsStore((s) => s.title);
   const segments = useTtsStore((s) => s.segments);
@@ -255,8 +438,13 @@ export function TtsPlayerBar() {
   const paneId = useTtsStore((s) => s.paneId);
   const sleepUntil = useTtsStore((s) => s.sleepUntil);
   const continuing = useTtsStore((s) => s.continuing);
+  const more = useTtsStore((s) => s.more);
+  const waitingForMore = useTtsStore((s) => s.waitingForMore);
+  // Which pane is reading, when there is more than one to choose from on
+  // screen. A maximized pane is the only one showing, and "Pane 2" above it
+  // named something the reader could not see.
   const paneLabel = useWorkspaceStore((s) => {
-    if (s.panes.length < 2 || paneId == null) return null;
+    if (s.panes.length < 2 || paneId == null || s.maximizedPaneId != null) return null;
     const idx = s.panes.findIndex((p) => p.id === paneId);
     return idx >= 0 ? `Pane ${idx + 1}` : null;
   });
@@ -291,41 +479,72 @@ export function TtsPlayerBar() {
   const sleepRemaining = sleepUntil != null ? Math.max(0, Math.round((sleepUntil - now) / 1000)) : null;
   const sleepLabel = sleepRemaining != null ? `${Math.floor(sleepRemaining / 60)}:${String(sleepRemaining % 60).padStart(2, "0")}` : null;
 
+  // The status line in two parts. Where the reading is -- the pane, the
+  // passage's label -- can be as long as a sermon's title, and is what gives
+  // way when the bar is narrow. How far along it is, or what it is waiting
+  // for, is never cut. One truncated line held all of it, with the error at
+  // the end: a book's long label pushed "15 of 140" and any error clean out
+  // of sight, and a reading stopped by a failure showed a Play button and no
+  // reason. The error now has a line of its own.
+  const showLabel = !continuing && !(waiting && waitingForMore);
+  const where = [paneLabel, showLabel ? currentLabel : null].filter(Boolean).join(" · ");
+  const status = continuing
+    ? "Continuing into the next chapter…"
+    : waiting && waitingForMore
+      ? // The reader has caught up with a book still loading its later
+        // sections. Not "Preparing the voice": the voice is ready and
+        // waiting, and it is the text that is on its way.
+        "Finding the next part…"
+      : waiting
+        ? "Preparing the voice…"
+        : `${currentSegmentIndex + 1} of ${segments.length}${more ? " so far" : ""}`;
+  const { name: whereName, place: wherePlace } = labelParts(where);
+
   return (
     <div className="shrink-0 border-t border-line bg-surface px-4 py-2">
       <div className="mx-auto flex max-w-3xl items-center gap-2">
         <div className="min-w-0 flex-1">
-          <div className="truncate text-sm font-medium text-ink">{title}</div>
-          <div className="truncate text-xs text-ink-3">
-            {paneLabel ? `${paneLabel} · ` : ""}
-            {continuing ? (
-              "Continuing into the next chapter…"
-            ) : waiting ? (
+          <div className="truncate text-sm font-medium text-ink" title={title}>
+            {title}
+          </div>
+          <div className="flex min-w-0 items-center text-xs text-ink-3" title={where ? `${where} · ${status}` : status}>
+            {where && (
               <>
-                {currentLabel ? `${currentLabel} · ` : ""}
-                Preparing the voice…
-              </>
-            ) : (
-              <>
-                {currentLabel ? `${currentLabel} · ` : ""}
-                {currentSegmentIndex + 1} of {segments.length}
+                <FittedName name={whereName} refit={`${wherePlace}${status}${sleepLabel ?? ""}`} />
+                <span className="shrink-0 whitespace-pre">{`${wherePlace} · `}</span>
               </>
             )}
+            <span className="shrink-0 whitespace-nowrap">{status}</span>
             {sleepLabel && (
-              <span className="ml-2 inline-flex items-center gap-1 text-ink-2" title="Sleep timer: reading stops when this reaches zero">
+              <span className="ml-2 inline-flex shrink-0 items-center gap-1 text-ink-2" title="Sleep timer: reading stops when this reaches zero">
                 <Moon className="h-3 w-3" aria-hidden="true" />
                 <span aria-label={`Sleep timer, ${sleepLabel} left`}>{sleepLabel}</span>
               </span>
             )}
-            {error && <span className="text-danger"> · {error}</span>}
           </div>
+          {error && (
+            <div className="truncate text-xs text-danger" role="status" title={error}>
+              {error}
+            </div>
+          )}
         </div>
 
         <IconButton icon={SkipBack} label="Previous" onClick={prev} disabled={currentSegmentIndex === 0} />
         <Button variant="primary" icon={playing ? Pause : Play} onClick={() => (playing ? pause() : resume())} className="w-24">
           {playing ? "Pause" : "Play"}
         </Button>
-        <IconButton icon={SkipForward} label="Next" onClick={next} disabled={currentSegmentIndex >= segments.length - 1} />
+        {/* At the last passage found so far, Next still has somewhere to go
+            while more of the book is loading: it waits there for it. */}
+        <IconButton icon={SkipForward} label="Next" onClick={next} disabled={waitingForMore || (currentSegmentIndex >= segments.length - 1 && !more)} />
+
+        <Popover
+          width="w-96"
+          trigger={({ toggle, open }) => (
+            <IconButton icon={ListOrdered} label="Jump to a passage" active={open} onClick={toggle} disabled={continuing || segments.length < 2} />
+          )}
+        >
+          {(close) => <JumpToPassage onDone={close} />}
+        </Popover>
 
         <Popover
           width="w-80"

@@ -11,14 +11,15 @@ import { useAllPsalmTunes } from "../../api/queries";
 import { Button } from "../../components/ui/Button";
 import { EmptyState, LoadingState } from "../../components/ui/EmptyState";
 import { schedule, TunePlayer } from "./tuneEngine";
-import { TuneStaff } from "./TuneStaff";
+import { STAFF_LYRIC_PX, TuneStaff } from "./TuneStaff";
 import type { PsalmTune } from "../../api/types";
 
 /** The metres a psalter reader meets most often come first; the rest follow
  *  in the order the tunes themselves arrive. */
 const FAMILIAR = ["C.M.", "S.M.", "L.M."];
 
-export function TuneIndexPanel() {
+/** `zoom` is the Psalter page's zoom (1 is the staff's own size). */
+export function TuneIndexPanel({ zoom = 1 }: { zoom?: number }) {
   const { data: tunes } = useAllPsalmTunes();
   const [openId, setOpenId] = useState<string | null>(null);
   const [playingId, setPlayingId] = useState<string | null>(null);
@@ -55,63 +56,69 @@ export function TuneIndexPanel() {
   return (
     <div className="flex h-full w-full flex-col">
       <div className="border-b border-line px-3 py-2 text-xs text-ink-3">
-        Psalm tunes · {tunes?.length ?? 0} in {byMetre.length} metres
-      </div>
+        <div className="mx-auto max-w-3xl">
+            Psalm tunes · {tunes?.length ?? 0} in {byMetre.length} metres
+          </div>
+        </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto">
-        {!tunes && <LoadingState />}
-        {tunes && tunes.length === 0 && <EmptyState compact title="No tunes are built in" />}
+        {/* A centred column, as the psalm itself is set, rather than rows
+            strung the width of a wide pane. */}
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <div className="mx-auto max-w-3xl">
+          {!tunes && <LoadingState />}
+          {tunes && tunes.length === 0 && <EmptyState compact title="No tunes are built in" />}
 
-        {byMetre.map(([metre, group]) => (
-          <section key={metre}>
-            <h3 className="sticky top-0 z-10 border-b border-line bg-surface-2/90 px-3 py-1.5 text-xs font-semibold text-ink-2 backdrop-blur">
-              {metre}
-              <span className="ml-2 font-normal text-ink-4">
-                {group[0].pattern.join(".")} · {group.length} tune{group.length === 1 ? "" : "s"}
-              </span>
-            </h3>
-            <ul>
-              {group.map((tune) => (
-                <li key={tune.id} className="border-b border-line/60">
-                  <div className="flex items-center gap-2 px-3 py-2">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => play(tune)}
-                      aria-label={playingId === tune.id ? `Stop ${tune.name}` : `Play ${tune.name}`}
-                    >
-                      {playingId === tune.id ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
-                    </Button>
-                    <button
-                      type="button"
-                      className="min-w-0 flex-1 text-left"
-                      onClick={() => setOpenId(openId === tune.id ? null : tune.id)}
-                      aria-expanded={openId === tune.id}
-                    >
-                      <span className="text-sm text-ink">{tune.name}</span>
-                      {tune.composer && <span className="ml-2 text-xs text-ink-4">{tune.composer.replace(/;\s*/g, "; ")}</span>}
-                    </button>
-                  </div>
-                  {openId === tune.id && (
-                    <div className="px-3 pb-3">
-                      <TuneStaff tune={tune} words={[]} sounding={null} />
+          {byMetre.map(([metre, group]) => (
+            <section key={metre}>
+              <h3 className="sticky top-0 z-10 border-b border-line bg-surface-2/90 px-3 py-1.5 text-xs font-semibold text-ink-2 backdrop-blur">
+                {metre}
+                <span className="ml-2 font-normal text-ink-4">
+                  {group[0].pattern.join(".")} · {group.length} tune{group.length === 1 ? "" : "s"}
+                </span>
+              </h3>
+              <ul>
+                {group.map((tune) => (
+                  <li key={tune.id} className="border-b border-line/60">
+                    <div className="flex items-center gap-2 px-3 py-2">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => play(tune)}
+                        aria-label={playingId === tune.id ? `Stop ${tune.name}` : `Play ${tune.name}`}
+                      >
+                        {playingId === tune.id ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
+                      </Button>
+                      <button
+                        type="button"
+                        className="min-w-0 flex-1 text-left"
+                        onClick={() => setOpenId(openId === tune.id ? null : tune.id)}
+                        aria-expanded={openId === tune.id}
+                      >
+                        <span className="text-sm text-ink">{tune.name}</span>
+                        {tune.composer && <span className="ml-2 text-xs text-ink-4">{tune.composer.replace(/;\s*/g, "; ")}</span>}
+                      </button>
                     </div>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </section>
-        ))}
+                    {openId === tune.id && (
+                      <div className="px-3 pb-3">
+                        <TuneStaff tune={tune} words={[]} sounding={null} lyricPx={STAFF_LYRIC_PX * zoom} />
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ))}
 
-        {tunes && tunes.length > 0 && (
-          <p className="flex items-start gap-2 px-3 py-3 text-xs text-ink-4">
-            <Music className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
-            <span>
-              A psalm is sung to any tune in its own metre. Open a Psalm with the Metrical Psalter beside it to sing one
-              with its words.
-            </span>
-          </p>
-        )}
+          {tunes && tunes.length > 0 && (
+            <p className="flex items-start gap-2 px-3 py-3 text-xs text-ink-4">
+              <Music className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+              <span>
+                A psalm is sung to any tune in its own metre. Open a psalm in the Psalter, or the Metrical Psalter beside a
+                Bible, to sing one with its words.
+              </span>
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -313,7 +313,11 @@ pub fn register_functions(conn: &Connection) -> rusqlite::Result<()> {
 /// migration has to be written a different way: recreate the table under a
 /// new name, copy the rows across, repoint the children, and only then drop
 /// the original -- or be run outside this function, with foreign keys off
-/// before any transaction is opened.
+/// before any transaction is opened. CONTENT_MIGRATION_0027, which rebuilds
+/// `timeline_events` under its verses and people, shows a third way: copy the
+/// children aside and drop them, rebuild the parent under a new name, drop
+/// the original and rename the new one into its place, then recreate the
+/// children and refill them from their copies (see its comment).
 fn run_migrations(conn: &mut Connection, schema_name: &str, migrations: &[&str]) -> anyhow::Result<()> {
     let db_name = if schema_name == "main" {
         rusqlite::DatabaseName::Main
@@ -710,6 +714,107 @@ mod tests {
         assert!(sermons::search(&conn, "strong", 10).unwrap().is_empty(), "not by a tag name");
         sermons::delete(&conn, sermon.id).unwrap();
         assert!(sermons::search(&conn, "unchangeable", 10).unwrap().is_empty(), "the Trash is filtered out");
+
+        drop(conn);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// CONTENT_MIGRATION_0027 rebuilds `timeline_events` to let church history
+    /// in, with foreign keys on -- rusqlite's SQLite is built with them on, and
+    /// the migrations run in a transaction where they cannot be turned off.
+    /// Built at version 26 and seeded the way the Bible's timeline import
+    /// leaves it, then migrated: every event keeps its id (a reader's saved
+    /// pane names the event it had open by id), its verses and people still
+    /// join to it and are still held to it, the indexes are back, nothing set
+    /// aside is left behind, and the widened CHECKs take a church event while
+    /// still refusing nonsense.
+    #[test]
+    fn the_timeline_rebuild_keeps_every_event_its_id_and_its_children() {
+        let dir = std::env::temp_dir().join(format!("sojourner-timeline-migrate-test-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("content.db");
+        {
+            let mut conn = Connection::open(&path).unwrap();
+            conn.execute_batch(PERFORMANCE_PRAGMAS).unwrap();
+            run_migrations(&mut conn, "main", &schema::CONTENT_MIGRATIONS[..26]).unwrap();
+            let foreign_keys: i64 = conn.query_row("PRAGMA foreign_keys", [], |r| r.get(0)).unwrap();
+            assert_eq!(foreign_keys, 1, "the rebuild is written for foreign keys on, as they are here");
+            conn.execute_batch(
+                "INSERT INTO factbook_entities (id, kind, name, description, summary, entity_type, verse_count)
+                   VALUES ('Paul@Act.7.58-2Pe', 'person', 'Paul', '', '', 'person', 1);
+                 INSERT INTO timeline_eras (slug, name, start_year, end_year, journey_era, sort_order)
+                   VALUES ('apostolic', 'The apostolic church', 30.333, 60, 'The apostolic church', 0);
+                 INSERT INTO timeline_events (id, key, title, start_year, end_year, precision, source, book_id, chapter, verse)
+                   VALUES (7, 'theo:900', 'Paul in Athens', 50, 50.003, 'day', 'theographic', 44, 17, 16);
+                 INSERT INTO timeline_events (id, key, title, start_year, end_year, precision, source)
+                   VALUES (126, 'add:x', 'An addition', 51, 51, 'year', 'added');
+                 INSERT INTO timeline_event_verses (event_id, book_id, chapter, verse) VALUES (7, 44, 17, 16), (7, 44, 17, 22);
+                 INSERT INTO timeline_event_entities (event_id, entity_id, role) VALUES (7, 'Paul@Act.7.58-2Pe', 'person');",
+            )
+            .unwrap();
+        }
+
+        let conn = open_content_db(&path).unwrap();
+        let version: i64 = conn.query_row("PRAGMA user_version", [], |r| r.get(0)).unwrap();
+        assert_eq!(version as usize, schema::CONTENT_MIGRATIONS.len());
+
+        let ids: Vec<(i64, String)> = conn
+            .prepare("SELECT id, key FROM timeline_events ORDER BY id")
+            .unwrap()
+            .query_map([], |r| Ok((r.get(0)?, r.get(1)?)))
+            .unwrap()
+            .collect::<Result<_, _>>()
+            .unwrap();
+        assert_eq!(ids, vec![(7, "theo:900".to_string()), (126, "add:x".to_string())], "every event keeps its id");
+        let count = |sql: &str| -> i64 { conn.query_row(sql, [], |r| r.get(0)).unwrap() };
+        assert_eq!(count("SELECT COUNT(*) FROM timeline_event_verses v JOIN timeline_events e ON e.id = v.event_id WHERE e.key = 'theo:900'"), 2);
+        assert_eq!(count("SELECT COUNT(*) FROM timeline_event_entities x JOIN timeline_events e ON e.id = x.event_id WHERE e.key = 'theo:900'"), 1);
+        assert_eq!(count("SELECT COUNT(*) FROM pragma_foreign_key_check"), 0, "no child is left pointing at nothing");
+        for index in ["idx_timeline_events_start", "idx_timeline_event_verses_passage", "idx_timeline_event_entities_entity"] {
+            let n: i64 = conn.query_row("SELECT COUNT(*) FROM sqlite_master WHERE type = 'index' AND name = ?1", [index], |r| r.get(0)).unwrap();
+            assert_eq!(n, 1, "{index} must survive the rebuild");
+        }
+        assert_eq!(count("SELECT COUNT(*) FROM sqlite_master WHERE name LIKE '%_aside' OR name = 'timeline_events_rebuilt'"), 0);
+        assert_eq!(count("SELECT COUNT(*) FROM timeline_eras WHERE track = 'bible'"), 1, "the eras already there are the Bible's");
+
+        // The children still answer to the rebuilt table, not to a name
+        // that went away with the old one.
+        conn.execute("INSERT INTO timeline_event_verses (event_id, book_id, chapter, verse) VALUES (126, 44, 18, 1)", []).unwrap();
+        assert!(conn.execute("INSERT INTO timeline_event_verses (event_id, book_id, chapter, verse) VALUES (999, 44, 18, 1)", []).is_err());
+
+        conn.execute(
+            "INSERT INTO timeline_events (key, title, start_year, end_year, precision, source, kind, circa, date, confession, era)
+             VALUES ('church:council-of-chalcedon', 'Council of Chalcedon', 451.769, 451.769, 'day', 'church', 'council', 0, '0451-10-08', 'chalcedon', 'church-nicene')",
+            [],
+        )
+        .expect("a church event is let in");
+        let church = conn.last_insert_rowid();
+        conn.execute("INSERT INTO timeline_event_citations (event_id, position, work, quote) VALUES (?1, 0, 'Schaff', 'in 451')", [church]).unwrap();
+        conn.execute(
+            "INSERT INTO timeline_eras (slug, name, start_year, end_year, sort_order, track) VALUES ('church-nicene', 'The Nicene church', 311, 590, 0, 'church')",
+            [],
+        )
+        .unwrap();
+        for (what, sql) in [
+            ("a source", "INSERT INTO timeline_events (key, title, start_year, end_year, precision, source) VALUES ('x:1', 'x', 1, 1, 'year', 'legend')"),
+            ("a kind", "INSERT INTO timeline_events (key, title, start_year, end_year, precision, source, kind) VALUES ('x:2', 'x', 1, 1, 'year', 'church', 'miracle')"),
+            ("a track", "INSERT INTO timeline_eras (slug, name, start_year, end_year, sort_order, track) VALUES ('x', 'x', 1, 1, 0, 'legend')"),
+        ] {
+            assert!(conn.execute(sql, []).is_err(), "the CHECK must still refuse {what} the app does not know");
+        }
+
+        let timeline = queries::timeline::all(&conn).unwrap();
+        let athens = timeline.events.iter().find(|e| e.id == 7).unwrap();
+        assert_eq!((athens.kind.as_deref(), athens.circa, athens.date.as_deref(), athens.era.as_deref()), (None, false, None, None));
+        assert!(athens.citations.is_empty());
+        assert_eq!(athens.entities.len(), 1);
+        let chalcedon = timeline.events.iter().find(|e| e.id == church).unwrap();
+        assert_eq!(chalcedon.citations.len(), 1);
+        assert_eq!(chalcedon.confession.as_deref(), Some("chalcedon"));
+        assert_eq!(chalcedon.era.as_deref(), Some("church-nicene"));
+        let tracks: Vec<&str> = timeline.eras.iter().map(|e| e.track.as_str()).collect();
+        assert_eq!(tracks, vec!["bible", "church"], "the Bible's eras first");
 
         drop(conn);
         let _ = std::fs::remove_dir_all(&dir);

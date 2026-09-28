@@ -7,9 +7,11 @@ import { LoadingState } from "../../components/ui/EmptyState";
 import { Button } from "../../components/ui/Button";
 import { cx, inputSmClass, selectSmClass } from "../../components/ui/classes";
 import type { MorphQuery } from "../../api/types";
+import { morphFieldOptions, searchExample, type MorphSearchField } from "./morphFieldOptions";
 
-/** The order the fields appear in, and what the form calls them. */
-const FIELD_LABELS: [string, string][] = [
+/** The order the fields appear in, and what the form calls them. Each
+ *  field's values, their order and their names are `morphFieldOptions`'. */
+const FIELD_LABELS: [MorphSearchField, string][] = [
   ["part_of_speech", "Part of speech"],
   ["stem", "Stem"],
   ["tense", "Tense"],
@@ -60,8 +62,14 @@ export function MorphSearch({ onOpenVerse }: { onOpenVerse: (bookId: number, cha
     queryKey: ["morphSearch", query],
     queryFn: () => api.morphSearch(query),
     enabled: asking,
-    placeholderData: (prev) => prev,
+    // The last results stay while the next are fetched, so the list does
+    // not blink at every change of a dropdown -- but not across languages:
+    // the Greek results are no answer to the first Hebrew search.
+    placeholderData: (prev, prevQuery) => ((prevQuery?.queryKey[1] as MorphQuery | undefined)?.language === language ? prev : undefined),
   });
+  // Nothing asked, nothing shown: after Clear or a change of language the
+  // query is off, but it still holds the last results it had.
+  const shown = asking ? page : undefined;
 
   const bookName = (id: number) => books?.find((b) => b.id === id)?.name ?? `#${id}`;
   const testamentBooks = books?.filter((b) => (language === "greek" ? b.testament === "NT" : b.testament === "OT")) ?? [];
@@ -115,9 +123,9 @@ export function MorphSearch({ onOpenVerse }: { onOpenVerse: (bookId: number, cha
               className={cx(selectSmClass, fields[k] && "border-accent text-accent")}
             >
               <option value="">{label}: any</option>
-              {values![k].map((v) => (
-                <option key={v} value={v}>
-                  {label}: {v}
+              {morphFieldOptions(k, values![k], language).map((o) => (
+                <option key={o.value} value={o.value} title={o.title}>
+                  {label}: {o.label}
                 </option>
               ))}
             </select>
@@ -138,16 +146,16 @@ export function MorphSearch({ onOpenVerse }: { onOpenVerse: (bookId: number, cha
         </div>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto p-2">
-        {!asking && <p className="p-3 text-sm text-ink-3">Choose a word or any parsing above: for example tense aorist and mood imperative, in Ephesians.</p>}
-        {error != null && <p className="p-3 text-sm text-danger">Search failed: {error instanceof Error ? error.message : String(error)}</p>}
-        {asking && page && (
+        {!asking && <p className="p-3 text-sm text-ink-3">Choose a word or any parsing above: for example {searchExample(language)}.</p>}
+        {asking && error != null && <p className="p-3 text-sm text-danger">Search failed: {error instanceof Error ? error.message : String(error)}</p>}
+        {shown && (
           <p className="px-2 pb-2 text-xs text-ink-3">
-            {page.description} · {page.word_total.toLocaleString()} word{page.word_total === 1 ? "" : "s"} in {page.verse_total.toLocaleString()} verse
-            {page.verse_total === 1 ? "" : "s"}
+            {shown.description} · {shown.word_total.toLocaleString()} word{shown.word_total === 1 ? "" : "s"} in {shown.verse_total.toLocaleString()} verse
+            {shown.verse_total === 1 ? "" : "s"}
           </p>
         )}
         <ul aria-label="Morphology results">
-          {page?.hits.map((h) => (
+          {shown?.hits.map((h) => (
             <li key={`${h.book_id}-${h.chapter}-${h.verse}`}>
               <button
                 type="button"
@@ -172,10 +180,10 @@ export function MorphSearch({ onOpenVerse }: { onOpenVerse: (bookId: number, cha
             </li>
           ))}
         </ul>
-        {page && page.verse_total > page.hits.length && (
+        {shown && shown.verse_total > shown.hits.length && (
           <div className="flex items-center justify-between px-3 py-2 text-xs text-ink-3">
             <span>
-              Showing {page.hits.length} of {page.verse_total} verses
+              Showing {shown.hits.length.toLocaleString()} of {shown.verse_total.toLocaleString()} verses
             </span>
             {limit < 2000 && (
               <Button size="sm" variant="ghost" onClick={() => setLimit(2000)}>

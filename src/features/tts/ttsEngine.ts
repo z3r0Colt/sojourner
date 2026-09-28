@@ -189,6 +189,137 @@ export const webSpeechEngine = new WebSpeechEngine();
 /** Used when no voice has been chosen: a clear, unhurried American reading. */
 const DEFAULT_KOKORO_VOICE = "af_heart";
 
+/** How soon a render is wanted: for the passage being said now, or ahead of
+ * time, for the one after it. */
+export type RenderUrgency = "now" | "ahead";
+
+interface QueuedRender<T> {
+  key: string;
+  urgency: RenderUrgency;
+  /** Sends the render, with the turn it is sent in. */
+  run: (turn: number) => Promise<T>;
+  resolve: (value: T) => void;
+  reject: (reason: unknown) => void;
+  promise: Promise<T>;
+}
+
+/** A render sent and not yet back. */
+interface SentRender {
+  key: string;
+  /** Let go of: the reader has moved away from it. */
+  abandoned: boolean;
+}
+
+/**
+ * Renders waiting their turn at the voice, one at a time, the passage being
+ * said now ahead of any asked for in advance.
+ *
+ * The voice renders one passage at a time whatever it is asked (it sits behind
+ * one lock in src-tauri/src/tts.rs), and every request used to go straight to
+ * it. Two things came of that. The passage after the current one, asked for a
+ * moment after it, often got the lock first -- the lock is not fair -- so the
+ * verse the reader pressed play on waited behind the next one, and the first
+ * sound took twice as long as it should. And nothing asked for was ever let
+ * go: a jump in the list, or Stop and a new book, waited behind every render
+ * the old reading still had queued -- twelve and eighteen seconds of them, in
+ * a debug build. Here the order is decided before a request is sent, and a
+ * request not sent yet can be dropped.
+ *
+ * A render already sent cannot be taken back, and it used to be waited out:
+ * the voice renders one thing at a time, and a passage that came back silent
+ * was rendered again and again (src-tauri/src/tts.rs, `speak_piece`), so a jump
+ * could wait twelve seconds for a passage the reader had left. Now letting go
+ * of one moves the queue on to a new turn, and the next request goes out at
+ * once rather than behind it, carrying that turn. The voice, seeing a later
+ * turn arrive, stops the old render at the next place it can -- before its
+ * next piece or its next try -- and moves on to the new one. Only the model
+ * call already running still has to finish.
+ */
+export class RenderQueue<T> {
+  private queue: QueuedRender<T>[] = [];
+  private sent: SentRender[] = [];
+  /** The turn requests are sent in. It is kept at or above the clock's
+   * milliseconds so that it only ever grows, even over a reload of the page:
+   * the voice remembers the latest turn it has seen for as long as the app
+   * runs, and a page starting again from nought would have every request
+   * taken for an old one. */
+  private turn = Date.now();
+  /** Renders let go of can pile up behind the voice's lock while it finishes
+   * the one under way; each gives up on sight once it gets the lock, but no
+   * more than this many are ever out at once. */
+  private static readonly MOST_SENT = 4;
+
+  /** Queue `run` under `key`; a key already waiting is moved up if it is now
+   * wanted sooner, and its promise handed back. */
+  add(key: string, urgency: RenderUrgency, run: (turn: number) => Promise<T>): Promise<T> {
+    const waiting = this.queue.find((job) => job.key === key);
+    if (waiting) {
+      if (urgency === "now") this.promote(key);
+      return waiting.promise;
+    }
+    let resolve!: (value: T) => void;
+    let reject!: (reason: unknown) => void;
+    const promise = new Promise<T>((res, rej) => {
+      resolve = res;
+      reject = rej;
+    });
+    this.queue.push({ key, urgency, run, resolve, reject, promise });
+    this.pump();
+    return promise;
+  }
+
+  /** A render asked for ahead that is wanted now after all goes to the
+   * front, if it is still waiting. */
+  promote(key: string) {
+    const waiting = this.queue.find((job) => job.key === key);
+    if (waiting) waiting.urgency = "now";
+  }
+
+  /** Whether `key` is waiting and not yet sent. */
+  isWaiting(key: string): boolean {
+    return this.queue.some((job) => job.key === key);
+  }
+
+  /** Drop every waiting render whose key is not in `keep`; their promises
+   * reject. A render already sent whose key is not in `keep` is let go of,
+   * and the turn moves on. Returns the keys dropped or let go of. */
+  drop(keep: ReadonlySet<string> = new Set()): string[] {
+    const dropped = this.queue.filter((job) => !keep.has(job.key));
+    this.queue = this.queue.filter((job) => keep.has(job.key));
+    for (const job of dropped) job.reject(new Error("This passage is no longer wanted."));
+    const abandoned = this.sent.filter((render) => !render.abandoned && !keep.has(render.key));
+    for (const render of abandoned) render.abandoned = true;
+    if (abandoned.length > 0) {
+      this.turn = Math.max(this.turn + 1, Date.now());
+      this.pump();
+    }
+    return [...dropped.map((job) => job.key), ...abandoned.map((render) => render.key)];
+  }
+
+  /** Whether anything sent is still wanted, so the next must wait for it. */
+  private get busy(): boolean {
+    return this.sent.some((render) => !render.abandoned) || this.sent.length >= RenderQueue.MOST_SENT;
+  }
+
+  private pump() {
+    if (this.busy || this.queue.length === 0) return;
+    const urgent = this.queue.findIndex((job) => job.urgency === "now");
+    const [job] = this.queue.splice(urgent >= 0 ? urgent : 0, 1);
+    const render: SentRender = { key: job.key, abandoned: false };
+    this.sent.push(render);
+    let started: Promise<T>;
+    try {
+      started = job.run(this.turn);
+    } catch (err) {
+      started = Promise.reject(err);
+    }
+    started.then(job.resolve, job.reject).finally(() => {
+      this.sent = this.sent.filter((other) => other !== render);
+      this.pump();
+    });
+  }
+}
+
 /** `af_heart` -> "Heart (American, female)". Kokoro names its voices by a
  * language letter, a gender letter, then the name. */
 function describeKokoroVoice(id: string): string {
@@ -296,26 +427,40 @@ export class KokoroEngine implements TtsEngine {
     return `${voiceId ?? DEFAULT_KOKORO_VOICE}\u0000${text}`;
   }
 
-  private render(text: string, voiceId: string | null): Promise<ArrayBuffer> {
+  /** Requests for the voice, in the order they should be sent. */
+  private queue = new RenderQueue<ArrayBuffer>();
+
+  private render(text: string, voiceId: string | null, urgency: RenderUrgency): Promise<ArrayBuffer> {
     const voice = voiceId ?? DEFAULT_KOKORO_VOICE;
     const key = this.key(text, voiceId);
     const existing = this.rendered.get(key);
-    if (existing) return existing;
+    if (existing) {
+      // Asked for ahead and still waiting its turn: it is wanted now.
+      if (urgency === "now") this.queue.promote(key);
+      return existing;
+    }
 
-    const pending = invoke<ArrayBuffer>("kokoro_synthesize", {
-      text,
-      voice,
-      // Speed is applied on playback rather than baked into the audio, so
-      // moving the slider does not mean waiting for the verse to render again.
-      speed: 1,
-    });
+    const pending = this.queue.add(key, urgency, (turn) =>
+      invoke<ArrayBuffer>("kokoro_synthesize", {
+        text,
+        voice,
+        // Speed is applied on playback rather than baked into the audio, so
+        // moving the slider does not mean waiting for the verse to render again.
+        speed: 1,
+        // So the voice can stop a render the reader has since left (RenderQueue).
+        turn,
+      }),
+    );
     // A failure must not be remembered, or the same verse would never be
     // retried for the rest of the session.
-    pending.catch(() => this.rendered.delete(key));
+    pending.catch(() => {
+      if (this.rendered.get(key) === pending) this.rendered.delete(key);
+    });
     this.rendered.set(key, pending);
-    // Only the verse playing and the one after it are worth holding; each is
-    // about a megabyte.
-    while (this.rendered.size > 3) {
+    // Only the passage playing and the one after it are worth holding, a few
+    // pieces each (see `splitForQuickStart`); a whole passage is about a
+    // megabyte.
+    while (this.rendered.size > 12) {
       const oldest = this.rendered.keys().next().value;
       if (oldest === undefined) break;
       this.rendered.delete(oldest);
@@ -323,8 +468,16 @@ export class KokoroEngine implements TtsEngine {
     return pending;
   }
 
+  /** Let go of renders not yet sent that are not in `keep`: what the reader
+   * has moved away from should not stand between them and what they moved
+   * to. Forgotten at once, so asking for one again renders it afresh. */
+  private dropWaiting(keep: ReadonlySet<string> = new Set()) {
+    for (const key of this.queue.drop(keep)) this.rendered.delete(key);
+  }
+
   prefetch(text: string, opts: SpeakOptions): void {
-    void this.render(text, opts.voiceId).catch(() => undefined);
+    // In the pieces `speak` will ask for, so it finds them ready.
+    for (const piece of splitForQuickStart(text)) void this.render(piece, opts.voiceId, "ahead").catch(() => undefined);
   }
 
   /** The session's audio element, made on first use and then kept. */
@@ -454,20 +607,26 @@ export class KokoroEngine implements TtsEngine {
     // A verse takes a few seconds to render, which is fine when the store has
     // asked for it in advance -- but the verse a reader has just pressed play
     // on, or jumped to, has had no such warning, and those seconds are dead
-    // silence under a player that says it is reading. That verse is read a
-    // sentence at a time instead: the first sentence is short enough to arrive
-    // quickly, and the rest of the verse renders while it plays. Breaks fall
-    // where the punctuation already puts them, never inside a clause.
-    const pieces = this.rendered.has(this.key(text, opts.voiceId)) ? [text] : splitForQuickStart(text);
+    // silence under a player that says it is reading. So a verse is read in
+    // pieces (`splitForQuickStart`): the first sentence is short enough to
+    // arrive quickly, and the rest of the verse renders while it plays. Breaks
+    // fall where the punctuation already puts them, never inside a clause. A
+    // verse asked for ahead was asked for in the same pieces, and is found
+    // ready -- or, if still waiting its turn, is moved up and read the quick
+    // way all the same.
+    const pieces = splitForQuickStart(text);
+    // Whatever else was waiting for the voice was for a passage the reader has
+    // left; the passage after this one is asked for again as this one starts.
+    this.dropWaiting(new Set(pieces.map((piece) => this.key(piece, opts.voiceId))));
+    // All asked for at once, in order: the second piece renders while the
+    // first plays, and both go before anything asked for ahead.
+    const renders = pieces.map((piece) => this.render(piece, opts.voiceId, "now"));
 
     void (async () => {
       try {
         for (let i = 0; i < pieces.length; i++) {
-          const buffer = await this.render(pieces[i], opts.voiceId);
+          const buffer = await renders[i];
           if (generation !== this.generation) return;
-          // The next piece renders while this one plays.
-          const next = pieces[i + 1];
-          if (next) void this.render(next, opts.voiceId).catch(() => undefined);
           await this.playRendered(buffer, opts, generation, i === 0 ? callbacks.onSpeakingStart : undefined);
           if (generation !== this.generation) return;
         }
@@ -497,6 +656,7 @@ export class KokoroEngine implements TtsEngine {
     this.generation += 1;
     this.paused = false;
     this.release();
+    this.dropWaiting();
   }
 }
 
@@ -506,24 +666,60 @@ const WHOLE_VERSE_CHARS = 70;
 /** A first piece shorter than this is a fragment -- "Selah.", "And he said." --
  * and the wait moves on to the next break instead. */
 const MIN_FIRST_PIECE_CHARS = 25;
+/** The pieces after the first are gathered up to about this length. A render
+ * under way cannot be stopped (src-tauri/src/tts.rs renders a piece in one
+ * call of the model), so this is the most a reader who jumps elsewhere has to
+ * wait out -- where a whole paragraph, rendered as one, was seconds of it. */
+const REST_PIECE_CHARS = 200;
 
 /**
- * A verse split into the piece to render first and the rest of it, or the
- * whole verse when there is nothing to gain by splitting.
+ * A passage cut into the pieces it is rendered in: the first sentence on its
+ * own, and the rest in pieces of whole sentences up to `REST_PIECE_CHARS` long
+ * -- or the whole passage when it is short enough that nothing is gained.
+ *
+ * The first piece is short so that it arrives quickly, and the rest renders
+ * while it plays. The rest is cut small so that the render under way, when
+ * the reader moves on, is soon over. The cuts are made the same way whether a
+ * passage is wanted now or asked for ahead, so a passage asked for ahead is
+ * found ready, piece for piece.
  *
  * Only sentence punctuation is a break: Kokoro shapes each piece as a complete
  * utterance, so cutting inside a clause would put a full stop in the middle of
- * one. A semicolon or colon is where the King James pauses too.
+ * one. A semicolon or colon is where the King James pauses too, and the old
+ * printers' full stop and dash, "is this.—“There is nothing…”", is a break
+ * like a full stop and a space: without it, that sentence and the one it
+ * introduced were one first piece of 391 characters, and the reader who had
+ * just pressed play sat through its render. A stretch with no break within
+ * the limit runs on to the next one.
  */
 export function splitForQuickStart(text: string): string[] {
   if (text.length <= WHOLE_VERSE_CHARS) return [text];
-  for (const match of text.matchAll(/[.;:!?]["'’”)\]]*\s+/g)) {
+  const breaks: number[] = [];
+  for (const match of text.matchAll(/[.;:!?]["'’”)\]]*(?:\s+|[—–]+\s*(?=["'“‘(]?[A-Z]))/g)) {
     const end = match.index + match[0].length;
-    if (end >= text.length) break;
-    if (end < MIN_FIRST_PIECE_CHARS) continue;
-    return [text.slice(0, end).trimEnd(), text.slice(end)];
+    if (end < text.length) breaks.push(end);
   }
-  return [text];
+  const first = breaks.find((end) => end >= MIN_FIRST_PIECE_CHARS);
+  if (first == null) return [text];
+  const pieces = [text.slice(0, first).trimEnd()];
+  let start = first;
+  let cut = first;
+  for (const end of breaks) {
+    if (end <= first) continue;
+    // Past the limit with a break in hand: the piece ends at that break.
+    if (end - start > REST_PIECE_CHARS && cut > start) {
+      pieces.push(text.slice(start, cut).trimEnd());
+      start = cut;
+    }
+    cut = end;
+  }
+  // The last break may leave too long a piece before the end; cut there too.
+  if (text.length - start > REST_PIECE_CHARS && cut > start) {
+    pieces.push(text.slice(start, cut).trimEnd());
+    start = cut;
+  }
+  pieces.push(text.slice(start));
+  return pieces;
 }
 
 export const kokoroEngine = new KokoroEngine();

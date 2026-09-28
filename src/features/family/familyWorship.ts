@@ -66,6 +66,12 @@ export interface FamilyWorship {
   /** The verse the family is learning by heart, if any (absent in a setup
    * saved before there was one). */
   memory?: FamilyMemory | null;
+  /** The family's own questions to talk over after the reading, when it has
+   * written its own. Absent means the three defaults (DEFAULT_TALK_QUESTIONS),
+   * so a setup saved before these could be changed asks those, and a family
+   * that never touches them hears any later rewording of the defaults. Read
+   * it through talkQuestions, never directly. */
+  talkQuestions?: string[];
   /** When the family set this up. */
   started: string;
 }
@@ -121,13 +127,135 @@ export const STARTER_TITLES = [
   "All things new",
 ];
 
-/** Asked of every reading: enough to start a conversation for a parent who
- * does not know what to say, and never wrong for any passage. */
-export const TALK_QUESTIONS = [
-  "What does this passage teach us about God?",
-  "What does it teach us about ourselves?",
-  "What should we believe, or do, because of it?",
+// ---------------------------------------------------------------------------
+// Talk about it: the questions asked after every reading.
+
+/**
+ * Asked of every reading unless the family writes its own: faith, love and
+ * hope, the three that abide (1 Corinthians 13:13). Enough to start a
+ * conversation for a parent who does not know what to say, never wrong for
+ * any passage, and easy for a child to remember by its one word.
+ */
+export const DEFAULT_TALK_QUESTIONS: readonly string[] = [
+  "What does this passage teach us to believe about God?",
+  "How does it call us to love God and our neighbour?",
+  "What does it give us to hope for?",
 ];
+
+/** The one word each default question goes by, shown beside it. */
+const DEFAULT_TALK_TAGS = ["Faith", "Love", "Hope"];
+
+/** A family's own list is kept short enough to ask in a few minutes and to
+ * fit under the readings on the printed sheet. */
+export const MAX_TALK_QUESTIONS = 8;
+export const MAX_TALK_QUESTION_LENGTH = 200;
+
+/**
+ * A list of questions made safe to ask: each trimmed and cut to length, the
+ * blank ones dropped, a question asked twice kept once, and no more than
+ * MAX_TALK_QUESTIONS. Anything that is not a list of strings (a hand-edited
+ * setting) comes out empty.
+ */
+export function cleanTalkQuestions(list: unknown): string[] {
+  if (!Array.isArray(list)) return [];
+  const out: string[] = [];
+  for (const item of list) {
+    if (typeof item !== "string") continue;
+    const q = item.trim().slice(0, MAX_TALK_QUESTION_LENGTH).trim();
+    if (q && !out.includes(q)) out.push(q);
+    if (out.length === MAX_TALK_QUESTIONS) break;
+  }
+  return out;
+}
+
+/** Whether the family asks questions of its own rather than the defaults. */
+export function hasOwnTalkQuestions(state: Pick<FamilyWorship, "talkQuestions"> | null | undefined): boolean {
+  return cleanTalkQuestions(state?.talkQuestions).length > 0;
+}
+
+/** The questions to ask after tonight's reading: the family's own when it
+ * has written any, otherwise the three defaults. */
+export function talkQuestions(state: Pick<FamilyWorship, "talkQuestions"> | null | undefined): string[] {
+  const own = cleanTalkQuestions(state?.talkQuestions);
+  return own.length > 0 ? own : [...DEFAULT_TALK_QUESTIONS];
+}
+
+/** "Faith", "Love" or "Hope" for a default question, word for word; a
+ * question the family has written or reworded is its own and goes by none.
+ * The word belongs to the question, so it follows it when the list is
+ * reordered. */
+export function talkQuestionTag(question: string): string | null {
+  const i = DEFAULT_TALK_QUESTIONS.indexOf(question.trim());
+  return i >= 0 ? DEFAULT_TALK_TAGS[i] : null;
+}
+
+/**
+ * The setup with `list` as its questions. A list that is empty, or is the
+ * defaults again, takes the family's own list away (Reset to the defaults is
+ * `withTalkQuestions(state, null)`), so a family that edits its way back to
+ * the three is on the defaults once more rather than holding a copy of them.
+ */
+export function withTalkQuestions(state: FamilyWorship, list: readonly string[] | null): FamilyWorship {
+  const cleaned = cleanTalkQuestions(list);
+  const isDefault = cleaned.length === DEFAULT_TALK_QUESTIONS.length && cleaned.every((q, i) => q === DEFAULT_TALK_QUESTIONS[i]);
+  const next: FamilyWorship = { ...state, talkQuestions: cleaned };
+  if (cleaned.length === 0 || isDefault) delete next.talkQuestions;
+  return next;
+}
+
+// The edits the settings make to a list. Each returns the very list it was
+// given when nothing changes (a blank question, one already asked, a full
+// list, a move past either end), so the caller can tell and not save.
+
+const asTalkQuestion = (text: string) => text.trim().slice(0, MAX_TALK_QUESTION_LENGTH).trim();
+
+/** Another question at the end of the list. */
+export function addTalkQuestion(list: string[], text: string): string[] {
+  return insertTalkQuestion(list, list.length, text);
+}
+
+/** A question put in at `index` -- how a removed question is put back where
+ * it was. */
+export function insertTalkQuestion(list: string[], index: number, text: string): string[] {
+  const q = asTalkQuestion(text);
+  if (!q || list.includes(q) || list.length >= MAX_TALK_QUESTIONS) return list;
+  const at = Math.max(0, Math.min(index, list.length));
+  return [...list.slice(0, at), q, ...list.slice(at)];
+}
+
+/** Which question on the list already asks `text`, word for word as it
+ * would be saved, or -1. The question at `except` -- the one being reworded
+ * -- does not count, so a question left as it was is not a repeat of
+ * itself. The settings use it to say why an edit or an addition was not
+ * taken, rather than quietly dropping it. */
+export function repeatedTalkQuestion(list: string[], text: string, except = -1): number {
+  const q = asTalkQuestion(text);
+  return q ? list.findIndex((old, i) => i !== except && old === q) : -1;
+}
+
+/** One question reworded. Cleared, it keeps its old words: taking a
+ * question away is the remove button's work, not an empty box's. */
+export function editTalkQuestion(list: string[], index: number, text: string): string[] {
+  const q = asTalkQuestion(text);
+  if (!q || index < 0 || index >= list.length || list[index] === q || list.includes(q)) return list;
+  return list.map((old, i) => (i === index ? q : old));
+}
+
+/** One question taken away. The last one stays, so there is always
+ * something to ask. */
+export function removeTalkQuestion(list: string[], index: number): string[] {
+  if (list.length <= 1 || index < 0 || index >= list.length) return list;
+  return list.filter((_, i) => i !== index);
+}
+
+/** One question moved up (-1) or down (+1) a place. */
+export function moveTalkQuestion(list: string[], index: number, by: -1 | 1): string[] {
+  const to = index + by;
+  if (index < 0 || index >= list.length || to < 0 || to >= list.length) return list;
+  const out = [...list];
+  [out[index], out[to]] = [out[to], out[index]];
+  return out;
+}
 
 /** A local calendar date, YYYY-MM-DD. */
 export function localDate(d: Date = new Date()): string {

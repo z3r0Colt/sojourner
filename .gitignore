@@ -56,3 +56,6 @@ dist-ssr
 
 # TypeScript incremental build state, written by `tsc -p tsconfig.node.json`.
 *.tsbuildinfo
+
+# Python bytecode from the tools/ scripts
+__pycache__/

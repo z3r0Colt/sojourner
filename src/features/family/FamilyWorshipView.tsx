@@ -1,8 +1,8 @@
-import { useCallback, useMemo, useState } from "react";
-import { BookOpen, Brain, HandHeart, HouseHeart, Maximize2, Music, Play, Printer, ScrollText } from "lucide-react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { ArrowDown, ArrowUp, BookOpen, Brain, HandHeart, HouseHeart, Maximize2, Music, Play, Plus, Printer, ScrollText, X } from "lucide-react";
 import { useBooks, usePrayerListPeople, useReadingPlanDays, useReadingPlans } from "../../api/queries";
 import { Page } from "../../components/ui/Page";
-import { Button } from "../../components/ui/Button";
+import { Button, IconButton } from "../../components/ui/Button";
 import { LoadingState } from "../../components/ui/EmptyState";
 import { confirmDialog } from "../../components/ui/confirm";
 import { cardClass, checkboxClass, cx, inputClass, linkClass, sectionLabelClass, selectClass } from "../../components/ui/classes";
@@ -22,18 +22,30 @@ import { api } from "../../api/client";
 import { useReaderTranslationId } from "../../state/workspaceStore";
 import {
   FAMILY_CATECHISMS,
+  MAX_TALK_QUESTIONS,
+  MAX_TALK_QUESTION_LENGTH,
   PACES,
   STARTER_PLAN,
   STARTER_PSALMS,
   STARTER_TITLES,
+  addTalkQuestion,
   customState,
+  editTalkQuestion,
   guessPrayerCategory,
+  hasOwnTalkQuestions,
+  insertTalkQuestion,
   localDate,
   logSummary,
+  moveTalkQuestion,
   nextPsalm,
   psalmWeekDue,
+  removeTalkQuestion,
+  repeatedTalkQuestion,
   starterState,
+  talkQuestionTag,
+  talkQuestions,
   upcomingDays,
+  withTalkQuestions,
   type FamilyWorship,
 } from "./familyWorship";
 
@@ -203,9 +215,12 @@ function Overview({ fw }: { fw: FW }) {
           size="sm"
           variant="danger-ghost"
           onClick={async () => {
+            // A family's own questions are words it wrote, not a place kept,
+            // and a new setup begins on faith, love and hope; say so.
+            const ownQuestions = hasOwnTalkQuestions(state) ? ", and your own questions to talk about" : "";
             const ok = await confirmDialog({
               title: "Stop family worship?",
-              message: "This clears the family's reading place, psalm and catechism. The log of days gathered is kept, and you can set it up again any time.",
+              message: `This clears the family's reading place, psalm and catechism${ownQuestions}. The log of days gathered is kept, and you can set it up again any time.`,
               confirmLabel: "Stop",
             });
             if (ok) setState(null);
@@ -366,7 +381,17 @@ function WeekAhead({ fw }: { fw: FW }) {
 
 function FamilySettings({ fw }: { fw: FW }) {
   const state = fw.state!;
-  const setState = fw.setState as (s: FamilyWorship) => void;
+  // Every change here is worked out from the stored setup at the moment it is
+  // saved, not from the one this render drew. A question reworded and saved
+  // as its box loses focus, followed at once by a click on a checkbox or a
+  // Move up, can reach the click before the page has drawn the new words;
+  // built from `state` the click would save the old words back over them.
+  // For the same reason an Undo pressed after other settings have changed
+  // puts back only what it undoes.
+  const update = useCallback(
+    (change: (s: FamilyWorship) => FamilyWorship) => fw.setState((prev) => (prev ? change(prev) : prev)),
+    [fw.setState],
+  );
   const { data: plans } = useReadingPlans();
   const { data: people } = usePrayerListPeople();
   const categories = useMemo(
@@ -376,20 +401,24 @@ function FamilySettings({ fw }: { fw: FW }) {
   const plan = plans?.find((p) => p.code === state.plan?.code);
   const available = FAMILY_CATECHISMS.filter((c) => fw.docs?.some((d) => d.code === c.code));
   const total = fw.tonight?.questions?.length;
-  const row = "grid gap-1 sm:grid-cols-[9rem_1fr] sm:items-center";
+  // The label column only where the card is wide enough to spare it: `@2xl`
+  // is the card's own width, which in a pane beside the Bible is far less
+  // than the window's -- a `sm:` column there left each question 170px.
+  const row = "grid gap-1 @2xl:grid-cols-[9rem_1fr] @2xl:items-center";
   const label = "text-sm text-ink-3";
 
   return (
-    <div className={cx(cardClass, "space-y-4 p-4")}>
+    <div className={cx(cardClass, "@container space-y-4 p-4")}>
       <div className={row}>
         <span className={label}>Reading plan</span>
         <div className="flex flex-wrap items-center gap-2">
           <select
             className={cx(selectClass, "min-w-0 max-w-full")}
             value={state.plan?.code ?? ""}
-            onChange={(e) =>
-              setState({ ...state, plan: e.target.value ? { code: e.target.value, nextDay: 1 } : null, starter: state.starter && e.target.value === STARTER_PLAN })
-            }
+            onChange={(e) => {
+              const code = e.target.value;
+              update((s) => ({ ...s, plan: code ? { code, nextDay: 1 } : null, starter: s.starter && code === STARTER_PLAN }));
+            }}
             aria-label="Reading plan"
           >
             <option value="">No reading</option>
@@ -407,14 +436,14 @@ function FamilySettings({ fw }: { fw: FW }) {
                 min={1}
                 max={plan.length_days}
                 value={state.plan.nextDay}
-                onCommit={(n) => setState({ ...state, plan: { ...state.plan!, nextDay: n } })}
+                onCommit={(n) => update((s) => ({ ...s, plan: s.plan && { ...s.plan, nextDay: n } }))}
               />
               of {plan.length_days}
             </label>
           )}
         </div>
       </div>
-      <p className="-mt-2 text-xs text-ink-4 sm:pl-[10rem]">
+      <p className="-mt-2 text-xs text-ink-4 @2xl:pl-[10rem]">
         The family keeps its own place, apart from your own reading plans. Build a plan of your own (a Gospel a chapter at a time, say) with New plan on the{" "}
         <button type="button" className={linkClass} onClick={(e) => openContent("plans", {}, { target: targetFor(e, "new") })}>
           Reading plans
@@ -422,11 +451,21 @@ function FamilySettings({ fw }: { fw: FW }) {
         page, then choose it here.
       </p>
 
+      <TalkQuestionsRow state={state} update={update} label={label} />
+
       <div className={row}>
         <span className={label}>Psalm of the week</span>
         <div className="flex flex-wrap items-center gap-3">
           <label className="flex items-center gap-1.5 text-sm text-ink-2">
-            <input type="checkbox" className={checkboxClass} checked={state.singing} onChange={(e) => setState({ ...state, singing: e.target.checked })} />
+            <input
+              type="checkbox"
+              className={checkboxClass}
+              checked={state.singing}
+              onChange={(e) => {
+                const singing = e.target.checked;
+                update((s) => ({ ...s, singing }));
+              }}
+            />
             Sing a psalm
           </label>
           {state.singing && (
@@ -436,7 +475,7 @@ function FamilySettings({ fw }: { fw: FW }) {
                 min={1}
                 max={150}
                 value={state.psalm?.number ?? 100}
-                onCommit={(n) => setState({ ...state, psalm: { number: n, since: localDate() }, starter: false })}
+                onCommit={(n) => update((s) => ({ ...s, psalm: { number: n, since: localDate() }, starter: false }))}
               />
             </label>
           )}
@@ -450,12 +489,10 @@ function FamilySettings({ fw }: { fw: FW }) {
           <select
             className={cx(selectClass, "min-w-0 max-w-full")}
             value={state.catechism?.code ?? ""}
-            onChange={(e) =>
-              setState({
-                ...state,
-                catechism: e.target.value ? { code: e.target.value, current: 0, pace: state.catechism?.pace ?? 2, timesOnCurrent: 0 } : null,
-              })
-            }
+            onChange={(e) => {
+              const code = e.target.value;
+              update((s) => ({ ...s, catechism: code ? { code, current: 0, pace: s.catechism?.pace ?? 2, timesOnCurrent: 0 } : null }));
+            }}
             aria-label="Catechism"
           >
             <option value="">No catechism</option>
@@ -473,14 +510,17 @@ function FamilySettings({ fw }: { fw: FW }) {
                   min={1}
                   max={total ?? 999}
                   value={state.catechism.current + 1}
-                  onCommit={(n) => setState({ ...state, catechism: { ...state.catechism!, current: n - 1, timesOnCurrent: 0 } })}
+                  onCommit={(n) => update((s) => ({ ...s, catechism: s.catechism && { ...s.catechism, current: n - 1, timesOnCurrent: 0 } }))}
                 />
                 {total ? `of ${total}` : ""}
               </label>
               <select
                 className={selectClass}
                 value={state.catechism.pace}
-                onChange={(e) => setState({ ...state, catechism: { ...state.catechism!, pace: Number(e.target.value) } })}
+                onChange={(e) => {
+                  const pace = Number(e.target.value);
+                  update((s) => ({ ...s, catechism: s.catechism && { ...s.catechism, pace } }));
+                }}
                 aria-label="How often a new question"
               >
                 {PACES.map((p) => (
@@ -494,10 +534,10 @@ function FamilySettings({ fw }: { fw: FW }) {
         </div>
       </div>
       {state.catechism && (
-        <p className="-mt-2 text-xs text-ink-4 sm:pl-[10rem]">{FAMILY_CATECHISMS.find((c) => c.code === state.catechism!.code)?.note}</p>
+        <p className="-mt-2 text-xs text-ink-4 @2xl:pl-[10rem]">{FAMILY_CATECHISMS.find((c) => c.code === state.catechism!.code)?.note}</p>
       )}
 
-      <FamilyMemoryRow state={state} setState={setState} row={row} label={label} />
+      <FamilyMemoryRow state={state} update={update} row={row} label={label} />
 
       <div className={row}>
         <span className={label}>Pray for</span>
@@ -505,7 +545,10 @@ function FamilySettings({ fw }: { fw: FW }) {
           <select
             className={cx(selectClass, "min-w-0 max-w-full")}
             value={state.prayerCategory ?? ""}
-            onChange={(e) => setState({ ...state, prayerCategory: e.target.value || null })}
+            onChange={(e) => {
+              const category = e.target.value || null;
+              update((s) => ({ ...s, prayerCategory: category }));
+            }}
             aria-label="Prayer list category"
           >
             <option value="">Everyone on the prayer list</option>
@@ -560,17 +603,319 @@ function DraftNumber({ value, min, max, onCommit }: { value: number; min: number
   );
 }
 
+/** A line of text that takes effect on Enter or on leaving it, like
+ * DraftNumber. Saved on every keystroke, each letter would be a write to
+ * user.db, and the list is trimmed as it is saved: the space typed between
+ * two words would vanish before the second could be typed. Esc puts the old
+ * words back.
+ *
+ * The box wraps and grows to show the whole question however narrow the
+ * pane, as a question half hidden cannot be read over before it is asked.
+ * It is still one line of text: Enter saves rather than breaking the line.
+ * `onCommit` answers false when it will not take the words (they repeat
+ * another question); they then stay in the box, marked, to be changed. */
+function DraftText({
+  value,
+  label,
+  problem,
+  onCommit,
+  onEscape,
+}: {
+  value: string;
+  label: string;
+  /** Id of the note saying what is wrong with the words in the box. */
+  problem?: string;
+  onCommit: (text: string) => boolean;
+  onEscape?: () => void;
+}) {
+  const [draft, setDraft] = useState<string | null>(null);
+  function commit() {
+    if (draft == null) return;
+    if (draft.trim() === value) {
+      setDraft(null);
+      return;
+    }
+    if (onCommit(draft)) setDraft(null);
+  }
+  return (
+    <textarea
+      rows={1}
+      value={draft ?? value}
+      maxLength={MAX_TALK_QUESTION_LENGTH}
+      aria-label={label}
+      aria-invalid={problem ? true : undefined}
+      aria-describedby={problem}
+      data-control="text"
+      className={cx(inputClass, "min-w-0 flex-1 resize-none [field-sizing:content]", problem && "border-danger focus:border-danger")}
+      onChange={(e) => setDraft(e.target.value.replace(/\s*\n\s*/g, " "))}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          commit();
+        } else if (e.key === "Escape") {
+          setDraft(null);
+          onEscape?.();
+        }
+      }}
+    />
+  );
+}
+
+/** The controls on a question's row, named so that keyboard focus can be
+ * sent to the right one once the list has been saved and drawn again. */
+type TalkControl = "text" | "up" | "down" | "remove";
+
+/**
+ * The questions talked over after every reading (the Read step's "Talk about
+ * it") and printed under the week's readings: faith, love and hope until the
+ * family writes its own. Any change saves the whole list as the family's own,
+ * and a list edited back to the three word for word is the defaults again
+ * (see withTalkQuestions). A cleared box keeps its old words and the last
+ * question cannot be removed, so there is always something to ask.
+ */
+function TalkQuestionsRow({
+  state,
+  update,
+  label,
+}: {
+  state: FamilyWorship;
+  update: (change: (s: FamilyWorship) => FamilyWorship) => void;
+  label: string;
+}) {
+  const [draft, setDraft] = useState("");
+  const questions = talkQuestions(state);
+  const own = hasOwnTalkQuestions(state);
+  const full = questions.length >= MAX_TALK_QUESTIONS;
+  // The Faith / Love / Hope column only while a default is on the list.
+  const tagged = questions.some((q) => talkQuestionTag(q) != null);
+
+  // Words not taken, and why, said under the list: an edit that only snapped
+  // back would look lost. `kept` when the words are still in their box (a
+  // repeat of another question), waiting to be changed or put back with Esc.
+  const [note, setNote] = useState<{ row: number | "new"; text: string; kept: boolean } | null>(null);
+  const noteId = useId();
+  // Bumped to empty the boxes when the list is reordered or shortened while
+  // words are kept in one: the rows are keyed by place, and the words would
+  // otherwise stay with a place that now holds another question.
+  const [generation, setGeneration] = useState(0);
+  function clearNote() {
+    if (note?.kept && note.row !== "new") setGeneration((g) => g + 1);
+    setNote(null);
+  }
+
+  // Where keyboard focus goes once a move or a removal has been saved and the
+  // list drawn again. The rows are keyed by place, so the focused Move up
+  // button would otherwise stay on its row and belong to the question just
+  // pushed down: pressing it again would swap the two back, and a question
+  // could never be walked to the top.
+  const listRef = useRef<HTMLOListElement>(null);
+  const focusAfter = useRef<{ row: number; controls: TalkControl[] } | null>(null);
+  const listKey = questions.join("\n");
+  useEffect(() => {
+    const want = focusAfter.current;
+    if (!want) return;
+    focusAfter.current = null;
+    const row = listRef.current?.querySelector(`[data-row="${want.row}"]`);
+    for (const control of want.controls) {
+      const el = row?.querySelector<HTMLTextAreaElement | HTMLButtonElement>(`[data-control="${control}"]`);
+      if (el && !el.disabled) {
+        el.focus();
+        return;
+      }
+    }
+  }, [listKey, generation]);
+
+  /**
+   * One edit, made to the list as it is stored rather than as this render
+   * drew it: a reworded question saved as its box loses focus, then a Move
+   * up clicked at once, can reach the click before the page has drawn the
+   * new words, and the move would put the old words back. The edits hand
+   * back the list they were given when nothing changes (a repeat, a blank, a
+   * move past either end); the new list comes back, or null for no change.
+   */
+  function save(edit: (list: string[]) => string[]): string[] | null {
+    let saved: string[] | null = null;
+    update((s) => {
+      const current = talkQuestions(s);
+      const next = edit(current);
+      if (next === current) return s;
+      saved = next;
+      return withTalkQuestions(s, next);
+    });
+    return saved;
+  }
+
+  /** Rewords question `index`; false when the words repeat another
+   * question, and so stay in the box to be changed. */
+  function reword(index: number, text: string): boolean {
+    const repeat = { of: -1 };
+    save((list) => {
+      repeat.of = repeatedTalkQuestion(list, text, index);
+      return editTalkQuestion(list, index, text);
+    });
+    if (repeat.of >= 0) {
+      setNote({ row: index, kept: true, text: `Question ${repeat.of + 1} already asks that. Change the words, or press Esc to keep the old ones.` });
+      return false;
+    }
+    if (!text.trim()) setNote({ row: index, kept: false, text: "A question cannot be left empty, so it keeps its words. To take it away, use its ×." });
+    else setNote((n) => (n?.kept && n.row !== index ? n : null));
+    return true;
+  }
+
+  function add() {
+    const repeat = { of: -1 };
+    save((list) => {
+      repeat.of = repeatedTalkQuestion(list, draft);
+      return addTalkQuestion(list, draft);
+    });
+    if (repeat.of >= 0) {
+      // Left in the box, to be seen and changed, rather than cleared away.
+      setNote({ row: "new", kept: true, text: `Question ${repeat.of + 1} already asks that.` });
+      return;
+    }
+    setNote((n) => (n?.row === "new" ? null : n));
+    setDraft("");
+  }
+
+  function move(index: number, by: -1 | 1) {
+    if (!save((list) => moveTalkQuestion(list, index, by))) return;
+    clearNote();
+    // Focus goes with the question, to the same button on its new row, or
+    // to the other arrow once it has reached the top or the bottom.
+    focusAfter.current = { row: index + by, controls: by < 0 ? ["up", "down"] : ["down", "up"] };
+  }
+
+  function remove(index: number) {
+    const taken = { words: "" };
+    const next = save((list) => {
+      taken.words = list[index] ?? "";
+      return removeTalkQuestion(list, index);
+    });
+    if (!next) return;
+    clearNote();
+    // To the question that moved up into its place, or the one above when
+    // the last was removed; to its words when only one is left to ask.
+    focusAfter.current = { row: Math.min(index, next.length - 1), controls: ["remove", "text"] };
+    // The family's own words are gone at one click on a small button beside
+    // Move down, so the removal can be taken back, as Reset can. The
+    // question goes back to its place in the list as it then stands.
+    const words = taken.words.length > 48 ? `${taken.words.slice(0, 47).trimEnd()}…` : taken.words;
+    toast.success(`Removed “${words}”`, {
+      label: "Undo",
+      onClick: () => {
+        const full = { now: false };
+        const back = save((list) => {
+          full.now = list.length >= MAX_TALK_QUESTIONS && !list.includes(taken.words);
+          return insertTalkQuestion(list, index, taken.words);
+        });
+        if (back) setGeneration((g) => g + 1);
+        else if (full.now) toast.info("The list is full. Remove a question to put that one back.");
+      },
+    });
+  }
+
+  function reset() {
+    // The list an Undo puts back is read as the reset is saved, like the
+    // edits above, so it is the words as they last stood.
+    let before: string[] | null = null;
+    update((s) => {
+      before = s.talkQuestions ?? null;
+      return withTalkQuestions(s, null);
+    });
+    clearNote();
+    toast.success("Back to faith, love and hope.", { label: "Undo", onClick: () => update((s) => withTalkQuestions(s, before)) });
+  }
+
+  return (
+    <>
+      <div className="grid gap-1 @2xl:grid-cols-[9rem_1fr] @2xl:items-start">
+        <span className={cx(label, "@2xl:pt-1.5")}>Talk about it</span>
+        <div className="min-w-0 space-y-1.5">
+          <ol ref={listRef} className="space-y-1.5">
+            {questions.map((q, i) => (
+              // By place, not by words: a question being reworded keeps its
+              // box. Each button names its question's number, so a screen
+              // reader can tell one row's Move up from the next.
+              <li key={`${generation}:${i}`} data-row={i} className="flex items-start gap-1">
+                {tagged && <span className="w-10 shrink-0 pt-2 text-xs font-medium text-ink-3">{talkQuestionTag(q) ?? ""}</span>}
+                <DraftText
+                  value={q}
+                  label={`Question ${i + 1}`}
+                  problem={note?.kept && note.row === i ? noteId : undefined}
+                  onCommit={(text) => reword(i, text)}
+                  onEscape={() => setNote((n) => (n?.row === i ? null : n))}
+                />
+                <IconButton icon={ArrowUp} label={`Move question ${i + 1} up`} size="sm" data-control="up" disabled={i === 0} onClick={() => move(i, -1)} />
+                <IconButton
+                  icon={ArrowDown}
+                  label={`Move question ${i + 1} down`}
+                  size="sm"
+                  data-control="down"
+                  disabled={i === questions.length - 1}
+                  onClick={() => move(i, 1)}
+                />
+                <IconButton
+                  icon={X}
+                  label={`Remove question ${i + 1}`}
+                  size="sm"
+                  data-control="remove"
+                  disabled={questions.length <= 1}
+                  onClick={() => remove(i)}
+                />
+              </li>
+            ))}
+          </ol>
+          <div className={cx("flex items-center gap-2", tagged && "pl-11")}>
+            <input
+              value={draft}
+              maxLength={MAX_TALK_QUESTION_LENGTH}
+              disabled={full}
+              onChange={(e) => {
+                setDraft(e.target.value);
+                if (note?.row === "new") setNote(null);
+              }}
+              onKeyDown={(e) => e.key === "Enter" && draft.trim() && add()}
+              placeholder={full ? "The list is full; remove a question to add another" : "Add a question of your own"}
+              aria-label="Add a question to talk about"
+              aria-invalid={note?.row === "new" ? true : undefined}
+              aria-describedby={note?.row === "new" ? noteId : undefined}
+              className={cx(inputClass, "min-w-0 flex-1", note?.row === "new" && "border-danger focus:border-danger")}
+            />
+            <Button size="sm" icon={Plus} onClick={add} disabled={full || !draft.trim()}>
+              Add
+            </Button>
+          </div>
+          <p id={noteId} role="status" className={cx("text-xs", note?.kept ? "text-danger" : "text-ink-3", !note && "sr-only")}>
+            {note?.text}
+          </p>
+        </div>
+      </div>
+      <p className="-mt-2 text-xs text-ink-4 @2xl:pl-[10rem]">
+        Asked after every reading, and printed under the week's readings.{" "}
+        {own ? (
+          <button type="button" className={linkClass} onClick={reset}>
+            Reset to the defaults
+          </button>
+        ) : (
+          "Faith, love and hope: change the words, or add questions of your own."
+        )}
+      </p>
+    </>
+  );
+}
+
 /** The family's memory verse: chosen here, said at every gathering (see
  * MemorizeStep), and kept in the Family set of the Memory deck once it is
  * learned, so it is not forgotten when the next one comes. */
 function FamilyMemoryRow({
   state,
-  setState,
+  update,
   row,
   label,
 }: {
   state: FamilyWorship;
-  setState: (s: FamilyWorship) => void;
+  update: (change: (s: FamilyWorship) => FamilyWorship) => void;
   row: string;
   label: string;
 }) {
@@ -605,7 +950,10 @@ function FamilyMemoryRow({
     }
     setError(null);
     setDraft("");
-    setState({ ...state, memory: { bookId: parsed.book.id, chapter: parsed.chapter, verseStart: parsed.verse, verseEnd, since: localDate(), times: 0 } });
+    // From the stored setup: the chapter was looked up in between, and the
+    // family may have changed something else while it was.
+    const chosen = { bookId: parsed.book.id, chapter: parsed.chapter, verseStart: parsed.verse, verseEnd, since: localDate(), times: 0 };
+    update((s) => ({ ...s, memory: chosen }));
   }
 
   async function keep() {
@@ -629,7 +977,7 @@ function FamilyMemoryRow({
               <Button size="sm" variant="ghost" onClick={() => void keep()} title="Put it in the Memory deck, in the Family set, so it keeps coming round">
                 Keep it in the Memory deck
               </Button>
-              <Button size="sm" variant="ghost" onClick={() => setState({ ...state, memory: null })}>
+              <Button size="sm" variant="ghost" onClick={() => update((s) => ({ ...s, memory: null }))}>
                 Stop
               </Button>
             </>
@@ -647,7 +995,7 @@ function FamilyMemoryRow({
           </Button>
         </div>
       </div>
-      <div className="-mt-2 flex flex-wrap items-center gap-1.5 text-xs text-ink-4 sm:pl-[10rem]">
+      <div className="-mt-2 flex flex-wrap items-center gap-1.5 text-xs text-ink-4 @2xl:pl-[10rem]">
         {error ? (
           <span className="text-danger">{error}</span>
         ) : (

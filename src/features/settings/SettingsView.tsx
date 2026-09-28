@@ -29,11 +29,15 @@ export function SettingsView() {
   const [params, setParams] = usePaneParams("settings");
   const section: Section = isSection(params.section) ? params.section : "preferences";
 
+  // Beside the section where the pane is wide enough for both, and above it
+  // where it is not: a pane a third of the window wide -- About opened from
+  // a Webster entry -- would otherwise give the section less room than the
+  // list of sections.
   return (
-    <div className="h-full overflow-y-auto">
-      <div className="mx-auto flex min-h-full w-full max-w-4xl gap-8 px-6 py-6">
-        <nav aria-label="Settings sections" className="w-44 shrink-0 space-y-0.5">
-          <h1 className="mb-3 px-2.5 text-xl font-semibold text-ink">Settings</h1>
+    <div className="@container h-full overflow-y-auto">
+      <div className="mx-auto flex min-h-full w-full max-w-4xl flex-col gap-4 px-4 py-6 @xl:flex-row @xl:gap-8 @xl:px-6">
+        <nav aria-label="Settings sections" className="-mx-2.5 flex flex-wrap gap-0.5 @xl:mx-0 @xl:block @xl:w-44 @xl:shrink-0 @xl:space-y-0.5">
+          <h1 className="mb-3 w-full px-2.5 text-xl font-semibold text-ink">Settings</h1>
           {SECTIONS.map((s) => (
             <button
               key={s.key}
@@ -41,7 +45,7 @@ export function SettingsView() {
               onClick={() => setParams({ section: s.key })}
               aria-current={section === s.key ? "page" : undefined}
               className={cx(
-                "flex h-8 w-full items-center gap-2.5 rounded-md px-2.5 text-left text-sm",
+                "flex h-8 items-center gap-2.5 rounded-md px-2.5 text-left text-sm @xl:w-full",
                 section === s.key ? "bg-accent-soft font-medium text-accent" : "text-ink-2 hover:bg-hover hover:text-ink",
               )}
             >

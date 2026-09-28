@@ -788,6 +788,56 @@ export function useDictionaryEntryForIsbe(slug: string | null) {
   });
 }
 
+// Webster's 1828 dictionary is content.db, fixed for the life of the build,
+// so every answer is held for the session (`staleTime: Infinity`): the popup
+// asking again about a word already looked up costs nothing.
+
+/** What Webster says of a double-clicked word, found under the word it is a
+ *  form of where the text inflects it (*prevented* is PREVENT's). Null word:
+ *  nothing asked. */
+export function useWebsterLookup(word: string | null) {
+  const asked = word?.trim() || null;
+  return useQuery({
+    queryKey: ["websterLookup", asked],
+    queryFn: () => api.websterLookup(asked as string),
+    enabled: asked != null,
+    staleTime: Infinity,
+  });
+}
+
+/** The Webster search, headwords first. Asked from two letters on, as the
+ *  Bible dictionaries' search is; the page debounces what it passes. */
+export function useWebsterSearch(query: string) {
+  const asked = query.trim();
+  return useQuery({
+    queryKey: ["websterSearch", asked],
+    queryFn: () => api.websterSearch(asked),
+    enabled: asked.length > 1,
+    staleTime: Infinity,
+  });
+}
+
+/** A page of the dictionary from `prefix` on ("" is the start of A), at
+ *  most `limit` rows: the page passes its page size, since it has to know
+ *  whether a page came back full to know whether there is another. */
+export function useWebsterBrowse(prefix: string, limit?: number) {
+  const from = prefix.trim().toLowerCase();
+  return useQuery({
+    queryKey: ["websterBrowse", from, limit ?? null],
+    queryFn: () => api.websterBrowse(from, limit),
+    staleTime: Infinity,
+  });
+}
+
+export function useWebsterEntry(id: number | null) {
+  return useQuery({
+    queryKey: ["websterEntry", id],
+    queryFn: () => api.websterEntry(id as number),
+    enabled: id != null,
+    staleTime: Infinity,
+  });
+}
+
 /** The whole gazetteer. 1,342 rows held for the session: the map redraws on
  *  every pan and zoom, and it must not go to the database to do it. */
 export function useAtlasPlaces() {
@@ -1041,7 +1091,13 @@ export function useSetMemoryVerseMode() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: { id: number; mode: MemoryMode }) => api.setMemoryVerseMode(input.id, input.mode),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["memoryVerses"] }),
+    // The due queue as well: "Practice what's due" asks the cards from it,
+    // and with only the deck refreshed it went on showing first letters for
+    // a card changed to blank words.
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["memoryVerses"] });
+      qc.invalidateQueries({ queryKey: ["dueMemoryVerses"] });
+    },
   });
 }
 

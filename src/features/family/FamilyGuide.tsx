@@ -12,7 +12,7 @@ export const GUIDE_POINTS: { title: string; body: string }[] = [
   },
   {
     title: "You don't need to preach",
-    body: "Read the passage clearly, talk about it for a minute, and pray simply. The Directory for Family-Worship asks the head of the house to read the Scriptures to the family and then to talk over what was read; the three questions under each reading are there to start that.",
+    body: "Read the passage clearly, talk about it for a minute, and pray simply. The Directory for Family-Worship asks the head of the house to read the Scriptures to the family and then to talk over what was read. The questions under each reading are there to start that: what it teaches us to believe, how it calls us to love, what it gives us to hope for. Once you have begun, you can change them or add your family's own under What we use.",
   },
   {
     title: "Choose a time you already share",

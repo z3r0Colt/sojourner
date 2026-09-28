@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { BookA, BookMarked, BookOpen, History, Languages, MapPin, ScrollText, type LucideIcon } from "lucide-react";
+import { BookA, BookMarked, BookOpen, History, Languages, ListMusic, MapPin, ScrollText, type LucideIcon } from "lucide-react";
 import type { Book } from "../../api/types";
 import { findPane, recentPositions, useWorkspaceStore, type Position } from "../../state/workspaceStore";
 import { useUiStore } from "../../state/uiStore";
@@ -11,7 +11,8 @@ import { useAtlasPlaces, useBookAliases, useDictionaryIndex, useIsbeIndex, useRe
 import { Modal } from "../../components/ui/Modal";
 import { Kbd } from "../../components/ui/Page";
 import { cx, inputClass } from "../../components/ui/classes";
-import { allCommands, commandQueryText, filterCommands, isCommandQuery, type Command, type CommandContext } from "./commands";
+import { allCommands, commandNamedBy, commandQueryText, filterCommands, isCommandQuery, type Command, type CommandContext } from "./commands";
+import { PSALMS_BOOK_ID, isPsalmNumber } from "../psalter/psalterParams";
 import type { SavedWorkspace } from "../../workspace/presets";
 
 const STRONGS_RE = /^[GgHh]\d{1,5}$/;
@@ -55,6 +56,29 @@ export function GoToCommandPalette({
 }) {
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState(0);
+  // Where the focus was before the palette opened, to go back to when it is
+  // dismissed. Taken while the palette first renders, before its input's
+  // autoFocus takes the focus: Modal takes its opener in an effect, which
+  // runs after that, so the opener it had was the palette's own input, gone
+  // once the palette closed, and the focus fell to the page -- off the
+  // Strong's card or the pane the reader was in.
+  const [opener] = useState(() => (document.activeElement instanceof HTMLElement ? document.activeElement : null));
+  /** Set when the palette is dismissed (Escape, a click outside) rather than
+   * closed by a choice: a choice takes the reader somewhere, perhaps a new
+   * pane, and the focus is not pulled back from it to the old one. */
+  const dismissed = useRef(false);
+  useEffect(
+    () => () => {
+      if (!dismissed.current || !opener?.isConnected || opener === document.body) return;
+      const lost = document.activeElement == null || document.activeElement === document.body;
+      if (lost) opener.focus({ preventScroll: true });
+    },
+    [opener],
+  );
+  function dismiss() {
+    dismissed.current = true;
+    onClose();
+  }
   const { data: aliases } = useBookAliases();
   const { data: coverage } = useTranslationCoverage(translationId ?? null);
   const { data: dictionaryIndex } = useDictionaryIndex();
@@ -133,14 +157,33 @@ export function GoToCommandPalette({
       }));
     }
     if (parsed) {
+      const passage: Candidate = {
+        key: "ref",
+        icon: BookOpen,
+        label: `${parsed.book.name} ${parsed.chapter}${parsed.verse ? `:${parsed.verse}` : ""}`,
+        hint: notCovered ? `Not in ${translationLabel ?? "the selected translation"}` : "Open passage",
+        disabled: notCovered,
+        run: () => onNavigate({ bookId: parsed.book.id, chapter: parsed.chapter, verse: parsed.verse }),
+      };
+      // A psalm is also a psalm to sing: "ps 23" offers it in the Psalter
+      // under the passage, as the command does for the psalm the Bible is
+      // open at -- turning a Psalter already open, else opening one beside.
+      // Typed text is read as a reference before any command is matched, so
+      // without this row a psalm could not be reached in the Psalter by name.
+      if (parsed.book.id !== PSALMS_BOOK_ID || !isPsalmNumber(parsed.chapter)) return [passage];
+      const psalm = parsed.chapter;
       return [
+        passage,
         {
-          key: "ref",
-          icon: BookOpen,
-          label: `${parsed.book.name} ${parsed.chapter}${parsed.verse ? `:${parsed.verse}` : ""}`,
-          hint: notCovered ? `Not in ${translationLabel ?? "the selected translation"}` : "Open passage",
-          disabled: notCovered,
-          run: () => onNavigate({ bookId: parsed.book.id, chapter: parsed.chapter, verse: parsed.verse }),
+          key: "psalter",
+          icon: ListMusic,
+          label: `Psalm ${psalm} in the Psalter`,
+          hint: "Sing it",
+          run: () => {
+            const open = useWorkspaceStore.getState().panes.find((p) => p.kind === "psalter");
+            openContent("psalter", { psalm }, { target: open ? open.id : "new" });
+            onClose();
+          },
         },
       ];
     }
@@ -216,8 +259,20 @@ export function GoToCommandPalette({
           onClose();
         },
       }));
-    const cmds = filterCommands(commands, trimmed).slice(0, MIXED_COMMAND_LIMIT).map(commandCandidate);
-    return [...dict, ...articles, ...places, ...docs, ...cmds];
+    // A name typed whole comes first -- the dictionary's "Mercy" for
+    // "mercy" -- and then any command the typed words name ("psalter" is
+    // "Open the Psalter"), ahead of the entries that only contain the text
+    // ("Psaltery", "Psalter, (Psalms), of Solomon").
+    const names = [...dict, ...articles, ...places, ...docs];
+    const exact = names.filter((c) => c.label.toLowerCase() === q);
+    const cmds = filterCommands(commands, trimmed).slice(0, MIXED_COMMAND_LIMIT);
+    const named = cmds.filter((c) => commandNamedBy(c, trimmed));
+    return [
+      ...exact,
+      ...named.map(commandCandidate),
+      ...names.filter((c) => !exact.includes(c)),
+      ...cmds.filter((c) => !named.includes(c)).map(commandCandidate),
+    ];
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trimmed, query, commandMode, commands, parsed, isStrongs, notCovered, dictionaryIndex, isbeIndex, atlasPlaces, westminsterDocs, recent, translationLabel]);
 
@@ -237,7 +292,7 @@ export function GoToCommandPalette({
   }
 
   return (
-    <Modal onClose={onClose} align="top" size="md" bodyClassName="p-3">
+    <Modal onClose={dismiss} align="top" size="md" bodyClassName="p-3">
       <input
         autoFocus
         value={query}

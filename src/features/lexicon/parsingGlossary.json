@@ -1,0 +1,803 @@
+{
+  "note": "Plain-English explanations of the parsing terms src-tauri/src/morph.rs gives for a Greek, Hebrew or Aramaic word, written for Sojourner. Each key is \"<field>:<value>\", the value exactly as morph.rs emits it in lower case; affix keys name the kind of morpheme (\"affix:pronominal suffix\"), the person, gender and number the backend adds after a comma being left off. Entries under hebrew_and_aramaic replace the general entry for a Hebrew or Aramaic word where the same name means something different there (the perfect and imperfect). The list of terms was checked against STEPBible's TEGMC and TEHMC tables (Translators Expansion of Greek / Hebrew Morphology Codes, STEPBible-Data commit b99716b0cddb648ddb95cc786a197180f2f97d48 of 2026-09-18, data created by STEPBible.org based on work at Tyndale House Cambridge, CC BY 4.0); the rarer Hebrew stems keep the names of the Open Scriptures Hebrew Bible morphology codes (hb.openscriptures.org/parsing/HebrewMorphologyCodes.html) that morph.rs follows. Every verse cited as an example was checked in TAHOT or TAGNT and is tagged there as the entry says. The explanations are Sojourner's own words, following the standard grammars: D. B. Wallace, Greek Grammar Beyond the Basics (1996); Gesenius' Hebrew Grammar, ed. E. Kautzsch, tr. A. E. Cowley (2nd ed., 1910); B. K. Waltke and M. O'Connor, An Introduction to Biblical Hebrew Syntax (1990); P. Joüon and T. Muraoka, A Grammar of Biblical Hebrew (2nd ed., 2006); F. Blass and A. Debrunner, A Greek Grammar of the New Testament, tr. R. W. Funk (1961); F. Rosenthal, A Grammar of Biblical Aramaic. See reference/morphology/SOURCES.md.",
+  "terms": {
+    "part_of_speech:verb": {
+      "term": "Verb",
+      "short": "A word for an action or a state: give, love, be.",
+      "explain": "A verb tells what happens or what something is: “he gave”, “she was glad”. In Greek and Hebrew the verb carries a great deal in its own form — who is acting, how the action is viewed, and often whether the subject acts or is acted upon — so a single word can take several English words to translate. The rest of the parsing spells out what this form shows."
+    },
+    "part_of_speech:noun": {
+      "term": "Noun",
+      "short": "A word naming a person, place, thing or idea: shepherd, Bethlehem, grace.",
+      "explain": "A noun names someone or something: “shepherd”, “Jerusalem”, “mercy”. Every noun has a number and a grammatical gender, which the parsing gives, though the ending does not always show the gender: Hebrew erets, “land”, is feminine. In Greek its ending also shows its case, the part it plays in the sentence, and in Hebrew its state shows whether it is bound to the word after it."
+    },
+    "part_of_speech:adjective": {
+      "term": "Adjective",
+      "short": "A word that describes a noun: good, holy, first.",
+      "explain": "An adjective describes a noun: “a good shepherd”, “the holy city”. In both languages it matches its noun in gender and number (and in Greek, in case too), and in Hebrew in having or lacking “the”: ha'ish hattov is “the good man”, ha'ish tov “the man is good”. Both languages also often use an adjective on its own as a noun, as English does with “the poor” or “the righteous”."
+    },
+    "part_of_speech:article": {
+      "term": "Article",
+      "short": "The Greek word for “the”, which changes form to match its noun.",
+      "explain": "Greek has one article, usually translated “the”; it has no word for “a”. The article matches its noun in case, number and gender, can turn almost anything into a noun (“the one believing” is “the believer”), and standing alone often means “he” or “they”. Greek uses it where English does not, with names and abstract nouns, and leaves it off where English needs “the”, so a noun without it is not therefore “a …”: in “the Word was God” (John 1:1), “God” has no article."
+    },
+    "part_of_speech:pronoun": {
+      "term": "Pronoun",
+      "short": "A word standing in for a noun: I, you, he, this, who.",
+      "explain": "A pronoun stands in for a noun so that it need not be repeated: “he”, “them”, “this”, “who”. The kind of pronoun (personal, relative, demonstrative and so on) is shown alongside. Because Greek and Hebrew verbs already show their subject, a separate subject pronoun such as “I” or “you” is often left out, and when one is written anyway it often adds emphasis or marks a contrast."
+    },
+    "part_of_speech:adverb": {
+      "term": "Adverb",
+      "short": "A word telling how, when, where or how much: now, there, greatly.",
+      "explain": "An adverb qualifies a verb, an adjective or a whole statement, telling how, when, where or to what degree: “he went out quickly”, “then he said”, “there they crucified him”. Many small, frequent words in both Greek and Hebrew are adverbs."
+    },
+    "part_of_speech:conjunction": {
+      "term": "Conjunction",
+      "short": "A joining word: and, but, for, therefore, that.",
+      "explain": "A conjunction joins words, phrases or sentences and shows how they relate: “and”, “but”, “for”, “therefore”. Conjunctions repay close attention in an argument such as one of Paul's letters, because they show whether a statement adds to, contrasts with, explains or follows from what came before. In Hebrew the commonest one, “and”, is a single letter joined to the front of the next word."
+    },
+    "part_of_speech:preposition": {
+      "term": "Preposition",
+      "short": "A word placing things in relation: in, into, from, through, with.",
+      "explain": "A preposition sets a noun in relation to something else — in place, time, cause or manner: “in the beginning”, “through faith”, “from the Lord”. Greek prepositions govern a particular case, and some change meaning with the case: dia with the genitive means “through”, with the accusative “because of”. Several Hebrew prepositions are single letters joined to the front of the next word."
+    },
+    "part_of_speech:particle": {
+      "term": "Particle",
+      "short": "A small word outside the other classes: not, if, behold, indeed.",
+      "explain": "“Particle” is a catch-all for small words that do not fit the other classes: negatives like “not”, words of emphasis or questioning, and little markers that shape a sentence. Their force is often a matter of tone that English conveys by word order or punctuation, so translations handle them differently. Where a kind is shown alongside, it says what sort of particle this is. In Hebrew more words are parsed as particles than English grammar would call so: the object marker et, the relative asher, im (“if”), yesh (“there is”), zeh (“this”) and hinneh (“behold”)."
+    },
+    "part_of_speech:interjection": {
+      "term": "Interjection",
+      "short": "An exclamation: O!, woe!, alas!, behold!",
+      "explain": "An interjection is a cry or exclamation — “O!”, “woe!”, “alas!” — standing apart from the grammar of the sentence around it. In the Bible these mark strong feeling in prophecy, lament and prayer, and the Greek idou, “behold!”, calls the hearer to look closely at what follows."
+    },
+    "part_of_speech:foreign word": {
+      "term": "Foreign word",
+      "short": "A Hebrew or Aramaic word kept as it was, written in Greek letters.",
+      "explain": "The Greek New Testament sometimes keeps a Hebrew or Aramaic word just as it was spoken, spelled in Greek letters, and the Gospel writers often translate it for their readers straight afterwards. Most such words are parsed like any other Greek word, with their language added as their kind; this label is for one given no Greek parsing at all. The language is shown alongside."
+    },
+
+    "kind:proper name, indeclinable": {
+      "term": "Proper name (indeclinable)",
+      "short": "A name whose form never changes, often from Hebrew: Abraham, David.",
+      "explain": "Many Old Testament names keep a single spelling in Greek whatever their role in the sentence: “Abraham”, “David”, “Israel”. Since the ending cannot show the case, the article or the words around the name show how it is being used."
+    },
+    "kind:numeral, indeclinable": {
+      "term": "Numeral (indeclinable)",
+      "short": "A number word whose form never changes: two, seven, twelve, forty.",
+      "explain": "Most Greek number words from five to one hundred keep one fixed form, as “two” (dyo) nearly always does: “seven”, “twelve”, “forty”. Whatever their role in the sentence they look the same, so the noun they count shows their case."
+    },
+    "kind:letter": {
+      "term": "Letter",
+      "short": "A letter of the alphabet used as a word: Alpha, Omega.",
+      "explain": "A letter of the Greek alphabet can be used as a word in its own right, as in “I am the Alpha and the Omega” (Revelation 1:8). Like other indeclinable words it never changes its form."
+    },
+    "kind:indeclinable": {
+      "term": "Indeclinable",
+      "short": "A word whose form never changes to show its role.",
+      "explain": "An indeclinable word keeps one form whatever its role in the sentence, so its ending does not show case, number or gender. Its use has to be read from the words around it."
+    },
+    "kind:personal": {
+      "term": "Personal pronoun",
+      "short": "I, you, he, she, it, we, they — and me, him, us, them.",
+      "explain": "Personal pronouns stand for people and things already known: “I”, “you”, “he”, “she”, “it”, “we”, “they”. In Greek the third-person pronoun (autos) can also mean “himself” or “the same”, and in Hebrew hu and hem with the article mean “that” and “those” (“on that day”). Hebrew usually writes possessive and object pronouns as suffixes, so a separate pronoun is most often the subject: in a sentence without a verb (“I am the LORD”) it is simply required, while beside a verb, which already shows its subject, it often adds emphasis or contrast."
+    },
+    "kind:relative": {
+      "term": "Relative",
+      "short": "Who, which, that: links a description to someone just named.",
+      "explain": "A relative word introduces a clause describing someone or something just mentioned: “the one who believes”, “the word which you heard”. In Greek this is the relative pronoun hos (“who, which”). In Hebrew it is usually the particle asher or the prefix she-, which marks the link without changing its own form. Joined to ke-, “like”, it becomes ka'asher, “as, just as, when”, which is parsed here too."
+    },
+    "kind:reciprocal": {
+      "term": "Reciprocal pronoun",
+      "short": "“One another”, “each other”.",
+      "explain": "The reciprocal pronoun, allēlōn, means “one another”: an action passed back and forth within a group, as in “love one another”. It is always plural and never stands as the subject of a sentence."
+    },
+    "kind:demonstrative": {
+      "term": "Demonstrative",
+      "short": "Pointing words: this, that, these, those.",
+      "explain": "Demonstratives point to something near or far: “this”, “that”, “these”, “those”. They can stand alone (“this is my beloved Son”) or go with a noun (“this cup”). In the Hebrew and Aramaic text such words are parsed as particles: Hebrew zeh and zot (“this”) and elleh (“these”), and their Aramaic counterparts. Hebrew “that” and “those” are usually hu and hem with the article (“on that day”), which are parsed as personal pronouns."
+    },
+    "kind:correlative": {
+      "term": "Correlative pronoun",
+      "short": "Words of amount or kind that answer each other: as many as, so great.",
+      "explain": "Correlative pronouns describe amount, size or kind, often in pairs that answer each other: “as many as” (hosos), “so great” (tosoutos). They belong to the same family as the question words “how much?” and “what kind?”."
+    },
+    "kind:interrogative": {
+      "term": "Interrogative",
+      "short": "A question word: who? what? why? where?",
+      "explain": "Interrogative words ask questions: “who?”, “what?”, “why?”, “how?”. In Hebrew a yes-or-no question can also be marked by a small prefix ha-, where English would change the word order: “Am I my brother's keeper?” begins this way (Genesis 4:9)."
+    },
+    "kind:indefinite": {
+      "term": "Indefinite",
+      "short": "Someone, something, anyone, a certain…",
+      "explain": "An indefinite pronoun refers to someone or something without saying exactly who or what: “someone”, “anyone”, “a certain man”. The Greek word tis is spelled just like the question word “who?” and differs from it only in accent."
+    },
+    "kind:correlative or interrogative": {
+      "term": "Correlative or interrogative",
+      "short": "A word of amount or kind that can ask or answer: how much? so much.",
+      "explain": "Some Greek words of amount and kind, such as posos (“how much?”, “how many?”), can either ask a question or work within a statement, as in “how much more will your Father give” (Matthew 7:11). The parsing leaves both possibilities open, and the sentence shows which is meant."
+    },
+    "kind:reflexive": {
+      "term": "Reflexive pronoun",
+      "short": "Myself, yourself, himself, themselves.",
+      "explain": "A reflexive pronoun turns the action back on the subject: “he humbled himself”, “let him deny himself”. It never stands as the subject of a sentence."
+    },
+    "kind:possessive": {
+      "term": "Possessive",
+      "short": "My, your, our: emos, sos; also the stressed emou, “of me”.",
+      "explain": "Greek usually shows possession with a pronoun meaning “of me” or “of you”, but it also has possessive adjectives: emos (“my, mine”), sos (“your”), hēmeteros (“our”) and hymeteros (“your”, plural), which agree with the thing possessed while their person shows the possessor. Also parsed as possessive is emou, the stressed form of “of me”, used mostly after a preposition (“pray for me”, Acts 8:24), where it is simply “me”."
+    },
+    "kind:conditional": {
+      "term": "Conditional",
+      "short": "“If”, “unless”, “whether”: a word that sets a condition.",
+      "explain": "A conditional word introduces a condition: “if you love me, you will keep my commandments”. In Greek (ei, ean) the verb's mood and tense shape how it is put: ei with the indicative usually assumes the condition for the sake of argument (it does not mean “since”), but with a past tense and the particle an in the other clause it is contrary to fact: “if you had been here, my brother would not have died” (John 11:21)."
+    },
+    "kind:existence": {
+      "term": "Existence (“there is”)",
+      "short": "yesh, “there is, there are”; with a pronoun suffix, “you are”, “he is”.",
+      "explain": "Hebrew has a small word, yesh, that says something exists or is present, where English uses “there is” or a form of “be”: “Surely the LORD is in this place” (Genesis 28:16), “there is hope of a tree” (Job 14:7). With a pronoun suffix it can stand for “you are” or “he is”. Its opposite is ein, “there is not”, which is parsed as a noun."
+    },
+    "kind:comparative": {
+      "term": "Comparative",
+      "short": "“More”, or “-er”: greater, better, more than.",
+      "explain": "A comparative adjective or adverb says “more”: “greater”, “better”, “more than”. In New Testament Greek it often does the work of a superlative too: “the greatest of these is love” (1 Corinthians 13:13) uses a comparative form, meizōn."
+    },
+    "kind:superlative": {
+      "term": "Superlative",
+      "short": "“Most”, or “-est”: Most High, most holy, very great.",
+      "explain": "A superlative says “most”: “the Most High”, “your most holy faith” (Jude 20). In New Testament Greek true superlative forms are fairly few, since the comparative often does their work, and some of those that remain simply mean “very”, as in “his precious and very great promises” (2 Peter 1:4)."
+    },
+    "kind:personal name": {
+      "term": "Personal name",
+      "short": "The name of a man or woman: Abraham, Mary, Paul.",
+      "explain": "A personal name belongs to a particular man or woman: “Abraham”, “Mary”, “Paul”. Hebrew names very often carry a meaning — “Isaac” means “he laughs” — which the text sometimes plays on, and a lexicon will usually give it. Several people can share a name, so it is worth checking which one is meant."
+    },
+    "kind:place name": {
+      "term": "Place name",
+      "short": "The name of a place: Jerusalem, Bethlehem, Egypt, the Jordan.",
+      "explain": "A place name names a town, land, region, river or mountain: “Jerusalem”, “Bethlehem”, “Egypt”, “the Jordan”. Many Hebrew place names have a meaning of their own (“Bethlehem” is “house of bread”), and some name both a land and its people, as “Israel” and “Egypt” do."
+    },
+    "kind:title": {
+      "term": "Title",
+      "short": "A name-like word for a title, office, god or special thing: God, Lord, Pharaoh.",
+      "explain": "A word that works like a name without being a personal or place name is parsed as a title. In the New Testament that is chiefly “God”, “Lord”, “Christ” (the Greek for “Messiah”, a title rather than a surname), “Father”, “Son of Man” and “Satan”, with groups such as the Pharisees; in the Old Testament, Pharaoh, gods such as Baal and Dagon, feasts such as Passover, and a few special terms such as the Urim and Thummim. The divine name YHWH (“the LORD”) is parsed this way too, though it is God's own name (Exodus 3:15) rather than a title."
+    },
+    "kind:transliterated from hebrew": {
+      "term": "Hebrew word",
+      "short": "A Hebrew word carried into the Greek text: amen, manna.",
+      "explain": "A few Hebrew words are written in Greek letters in the New Testament instead of being translated. Only two are parsed this way: “amen”, which passed untranslated into the worship of the early church as it has into ours, and “manna”, the bread from heaven. Other borrowed words such as “hallelujah” and “hosanna” are parsed simply as particles, and “sabaoth” as a title."
+    },
+    "kind:transliterated from aramaic": {
+      "term": "Aramaic word",
+      "short": "An Aramaic word carried into the Greek text: Talitha koum, Eloi, Maranatha.",
+      "explain": "Aramaic, a sister language of Hebrew, was the everyday language of most Jews in Judea and Galilee in Jesus' day. The Gospels sometimes keep his own Aramaic words, as in “Talitha koum” (Mark 5:41) and “Eloi, Eloi, lema sabachthani” (Mark 15:34), and Paul keeps the prayer “Maranatha”, most likely “Our Lord, come!” (it can also be read “Our Lord has come”). “Abba”, though Aramaic, is parsed as a title."
+    },
+    "kind:common": {
+      "term": "Common noun",
+      "short": "An ordinary noun, not a name: king, land, covenant.",
+      "explain": "A common noun names a kind of person, thing or idea — “king”, “land”, “covenant” — as opposed to a proper name like “David” or “Egypt”. Common nouns are the most frequent kind of word in the Hebrew Bible."
+    },
+    "kind:gentilic": {
+      "term": "Gentilic",
+      "short": "A word for a people or one of its members: Hebrew, Moabite, Samaritan.",
+      "explain": "A gentilic noun or adjective names a people or someone belonging to it: “a Hebrew”, “Ruth the Moabitess”, “Uriah the Hittite”, and in the New Testament “a Samaritan” or “the Nazarene”. Hebrew usually forms these with an -i ending (ivri, “Hebrew”), much like English words ending in -ite or -ian."
+    },
+    "kind:proper name": {
+      "term": "Proper name",
+      "short": "The name of a person, place or people: Abraham, Zion, Egypt.",
+      "explain": "A proper name belongs to a particular person, place or people: “Abraham”, “Zion”, “Egypt”. The parsing usually says which of these a name is; where it does not, the lexicon entry will."
+    },
+    "kind:cardinal number": {
+      "term": "Cardinal number",
+      "short": "A counting number: one, two, seven, forty.",
+      "explain": "Cardinal numbers count: “one”, “two”, “seven”, “forty”. In Hebrew the numbers from three to ten take the opposite gender form to the noun they count, a curious habit that does not affect the meaning. Some numbers, like seven and forty, recur with symbolic weight, though that should be weighed with care in each passage rather than assumed."
+    },
+    "kind:ordinal number": {
+      "term": "Ordinal number",
+      "short": "A number giving order: first, second, seventh.",
+      "explain": "Ordinal numbers give a position in a sequence: “the first day”, “the seventh day”. Hebrew has separate ordinal forms only up to “tenth”; beyond that it uses the counting numbers, so “in the fourteenth year” is literally “in fourteen year”."
+    },
+    "kind:affirmation": {
+      "term": "Affirmation",
+      "short": "A particle of assurance: surely, indeed, truly.",
+      "explain": "An affirmative particle underlines that something is truly so, much like English “surely”, “indeed” or “truly”. It adds weight to a statement rather than changing what it says."
+    },
+    "kind:definite article": {
+      "term": "Definite article",
+      "short": "The word “the”: in Hebrew a prefix ha-, in Aramaic an ending -a.",
+      "explain": "Hebrew has no separate word for “the”: it prefixes ha- to the word, usually doubling the letter that follows, while Aramaic adds an ending, usually -a. Its use does not match English: Hebrew uses it in addressing someone (“O king”), in hayyom, “today” (“the day”), and with a participle for “the one who” (“he who comes”, Psalm 118:26), while poetry often leaves it out, so its absence does not always mean “a”."
+    },
+    "kind:exhortation": {
+      "term": "Particle of entreaty",
+      "short": "“Please”, “I pray”: the particle na, softening or urging a request.",
+      "explain": "The little word na is added to commands and requests to soften or urge them, much like English “please” or the older “I pray thee”. Older translations often render it “now”, or leave it untranslated."
+    },
+    "kind:interjection": {
+      "term": "Interjection",
+      "short": "An exclamation or appeal: behold!, woe!, alas!, please.",
+      "explain": "An interjection is an exclamation standing apart from the grammar of the sentence. In Hebrew the commonest by far are hinneh and hen, “behold!”, which call the hearer to look at what follows and are rendered “look”, “here” or “now”, or left untranslated. Also counted here are the prophets' “woe!” (hoy), the little word na, “please”, often rendered “now” (“Look now toward heaven”, Genesis 15:5), and a few words that are not exclamations at all: amen, the psalms' Selah (of uncertain meaning, probably musical) and af, “also, indeed”."
+    },
+    "kind:negative": {
+      "term": "Negative",
+      "short": "Words that deny or forbid: not, no one, nor, do not.",
+      "explain": "Negative words deny or forbid: “not”, “no one”, “nor”, “do not”. Greek has two families: ou for plain statements, and mē for commands, wishes, conditions and most participles and infinitives; in a question ou expects “yes”, while mē expects “no” or voices a hesitant guess (“Can this be the Christ?”, John 4:29). Hebrew lo (“not”) serves for statements and, with the imperfect, for firm prohibitions such as “You shall not steal”; al (“do not”) goes with the jussive in requests, warnings and wishes, often more immediate ones, and poetry also uses bal."
+    },
+    "kind:direct object marker": {
+      "term": "Object marker (et)",
+      "short": "A small untranslated word (et) pointing to a definite direct object.",
+      "explain": "The particle et has no English equivalent: it marks the next word as the definite direct object of the verb, as in “God created (et) the heavens and (et) the earth”. It is usually left untranslated, though it can carry pronoun suffixes (“him”, “them”). The preposition et, “with”, is spelled the same, and a few of those are parsed here too, so the translation shows which is meant."
+    },
+
+    "stem:qal": {
+      "term": "Qal",
+      "short": "The basic, simple stem: the verb's plain meaning.",
+      "explain": "Qal (“light”, that is, simple) is the basic form of the Hebrew verb, giving its plain meaning: “he wrote”, “she heard”, “they went”. About two-thirds of the verbs in the Old Testament are qal. The other stems build on the same root to express passive, reflexive, causative and related meanings."
+    },
+    "stem:niphal": {
+      "term": "Niphal",
+      "short": "Usually passive or reflexive of the simple meaning: “was seen”, “hid himself”.",
+      "explain": "The niphal most often gives a passive or reflexive sense to the simple meaning: “it was heard”, “he hid himself”, “they were gathered”. It can also describe something that simply happens to the subject, or an action done to one another. A few verbs, such as “fight” and “swear”, occur mainly in this stem with meanings English treats as active."
+    },
+    "stem:piel": {
+      "term": "Piel",
+      "short": "Often brings about a state or result: “make holy”, “make great”.",
+      "explain": "The piel is traditionally called the “intensive” stem, but that label fits only some verbs. Most often it expresses bringing someone or something into a state — “be holy” in the qal becomes “make holy, consecrate” in the piel — and it also forms verbs from nouns and can describe actions repeated many times. Some very common verbs, such as “speak” (dibber) and “praise” (hillel), belong mainly to this stem. Related patterns some grammars name separately, such as qomem, “raise up” (Isaiah 44:26), are parsed as piel too."
+    },
+    "stem:pual": {
+      "term": "Pual",
+      "short": "The passive of the piel: “was made holy”, “to be praised”.",
+      "explain": "The pual is the passive partner of the piel: where the piel means “sanctify”, the pual means “be sanctified”. It is a fairly uncommon stem, and many of its occurrences are participles, as in “great is the LORD, and greatly to be praised” (Psalm 48:1). A few remnants of an old passive of the simple stem are parsed as pual too, such as yullad, “was born” (Genesis 4:26), and luqqachah, “she was taken” (Genesis 2:23)."
+    },
+    "stem:hiphil": {
+      "term": "Hiphil",
+      "short": "Usually causative: “bring out” (make go out), “show” (make see).",
+      "explain": "The hiphil most often expresses causing an action: “go out” becomes “bring out”, “see” becomes “show”, “know” becomes “make known”. It can also declare or treat someone as being something, as in “justify” (declare righteous), and it forms verbs from nouns and adjectives. After the qal it is the most common stem."
+    },
+    "stem:hophal": {
+      "term": "Hophal",
+      "short": "The passive of the hiphil: “was brought”, “was made to…”.",
+      "explain": "The hophal is the passive partner of the hiphil: if the hiphil means “bring down”, the hophal means “be brought down”. It is one of the rarer stems. In the Aramaic chapters the same name is used for the passive of the haphel."
+    },
+    "stem:hithpael": {
+      "term": "Hithpael",
+      "short": "Often reflexive or reciprocal: acting on oneself, or with one another.",
+      "explain": "The hithpael, recognised by a t after its prefix (hit-, yit-, mit-), often expresses action on oneself (“he sanctified himself”), action with one another, or repeated action (“walk about, walk to and fro”). It can also mean acting as, or presenting oneself as, something: “pretend to be ill”, “prophesy” (behave as a prophet). Related patterns some grammars name separately, such as hitbonen, “consider” (Job 37:14), are parsed as hithpael too. Its sense depends on the verb, so it is best checked against a lexicon."
+    },
+    "stem:polel": {
+      "term": "Polel",
+      "short": "A piel-type stem used by verbs with a weak middle letter: “raise up”.",
+      "explain": "The polel does the work of the piel for verbs whose middle root letter is weak (often a vowel), which cannot double that letter in the usual way: from qum, “arise”, comes qomem, “raise up”. Its sense lies in the same range as the piel's, bringing about a state or result."
+    },
+    "stem:polal": {
+      "term": "Polal",
+      "short": "The passive of the polel; rare.",
+      "explain": "The polal is the passive partner of the polel, used by the same kinds of verbs, those whose middle root letter is weak. It is rare, and its sense matches the pual's: being brought into a state or result."
+    },
+    "stem:hithpolel": {
+      "term": "Hithpolel",
+      "short": "The reflexive of the polel: “consider”, “show oneself discerning”.",
+      "explain": "The hithpolel is the hithpael-type form of verbs with a weak middle root letter. Like the hithpael it usually has a reflexive or reciprocal sense: from bin, “understand”, comes hitbonen, “consider, give careful thought”."
+    },
+    "stem:poel": {
+      "term": "Poel",
+      "short": "A less common piel-type stem found with a few verbs.",
+      "explain": "The poel belongs to the piel family and is used in its place by a small number of verbs, marked by a long o after the first root letter. Its meaning lies in the same range as the piel's."
+    },
+    "stem:poal": {
+      "term": "Poal",
+      "short": "The passive of the poel; rare.",
+      "explain": "The poal is the passive partner of the poel, found with only a handful of verbs. Its sense matches the pual's: being brought into a state or result."
+    },
+    "stem:palel": {
+      "term": "Palel",
+      "short": "A rare stem repeating the last root letter, mostly for states: “be at ease”.",
+      "explain": "The palel doubles the last letter of the root and is found with only a few verbs, mostly describing a state or quality, such as “be at ease” or “be green, flourishing”. It belongs to the broad family of the piel."
+    },
+    "stem:pulal": {
+      "term": "Pulal",
+      "short": "The passive of the palel; very rare.",
+      "explain": "The pulal is the passive partner of the palel, found only a few times, as of things that “languish” or “wither”. Its sense is of being brought into a state."
+    },
+    "stem:qal passive": {
+      "term": "Qal passive",
+      "short": "An old passive of the simple stem: “was taken”, “was born”.",
+      "explain": "Early Hebrew had a passive of the qal that later largely fell out of use. Its remnants look like pual or hophal forms, and are parsed as such, but they are the passive of the simple meaning rather than of the piel or hiphil: luqqachah, “she was taken”, and yullad, “was born” (the passive of qal “bear”, not of hiphil “father”)."
+    },
+    "stem:pilpel": {
+      "term": "Pilpel",
+      "short": "Repeats two root letters; often vigorous or repeated action: “roll along”.",
+      "explain": "The pilpel repeats two letters of a short root and belongs to the piel family, often for vigorous or repeated action: from galal, “roll”, comes gilgel, “roll along”, and from kul comes kilkel, “sustain, provide for”. Its passive is the polpal and its reflexive the hithpalpel."
+    },
+    "stem:polpal": {
+      "term": "Polpal",
+      "short": "The passive of the pilpel; very rare.",
+      "explain": "The polpal is the passive partner of the pilpel, the stem that repeats two letters of a short root. It is very rare."
+    },
+    "stem:hithpalpel": {
+      "term": "Hithpalpel",
+      "short": "The reflexive of the pilpel: “he lingered”.",
+      "explain": "The hithpalpel is the reflexive partner of the pilpel, repeating two letters of the root with the hithpael's prefix. Hitmahmah, “linger, delay”, is one of its few examples."
+    },
+    "stem:nithpael": {
+      "term": "Nithpael",
+      "short": "A rare mix of niphal and hithpael, passive or reflexive in sense.",
+      "explain": "The nithpael is a rare mixed form, joining the niphal's n- to the pattern of the hithpael, with a passive or reflexive sense: “the blood shall be atoned for” (Deuteronomy 21:8). It occurs only three times in the Old Testament (also Ezekiel 23:48 and Proverbs 27:15), though it became common in later Hebrew."
+    },
+    "stem:pealal": {
+      "term": "Pealal",
+      "short": "Repeats the last two root letters, for quick, repeated movement: “throb”.",
+      "explain": "The pealal repeats the last two letters of the root to describe movement repeated in quick succession. It appears only a few times, as in secharchar, “throb, palpitate”, of a pounding heart (Psalm 38:10), which is parsed here as a piel."
+    },
+    "stem:pilel": {
+      "term": "Pilel",
+      "short": "A rare stem repeating the last root letter, for states or qualities.",
+      "explain": "The pilel is a variant of the palel, repeating the last root letter, used by a few verbs describing a state or quality such as “be green, flourishing”. It belongs to the broad family of the piel."
+    },
+    "stem:hothpaal": {
+      "term": "Hothpaal",
+      "short": "A rare passive of the hithpael: “they were not enrolled”.",
+      "explain": "The hothpaal is a rare passive of the hithpael, with a prefix hot- or hut-: “they were not enrolled” (Numbers 1:47), “she has been defiled” (Deuteronomy 24:4). It occurs only a few times."
+    },
+    "stem:tiphil": {
+      "term": "Tiphil",
+      "short": "A rare stem with a t- prefix: “I taught Ephraim to walk”.",
+      "explain": "The tiphil is a rare stem formed with a prefixed t-, found only three times. In “I taught Ephraim to walk” (Hosea 11:3) it is causative, like a hiphil; in “how can you compete with horses?” (Jeremiah 12:5; also 22:15) it simply means “compete, vie”."
+    },
+    "stem:hishtaphel": {
+      "term": "Hishtaphel",
+      "short": "The stem of “bow down, worship” (hishtachawah).",
+      "explain": "The hishtaphel is a rare stem with a prefixed hisht-, known in Hebrew almost only from the very common verb “bow down, worship” (hishtachawah). Older grammars treated that verb as a hithpael-type form (a hithpalel) of shachah; most now see it as a hishtaphel of chawah, and most of its occurrences are parsed so here, though some are parsed as hithpael. In the Aramaic chapters the name marks a reflexive or passive of the shaphel."
+    },
+    "stem:nithpalel": {
+      "term": "Nithpalel",
+      "short": "A very rare mixed form, passive or reflexive in sense.",
+      "explain": "The nithpalel is a very rare mixed form, joining the niphal's n- to the pattern of the hithpalel. Its sense is passive or reflexive."
+    },
+    "stem:nithpoel": {
+      "term": "Nithpoel",
+      "short": "A very rare mixed form, passive or reflexive in sense.",
+      "explain": "The nithpoel is a very rare mixed form, joining the niphal's n- to the pattern of the hithpoel. Its sense is passive or reflexive."
+    },
+    "stem:hithpoel": {
+      "term": "Hithpoel",
+      "short": "The reflexive of the poel: acting on oneself or with one another.",
+      "explain": "The hithpoel is the reflexive partner of the poel, a variant of the hithpolel. It usually means acting on oneself or with one another."
+    },
+    "stem:peal": {
+      "term": "Peal",
+      "short": "The basic Aramaic stem, like the Hebrew qal.",
+      "explain": "Peal is the simple, basic stem of the Aramaic verb, the counterpart of the Hebrew qal, giving the verb's plain meaning: “he said”, “he went”. It is by far the most common stem in the Aramaic chapters of Daniel and Ezra."
+    },
+    "stem:peil": {
+      "term": "Peil",
+      "short": "The simple Aramaic passive: “was given”, “was written”.",
+      "explain": "The peil is the simple passive of Aramaic, used in the perfect and, in the parsing here, for the passive participle: “it was given”, “it was written”, “blessed be” (Daniel 3:28). The sentence on Belshazzar, “you have been weighed in the balances” (Daniel 5:27), uses it."
+    },
+    "stem:hithpeel": {
+      "term": "Hithpeel",
+      "short": "Aramaic passive or reflexive of the simple stem: “was cut out”.",
+      "explain": "The hithpeel, with a prefixed hit-, gives a passive or reflexive sense to the simple meaning: “a stone was cut out” (Daniel 2:34). It is the ordinary passive for many Aramaic verbs."
+    },
+    "stem:ithpeel": {
+      "term": "Ithpeel",
+      "short": "Aramaic passive or reflexive of the simple stem (spelled it-).",
+      "explain": "The ithpeel is the same stem as the hithpeel, spelled with an initial it- instead of hit-. It gives a passive or reflexive sense to the simple meaning."
+    },
+    "stem:pael": {
+      "term": "Pael",
+      "short": "The Aramaic counterpart of the Hebrew piel: “praise”, “appoint”.",
+      "explain": "The pael is the Aramaic equivalent of the Hebrew piel, marked by doubling the middle root letter. It often brings about a state or result or forms verbs from nouns: “praise”, “appoint”, “receive”. Like the piel, it is not simply an “intensive” of the simple stem."
+    },
+    "stem:ithpaal": {
+      "term": "Ithpaal",
+      "short": "Aramaic reflexive or passive of the pael, like the Hebrew hithpael.",
+      "explain": "The ithpaal is the reflexive or passive partner of the pael, the Aramaic counterpart of the Hebrew hithpael: “they have taken counsel together” (Daniel 6:7). It is also spelled with h- as the hithpaal."
+    },
+    "stem:hithpaal": {
+      "term": "Hithpaal",
+      "short": "Aramaic reflexive or passive of the pael: “shall be destroyed”.",
+      "explain": "The hithpaal is the reflexive or passive partner of the pael, the Aramaic counterpart of the Hebrew hithpael: a kingdom that “shall never be destroyed” (Daniel 2:44). It is also spelled with an initial it- as the ithpaal."
+    },
+    "stem:aphel": {
+      "term": "Aphel",
+      "short": "An Aramaic causative with an a- prefix, like the Hebrew hiphil.",
+      "explain": "The aphel is an Aramaic causative stem, the counterpart of the Hebrew hiphil, spelled with a prefixed a-: “he set it up” (Daniel 3:1). Biblical Aramaic usually spells this stem with h- as the haphel, and the aphel appears only a few times."
+    },
+    "stem:haphel": {
+      "term": "Haphel",
+      "short": "The usual Aramaic causative, like the Hebrew hiphil: “make known”.",
+      "explain": "The haphel is the main causative stem of Biblical Aramaic, the counterpart of the Hebrew hiphil: “make known” from “know”, “bring in” from “go in”. The king's repeated demand in Daniel 2 to “make known” the dream and its interpretation uses it."
+    },
+    "stem:saphel": {
+      "term": "Saphel",
+      "short": "A rare Aramaic causative with an s- prefix.",
+      "explain": "The saphel is a rare causative stem with a prefixed s-, a variant of the shaphel. It occurs only a handful of times."
+    },
+    "stem:shaphel": {
+      "term": "Shaphel",
+      "short": "An Aramaic causative with an sh- prefix: “finish”, “rescue”.",
+      "explain": "The shaphel is a causative stem formed with a prefixed sh-, found with a small number of Aramaic verbs that mostly carry settled meanings of their own: “finish” (Ezra 5:11), “rescue” (Daniel 3:28). It works much like the haphel."
+    },
+    "stem:ishtaphel": {
+      "term": "Ishtaphel",
+      "short": "The reflexive or passive of the shaphel: “be finished”.",
+      "explain": "The ishtaphel is the reflexive or passive partner of the shaphel: “if the walls are finished” (Ezra 4:13). It is rare."
+    },
+    "stem:hithaphel": {
+      "term": "Hithaphel",
+      "short": "A rare Aramaic reflexive or passive of the causative stem.",
+      "explain": "The hithaphel is a rare reflexive or passive of the Aramaic causative stems, the haphel and aphel. It occurs only a few times."
+    },
+    "stem:hephal": {
+      "term": "Hephal",
+      "short": "A rare Aramaic passive of the causative haphel.",
+      "explain": "The hephal is a rare passive of the causative haphel, a variant of the Aramaic hophal: the subject is made to do or undergo something. It occurs only a few times."
+    },
+    "stem:tiphel": {
+      "term": "Tiphel",
+      "short": "A rare Aramaic stem with a t- prefix.",
+      "explain": "The tiphel is a rare Aramaic stem formed with a prefixed t-, comparable to the Hebrew tiphil. It occurs only a few times, and the lexicon gives its meaning for each verb."
+    },
+    "stem:palpel": {
+      "term": "Palpel",
+      "short": "The Aramaic counterpart of the pilpel, repeating two root letters.",
+      "explain": "The palpel is the Aramaic counterpart of the Hebrew pilpel, repeating two letters of a short root, often for vigorous or repeated action. It is rare."
+    },
+    "stem:ithpalpel": {
+      "term": "Ithpalpel",
+      "short": "The reflexive or passive of the palpel; very rare.",
+      "explain": "The ithpalpel is the reflexive or passive partner of the palpel, the Aramaic counterpart of the Hebrew hithpalpel. It is very rare."
+    },
+    "stem:ithpoel": {
+      "term": "Ithpoel",
+      "short": "An Aramaic reflexive or passive of the poel type; very rare.",
+      "explain": "The ithpoel is an Aramaic reflexive or passive of the poel type, spelled with it-. It is very rare."
+    },
+    "stem:ithpolel": {
+      "term": "Ithpolel",
+      "short": "An Aramaic reflexive or passive of the polel type; very rare.",
+      "explain": "The ithpolel is the Aramaic reflexive or passive of the polel type, used by verbs with a weak middle root letter. It is very rare."
+    },
+    "stem:ittaphal": {
+      "term": "Ittaphal",
+      "short": "A rare Aramaic reflexive or passive of the aphel.",
+      "explain": "The ittaphal is a rare reflexive or passive of the causative aphel, formed with a doubled t (itta-). It occurs only a few times."
+    },
+
+    "tense:present": {
+      "term": "Present",
+      "short": "Action viewed as ongoing; in statements, usually present time.",
+      "explain": "The present views an action as in progress rather than as a single whole: “he is teaching”, “we are being saved”. In a plain statement it usually refers to present time, but it can also state what is habitual or always true, and storytellers use it for past events, to make them vivid or to mark a turn in the story. Outside statements it chiefly shows this ongoing view rather than time (a present participle usually describes something going on at the time of the main verb), and even in commands it does not always mean “keep on doing”; context decides."
+    },
+    "tense:imperfect": {
+      "term": "Imperfect",
+      "short": "Past action viewed as ongoing, repeated or beginning: “he was teaching”.",
+      "explain": "The imperfect is the past-time partner of the present: it looks at a past action as it was going on, as repeated, or as just beginning: “he was teaching them”, “they kept asking him”, “he began to speak”. Storytellers often use it for background and scene-setting while the aorist carries the main events forward. It is found only in the indicative mood."
+    },
+    "tense:future": {
+      "term": "Future",
+      "short": "Action still to come: “he will save his people”.",
+      "explain": "The future speaks of what will happen: “he will save his people from their sins”. It can also make a promise, a prediction or a solemn command, as in “you shall love the Lord your God”. Its main force is time rather than a particular view of the action."
+    },
+    "tense:aorist": {
+      "term": "Aorist",
+      "short": "Action viewed as a whole, simply as an event; in statements, usually past.",
+      "explain": "The aorist, the commonest tense in narrative, presents an action simply as a whole event, without looking inside at its progress: “he taught”, “God so loved the world”. In a statement it usually refers to the past; in commands, infinitives and the like it marks this summary view rather than time, though an aorist participle usually describes something before the main verb. It does not by itself mean “once for all”, “instantaneous” or “finished forever” — where those ideas are present, they come from the verb's meaning and the context."
+    },
+    "tense:perfect": {
+      "term": "Perfect",
+      "short": "Usually a present state resulting from a past action: “it is written”.",
+      "explain": "The Greek perfect presents a state that results from an earlier action: “it is written” (and stands written), “it is finished”, “I have believed”. Its weight usually falls on the lasting result rather than on the past event itself: “by grace you have been saved” (Ephesians 2:8) is a perfect participle with “you are”, a past saving whose effect continues. A few very common verbs are perfect in form but simply present in meaning, with no earlier act in view: oida, “I know”, hestēka, “I stand”, and pepoitha, “I am confident”."
+    },
+    "tense:pluperfect": {
+      "term": "Pluperfect",
+      "short": "A past state resulting from an earlier action: “it had been founded”; also “he knew”.",
+      "explain": "The pluperfect is the perfect set in the past: a state that already existed at some past time because of something done earlier, as in “it had been founded on the rock” (Matthew 7:25). It is rare in the New Testament and is often translated with English “had”. Its two commonest verbs, though, are simply past in meaning, as their perfects are present: ēdei, “he knew”, and heistēkei, “he was standing”."
+    },
+    "tense:sequential imperfect": {
+      "term": "Sequential imperfect (wayyiqtol)",
+      "short": "The main narrative past form: “and he said”, “and it came to pass”.",
+      "explain": "This is the form that carries Hebrew storytelling: a verb like the imperfect joined to a special “and” (wa-), which moves the story on one event at a time: “and God said… and there was light… and God saw”. It usually narrates past events in sequence, though it can also sum up or explain. Older grammars call it the “vav consecutive” or “converted imperfect”, but it is best read as a narrative form in its own right, not an imperfect whose time has been mechanically flipped."
+    },
+    "tense:sequential perfect": {
+      "term": "Sequential perfect (weqatal)",
+      "short": "A perfect joined to “and”, carrying on a future, habitual or commanded line.",
+      "explain": "Joined to “and”, a perfect usually continues the sense of what comes before it rather than pointing to the past. After a future, a command or a description of habit it carries that same line forward (“you shall make rooms in the ark, and cover it inside and out with pitch”, Genesis 6:14), which is why it is so common in instructions, laws and prophecy. As with the sequential imperfect, the context shows the time, not a mechanical rule."
+    },
+    "tense:conjunctive imperfect": {
+      "term": "Conjunctive imperfect (weyiqtol)",
+      "short": "An imperfect after a plain “and”, keeping its own sense; often purpose.",
+      "explain": "Here a plain “and” is joined to an ordinary imperfect, and unlike the sequential form it does not carry a story forward in the past. The verb keeps the imperfect's own range — future, habitual, or what may or should happen — and after a command or wish it often expresses purpose or result: “Let my people go, that they may serve me” (Exodus 7:16). The context shows which."
+    },
+    "tense:imperative": {
+      "term": "Imperative",
+      "short": "A direct command or appeal to the one addressed: “Hear, O Israel”.",
+      "explain": "The imperative gives a direct command, instruction or appeal to the one being spoken to: “Hear, O Israel”, “Praise the LORD”, “Create in me a clean heart, O God”. Addressed to God in prayer, it is a plea rather than an order. Hebrew uses it only for positive commands; to forbid, it uses a negative with the jussive or imperfect instead."
+    },
+    "tense:participle": {
+      "term": "Participle",
+      "short": "A verbal adjective: “the one who creates”, “crying”, “about to…”.",
+      "explain": "A participle is a verb used like an adjective or a noun. In Hebrew it often describes ongoing or characteristic action (“a voice crying in the wilderness”), names someone by what they do (“the Creator” is literally “the one creating”), or, after “behold”, describes what is about to happen (“behold, I am bringing a flood”). It has gender and number like a noun but no person."
+    },
+    "tense:passive participle": {
+      "term": "Passive participle",
+      "short": "A participle for someone or something acted upon: “blessed”, “written”.",
+      "explain": "The passive participle describes a person or thing that has had something done to it, usually as a lasting condition: “blessed is he who comes” (barukh), “it is written” (katuv). It is found mostly with the qal, and also with the passive stems pual and hophal."
+    },
+    "tense:infinitive absolute": {
+      "term": "Infinitive absolute",
+      "short": "The verb's bare idea, often for emphasis: “you shall surely die”.",
+      "explain": "The infinitive absolute is the verb's plain, unchanging form. Its best-known use is beside another form of the same verb to add emphasis or certainty — literally “dying you shall die”, translated “you shall surely die” — and it can also stand for a command (“Remember the Sabbath day”) or describe an action going on alongside another. It matches no single English form, so translations vary."
+    },
+    "tense:infinitive construct": {
+      "term": "Infinitive construct",
+      "short": "The verb used like a noun, often after a preposition: “to keep”, “when…”.",
+      "explain": "The infinitive construct is the Hebrew verb used as a noun, the nearest thing to English “to do” or “doing”. With a prefixed preposition it expresses purpose (“to keep it”), time (“when they were created”, literally “in their being created”) and much else, and it can take suffixes showing who acts or is acted upon. It is extremely common, and smooth English translation often hides it."
+    },
+
+    "voice:active": {
+      "term": "Active",
+      "short": "The subject does the action: “God loved”.",
+      "explain": "In the active voice the subject performs the action: “God loved the world”, “Jesus answered”. It is by far the commonest voice. Some active verbs describe a state rather than an action: “he is”, “it remains”."
+    },
+    "voice:middle": {
+      "term": "Middle",
+      "short": "The subject is itself involved: acting for or on itself, or undergoing a change.",
+      "explain": "The middle voice is one English lacks: the subject is involved in or affected by its own action — doing something for itself (“she chose”, Luke 10:42), to itself (“he washed”, John 9:7), or simply undergoing it: “should not perish” in John 3:16 is a middle. The difference from the active is often slight and varies from verb to verb, so a middle form invites a closer look without always carrying a reflexive meaning. Many verbs middle in form but active in meaning are parsed as deponent instead, though not all: euangelizomai, “preach the good news”, is parsed as middle."
+    },
+    "voice:passive": {
+      "term": "Passive",
+      "short": "The subject receives the action: “he was baptized”.",
+      "explain": "In the passive voice the subject is acted upon rather than acting: “he was baptized”, “your sins are forgiven”. Some verbs, though, use passive forms for what the subject simply does or undergoes — “turning” (strapheis), “he appeared” (ephanē), and on many readings “he has risen” (ēgerthē) — and they are still parsed as passive, so check a translation before reading one as something done to the subject. Where a true passive names no doer, God is sometimes the one meant (the so-called “divine passive”), but that is an inference from context, not something the form says."
+    },
+    "voice:middle or passive": {
+      "term": "Middle or passive",
+      "short": "A form that could be middle or passive; the context decides.",
+      "explain": "In several tenses Greek uses the same endings for the middle and the passive, so the form alone cannot say which is meant: “he is washing himself” or “he is being washed”. The parsing leaves the choice open, and translators decide from the context."
+    },
+    "voice:middle deponent": {
+      "term": "Middle deponent",
+      "short": "Middle (sometimes passive) in form, active in meaning: “it came to pass”, “he answered”.",
+      "explain": "A deponent verb has a middle form but, to an English reader, an active meaning: “it came to pass” (egeneto), “he received”, “he will come”; some passive-looking forms are parsed here too, above all apekrithē, “he answered”. Traditional grammars say such verbs have “laid aside” their active forms; many scholars now think the middle voice itself suits them, since they often describe what happens in or to the subject. Either way they are translated as active, and the form alone does not make them reflexive."
+    },
+    "voice:passive deponent": {
+      "term": "Passive deponent",
+      "short": "Passive in form, active in meaning: “they were afraid”, “he went”.",
+      "explain": "Some verbs use passive forms, especially in the aorist and future, with an active meaning: “they were afraid” (ephobēthēsan), “he went” (eporeuthē), “answering” (apokritheis). Traditional grammars call them deponent; many scholars now see them as middle in sense, the passive endings having taken over the middle's work in these tenses. They should not be read as something done to the subject."
+    },
+    "voice:middle or passive deponent": {
+      "term": "Middle or passive deponent",
+      "short": "Middle or passive in form, active in meaning: “he comes”, “he is able”.",
+      "explain": "In the present and several other tenses the middle and passive share their endings, and many verbs using them have an ordinary active meaning: “he comes” (erchetai), “he is able” (dynatai). They are parsed as deponent so that they are not mistaken for something done to the subject, and they are translated as active."
+    },
+
+    "mood:indicative": {
+      "term": "Indicative",
+      "short": "The mood of plain statement and question: “Jesus wept”.",
+      "explain": "The indicative is the mood of statement: it presents something as actual — it happened, is happening or will happen: “Jesus wept”, “God is love”. Most questions use it too. In Greek only the indicative marks time clearly; in the other moods the tense chiefly shows how the action is viewed."
+    },
+    "mood:subjunctive": {
+      "term": "Subjunctive",
+      "short": "Action that is possible, intended or hoped for: “that…”, “if…”, “let us…”.",
+      "explain": "The subjunctive presents an action as possible, intended or desired rather than as a stated fact. It appears after “that” and “in order that” (“that whoever believes in him should not perish”), in conditions (“if we confess our sins”), in exhortations (“let us draw near”), in questions of what to do (“what shall we do?”), with mē in prohibitions (“do not marvel”) and in strong denials (“they will never perish”). Its tense shows how the action is viewed, not when it happens."
+    },
+    "mood:optative": {
+      "term": "Optative",
+      "short": "A wish or a remote possibility: “may it never be!”.",
+      "explain": "The optative expresses a wish, a prayer or a remote possibility: “may the God of peace himself sanctify you completely” (1 Thessalonians 5:23), and Paul's emphatic “May it never be!” (mē genoito). It had largely faded from everyday Greek by New Testament times, so its fewer than seventy appearances stand out."
+    },
+    "mood:imperative": {
+      "term": "Imperative",
+      "short": "A command, request or appeal: “repent”, “follow me”.",
+      "explain": "The imperative is the mood of command, instruction and appeal: “repent”, “follow me”, “give us this day our daily bread”; addressed to God in prayer, it is a request, not an order. Greek also has third-person imperatives, traditionally translated “let him…”, though they are usually commands (“he must…”) rather than permission. Present and aorist imperatives differ in how they view the action, but the old rule that the aorist means “do it once” and the present “keep on doing it” does not hold consistently."
+    },
+    "mood:infinitive": {
+      "term": "Infinitive",
+      "short": "The verb as a noun: “to love”, “to be saved”.",
+      "explain": "The infinitive is a verbal noun, much like English “to go” or “going”. It can express purpose (“he came to seek and to save”), result, time, or the content of what is said or wished, and it can act as the subject or object of another verb. It has tense and voice but no person."
+    },
+    "mood:participle": {
+      "term": "Participle",
+      "short": "A verbal adjective: “believing”, “the one who believes”.",
+      "explain": "A participle is a verb that works like an adjective, and one of the most flexible forms in Greek. It can describe a noun (“living water”), stand for a person (“the one who believes”, often translated “whoever believes”), or add a circumstance to the main verb — when, because, although or by what means — which English usually spells out as a whole clause. Its tense shows its view of the action and often, though not always, its time relative to the main verb."
+    },
+    "mood:jussive": {
+      "term": "Jussive",
+      "short": "A wish, blessing or indirect command: “let there be light”.",
+      "explain": "The jussive is the imperfect used to express a wish, blessing, permission or indirect command, mostly in the third person: “let there be light”, “the LORD make his face shine upon you”. With the negative al it forbids: “do not lay your hand on the boy” (Genesis 22:12). In many verbs it looks exactly like the ordinary imperfect, so telling the two apart relies partly on context."
+    },
+    "mood:cohortative": {
+      "term": "Cohortative",
+      "short": "A first-person wish or resolve: “let me…”, “let us…”.",
+      "explain": "The cohortative is the imperfect used in the first person for wish, resolve or self-encouragement: “let me turn aside and see” (Exodus 3:3), “let us break their bonds” (Psalm 2:3). It often carries an extra -ah ending. It voices the speaker's own will leaning toward an action rather than a plain statement of what will happen."
+    },
+
+    "person:1st": {
+      "term": "First person",
+      "short": "The speaker: I, we.",
+      "explain": "First person means the speaker or writer is the subject: “I believe”, “we love”. In Greek and Hebrew the verb's ending shows this, so the separate word for “I” or “we” is often left out."
+    },
+    "person:2nd": {
+      "term": "Second person",
+      "short": "The one spoken to: you.",
+      "explain": "Second person means the one being addressed: “you know”, “you shall love”. Greek and Hebrew show whether this “you” is one person or many, as older English did with “thou” and “ye”, which is worth noticing when a letter moves between addressing one person and a whole church."
+    },
+    "person:3rd": {
+      "term": "Third person",
+      "short": "The one spoken about: he, she, it, they.",
+      "explain": "Third person means the one being spoken about: “he said”, “it is written”, “they went out”. Where no subject is named, the verb's ending (and in Hebrew its gender) narrows down who is meant."
+    },
+
+    "case:nominative": {
+      "term": "Nominative",
+      "short": "The case of the subject: who or what does the action.",
+      "explain": "The nominative is mainly the case of the subject, the one acting or being described: “God loved”, “the Word was God”. It is also used for a word that renames the subject after “to be”, and for names and titles standing on their own. Because Greek word order is free, the case rather than the position often shows which word is the subject."
+    },
+    "case:genitive": {
+      "term": "Genitive",
+      "short": "Often “of”: belonging, source, description or relation.",
+      "explain": "The genitive usually answers to English “of” or the possessive ’s: “the love of God”, “the word of the Lord”. It covers a wide range of relations — belonging, source, description, content — and some phrases can be read more than one way: “the love of God” may be God's love for us or our love for God, and interpreters weigh the context to decide. It also follows certain prepositions and verbs."
+    },
+    "case:dative": {
+      "term": "Dative",
+      "short": "Often “to” or “for”: the one receiving; also means, manner, place, time.",
+      "explain": "The dative usually marks the person to or for whom something is done (“he said to them”), but also the means (“by grace”), the manner, the place or the time of an action. English expresses these with different prepositions — to, for, by, with, in — so translators choose from the context. It also follows certain prepositions, such as en, “in”, and syn, “with”, and verbs such as “believe”, “follow” and “serve”."
+    },
+    "case:accusative": {
+      "term": "Accusative",
+      "short": "The case of the direct object: who or what is acted upon.",
+      "explain": "The accusative marks the direct object, the one receiving the action: “God so loved the world”. It also follows many prepositions (often of motion toward, “into the city”) and can express extent, as in “for three days”. With an infinitive it often names the one doing the action."
+    },
+    "case:vocative": {
+      "term": "Vocative",
+      "short": "Direct address: “Lord”, “Father”, “O foolish Galatians”.",
+      "explain": "The vocative is the case of direct address, used when calling on someone by name or title: “Lord, save us”, “Father, glorify your name”, “O foolish Galatians”. In English it is usually shown only by a comma or an “O”."
+    },
+
+    "gender:masculine": {
+      "term": "Masculine",
+      "short": "Grammatical gender, used for males and for many things and ideas.",
+      "explain": "Every Greek and Hebrew noun has a grammatical gender, and the words that go with it — adjectives, articles, pronouns, and in Hebrew verbs too — match it. Masculine is used for male persons, and also for many things and ideas where it says nothing about maleness: Greek logos, “word”, is masculine. A masculine plural can include both men and women, as “brothers” in the letters regularly addresses the whole church."
+    },
+    "gender:feminine": {
+      "term": "Feminine",
+      "short": "Grammatical gender, used for females and for many things and ideas.",
+      "explain": "Feminine is used for female persons, and also for many things and ideas where it says nothing about femaleness: Greek “grace” (charis) and “faith” (pistis) are feminine, as are Hebrew “wisdom” (chokmah) and, usually, “spirit” (ruach). Its value to a reader lies mainly in tracing what a pronoun or adjective refers to, since those must match the gender of their noun."
+    },
+    "gender:neuter": {
+      "term": "Neuter",
+      "short": "Greek's third gender, “neither”: mostly things, and some words for persons.",
+      "explain": "Greek has a third gender, neuter (“neither”), used for many things and ideas and for some words for persons, such as “child” (teknon) and “spirit” (pneuma); the grammatical gender alone says nothing about whether a person is meant. Because pronouns agree in gender, the neuter can help trace a reference: in Ephesians 2:8, “and this is not your own doing” uses a neuter “this”, so many interpreters take it to mean the whole gift of salvation rather than “faith” (a feminine noun) alone."
+    },
+    "gender:common": {
+      "term": "Common (either gender)",
+      "short": "Hebrew and Aramaic: a form or noun used with either masculine or feminine.",
+      "explain": "Some Hebrew forms serve for both genders: “I”, “we”, the third-person plural of the perfect (“they said”) and several pronoun suffixes (“my”, “our”) are the same whether men or women are meant. A good many nouns found with either gender, or whose gender the lexicons leave open, are parsed as common too: “hand” (yad), “fire”, “way” (derekh), “sun” (shemesh), “time”, and several number words. The words around such a noun show which gender it takes there."
+    },
+
+    "number:singular": {
+      "term": "Singular",
+      "short": "One person or thing.",
+      "explain": "Singular means one person or thing. English “you” no longer shows this, but Greek and Hebrew do, so the parsing can show whether a “you” is one person or a whole group."
+    },
+    "number:plural": {
+      "term": "Plural",
+      "short": "More than one.",
+      "explain": "Plural means more than one. Hebrew sometimes uses a plural for something great or majestic rather than many: the word for God, elohim, is plural in form but normally takes singular verbs when it refers to the God of Israel. Greek, for its part, often puts a neuter plural subject with a singular verb."
+    },
+    "number:dual": {
+      "term": "Dual",
+      "short": "Hebrew: exactly two, or a natural pair: hands, eyes, feet.",
+      "explain": "Hebrew has a special form for two of something, used mostly for things that come in pairs, such as “hands”, “eyes” and “ears”, and for some expressions of time like “two days”. It is found only in nouns and a few number words; verbs, adjectives and pronouns that go with a dual are plural."
+    },
+
+    "state:absolute": {
+      "term": "Absolute",
+      "short": "A noun's ordinary, stand-alone form.",
+      "explain": "The absolute state is the ordinary dictionary form of a Hebrew or Aramaic noun or adjective, not bound to a following word: “a king”, “the land”. It contrasts with the construct, the form a noun takes when it is joined to the word after it. In Aramaic it is also the undetermined form, “a king” rather than “the king”."
+    },
+    "state:construct": {
+      "term": "Construct",
+      "short": "A noun bound to the next word, usually read with “of”: “word of the LORD”.",
+      "explain": "A noun in the construct state is bound closely to the word that follows it, and the pair is usually translated with “of”: “the word of the LORD”, “the house of David”, “the fear of the LORD”. The construct noun itself normally takes no article, though there are a few exceptions (Genesis 2:9, “the knowledge of good and evil”); the whole phrase is definite when the second word is. As with the Greek genitive, the relation can be of many kinds — possession, material, description — and the context decides."
+    },
+    "state:determined": {
+      "term": "Determined (emphatic)",
+      "short": "Aramaic: a noun made definite by its ending, like adding “the”.",
+      "explain": "Aramaic has no separate word for “the”; instead a noun takes an ending, usually -a, that makes it definite: melek is “a king”, malka “the king”. Grammars call this the determined or emphatic state, and it is common in the Aramaic chapters of Daniel and Ezra."
+    },
+
+    "affix:preposition": {
+      "term": "Prefixed preposition",
+      "short": "A one-letter preposition joined to the front: be- “in”, le- “to”, ke- “like”.",
+      "explain": "Three common Hebrew prepositions are single letters written as part of the next word: be- (“in, with, by”), le- (“to, for”) and ke- (“like, as”), and a shortened form of min (“from”) can join the same way. So one Hebrew word such as bereshit, “in the beginning”, can hold what English writes as several."
+    },
+    "affix:conjunction": {
+      "term": "Prefixed “and”",
+      "short": "“And” (vav) joined to the front of a word: and, but, then, so.",
+      "explain": "The Hebrew and Aramaic word for “and” is the single letter vav, written as part of the next word. It links words and clauses of every kind, so translations render it “and”, “but”, “then”, “so” or “now”, or leave it out altogether, as the context suggests."
+    },
+    "affix:sequential conjunction": {
+      "term": "Sequential “and”",
+      "short": "The “and” (vav) that opens a sequential verb, carrying a story or instruction on.",
+      "explain": "This vav is not simply a separate “and” but part of the sequential verb form that follows it, the wayyiqtol of narrative or the weqatal of instruction and prophecy. It ties the action into a series (“and he said… and he went”), and translators render it “and”, “then” or “so”, or leave it unexpressed."
+    },
+    "affix:article": {
+      "term": "The article",
+      "short": "“The”: in Hebrew a prefix ha-, in Aramaic an ending -a.",
+      "explain": "Hebrew writes “the” as a prefix ha- joined to the front of the word, usually doubling the letter that follows it; Aramaic writes it as an ending, usually -a. After the one-letter prepositions be-, le- and ke- the h of the article drops out and only its vowel remains (bashamayim, “in the heavens”). Its use does not match English: Hebrew uses it in addressing someone (“O king”) and in hayyom, “today” (“the day”), with a participle it often means “the one who” (“he who comes”, Psalm 118:26), and poetry often leaves it out."
+    },
+    "affix:interrogative particle": {
+      "term": "Question marker",
+      "short": "The prefix ha- turning a statement into a yes-or-no question.",
+      "explain": "Hebrew can turn a statement into a yes-or-no question by prefixing ha- to its first word, where English changes the word order: “Am I my brother's keeper?” (Genesis 4:9) begins this way. It looks like the article ha- (“the”) but is pointed differently."
+    },
+    "affix:relative particle": {
+      "term": "Prefixed “who, which”",
+      "short": "The prefix she- meaning “who, which, that”.",
+      "explain": "The prefix she- (or sha-) does the same work as the separate word asher, “who, which, that”, linking a description to what has just been named. It is especially common in Ecclesiastes, the Song of Songs and some later Psalms."
+    },
+    "affix:pronominal suffix": {
+      "term": "Pronoun suffix",
+      "short": "A pronoun joined to the end of a word: his, my, them, you.",
+      "explain": "Hebrew and Aramaic usually attach pronouns to the end of a word instead of writing them separately. On a noun the suffix shows possession (suso, “his horse”); on a verb or the object marker it is usually the object (“he blessed them”); on a preposition it is what the preposition governs (lo, “to him”). On an infinitive, or on hinneh, “behold”, it often names the one acting or present (hinneni, “here I am”). The person, gender and number shown with it tell exactly who is meant."
+    },
+    "affix:directional suffix": {
+      "term": "Directional ending",
+      "short": "An ending -ah meaning “toward”: “to the ground”, “toward heaven”.",
+      "explain": "An unstressed -ah added to a place or direction word means motion toward it: artsah, “to the ground”, hashamaymah, “toward heaven”, shammah, “there, thither”. English translations render it with “to” or “toward”, or leave it in the verb, as in “went down”."
+    },
+    "affix:paragogic he": {
+      "term": "Extra -ah ending",
+      "short": "An extra -ah on some verbs, above all on commands: “arise!”, “hear!”.",
+      "explain": "Sometimes a Hebrew verb carries an extra -ah ending that does not change who acts or when. It is commonest on commands (qumah, “arise!”; shim'ah, “hear!”), where it may add a note of urgency or courtesy, though grammarians differ on how much it adds. It also appears on some first-person narrative verbs, especially in Ezra and Nehemiah, as in va'eshlechah, “and I have sent” (Genesis 32:5), where it does not mean “let me”; the -ah of a cohortative (“let me…”, “let us…”) is shown in the verb's own parsing instead."
+    },
+    "affix:paragogic nun": {
+      "term": "Extra -n ending",
+      "short": "An added -n on some verbs, nearly all imperfects: an older, fuller form.",
+      "explain": "Some verbs, nearly all imperfects, end in an extra -n (-un, -in), an older and fuller form of the ending. It is commonest in Deuteronomy, the Psalms, Isaiah, Exodus and Job, in prose as well as poetry, often at a pause in the sentence, and grammarians debate whether it adds emphasis or is mainly a matter of style. It does not change who acts or when."
+    }
+  },
+  "hebrew_and_aramaic": {
+    "tense:perfect": {
+      "term": "Perfect (qatal)",
+      "short": "An action viewed as a complete whole; most often past: “God created”.",
+      "explain": "The Hebrew perfect (called qatal, after its pattern) presents an action as a complete whole. Most often that means past time (“God created”), but it can also describe a present state (“I know”, “I love”), and the prophets sometimes use it for future events so certain they can be spoken of as done. Hebrew verbs do not mark time the way English tenses do, so the context decides how to translate; in the Aramaic chapters the perfect is more plainly a past tense."
+    },
+    "tense:imperfect": {
+      "term": "Imperfect (yiqtol)",
+      "short": "An action viewed as unfolding or not yet complete; often future or habitual.",
+      "explain": "The Hebrew imperfect (yiqtol) presents an action as not complete or still unfolding. It is used for the future (“he will judge the world”), for what happens habitually (“so Job used to do continually”), and for what may, can or should happen. Where the parsing adds jussive or cohortative, the same form is expressing a wish, blessing or resolve. As with the perfect, the time comes from the context rather than from the form itself, though in the Aramaic chapters it leans more plainly toward the future."
+    },
+    "mood:indicative": {
+      "term": "Indicative",
+      "short": "A verb that states or asks, as opposed to commanding or wishing: “God created”.",
+      "explain": "In the Hebrew parsing the indicative is every finite verb that is not a command (the imperative) or a wish (the jussive and cohortative): the perfect, the imperfect and their forms after “and”. The parsing of a word does not name it, since the conjugation already says what the verb is, but a search for it finds the plain statements and questions of the text. Whether their time is past, present or future comes from the conjugation and the context."
+    },
+    "mood:participle": {
+      "term": "Participle (active or passive)",
+      "short": "Every participle, active or passive: “creating”, “blessed”.",
+      "explain": "Hebrew has an active participle (“the one who creates”, “crying”) and a passive one (“blessed”, “written”), each parsed as a conjugation of its own; as a mood, participle takes in both. Like an adjective it has gender, number and state, and it can describe, stand for a person (“he that keeps Israel”), or serve as the verb of a sentence, often for what is happening now."
+    },
+    "mood:infinitive": {
+      "term": "Infinitive (construct or absolute)",
+      "short": "Either Hebrew infinitive: the construct (“to keep”) or the absolute (“surely”).",
+      "explain": "Hebrew has two infinitives, each parsed as a conjugation of its own: the infinitive construct, used much like an English infinitive or after a preposition (“when he came”), and the infinitive absolute, which most often strengthens a verb of the same root (“you shall surely die”). As a mood, infinitive takes in both."
+    },
+    "kind:personal name": {
+      "term": "Personal name",
+      "short": "The name of a man or woman: Abraham, Sarah, David.",
+      "explain": "A personal name belongs to a particular man or woman: “Abraham”, “Sarah”, “David”. Hebrew names very often carry a meaning — “Isaac” means “he laughs” — which the text sometimes plays on, and a lexicon will usually give it. Several people can share a name, so it is worth checking which one is meant."
+    },
+    "part_of_speech:particle": {
+      "term": "Particle",
+      "short": "A small word outside the other classes: not, if, there is, behold, so that.",
+      "explain": "“Particle” is a catch-all for small words that do not fit the other classes, and more Hebrew words are parsed as particles than English grammar would call so: the object marker et, the relative asher, im (“if”), yesh (“there is”), zeh (“this”) and hinneh (“behold”). One of them, lemaan, is “for the sake of” before a noun (“for his name's sake”, Psalm 23:3) and “so that” before a verb (Genesis 12:13); the verse shows which. Where a kind is shown alongside, it says what sort of particle this is."
+    },
+    "kind:conditional": {
+      "term": "Conditional",
+      "short": "“If”, and its kin: “unless”, “if only”.",
+      "explain": "A conditional word sets a condition: “If thou doest well, shalt thou not be accepted?” (Genesis 4:7). In Hebrew it is chiefly im, “if”, which also asks “whether”, and in an oath is a strong “not”: “as the LORD liveth, there shall not one hair of his head fall” (1 Samuel 14:45). Its kin are lule, “unless, if not”, and lu, “if only”."
+    }
+  }
+}

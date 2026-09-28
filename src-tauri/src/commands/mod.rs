@@ -60,3 +60,4 @@ pub mod settings;
 pub mod study;
 pub mod tts;
 pub mod update;
+pub mod webster;

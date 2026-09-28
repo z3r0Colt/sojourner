@@ -920,6 +920,12 @@ pub struct MorphologyWord {
     pub lemma: Option<String>,
     pub morph_code: Option<String>,
     pub strongs_id: Option<String>,
+    /// `morph_code` read into plain English (`crate::morph::decode`), filled
+    /// when the row is queried rather than stored: decoding is string work on
+    /// a code a few letters long, and keeping it out of content.db means a
+    /// better reading of a code reaches every word without a rebuild. None
+    /// when the word has no code.
+    pub parsing: Option<crate::morph::MorphInfo>,
 }
 
 #[derive(Debug, Clone, Serialize)]

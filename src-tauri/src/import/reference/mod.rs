@@ -1,4 +1,5 @@
 pub mod atlas;
+pub mod church_history;
 pub mod confessions;
 pub mod crossrefs;
 pub mod dictionary;
@@ -20,6 +21,7 @@ pub mod red_letter;
 pub mod strongs;
 pub mod thayers;
 pub mod treasury;
+pub mod webster1828;
 pub mod westminster;
 pub mod westminster_commentary;
 pub mod word_study;
@@ -247,6 +249,14 @@ pub fn import_all(conn: &mut Connection, reference_dir: &Path) -> anyhow::Result
         lexicons::import(conn, reference_dir).map_err(|e| anyhow::anyhow!("lexicons import failed: {e:#}"))?;
     }
 
+    // Webster's 1828, a dictionary of its own beside the Bible dictionaries
+    // (see CONTENT_MIGRATION_0028). After the Bibles, whose KJV its
+    // scripture links are checked against; gated on its own table, so an
+    // `--update` build of an older content.db picks it up.
+    if table_count(conn, "webster_entries") == 0 {
+        webster1828::import(conn, &reference_dir.join("webster1828")).map_err(|e| anyhow::anyhow!("Webster 1828 import failed: {e:#}"))?;
+    }
+
     // After the encyclopedia, dictionary and atlas, which it links to.
     if table_count(conn, "factbook_entities") == 0 {
         factbook::import(conn, &reference_dir.join("factbook")).map_err(|e| anyhow::anyhow!("factbook import failed: {e:#}"))?;
@@ -263,10 +273,23 @@ pub fn import_all(conn: &mut Connection, reference_dir: &Path) -> anyhow::Result
         library_catalog::import(conn, &library_dir).map_err(|e| anyhow::anyhow!("library catalog import failed: {e:#}"))?;
     }
 
-    // After the morphology and the interlinear, which it reads.
-    if table_count(conn, "morph_codes") == 0 {
-        word_study::import(conn).map_err(|e| anyhow::anyhow!("word study tables failed: {e:#}"))?;
-    }
+    // Not gated: church history is a hand-edited file of a few hundred
+    // events, and its import replaces its own rows (and only its own) in a
+    // moment, so an edit to it reaches every build, `--update` included,
+    // with each event back under the id the file gives it. After the Bible's
+    // timeline, whose events are numbered as they go in and so keep the ids
+    // they have always had (a reader's saved panes name an event by id), and
+    // after the confessions and the library catalog, which its links are
+    // checked against.
+    church_history::import(conn, &reference_dir.join("timeline")).map_err(|e| anyhow::anyhow!("church history import failed: {e:#}"))?;
+
+    // After the morphology and the interlinear, which they read. Not gated:
+    // `morph_codes` is the decoder's reading of the parsing codes and
+    // `lemma_glosses` is `normalize_gloss`'s reading of the interlinear's
+    // English, both code that changes, so every build, `--update` included,
+    // reads them again rather than keep an older reading (see `word_study`).
+    word_study::import_morph_codes(conn).map_err(|e| anyhow::anyhow!("parsing codes failed: {e:#}"))?;
+    word_study::import_lemma_glosses(conn).map_err(|e| anyhow::anyhow!("KJV renderings failed: {e:#}"))?;
 
     Ok(ReferenceImportReport {
         strongs_entries,

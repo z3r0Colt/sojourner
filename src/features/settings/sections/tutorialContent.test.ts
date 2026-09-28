@@ -52,7 +52,7 @@ describe("the tutorial", () => {
   });
 
   it("uses no stale wording", () => {
-    for (const stale of ["Windows voice", "1300px", "Ctrl+4 for the others", "three-step", "Unknown author", "swap the two"]) {
+    for (const stale of ["Windows voice", "1300px", "Ctrl+4 for the others", "three-step", "Unknown author", "swap the two", "grammar codes", "checkbox at the top of the interlinear", "Click Confessions on the right edge", "View full entry", "find Pronunciation", "Listen beside Practice", "three sidebar groups", "Bible and Church history frame"]) {
       expect(allText.includes(stale), stale).toBe(false);
     }
   });

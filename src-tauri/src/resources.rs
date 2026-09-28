@@ -377,9 +377,32 @@ fn extract_epub_text(path: &Path) -> anyhow::Result<String> {
 }
 
 fn extract_mobi_text(path: &Path) -> anyhow::Result<String> {
-    let m = mobi::Mobi::from_path(path)?;
+    let mut m = mobi::Mobi::from_path(path)?;
+    take_the_last_text_record(&mut m);
     let content = m.content_as_string().map_err(|e| anyhow::anyhow!("{e}"))?;
     Ok(strip_html_tags(&content))
+}
+
+/// Makes up for mobi 0.8.0 dropping a book's last text record.
+///
+/// The crate reads the text from records `first_content_record ..
+/// first_non_book_index`, through `RawRecords::range` -- which turns an
+/// exclusive end `b` into `b - 1` and then slices exclusively, so the range
+/// comes back one record short. Every MOBI whose writer set the first non-book
+/// record to the one after its text, as writers do, lost its last text record:
+/// up to 4 KB off the end of the book, cut mid-sentence, in the reader and in
+/// what read aloud had to read.
+///
+/// So the end it is handed is moved one on -- but never past the text records
+/// the PalmDOC header counts, so a file whose first non-book record is set
+/// wrong (or not at all) reads no more than it did.
+fn take_the_last_text_record(m: &mut mobi::Mobi) {
+    let first = u32::from(m.metadata.mobi.first_content_record);
+    let text_end = first + u32::from(m.metadata.palmdoc.record_count);
+    let end = &mut m.metadata.mobi.first_non_book_index;
+    if *end <= text_end {
+        *end += 1;
+    }
 }
 
 fn extract_pdf_text(path: &Path) -> anyhow::Result<String> {
@@ -429,7 +452,7 @@ fn extract_text_within(path: &Path, kind: &str, max_bytes: u64) -> Option<String
 
 #[cfg(test)]
 mod tests {
-    use super::{decode_pdf_string, extract_text, extract_text_within, free_destination_path, opf_fields, opf_path_in, read_metadata, strip_html_tags, FileMetadata};
+    use super::{decode_pdf_string, extract_mobi_text, extract_text, extract_text_within, free_destination_path, opf_fields, opf_path_in, read_metadata, strip_html_tags, FileMetadata};
     use std::io::Write;
     use std::path::PathBuf;
 
@@ -651,6 +674,111 @@ startxref
         let html = r#"<html><head><title>A Scanned Book</title></head>
         <body><div><img src="page1.png" alt=""/></div></body></html>"#;
         assert_eq!(strip_html_tags(html), "");
+    }
+
+    /// A minimal uncompressed MOBI: a PalmDB of record 0 (PalmDOC and MOBI
+    /// headers), the HTML in 4 KB text records, and an end-of-file record --
+    /// with the first non-book record set, as writers set it, to the one after
+    /// the text.
+    fn minimal_mobi(html: &[u8]) -> Vec<u8> {
+        const REC: usize = 4096;
+        let be16 = |n: u16| n.to_be_bytes();
+        let be32 = |n: u32| n.to_be_bytes();
+        let text: Vec<&[u8]> = html.chunks(REC).collect();
+        let n_text = text.len() as u32;
+        let name = b"Test";
+
+        let mut rec0 = Vec::new();
+        rec0.extend(be16(1)); // no compression
+        rec0.extend(be16(0));
+        rec0.extend(be32(html.len() as u32));
+        rec0.extend(be16(n_text as u16));
+        rec0.extend(be16(REC as u16));
+        rec0.extend(be32(0));
+        let mut mobi = Vec::new();
+        mobi.extend(b"MOBI");
+        mobi.extend(be32(232));
+        for n in [2, 65001, 0x1234, 6] {
+            mobi.extend(be32(n));
+        }
+        for _ in 0..10 {
+            mobi.extend(be32(u32::MAX));
+        }
+        for n in [n_text + 1, 16 + 232, name.len() as u32] {
+            mobi.extend(be32(n));
+        }
+        mobi.extend(be16(0));
+        mobi.extend([0, 9]);
+        for n in [0, 0, 6, n_text + 1, 0, 0, 0, 0, 0] {
+            mobi.extend(be32(n));
+        }
+        mobi.extend([0; 32]);
+        for n in [u32::MAX, u32::MAX, 0, 0, 0] {
+            mobi.extend(be32(n));
+        }
+        mobi.extend([0; 8]);
+        mobi.extend(be16(1));
+        mobi.extend(be16(n_text as u16));
+        for n in [1, u32::MAX, 1, u32::MAX, 1] {
+            mobi.extend(be32(n));
+        }
+        mobi.extend([0; 8]);
+        for n in [u32::MAX, 0, u32::MAX, u32::MAX, 0, u32::MAX] {
+            mobi.extend(be32(n));
+        }
+        assert_eq!(mobi.len(), 232);
+        rec0.extend(mobi);
+        rec0.extend(name);
+        rec0.extend([0, 0]);
+        while rec0.len() % 4 != 0 {
+            rec0.push(0);
+        }
+
+        let mut records: Vec<Vec<u8>> = vec![rec0];
+        records.extend(text.iter().map(|r| r.to_vec()));
+        records.push(vec![0xe9, 0x8e, 0x0d, 0x0a]);
+        let n = records.len() as u16;
+        let mut out = name.to_vec();
+        out.resize(32, 0);
+        out.extend(be16(0));
+        out.extend(be16(0));
+        for n in [0x6000_0000, 0x6000_0000, 0, 0, 0, 0] {
+            out.extend(be32(n));
+        }
+        out.extend(b"BOOKMOBI");
+        out.extend(be32(0));
+        out.extend(be32(0));
+        out.extend(be16(n));
+        let mut offset = 78 + 8 * n as u32 + 2;
+        for (i, r) in records.iter().enumerate() {
+            out.extend(be32(offset));
+            out.extend([0]);
+            out.extend(&be32(i as u32 * 2)[1..]);
+            offset += r.len() as u32;
+        }
+        out.extend([0, 0]);
+        for r in records {
+            out.extend(r);
+        }
+        out
+    }
+
+    /// mobi 0.8.0 reads a book's text one record short. A book of two text
+    /// records came out as the first alone, cut off mid-sentence.
+    #[test]
+    fn a_mobi_is_read_to_the_end_of_its_last_text_record() {
+        let sentence = "They are always exposed to destruction, as one that walks in slippery places. ";
+        let body = sentence.repeat(70);
+        let html = format!("<html><head><title>T</title></head><body><p>{body}</p><p>The very end.</p></body></html>");
+        assert!(html.len() > 4096 && html.len() < 8192, "two text records");
+        let dir = temp_dir("mobi-end");
+        let path = dir.join("book.mobi");
+        std::fs::write(&path, minimal_mobi(html.as_bytes())).unwrap();
+
+        let text = extract_mobi_text(&path).unwrap();
+        assert!(text.trim_end().ends_with("The very end."), "ends: {:?}", &text[text.len().saturating_sub(60)..]);
+        assert_eq!(text.matches("slippery places").count(), 70);
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]

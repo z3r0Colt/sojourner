@@ -138,6 +138,23 @@ export function minSize(tree: LayoutNode): { width: number; height: number } {
     : { width: Math.max(a.width, b.width), height: a.height + b.height + DIVIDER_PX };
 }
 
+/** The box a leaf is given when the tree is laid out in `width` x `height`:
+ * each branch shares its axis, less the divider, between its children at its
+ * ratio, as the workspace's flex layout does. Null when the leaf is not in
+ * the tree. This is how big a pane is while a maximized one hides the rest,
+ * and so the size a split beside it will really have to share. */
+export function leafBox(tree: LayoutNode, leafId: string, width: number, height: number): { width: number; height: number } | null {
+  if (tree.type === "leaf") return tree.id === leafId ? { width, height } : null;
+  const row = tree.direction === "row";
+  const axis = (row ? width : height) - DIVIDER_PX;
+  const shares = [axis * tree.ratio, axis * (1 - tree.ratio)];
+  for (let i = 0; i < 2; i++) {
+    const box = row ? leafBox(tree.children[i], leafId, shares[i], height) : leafBox(tree.children[i], leafId, width, shares[i]);
+    if (box) return box;
+  }
+  return null;
+}
+
 // ---------------------------------------------------------------------------
 // Rewriting the tree
 

@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { BookOpen, MapPin } from "lucide-react";
 import { useBooks, useChapter, useMemoryVerses, useReviewMemoryVerse, useSetMemoryVerseTranslation } from "../../api/queries";
 import { useReaderTranslationId } from "../../state/workspaceStore";
@@ -17,6 +17,9 @@ import { joinVerses } from "../../lib/passage";
 import { parseReference, useBookLookup } from "../../hooks/useReferenceParser";
 import { openPassage, targetFor } from "../../workspace/openContent";
 import { ReadAloudButton } from "../tts/ReadAloudButton";
+import { useTtsStore } from "../../state/ttsStore";
+import { cardVerses, listenOffered, memoryCardKey, memorySegments, readingGivesAway, verseBeingRead, type CardVerse } from "./memorySpeech";
+import { passageMarkStyle } from "../tts/ReadAloudWords";
 
 /** One spaced-repetition flashcard. Asked the usual way it shows the verse
  * in first-letter or blank-word form (or an empty box, to type it) and the
@@ -31,7 +34,12 @@ export function MemoryPracticeCard({ card, onDone, onBack }: { card: MemoryVerse
   // The session queue holds the card as it was when practice began; the
   // translation is read live so changing it here takes effect at once.
   const { data: deck } = useMemoryVerses();
-  const pinnedTranslationId = deck?.find((v) => v.id === card.id)?.translation_id ?? card.translation_id;
+  const live = deck?.find((v) => v.id === card.id);
+  const pinnedTranslationId = live?.translation_id ?? card.translation_id;
+  // So is the practice mode: changed in the list while a session was under
+  // way (or before one began from a queue not yet refreshed), the card kept
+  // showing first letters after it had been set to blank words.
+  const mode = live?.mode ?? card.mode;
   const translationId = pinnedTranslationId ?? primaryTranslationId;
   const { data: verses } = useChapter(translationId, card.book_id, card.chapter);
   const review = useReviewMemoryVerse();
@@ -43,7 +51,7 @@ export function MemoryPracticeCard({ card, onDone, onBack }: { card: MemoryVerse
 
   const book = books?.find((b) => b.id === card.book_id);
   const text = verses ? joinVerses(verses.map((v) => ({ ...v, text: memoryWords(v.text) })), card.verse_start, card.verse_end) : undefined;
-  const typeIt = card.mode === "type-it";
+  const typeIt = mode === "type-it";
   const where = askWhere(card);
   const answerShowing = !!text && (typeIt ? checked : revealed);
 
@@ -91,10 +99,33 @@ export function MemoryPracticeCard({ card, onDone, onBack }: { card: MemoryVerse
             ? 3
             : 1;
 
-  // What Listen says: the reference and the words, or -- asked where --
-  // only the words, so hearing it does not give the answer away.
-  const listen = text ? [{ id: `memory-${card.id}`, text: where ? text : `${reference}. ${text}` }] : [];
+  // What Listen says: the reference and then the words a verse at a time,
+  // or -- asked where -- only the words, so hearing it does not give the
+  // answer away (memorySegments). Nothing until the words are loaded.
+  const cardKey = memoryCardKey(card.id);
+  const listen = useMemo(
+    () => memorySegments({ key: cardKey, reference, verses: cardVerses(verses, card.verse_start, card.verse_end), askWhere: where }),
+    [cardKey, card.verse_start, card.verse_end, reference, verses, where],
+  );
   const referenceShown = !where || answerShowing;
+
+  // A reading that outlived its card must not answer it when it comes back.
+  // Graded and then brought back with Backspace, or met again on "Practice
+  // again", a card shows its answer hidden -- and Listen hidden with it -- while
+  // the reading it started last time is still saying its verses (or "Listen to
+  // what's due", left playing, is about to say them). That reading is stopped
+  // here; the reader can press Listen again once the answer is showing.
+  const givesAway = useTtsStore((s) => readingGivesAway(s.segments, { key: cardKey, askWhere: where, answerShowing }));
+  useEffect(() => {
+    if (!givesAway) return;
+    // Asked again of the store rather than trusted from the render: an effect
+    // run twice (StrictMode) should neither stop nor say so twice.
+    const tts = useTtsStore.getState();
+    if (!readingGivesAway(tts.segments, { key: cardKey, askWhere: where, answerShowing })) return;
+    const audible = tts.isPlaying;
+    tts.stop();
+    if (audible) toast.info("Stopped reading aloud, so it won't give the answer away.");
+  }, [givesAway, cardKey, where, answerShowing]);
 
   return (
     <div className="mx-auto max-w-xl rounded-xl border border-line bg-surface p-6 shadow-sm">
@@ -120,7 +151,32 @@ export function MemoryPracticeCard({ card, onDone, onBack }: { card: MemoryVerse
           />
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <ReadAloudButton title={`Memory: ${where ? `card ${card.id}` : reference}`} sourceKind="scripture" segments={listen} iconOnly />
+          {/* Asked for the words, hearing them is the answer: Listen waits
+              until it is showing. Asked where, it is there from the start. */}
+          {listenOffered({ askWhere: where, answerShowing }) && (
+            // Space and Enter on Listen press Listen. The practice keys are
+            // heard on the window -- Space reveals, Enter checks -- and they
+            // used to take those keys from under the focused button: a reader
+            // who tabbed to Listen on a "Where is this?" card and pressed
+            // Space was shown the reference and heard nothing.
+            <span
+              className="contents"
+              onKeyDown={(e) => {
+                if (e.key === " " || e.key === "Enter") e.stopPropagation();
+              }}
+            >
+              <ReadAloudButton
+                // Asked where, the title cannot be the reference -- that is
+                // the answer -- and a card's number means nothing to the
+                // reader, so it says what the card is asking.
+                title={`Memory: ${where ? "Where is this?" : reference}`}
+                sameTitleForMany={where}
+                sourceKind="scripture"
+                segments={listen}
+                iconOnly
+              />
+            </span>
+          )}
           {referenceShown && (
             <button
               type="button"
@@ -155,7 +211,7 @@ export function MemoryPracticeCard({ card, onDone, onBack }: { card: MemoryVerse
       {text && where && (
         <>
           <p className="reading-font mb-5 text-ink" style={typography}>
-            {text}
+            <CardWords verses={cardVerses(verses, card.verse_start, card.verse_end)} cardKey={cardKey} />
           </p>
           {!typeIt && !revealed && (
             <Button onClick={reveal} aria-keyshortcuts="Space">
@@ -200,7 +256,11 @@ export function MemoryPracticeCard({ card, onDone, onBack }: { card: MemoryVerse
       {text && !where && !typeIt && (
         <>
           <p className="reading-font mb-5 text-ink" style={typography}>
-            {revealed ? text : applyMemoryMode(text, card.mode as "first-letter" | "blank-word")}
+            {revealed ? (
+              <CardWords verses={cardVerses(verses, card.verse_start, card.verse_end)} cardKey={cardKey} />
+            ) : (
+              applyMemoryMode(text, mode as "first-letter" | "blank-word")
+            )}
           </p>
           {!revealed ? (
             <Button onClick={reveal} aria-keyshortcuts="Space">
@@ -256,5 +316,27 @@ export function MemoryPracticeCard({ card, onDone, onBack }: { card: MemoryVerse
         </>
       )}
     </div>
+  );
+}
+
+/**
+ * A card's words, the verse being read aloud marked. The player said "v. 1"
+ * and the card showed nothing -- a verse being read looked just like one that
+ * was not -- where a Bible chapter or a commentary entry being read is
+ * marked. Verses are joined as the card joins them, so the words are the same.
+ */
+function CardWords({ verses, cardKey }: { verses: CardVerse[]; cardKey: string }) {
+  const speaking = useTtsStore((s) => (s.isPlaying ? verseBeingRead(s.segments[s.currentSegmentIndex]?.id, cardKey) : null));
+  const highlightColor = useTtsStore((s) => s.highlightColor);
+  const highlightStyle = useTtsStore((s) => s.highlightStyle);
+  return (
+    <>
+      {verses.map((v, i) => (
+        <Fragment key={v.verse}>
+          {i > 0 && " "}
+          <span style={v.verse === speaking ? passageMarkStyle(highlightColor, highlightStyle) : undefined}>{v.text.trim()}</span>
+        </Fragment>
+      ))}
+    </>
   );
 }

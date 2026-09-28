@@ -1,4 +1,4 @@
-import { BookOpen } from "lucide-react";
+import { BookOpen, ListMusic } from "lucide-react";
 import { useBooks } from "../../api/queries";
 import { LoadingState } from "../../components/ui/EmptyState";
 import { Button } from "../../components/ui/Button";
@@ -56,7 +56,7 @@ export function InterlinearPane() {
           </Button>
         </div>
       )}
-      <InterlinearView book={book} chapter={params.chapter} onExit={readAsText} />
+      <InterlinearView book={book} chapter={params.chapter} verse={params.verse} onExit={readAsText} />
     </div>
   );
 }
@@ -141,15 +141,33 @@ export function MinePane() {
 }
 
 export function MetricalPane() {
+  const { id: paneId } = usePane();
   const [params] = usePaneParams("metrical");
   const { data: books } = useBooks();
   const book = books?.find((b) => b.id === params.bookId);
   if (!book) return <LoadingState className="p-8" />;
   if (book.id !== 19) {
+    // Away from the Psalms this pane has nothing to follow. The Psalter page
+    // chooses its own psalm, so a reader who wants to sing one now need not
+    // turn the Bible to find it: it opens here, in place of this pane (Back
+    // brings this pane again), or beside it with Ctrl+click.
     return (
       <div className="flex h-full w-full flex-col">
         <div className="border-b border-line px-3 py-2 text-xs text-ink-3">1650 Scottish Metrical Psalter</div>
-        <p className="p-4 text-sm text-ink-3">The Metrical Psalter follows the Psalms. Open a Psalm in the linked Bible pane to see its setting here.</p>
+        <p className="p-4 text-sm text-ink-3">
+          The Metrical Psalter follows the Psalms. Open a Psalm in the linked Bible pane to see its setting here, or open the Psalter to choose any
+          psalm to sing.
+        </p>
+        <div className="px-4">
+          <Button
+            size="sm"
+            icon={ListMusic}
+            onClick={(e) => openContent("psalter", {}, { target: targetFor(e, paneId) })}
+            title="Choose any psalm, without turning the Bible (Ctrl+click for a new pane)"
+          >
+            Open the Psalter
+          </Button>
+        </div>
       </div>
     );
   }

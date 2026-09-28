@@ -44,7 +44,7 @@ export function PassageBlock({ node, updateAttributes, deleteNode, editor }: Nod
   const readerTranslationId = useReaderTranslationId();
   const { data: books } = useBooks();
   const { data: translations } = useTranslations();
-  const [footnote, setFootnote] = useState<{ note: Footnote; x: number; y: number } | null>(null);
+  const [footnote, setFootnote] = useState<{ note: Footnote; x: number; y: number; anchorTop: number } | null>(null);
 
   // A block pinned to a translation the app no longer carries (Wycliffe and
   // the OEB left in 0.3.1) renders in the sermon's own, as if unpinned.
@@ -95,13 +95,13 @@ export function PassageBlock({ node, updateAttributes, deleteNode, editor }: Nod
                     aria-label={`Footnote ${token.footnote.marker}`}
                     onClick={(e) => {
                       const rect = (e.target as HTMLElement).getBoundingClientRect();
-                      setFootnote({ note: token.footnote, x: rect.left, y: rect.bottom + 4 });
+                      setFootnote({ note: token.footnote, x: rect.left, y: rect.bottom + 4, anchorTop: rect.top });
                     }}
                     onKeyDown={(e) => {
                       if (e.key !== "Enter" && e.key !== " ") return;
                       e.preventDefault();
                       const rect = (e.target as HTMLElement).getBoundingClientRect();
-                      setFootnote({ note: token.footnote, x: rect.left, y: rect.bottom + 4 });
+                      setFootnote({ note: token.footnote, x: rect.left, y: rect.bottom + 4, anchorTop: rect.top });
                     }}
                   >
                     [{token.footnote.marker}]
@@ -186,6 +186,7 @@ export function PassageBlock({ node, updateAttributes, deleteNode, editor }: Nod
           text={footnote.note.text}
           x={footnote.x}
           y={footnote.y}
+          anchorTop={footnote.anchorTop}
           onClose={() => setFootnote(null)}
         />
       )}

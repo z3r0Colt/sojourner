@@ -58,6 +58,9 @@ import type {
   Pronunciation,
   IsbePassageEntry,
   IsbeSearchResult,
+  WebsterEntry,
+  WebsterHit,
+  WebsterLookup,
   InterlinearWord,
   MorphologyWord,
   Footnote,
@@ -318,6 +321,17 @@ export const api = {
   searchIsbeGlobal: (query: string, limit = 50) => invoke<IsbeSearchResult[]>("search_isbe_global", { query, limit }),
   isbeForPassage: (bookId: number, chapter: number, verse?: number | null, limit = 40) =>
     invoke<IsbePassageEntry[]>("isbe_for_passage", { bookId, chapter, verse: verse ?? null, limit }),
+
+  /** Webster 1828. A word as the text prints it -- "prevented", "maketh",
+   *  "spake" -- is found under the word it is a form of (see WebsterLookup). */
+  websterLookup: (word: string) => invoke<WebsterLookup | null>("webster_lookup", { word }),
+  /** Headwords first (the word, then those beginning with it), then entries
+   *  whose text matches. */
+  websterSearch: (query: string, limit = 100) => invoke<WebsterHit[]>("webster_search", { query, limit }),
+  /** The dictionary in order from `prefix` on: the words beginning with it
+   *  first, then running on alphabetically. "" is the start of A. */
+  websterBrowse: (prefix: string, limit = 200) => invoke<WebsterHit[]>("webster_browse", { prefix, limit }),
+  websterEntry: (id: number) => invoke<WebsterEntry | null>("webster_entry", { id }),
 
   listAtlasPlaces: () => invoke<AtlasPlace[]>("list_atlas_places"),
   getAtlasPlace: (slug: string) => invoke<AtlasPlace | null>("get_atlas_place", { slug }),

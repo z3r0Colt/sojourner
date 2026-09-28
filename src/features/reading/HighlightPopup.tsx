@@ -6,6 +6,7 @@ import { Button, IconButton } from "../../components/ui/Button";
 export function HighlightPopup({
   x,
   y,
+  flipY,
   hasNote,
   onPickColor,
   onUnderline,
@@ -13,8 +14,13 @@ export function HighlightPopup({
   onRemove,
   onClose,
 }: {
+  /** The middle of the top of the highlighted line that was clicked, which
+   * the bar floats over. */
   x: number;
   y: number;
+  /** The bottom of that line: with no room over it, the bar drops under it
+   * here rather than onto the words. */
+  flipY?: number;
   hasNote?: boolean;
   onPickColor: (color: string) => void;
   onUnderline: (color: string) => void;
@@ -22,7 +28,16 @@ export function HighlightPopup({
   onRemove: () => void;
   onClose: () => void;
 }) {
-  const { ref, style } = useViewportClampedPosition<HTMLDivElement>(x, y, { align: "above-center" });
+  // Closes when the reader scrolls the text, rather than floating on over
+  // whatever words scroll in under it; and, like the verse menu, on Escape
+  // and on a press anywhere else -- another verse, another highlight.
+  const { ref, style } = useViewportClampedPosition<HTMLDivElement>(x, y, {
+    align: "above-center",
+    flipY,
+    onDismiss: onClose,
+    closeOnEscape: true,
+    closeOnPressOutside: true,
+  });
   const [labels] = useHighlightLabels();
 
   return (

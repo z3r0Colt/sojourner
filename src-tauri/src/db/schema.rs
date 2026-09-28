@@ -1234,6 +1234,188 @@ CREATE TABLE library_catalog (
 ) WITHOUT ROWID;
 "#;
 
+// Church history on the timeline: the apostles to the present, from
+// `reference/timeline/church_history.json` (see
+// `import::reference::church_history`), beside the Bible's events rather than
+// in a timeline of their own, so that AD 30 to 100 reads as one stretch.
+//
+// An event of church history is not dated by a verse, so where a Bible event
+// has its verses a church one has its citations: the work, volume and place
+// in it that give the date, the source's own words for it, and a link where
+// the source is a page on the web. `timeline_event_citations` holds them in
+// order, the first being the one the date is taken from. `kind` sorts the
+// events into councils, lives, writings, missions and other events; `circa`
+// marks a year the source gives as approximate or disputed; `date` is the
+// month or day as the source prints it ("0451-10-08"), where it prints one --
+// `start_year` already carries it as a fraction of the year, the way the
+// Bible's dated events do, and `date` is what the reader is shown.
+// `confession` is a `westminster_documents` code, for a creed or confession
+// the app ships; `resource` a shipped book's file name, as `library_catalog`
+// and the reader's own `resources.library_key` name it. `era` is the slug of
+// the church era the file files the event under, kept because it cannot be
+// worked out again from the years: a life goes with the age of its work
+// (Luther, born in 1483, is the Reformation's) and an event on a boundary
+// year with the age it closes, and reckoned from the start year 28 of the
+// first 310 would be named wrongly. All of them are NULL (and `circa` 0) for
+// the Bible's events, whose era is the one their first year falls in.
+//
+// `source` widens to 'church', and SQLite cannot change a CHECK in place, so
+// `timeline_events` is rebuilt. Not by the twelve steps of SQLite's ALTER
+// TABLE page, though: foreign keys are on in every connection this app opens
+// (rusqlite's bundled SQLite is compiled with them on), `run_migrations` runs
+// inside a transaction where they cannot be turned off, and the `DROP TABLE`
+// in the middle of those twelve steps would fail on the verses and people
+// that still point at the old table. So the two child tables are set aside
+// first -- copied into plain tables with no constraints and dropped -- then
+// the events are copied into the new table with their ids, the old table
+// dropped with nothing left referring to it, and the new one renamed into
+// its place. The children are then recreated exactly as 0025 wrote them and
+// filled from their copies. Every id survives the migration, which matters
+// because a reader's saved panes name the event they had open by it; and a
+// church event's id is its own from one build to the next as well, numbered
+// from the permanent id it carries in the file rather than from where it was
+// inserted (see `church_history::ID_BASE`).
+//
+// Eras gain the track they belong to: 'bible' for Theographic's, 'church' for
+// the church's, whose slugs all begin "church-" so the two can never collide
+// ("apostolic" is a Bible era and would otherwise be a church one too).
+pub const CONTENT_MIGRATION_0027: &str = r#"
+CREATE TABLE timeline_event_verses_aside AS SELECT event_id, book_id, chapter, verse FROM timeline_event_verses;
+CREATE TABLE timeline_event_entities_aside AS SELECT event_id, entity_id, role FROM timeline_event_entities;
+DROP TABLE timeline_event_verses;
+DROP TABLE timeline_event_entities;
+
+CREATE TABLE timeline_events_rebuilt (
+  id          INTEGER PRIMARY KEY,
+  key         TEXT NOT NULL UNIQUE,
+  title       TEXT NOT NULL,
+  start_year  REAL NOT NULL,
+  end_year    REAL NOT NULL,
+  precision   TEXT NOT NULL CHECK(precision IN ('year','month','day')),
+  parent_key  TEXT,
+  lane        TEXT CHECK(lane IN ('judah','israel')),
+  note        TEXT,
+  source      TEXT NOT NULL CHECK(source IN ('theographic','added','church')),
+  book_id     INTEGER,
+  chapter     INTEGER,
+  verse       INTEGER,
+  kind        TEXT CHECK(kind IN ('council','life','writing','mission','event')),
+  circa       INTEGER NOT NULL DEFAULT 0 CHECK(circa IN (0,1)),
+  date        TEXT,
+  confession  TEXT,
+  resource    TEXT,
+  era         TEXT
+);
+INSERT INTO timeline_events_rebuilt (id, key, title, start_year, end_year, precision, parent_key, lane, note, source, book_id, chapter, verse)
+  SELECT id, key, title, start_year, end_year, precision, parent_key, lane, note, source, book_id, chapter, verse FROM timeline_events;
+DROP TABLE timeline_events;
+ALTER TABLE timeline_events_rebuilt RENAME TO timeline_events;
+CREATE INDEX idx_timeline_events_start ON timeline_events(start_year);
+
+CREATE TABLE timeline_event_verses (
+  event_id INTEGER NOT NULL REFERENCES timeline_events(id),
+  book_id  INTEGER NOT NULL,
+  chapter  INTEGER NOT NULL,
+  verse    INTEGER NOT NULL,
+  PRIMARY KEY (event_id, book_id, chapter, verse)
+) WITHOUT ROWID;
+INSERT INTO timeline_event_verses (event_id, book_id, chapter, verse)
+  SELECT event_id, book_id, chapter, verse FROM timeline_event_verses_aside;
+DROP TABLE timeline_event_verses_aside;
+CREATE INDEX idx_timeline_event_verses_passage ON timeline_event_verses(book_id, chapter);
+
+CREATE TABLE timeline_event_entities (
+  event_id  INTEGER NOT NULL REFERENCES timeline_events(id),
+  entity_id TEXT NOT NULL REFERENCES factbook_entities(id),
+  role      TEXT NOT NULL CHECK(role IN ('person','place')),
+  PRIMARY KEY (event_id, entity_id)
+) WITHOUT ROWID;
+INSERT INTO timeline_event_entities (event_id, entity_id, role)
+  SELECT event_id, entity_id, role FROM timeline_event_entities_aside;
+DROP TABLE timeline_event_entities_aside;
+CREATE INDEX idx_timeline_event_entities_entity ON timeline_event_entities(entity_id);
+
+CREATE TABLE timeline_event_citations (
+  event_id  INTEGER NOT NULL REFERENCES timeline_events(id),
+  position  INTEGER NOT NULL,
+  work      TEXT NOT NULL,
+  volume    TEXT,
+  locator   TEXT,
+  quote     TEXT NOT NULL,
+  url       TEXT,
+  PRIMARY KEY (event_id, position)
+) WITHOUT ROWID;
+
+ALTER TABLE timeline_eras ADD COLUMN track TEXT NOT NULL DEFAULT 'bible' CHECK(track IN ('bible','church'));
+"#;
+
+// Webster's American Dictionary of the English Language (1828), from
+// `reference/webster1828/` (see `import::reference::webster1828`): the
+// dictionary of the English the King James Version is written in.
+//
+// It has tables of its own rather than a third source in
+// `dictionary_entries`, because it is a different kind of book. Easton's and
+// Smith's explain the Bible's subjects -- Abel, the ephod, Pentecost -- one
+// merged headword each. Webster explains words, and the words a reader of
+// the KJV misreads are the ordinary ones: *prevent* (go before),
+// *conversation* (manner of life), *charity* (love), *let* (hinder), *quick*
+// (living), *meat* (food), *suffer* (allow). Filed with the Bible
+// dictionaries, its 69,580 entries would bury their five thousand, and its
+// homographs -- LET the verb, LET the noun, LET the suffix -- would be
+// merged into one article that is none of them.
+//
+// One row per entry as Webster printed it, homographs apart. `key` is the
+// headword in lower case, shared by homographs, and is what a lookup asks
+// for. `sort` is the entry's place in the dictionary (by key, and then in
+// Webster's own order, as the letter files keep them), and what every list
+// is ordered by; `id` is the same number today, but nothing relies on that,
+// so a later edition of the data can keep old ids steady without disturbing
+// the order. `html` is the entry as the reader shows it -- only `<p>`,
+// `<b>`, `<i>` and the `a.scripref[data-osis]` links ISBE's articles use,
+// which the importer checks -- and `text` the same as plain text, a line
+// per paragraph, for the index and the snippets. The short columns come
+// first, so that ranking a search reads a row's key without its text.
+//
+// `webster_aliases` holds the other keys an entry answers to: spellings
+// printed with its headword ("ABASSI, or ABASSIS"), a spelling printed as a
+// fragment and written out ("OPTIC, 'TICAL" answers to `optical`), and
+// headwords the source left empty and filed under the entry that carries
+// their text (AMONG under AMONGST).
+//
+// `webster_fts` indexes the headword and the text, stemmed, so that
+// *hindered* finds the entries that say *hinder*.
+pub const CONTENT_MIGRATION_0028: &str = r#"
+CREATE TABLE webster_entries (
+  id    INTEGER PRIMARY KEY,
+  key   TEXT NOT NULL,
+  sort  INTEGER NOT NULL UNIQUE,
+  word  TEXT NOT NULL,
+  pos   TEXT,
+  html  TEXT NOT NULL,
+  text  TEXT NOT NULL
+);
+CREATE INDEX idx_webster_key ON webster_entries(key, sort);
+
+CREATE TABLE webster_aliases (
+  alias    TEXT NOT NULL,
+  entry_id INTEGER NOT NULL REFERENCES webster_entries(id),
+  PRIMARY KEY (alias, entry_id)
+) WITHOUT ROWID;
+CREATE INDEX idx_webster_aliases_entry ON webster_aliases(entry_id);
+
+CREATE VIRTUAL TABLE webster_fts USING fts5(
+  word, text,
+  content='webster_entries', content_rowid='id',
+  tokenize='porter unicode61'
+);
+CREATE TRIGGER webster_ai AFTER INSERT ON webster_entries BEGIN
+  INSERT INTO webster_fts(rowid, word, text) VALUES (new.id, new.word, new.text);
+END;
+CREATE TRIGGER webster_ad AFTER DELETE ON webster_entries BEGIN
+  INSERT INTO webster_fts(webster_fts, rowid, word, text) VALUES ('delete', old.id, old.word, old.text);
+END;
+"#;
+
 pub const CONTENT_MIGRATIONS: &[&str] = &[
     CONTENT_MIGRATION_0001,
     CONTENT_MIGRATION_0002,
@@ -1261,6 +1443,8 @@ pub const CONTENT_MIGRATIONS: &[&str] = &[
     CONTENT_MIGRATION_0024,
     CONTENT_MIGRATION_0025,
     CONTENT_MIGRATION_0026,
+    CONTENT_MIGRATION_0027,
+    CONTENT_MIGRATION_0028,
 ];
 
 // library.db: the books that ship with the app, in a file of their own.

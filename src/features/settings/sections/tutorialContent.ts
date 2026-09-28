@@ -43,7 +43,7 @@ export const TUTORIAL: TutorialCategory[] = [
       {
         id: "sidebar",
         title: "The sidebar",
-        what: "The sidebar on the left lists every page in four groups: Scripture, Library (works others wrote), Notebook (what you write), and Devotion (daily practice, family worship among it), with Today above them and Settings below.",
+        what: "The sidebar on the left lists every page in four groups: Scripture, Library (works others wrote), Notebook (what you write), and Devotion (reading plans, prayer, memory, the Psalter, and family worship), with Today above them and Settings below.",
         steps: [
           "Click a page to open it in the pane you are working in.",
           "[Ctrl]+click (or middle-click) a page to open it in a new pane beside what you have.",
@@ -244,7 +244,7 @@ export const TUTORIAL: TutorialCategory[] = [
           "Click the sliders button in the reading toolbar.",
           "Paragraph mode runs verses together as prose; Show verse numbers and Words of Jesus in red are switches. Only his quoted words turn red.",
           "The same menu prints the chapter.",
-          "Settings → Reading → Bible text holds the defaults, plus Show highlights, Show note markers, and Show grammar codes in interlinear view.",
+          "Settings → Reading → Bible text holds the defaults, plus Show highlights, Show note markers, and Show original words and parsing in interlinear view.",
         ],
         links: [{ label: "Settings → Reading", to: "/settings?section=preferences" }],
       },
@@ -280,28 +280,35 @@ export const TUTORIAL: TutorialCategory[] = [
           "Hover a reference (or Tab to it) in cross references, confession proofs, commentary, notes, dictionary entries, reading plans, or the Harmony.",
           "Click Open in the card to go there; [Ctrl]+click Open to put it in a new pane.",
           "Press [Esc] or move away to close it.",
+          "The card keeps to the window: near an edge it opens the other way, a long passage scrolls inside it, and scrolling the page closes it.",
         ],
       },
       {
         id: "read-aloud",
         title: "Read aloud",
-        what: "The app reads a chapter, a commentary entry, or a book with a neural voice that ships with it, following along as it reads.",
+        what: "The app reads a chapter, a commentary, or a book with a neural voice that ships with it, following along as it reads.",
         steps: [
-          "Click the speaker button in the reading toolbar (or the Read aloud button on a commentary or book).",
+          "Click the speaker button in the reading toolbar, or Read aloud on a commentary or a book. A commentary starts at the entry on screen, and a book at the page you are on, not at its first word.",
+          "To start somewhere else, select a few words in the Bible and click Read aloud from here in the toolbar above them, or choose it from the verse menu. Each commentary entry has a small speaker that reads from it; in an EPUB or MOBI book, select words and click From selection beside Read aloud. A PDF's text cannot be selected, so a PDF starts at the page on screen, and a click on a paragraph moves the voice there.",
           "The player bar appears at the bottom of the window with play, pause, next, and previous.",
+          "While it reads, click a verse, a commentary paragraph, or a paragraph of the book to move the voice there. The page follows the voice, turning as it goes.",
+          "Jump to a passage, the list button in the player bar, lists every passage of the reading; type words or a heading to find one, and click it to go there.",
           "Click the speed button in the bar for the settings: Engine (the bundled neural voice, or the voices installed in Windows), Voice, Speed, Pitch, and how the current word is highlighted.",
           "Continue into the next chapter turns the page and keeps reading; Stop after is a sleep timer that fades the voice out over its last ten seconds.",
-          "Click a verse while it reads to move the voice to that verse.",
+          "References are read as a reader says them: John viii. 23 is John 8, verse 23, and Roman numerals and ordinals such as 1st are said as words.",
         ],
-        links: [{ label: "Bible", to: "/" }],
+        links: [
+          { label: "Bible", to: "/" },
+          { label: "Resources", to: "/resources" },
+        ],
       },
       {
         id: "pronunciation",
         title: "Correct how a name is said",
         what: "Your own respellings for names the voice gets wrong, kept with your data.",
         steps: [
-          "Open the player's settings (the speed button in the player bar) and find Pronunciation.",
-          "Add the word as written and the way it should be said, one entry per name.",
+          "Open the player's settings (the speed button in the player bar) and tick Say biblical names properly.",
+          "Under Fix a pronunciation, which appears once that is ticked, type the word as it is written, then the way it should be said in the box beside it, and click Add: one entry per name.",
           "Entries live in your database, so they survive a reinstall and travel with backups.",
         ],
       },
@@ -325,7 +332,7 @@ export const TUTORIAL: TutorialCategory[] = [
         title: "Open a study pane",
         what: "A study pane sits beside the text and follows the verse you select.",
         steps: [
-          "Click one of the icons on the right edge of the window: Commentary, Cross references, Confessions, Mine, Encyclopedia for passage, Atlas, and in the Psalms the Metrical Psalter. Press [Ctrl]+[B] to add a Commentary pane or focus the study pane that is open.",
+          "Click one of the icons on the right edge of the window: Commentary, Cross references, Encyclopedia for passage, People and places, Cited in your library, Timeline for passage, Confessions on this passage, Atlas, Mine, and in the Psalms the Metrical Psalter for passage. Press [Ctrl]+[B] to add a Commentary pane or focus the study pane that is open.",
           "The new pane opens to the right of the one you are in, or below it when that pane is narrow.",
           "The pane's ⋯ menu offers Show instead, which changes what it shows to any page.",
         ],
@@ -510,11 +517,15 @@ export const TUTORIAL: TutorialCategory[] = [
       {
         id: "interlinear",
         title: "Interlinear",
-        what: "The Hebrew or Greek beneath each phrase, aligned word by word, in its own pane.",
+        what: "The Hebrew or Greek under the English it translates, word by word, in its own pane.",
         steps: [
           "Click Interlinear in the reading toolbar.",
-          "Click any tagged word to see its lexicon entry in a popup; View full entry opens the Lexicon page with a concordance of every verse using that word.",
-          "Settings → Reading → Bible text → Show grammar codes in interlinear view adds the parsing under each word.",
+          "Each KJV phrase carries its Strong's number, and under it the Hebrew or Greek words it translates, each with its parsing in words beneath it (Verb · aorist active imperative · 2nd sg). Words matched to no phrase, mostly ones the English leaves untranslated such as an article, are set apart under Not matched.",
+          "The switch at the top chooses the layout: Under each English word; In Greek order (In Hebrew order in the Old Testament), which runs the original on a line of its own as it was written; or English only.",
+          "Click any tagged word to see its lexicon entry in a popup; Full lexicon entry opens the Lexicon page with a concordance of every verse using that word.",
+          "Rest the pointer on an original word, or reach it with [Tab], for the whole parsing and the prefixes and suffixes written on it.",
+          "Click an original word and the popup has a Parsing section: the word as written, its parsing, and a row for each term (aorist, piel, construct). Click a term for what it means.",
+          "English only is the same choice as turning off Settings → Reading → Bible text → Show original words and parsing in interlinear view.",
         ],
         links: [
           { label: "Interlinear", to: "/interlinear" },
@@ -528,8 +539,10 @@ export const TUTORIAL: TutorialCategory[] = [
         steps: [
           "Double-click a word in the Bible text.",
           "The popup shows the Strong's entry. The tagging follows the KJV's wording, so it matches best there; when a word cannot be matched, the popup offers to search the lexicon for it.",
+          "In the Greek or Hebrew text, the popup also parses the word you double-clicked, and in English it parses the Greek or Hebrew word the English stands for when the verse has only the one: each term has a row that opens to say what it means.",
           "From the popup, open the word's study, or its entry in each full lexicon that has it.",
           "A proper name opens the Factbook entry for the person or place that verse means: the Zechariah of 2 Chronicles 24, not a list of every Zechariah.",
+          "In an English Bible the popup ends with the word in Webster's 1828 dictionary, the English of the King James Version's readers: prevent is to go before, conversation is manner of life, let is to hinder. A form like prevented, maketh or spake is found under its verb. More shows every entry in full; Open in Webster opens the Dictionary page on it.",
         ],
       },
       {
@@ -553,6 +566,7 @@ export const TUTORIAL: TutorialCategory[] = [
           "Double-click a word in the text, or click one in the interlinear, and choose Word study in the popup. A lexicon entry has the same button.",
           "The counts are of the Hebrew Old Testament and the Greek New Testament (Textus Receptus) themselves, not of any English translation.",
           "Click a rendering to list only the verses where the KJV renders the word that way; click a bar or a book to list only that book's.",
+          "Forms in the text gives each form's parsing in words, and every occurrence has its own; click a parsing for what each of its terms means.",
           "The occurrence list shows each verse in the translation you are reading; the list beside it switches translation.",
           "The send-to-sermon button puts a short summary of the study into the open sermon.",
         ],
@@ -574,15 +588,21 @@ export const TUTORIAL: TutorialCategory[] = [
       {
         id: "timeline",
         title: "Timeline",
-        what: "Every major event of the Bible on one line, from Creation to Paul in Rome: the eras, the kings of Judah and Israel side by side, and where the chapter you are reading falls.",
+        what: "Every major event of the Bible on one line, from Creation to Paul in Rome, and church history after it to the present: the eras, the kings of Judah and Israel side by side, and where the chapter you are reading falls.",
         steps: [
-          "Open Timeline in the sidebar. Wheel to zoom, drag to move along it, or pick an era from the list. Zoomed out, the larger events show first; zoom in for the rest.",
-          "With the timeline focused (click it, or Tab to it), [+] and [-] zoom and [←] and [→] move along it.",
-          "Click an event for the verses that record it, the people (to the Factbook) and places (to the atlas), and the atlas journeys of its era.",
+          "Open Timeline in the sidebar. Wheel to zoom about the pointer; drag, or [Shift]+wheel, to move along it; or pick an era from the list. All shows the whole line; Bible frames the Bible's years, and AD 30–present frames church history. Zoomed out, the larger events show first; zoom in for the rest.",
+          "The strip under the line is the whole timeline, with the view as a window on it: drag the window to move, drag either edge of it to zoom, or press anywhere on the strip to go there.",
+          "With the timeline focused (click it, or Tab to it), [+] and [-] zoom, [←] and [→] move along it, PageUp and PageDown move a screen at a time, and [Home] and End go to its ends.",
+          "Click an event for the verses that record it, the people (to the Factbook) and places (to the atlas), and the atlas journeys of its era. The search box above finds an event or a name.",
+          "Church history runs in violet under the Bible's events: 296 events in ten eras, from the apostles to the present, councils and creeds, writings, missions, and lives. Click one for what happened, the source that dates it quoted in its own words (Schaff, the Nicene and Post-Nicene Fathers, and others), and, where there is one, a link to the confession it produced or to the book in your library.",
+          "Untick Church history at the top to leave the line at the Bible's events; every timeline remembers the choice.",
           "Beside the text, add the Timeline for passage pane: it follows the chapter, marks its years, and lists the events it records.",
-          "Dates are approximate, as the Theographic Bible Metadata gives them (a traditional chronology, Ussher's for the early ages).",
+          "The Bible's dates are approximate, as the Theographic Bible Metadata gives them (a traditional chronology, Ussher's for the early ages). Church history's are its sources' own; c. marks one they give as approximate.",
         ],
-        links: [{ label: "Timeline", to: "/timeline" }],
+        links: [
+          { label: "Timeline", to: "/timeline" },
+          { label: "Timeline for passage", to: "/study/timeline" },
+        ],
       },
       {
         id: "grammar-search",
@@ -599,14 +619,18 @@ export const TUTORIAL: TutorialCategory[] = [
       {
         id: "dictionary",
         title: "Dictionary",
-        what: "Short entries on people, places, and topics from Easton's and Smith's, merged where both cover a headword.",
+        what: "Short entries on people, places, and topics from Easton's and Smith's, merged where both cover a headword; and, kept apart from them, Webster's 1828 dictionary of the English language.",
         steps: [
           "Open Dictionary in the sidebar; browse by letter or search.",
           "The box above the list reads from both dictionaries or from either alone. Easton's has about 1,300 headwords Smith's lacks and Smith's about 1,850 Easton's lacks.",
           "An entry spelled differently by the two (Abel-meholah, Abelmeholah) is one entry with both articles, found by either spelling.",
           "Scripture references inside an entry are clickable; where the encyclopedia covers the same headword, a link at the top offers the fuller article.",
+          "The tabs at the top of the list, Bible dictionaries and Webster 1828, switch between the two works, and the page remembers which you chose. Webster's has 69,580 entries: type a word to look it up (prevented, letteth and spake find their verbs) and search the definitions, or browse a letter a page at a time.",
         ],
-        links: [{ label: "Dictionary", to: "/dictionary" }],
+        links: [
+          { label: "Dictionary", to: "/dictionary" },
+          { label: "Webster 1828", to: "/dictionary/webster" },
+        ],
       },
       {
         id: "encyclopedia",
@@ -690,7 +714,7 @@ export const TUTORIAL: TutorialCategory[] = [
         id: "confessions-passage",
         title: "From the Bible side",
         what: "A Confessions pane shows where the Standards cite the verse you selected.",
-        steps: ["Click Confessions on the right edge, beside a Bible pane.", "Select a verse; the sections that cite it are listed."],
+        steps: ["Click Confessions on this passage on the right edge, beside a Bible pane.", "Select a verse; the sections that cite it are listed."],
         links: [{ label: "Confessions for passage", to: "/study/confessions" }],
       },
     ],
@@ -746,6 +770,7 @@ export const TUTORIAL: TutorialCategory[] = [
           "The type button above the page sets text size, spacing, font, and how wide a line runs, and can show the book exactly as its publisher styled it.",
           "[Space] and PageDown turn the page, carrying on into the next chapter; PageUp goes back; [←] and [→] jump a chapter; [Home] and End go to the top and bottom of the chapter.",
           "The bar underneath shows how far through the book you are and can be dragged to anywhere in it. Contents in the sidebar lists the chapters (the list icon when the pane is narrow).",
+          "Read aloud, in the sidebar or as the speaker above the page, reads from the page you are on and turns the pages as it goes; click a paragraph to move the voice there. See Read aloud under Reading the Bible.",
         ],
         links: [{ label: "Resources", to: "/resources" }],
       },
@@ -843,6 +868,31 @@ export const TUTORIAL: TutorialCategory[] = [
     ],
   },
   {
+    title: "Psalter",
+    entries: [
+      {
+        id: "psalter",
+        title: "Sing a psalm",
+        what: "The Psalter page sets each psalm of the 1650 Scottish Metrical Psalter under a tune to sing, on a page of its own with no Bible needed beside it.",
+        steps: [
+          "Open Psalter in the sidebar (under Devotion). It opens at the psalm you had last.",
+          "Choose a psalm from the Psalm list at the top, or step with the arrows either side of it; [Ctrl]+[[] and [Ctrl]+[]] turn the psalm while the Psalter has focus. The book button opens the psalm in the Bible.",
+          "In the Go to box, type ps 23: under the passage comes Psalm 23 in the Psalter. Open the Psalter is a command there too.",
+          "Where a psalm has more than one setting, buttons above the tune choose between them.",
+          "Choose a tune from the list (the psalm keeps your choice), click Play, and set the tempo and the pitch. The repeat button sings through every stanza with the words following; the download button saves the tune as MIDI.",
+          "The zoom buttons, [Ctrl]+scroll, or [Ctrl]+[=] and [Ctrl]+[-] make the staff and words larger, for a family reading from across the room; click the percentage to reset.",
+          "The Tunes tab lists every tune the Psalter carries, by metre. Click Play beside one to hear it, or its name for its staff.",
+          "Beside a Bible open in the Psalms, the Metrical Psalter for passage pane on the right edge follows the chapter instead.",
+        ],
+        links: [
+          { label: "Psalter", to: "/psalter" },
+          { label: "Psalm 23", to: "/psalter/23" },
+          { label: "Tunes", to: "/psalter/tunes" },
+        ],
+      },
+    ],
+  },
+  {
     title: "Family worship",
     entries: [
       {
@@ -863,7 +913,7 @@ export const TUTORIAL: TutorialCategory[] = [
         what: "Begin walks the family through the steps; Gather round does the same filling the screen in large type, for the table or a television.",
         steps: [
           "Click Begin (or Gather round) on the Family worship page or on Today, or type begin family worship in the Go to box.",
-          "Read shows the passage with Read aloud, and three questions to talk about. Sing shows the psalm from the 1650 Scottish Psalter with its tune: press Play and sing along. Catechism asks tonight's question and goes over the last few; click Show the answer. Memorize, when the family has a memory verse, shows it to say together: whole the first two times, then with words hidden, then only first letters (Show the words brings it back). Pray gives an order to follow, the names to pray for, and the Lord's Prayer.",
+          "Read shows the passage with Read aloud, and questions to talk about (faith, love and hope, or your family's own). Sing shows the psalm from the 1650 Scottish Psalter with its tune: press Play and sing along. Catechism asks tonight's question and goes over the last few; click Show the answer. Memorize, when the family has a memory verse, shows it to say together: whole the first two times, then with words hidden, then only first letters (Show the words brings it back). Pray gives an order to follow, the names to pray for, and the Lord's Prayer.",
           "Click a step's name to jump to it, or Next and Back. In Gather round, [→] and [←] move, [Ctrl]+[=] and [Ctrl]+[-] change the size, and [Esc] leaves full screen.",
           "Click Amen at the end: the day is logged, the reading and the catechism move on for next time, and a prayer is logged for each name still ticked. Undo on the notice takes it back.",
         ],
@@ -876,9 +926,10 @@ export const TUTORIAL: TutorialCategory[] = [
         steps: [
           "Under What we use on the Family worship page, choose the reading plan and the next day, the psalm of the week (or turn singing off), the catechism, where you are in it and how often a new question comes, and whose names to pray for: everyone on the prayer list or one category.",
           "Memory verse: type a verse to learn together, or pick one of the suggestions for little ones. It is said at every gathering. Move on to a new one when it is learned, and click Keep it in the Memory deck to put it in the Family set on the Memory page so it keeps coming round.",
+          "Talk about it holds the questions asked after every reading: one each on faith, love and hope to start. Reword them, move them up or down, remove one, or add your own, up to eight. Reset to the defaults brings the three back.",
           "After a week on one psalm the page offers to move on or keep it. When a plan or a catechism is finished it offers what to do next.",
           "The last five weeks shows a dot for each day the family gathered. There are no streaks.",
-          "Print this week prints one sheet: the next seven readings, the psalm's words, the week's catechism questions and answers, the memory verse, and the names to pray for.",
+          "Print this week prints one sheet: the next seven readings with the questions to talk about, the psalm's words, the week's catechism questions and answers, the memory verse, and the names to pray for.",
           "Start over at the bottom clears the setup; the log is kept.",
         ],
         links: [
@@ -932,8 +983,8 @@ export const TUTORIAL: TutorialCategory[] = [
         title: "Listen, and the calendar",
         what: "Hear the verses read aloud, and see which days you practised.",
         steps: [
-          "Listen beside Practice what's due reads each due card aloud, its reference and then its words, in the card's own translation: for the car, a walk, or a child who cannot read yet.",
-          "Each card in practice has its own read-aloud button. Asked where a verse is, it reads only the words.",
+          "Read aloud beside Practice what's due reads each due card aloud, its reference and then its words, in the card's own translation: for the car, a walk, or a child who cannot read yet.",
+          "A card's own read-aloud button appears once its answer is showing, so it never gives the answer away. On a card that asks where a verse is, it is there from the start and reads only the words.",
           "The calendar shows a dot for each day in the last five weeks you practised either deck. Missed days are just days: there are no streaks.",
         ],
         links: [{ label: "Memory", to: "/memory" }],
@@ -1215,7 +1266,7 @@ export const TUTORIAL: TutorialCategory[] = [
         steps: [
           "Reading: Open on (Bible or Today), Theme, Accent color, Text size, Line spacing, Font, and a Preview.",
           "Accessibility: Reduce motion.",
-          "Bible text: Paragraph mode, Show verse numbers, Words of Jesus in red, Show highlights, Show note markers, Show grammar codes in interlinear view, Highlight colors, When copying verses, Note templates, Speaking rate, Sermon templates.",
+          "Bible text: Paragraph mode, Show verse numbers, Words of Jesus in red, Show highlights, Show note markers, Show original words and parsing in interlinear view, Highlight colors, When copying verses, Note templates, Speaking rate, Sermon templates.",
         ],
         links: [{ label: "Settings → Reading", to: "/settings?section=preferences" }],
       },
@@ -1261,7 +1312,7 @@ export const TUTORIAL: TutorialCategory[] = [
       {
         id: "tour",
         title: "Take the tour again",
-        what: "The first launch walks through nine things in place: the Go to button, a verse, the Add pane strip, a pane header, the layout button, the three sidebar groups, and Settings. The app opens on Today, so the tour opens a Bible beside it when it comes to the verse.",
+        what: "The first launch walks through nine things in place: the Go to button, a verse, the Add pane strip, a pane header, the layout button, the Library, Notebook and Devotion groups of the sidebar, and Settings. The app opens on Today, so the tour opens a Bible beside it when it comes to the verse.",
         steps: ["Click Show the tour again at the top of this page.", "Inside the tour, [→] and [←] step and [Esc] skips."],
         links: [{ label: "Start the tour", tour: true }],
       },

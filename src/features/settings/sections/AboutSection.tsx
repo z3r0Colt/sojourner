@@ -1,11 +1,19 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { openUrl } from "@tauri-apps/plugin-opener";
+import { create } from "zustand";
 import { Check, Download, Globe, Mail, RefreshCw } from "lucide-react";
 import { api } from "../../../api/client";
 import { useTranslations } from "../../../api/queries";
 import type { UpdateCheck } from "../../../api/types";
 import { Button } from "../../../components/ui/Button";
+import { openContent, targetFor } from "../../../workspace/openContent";
+import { usePaneOptional } from "../../../workspace/PaneContext";
+import { useWorkspaceStore } from "../../../state/workspaceStore";
+import { licenceParagraphs } from "./licenceText";
+// The notice DataWar's licence asks to go with every copy of its data, as
+// the data folder keeps it, so the two cannot drift apart.
+import dataWarLicence from "../../../../reference/webster1828/LICENSE-DataWar.txt?raw";
 
 /** An external link. `target="_blank"` inside a webview can navigate the app
  * window itself out of the app, so hand the URL to the system browser (the
@@ -158,9 +166,13 @@ function TranslationCredits() {
   );
 }
 
+function useLexiconSources() {
+  return useQuery({ queryKey: ["lexiconSources"], queryFn: () => api.listLexiconSources(), staleTime: Infinity });
+}
+
 /** The lexicon shelf, credited from the database like the translations. */
 function LexiconCredits() {
-  const { data: sources } = useQuery({ queryKey: ["lexiconSources"], queryFn: () => api.listLexiconSources(), staleTime: Infinity });
+  const { data: sources } = useLexiconSources();
   return (
     <>
       {(sources ?? []).map((l) => (
@@ -172,25 +184,78 @@ function LexiconCredits() {
   );
 }
 
-/** One credited source: what it is, and on what terms it is here. */
-function Source({ name, children }: { name: string; children: React.ReactNode }) {
+/** One credited source: what it is, and on what terms it is here. Side by
+ * side where the page has the width for it, and the name above its terms
+ * where it has not: About opened from a Webster entry can be a pane a third
+ * of the window wide, and a name column of fixed width there left the terms
+ * none at all. `credit` names it for openAboutAt. */
+function Source({ name, credit, children }: { name: string; credit?: string; children: React.ReactNode }) {
   return (
-    <div className="flex flex-col gap-0.5 py-2.5 sm:flex-row sm:gap-3">
-      <dt className="shrink-0 font-medium text-ink sm:w-64">{name}</dt>
+    <div data-credit={credit} className="flex scroll-mt-4 flex-col gap-0.5 py-2.5 @xl:flex-row @xl:gap-3">
+      <dt className="shrink-0 font-medium text-ink @xl:w-64">{name}</dt>
       <dd className="min-w-0 flex-1 leading-relaxed text-ink-3">{children}</dd>
     </div>
   );
 }
 
+/** Brings `el` to the top of the page's own scroll, and moves nothing else:
+ * scrollIntoView goes on to scroll the pane's clipped frame too, and took
+ * the pane's header out of sight. */
+function scrollToTop(el: HTMLElement) {
+  let scroller = el.parentElement;
+  while (scroller && !/(auto|scroll)/.test(getComputedStyle(scroller).overflowY)) scroller = scroller.parentElement;
+  if (!scroller) return;
+  const margin = parseFloat(getComputedStyle(el).scrollMarginTop) || 0;
+  scroller.scrollTop += el.getBoundingClientRect().top - scroller.getBoundingClientRect().top - margin;
+}
+
+/** A credit an About page has been asked to go to, and the pane asked (see
+ * openAboutAt). A store rather than a prop, because the page asked may be
+ * open already, and must hear of it. */
+export const useCreditAsked = create<{ asked: { credit: string; paneId: string } | null }>(() => ({ asked: null }));
+
+/**
+ * Opens Settings → About at one source's credit (a `Source`'s `credit`):
+ * "Sources and licences" under a Webster entry means Webster's credit and
+ * DataWar's notice, not the top of a long page.
+ *
+ * In the Settings pane already open, if there is one -- one showing About
+ * first, else any, turned to About -- as "Open in Webster" uses the
+ * Dictionary pane: every click used to open another About, identical to the
+ * last, as another tab. Ctrl+click or a middle-click still opens a new one.
+ */
+export function openAboutAt(credit: string, e: React.MouseEvent) {
+  const panes = useWorkspaceStore.getState().panes;
+  const open = panes.find((p) => p.kind === "settings" && p.params.section === "about") ?? panes.find((p) => p.kind === "settings");
+  openContent("settings", { section: "about" }, { target: targetFor(e, open?.id ?? "new") });
+  // Opened or gone to, the page is in the pane that now has the focus.
+  useCreditAsked.setState({ asked: { credit, paneId: useWorkspaceStore.getState().focusedPaneId } });
+}
+
 export function AboutSection() {
   const [version, setVersion] = useState<string | null>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+  // A credit this page was asked to go to, as it opened or since.
+  const paneId = usePaneOptional()?.id;
+  const asked = useCreditAsked((s) => (s.asked && s.asked.paneId === paneId ? s.asked : null));
+  // The credits read from the library come before the one asked for, and
+  // move it down as they arrive: go to it once they have.
+  const translations = useTranslations();
+  const lexicons = useLexiconSources();
+  const creditsPlaced = !translations.isPending && !lexicons.isPending;
+  useEffect(() => {
+    if (!asked || !creditsPlaced) return;
+    useCreditAsked.setState({ asked: null });
+    const el = rootRef.current?.querySelector<HTMLElement>(`[data-credit="${asked.credit}"]`);
+    if (el) scrollToTop(el);
+  }, [asked, creditsPlaced]);
 
   useEffect(() => {
     api.appVersion().then(setVersion).catch(() => {});
   }, []);
 
   return (
-    <div>
+    <div ref={rootRef} className="@container">
       <h2 className="mb-1 text-lg font-semibold text-ink">About</h2>
       <div className="mb-6 flex items-center gap-3">
         <span className="brand-mark h-10 w-10 shrink-0" aria-hidden="true" />
@@ -215,7 +280,7 @@ export function AboutSection() {
         </p>
         <p>
           Included are multiple Bible translations, a timeline of the biblical events, classic commentaries (Matthew Henry, Jamieson-Fausset-Brown, Spurgeon's Treasury of David, and others),
-          the Westminster Standards, Strong's lexicon with interlinear Hebrew and Greek, a Bible dictionary and encyclopedia, an atlas of the biblical world,
+          the Westminster Standards, Strong's lexicon with interlinear Hebrew and Greek, a Bible dictionary and encyclopedia, Webster's 1828 dictionary of the English language, an atlas of the biblical world,
           two harmonies of the Gospels, reading plans, and tools for prayer and Scripture memory.
         </p>
         <p>
@@ -262,6 +327,15 @@ export function AboutSection() {
           Open Scriptures Hebrew Bible's parsing, in English chapter and verse numbering so that the interlinear, the word study and the Hebrew text line up
           with the English beside them.
         </Source>
+        <Source name="Parsing glossary">
+          Written for Sojourner. Its list of Greek and Hebrew parsing terms was checked against STEPBible's Translators Expansion of Greek Morphology
+          Codes (TEGMC) and Translators Expansion of Hebrew Morphology Codes (TEHMC), data created by{" "}
+          <ExternalLink href="https://github.com/STEPBible/STEPBible-Data">STEPBible.org</ExternalLink> based on work at Tyndale House Cambridge, used
+          under a <ExternalLink href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0</ExternalLink> licence; the rarer
+          Hebrew stems keep the names of the{" "}
+          <ExternalLink href="https://hb.openscriptures.org/parsing/HebrewMorphologyCodes.html">Open Scriptures Hebrew Bible morphology codes</ExternalLink>{" "}
+          (Creative Commons Attribution 4.0). The tables were consulted, not copied; the explanations follow the standard grammars.
+        </Source>
         <Source name="Factbook — people, places and their family and verses">
           The Translators Individualised Proper Names with all References, © Tyndale House Cambridge, used under a{" "}
           <ExternalLink href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0</ExternalLink> licence, from{" "}
@@ -277,6 +351,14 @@ export function AboutSection() {
           Sojourner adds (the fall of Jerusalem, Ezra, Nehemiah and others) are dated by its year for the verse that records them. The timeline data
           (reference/timeline) is shared under the same licence.
         </Source>
+        <Source name="Timeline — church history">
+          Written for Sojourner. Every date is taken from a source, and each event quotes that source's own words for it: Philip Schaff's{" "}
+          <i>History of the Christian Church</i> and <i>The Creeds of Christendom</i>, the editors' prolegomena to the <i>Nicene and Post-Nicene
+          Fathers</i> (Second Series, 1890–1900), and <i>The New Schaff-Herzog Encyclopedia of Religious Knowledge</i> (1908–14), all public domain, in
+          the <ExternalLink href="https://ccel.org">Christian Classics Ethereal Library</ExternalLink>'s texts and page images. The six events after 1914,
+          which those works do not reach, are each dated from two independent references named with the event, and quote only the words that give
+          the date.
+        </Source>
         <Source name="Book library shelves">
           Public domain. The Church Fathers (the Ante-Nicene and Nicene and Post-Nicene series, 1885–1900, and Lightfoot's Apostolic Fathers), Josephus
           (Whiston), Philo (Yonge), Schaff's History of the Christian Church and Creeds of Christendom, and Edersheim, as epubs from the{" "}
@@ -285,6 +367,21 @@ export function AboutSection() {
           own file.
         </Source>
         <Source name="Easton's and Smith's Bible dictionaries">Public domain.</Source>
+        <Source name="Webster's 1828 dictionary" credit="webster-1828">
+          Noah Webster, <i>An American Dictionary of the English Language</i> (1828): public domain. Prepared from the database in{" "}
+          <ExternalLink href="https://github.com/DataWar/1828-dictionary">DataWar/1828-dictionary</ExternalLink>, © 2021 DataWar, used under the MIT
+          licence, whose notice follows. Its Scripture links are Sojourner's, made from Webster's own citations.
+          <details className="mt-1">
+            <summary className="cursor-pointer text-xs text-ink-3 hover:text-ink">The MIT licence</summary>
+            {/* Set to the column: the file's own line breaks, at eighty
+                columns, left every other line a stub here. */}
+            <div className="mt-1 space-y-1.5 text-xs leading-relaxed text-ink-3">
+              {licenceParagraphs(dataWarLicence).map((paragraph, i) => (
+                <p key={i}>{paragraph}</p>
+              ))}
+            </div>
+          </details>
+        </Source>
         <Source name="International Standard Bible Encyclopedia (1915)">
           James Orr, general editor. Public domain. Prepared from the edition distributed by the CrossWire Bible Society.
         </Source>

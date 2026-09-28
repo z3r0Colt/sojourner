@@ -1,7 +1,7 @@
-import { useMemo, useRef, useState } from "react";
+import { useId, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { BookA, X } from "lucide-react";
+import { BookA, ChevronRight, X } from "lucide-react";
 import { api } from "../../api/client";
 import { useBooks, useTranslations } from "../../api/queries";
 import { usePane, usePaneParams } from "../../workspace/PaneContext";
@@ -13,7 +13,11 @@ import { Button } from "../../components/ui/Button";
 import { cx, inputSmClass, selectSmClass } from "../../components/ui/classes";
 import { StudyActions } from "../sermons/StudyActions";
 import { strongsRef } from "../sermons/sourceIdentity";
-import type { WordOccurrence, WordStudy } from "../../api/types";
+import { strongsText } from "./strongsText";
+import { ParsingTerms } from "./ParsingSection";
+import { codedAsNote, parsingSentence } from "./parsingDisplay";
+import { occurrenceParsing, parsingLine, parsingsByCode } from "./wordStudyParsing";
+import type { MorphParsing, WordOccurrence, WordStudy } from "../../api/types";
 
 /** Marks the KJV's words for the studied word in a verse, case-insensitively,
  * as whole words; the text is escaped first. */
@@ -33,7 +37,7 @@ function markedVerse(text: string, words: string[]): string {
 function summary(ws: WordStudy, bookName: (id: number) => string): string {
   const top = ws.renderings.slice(0, 5).map((r) => `“${r.gloss}” ${r.count}`).join(", ");
   const books = [...ws.by_book].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([id, n]) => `${bookName(id)} ${n}`).join(", ");
-  return `${ws.entry.original_word} (${ws.entry.transliteration ?? ws.entry.id}), ${ws.entry.id}: ${ws.entry.short_definition ?? ws.entry.definition}. Occurs ${ws.occurrences} times in ${ws.verses} verses${books ? `, most in ${books}` : ""}. KJV renders it ${top}.`;
+  return `${ws.entry.original_word} (${ws.entry.transliteration ?? ws.entry.id}), ${ws.entry.id}: ${ws.entry.short_definition ?? strongsText(ws.entry).definition}. Occurs ${ws.occurrences} times in ${ws.verses} verses${books ? `, most in ${books}` : ""}. KJV renders it ${top}.`;
 }
 
 /**
@@ -87,6 +91,7 @@ export function WordStudyView() {
     () => (occurrences ?? []).filter((o) => bookFilter == null || o.book_id === bookFilter),
     [occurrences, bookFilter],
   );
+  const byCode = useMemo(() => parsingsByCode(ws?.forms ?? []), [ws]);
 
   const open = (id: string) => {
     setParams({ id });
@@ -167,7 +172,7 @@ export function WordStudyView() {
             {ws.entry.transliteration && <span className="text-lg italic text-ink-3">{ws.entry.transliteration}</span>}
           </div>
           <p className="mb-1 text-ink" style={typography}>
-            {ws.entry.short_definition ?? ws.entry.definition}
+            {ws.entry.short_definition ?? strongsText(ws.entry).definition}
           </p>
           {briefGloss && (
             <p className="mb-1 text-sm text-ink-2">
@@ -247,19 +252,16 @@ export function WordStudyView() {
           </Section>
 
           <Section title="Forms in the text">
-            <table className="w-full text-sm">
-              <tbody>
-                {ws.forms.map((f) => (
-                  <tr key={`${f.form}-${f.morph_code}`} className="border-b border-line last:border-0">
-                    <td className="py-1 pr-3 text-base text-ink" lang={lang}>
-                      {f.form}
-                    </td>
-                    <td className="py-1 pr-3 text-ink-2">{f.description || f.morph_code}</td>
-                    <td className="py-1 text-right tabular-nums text-ink-3">{f.count}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            {/* One grid for the whole list, each row a subgrid of it, so the
+                parsing labels start in one column however wide the form
+                before them: ἀγάπη and ἀγάπαις, or a Hebrew form with its
+                prefixes. The form's column is as wide as the widest form, up
+                to two-fifths of the pane, and the label wraps beside it. */}
+            <ul className="grid grid-cols-[fit-content(40%)_minmax(0,1fr)_auto] gap-x-3 text-sm">
+              {ws.forms.map((f) => (
+                <FormRow key={`${f.form}-${f.morph_code}`} form={f} lang={lang} />
+              ))}
+            </ul>
           </Section>
 
           {ws.related.length > 0 && (
@@ -314,7 +316,16 @@ export function WordStudyView() {
               </span>
             }
           >
-            <OccurrenceList occurrences={shown} lang={lang} bookName={bookName} typography={typography} />
+            <OccurrenceList
+              // A new filter is a new list: the parsing opened under the
+              // tenth verse of the last one is closed.
+              key={`${gloss ?? ""}|${bookFilter ?? ""}`}
+              occurrences={shown}
+              parsingOf={(o) => occurrenceParsing(byCode, o)}
+              lang={lang}
+              bookName={bookName}
+              typography={typography}
+            />
           </Section>
         </div>
       </div>
@@ -334,18 +345,118 @@ function Section({ title, aside, children }: { title: string; aside?: React.Reac
   );
 }
 
+/**
+ * The parsing of a form or an occurrence as a disclosure: its line in plain
+ * words on a button, which opens to the whole parsing in a sentence and the
+ * Strong's card's row for each term, each of those opening in turn to what
+ * the glossary says of it. Everything starts closed: a form list of fifty
+ * rows, or a verse list of thousands, is read down by its labels.
+ */
+function ParsingToggle({
+  label,
+  description,
+  open,
+  onToggle,
+  controls,
+}: {
+  label: string;
+  description: string | null;
+  open: boolean;
+  onToggle: () => void;
+  controls: string;
+}) {
+  return (
+    <button
+      type="button"
+      aria-expanded={open}
+      aria-controls={controls}
+      title={description ? `${description} — click for what each term means` : "Click for what each term means"}
+      onClick={(e) => {
+        e.stopPropagation();
+        onToggle();
+      }}
+      className="inline-flex min-w-0 items-start gap-0.5 rounded px-0.5 text-left text-ink-2 hover:bg-hover hover:text-ink"
+    >
+      <ChevronRight className={cx("mt-[3px] h-3 w-3 shrink-0 text-ink-3 transition-transform", open && "rotate-90")} aria-hidden="true" />
+      <span className="min-w-0">{label}</span>
+    </button>
+  );
+}
+
+/** What opens under a form or occurrence: the whole parsing in a sentence
+ *  with its code, the note on a word read otherwise than its code, and the
+ *  Strong's card's term rows. */
+function ParsingPanel({ id, parsing, code, word }: { id: string; parsing: MorphParsing; code: string | null; word: string | null }) {
+  const note = code ? codedAsNote(parsing) : null;
+  return (
+    <div
+      id={id}
+      // Inside an occurrence the row opens its verse; the panel's own clicks
+      // open its terms and nothing else.
+      onClick={(e) => e.stopPropagation()}
+      className="mb-1 mt-1 cursor-auto rounded-md border border-line bg-surface-2 px-2 py-1.5 text-left"
+    >
+      <p className="mb-1 text-sm leading-snug text-ink-2">
+        {parsingSentence(parsing)}
+        {code && (
+          <span className="ml-2 whitespace-nowrap font-mono text-[11px] text-ink-3" title="The parsing code in the tagged text">
+            {code}
+          </span>
+        )}
+      </p>
+      {note && <p className="mb-1 text-[11px] leading-snug text-ink-3">{note}</p>}
+      <ParsingTerms parsing={parsing} word={word} />
+    </div>
+  );
+}
+
+/** A form in the text: the form, its parsing in plain words, how often it
+ *  occurs, and the whole parsing under it when asked for. */
+function FormRow({ form: f, lang }: { form: WordStudy["forms"][number]; lang: string }) {
+  const [open, setOpen] = useState(false);
+  const id = useId();
+  const line = parsingLine(f.parsing, f.description, f.morph_code);
+  return (
+    <li className="col-span-3 grid grid-cols-subgrid items-baseline border-b border-line py-1 last:border-0">
+      <span className="text-base text-ink" lang={lang}>
+        {f.form}
+      </span>
+      <span className="min-w-0">
+        {f.parsing ? (
+          <ParsingToggle label={line} description={f.description || null} open={open} onToggle={() => setOpen((v) => !v)} controls={id} />
+        ) : (
+          <span className="text-ink-2">{line}</span>
+        )}
+      </span>
+      <span className="text-right tabular-nums text-ink-3">{f.count}</span>
+      {open && f.parsing && (
+        <div className="col-span-3 min-w-0">
+          <ParsingPanel id={id} parsing={f.parsing} code={f.morph_code || null} word={f.form} />
+        </div>
+      )}
+    </li>
+  );
+}
+
 function OccurrenceList({
   occurrences,
+  parsingOf,
   lang,
   bookName,
   typography,
 }: {
   occurrences: WordOccurrence[];
+  parsingOf: (o: WordOccurrence) => MorphParsing | null;
   lang: string;
   bookName: (id: number) => string;
   typography: React.CSSProperties;
 }) {
   const listRef = useRef<HTMLDivElement>(null);
+  // One occurrence's parsing open at a time, by its place in the list: kept
+  // here, not in the row, so it stays open when the row scrolls out of the
+  // virtual window and back.
+  const [openAt, setOpenAt] = useState<number | null>(null);
+  const idBase = useId();
   const virtualizer = useVirtualizer({
     count: occurrences.length,
     getScrollElement: () => listRef.current,
@@ -357,29 +468,54 @@ function OccurrenceList({
       <div style={{ position: "relative", height: virtualizer.getTotalSize() }}>
         {virtualizer.getVirtualItems().map((item) => {
           const o = occurrences[item.index];
+          const parsing = parsingOf(o);
+          const open = openAt === item.index && !!parsing;
+          const panelId = `${idBase}-${item.index}`;
+          const go = (ev: React.MouseEvent) => openPassage({ bookId: o.book_id, chapter: o.chapter, verse: o.verse }, { target: targetFor(ev) });
+          // The row was one button, opening the verse. It holds a second
+          // now, the parsing, and a button cannot hold a button: the
+          // reference is the verse's button, for the keyboard, and a click
+          // anywhere else on the row but the parsing opens the verse too.
           return (
-            <button
+            <div
               key={item.index}
-              type="button"
               ref={virtualizer.measureElement}
               data-index={item.index}
               style={{ position: "absolute", top: 0, left: 0, right: 0, transform: `translateY(${item.start}px)` }}
-              className="block w-full rounded-md p-2 text-left hover:bg-hover"
-              onClick={(ev) => openPassage({ bookId: o.book_id, chapter: o.chapter, verse: o.verse }, { target: targetFor(ev) })}
+              className="block w-full cursor-pointer rounded-md p-2 text-left hover:bg-hover"
+              onClick={go}
             >
-              <div className="flex items-baseline gap-2 text-xs">
-                <span className="font-medium text-accent">
+              <div className="flex flex-wrap items-baseline gap-x-2 text-xs">
+                <button
+                  type="button"
+                  className="font-medium text-accent hover:underline"
+                  onClick={(ev) => {
+                    ev.stopPropagation();
+                    go(ev);
+                  }}
+                >
                   {bookName(o.book_id)} {o.chapter}:{o.verse}
-                </span>
+                </button>
                 <span className="text-sm text-ink" lang={lang}>
                   {o.original_word}
                 </span>
-                <span className="truncate text-ink-3">{o.description}</span>
+                {parsing ? (
+                  <ParsingToggle
+                    label={parsingLine(parsing, o.description, o.morph_code)}
+                    description={o.description}
+                    open={open}
+                    onToggle={() => setOpenAt(open ? null : item.index)}
+                    controls={panelId}
+                  />
+                ) : (
+                  <span className="truncate text-ink-3">{o.description}</span>
+                )}
               </div>
+              {open && parsing && <ParsingPanel id={panelId} parsing={parsing} code={o.morph_code} word={o.original_word} />}
               {o.text && (
                 <div className="reading-font text-ink-2" style={typography} dangerouslySetInnerHTML={{ __html: markedVerse(o.text, o.renderings) }} />
               )}
-            </button>
+            </div>
           );
         })}
       </div>

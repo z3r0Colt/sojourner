@@ -85,7 +85,7 @@ export const TOUR_STEPS: Step[] = [
     title: "The library",
     body: (
       <>
-        Works someone else wrote: the Westminster Confession and Catechisms, a Hebrew and Greek lexicon, two Bible dictionaries, the ISBE encyclopedia, an atlas of 1,342 places, and Resources for your own books, audio, and video.
+        Works someone else wrote: the Westminster Confession and Catechisms and the creeds, a Hebrew and Greek lexicon, a Bible dictionary and Webster's 1828, the ISBE encyclopedia, the Factbook of people and places, a timeline from Creation through church history, an atlas of 1,342 places, and Resources for your own books, audio, and video.
       </>
     ),
     missing: "The Library group is in the sidebar on the left.",
@@ -105,7 +105,7 @@ export const TOUR_STEPS: Step[] = [
     title: "Daily practice",
     body: (
       <>
-        Reading plans (M'Cheyne, chronological, and your own), a Prayer journal and prayer list, and Scripture and catechism Memory with spaced repetition. Today, at the top of the sidebar, gathers all of it for the day.
+        Reading plans (M'Cheyne, chronological, and your own), a Prayer journal and prayer list, Scripture and catechism Memory with spaced repetition, the Psalter to sing from, and Family worship. Today, at the top of the sidebar, gathers all of it for the day.
       </>
     ),
     missing: "The Devotion group is in the sidebar on the left.",

@@ -280,7 +280,7 @@ export function PreferencesSection() {
         />
         <Toggle label="Show highlights" checked={showHighlights} onChange={toggleShowHighlights} />
         <Toggle label="Show note markers" checked={showNoteSymbols} onChange={toggleShowNoteSymbols} />
-        <Toggle label="Show grammar codes in interlinear view" checked={showMorphology} onChange={toggleShowMorphology} />
+        <Toggle label="Show original words and parsing in interlinear view" checked={showMorphology} onChange={toggleShowMorphology} />
         <Row label="Highlight colors" hint="Names show as tooltips on the color buttons and as headings on the Highlights page.">
           <HighlightLabelsRow />
         </Row>

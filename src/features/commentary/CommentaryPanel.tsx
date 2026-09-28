@@ -9,8 +9,10 @@ import { sanitizeHtml } from "../../lib/sanitizeHtml";
 import { toPassageRef } from "../../lib/passage";
 import { useTtsReadingHere, useTtsStore } from "../../state/ttsStore";
 import { useReadingTypography } from "../../state/uiStore";
+import { ReadFromHereButton, useSpokenPieces, type SpeakingEntry } from "./CommentaryReadAloud";
+import { buildCommentaryReading, entryOfPiece, isReadingClick, onScreenStart, pieceIndexAt, verseRangeLabel } from "./commentarySpeech";
+import { landOnRow } from "./landOnRow";
 import { ReadAloudButton } from "../tts/ReadAloudButton";
-import { ReadAloudWords } from "../tts/ReadAloudWords";
 import { PaneLink } from "../../workspace/PaneLink";
 import { usePane } from "../../workspace/PaneContext";
 import type { Book } from "../../api/types";
@@ -49,12 +51,44 @@ export function CommentaryPanel({
   });
 
   const { data: entries, isLoading } = useCommentaryForPassage(sourceId, book.id, chapter);
-  const ttsHere = useTtsReadingHere(usePane().id, "commentary");
+  // The book's contents, for the "read as a book" link: it opens at this
+  // chapter rather than at the book's first section (a preface, Romans 1).
+  const { data: toc } = useQuery({
+    queryKey: ["commentaryToc", sourceId, book.id],
+    queryFn: () => api.getCommentaryToc(sourceId as number, book.id),
+    enabled: sourceId != null && hasCommentary !== false,
+  });
+  const chapterSection = toc?.find((s) => s.chapter === chapter);
+  const paneId = usePane().id;
+  const ttsHere = useTtsReadingHere(paneId, "commentary");
   const ttsCurrentSegmentId = useTtsStore((s) => (ttsHere ? (s.segments[s.currentSegmentIndex]?.id ?? null) : null));
+  // The entry the voice is in, whichever of its pieces it has reached.
+  const readingEntryId = entryOfPiece(ttsCurrentSegmentId);
   const source = sources?.find((s) => s.id === sourceId);
   const sourceTitle = source?.title ?? "Commentary";
   // A source line reads better with the author's name than the volume title.
   const sourceAuthor = source?.author ?? sourceTitle;
+  const ttsTitle = `${sourceTitle}: ${book.name} ${chapter}`;
+
+  // The chapter's entries as the voice reads them, built once per list so
+  // that a paragraph's place in the reading stays put between renders -- a
+  // click on it seeks by that place. Labelled by verse ("vv. 28-30 ¶2"); an
+  // entry on no verse in particular is on the chapter.
+  const reading = useMemo(
+    () => buildCommentaryReading(entries ?? [], (e) => verseRangeLabel(e.verse_start, e.verse_end) ?? `Ch. ${chapter}`),
+    [entries, chapter],
+  );
+
+  // A click on a paragraph while this pane is reading the commentary moves
+  // the voice to it -- to the very sentence, in the paragraph being read --
+  // as a click on a verse does in the Bible beside it. Links, buttons and a
+  // selection being made are left to do what they do.
+  function readFromClick(e: React.MouseEvent, entryId: number) {
+    if (!ttsHere || !isReadingClick(e.target, window.getSelection())) return;
+    const index = pieceIndexAt(e.target, { x: e.clientX, y: e.clientY }) ?? reading.firstPiece.get(entryId);
+    if (index == null) return;
+    useTtsStore.getState().readFrom(ttsTitle, "commentary", reading.segments, index, { paneId });
+  }
 
   const listRef = useRef<HTMLDivElement>(null);
   // Virtualized so a long commentary entry list (e.g. Henry or Barnes on a
@@ -65,16 +99,46 @@ export function CommentaryPanel({
     getScrollElement: () => listRef.current,
     estimateSize: () => 150,
     overscan: 5,
+    // Rows are measured from their ref callbacks, during React's commit,
+    // where a synchronous re-render is an error (see ReadingPane).
+    useFlushSync: false,
   });
+
+  // While the voice reads this commentary and the page follows along, the
+  // page is the voice's. A verse picked in the Bible beside it -- right-
+  // clicked for its menu, a word in it double-clicked -- is still marked
+  // here, but does not take the page away from the paragraph being read.
+  const autoScroll = useTtsStore((s) => s.autoScroll);
+  const voiceRunning = useTtsStore((s) => s.isPlaying && !s.isPaused);
+  const voiceLeads = ttsHere && voiceRunning && autoScroll;
 
   // Bring the verse being read into view: the entry that starts on it, or
   // else the first whose range covers it. Only when the verse (or the list
   // under it) changes, so reading down the commentary isn't yanked back.
   const landingIndex = useMemo(() => verseLandingIndex(entries ?? [], activeVerse), [entries, activeVerse]);
   useEffect(() => {
-    if (landingIndex >= 0) rowVirtualizer.scrollToIndex(landingIndex, { align: "start" });
+    if (landingIndex < 0 || voiceLeads) return;
+    const aim = () => rowVirtualizer.scrollToIndex(landingIndex, { align: "start" });
+    aim();
+    // The aim is taken from guessed row heights; hold the row at the top
+    // while the rows around it are drawn and measured (see landOnRow).
+    return landOnRow(listRef.current, landingIndex, aim);
+    // Not again when the voice stops: that would yank the page from the
+    // paragraph the reader was just listening to.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [landingIndex, entries]);
+
+  // Keep the paragraph being read on the page as the voice moves on. The
+  // spoken words scroll themselves into view (ReadAloudWords), but only when
+  // they are on the page: the list is virtualized, and a paragraph scrolled
+  // well away is not rendered at all, leaving nothing to follow -- the page
+  // stood still from then on. Its row is brought back first.
+  const readingIndex = useMemo(() => (readingEntryId == null ? -1 : (entries ?? []).findIndex((e) => e.id === readingEntryId)), [entries, readingEntryId]);
+  useEffect(() => {
+    if (!autoScroll || readingIndex < 0) return;
+    if (!rowVirtualizer.getVirtualItems().some((item) => item.index === readingIndex)) rowVirtualizer.scrollToIndex(readingIndex, { align: "start" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ttsCurrentSegmentId, readingIndex, autoScroll]);
 
   return (
     <div className="flex h-full w-full flex-col">
@@ -88,7 +152,7 @@ export function CommentaryPanel({
         </select>
         {sourceId != null && (
           <PaneLink
-            to={`/commentary/${sourceId}/${book.id}`}
+            to={`/commentary/${sourceId}/${book.id}${chapterSection ? `/${chapterSection.id}` : ""}`}
             className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-ink-3 hover:bg-hover hover:text-ink"
             title="Read this commentary as a book"
             aria-label="Read this commentary as a book"
@@ -96,15 +160,19 @@ export function CommentaryPanel({
             <BookOpenText className="h-4 w-4" aria-hidden="true" />
           </PaneLink>
         )}
+        {/* From the first paragraph on screen (onScreenStart), worked out on
+            the click. With nothing to read there is no onStart, and the
+            button shows itself disabled. */}
         <ReadAloudButton
-          title={`${sourceTitle}: ${book.name} ${chapter}`}
+          title={ttsTitle}
           sourceKind="commentary"
           iconOnly
-          segments={(entries ?? []).map((e) => ({
-            id: e.id,
-            text: e.plain_text,
-            label: e.verse_start != null ? `v.${e.verse_start}${e.verse_end !== e.verse_start ? `-${e.verse_end}` : ""}` : undefined,
-          }))}
+          segments={reading.segments}
+          onStart={
+            reading.segments.length > 0
+              ? () => useTtsStore.getState().start(ttsTitle, "commentary", reading.segments, { paneId, startIndex: onScreenStart(listRef.current, reading, entries ?? []) })
+              : undefined
+          }
         />
       </div>
       <div ref={listRef} className="min-h-0 flex-1 overflow-y-auto p-3">
@@ -131,11 +199,14 @@ export function CommentaryPanel({
               const showVerseLabel = e.verse_start != null && !(prev && prev.verse_start === e.verse_start && prev.verse_end === e.verse_end);
               const isCurrent =
                 activeVerse != null && e.verse_start != null && activeVerse >= e.verse_start && activeVerse <= (e.verse_end ?? e.verse_start);
+              const firstPiece = reading.firstPiece.get(e.id);
+              const spoken = readingEntryId === e.id ? reading.pieces.get(e.id) : undefined;
               return (
                 <div
                   key={e.id}
                   ref={rowVirtualizer.measureElement}
                   data-index={item.index}
+                  data-entry-index={item.index}
                   style={{ position: "absolute", top: 0, left: 0, right: 0, transform: `translateY(${item.start}px)` }}
                   className={cx("mb-3 rounded-md p-2 -mx-1", isCurrent && "bg-amber-50 ring-1 ring-amber-200 dark:bg-amber-950/30 dark:ring-amber-900")}
                 >
@@ -150,6 +221,7 @@ export function CommentaryPanel({
                       </button>
                     )}
                     <span className="ml-auto flex shrink-0 items-center">
+                      {firstPiece != null && <ReadFromHereButton title={ttsTitle} segments={reading.segments} index={firstPiece} />}
                       <StudyActions
                         what={`${sourceTitle} on ${book.name} ${chapter}${e.verse_start != null ? `:${e.verse_start}` : ""}`}
                         item={() =>
@@ -165,12 +237,14 @@ export function CommentaryPanel({
                       />
                     </span>
                   </div>
-                  <div className="reading-font text-ink-2" style={typography}>
-                    {ttsHere && ttsCurrentSegmentId === e.id ? (
-                      <ReadAloudWords text={e.plain_text} active />
-                    ) : (
-                      <CommentaryHtml html={e.html} onJumpToRef={onJumpToRef} />
-                    )}
+                  {/* While the voice is in this entry, the piece being read
+                      is marked in the entry's own HTML (useSpokenPieces). */}
+                  <div className="reading-font text-ink-2" style={typography} onClick={(ev) => readFromClick(ev, e.id)}>
+                    <CommentaryHtml
+                      html={e.html}
+                      onJumpToRef={onJumpToRef}
+                      speaking={spoken && firstPiece != null ? { entryId: e.id, pieces: spoken, first: firstPiece } : undefined}
+                    />
                   </div>
                 </div>
               );
@@ -208,8 +282,9 @@ export function parseOsis(osis: string): { book: string; chapter: number; verse:
   return { book: m[1], chapter, verse, verseEnd };
 }
 
-export function CommentaryHtml({ html, onJumpToRef }: { html: string; onJumpToRef: JumpToRef }) {
+export function CommentaryHtml({ html, onJumpToRef, speaking }: { html: string; onJumpToRef: JumpToRef; speaking?: SpeakingEntry }) {
   const ref = useRef<HTMLDivElement>(null);
+  useSpokenPieces(ref, html, speaking);
   const { data: books } = useBooks();
   // One object per HTML string: React resets innerHTML whenever this
   // object's identity changes, which would wipe the attributes added below

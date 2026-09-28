@@ -4,9 +4,9 @@ import { api } from "../../api/client";
 import { useBooks } from "../../api/queries";
 import { refKey } from "../../lib/passage";
 import { useReaderTranslationId } from "../../state/workspaceStore";
-import type { MemoryVerse, PassageRef } from "../../api/types";
+import type { MemoryVerse, PassageRef, Verse } from "../../api/types";
 import { ReadAloudButton } from "../tts/ReadAloudButton";
-import { memoryWords } from "./memoryText";
+import { cardVerses, memoryCardKey, memorySegments } from "./memorySpeech";
 
 /**
  * Reads cards aloud, one after another: each reference, then its words, in
@@ -39,18 +39,31 @@ export function ListenToCards({ cards, title }: { cards: MemoryVerse[]; title: s
     })),
   });
 
+  // Each card as its reference and then its verses, one segment a verse (a
+  // long one in sentence-sized pieces): a list of cards read as one string
+  // apiece was a long render before each, and a card the voice could not
+  // say went by unread entire. Each verse is labelled with its full
+  // reference, since the player is showing a run of different passages.
   const segments = useMemo(() => {
-    const text = new Map<string, string>();
+    const loaded = new Map<string, Verse[]>();
     groups.forEach(([translationId], i) => {
-      for (const p of results[i]?.data ?? []) text.set(`${translationId}|${refKey(p.ref)}`, p.verses.map((v) => memoryWords(v.text)).join(" "));
+      for (const p of results[i]?.data ?? []) loaded.set(`${translationId}|${refKey(p.ref)}`, p.verses);
     });
     return cards.flatMap((c) => {
       const t = c.translation_id ?? readerTranslationId;
-      const words = text.get(`${t}|${refKey({ book_id: c.book_id, chapter: c.chapter, verse_start: c.verse_start, verse_end: c.verse_end })}`);
-      if (!words) return [];
+      const verses = loaded.get(`${t}|${refKey({ book_id: c.book_id, chapter: c.chapter, verse_start: c.verse_start, verse_end: c.verse_end })}`);
+      if (!verses) return [];
       const name = books?.find((b) => b.id === c.book_id)?.name ?? "";
       const where = `${name} ${c.chapter}:${c.verse_start}${c.verse_end !== c.verse_start ? `-${c.verse_end}` : ""}`;
-      return [{ id: `memory-${c.id}`, text: `${where}. ${words}`, label: where }];
+      return memorySegments({
+        // The card's own key, as its practice card uses: a card that comes up
+        // in practice while this is still reading it can tell (readingGivesAway).
+        key: memoryCardKey(c.id),
+        reference: where,
+        verses: cardVerses(verses, c.verse_start, c.verse_end),
+        askWhere: false,
+        verseLabel: (verse) => `${name} ${c.chapter}:${verse}`,
+      });
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cards, books, readerTranslationId, results.map((r) => r.dataUpdatedAt).join(",")]);

@@ -119,4 +119,40 @@ describe("publishPassage to a linked Bible pane", () => {
     const l = biblePane(useWorkspaceStore.getState().panes, leader);
     expect(l.params.verse).toBeUndefined();
   });
+
+  // What two linked Bible panes do on every verse click: the reader selects
+  // a verse in one (only `activeVerse` changes there), that pane publishes
+  // it, and the follower, whose own selection has now changed, publishes it
+  // back. The pane the reader clicked must not be scrolled by the echo.
+  it("does not scroll the pane the verse was chosen in when a follower publishes it back", () => {
+    const s = useWorkspaceStore.getState();
+    s.setPaneParams(leader, "bible", { activeVerse: 16 });
+    s.publishPassage(leader, { bookId: 43, chapter: 3, verse: 16 });
+    useWorkspaceStore.getState().publishPassage(follower, { bookId: 43, chapter: 3, verse: 16 });
+    const l = biblePane(useWorkspaceStore.getState().panes, leader);
+    expect(l.params.activeVerse).toBe(16);
+    expect(l.params.verse).toBeUndefined();
+    // The follower still followed.
+    expect(biblePane(useWorkspaceStore.getState().panes, follower).params.verse).toBe(16);
+  });
+
+  it("works the same the other way round, from the follower's side", () => {
+    const s = useWorkspaceStore.getState();
+    s.setPaneParams(follower, "bible", { activeVerse: 9 });
+    s.publishPassage(follower, { bookId: 43, chapter: 3, verse: 9 });
+    useWorkspaceStore.getState().publishPassage(leader, { bookId: 43, chapter: 3, verse: 9 });
+    const f = biblePane(useWorkspaceStore.getState().panes, follower);
+    expect(f.params.verse).toBeUndefined();
+    expect(biblePane(useWorkspaceStore.getState().panes, leader).params.verse).toBe(9);
+  });
+
+  it("still scrolls a follower to a verse it had selected before, once it was changed", () => {
+    const s = useWorkspaceStore.getState();
+    s.publishPassage(leader, { bookId: 43, chapter: 3, verse: 16 });
+    s.publishPassage(leader, { bookId: 43, chapter: 3, verse: 18 });
+    s.publishPassage(leader, { bookId: 43, chapter: 3, verse: 16 });
+    const f = biblePane(useWorkspaceStore.getState().panes, follower);
+    expect(f.params.activeVerse).toBe(16);
+    expect(f.params.verse).toBe(16);
+  });
 });

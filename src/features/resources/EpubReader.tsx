@@ -10,7 +10,32 @@ import { Button, IconButton } from "../../components/ui/Button";
 import { Popover } from "../../components/ui/Popover";
 import { LoadingState } from "../../components/ui/EmptyState";
 import { checkboxClass, cx, selectSmClass } from "../../components/ui/classes";
+import { toast } from "../../components/ui/toast";
+import { useTtsStore, type TtsSegment } from "../../state/ttsStore";
+import { usePaneOptional } from "../../workspace/PaneContext";
+import { splitForSpeech } from "../tts/textUtils";
 import { flatten, printedAt } from "./findPrinted";
+import { ReadAloudControls } from "./ReadAloudControls";
+import { endLoading, isReadingHere, letGoOfLoading, takeOverLoading, whenMoreWanted } from "./readAloudLoading";
+import {
+  blockIndexAt,
+  blockIndexForPiece,
+  blockIndexFrom,
+  collectSpeechBlocks,
+  epubSegments,
+  fractionThroughBlock,
+  nextAfterReading,
+  parseSpeechId,
+  rangeOfBlock,
+  revealOffset,
+  segmentIndexAtBlock,
+  segmentIndexForBlock,
+  speechTextOf,
+  startIndexForView,
+  type ReadAloudFrom,
+  type ResourceReadAloudHandle,
+  type SpeechBlock,
+} from "./readAloudText";
 import {
   EPUB_WIDTH_OPTIONS,
   EPUB_ZOOM_MAX,
@@ -33,6 +58,8 @@ import {
   padSheetToHeight,
   pinInvisibleText,
   routeExternalLinks,
+  SPEAKING_ATTR,
+  SPEAKING_HIGHLIGHT,
   sheetWidthPx,
   unstackPositionedElements,
 } from "./epubStyles";
@@ -99,10 +126,78 @@ function contentsOf(rendition: Rendition): Contents[] {
   return Array.isArray(contents) ? (contents as Contents[]) : contents ? [contents as Contents] : [];
 }
 
-/** Re-measures the frame against its container. epub.js types both
- * arguments as required, but omitting them is what asks it to measure. */
+/**
+ * Re-measures the frame against its container. epub.js types both
+ * arguments as required, but omitting them is what asks it to measure.
+ *
+ * Only once the view manager has been rendered, and never after the book is
+ * closed. `rendition.resize` hands straight on to the manager with no check
+ * of its own, and there are three moments when there is nothing to hand on
+ * to:
+ *
+ * - The book is still opening. epub.js creates the manager only when the
+ *   rendition starts, which waits for the book's package to be read; until
+ *   then there is no manager at all. A pane resized (or zoomed) while a big
+ *   book was opening threw "Cannot read properties of undefined (reading
+ *   'resize')" -- by far the most common entry in the error log, over and
+ *   over.
+ * - The manager exists but has not been attached to the page yet, so has no
+ *   stage (the element it measures), and reading the stage's size threw
+ *   "... (reading 'size')".
+ * - The book has been closed: `destroy` pulls the stage out of the page and
+ *   marks the manager unrendered, and the zoom's settle timer could still
+ *   fire just after the pane closed.
+ *
+ * A resize at any of those moments has nothing to measure anyway.
+ */
 function resizeToContainer(rendition: Rendition): void {
-  (rendition as unknown as { resize: (width?: number, height?: number) => void }).resize();
+  const manager = (rendition as unknown as { manager?: { stage?: unknown; isRendered?: () => boolean } }).manager;
+  if (!manager?.stage || manager.isRendered?.() === false) return;
+  try {
+    (rendition as unknown as { resize: (width?: number, height?: number) => void }).resize();
+  } catch {
+    // One of the same races by a route not checked for above; the next
+    // settled resize measures again.
+  }
+}
+
+/** How many sections past a page with nothing to read (a cover, a picture,
+ * the end of a chapter) a reading looks for somewhere to begin. */
+const MAX_SILENT_SECTIONS = 12;
+
+/**
+ * The document a section's `load` resolved with. epub.js resolves it with
+ * the document's root element, and that -- not `section.document` read
+ * afterwards -- is what to take: the section objects are shared, and the
+ * locations being generated and a citation being looked for load and
+ * unload the same sections at the same time. One of them unloading a
+ * section between its load finishing and this code running left
+ * `section.document` empty, and the whole section was skipped without a
+ * word said about it.
+ */
+async function loadSectionDocument(section: SpineSection, book: Book): Promise<Document | null> {
+  const root = (await section.load(book.load.bind(book))) as Node | null | undefined;
+  return root?.ownerDocument ?? section.document ?? null;
+}
+
+/** A section, loaded in the background, as the voice would read it. A
+ * non-linear section (a footnote file, a pop-up) is not part of the
+ * reading order and gives nothing; so does one that will not load. */
+async function loadSectionSegments(book: Book, index: number, chapter: string | null): Promise<TtsSegment[]> {
+  const item = book.spine.get(index) as unknown as (SpineSection & { linear?: boolean }) | null;
+  if (!item || item.linear === false) return [];
+  try {
+    const doc = await loadSectionDocument(item, book);
+    return doc ? epubSegments(collectSpeechBlocks(doc), index, chapter) : [];
+  } catch {
+    return [];
+  } finally {
+    try {
+      item.unload();
+    } catch {
+      // Nothing was loaded to let go of.
+    }
+  }
 }
 
 /**
@@ -139,8 +234,16 @@ export function EpubReader({
   onSelect,
   controllerRef,
   find,
+  readAloudTitle,
+  readAloudRef,
 }: {
   filePath: string;
+  /** The book's title, which reading it aloud goes by: the read-aloud
+   * button knows the reading is this book's by it. Without it the book has
+   * no read-aloud controls. */
+  readAloudTitle?: string;
+  /** Filled in with this book's read-aloud, for the reader sidebar. */
+  readAloudRef?: MutableRefObject<ResourceReadAloudHandle | null>;
   /** Open at these words instead of where the reader left off -- a
    * citation's reference, found in the book and marked. Read once, on open. */
   find?: { text: string; occurrence: number; fallback?: string } | null;
@@ -180,13 +283,30 @@ export function EpubReader({
   const zoom = useUiStore((s) => s.epubZoom);
   const setZoom = useUiStore((s) => s.setEpubZoom);
   const themeVersion = useThemeVersion();
+  const speakingColor = useTtsStore((s) => s.highlightColor);
+  /** Words are selected in the section on screen. */
+  const [hasSelection, setHasSelection] = useState(false);
+  const hasSelectionRef = useRef(false);
+  const paneId = usePaneOptional()?.id ?? null;
+  /** The title and pane a reading of this book goes by, for code that runs
+   * long after the render that started it (the loader, the frame's clicks). */
+  const readingRef = useRef({ title: readAloudTitle ?? "", paneId });
+  readingRef.current = { title: readAloudTitle ?? "", paneId };
+  /** Bumped by every reading this reader starts; a loader from an earlier
+   * one sees it has been replaced and stops. */
+  const readGenRef = useRef(0);
+  /** How many sections the book has, once it is open. */
+  const spineCountRef = useRef(0);
+  /** Each section document's blocks, collected once: the frame's DOM does
+   * not change after the content hook has run. */
+  const blocksCache = useRef(new WeakMap<Document, { blocks: SpeechBlock[]; texts: string[] }>());
 
   const css = useMemo(() => {
     // themeVersion carries no value of its own; changing is its whole
     // purpose, because the colours are read from the theme's tokens.
     void themeVersion;
-    return buildEpubCss({ fontSize, lineSpacing, readingFont, width: epubWidth, useBookStyles, zoom });
-  }, [fontSize, lineSpacing, readingFont, epubWidth, useBookStyles, zoom, themeVersion]);
+    return buildEpubCss({ fontSize, lineSpacing, readingFont, width: epubWidth, useBookStyles, zoom, speakingColor });
+  }, [fontSize, lineSpacing, readingFont, epubWidth, useBookStyles, zoom, speakingColor, themeVersion]);
 
   // Callbacks, the stylesheet and the opening CFI are reached through refs
   // so the book is opened once per file, not once per parent render or
@@ -231,6 +351,319 @@ export function EpubReader({
   }, [controllerRef]);
 
   const scrollerEl = useCallback(() => containerRef.current?.querySelector<HTMLElement>(".epub-container") ?? null, []);
+
+  // ---------------------------------------------------------------------
+  // Read aloud. The voice reads what the page shows: the section on screen
+  // block by block, starting at the first one in view, and the sections
+  // after it as it gets to them (see readAloudText.ts for why not the
+  // book's extracted text). Pieces are named "e:<section>:<block>:<piece>".
+
+  const blocksOf = (doc: Document) => {
+    let entry = blocksCache.current.get(doc);
+    if (!entry) {
+      const blocks = collectSpeechBlocks(doc);
+      entry = { blocks, texts: blocks.map(speechTextOf) };
+      blocksCache.current.set(doc, entry);
+    }
+    return entry;
+  };
+
+  /** The chapter a section belongs to: its own contents entry, or the last
+   * one before it -- a long chapter is often split across several files and
+   * only the first is in the contents. */
+  const chapterOf = (book: Book, index: number): string | null => {
+    for (let i = index; i >= 0; i--) {
+      const href = book.spine.get(i)?.href;
+      const label = href ? labelForHref(tocRef.current, href) : null;
+      if (label) return label;
+    }
+    return null;
+  };
+
+  /** Where the section on screen's blocks are, in the frame's coordinates,
+   * and the part of the frame the pane shows; null before it is laid out. */
+  const measureBlocks = (contents: Contents) => {
+    const frame = contents.document.defaultView?.frameElement;
+    const scroller = scrollerEl();
+    if (!frame || !scroller) return null;
+    const frameTop = frame.getBoundingClientRect().top;
+    const view = scroller.getBoundingClientRect();
+    const rects = blocksOf(contents.document).blocks.map((block) => {
+      const rect = rangeOfBlock(block).getBoundingClientRect();
+      return { top: rect.top, bottom: rect.bottom, shown: rect.width > 0 || rect.height > 0 };
+    });
+    return { rects, viewTop: view.top - frameTop, viewBottom: view.bottom - frameTop };
+  };
+
+  /** Hands the sections after `from` to the reading as the voice nears the
+   * end of what it has, until the book ends or the reading is no longer
+   * this one. */
+  const keepLoading = async (book: Book, gen: number, from: number) => {
+    const { title, paneId: pane } = readingRef.current;
+    const ours = (s: ReturnType<typeof useTtsStore.getState>) =>
+      bookRef.current === book && readGenRef.current === gen && s.sourceKind === "resource" && s.title === title && s.paneId === pane && s.segments.length > 0;
+    const total = spineCountRef.current;
+    for (let next = from; next < total; next++) {
+      if (!(await whenMoreWanted(ours))) return;
+      const segments = await loadSectionSegments(book, next, chapterOf(book, next));
+      if (!ours(useTtsStore.getState())) return;
+      const done = next + 1 >= total;
+      if (segments.length > 0 || done) useTtsStore.getState().appendSegments(title, pane, segments, { done });
+    }
+  };
+
+  /**
+   * Carries on loading a reading of this book that the reader before this
+   * one was loading: the pane showed the book a moment ago and has opened it
+   * afresh, at a citation say (see `takeOverLoading`). The voice is somewhere
+   * in what that reader handed over, and loading goes on from the section
+   * after it as the voice nears the end.
+   */
+  const carryOnLoading = (book: Book) => {
+    const { title, paneId: pane } = readingRef.current;
+    const from = nextAfterReading(useTtsStore.getState().segments, "e");
+    if (from == null || from >= spineCountRef.current) {
+      endLoading(title, pane);
+      return;
+    }
+    void keepLoading(book, ++readGenRef.current, from);
+  };
+  const carryOnRef = useRef(carryOnLoading);
+  carryOnRef.current = carryOnLoading;
+
+  /**
+   * Starts a fresh reading of the section on screen, at block `from` or at
+   * the first block in view: the whole section is the reading's opening (so
+   * Previous can go back up the page), the voice begins at that block, and
+   * the sections after it load as they are wanted. Blocks the page does not
+   * show at all (hidden by the book's stylesheet) are left out. A page with
+   * nothing to say from there on -- a cover, a picture, the last line of a
+   * chapter -- begins at the next section that has something.
+   */
+  const startReading = async (book: Book, contents: Contents, from: number | "view") => {
+    const gen = ++readGenRef.current;
+    const { title, paneId: pane } = readingRef.current;
+    const section = contents.sectionIndex;
+    const total = spineCountRef.current;
+    const { blocks } = blocksOf(contents.document);
+    const layout = measureBlocks(contents);
+    const block = from !== "view" ? from : layout ? startIndexForView(layout.rects, layout.viewTop, layout.viewBottom) : 0;
+    const hidden = layout ? (b: number) => !layout.rects[b]?.shown : undefined;
+    let segments = epubSegments(blocks, section, chapterOf(book, section), hidden);
+    let startIndex = segmentIndexAtBlock(segments, "e", section, block);
+    let next = section + 1;
+    for (let tries = 0; startIndex < 0 && next < total && tries < MAX_SILENT_SECTIONS; tries++) {
+      const more = await loadSectionSegments(book, next, chapterOf(book, next));
+      next += 1;
+      if (bookRef.current !== book || readGenRef.current !== gen) return;
+      if (more.length > 0) {
+        startIndex = segments.length;
+        segments = segments.concat(more);
+      }
+    }
+    if (startIndex < 0) {
+      toast.info("There is nothing from here on that the voice can read aloud.");
+      return;
+    }
+    useTtsStore.getState().start(title, "resource", segments, { startIndex, paneId: pane, more: next < total });
+    // Begun past the page on screen: show where the voice is.
+    const first = parseSpeechId(segments[startIndex].id);
+    const rendition = renditionRef.current;
+    if (first && first.parts[0] !== section && rendition) {
+      const href = book.spine.get(first.parts[0])?.href;
+      if (href) void rendition.display(href).catch(() => {});
+    }
+    if (next < total) void keepLoading(book, gen, next);
+  };
+
+  /** Read from block `block` of a section on screen: a move within the
+   * reading when it already holds that block, a fresh reading otherwise. */
+  const readFromBlock = (contents: Contents, block: number) => {
+    const book = bookRef.current;
+    if (!book) return;
+    const s = useTtsStore.getState();
+    const { title, paneId: pane } = readingRef.current;
+    if (isReadingHere(s, title, pane)) {
+      const { blocks } = blocksOf(contents.document);
+      // The block's first piece identifies it in the reading; a block with
+      // nothing to say hands over to the next one that has something.
+      let from = block;
+      while (from < blocks.length && splitForSpeech(blocks[from].text).length === 0) from += 1;
+      const firstPiece = from < blocks.length ? splitForSpeech(blocks[from].text)[0] : null;
+      const at = segmentIndexForBlock(s.segments, "e", contents.sectionIndex, from, firstPiece);
+      if (at >= 0) {
+        s.readFrom(title, "resource", s.segments, at, { paneId: pane, more: s.more });
+        return;
+      }
+    }
+    void startReading(book, contents, block);
+  };
+
+  /** Read from where the selection in the book begins; false when there is
+   * no selection to read from. */
+  const readFromSelection = (): boolean => {
+    const rendition = renditionRef.current;
+    if (!rendition) return false;
+    for (const contents of contentsOf(rendition)) {
+      const selection = contents.window.getSelection();
+      if (!selection || selection.isCollapsed || selection.rangeCount === 0) continue;
+      const range = selection.getRangeAt(0);
+      const container = range.startContainer;
+      const node = container.nodeType === 1 ? (container.childNodes[range.startOffset] ?? container) : container;
+      const block = blockIndexFrom(blocksOf(contents.document).blocks, node);
+      if (block < 0) continue;
+      readFromBlock(contents, block);
+      return true;
+    }
+    return false;
+  };
+
+  const readAloud = (from: ReadAloudFrom) => {
+    const rendition = renditionRef.current;
+    const book = bookRef.current;
+    const contents = rendition ? contentsOf(rendition)[0] : undefined;
+    if (!book || !contents) {
+      toast.info("The book is still opening.");
+      return;
+    }
+    if (from === "selection" && readFromSelection()) return;
+    void startReading(book, contents, "view");
+  };
+  const readAloudFnRef = useRef(readAloud);
+  readAloudFnRef.current = readAloud;
+
+  useEffect(() => {
+    if (!readAloudRef) return;
+    readAloudRef.current = { readAloud: (from) => readAloudFnRef.current(from) };
+    return () => {
+      readAloudRef.current = null;
+    };
+  }, [readAloudRef]);
+
+  /** While this pane is reading the book, a click on a paragraph (not a
+   * link, and not the end of a drag that selected words) reads from there. */
+  const onBookClick = (event: MouseEvent, contents: Contents) => {
+    if (event.button !== 0 || event.defaultPrevented) return;
+    const target = event.target as Element | null;
+    if (!target || target.nodeType !== 1 || target.closest("a[href]")) return;
+    const selection = contents.window.getSelection();
+    if (selection && !selection.isCollapsed) return;
+    const { title, paneId: pane } = readingRef.current;
+    if (!isReadingHere(useTtsStore.getState(), title, pane)) return;
+    const block = blockIndexAt(blocksOf(contents.document).blocks, target);
+    if (block >= 0) readFromBlock(contents, block);
+  };
+  const onBookClickRef = useRef(onBookClick);
+  onBookClickRef.current = onBookClick;
+
+  /**
+   * Following the voice: the block being read is marked on the page and,
+   * with auto-scroll on, kept in view. When the voice moves on into the next
+   * section, the page goes with it -- if the reader was following, that is:
+   * the section on screen was the one just being read. A reader who had gone
+   * elsewhere to look something up is left where they are.
+   *
+   * Called on every change of the passage being read, and again (forced)
+   * whenever a section's page is rebuilt, since the mark lived in the frame
+   * that was thrown away. The scroll waits for epub.js to have sized the new
+   * frame; before that, where a block sits is not yet known.
+   */
+  const followRef = useRef<(opts?: { force?: boolean; scroll?: boolean }) => void>(() => {});
+  useEffect(() => {
+    let key = "";
+    let lastSection: number | null = null;
+    let marked: Element | null = null;
+    /** Loose text being read, marked as a range rather than by its element
+     * (see `markBlock`). */
+    let markedRange: { registry: HighlightRegistry; block: SpeechBlock } | null = null;
+    const unmark = () => {
+      marked?.removeAttribute(SPEAKING_ATTR);
+      marked = null;
+      markedRange?.registry.delete(SPEAKING_HIGHLIGHT);
+      markedRange = null;
+    };
+    /**
+     * Marks the block being read. Usually that is its element, a paragraph or
+     * a heading. But a block can be loose text in an element that holds other
+     * blocks too -- CCEL's front matter is `<div class="footer"><h4>Copyright
+     * ...</h4> All rights reserved...</div>` -- and marking that element
+     * marked the heading read before it as well. Such text is marked as a
+     * range of its own, where the frame can do that.
+     */
+    const markBlock = (blocks: readonly SpeechBlock[], at: number) => {
+      const block = blocks[at];
+      const loose = blocks.some((other, i) => i !== at && block.element.contains(other.element));
+      const view = block.element.ownerDocument.defaultView as (Window & typeof globalThis) | null;
+      const registry = loose ? view?.CSS?.highlights : undefined;
+      if (registry && view?.Highlight) {
+        if (markedRange?.block === block && !marked) return;
+        unmark();
+        registry.set(SPEAKING_HIGHLIGHT, new view.Highlight(rangeOfBlock(block)));
+        markedRange = { registry, block };
+        return;
+      }
+      if (block.element === marked && marked.isConnected && !markedRange) return;
+      unmark();
+      block.element.setAttribute(SPEAKING_ATTR, "");
+      marked = block.element;
+    };
+    const follow = ({ force = false, scroll = true }: { force?: boolean; scroll?: boolean } = {}) => {
+      const rendition = renditionRef.current;
+      const book = bookRef.current;
+      const s = useTtsStore.getState();
+      const { title, paneId: pane } = readingRef.current;
+      const index = s.currentSegmentIndex;
+      const segment = s.isPlaying && s.sourceKind === "resource" && s.title === title && s.paneId === pane ? s.segments[index] : undefined;
+      const id = segment ? parseSpeechId(segment.id) : null;
+      const nextKey = segment && id?.kind === "e" ? String(segment.id) : "";
+      if (!force && nextKey === key) return;
+      key = nextKey;
+      if (!rendition || !book || !segment || !id || id.kind !== "e") {
+        unmark();
+        lastSection = null;
+        return;
+      }
+      const section = id.parts[0];
+      const shown = contentsOf(rendition)[0];
+      const shownSection = shown?.sectionIndex ?? null;
+      const previous = lastSection;
+      lastSection = section;
+      if (!shown || shownSection !== section) {
+        unmark();
+        if (previous != null && previous !== section && previous === shownSection) {
+          const href = book.spine.get(section)?.href;
+          if (href) void rendition.display(href).catch(() => {});
+        }
+        return;
+      }
+      const { blocks, texts } = blocksOf(shown.document);
+      const at = blockIndexForPiece(texts, id.parts[1], segment.text);
+      if (at >= 0) markBlock(blocks, at);
+      else unmark();
+      if (at < 0 || !scroll || !s.autoScroll) return;
+      const frame = shown.document.defaultView?.frameElement;
+      const scroller = scrollerEl();
+      if (!frame || !scroller) return;
+      const rect = rangeOfBlock(blocks[at]).getBoundingClientRect();
+      if (rect.height <= 0) return;
+      const frameTop = frame.getBoundingClientRect().top;
+      const view = scroller.getBoundingClientRect();
+      const delta = revealOffset(
+        { top: frameTop + rect.top, bottom: frameTop + rect.bottom },
+        { top: view.top, bottom: view.bottom },
+        fractionThroughBlock(s.segments, index),
+      );
+      if (Math.abs(delta) > 1) scroller.scrollBy({ top: delta, behavior: "smooth" });
+    };
+    followRef.current = follow;
+    const unsubscribe = useTtsStore.subscribe(() => follow());
+    follow({ force: true });
+    return () => {
+      unsubscribe();
+      unmark();
+      followRef.current = () => {};
+    };
+  }, [scrollerEl]);
 
   /** A page down (or up) that runs on into the next section at the end of
    * this one, so a book can be read on the space bar alone. */
@@ -347,6 +780,12 @@ export function EpubReader({
     let disposed = false;
     let resizeTimer: number | null = null;
     let locationsTimer: number | null = null;
+    // A reading of this book that the reader before this one, in this pane,
+    // was still loading is this one's to carry on with once the book is
+    // open. It is claimed now, in the same pass that closed that reader, or
+    // the reading would be told nothing more is coming.
+    const reading = readingRef.current;
+    let takingOver = reading.title !== "" && takeOverLoading(reading.title, reading.paneId);
 
     const rendition = book.renderTo(host, {
       width: "100%",
@@ -401,10 +840,38 @@ export function EpubReader({
       routeExternalLinks(doc);
       // The wheel inside the frame never reaches this document.
       doc.addEventListener("wheel", (e) => handleWheelRef.current(e), { passive: false });
+      // A click on a paragraph while the book is being read aloud reads
+      // from there.
+      doc.addEventListener("click", (e) => onBookClickRef.current(e, contents));
+      // The selection is this frame's own, and a new frame starts without
+      // one. It is reported cleared when it goes, as `onSelect` promises --
+      // before, "Send to sermon" went on quoting words the reader had long
+      // since clicked away from.
+      if (hasSelectionRef.current) {
+        hasSelectionRef.current = false;
+        setHasSelection(false);
+        onSelectRef.current?.("", null);
+      }
+      doc.addEventListener("selectionchange", () => {
+        if (disposed) return;
+        const selection = doc.getSelection();
+        const has = !!selection && !selection.isCollapsed && selection.toString().trim() !== "";
+        if (has === hasSelectionRef.current) return;
+        hasSelectionRef.current = has;
+        setHasSelection(has);
+        if (!has) onSelectRef.current?.("", null);
+      });
+      // The block being read aloud is marked again in the new frame.
+      followRef.current({ force: true, scroll: false });
     });
 
     rendition.on("rendered", () => {
       if (disposed) return;
+      // Now the frame has its size, the block being read can be brought
+      // into view.
+      window.setTimeout(() => {
+        if (!disposed) followRef.current({ force: true });
+      }, 120);
       setStatus("ready");
       // A scroll that runs off the end of a chapter should stop there
       // rather than carry on into whatever is behind the pane. The
@@ -459,7 +926,12 @@ export function EpubReader({
         book.spine.each(() => {
           total += 1;
         });
+        spineCountRef.current = total;
         setProgress((prev) => ({ ...prev, total }));
+        if (takingOver) {
+          takingOver = false;
+          carryOnRef.current(book);
+        }
 
         // Restoring a CFI before the spine has loaded silently fails, so
         // the first display waits for the book to be ready. A CFI from
@@ -486,7 +958,13 @@ export function EpubReader({
         }, LOCATIONS_DELAY_MS);
       })
       .catch(() => {
-        if (!disposed) setStatus("error");
+        if (disposed) return;
+        setStatus("error");
+        // A book that will not open has nothing more to give a reading.
+        if (takingOver) {
+          takingOver = false;
+          endLoading(readingRef.current.title, readingRef.current.paneId);
+        }
       });
 
     // A pane being dragged wider changes size every frame; each change
@@ -511,6 +989,11 @@ export function EpubReader({
       book.destroy();
       renditionRef.current = null;
       bookRef.current = null;
+      spineCountRef.current = 0;
+      // A reading this reader was loading (or had claimed) is let go of: the
+      // reader that replaces this one takes it over if it is the same book
+      // in the same pane, and otherwise it goes on with what it has.
+      if (readGenRef.current > 0 || takingOver) letGoOfLoading(readingRef.current.title, readingRef.current.paneId);
     };
   }, [filePath]);
 
@@ -554,6 +1037,7 @@ export function EpubReader({
         <span className="min-w-0 flex-1 truncate text-xs text-ink-3" title={chapter ?? undefined}>
           {chapter ?? ""}
         </span>
+        {readAloudTitle && <ReadAloudControls compact title={readAloudTitle} onRead={(from) => readAloudFnRef.current(from)} hasSelection={hasSelection} />}
         <div className="flex items-center gap-0.5" role="group" aria-label="Page zoom">
           <IconButton icon={ZoomOut} label="Zoom out (Ctrl+-)" size="sm" onClick={() => zoomBy(-1)} disabled={zoom <= EPUB_ZOOM_MIN} />
           <button
@@ -721,8 +1205,7 @@ type SpineSection = {
  * matches any substring in any case and within one text node, which throws
  * off which occurrence is which.
  */
-function exactHits(section: SpineSection, text: string): { cfi: string }[] {
-  const doc = section.document;
+function exactHits(section: SpineSection, doc: Document | null, text: string): { cfi: string }[] {
   if (!doc?.body) return [];
   const nodes: Text[] = [];
   const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT);
@@ -755,8 +1238,8 @@ async function findAndShow(book: Book, rendition: Rendition, find: { text: strin
     for (const item of items) {
       if (disposed()) return null;
       try {
-        await item.load(book.load.bind(book));
-        const hits = exactHits(item, text);
+        // The document as loaded, for the reason `loadSectionDocument` gives.
+        const hits = exactHits(item, await loadSectionDocument(item, book), text);
         item.unload();
         if (seen + hits.length > occurrence) return hits[occurrence - seen].cfi;
         seen += hits.length;

@@ -14,6 +14,7 @@ import {
   Library,
   Lightbulb,
   Link2,
+  ListMusic,
   MapPin,
   MessageSquareText,
   Mic,
@@ -39,6 +40,8 @@ import type {
   WestminsterDocument,
 } from "../api/types";
 import { bookName } from "../lib/passage";
+import { isPsalmNumber, psalmShown } from "../features/psalter/psalterParams";
+import { dictionaryWorkShown } from "../features/dictionary/websterDisplay";
 import { PASSAGE_KINDS, type PaneContent, type PaneKind, type ParamsOf } from "../state/workspaceStore";
 
 /**
@@ -138,6 +141,10 @@ export const PANE_KINDS: Registry = {
     acceptsPassage: true,
     listed: true,
   },
+  // Kept so a tunes pane in a saved workspace (or /study/tunes) still opens,
+  // but no longer offered in the pane menus: the Psalter page's Tunes tab is
+  // the same index, and three Psalter entries side by side left a reader
+  // guessing which was which.
   tunes: {
     kind: "tunes",
     label: "Psalm tunes",
@@ -145,11 +152,13 @@ export const PANE_KINDS: Registry = {
     title: () => "Psalm tunes",
     defaultWidth: 420,
     acceptsPassage: false,
-    listed: true,
+    listed: false,
   },
+  // Named "for passage" like the encyclopedia and timeline that follow the
+  // Bible, so the menus tell it apart from the Psalter page, which does not.
   metrical: {
     kind: "metrical",
-    label: "Metrical Psalter",
+    label: "Metrical Psalter for passage",
     icon: Music,
     title: (p) => `Metrical · Psalm ${p.chapter}`,
     defaultWidth: 420,
@@ -188,6 +197,7 @@ export const PANE_KINDS: Registry = {
     label: "Dictionary",
     icon: BookA,
     title: (p, ctx) => {
+      if (dictionaryWorkShown(p, undefined) === "webster") return "Webster 1828";
       const term = p.slug ? ctx.dictionaryIndex?.find((e) => e.slug === p.slug)?.term : undefined;
       return term ? `Dictionary · ${term}` : "Dictionary";
     },
@@ -265,6 +275,19 @@ export const PANE_KINDS: Registry = {
   prayer: { kind: "prayer", label: "Prayer", icon: HeartHandshake, title: () => "Prayer", defaultWidth: 900, acceptsPassage: false, listed: true },
   memory: { kind: "memory", label: "Memory", icon: Brain, title: () => "Memory", defaultWidth: 900, acceptsPassage: false, listed: true },
   plans: { kind: "plans", label: "Reading plans", icon: CalendarCheck, title: () => "Reading plans", defaultWidth: 900, acceptsPassage: false, listed: true },
+  // A page of its own, not a study pane: it keeps the psalm the reader
+  // chose rather than following the Bible beside it (the metrical study pane
+  // above is the one that follows), and choosing a psalm here never turns
+  // the Bible pane either.
+  psalter: {
+    kind: "psalter",
+    label: "Psalter",
+    icon: ListMusic,
+    title: (p) => (p.view === "tunes" ? "Psalter · Tunes" : `Psalter · Psalm ${psalmShown(p)}`),
+    defaultWidth: 700,
+    acceptsPassage: false,
+    listed: true,
+  },
   family: { kind: "family", label: "Family worship", icon: HouseHeart, title: () => "Family worship", defaultWidth: 900, acceptsPassage: false, listed: true },
   harmony: { kind: "harmony", label: "Harmony", icon: Columns3, title: () => "Harmony of the Gospels", defaultWidth: 900, acceptsPassage: false, listed: true },
   sermons: { kind: "sermons", label: "Sermons", icon: Mic, title: () => "Sermons", defaultWidth: 900, acceptsPassage: false, listed: true },
@@ -397,6 +420,9 @@ export function routeFor(content: PaneContent): string {
     case "lexicon":
       return content.params.id ? `/lexicon/${encodeURIComponent(content.params.id)}` : "/lexicon";
     case "dictionary":
+      if (dictionaryWorkShown(content.params, undefined) === "webster") {
+        return content.params.webster != null ? `/dictionary/webster/${content.params.webster}` : "/dictionary/webster";
+      }
       return content.params.slug ? `/dictionary/${encodeURIComponent(content.params.slug)}` : "/dictionary";
     case "encyclopedia":
       return content.params.slug ? `/encyclopedia/${encodeURIComponent(content.params.slug)}` : "/encyclopedia";
@@ -424,6 +450,8 @@ export function routeFor(content: PaneContent): string {
       return "/memory";
     case "plans":
       return "/plans";
+    case "psalter":
+      return content.params.view === "tunes" ? "/psalter/tunes" : `/psalter/${psalmShown(content.params)}`;
     case "family":
       return "/family";
     case "harmony":
@@ -485,6 +513,9 @@ export function parseRoute(pathname: string, search = ""): ContentRequest | null
     case "lexicon":
       return { kind: "lexicon", params: { id: a ?? null } };
     case "dictionary":
+      // No Bible-dictionary headword is "webster", so the word is free to
+      // name the other work.
+      if (a === "webster") return { kind: "dictionary", params: { slug: null, work: "webster", webster: num(b) } };
       return { kind: "dictionary", params: { slug: a ?? null } };
     case "encyclopedia":
       return { kind: "encyclopedia", params: { slug: a ?? null } };
@@ -509,6 +540,14 @@ export function parseRoute(pathname: string, search = ""): ContentRequest | null
       return { kind: "memory", params: {} };
     case "plans":
       return { kind: "plans", params: {} };
+    case "psalter": {
+      // A psalm the Psalter does not have (0, 151, "abc") is not worth a
+      // blank pane: the request drops it, and the Psalter opens where the
+      // reader last left off (see completePsalterParams).
+      if (a === "tunes") return { kind: "psalter", params: { view: "tunes" } };
+      const psalm = num(a);
+      return { kind: "psalter", params: isPsalmNumber(psalm) ? { psalm } : {} };
+    }
     case "family":
       return { kind: "family", params: {} };
     case "harmony":

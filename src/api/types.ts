@@ -599,6 +599,57 @@ export interface IsbeSearchResult {
   snippet: string;
 }
 
+/** One entry of Webster's 1828 dictionary, as Webster printed it: homographs
+ *  are separate entries sharing a `key` (LET the verb, LET the noun). `html`
+ *  is paragraphs with `<b>`, `<i>` and `a.scripref[data-osis]` links only,
+ *  checked at import, and rendered as ISBE's articles are. */
+export interface WebsterEntry {
+  id: number;
+  /** The headword, capitalised, accents removed: "Prevent". */
+  word: string;
+  /** The headword in lower case. */
+  key: string;
+  /** Webster's abbreviation ("v.t.", "n.", "pp."), or null where he prints none. */
+  pos: string | null;
+  html: string;
+  /** Other keys the entry answers to (AMONGST answers to "among"). */
+  aliases: string[];
+}
+
+/** What Webster says of a word as the text prints it. `via` says how it was
+ *  reached: the word is a key ("exact"), another entry's alias ("alias"), or
+ *  a form of `matched` ("base": *prevented* is PREVENT's, *maketh* MAKE's,
+ *  *spake* SPEAK's). `entries` start with `matched`'s; after them may come
+ *  the word's own (PREVENTED, pp., after PREVENT) or, for a word that is
+ *  partly a preterit, the verb (SAW's entries, then SEE's) -- each entry
+ *  carries its own `key`. */
+export interface WebsterLookup {
+  /** The word as looked up: lower case, punctuation and a possessive 's off. */
+  query: string;
+  /** The key whose entries come first. */
+  matched: string;
+  via: "exact" | "alias" | "base";
+  entries: WebsterEntry[];
+  /** Present only where this copy of the dictionary lacks the entry the KJV
+   *  means and what was found is another word -- "even" finds EVE, the
+   *  evening, since the dump has no EVEN, adj. and adv.; "rank" finds only
+   *  "the old pret. of ring". Plain text saying what is missing and what is
+   *  shown instead, to show beside the entries so they are not taken for
+   *  the word's meaning. */
+  note?: string;
+}
+
+/** A line of the Webster search or browse list. */
+export interface WebsterHit {
+  id: number;
+  word: string;
+  key: string;
+  pos: string | null;
+  /** Plain text, not HTML, with no match marks -- render it as text: the
+   *  entry's first sense, or for a match in its body, the passage around it. */
+  snippet: string;
+}
+
 /** How firmly a place is tied to a modern location. Most biblical sites are
  *  not certain, and the atlas says so rather than implying otherwise. */
 export type AtlasConfidence = "certain" | "probable" | "possible" | "proposed" | "unidentified";
@@ -657,6 +708,53 @@ export interface InterlinearWord {
   strongs_id: string | null;
 }
 
+/** A Hebrew or Aramaic morpheme written onto the word: a prefixed
+ * preposition, conjunction or article, or a pronominal, directional or
+ * paragogic suffix, in plain English ("preposition", "pronominal suffix, 3rd
+ * person masculine singular"). Greek words have none. */
+export interface MorphAffix {
+  role: "prefix" | "suffix";
+  description: string;
+}
+
+/** A word's parsing code read into plain English by `morph.rs` -- the same
+ * lower-case values the morphology search offers, each one a key into
+ * `features/lexicon/parsingGlossary.json` as "<field>:<value>". */
+export interface MorphParsing {
+  language: "greek" | "hebrew" | "aramaic";
+  part_of_speech: string | null;
+  /** Greek tense, or the Hebrew verb's conjugation ("perfect", "sequential imperfect"). */
+  tense: string | null;
+  voice: string | null;
+  mood: string | null;
+  person: string | null;
+  number: string | null;
+  gender: string | null;
+  case: string | null;
+  /** Hebrew and Aramaic: "absolute", "construct", "determined". */
+  state: string | null;
+  /** Hebrew and Aramaic verb stem ("qal", "piel", "peal"). */
+  stem: string | null;
+  /** A pronoun's, particle's or name's kind ("personal", "negative", "place name"). */
+  kind: string | null;
+  /** A Greek possessive's possessor, "singular" (ἐμός, "my") or "plural"
+   * (ἡμέτερος, "our"). Its `person` is the possessor's too, but its `number`
+   * is the thing possessed's: τὰς ἐντολὰς τὰς ἐμὰς, "my commandments", is
+   * 1st person with a plural number. Absent on every other word. */
+  possessor_number?: string | null;
+  /** The whole parsing in words: "verb, aorist active imperative, 2nd person singular".
+   * A code that writes several words as one joins each part's with " + ", and a
+   * Hebrew part after the first names its own prefixes and suffixes there. */
+  description: string;
+  /** The word's prefixes and suffixes in written order; where the code writes
+   * several words as one, the first word's, as the other fields are. */
+  affixes: MorphAffix[];
+  /** What the code alone calls a word read otherwise than its code says
+   * ("a cardinal number" for מְאֹד, "very", coded `HAcmsa`): see `RETAGGED`
+   * in morph.rs. Absent on every word read as its code says. */
+  coded_as?: string | null;
+}
+
 export interface MorphologyWord {
   id: number;
   sort_order: number;
@@ -664,6 +762,8 @@ export interface MorphologyWord {
   lemma: string | null;
   morph_code: string | null;
   strongs_id: string | null;
+  /** `morph_code` decoded at query time; null when the word has no code. */
+  parsing: MorphParsing | null;
 }
 
 export interface Footnote {
@@ -1179,7 +1279,11 @@ export interface WordStudy {
   renderings: { gloss: string; count: number }[];
   /** [book id, occurrences], canonical order. */
   by_book: [number, number][];
-  forms: { form: string; morph_code: string; description: string; count: number }[];
+  /** Each form with its code; `parsing` is the code decoded as the Strong's
+   * card decodes it (null for a form with no code). The occurrences are
+   * parsed by looking their code up here: within one Strong's number a
+   * code always reads the same. */
+  forms: { form: string; morph_code: string; description: string; parsing: MorphParsing | null; count: number }[];
   related: { id: string; original_word: string; transliteration: string | null; short_definition: string | null; relation: "root" | "derived" }[];
 }
 
@@ -1304,6 +1408,8 @@ export interface TimelineEra {
   end_year: number;
   /** The atlas journeys of this era, by their `era`. */
   journey_era: string | null;
+  /** The Bible's eras, or church history's (whose slugs begin "church-"). */
+  track: "bible" | "church";
 }
 
 export interface TimelineEntity {
@@ -1311,6 +1417,16 @@ export interface TimelineEntity {
   name: string;
   role: "person" | "place";
   atlas_slug: string | null;
+}
+
+/** Where a church event's date comes from: the work and the place in it,
+ * the source's own words, and a link where the source is a web page. */
+export interface TimelineCitation {
+  work: string;
+  volume: string | null;
+  locator: string | null;
+  quote: string;
+  url: string | null;
 }
 
 export interface TimelineEvent {
@@ -1322,11 +1438,31 @@ export interface TimelineEvent {
   parent_id: number | null;
   lane: "judah" | "israel" | null;
   note: string | null;
-  source: "theographic" | "added";
+  /** "church" for church history, which has no lane, verse or entities. */
+  source: "theographic" | "added" | "church";
   book_id: number | null;
   chapter: number | null;
   verse: number | null;
   entities: TimelineEntity[];
+  /** A church event's kind; null for the Bible's. */
+  kind: "council" | "life" | "writing" | "mission" | "event" | null;
+  /** The source gives the year as approximate or disputed. */
+  circa: boolean;
+  /** "YYYY-MM" or "YYYY-MM-DD" as the source prints it, where it prints one;
+   * `start_year` already carries it as a fraction of the year. */
+  date: string | null;
+  /** The sources of a church event's date, the one it is taken from first;
+   * empty for the Bible's, which are dated by their verses. */
+  citations: TimelineCitation[];
+  /** A creed or confession the app ships, by its document code ("wcf"). */
+  confession: string | null;
+  /** A shipped book the event concerns, by file name (`resources.library_key`). */
+  resource: string | null;
+  /** The slug of the church era a church event is filed under
+   * ("church-reformation"), which its years alone would not give: a life goes
+   * with the age of its work, an event on a boundary year with the age it
+   * closes. Null for the Bible's, whose era is the one their first year falls in. */
+  era: string | null;
 }
 
 export interface Timeline {

@@ -382,6 +382,13 @@ pub fn get_morphology_for_chapter(
          WHERE book_id = ?1 AND chapter = ?2 ORDER BY verse, sort_order",
     )?;
     let rows = stmt.query_map(params![book_id, chapter], |r| {
+        let morph_code: Option<String> = r.get(5)?;
+        let strongs_id: Option<String> = r.get(6)?;
+        // Fourteen TAHOT rows (Judges 16:25, Ruth 3:12 and others) carry an
+        // empty word and an empty code rather than none; neither has
+        // anything to parse. The Strong's number is read with the code: it
+        // is what tells מְאֹד, "very", from the number TAHOT codes it as.
+        let parsing = morph_code.as_deref().filter(|c| !c.trim().is_empty()).map(|c| crate::morph::decode_word(c, strongs_id.as_deref()));
         Ok((
             r.get::<_, i64>(1)?,
             MorphologyWord {
@@ -389,8 +396,9 @@ pub fn get_morphology_for_chapter(
                 sort_order: r.get(2)?,
                 original_word: r.get(3)?,
                 lemma: r.get(4)?,
-                morph_code: r.get(5)?,
-                strongs_id: r.get(6)?,
+                morph_code,
+                strongs_id,
+                parsing,
             },
         ))
     })?;

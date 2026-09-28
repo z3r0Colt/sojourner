@@ -5,6 +5,7 @@ import type { RedLetterSpan } from "./redLetterSpans";
 import type { FindRange } from "./findMatches";
 import { SegmentText } from "./VerseRow";
 import { cx } from "../../components/ui/classes";
+import { lineBoxAt } from "../../lib/popupPosition";
 
 /** Paragraph mode's per-verse renderer: the same highlight/footnote token
  * splitting VerseRow uses, but flowed inline (a small superscript verse
@@ -38,9 +39,9 @@ function ParagraphVerse({
   showVerseNumbers: boolean;
   showNoteSymbols: boolean;
   onSelectVerse: (verseNum: number) => void;
-  onHighlightClick: (highlightId: number, x: number, y: number) => void;
+  onHighlightClick: (highlightId: number, x: number, y: number, flipY: number) => void;
   onNoteSymbolClick: (note: Note) => void;
-  onFootnoteClick?: (footnote: Footnote, x: number, y: number) => void;
+  onFootnoteClick?: (footnote: Footnote, x: number, y: number, anchorTop: number) => void;
   onContextMenu?: (verseNum: number, x: number, y: number) => void;
   redLetterSpans?: RedLetterSpan[];
   findRanges?: FindRange[];
@@ -109,7 +110,7 @@ function ParagraphVerse({
                 onClick={(e) => {
                   e.stopPropagation();
                   const rect = (e.target as HTMLElement).getBoundingClientRect();
-                  onFootnoteClick?.(f, rect.left, rect.bottom + 4);
+                  onFootnoteClick?.(f, rect.left, rect.bottom + 4, rect.top);
                 }}
               >
                 [{f.marker}]
@@ -133,8 +134,11 @@ function ParagraphVerse({
               onClick={(e) => {
                 if (seg.highlightId != null) {
                   e.stopPropagation();
-                  const rect = (e.target as HTMLElement).getBoundingClientRect();
-                  onHighlightClick(seg.highlightId, rect.left + rect.width / 2, rect.top);
+                  // Beside the line of the highlight that was clicked: the top of
+                  // a highlight running over several lines may be out of view.
+                  const mark = e.currentTarget;
+                  const line = lineBoxAt(mark.getClientRects(), e.clientY) ?? mark.getBoundingClientRect();
+                  onHighlightClick(seg.highlightId, (line.left + line.right) / 2, line.top, line.bottom);
                 }
               }}
             >
@@ -191,9 +195,9 @@ export function ParagraphVerses({
   findRangesByVerse?: Map<number, FindRange[]> | null;
   backlinkVerses?: Set<number>;
   onSelectVerse: (verseNum: number) => void;
-  onHighlightClick: (highlightId: number, x: number, y: number) => void;
+  onHighlightClick: (highlightId: number, x: number, y: number, flipY: number) => void;
   onNoteSymbolClick: (note: Note) => void;
-  onFootnoteClick?: (footnote: Footnote, x: number, y: number) => void;
+  onFootnoteClick?: (footnote: Footnote, x: number, y: number, anchorTop: number) => void;
   onContextMenu?: (verseNum: number, x: number, y: number) => void;
 }) {
   return (
