@@ -3,7 +3,7 @@ use rusqlite::{params, Connection};
 
 pub fn list_commentary_sources(conn: &Connection) -> anyhow::Result<Vec<CommentarySource>> {
     let mut stmt = conn.prepare(
-        "SELECT id, code, title, author, imported_at FROM commentary_sources ORDER BY title",
+        "SELECT id, code, title, author, imported_at, source_files FROM commentary_sources ORDER BY title",
     )?;
     let sources = stmt
         .query_map([], |r| {
@@ -13,12 +13,18 @@ pub fn list_commentary_sources(conn: &Connection) -> anyhow::Result<Vec<Commenta
                 r.get::<_, String>(2)?,
                 r.get::<_, Option<String>>(3)?,
                 r.get::<_, String>(4)?,
+                r.get::<_, Option<String>>(5)?,
             ))
         })?
         .collect::<Result<Vec<_>, _>>()?;
 
     let mut result = Vec::new();
-    for (id, code, title, author, imported_at) in sources {
+    for (id, code, title, author, imported_at, source_files) in sources {
+        // source_files maps each file the source was read from to its
+        // checksum; a source is the reader's when a file of it is.
+        let user_provided = source_files
+            .and_then(|json| serde_json::from_str::<std::collections::HashMap<String, String>>(&json).ok())
+            .is_some_and(|files| files.keys().any(|path| crate::paths::is_reader_import(path)));
         let mut bstmt = conn.prepare(
             "SELECT book_id FROM commentary_books WHERE commentary_source_id = ?1 ORDER BY book_id",
         )?;
@@ -32,6 +38,7 @@ pub fn list_commentary_sources(conn: &Connection) -> anyhow::Result<Vec<Commenta
             author,
             imported_at,
             covered_book_ids,
+            user_provided,
         });
     }
     Ok(result)

@@ -302,12 +302,16 @@ pub fn search(conn: &Connection, query: &str, limit: i64) -> anyhow::Result<Vec<
     };
     for schema in &schemas {
         let q = if schema.is_empty() { String::new() } else { format!("{schema}.") };
+        // No alias on the fts table: MATCH and bm25() take the table's own
+        // name (its hidden column), and SQLite answers an alias there with
+        // "no such column", which failed every search once a shelf was
+        // installed. Unqualified is unambiguous: one library_fts per query.
         let mut shipped = conn.prepare(&format!(
-            "SELECT res.id, res.title, res.kind, bm25(f), lib.id
-             FROM {q}library_fts f
-             JOIN {q}library_resources lib ON lib.id = f.rowid
+            "SELECT res.id, res.title, res.kind, bm25(library_fts), lib.id
+             FROM {q}library_fts
+             JOIN {q}library_resources lib ON lib.id = library_fts.rowid
              JOIN resources res ON res.library_key = lib.file_name
-             WHERE f MATCH ?1 ORDER BY bm25(f) LIMIT ?2"
+             WHERE library_fts MATCH ?1 ORDER BY bm25(library_fts) LIMIT ?2"
         ))?;
         let rows = shipped.query_map(params![match_expr, limit], |r| {
             Ok(RankedHit { resource_id: r.get(0)?, title: r.get(1)?, kind: r.get(2)?, rank: r.get(3)?, shipped: true, text_id: r.get(4)?, schema: schema.clone() })
@@ -681,6 +685,34 @@ mod tests {
         assert!(snippet.contains("sweetness"), "with its surroundings: {snippet}");
         assert!(snippet.chars().count() < 260, "and no more than a passage: {snippet}");
 
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn a_shipped_book_on_an_attached_shelf_is_found_and_quoted() {
+        // The shelf query once aliased its fts table, which SQLite refuses in
+        // MATCH: every search failed outright as soon as a shelf was attached.
+        let (conn, dir) = open_test("shelf");
+        let library_db_path = dir.join("library.db");
+        {
+            let lib = db::open_library_db(&library_db_path).unwrap();
+            let body = format!("{}All of grace is the free favour of God.", "opening words. ".repeat(30));
+            lib.execute(
+                "INSERT INTO library_resources (file_name, kind, title, extracted_text) VALUES ('grace.epub', 'epub', 'A Shipped Book', ?1)",
+                [body],
+            )
+            .unwrap();
+        }
+        db::attach_library(&conn, &library_db_path).unwrap();
+        conn.execute(
+            "INSERT INTO resources (kind, title, file_path, added_at, library_key) VALUES ('epub', 'A Shipped Book', 'grace.epub', '2026-01-01', 'grace.epub')",
+            [],
+        )
+        .unwrap();
+
+        let hits = search(&conn, "favour", 10).unwrap();
+        assert_eq!(hits.len(), 1, "the shipped book is found");
+        assert!(brackets(&hits[0].snippet).contains("[favour]"), "got: {}", hits[0].snippet);
         let _ = std::fs::remove_dir_all(&dir);
     }
 

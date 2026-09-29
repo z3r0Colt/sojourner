@@ -26,12 +26,14 @@ pub fn list_translations(conn: &Connection) -> anyhow::Result<Vec<Translation>> 
          FROM translations t ORDER BY t.name",
     )?;
     let rows = stmt.query_map([], |r| {
+        let source_path: String = r.get(4)?;
         Ok(Translation {
             id: r.get(0)?,
             code: r.get(1)?,
             name: r.get(2)?,
             language: r.get(3)?,
-            source_path: r.get(4)?,
+            user_provided: crate::paths::is_reader_import(&source_path),
+            source_path,
             imported_at: r.get(5)?,
             verse_count: r.get(6)?,
             license_status: r.get(7)?,

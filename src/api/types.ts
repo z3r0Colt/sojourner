@@ -26,6 +26,8 @@ export interface Translation {
   script: "latin" | "greek" | "hebrew";
   direction: "ltr" | "rtl";
   source_format: string;
+  /** Added by the reader ("Add file"), not shipped with the app. */
+  user_provided: boolean;
 }
 
 export interface BookCoverage {
@@ -72,6 +74,8 @@ export interface CommentarySource {
   author: string | null;
   imported_at: string;
   covered_book_ids: number[];
+  /** Added by the reader ("Add file"), not shipped with the app. */
+  user_provided: boolean;
 }
 
 export interface CommentaryEntry {

@@ -26,6 +26,14 @@ pub fn default_import_roots(app: &AppHandle) -> Vec<PathBuf> {
     roots
 }
 
+/// True for a file the reader added themselves: one that sits in the
+/// "imports" folder under the app data dir, not among the bundled copies
+/// content.db was built from. The same test `rescan_imports_after_upgrade`
+/// picks its files by.
+pub fn is_reader_import(path: &str) -> bool {
+    std::path::Path::new(path).components().any(|c| c.as_os_str() == "imports")
+}
+
 /// Location of the bundled Strong's/dictionary/interlinear reference data.
 pub fn reference_dir(app: &AppHandle) -> Option<PathBuf> {
     app.path().resource_dir().ok().map(|d| d.join("reference"))

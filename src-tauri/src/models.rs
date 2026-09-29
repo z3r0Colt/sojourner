@@ -32,6 +32,8 @@ pub struct Translation {
     /// 'ltr' or 'rtl'.
     pub direction: String,
     pub source_format: String,
+    /// Added by the reader ("Add file"), not shipped with the app.
+    pub user_provided: bool,
 }
 
 /// Which chapters of a book a given translation actually has verses for --
@@ -153,6 +155,8 @@ pub struct CommentarySource {
     pub author: Option<String>,
     pub imported_at: String,
     pub covered_book_ids: Vec<i64>,
+    /// Added by the reader ("Add file"), not shipped with the app.
+    pub user_provided: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]

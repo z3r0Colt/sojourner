@@ -161,6 +161,24 @@ function resizeToContainer(rendition: Rendition): void {
   }
 }
 
+/**
+ * Takes out of the reading order every section whose file the book does not
+ * have. Thirteen of the shipped books list a "cover" page in their spine
+ * with no such item in the manifest; epub.js gives that section no url, and
+ * showing it -- the first page, so every time the book opened -- threw
+ * inside epub.js and left the pane on "Opening book..." for good. Marked
+ * non-linear rather than removed: epub.js pages and places CFIs by spine
+ * index, and removing an entry would shift every one after it. Non-linear
+ * sections are already passed over by the first page shown, Previous and
+ * Next, the locations and the reading voice.
+ */
+function skipSectionsWithNoFile(book: Book) {
+  book.spine.each((item: unknown) => {
+    const section = item as { url?: string; linear?: boolean };
+    if (!section.url) section.linear = false;
+  });
+}
+
 /** How many sections past a page with nothing to read (a cover, a picture,
  * the end of a chapter) a reading looks for somewhere to begin. */
 const MAX_SILENT_SECTIONS = 12;
@@ -922,6 +940,7 @@ export function EpubReader({
     book.ready
       .then(() => {
         if (disposed) return;
+        skipSectionsWithNoFile(book);
         let total = 0;
         book.spine.each(() => {
           total += 1;

@@ -1,4 +1,5 @@
 pub mod checksum;
+pub mod known;
 pub mod plain_index;
 pub mod reference;
 pub mod thml;
@@ -115,6 +116,14 @@ pub fn scan_files(conn: &mut Connection, paths: &[PathBuf]) -> Vec<ScannedFile> 
         }
     }
 
+    // A reader's own copy of a copyrighted translation is marked as such the
+    // moment it comes in, not only in a build: this is the path "Add file"
+    // and the rescans take, and before it ran here an imported NASB sat in
+    // the Library marked public domain.
+    if let Err(e) = backfill_license_status(conn) {
+        eprintln!("[imports] could not mark licensed translations: {e:#}");
+    }
+
     results
 }
 
@@ -195,29 +204,22 @@ pub fn populate_content_db(
     Ok(results)
 }
 
-/// Modern translations whose text is in copyright and cannot be
-/// redistributed inside an application without a negotiated licence.
-///
-/// The app once shipped the first three of these. It does not any more: a
-/// complete bundled Bible is far past what any of their publishers allow to
-/// be quoted without an agreement, and there was no agreement. They were
-/// removed from `bibles/`, and [`refuse_licensed_translations`] keeps them
-/// out.
-///
-/// The list stays, and has grown, because a reader may still have their own
-/// licensed copy and import it through "Add File…". That is their
-/// arrangement to make, not ours to ship -- so such a translation is marked
-/// rather than refused, and the Library settings page says so beside it.
-pub const LICENSED_CODES: &[&str] = &["NASB", "NKJV", "NLT", "ESV", "NIV"];
-
 /// Marks translations whose text is in copyright, so the UI can show that
 /// distinction rather than implying every translation in the list is freely
 /// reproducible -- see the CONTENT_MIGRATION_0009 schema comment. Everything
 /// the app itself ships is genuine public domain and keeps the column's
 /// default.
+///
+/// The app once shipped NASB, NKJV and NLT. It does not any more: a complete
+/// bundled Bible is far past what any of their publishers allow to be quoted
+/// without an agreement, and there was no agreement. They were removed from
+/// `bibles/`, and [`refuse_licensed_translations`] keeps them out. A reader
+/// may still import their own licensed copy through "Add File…"; that is
+/// their arrangement to make, not ours to ship, so it is marked rather than
+/// refused. Which translations count is `known::KNOWN_TRANSLATIONS`.
 fn backfill_license_status(conn: &Connection) -> anyhow::Result<()> {
-    for code in LICENSED_CODES {
-        conn.execute("UPDATE translations SET license_status = 'licensed' WHERE code = ?1", rusqlite::params![code])?;
+    for known in known::KNOWN_TRANSLATIONS.iter().filter(|k| k.licensed) {
+        conn.execute("UPDATE translations SET license_status = 'licensed' WHERE code = ?1", rusqlite::params![known.code])?;
     }
     Ok(())
 }
@@ -233,7 +235,7 @@ fn backfill_license_status(conn: &Connection) -> anyhow::Result<()> {
 ///
 /// Only the build path calls this. A reader importing their own copy goes
 /// through `scan_files` from the app, is not refused, and is marked by
-/// [`backfill_license_status`] instead.
+/// [`backfill_license_status`] (which `scan_files` runs) instead.
 fn refuse_licensed_translations(conn: &Connection) -> anyhow::Result<()> {
     let mut stmt = conn.prepare(
         "SELECT name, source_path FROM translations WHERE license_status = 'licensed' ORDER BY name",
@@ -323,5 +325,40 @@ mod translation_id_tests {
         assert_eq!(new_translation_id(&conn, "NASB").unwrap(), 1001);
         // Retired ids are never handed out again.
         assert_eq!(new_translation_id(&conn, "WYC").unwrap(), 1001);
+    }
+}
+
+#[cfg(test)]
+mod license_tests {
+    use super::scan_files;
+
+    #[test]
+    fn a_readers_own_copyrighted_translation_is_marked_licensed_on_import() {
+        let dir = std::env::temp_dir().join(format!("sojourner-license-import-test-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(dir.join("imports")).unwrap();
+        let mut conn = crate::db::open_content_db(&dir.join("content.db")).unwrap();
+        let xml = r#"<?xml version="1.0" encoding="UTF-8"?>
+<XMLBIBLE biblename="ENGLISHESV">
+  <BIBLEBOOK bnumber="43" bname="John">
+    <CHAPTER cnumber="3">
+      <VERS vnumber="16">For God so loved the world.</VERS>
+    </CHAPTER>
+  </BIBLEBOOK>
+</XMLBIBLE>"#;
+        let esv = dir.join("imports").join("English Standard Version.xml");
+        let public = dir.join("imports").join("Young's Literal Translation.xml");
+        std::fs::write(&esv, xml).unwrap();
+        std::fs::write(&public, xml.replace("ENGLISHESV", "YLT")).unwrap();
+
+        let results = scan_files(&mut conn, &[esv, public]);
+        assert!(results.iter().all(|r| r.status != "Failed"), "{:?}", results.iter().map(|r| &r.detail).collect::<Vec<_>>());
+        let status = |code: &str| -> String {
+            conn.query_row("SELECT license_status FROM translations WHERE code = ?1", [code], |r| r.get(0)).unwrap()
+        };
+        assert_eq!(status("ESV"), "licensed");
+        assert_eq!(status("YLT"), "public_domain");
+        drop(conn);
+        let _ = std::fs::remove_dir_all(&dir);
     }
 }

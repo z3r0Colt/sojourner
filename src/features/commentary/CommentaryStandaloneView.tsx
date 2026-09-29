@@ -15,6 +15,7 @@ import { buildCommentaryReading, entryOfPiece, isReadingClick, onScreenStart, pi
 import { ReadAloudButton } from "../tts/ReadAloudButton";
 import { EmptyState, LoadingState } from "../../components/ui/EmptyState";
 import { cx, selectSmClass } from "../../components/ui/classes";
+import { CommentarySourceOptions } from "./CommentarySourceOptions";
 
 const navItemClass = "block rounded-md px-2 py-1 text-sm hover:bg-hover";
 
@@ -83,11 +84,7 @@ export function CommentaryStandaloneView() {
           pane and left the text two or three words a line. */}
       <SidePanel id="commentary-contents" label="Contents" defaultWidth={240} autoCollapse={activeSectionId != null} className="overflow-y-auto p-2">
         <select aria-label="Commentary" className={cx(selectSmClass, "mb-3 w-full")} value={sourceId ?? ""} onChange={(e) => navigate(`/commentary/${e.target.value}`)}>
-          {sources?.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.title}
-            </option>
-          ))}
+          <CommentarySourceOptions sources={sources} />
         </select>
         <div className="mb-1 px-2 text-xs font-semibold uppercase tracking-wide text-ink-3">Books</div>
         <ul className="mb-4 space-y-0.5">

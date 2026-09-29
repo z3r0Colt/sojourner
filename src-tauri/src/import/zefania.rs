@@ -236,43 +236,12 @@ struct ParsedBible {
 }
 
 fn derive_code_and_name(biblename_attr: &str, info_title: Option<&str>, filename_stem: &str) -> (String, String) {
-    let hay = info_title.unwrap_or(biblename_attr).to_lowercase();
-    let filename_hay = filename_stem.to_lowercase();
-    let combined = format!("{hay} {filename_hay}");
-
-    let code = if combined.contains("new american standard") {
-        "NASB"
-    } else if combined.contains("new king james") {
-        "NKJV"
-    } else if combined.contains("king james") {
-        "KJV"
-    } else if combined.contains("american standard") {
-        "ASV"
-    } else if combined.contains("english standard") {
-        "ESV"
-    } else if combined.contains("new international") {
-        "NIV"
-    } else if combined.contains("new living") {
-        "NLT"
-    } else if combined.contains("young") && combined.contains("literal") {
-        "YLT"
-    } else if combined.contains("darby") {
-        "DBY"
-    } else if combined.contains("webster") {
-        "WBS"
-    } else if combined.contains("world english") {
-        "WEB"
-    } else if combined.contains("douay") || combined.contains("rheims") {
-        "DRA"
-    } else if combined.contains("geneva") {
-        "GNV"
-    } else if combined.contains("tyndale") {
-        "TYN"
-    } else if combined.contains("wycliffe") || combined.contains("wyclif") {
-        "WYC"
-    } else {
-        ""
-    };
+    // Recognised by the title the file gives itself, or failing that by its
+    // file name (see `known` for the translations and how they are matched).
+    let code = super::known::recognise(info_title.unwrap_or(biblename_attr))
+        .or_else(|| super::known::recognise(filename_stem))
+        .map(|k| k.code)
+        .unwrap_or("");
 
     // A title that is only an abbreviation or a single word ("YLT",
     // "Webster") names the translation less well than a file called "Young's

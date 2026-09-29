@@ -22,13 +22,15 @@ export function translationGroup(t: Translation): "modern" | "historic" | "origi
 }
 
 /** The picker's headings, in the order a reader looks for them. Groups with
- * nothing in them are left out. */
+ * nothing in them are left out. What the reader added themselves goes under
+ * a heading of its own, whatever its age or language, so it is easy to find. */
 export function groupTranslations(translations: Translation[]): TranslationGroup[] {
-  const groups: Record<ReturnType<typeof translationGroup>, Translation[]> = { historic: [], modern: [], original: [] };
-  for (const t of translations) groups[translationGroup(t)].push(t);
+  const groups: Record<ReturnType<typeof translationGroup> | "user", Translation[]> = { historic: [], modern: [], original: [], user: [] };
+  for (const t of translations) groups[t.user_provided ? "user" : translationGroup(t)].push(t);
   return [
     { label: "Historic English", translations: groups.historic },
     { label: "Modern English", translations: groups.modern },
     { label: "Greek, Hebrew and Latin", translations: groups.original },
+    { label: "User provided", translations: groups.user },
   ].filter((g) => g.translations.length > 0);
 }

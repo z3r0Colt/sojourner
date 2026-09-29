@@ -21,6 +21,7 @@ import { EmptyState, LoadingState } from "../../components/ui/EmptyState";
 import { StudyActions } from "../sermons/StudyActions";
 import { commentaryRef } from "../sermons/sourceIdentity";
 import { firstParagraph } from "../sermons/excerpt";
+import { CommentarySourceOptions } from "./CommentarySourceOptions";
 
 export function CommentaryPanel({
   book,
@@ -144,11 +145,7 @@ export function CommentaryPanel({
     <div className="flex h-full w-full flex-col">
       <div className="flex items-center gap-1.5 border-b border-line px-2 py-1.5">
         <select aria-label="Commentary source" className={cx(selectSmClass, "min-w-0 flex-1")} value={sourceId ?? ""} onChange={(e) => onSourceChange(Number(e.target.value))}>
-          {sources?.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.title}
-            </option>
-          ))}
+          <CommentarySourceOptions sources={sources} />
         </select>
         {sourceId != null && (
           <PaneLink
