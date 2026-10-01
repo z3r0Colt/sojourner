@@ -407,6 +407,7 @@ pub fn run() {
             commands::study::get_westminster_section,
             commands::study::get_confession_for_passage,
             commands::study::search_westminster,
+            commands::study::get_westminster_parallels,
             commands::study::list_westminster_commentary_sources,
             commands::study::get_westminster_commentary,
             commands::study::list_doctrine_topics,

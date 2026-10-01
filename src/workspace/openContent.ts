@@ -110,6 +110,8 @@ export function completeParams<K extends PaneKind>(kind: K, partial: Partial<Par
     }
     case "westminster":
       return { docCode: null, sectionId: null, ...partial } as unknown as ParamsOf<K>;
+    case "guide":
+      return { lessonId: null, ...partial } as unknown as ParamsOf<K>;
     case "lexicon":
       return { id: null, ...partial } as unknown as ParamsOf<K>;
     case "dictionary":

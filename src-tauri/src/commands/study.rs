@@ -5,7 +5,7 @@ use crate::error::AppResult;
 use crate::models::{
     CrossReference, DoctrineTopic, MetricalPsalmVersion, PsalmTune, WestminsterCommentaryEntry,
     WestminsterCommentarySource,
-    WestminsterDocument, WestminsterPassageMatch, WestminsterSection, WestminsterSectionSummary,
+    WestminsterDocument, WestminsterParallel, WestminsterPassageMatch, WestminsterSection, WestminsterSectionSummary,
 };
 use serde::Serialize;
 use tauri::State;
@@ -53,6 +53,12 @@ pub fn get_westminster_section(db: State<DbState>, id: i64) -> AppResult<Option<
 pub fn get_confession_for_passage(db: State<DbState>, book_id: i64, chapter: i64, verse: i64) -> AppResult<Vec<WestminsterPassageMatch>> {
     let conn = db.conn();
     Ok(westminster::get_confession_for_passage(&conn, book_id, chapter, verse)?)
+}
+
+#[tauri::command]
+pub fn get_westminster_parallels(db: State<DbState>, section_id: i64) -> AppResult<Vec<WestminsterParallel>> {
+    let conn = db.conn();
+    Ok(westminster::get_parallels(&conn, section_id)?)
 }
 
 #[tauri::command]

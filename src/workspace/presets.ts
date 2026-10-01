@@ -63,7 +63,7 @@ export const WORKSPACES_SETTING = "workspaces";
 const A: LinkGroup = "A";
 
 /** Index-named leaves for a template over `n` panes with these weights. */
-function indexTree(layout: LayoutId, widths: number[]): LayoutNode {
+export function indexTree(layout: LayoutId, widths: number[]): LayoutNode {
   return treeFromTemplate(
     layout,
     widths.map((width, i) => ({ id: String(i), width })),
@@ -159,8 +159,14 @@ export function savedTree(saved: SavedWorkspace): LayoutNode {
   );
 }
 
-/** Builds the live panes for a saved workspace and applies it. */
-export function applyWorkspace(saved: SavedWorkspace, commentarySources: CommentarySource[] | undefined): void {
+/** Builds the live panes for a saved workspace and applies it. With
+ * `keepPassage: false` its Bible panes open where it says rather than on
+ * the chapter being read (a guided-study lesson opens on its own text). */
+export function applyWorkspace(
+  saved: SavedWorkspace,
+  commentarySources: CommentarySource[] | undefined,
+  opts: { keepPassage?: boolean } = {},
+): void {
   const s = useWorkspaceStore.getState();
   const currentBibles = s.panes.filter((p): p is Extract<Pane, { kind: "bible" }> => p.kind === "bible");
   const fallback = resolveBiblePane(s);
@@ -179,7 +185,7 @@ export function applyWorkspace(saved: SavedWorkspace, commentarySources: Comment
     }
     const linkGroup = isLinkGroup(sp.linkGroup) ? sp.linkGroup : A;
     let params = completeParams(kind, partial as never, undefined) as ParamsOf<typeof kind>;
-    if (kind === "bible") {
+    if (kind === "bible" && opts.keepPassage !== false) {
       // Keep the passage being read: the current Bible pane in the same
       // group, else the one the reader is working in.
       const keep = (linkGroup != null ? currentBibles.find((b) => b.linkGroup === linkGroup) : undefined) ?? fallback;

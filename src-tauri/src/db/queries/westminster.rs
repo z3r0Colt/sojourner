@@ -1,5 +1,5 @@
 use crate::models::{
-    WestminsterCommentaryEntry, WestminsterCommentarySource, WestminsterDocument, WestminsterPassageMatch, WestminsterProofRef,
+    WestminsterCommentaryEntry, WestminsterCommentarySource, WestminsterDocument, WestminsterParallel, WestminsterPassageMatch, WestminsterProofRef,
     WestminsterSection, WestminsterSectionSummary,
 };
 use rusqlite::{params, Connection};
@@ -129,6 +129,36 @@ pub fn list_wcf_chapters_cited(conn: &Connection, book_id: i64, chapter: i64) ->
     chapters.sort_unstable();
     chapters.dedup();
     Ok(chapters)
+}
+
+/// The other Standards' paragraphs on what this one teaches: for a Shorter
+/// Catechism question, the Larger Catechism questions and Confession
+/// paragraphs beside it, and so on in every direction. A member is listed
+/// once however many of its sections are in the group (a whole Confession
+/// chapter), linked to its first; members of the reader's own document are
+/// left out.
+pub fn get_parallels(conn: &Connection, section_id: i64) -> anyhow::Result<Vec<WestminsterParallel>> {
+    let mut stmt = conn.prepare(
+        "SELECT g.topic, wd.code, MIN(p.section_id), p.label
+         FROM westminster_parallels mine
+         JOIN westminster_parallel_groups g ON g.id = mine.group_id
+         JOIN westminster_parallels p ON p.group_id = mine.group_id
+         JOIN westminster_sections ws ON ws.id = p.section_id
+         JOIN westminster_documents wd ON wd.id = ws.document_id
+         WHERE mine.section_id = ?1
+           AND ws.document_id != (SELECT document_id FROM westminster_sections WHERE id = ?1)
+         GROUP BY g.id, wd.id, p.label
+         ORDER BY g.sort_order, wd.id DESC, MIN(p.section_id)",
+    )?;
+    let rows = stmt.query_map(params![section_id], |r| {
+        Ok(WestminsterParallel {
+            topic: r.get(0)?,
+            document_code: r.get(1)?,
+            section_id: r.get(2)?,
+            label: r.get(3)?,
+        })
+    })?;
+    Ok(rows.collect::<Result<Vec<_>, _>>()?)
 }
 
 pub fn list_commentary_sources(conn: &Connection) -> anyhow::Result<Vec<WestminsterCommentarySource>> {

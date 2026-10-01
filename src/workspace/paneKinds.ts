@@ -7,6 +7,7 @@ import {
   CalendarCheck,
   CalendarRange,
   Columns3,
+  GraduationCap,
   HeartHandshake,
   HouseHeart,
   Highlighter,
@@ -42,6 +43,7 @@ import type {
 import { bookName } from "../lib/passage";
 import { isPsalmNumber, psalmShown } from "../features/psalter/psalterParams";
 import { dictionaryWorkShown } from "../features/dictionary/websterDisplay";
+import { lessonById } from "../features/guide/course";
 import { PASSAGE_KINDS, type PaneContent, type PaneKind, type ParamsOf } from "../state/workspaceStore";
 
 /**
@@ -289,6 +291,18 @@ export const PANE_KINDS: Registry = {
     listed: true,
   },
   family: { kind: "family", label: "Family worship", icon: HouseHeart, title: () => "Family worship", defaultWidth: 900, acceptsPassage: false, listed: true },
+  guide: {
+    kind: "guide",
+    label: "Guided study",
+    icon: GraduationCap,
+    title: (p) => {
+      const lesson = p.lessonId ? lessonById(p.lessonId) : undefined;
+      return lesson ? `Lesson ${lesson.number} · ${lesson.title}` : "Guided study";
+    },
+    defaultWidth: 560,
+    acceptsPassage: false,
+    listed: true,
+  },
   harmony: { kind: "harmony", label: "Harmony", icon: Columns3, title: () => "Harmony of the Gospels", defaultWidth: 900, acceptsPassage: false, listed: true },
   sermons: { kind: "sermons", label: "Sermons", icon: Mic, title: () => "Sermons", defaultWidth: 900, acceptsPassage: false, listed: true },
   // The title is the sermon's own; the pane fills it in through the title
@@ -454,6 +468,8 @@ export function routeFor(content: PaneContent): string {
       return content.params.view === "tunes" ? "/psalter/tunes" : `/psalter/${psalmShown(content.params)}`;
     case "family":
       return "/family";
+    case "guide":
+      return content.params.lessonId ? `/guide/${encodeURIComponent(content.params.lessonId)}` : "/guide";
     case "harmony":
       return "/harmony";
     case "sermons":
@@ -550,6 +566,8 @@ export function parseRoute(pathname: string, search = ""): ContentRequest | null
     }
     case "family":
       return { kind: "family", params: {} };
+    case "guide":
+      return { kind: "guide", params: { lessonId: a ?? null } };
     case "harmony":
       return { kind: "harmony", params: {} };
     case "sermons": {

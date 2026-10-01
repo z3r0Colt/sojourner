@@ -550,6 +550,15 @@ export function useDoctrineTopic(id: number | null) {
   });
 }
 
+export function useWestminsterParallels(sectionId: number | null) {
+  return useQuery({
+    queryKey: ["westminsterParallels", sectionId],
+    queryFn: () => api.getWestminsterParallels(sectionId as number),
+    enabled: sectionId != null,
+    staleTime: Infinity,
+  });
+}
+
 export function useWestminsterCommentarySources() {
   return useQuery({
     queryKey: ["westminsterCommentarySources"],

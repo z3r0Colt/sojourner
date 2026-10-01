@@ -173,6 +173,11 @@ export interface SettingsParams {
 
 export type EmptyParams = Record<string, never>;
 
+/** The guided study: the course, or one lesson in it by id ("wsc-33"). */
+export interface GuideParams {
+  lessonId: string | null;
+}
+
 export interface SearchParams {
   query: string;
 }
@@ -233,6 +238,7 @@ export type PaneContent =
   | { kind: "plans"; params: EmptyParams }
   | { kind: "psalter"; params: PsalterParams }
   | { kind: "family"; params: EmptyParams }
+  | { kind: "guide"; params: GuideParams }
   | { kind: "harmony"; params: EmptyParams }
   | { kind: "sermons"; params: EmptyParams }
   | { kind: "sermon"; params: SermonParams }
@@ -275,6 +281,7 @@ export const PANE_KIND_LIST: readonly PaneKind[] = [
   "plans",
   "psalter",
   "family",
+  "guide",
   "harmony",
   "sermons",
   "sermon",

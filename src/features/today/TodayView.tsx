@@ -32,6 +32,7 @@ import { isFinished, todaysDays } from "../plans/planSchedule";
 import { longestUnprayed, timeAgo } from "../prayer/prayerListTime";
 import { ThisSunday } from "./ThisSunday";
 import { FamilyToday } from "./FamilyToday";
+import { GuideToday } from "./GuideToday";
 
 /**
  * The Today page (F3.1): one place to start the day from. Eight blocks in a
@@ -318,6 +319,7 @@ export function TodayView() {
       <ContinueReading />
       <TodaysPlan />
       <FamilyToday />
+      <GuideToday />
       <ThisSunday />
       <DueForReview />
       <PrayFor />

@@ -548,6 +548,18 @@ pub struct WestminsterPassageMatch {
     pub marker: i64,
 }
 
+/// A paragraph of another Westminster Standard that teaches what the one
+/// being read teaches (see CONTENT_MIGRATION_0030). `label` is the member as
+/// the table names it ("70", "11.3", or "11" for a whole Confession chapter,
+/// then `section_id` is its first paragraph); `topic` is the group's.
+#[derive(Debug, Clone, Serialize)]
+pub struct WestminsterParallel {
+    pub topic: String,
+    pub document_code: String,
+    pub section_id: i64,
+    pub label: String,
+}
+
 /// One entry in the doctrine/topic index -- see the doctrine_topics schema
 /// comment. `heading`/`document_code` are denormalized in from the resolved
 /// section so the UI can link straight to it without a second lookup.

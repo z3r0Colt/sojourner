@@ -18,6 +18,7 @@ import { SearchPane } from "../features/search/SearchPane";
 import { WordStudyView } from "../features/lexicon/WordStudyView";
 import { FactbookView } from "../features/factbook/FactbookView";
 import { TimelineView } from "../features/timeline/TimelineView";
+import { GuideView } from "../features/guide/GuideView";
 import { CommentaryPane, ConfessionPane, CrossRefsPane, EncyclopediaForPassagePane, FactbookForPassagePane, CitationsPane, TimelineForPassagePane, InterlinearPane, MetricalPane, MinePane } from "./panes/StudyPanes";
 import { FamilyPane, HarmonyPane, HighlightsPane, MemoryPane, NotesPane, PlansPane, PrayerPane, ResourcesPane, TodayPane } from "./panes/PagePanes";
 
@@ -51,6 +52,7 @@ export const PANE_COMPONENTS: Record<PaneKind, ComponentType> = {
   plans: PlansPane,
   psalter: PsalterView,
   family: FamilyPane,
+  guide: GuideView,
   harmony: HarmonyPane,
   sermons: SermonsView,
   sermon: SermonPane,

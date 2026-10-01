@@ -81,6 +81,7 @@ import type {
   WestminsterCommentarySource,
   WestminsterCommentaryEntry,
   WestminsterPassageMatch,
+  WestminsterParallel,
   DoctrineTopic,
   Resource,
   ResourcePassageLink,
@@ -361,6 +362,8 @@ export const api = {
     invoke<WestminsterPassageMatch[]>("get_confession_for_passage", { bookId, chapter, verse }),
   searchWestminster: (query: string, limit = 50) =>
     invoke<WestminsterSearchResult[]>("search_westminster", { query, limit }),
+  getWestminsterParallels: (sectionId: number) =>
+    invoke<WestminsterParallel[]>("get_westminster_parallels", { sectionId }),
   listWestminsterCommentarySources: () =>
     invoke<WestminsterCommentarySource[]>("list_westminster_commentary_sources"),
   getWestminsterCommentary: (sourceId: number, chapter: number) =>

@@ -1454,6 +1454,33 @@ CREATE TRIGGER strongs_ai AFTER INSERT ON strongs_entries BEGIN
 END;
 "#;
 
+// The three Westminster Standards side by side: which Larger Catechism
+// questions and Confession paragraphs teach what a Shorter Catechism
+// question teaches (WSC 33, justification, beside WLC 70-73 and WCF 11).
+// Hand-made, in reference/westminster/parallels.json; see
+// import::reference::westminster_parallels. A group is one topic, and a
+// paragraph may sit in several (WLC 72 is in justification and in faith).
+//
+// Every member is one row, a whole Confession chapter one row per section,
+// so the paragraph a reader is on finds its groups by its own id; `label`
+// is the member as written ("11" for that whole chapter, "11.3", "70"),
+// which the view shows once, linked to the lowest section id carrying it.
+pub const CONTENT_MIGRATION_0030: &str = r#"
+CREATE TABLE westminster_parallel_groups (
+  id          INTEGER PRIMARY KEY,
+  topic       TEXT NOT NULL,
+  sort_order  INTEGER NOT NULL
+);
+
+CREATE TABLE westminster_parallels (
+  group_id    INTEGER NOT NULL REFERENCES westminster_parallel_groups(id) ON DELETE CASCADE,
+  section_id  INTEGER NOT NULL REFERENCES westminster_sections(id),
+  label       TEXT NOT NULL,
+  PRIMARY KEY (group_id, section_id)
+) WITHOUT ROWID;
+CREATE INDEX idx_westminster_parallels_section ON westminster_parallels(section_id);
+"#;
+
 pub const CONTENT_MIGRATIONS: &[&str] = &[
     CONTENT_MIGRATION_0001,
     CONTENT_MIGRATION_0002,
@@ -1484,6 +1511,7 @@ pub const CONTENT_MIGRATIONS: &[&str] = &[
     CONTENT_MIGRATION_0027,
     CONTENT_MIGRATION_0028,
     CONTENT_MIGRATION_0029,
+    CONTENT_MIGRATION_0030,
 ];
 
 // library.db: the books that ship with the app, in a file of their own.

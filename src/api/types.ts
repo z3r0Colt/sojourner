@@ -929,6 +929,16 @@ export interface WestminsterPassageMatch {
   marker: number;
 }
 
+/** A paragraph of another Westminster Standard teaching what the one being
+ * read teaches. `label` is "70", "11.3", or "11" for a whole Confession
+ * chapter (then `section_id` is its first paragraph). */
+export interface WestminsterParallel {
+  topic: string;
+  document_code: string;
+  section_id: number;
+  label: string;
+}
+
 export interface BulkImportOutcome {
   imported: string[];
   skipped_duplicate: string[];

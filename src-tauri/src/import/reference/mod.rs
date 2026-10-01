@@ -24,6 +24,7 @@ pub mod treasury;
 pub mod webster1828;
 pub mod westminster;
 pub mod westminster_commentary;
+pub mod westminster_parallels;
 pub mod word_study;
 
 use rusqlite::Connection;
@@ -173,6 +174,11 @@ pub fn import_all(conn: &mut Connection, reference_dir: &Path) -> anyhow::Result
     } else {
         0
     };
+
+    // Not gated: a small hand-made table that is edited as the guided study
+    // is written, so every build, `--update` included, reads it again.
+    westminster_parallels::import(conn, &reference_dir.join("westminster"))
+        .map_err(|e| anyhow::anyhow!("westminster parallels import failed: {e:#}"))?;
 
     let metrical_psalm_verses = if table_count(conn, "metrical_psalms") == 0 {
         psalter::import(conn, &reference_dir.join("psalter"))

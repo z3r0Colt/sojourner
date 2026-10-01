@@ -13,6 +13,7 @@ import {
   useDoctrineTopics,
   useSuggestedResourcesForTopic,
   useDictionaryEntryByTerm,
+  useWestminsterParallels,
 } from "../../api/queries";
 import { usePaneNavigate, usePaneParams } from "../../workspace/PaneContext";
 import { SidePanel } from "../../components/ui/SidePanel";
@@ -21,7 +22,7 @@ import { openPassage, targetFor } from "../../workspace/openContent";
 import { useReadingTypography } from "../../state/uiStore";
 import { refAttrs } from "../../lib/refAttr";
 import { toPassageRef } from "../../lib/passage";
-import type { WestminsterProofRef, DoctrineTopic } from "../../api/types";
+import type { WestminsterProofRef, DoctrineTopic, WestminsterParallel } from "../../api/types";
 import { Tabs } from "../../components/ui/Tabs";
 import { EmptyState, LoadingState } from "../../components/ui/EmptyState";
 import { cx, inputSmClass, selectSmClass } from "../../components/ui/classes";
@@ -325,6 +326,8 @@ export function WestminsterView() {
               {renderBody(section.body_with_proofs)}
             </div>
 
+            <Parallels sectionId={section.id} />
+
             {section.proofs.length > 0 && (
               <div className="mb-6 border-t border-line pt-3 text-sm">
                 <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-ink-3">Scripture proofs</h3>
@@ -395,6 +398,60 @@ export function WestminsterView() {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+const STANDARD_NAMES: Record<string, string> = {
+  wsc: "Shorter Catechism",
+  wlc: "Larger Catechism",
+  wcf: "Confession",
+};
+
+/** The other Standards on what this paragraph teaches (WSC 33 beside WLC
+ * 70-73 and WCF 11), one line per topic: most paragraphs are in one, a few
+ * in two (WLC 72 is on justification and on faith). */
+function Parallels({ sectionId }: { sectionId: number }) {
+  const { data: parallels } = useWestminsterParallels(sectionId);
+  const groups = useMemo(() => {
+    const byTopic = new Map<string, Map<string, WestminsterParallel[]>>();
+    for (const p of parallels ?? []) {
+      const docs = byTopic.get(p.topic) ?? new Map<string, WestminsterParallel[]>();
+      docs.set(p.document_code, [...(docs.get(p.document_code) ?? []), p]);
+      byTopic.set(p.topic, docs);
+    }
+    return [...byTopic.entries()];
+  }, [parallels]);
+  if (groups.length === 0) return null;
+
+  return (
+    <div className="mb-6 border-t border-line pt-3 text-sm">
+      <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-ink-3">In the other Standards</h3>
+      <ul className="space-y-1">
+        {groups.map(([topic, docs]) => (
+          <li key={topic} className="text-ink-2">
+            <span className="mr-2 text-ink-3">{topic}:</span>
+            {[...docs.entries()].map(([code, members], i) => (
+              <span key={code}>
+                {i > 0 && <span className="mx-1.5 text-ink-4">·</span>}
+                {STANDARD_NAMES[code] ?? code.toUpperCase()}{" "}
+                {members.map((m, j) => (
+                  <Fragment key={m.section_id}>
+                    {j > 0 && ", "}
+                    <Link
+                      to={`/westminster/${code}/${m.section_id}`}
+                      className="text-accent hover:underline"
+                      title={code === "wcf" && !m.label.includes(".") ? `Confession chapter ${m.label}` : undefined}
+                    >
+                      {m.label}
+                    </Link>
+                  </Fragment>
+                ))}
+              </span>
+            ))}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
