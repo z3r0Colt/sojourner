@@ -119,7 +119,7 @@ export async function openStep(open: StepOpen, guidePaneId: string): Promise<voi
  * The panes a lesson is studied in, in place of the workspace on screen:
  *
  *   [ Guide | Bible | study pane     ]
- *   [       |       | study pane     ]   (+ the Confessions as a tab there)
+ *   [       |       | Confessions    ]   (a third pane is a tab there)
  *
  * The Bible opens on the lesson's passage, and the study panes follow it in
  * link group A. The reader's own workspaces are untouched; the Workspaces
@@ -136,8 +136,10 @@ export function layOutLesson(lesson: Lesson, commentarySources: CommentarySource
   if (ws.question != null) {
     panes.push({ kind: "westminster", params: { docCode: "wsc", sectionId: sectionId("wsc", ws.question) }, linkGroup: null });
   }
-  const columns = 2 + Math.min(ws.study.length, 1);
-  const layout = ws.study.length >= 2 ? "three-plus-one" : columns === 3 ? "three" : "two";
+  // The right-hand column: the study panes and the Confessions, stacked
+  // two high, any more as tabs in the lower slot.
+  const right = panes.length - 2;
+  const layout = right >= 2 ? "three-plus-one" : right === 1 ? "three" : "two";
   const widths = panes.map((p) => (p.kind === "guide" ? 560 : p.kind === "bible" ? 1000 : 460));
   applyWorkspace({ name: lesson.title, tree: indexTree(layout, widths), panes }, commentarySources, { keepPassage: false });
 

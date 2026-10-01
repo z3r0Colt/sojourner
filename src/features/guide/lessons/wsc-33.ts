@@ -1,4 +1,5 @@
 import type { LessonData } from "../course";
+import { HIGHLIGHT_TIP, NOTE_TIP } from "./tips";
 
 const ROMANS = 45;
 
@@ -24,7 +25,7 @@ export const WSC_33: LessonData = {
       id: "observe",
       title: "Read and mark",
       text: "Read Romans 3:21–28 slowly. Highlight every “righteousness” and every “justified”. Notice where the righteousness comes from, and how it is received.",
-      tip: "Select words in the Bible pane and choose a colour to highlight them.",
+      tip: HIGHLIGHT_TIP,
       open: { pane: "bible", passage: { book: ROMANS, chapter: 3, verse: 21, to: 28 } },
       check: { type: "highlight", passage: { book: ROMANS, chapter: 3, verse: 21, to: 28 } },
     },
@@ -47,9 +48,9 @@ export const WSC_33: LessonData = {
     {
       id: "scripture",
       title: "Scripture with Scripture",
-      text: "Click verse 24 in the Bible pane and follow its cross references. Read Galatians 2:16 and Romans 4:5. What do they add about faith and works?",
-      tip: "Cross references follow the verse you click in the Bible pane beside them.",
-      open: { pane: "crossrefs", passage: { book: ROMANS, chapter: 3, verse: 24 } },
+      text: "Follow the cross references from Romans 3:28 to Galatians 2:16 and Titus 3:7. You will also meet James 2:24: “by works a man is justified, and not by faith only.” Read James 2:14–26. Is James answering the same question as Paul, or showing what living faith looks like?\n\nThe Confession (11.2) puts the two together: faith “is the alone instrument of justification; yet is it not alone in the person justified, but is ever accompanied with all other saving graces, and is no dead faith, but worketh by love.”",
+      tip: "Cross references list other verses on the same subject, strongest first. They follow whichever verse you click in the Bible pane.",
+      open: { pane: "crossrefs", passage: { book: ROMANS, chapter: 3, verse: 28 } },
       check: { type: "opened" },
     },
     {
@@ -70,7 +71,7 @@ export const WSC_33: LessonData = {
     {
       id: "teaching",
       title: "Teaching",
-      text: "Alexander Whyte explains the answer phrase by phrase. Read him on Question 33.\n\nThe Confession (11.1) says plainly what justification is not: God justifies “not by infusing righteousness into them, but by pardoning their sins, and by accounting and accepting their persons as righteous; not for any thing wrought in them, or done by them, but for Christ’s sake alone; nor by imputing faith itself, the act of believing, or any other evangelical obedience to them, as their righteousness.”",
+      text: "Alexander Whyte explains the answer phrase by phrase. Read him on Question 33.\n\nThe Confession (11.1) says plainly what justification is not: God justifies “not by infusing righteousness into them, but by pardoning their sins, and by accounting and accepting their persons as righteous: not for anything wrought in them, or done by them, but for Christ’s sake alone; nor by imputing faith itself, the act of believing, or any other evangelical obedience to them, as their righteousness.”",
       open: { pane: "westminster", doc: "wsc", n: 33, commentary: "whyte" },
       openLabel: "Read Whyte on Q33",
       check: { type: "opened" },
@@ -126,7 +127,7 @@ export const WSC_33: LessonData = {
       id: "write",
       title: "Write it",
       text: "Put Question 33 in your own words, as a note on Romans 3:28. Your note stays with the verse, so you will meet it again whenever you read Romans.",
-      tip: "Click a verse number in the Bible pane to add a note to that verse.",
+      tip: NOTE_TIP,
       open: { pane: "bible", passage: { book: ROMANS, chapter: 3, verse: 28 } },
       openLabel: "Open Romans 3:28",
       check: { type: "note", passage: { book: ROMANS, chapter: 3, verse: 28 }, tag: "wsc-33" },
