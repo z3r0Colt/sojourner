@@ -6,7 +6,7 @@ const ROMANS = 45;
 export const WSC_33: LessonData = {
   id: "wsc-33",
   title: "Justification",
-  questions: [33],
+  questions: [32, 33],
   intro:
     "How can a guilty person be right with God? The Catechism answers in one sentence, and every phrase of it comes from Paul. In this lesson you read Romans 3 for yourself, weigh its key word in Greek, and set the Catechism's answer beside the Scripture it was drawn from.",
   workspace: {
@@ -56,7 +56,7 @@ export const WSC_33: LessonData = {
     {
       id: "answer",
       title: "The Catechism’s answer",
-      text: "Now read Question 33. Find each phrase in what you read: an act of God’s free grace (v. 24), pardon (v. 25), righteousness imputed (4:6), received by faith alone (v. 28).",
+      text: "Now read Questions 32 and 33. Question 32 says that those who are effectually called partake in this life of justification, adoption and sanctification; this lesson takes the first. In Question 33, find each phrase in what you read: an act of God’s free grace (v. 24), pardon (v. 25), righteousness imputed (4:6), received by faith alone (v. 28).",
       open: { pane: "westminster", doc: "wsc", n: 33 },
       check: { type: "opened" },
     },

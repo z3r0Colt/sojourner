@@ -35,9 +35,9 @@ export const WSC_2: LessonData = {
       6,
       "The Confession on Scripture",
     ),
-    teaching(2, "whyte", "Read Alexander Whyte on Question 2. Notice what he makes of the words “contained in” and “only rule”."),
+    teaching(2, "whyte", "Read Alexander Whyte on Question 2. Notice what he makes of the words “the only rule”."),
     classic(
-      "Thomas Watson’s sermon on Question 2 asks how we know the Scriptures are the Word of God, and gives his answers one by one.",
+      "Thomas Watson’s sermon on Question 2 asks how it appears that the Scriptures have “a divine authority stamped upon them”, and gives his answers one by one.",
       "A Body of Divinity",
       "WHAT RULE HAS GOD GIVEN TO DIRECT US",
       2,

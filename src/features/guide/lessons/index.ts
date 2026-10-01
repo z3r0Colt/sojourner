@@ -1,12 +1,12 @@
 import { sortKey, type Lesson, type LessonData } from "../course";
 import { reviewLesson } from "./review";
-import { WSC_1 } from "./wsc-1";
-import { WSC_2 } from "./wsc-2";
-import { WSC_4 } from "./wsc-4";
-import { WSC_33 } from "./wsc-33";
 
-/** Every lesson as written, in any order: the course sorts them. */
-const WRITTEN: LessonData[] = [WSC_1, WSC_2, WSC_4, WSC_33];
+/** Every lesson as written: each file named for the first question it
+ * teaches exports one. Their order here does not matter; the course sorts
+ * them. */
+const WRITTEN: LessonData[] = Object.values(import.meta.glob<Record<string, LessonData>>("./wsc-*.ts", { eager: true })).flatMap((m) =>
+  Object.values(m),
+);
 
 /** The units' question ranges, each closed by a review of its lessons. The
  * prayer journal is introduced in unit 2, so unit 1's review prays without it. */
