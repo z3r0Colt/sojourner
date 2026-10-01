@@ -10,12 +10,29 @@ use std::path::Path;
 /// reliably; and Vincent, whose 107 questions have no sub-section structure
 /// of their own to split on. Any other fields present in the JSON (e.g.
 /// Hodge's "heading") are simply ignored.
+///
+/// An entry may instead name several (`chapters`), when its author takes
+/// them together -- Ridgley on Larger Catechism 14 and 15, Beattie's chapter
+/// on WSC 21-22 -- and is filed under each of them.
 #[derive(Deserialize)]
 struct RawEntry {
-    chapter: i64,
+    #[serde(default)]
+    chapter: Option<i64>,
+    #[serde(default)]
+    chapters: Vec<i64>,
     #[serde(default)]
     section: Option<i64>,
     text: String,
+}
+
+impl RawEntry {
+    fn numbers(&self) -> Vec<i64> {
+        if self.chapters.is_empty() {
+            self.chapter.into_iter().collect()
+        } else {
+            self.chapters.clone()
+        }
+    }
 }
 
 /// A confession/catechism exposition source, as declared in
@@ -75,12 +92,33 @@ pub fn import(conn: &mut Connection, dir: &Path) -> anyhow::Result<usize> {
                 "INSERT INTO westminster_commentary_entries (source_id, chapter, section, sort_order, body) VALUES (?1,?2,?3,?4,?5)",
             )?;
             for (i, e) in entries.iter().enumerate() {
-                insert.execute(params![source_id, e.chapter, e.section, i as i64, e.text])?;
-                total += 1;
+                let numbers = e.numbers();
+                if numbers.is_empty() {
+                    anyhow::bail!("{}: entry {i} names no chapter or question", path.display());
+                }
+                for n in numbers {
+                    insert.execute(params![source_id, n, e.section, i as i64, e.text])?;
+                    total += 1;
+                }
             }
         }
     }
 
     tx.commit()?;
     Ok(total)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn an_entry_on_several_questions_is_filed_under_each() {
+        let one: RawEntry = serde_json::from_str(r#"{"chapter": 11, "section": 2, "text": "x"}"#).unwrap();
+        assert_eq!(one.numbers(), vec![11]);
+        let many: RawEntry = serde_json::from_str(r#"{"chapters": [14, 15], "text": "x"}"#).unwrap();
+        assert_eq!(many.numbers(), vec![14, 15]);
+        let none: RawEntry = serde_json::from_str(r#"{"text": "x"}"#).unwrap();
+        assert!(none.numbers().is_empty());
+    }
 }

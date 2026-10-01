@@ -105,6 +105,10 @@ export interface CommentaryBookParams {
 export interface WestminsterParams {
   docCode: string | null;
   sectionId: number | null;
+  /** A commentary to show open on arrival, by its source code ("fisher",
+   * "ridgley") -- as a guided-study step opens WSC 33 with Fisher on it.
+   * Unset, the commentary panel starts closed on the first source. */
+  commentary?: string | null;
 }
 
 export interface LexiconParams {

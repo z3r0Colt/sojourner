@@ -148,10 +148,14 @@ export function WestminsterView() {
     () => allCommentarySources?.filter((s) => s.document_code === doc?.code) ?? [],
     [allCommentarySources, doc?.code],
   );
+  // A pane opened with a commentary named (a guided-study step) shows that
+  // one, open; otherwise the first, closed.
+  const commentaryCode = params.commentary ?? null;
+  const requestedCommentary = commentaryCode ? commentarySources.find((s) => s.code === commentaryCode) : undefined;
   const [commentarySourceId, setCommentarySourceId] = useState<number | null>(null);
   useEffect(() => {
-    setCommentarySourceId(commentarySources.length > 0 ? commentarySources[0].id : null);
-  }, [commentarySources]);
+    setCommentarySourceId(requestedCommentary?.id ?? commentarySources[0]?.id ?? null);
+  }, [commentarySources, requestedCommentary]);
 
   function renderBody(text: string) {
     const parts = text.split(/(\[\d+\])/g);
@@ -349,6 +353,8 @@ export function WestminsterView() {
 
             {chapterRef && commentarySources && commentarySources.length > 0 && (
               <CommentaryPanel
+                unit={doc?.code === "wcf" ? "chapter" : "question"}
+                openOnArrival={requestedCommentary ? `${requestedCommentary.code}:${sectionId}` : null}
                 chapter={chapterRef.chapter}
                 currentSection={chapterRef.section}
                 sources={commentarySources}
@@ -394,25 +400,39 @@ export function WestminsterView() {
 }
 
 function CommentaryPanel({
+  unit,
+  openOnArrival,
   chapter,
   currentSection,
   sources,
   sourceId,
   onSourceChange,
 }: {
+  /** What `chapter` numbers: the Confession's chapters, or a catechism's questions. */
+  unit: "chapter" | "question";
+  /** Set when the pane was opened to show this commentary: the panel opens
+   * and scrolls into view, again each time the value changes. */
+  openOnArrival: string | null;
   chapter: number;
   currentSection: number;
   sources: { id: number; code: string; title: string; author: string | null }[];
   sourceId: number | null;
   onSourceChange: (id: number) => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(openOnArrival != null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (openOnArrival == null) return;
+    setOpen(true);
+    const frame = requestAnimationFrame(() => panelRef.current?.scrollIntoView({ block: "start", behavior: "smooth" }));
+    return () => cancelAnimationFrame(frame);
+  }, [openOnArrival]);
   const { data: entries } = useWestminsterCommentary(open ? sourceId : null, chapter);
   const source = sources.find((s) => s.id === sourceId);
   const typography = useReadingTypography(0.9);
 
   return (
-    <div className="mb-6 border-t border-line pt-3">
+    <div ref={panelRef} className="mb-6 border-t border-line pt-3">
       <div className="flex items-center justify-between gap-2">
         <button
           type="button"
@@ -421,7 +441,7 @@ function CommentaryPanel({
           className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-ink-3 hover:text-ink"
         >
           <ChevronDown className={cx("h-3.5 w-3.5 transition-transform", !open && "-rotate-90")} aria-hidden="true" />
-          Commentary on chapter {chapter}
+          Commentary on {unit} {chapter}
         </button>
         <select
           aria-label="Commentary source"
@@ -443,7 +463,7 @@ function CommentaryPanel({
       {open && (
         <div className="reading-font mt-3 space-y-4 text-ink-2" style={typography}>
           {!entries && <LoadingState />}
-          {entries?.length === 0 && <p className="text-sm text-ink-3">No commentary on this chapter.</p>}
+          {entries?.length === 0 && <p className="text-sm text-ink-3">No commentary on this {unit} from this source.</p>}
           {entries?.map((e) => (
             <div key={e.id} className={cx(e.section === currentSection && "-mx-3 rounded-md bg-amber-50 px-3 py-2 ring-1 ring-amber-200 dark:bg-amber-950/30 dark:ring-amber-900")}>
               {e.section != null && <div className="mb-1 font-sans text-xs font-semibold text-ink-3">Section {e.section}</div>}

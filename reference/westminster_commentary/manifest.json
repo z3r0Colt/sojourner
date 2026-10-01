@@ -19,5 +19,61 @@
     "author": "Thomas Vincent",
     "file": "vincent.json",
     "document_code": "wsc"
+  },
+  {
+    "code": "fisher",
+    "title": "The Assembly's Shorter Catechism Explained",
+    "author": "James Fisher and Ebenezer Erskine",
+    "file": "fisher.json",
+    "document_code": "wsc"
+  },
+  {
+    "code": "henry",
+    "title": "A Scripture Catechism",
+    "author": "Matthew Henry",
+    "file": "henry.json",
+    "document_code": "wsc"
+  },
+  {
+    "code": "flavel",
+    "title": "An Exposition of the Assembly's Catechism",
+    "author": "John Flavel",
+    "file": "flavel.json",
+    "document_code": "wsc"
+  },
+  {
+    "code": "whyte",
+    "title": "A Commentary on the Shorter Catechism",
+    "author": "Alexander Whyte",
+    "file": "whyte.json",
+    "document_code": "wsc"
+  },
+  {
+    "code": "beattie-wsc",
+    "title": "The Presbyterian Standards",
+    "author": "Francis R. Beattie",
+    "file": "beattie-wsc.json",
+    "document_code": "wsc"
+  },
+  {
+    "code": "ridgley",
+    "title": "A Body of Divinity",
+    "author": "Thomas Ridgley",
+    "file": "ridgley.json",
+    "document_code": "wlc"
+  },
+  {
+    "code": "beattie-wlc",
+    "title": "The Presbyterian Standards",
+    "author": "Francis R. Beattie",
+    "file": "beattie-wlc.json",
+    "document_code": "wlc"
+  },
+  {
+    "code": "beattie-wcf",
+    "title": "The Presbyterian Standards",
+    "author": "Francis R. Beattie",
+    "file": "beattie-wcf.json",
+    "document_code": "wcf"
   }
 ]
