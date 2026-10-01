@@ -205,9 +205,9 @@ pub fn run() {
             let shelves_installed = paths::installed_packs(&handle).iter().any(|(id, _)| id != "library");
             if shelves_installed {
                 match commands::pack::attach_and_sync_all(&handle, &conn) {
-                    Ok(o) if o.added + o.adopted + o.repointed + o.retired > 0 => println!(
-                        "[library] {} added, {} adopted, {} repointed, {} retired",
-                        o.added, o.adopted, o.repointed, o.retired
+                    Ok(o) if o.added + o.adopted + o.repointed + o.retired + o.dropped > 0 => println!(
+                        "[library] {} added, {} adopted, {} repointed, {} retired, {} dropped",
+                        o.added, o.adopted, o.repointed, o.retired, o.dropped
                     ),
                     Ok(_) => {}
                     Err(e) => eprintln!("[library] sync failed: {e:#}"),
@@ -215,9 +215,9 @@ pub fn run() {
             } else {
                 match library_dir.filter(|_| library::is_available(&conn)) {
                     Some(dir) => match library::sync(&conn, &dir) {
-                        Ok(o) if o.added + o.adopted + o.repointed + o.retired > 0 => println!(
-                            "[library] {} added, {} adopted, {} repointed, {} retired",
-                            o.added, o.adopted, o.repointed, o.retired
+                        Ok(o) if o.added + o.adopted + o.repointed + o.retired + o.dropped > 0 => println!(
+                            "[library] {} added, {} adopted, {} repointed, {} retired, {} dropped",
+                            o.added, o.adopted, o.repointed, o.retired, o.dropped
                         ),
                         Ok(_) => {}
                         Err(e) => eprintln!("[library] sync failed: {e:#}"),

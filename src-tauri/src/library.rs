@@ -336,6 +336,9 @@ pub struct SyncOutcome {
     pub adopted: usize,
     pub repointed: usize,
     pub retired: usize,
+    /// Rows for books no longer shipped that the reader had done nothing
+    /// with, deleted rather than retired (see [`holds_reader_data`]).
+    pub dropped: usize,
 }
 
 /// Makes user.db agree with the shipped library.
@@ -373,6 +376,29 @@ pub fn sync_all(conn: &Connection, packs: &[(String, PathBuf)]) -> anyhow::Resul
         return Ok(SyncOutcome::default());
     }
     sync_books(conn, books)
+}
+
+/// Whether anything the reader made points at this book: a tag, a passage
+/// link, a link to or from another book, a sermon source, or a link to it
+/// written into a note, sermon or illustration. Citations found in its text
+/// are the app's own work, and do not count.
+fn holds_reader_data(conn: &Connection, id: i64) -> anyhow::Result<bool> {
+    let link = format!("%bsapp://resource/{id}\"%");
+    let source = format!("resource:{id}");
+    let found: i64 = conn.query_row(
+        "SELECT EXISTS (SELECT 1 FROM resource_tags WHERE resource_id = ?1)
+             OR EXISTS (SELECT 1 FROM resource_passage_links WHERE resource_id = ?1)
+             OR EXISTS (SELECT 1 FROM resource_links WHERE from_resource_id = ?1 OR to_resource_id = ?1)
+             OR EXISTS (SELECT 1 FROM sermon_sources WHERE kind = 'resource' AND (ref_id = ?2 OR ref_id LIKE ?2 || ':%'))
+             OR EXISTS (SELECT 1 FROM notes WHERE body LIKE ?3)
+             OR EXISTS (SELECT 1 FROM chapter_notes WHERE body LIKE ?3)
+             OR EXISTS (SELECT 1 FROM sermons WHERE body LIKE ?3)
+             OR EXISTS (SELECT 1 FROM sermon_ideas WHERE body LIKE ?3)
+             OR EXISTS (SELECT 1 FROM illustrations WHERE body LIKE ?3)",
+        params![id, source, link],
+        |r| r.get(0),
+    )?;
+    Ok(found != 0)
 }
 
 /// Lets go of the rows for one pack's books, for when that pack alone is
@@ -453,11 +479,19 @@ fn sync_books(conn: &Connection, books_with_dirs: Vec<(LibraryBook, PathBuf)>) -
     }
 
     // Rows still claiming to be shipped books that this build no longer ships.
+    // One the reader tagged, linked or cited is retired: it stays, as one of
+    // their own books, so none of that is lost. One they never touched goes,
+    // or every reader would find it under "Your books" with no file behind it.
     let shipped: HashSet<&str> = books.iter().map(|b| b.file_name.as_str()).collect();
     for (key, (id, _)) in &by_key {
         if !shipped.contains(key.as_str()) {
-            tx.execute("UPDATE resources SET library_key = NULL WHERE id = ?1", params![id])?;
-            outcome.retired += 1;
+            if holds_reader_data(&tx, *id)? {
+                tx.execute("UPDATE resources SET library_key = NULL WHERE id = ?1", params![id])?;
+                outcome.retired += 1;
+            } else {
+                tx.execute("DELETE FROM resources WHERE id = ?1", params![id])?;
+                outcome.dropped += 1;
+            }
         }
     }
 
@@ -584,7 +618,7 @@ mod tests {
     /// files. And a book this build no longer ships stops claiming to be part
     /// of the library rather than leaving a row pointing at nothing.
     #[test]
-    fn rows_follow_the_files_and_a_dropped_book_is_retired() {
+    fn rows_follow_the_files_and_a_dropped_book_is_retired_or_dropped() {
         let (dir, conn) = scratch("move");
         let first = dir.join("install-one").join("library");
         sync(&conn, &first).unwrap();
@@ -597,9 +631,16 @@ mod tests {
             .unwrap();
         assert_eq!(path, second.join("All of Grace.epub").display().to_string());
 
+        // A book the reader tagged stays, as one of their own.
+        conn.execute(
+            "INSERT INTO resource_tags (resource_id, tag)
+             SELECT id, 'grace' FROM resources WHERE library_key = 'All of Grace.epub'",
+            [],
+        )
+        .unwrap();
         conn.execute("DELETE FROM library_resources WHERE file_name = 'All of Grace.epub'", []).unwrap();
         let outcome = sync(&conn, &second).unwrap();
-        assert_eq!(outcome.retired, 1);
+        assert_eq!((outcome.retired, outcome.dropped), (1, 0));
         let (key, bundled): (Option<String>, i64) = conn
             .query_row(
                 "SELECT library_key, (library_key IS NOT NULL) FROM resources WHERE title = 'All of Grace'",
@@ -608,6 +649,24 @@ mod tests {
             )
             .unwrap();
         assert_eq!((key, bundled), (None, 0), "no longer claims to ship with the app");
+        let tags: i64 = conn.query_row("SELECT COUNT(*) FROM resource_tags WHERE tag = 'grace'", [], |r| r.get(0)).unwrap();
+        assert_eq!(tags, 1, "and keeps its tag");
+
+        // One the reader never touched goes, rather than haunting their own
+        // books. (Another book still ships, or sync has nothing to go on.)
+        conn.execute(
+            "INSERT INTO library_resources (file_name, kind, title, author, extracted_text)
+             VALUES ('Holy War.epub', 'epub', 'Holy War', 'John Bunyan', 'the words of the book')",
+            [],
+        )
+        .unwrap();
+        conn.execute("DELETE FROM library_resources WHERE file_name = 'Mortification.epub'", []).unwrap();
+        let outcome = sync(&conn, &second).unwrap();
+        assert_eq!((outcome.retired, outcome.dropped), (0, 1));
+        let left: i64 = conn
+            .query_row("SELECT COUNT(*) FROM resources WHERE title = 'Of the Mortification of Sin'", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(left, 0);
 
         drop(conn);
         let _ = std::fs::remove_dir_all(&dir);

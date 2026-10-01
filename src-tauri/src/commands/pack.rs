@@ -95,8 +95,8 @@ pub async fn install_pack(app: AppHandle, token: String) -> AppResult<InstallOut
         });
         let synced = attach_and_sync_all(&app, &conn)?;
         println!(
-            "[pack] installed {} {}: {} added, {} adopted, {} repointed, {} retired",
-            outcome.name, outcome.version, synced.added, synced.adopted, synced.repointed, synced.retired
+            "[pack] installed {} {}: {} added, {} adopted, {} repointed, {} retired, {} dropped",
+            outcome.name, outcome.version, synced.added, synced.adopted, synced.repointed, synced.retired, synced.dropped
         );
 
         report(pack::PackProgress {
