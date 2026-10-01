@@ -40,10 +40,17 @@ export type StepOpen =
   | { pane: "lexicon"; strongs: string }
   | { pane: "webster"; word: string }
   /** The study panes that follow the Bible, opened on `passage`. */
-  | { pane: "crossrefs" | "confession-for-passage" | "citations" | "commentary" | "factbook-for-passage" | "timeline-for-passage"; passage: Passage }
+  | { pane: "crossrefs" | "confession-for-passage" | "citations" | "factbook-for-passage" | "timeline-for-passage" | "encyclopedia-for-passage"; passage: Passage }
+  /** A Bible commentary on `passage`, by its code ("mhc" for Matthew Henry). */
+  | { pane: "commentary"; passage: Passage; source?: string }
   | { pane: "psalter"; psalm: number }
   | { pane: "search"; query: string }
-  | { pane: "memory" | "prayer" | "notes" | "highlights" | "harmony" | "timeline" | "atlas" | "sermons" }
+  /** A person or place in the Factbook, by its id ("Joseph@Gen.30.24-Rev"). */
+  | { pane: "factbook"; id: string }
+  | { pane: "atlas"; slug?: string; journey?: string }
+  | { pane: "encyclopedia"; slug: string }
+  | { pane: "timeline"; eventId: number }
+  | { pane: "memory" | "prayer" | "notes" | "highlights" | "harmony" | "sermons" }
   /** A library book by (part of) its title, opened at a phrase. When the
    * install lacks it, `fallback` -- a Standards commentary on a question --
    * opens instead. */
@@ -68,11 +75,24 @@ export type Check =
   | { type: "highlight"; passage: Passage }
   /** A verse note in the passage, tagged `tag` or written since the lesson began. */
   | { type: "note"; passage: Passage; tag: string }
-  /** Memory cards for these: a Shorter Catechism question, a verse. */
-  | { type: "memory"; question?: number; verse?: Passage }
+  /** Memory cards for these: Shorter Catechism questions, a verse. */
+  | { type: "memory"; questions?: number[]; verse?: Passage }
   /** A prayer journal entry tagged `tag` or written since the lesson began. */
   | { type: "prayer"; tag: string }
-  | { type: "quiz"; questions: QuizQuestion[] };
+  /** Questions written for the lesson, then Matthew Henry's from A Scripture
+   * Catechism (1703), named by their exact words and read from the copy
+   * that ships with the app, each with his own Scripture answer. */
+  | { type: "quiz"; questions: QuizQuestion[]; henry?: HenryAsk[] }
+  /** A review: the unit's "before" answers, and a box for what the student
+   * would say now. */
+  | { type: "reflect" };
+
+export interface HenryAsk {
+  /** The Shorter Catechism question Henry is opening. */
+  question: number;
+  /** His question, exactly as printed ("Is man his own end?"). */
+  ask: string;
+}
 
 export interface Step {
   /** Stable within the lesson: progress is kept by it. */
@@ -103,6 +123,8 @@ export interface LessonWorkspace {
 export interface LessonData {
   /** "wsc-33"; kept in progress and in pane params, so never renamed. */
   id: string;
+  /** A unit's closing review, which comes after the unit's last lesson. */
+  review?: boolean;
   title: string;
   /** The Shorter Catechism questions it teaches. */
   questions: number[];
@@ -167,6 +189,18 @@ export const UNITS: Unit[] = [
     lessons: LESSONS.filter((l) => l.questions[0] >= 85),
   },
 ];
+
+export function unitOf(lesson: Lesson): Unit | undefined {
+  return UNITS.find((u) => u.lessons.some((l) => l.id === lesson.id));
+}
+
+/** "Question 33", "Questions 13–15", or for a review its range. */
+export function questionsLabel(lesson: Lesson): string {
+  const qs = lesson.questions;
+  if (qs.length === 1) return `Question ${qs[0]}`;
+  const run = qs.every((q, i) => i === 0 || q === qs[i - 1] + 1);
+  return run ? `Questions ${qs[0]}–${qs[qs.length - 1]}` : `Questions ${qs.join(", ")}`;
+}
 
 export function lessonById(id: string): Lesson | undefined {
   return LESSONS.find((l) => l.id === id);
@@ -242,6 +276,38 @@ export function nextLesson(state: GuideState, lessons: Lesson[] = LESSONS): Less
   const current = state.current ? lessons.find((l) => l.id === state.current) : undefined;
   if (current && !state.lessons[current.id]?.completedAt) return current;
   return lessons.find((l) => !state.lessons[l.id]?.completedAt);
+}
+
+/** One of Henry's questions with his answer: "Is man his own end?" /
+ * no / "No: For none of us lives to himself…, Romans 14:7." */
+export interface HenryItem {
+  ask: string;
+  yes: boolean;
+  answer: string;
+}
+
+/** Henry's yes-or-no questions on one Shorter Catechism question, from the
+ * commentary entry the app ships (reference/westminster_commentary/henry.json):
+ * a question on one line, his answer on the next, beginning "Yes" or "No".
+ * His few questions answered otherwise are left out. */
+export function parseHenry(text: string): HenryItem[] {
+  const lines = text.split(/\r?\n/).map((l) => l.trim());
+  const out: HenryItem[] = [];
+  for (let i = 0; i + 1 < lines.length; i++) {
+    const ask = lines[i].replace(/^\d+\.\s*/, "");
+    const m = lines[i + 1].match(/^(Yes|No)\b/);
+    if (ask.endsWith("?") && m) out.push({ ask, yes: m[1] === "Yes", answer: lines[i + 1] });
+  }
+  return out;
+}
+
+export function henryQuestion(item: HenryItem): QuizQuestion {
+  return { q: item.ask, choices: ["Yes", "No"], answer: item.yes ? 0 : 1, why: item.answer };
+}
+
+/** Course order: by the first question taught, a review after its unit's last. */
+export function sortKey(l: LessonData): number {
+  return l.review ? Math.max(...l.questions) + 0.5 : l.questions[0];
 }
 
 /** Whether a verse range overlaps a passage. */

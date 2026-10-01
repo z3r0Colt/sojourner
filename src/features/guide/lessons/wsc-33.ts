@@ -136,7 +136,7 @@ export const WSC_33: LessonData = {
       id: "keep",
       title: "Keep it",
       text: "Learn the answer by heart, and the verse it rests on. Memory brings each card back for review just before you would forget it.",
-      check: { type: "memory", question: 33, verse: { book: ROMANS, chapter: 3, verse: 28 } },
+      check: { type: "memory", questions: [33], verse: { book: ROMANS, chapter: 3, verse: 28 } },
     },
     {
       id: "sing",

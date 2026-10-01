@@ -42,9 +42,9 @@ export function useLiveCheck(check: Check | undefined, startedAt: string | undef
       );
     }
     case "memory": {
-      const q = check.question;
       const v = check.verse;
-      const hasQuestion = q == null || (catechismCards.data ?? []).some((c) => c.westminster_section_id === sectionId("wsc", q));
+      const learning = new Set((catechismCards.data ?? []).map((c) => c.westminster_section_id));
+      const hasQuestion = (check.questions ?? []).every((q) => learning.has(sectionId("wsc", q)));
       const hasVerse = v == null || (verseCards.data ?? []).some((c) => overlaps(v, c.book_id, c.chapter, c.verse_start, c.verse_end));
       return hasQuestion && hasVerse;
     }

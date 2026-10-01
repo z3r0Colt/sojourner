@@ -63,13 +63,32 @@ export async function openStep(open: StepOpen, guidePaneId: string): Promise<voi
     case "crossrefs":
     case "confession-for-passage":
     case "citations":
-    case "commentary":
     case "factbook-for-passage":
-    case "timeline-for-passage": {
+    case "timeline-for-passage":
+    case "encyclopedia-for-passage": {
       openBible(open.passage, guidePaneId);
       openBeside(open.pane, passageParams(open.passage), guidePaneId);
       return;
     }
+    case "commentary": {
+      openBible(open.passage, guidePaneId);
+      const sources = open.source ? await api.listCommentarySources().catch(() => []) : [];
+      const sourceId = sources.find((s) => s.code === open.source)?.id;
+      openBeside("commentary", { ...passageParams(open.passage), ...(sourceId != null ? { sourceId } : {}) }, guidePaneId);
+      return;
+    }
+    case "factbook":
+      openBeside("factbook", { id: open.id }, guidePaneId);
+      return;
+    case "atlas":
+      openBeside("atlas", { slug: open.slug ?? null, journey: open.journey ?? null }, guidePaneId);
+      return;
+    case "encyclopedia":
+      openBeside("encyclopedia", { slug: open.slug }, guidePaneId);
+      return;
+    case "timeline":
+      openBeside("timeline", { eventId: open.eventId, year: null }, guidePaneId);
+      return;
     case "westminster":
       openBeside(
         "westminster",
@@ -100,7 +119,7 @@ export async function openStep(open: StepOpen, guidePaneId: string): Promise<voi
       const want = open.title.toLowerCase();
       const book = resources.find((r) => r.title.toLowerCase() === want) ?? resources.find((r) => r.title.toLowerCase().includes(want));
       if (book) {
-        openBeside("resource", { id: book.id, find: open.find ? { text: open.find, occurrence: 1 } : null }, guidePaneId);
+        openBeside("resource", { id: book.id, find: open.find ? { text: open.find, occurrence: 0 } : null }, guidePaneId);
         return;
       }
       // Not in this library (it needs a pack): the Standards commentary on

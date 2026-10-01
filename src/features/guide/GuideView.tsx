@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useMemo, useState } from "react";
+import { useQueries, useQuery } from "@tanstack/react-query";
 import { ArrowRight, Check, ChevronLeft, CircleCheck, ExternalLink, LayoutPanelLeft, Lightbulb } from "lucide-react";
 import { api } from "../../api/client";
 import {
@@ -10,6 +10,7 @@ import {
   useCreateCatechismMemory,
   useCreateNote,
   useCreatePrayerEntry,
+  useWestminsterCommentarySources,
 } from "../../api/queries";
 import { Button } from "../../components/ui/Button";
 import { cardClass, cx, linkClass, pageClass, sectionLabelClass, textareaClass } from "../../components/ui/classes";
@@ -23,6 +24,10 @@ import { localDate } from "../family/familyWorship";
 import {
   EMPTY_GUIDE,
   GUIDE_SETTING,
+  questionsLabel,
+  unitOf,
+  henryQuestion,
+  parseHenry,
   UNITS,
   lessonById,
   lessonTag,
@@ -35,6 +40,8 @@ import {
   unmarkDone,
   withLesson,
   type GuideState,
+  type HenryAsk,
+  type HenryItem,
   type Lesson,
   type LessonProgress,
   type Passage,
@@ -119,7 +126,7 @@ function CourseView() {
                       <span className="w-6 shrink-0 text-right text-sm tabular-nums text-ink-3">{l.number}</span>
                       <span className="min-w-0 flex-1">
                         <span className="block text-sm font-medium text-ink">{l.title}</span>
-                        <span className="block text-xs text-ink-3">Question {l.questions.join(", ")}</span>
+                        <span className="block text-xs text-ink-3">{l.review ? `Review of ${questionsLabel(l)}` : questionsLabel(l)}</span>
                       </span>
                       {p?.completedAt ? (
                         <CircleCheck className="h-4 w-4 shrink-0 text-accent" aria-label="Finished" />
@@ -166,7 +173,7 @@ function LessonView({ lesson }: { lesson: Lesson }) {
         <ChevronLeft className="h-4 w-4" aria-hidden="true" /> All lessons
       </button>
       <p className={sectionLabelClass}>
-        Lesson {lesson.number} · Shorter Catechism {lesson.questions.length > 1 ? "Questions" : "Question"} {lesson.questions.join(", ")}
+        Lesson {lesson.number} · {lesson.review ? "Review of" : "Shorter Catechism"} {questionsLabel(lesson)}
       </p>
       <h1 className="reading-font mb-2 text-2xl font-semibold text-ink">{lesson.title}</h1>
       <p className="mb-4 text-sm text-ink-2">{lesson.intro}</p>
@@ -181,7 +188,7 @@ function LessonView({ lesson }: { lesson: Lesson }) {
 
       <ol className="space-y-3">
         {lesson.steps.map((step, i) => (
-          <StepCard key={step.id} lesson={lesson} step={step} index={i} progress={progress} update={(c) => update(lesson.id, c)} />
+          <StepCard key={step.id} lesson={lesson} step={step} index={i} guide={state} progress={progress} update={(c) => update(lesson.id, c)} />
         ))}
       </ol>
 
@@ -243,12 +250,14 @@ function StepCard({
   lesson,
   step,
   index,
+  guide,
   progress,
   update,
 }: {
   lesson: Lesson;
   step: Step;
   index: number;
+  guide: GuideState;
   progress: LessonProgress | undefined;
   update: (change: (p: LessonProgress) => LessonProgress) => void;
 }) {
@@ -312,10 +321,11 @@ function StepCard({
               </Button>
             </div>
           )}
-          {step.check?.type === "answer" && (
+          {step.check?.type === "reflect" && <Then lesson={lesson} guide={guide} />}
+          {(step.check?.type === "answer" || step.check?.type === "reflect") && (
             <AnswerBox
               initial={progress?.answers[step.id] ?? ""}
-              placeholder={step.check.placeholder}
+              placeholder={step.check.type === "answer" ? step.check.placeholder : "Now I would say…"}
               onSave={(text) =>
                 update((p) => {
                   const next = { ...p, answers: { ...p.answers, [step.id]: text } };
@@ -327,6 +337,7 @@ function StepCard({
           {step.check?.type === "quiz" && (
             <Quiz
               questions={step.check.questions}
+              henry={step.check.henry ?? []}
               saved={progress?.quiz[step.id]?.picks}
               onSubmit={(picks, questions) =>
                 update((p) => markDone({ ...p, quiz: { ...p.quiz, [step.id]: scoreQuiz(questions, picks) } }, step.id, now()))
@@ -334,11 +345,30 @@ function StepCard({
             />
           )}
           {step.check?.type === "note" && !done && <QuickNote passage={step.check.passage} tag={step.check.tag} />}
-          {step.check?.type === "memory" && <MemoryButtons question={step.check.question} verse={step.check.verse} />}
+          {step.check?.type === "memory" && <MemoryButtons questions={step.check.questions ?? []} verse={step.check.verse} />}
           {step.check?.type === "prayer" && !done && <QuickPrayer tag={lessonTag(lesson)} />}
         </div>
       </div>
     </li>
+  );
+}
+
+/** What the student wrote before each lesson of the unit. */
+function Then({ lesson, guide }: { lesson: Lesson; guide: GuideState }) {
+  const lessons = (unitOf(lesson)?.lessons ?? []).filter((l) => !l.review);
+  const written = lessons.filter((l) => guide.lessons[l.id]?.answers.before?.trim());
+  if (written.length === 0) return <p className="mt-2 text-sm italic text-ink-3">You have no “before you read” answers in this unit yet.</p>;
+  return (
+    <ul className="mt-2 space-y-2">
+      {written.map((l) => (
+        <li key={l.id} className="rounded-md bg-surface-2 px-3 py-2 text-sm">
+          <span className="block text-xs text-ink-3">
+            Lesson {l.number}: {l.title}
+          </span>
+          <span className="text-ink-2">“{guide.lessons[l.id]!.answers.before.trim()}”</span>
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -359,14 +389,18 @@ function AnswerBox({ initial, placeholder, onSave }: { initial: string; placehol
 }
 
 function Quiz({
-  questions,
+  questions: own,
+  henry,
   saved,
   onSubmit,
 }: {
   questions: QuizQuestion[];
+  henry: HenryAsk[];
   saved: number[] | undefined;
   onSubmit: (picks: number[], questions: QuizQuestion[]) => void;
 }) {
+  const henryQuestions = useHenryQuestions(henry);
+  const questions = useMemo(() => [...own, ...henryQuestions], [own, henryQuestions]);
   const [picks, setPicks] = useState<number[]>(saved ?? []);
   const [shown, setShown] = useState(saved != null);
   const all = questions.every((_, i) => picks[i] != null);
@@ -431,6 +465,32 @@ function Quiz({
   );
 }
 
+/** Henry's questions as the app's own copy of his Scripture Catechism has
+ * them; any not found (a different copy) are left out. */
+function useHenryQuestions(asks: HenryAsk[]): QuizQuestion[] {
+  const { data: sources } = useWestminsterCommentarySources();
+  const sourceId = sources?.find((s) => s.code === "henry")?.id ?? null;
+  const numbers = [...new Set(asks.map((a) => a.question))];
+  const entries = useQueries({
+    queries: numbers.map((n) => ({
+      queryKey: ["westminsterCommentary", sourceId, n],
+      queryFn: () => api.getWestminsterCommentary(sourceId as number, n),
+      enabled: sourceId != null,
+      staleTime: Infinity,
+    })),
+  });
+  const key = entries.map((e) => e.dataUpdatedAt).join(",");
+  return useMemo(() => {
+    const items = new Map<number, HenryItem[]>();
+    numbers.forEach((n, i) => items.set(n, (entries[i]?.data ?? []).flatMap((e) => parseHenry(e.body))));
+    return asks.flatMap((a) => {
+      const item = items.get(a.question)?.find((it) => it.ask === a.ask);
+      return item ? [henryQuestion(item)] : [];
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key, asks]);
+}
+
 /** Writing the step's note without leaving the Guide: an ordinary verse
  * note, tagged with the lesson. */
 function QuickNote({ passage, tag }: { passage: Passage; tag: string }) {
@@ -458,33 +518,39 @@ function QuickNote({ passage, tag }: { passage: Passage; tag: string }) {
   );
 }
 
-function MemoryButtons({ question, verse }: { question?: number; verse?: Passage }) {
+function MemoryButtons({ questions, verse }: { questions: number[]; verse?: Passage }) {
   const { data: books } = useBooks();
   const { data: catechismCards } = useQuery({ queryKey: ["catechismMemory"], queryFn: api.listCatechismMemory });
   const { data: verseCards } = useQuery({ queryKey: ["memoryVerses"], queryFn: api.listMemoryVerses });
   const createCatechism = useCreateCatechismMemory();
   const addToMemory = useAddToMemory();
-  const hasQuestion = question != null && (catechismCards ?? []).some((c) => c.westminster_section_id === sectionId("wsc", question));
+  const learning = new Set((catechismCards ?? []).map((c) => c.westminster_section_id));
   const hasVerse = verse != null && (verseCards ?? []).some((c) => overlaps(verse, c.book_id, c.chapter, c.verse_start, c.verse_end));
-  const verseLabel = verse ? `${bookName(books, verse.book)} ${verse.chapter}${verse.verse ? `:${verse.verse}` : ""}` : "";
+  const verseLabel = verse
+    ? `${bookName(books, verse.book)} ${verse.chapter}${verse.verse ? `:${verse.verse}${verse.to ? `-${verse.to}` : ""}` : ""}`
+    : "";
 
   return (
     <div className="mt-2 flex flex-wrap gap-2">
-      {question != null && (
-        <Button
-          size="sm"
-          icon={hasQuestion ? Check : undefined}
-          disabled={hasQuestion || createCatechism.isPending}
-          onClick={() => createCatechism.mutate({ westminsterSectionId: sectionId("wsc", question), mode: "first-letter" })}
-        >
-          {hasQuestion ? `Question ${question} is in your memory` : `Learn Question ${question}`}
-        </Button>
-      )}
+      {questions.map((question) => {
+        const has = learning.has(sectionId("wsc", question));
+        return (
+          <Button
+            key={question}
+            size="sm"
+            icon={has ? Check : undefined}
+            disabled={has || createCatechism.isPending || !catechismCards}
+            onClick={() => createCatechism.mutate({ westminsterSectionId: sectionId("wsc", question), mode: "first-letter" })}
+          >
+            {has ? `Question ${question} is in your memory` : `Learn Question ${question}`}
+          </Button>
+        );
+      })}
       {verse && (
         <Button
           size="sm"
           icon={hasVerse ? Check : undefined}
-          disabled={hasVerse || !books}
+          disabled={hasVerse || !books || !verseCards}
           onClick={async () => {
             const r = await addToMemory(verseLabel, { setName: "Guided study" });
             if (!r.ok) toast.error(r.error);
