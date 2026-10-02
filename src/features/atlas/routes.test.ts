@@ -42,6 +42,19 @@ describe("journeys along the Roman roads", () => {
     expect(routeLeg(graph, at.caesarea, at.rome).by).toBe("direct");
   });
 
+  it("takes an Old Testament journey along the great routes, never a Roman road", () => {
+    const ancient = buildRoadGraph(roads, "ancient");
+    const hebron = { lon: 35.10222, lat: 31.52509 };
+    const shechem = { lon: 35.28194, lat: 32.21361 };
+    // Hebron to Shechem is the ridge route, the Way of the Patriarchs.
+    const ridge = routeLeg(ancient, hebron, shechem);
+    expect(ridge.by).toBe("road");
+    expect(ridge.coords.length).toBeGreaterThan(3);
+    // Philippi to Thessalonica was the Via Egnatia, which no older route
+    // follows: before the Romans it is a straight line.
+    expect(routeLeg(ancient, at.philippi, at.thessalonica).by).toBe("direct");
+  });
+
   it("starts and ends on the stops themselves", () => {
     const leg = routeLeg(graph, at.jerusalem, at.damascus);
     expect(leg.coords[0]).toEqual([at.jerusalem.lon, at.jerusalem.lat]);

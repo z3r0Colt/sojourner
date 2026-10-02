@@ -7,7 +7,8 @@ import { distanceKm, type LonLat } from "./geo";
  * A New Testament traveller on land went by the Roman roads and the old
  * highways they were laid along, so a leg of such a journey is drawn along
  * them: the shortest way through the road network the Atlas already draws
- * (the AWMC's Roman roads and the great routes of the land). A traveller can
+ * (the AWMC's Roman roads and the great routes of the land). An Old Testament
+ * journey, before there were Roman roads, has the great routes alone. A traveller can
  * also leave the road -- the network has gaps, and not every village was on
  * a highway -- at a cost: going across country counts for more than its
  * distance, so the road is taken wherever it really is the better way.
@@ -57,7 +58,17 @@ function near(cells: Map<string, number[]>, p: LonLat, reach: number): number[] 
   return out;
 }
 
-export function buildRoadGraph(geojson: { features: { geometry: { type: string; coordinates: unknown } | null; properties: { kind?: string } }[] }): RoadGraph {
+/** Which roads a journey can take: the Roman roads and the great routes, or
+ * (before the Romans) the great routes alone. */
+export type RoadNetwork = "roman" | "ancient";
+
+const KINDS: Record<RoadNetwork, string[]> = { roman: ["roman", "ot"], ancient: ["ot"] };
+
+export function buildRoadGraph(
+  geojson: { features: { geometry: { type: string; coordinates: unknown } | null; properties: { kind?: string } }[] },
+  network: RoadNetwork = "roman",
+): RoadGraph {
+  const kinds = KINDS[network];
   const lon: number[] = [];
   const lat: number[] = [];
   const edges: { to: number; km: number }[][] = [];
@@ -90,7 +101,7 @@ export function buildRoadGraph(geojson: { features: { geometry: { type: string; 
   };
   for (const f of geojson.features) {
     const kind = f.properties.kind;
-    if ((kind !== "roman" && kind !== "ot") || !f.geometry) continue;
+    if (!kind || !kinds.includes(kind) || !f.geometry) continue;
     if (f.geometry.type === "LineString") addLine(f.geometry.coordinates as Line, kind === "ot");
     else if (f.geometry.type === "MultiLineString") for (const l of f.geometry.coordinates as Line[]) addLine(l, kind === "ot");
   }
@@ -240,16 +251,20 @@ export function journeyRoutes(journey: AtlasJourney, g: RoadGraph | null): LegRo
 /** The eras whose travellers went by the Roman roads. */
 export const ROMAN_ERAS = new Set(["The life of Christ", "The apostolic church"]);
 
-let graph: Promise<RoadGraph> | null = null;
+const graphs = new Map<RoadNetwork, Promise<RoadGraph>>();
 
-/** The road network, read once from the Atlas's roads file. */
-export function loadRoadGraph(url: string): Promise<RoadGraph> {
-  graph ??= fetch(url)
-    .then((r) => r.json())
-    .then(buildRoadGraph)
-    .catch((e) => {
-      graph = null;
-      throw e;
-    });
+/** A road network, read once from the Atlas's roads file. */
+export function loadRoadGraph(url: string, network: RoadNetwork): Promise<RoadGraph> {
+  let graph = graphs.get(network);
+  if (!graph) {
+    graph = fetch(url)
+      .then((r) => r.json())
+      .then((json) => buildRoadGraph(json, network))
+      .catch((e) => {
+        graphs.delete(network);
+        throw e;
+      });
+    graphs.set(network, graph);
+  }
   return graph;
 }

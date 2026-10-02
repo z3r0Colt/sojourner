@@ -142,9 +142,9 @@ function journeyGeoJSON(journey: AtlasJourney | null, routes: LegRoute[] | null,
       [stops[i].lon as number, stops[i].lat as number],
       [l.lon as number, l.lat as number],
     ];
-    // An Old Testament leg is a line between stops; a Roman-era one is a
-    // road, or open where no road served (by sea, or across country).
-    const way = !roman ? "line" : route?.by === "road" ? "road" : "open";
+    // A leg on the road, or off it: a Roman-era leg off the road is drawn
+    // open (by sea, or across country); an older one is a plain line.
+    const way = route?.by === "road" ? "road" : roman ? "open" : "line";
     return { type: "Feature" as const, geometry: { type: "LineString" as const, coordinates: coords }, properties: { way } };
   });
   return {

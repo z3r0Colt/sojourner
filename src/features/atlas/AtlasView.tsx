@@ -95,20 +95,19 @@ export function AtlasView() {
   const highlighted = useMemo(() => new Set((passagePlaces ?? []).map((p) => p.slug)), [passagePlaces]);
   const chapterName = params.bookId && params.chapter ? `${bookName(books, params.bookId)} ${params.chapter}` : null;
 
-  // A New Testament journey goes by the Roman roads: the road network is
-  // read when the first such journey is shown, and kept.
+  // A journey goes by the roads of its day: a New Testament one by the
+  // Roman roads, an Old Testament one by the great routes. Each network is
+  // read when the first journey that needs it is shown, and kept.
   const roman = !!journey && ROMAN_ERAS.has(journey.era);
+  const network = roman ? "roman" : "ancient";
   const { data: roadGraph } = useQuery({
-    queryKey: ["atlasRoadGraph"],
-    queryFn: () => loadRoadGraph(`${DATA}/roads.geojson`),
-    enabled: roman,
+    queryKey: ["atlasRoadGraph", network],
+    queryFn: () => loadRoadGraph(`${DATA}/roads.geojson`, network),
+    enabled: !!journey,
     staleTime: Infinity,
     gcTime: Infinity,
   });
-  const routes = useMemo(
-    () => (journey && (!roman || roadGraph) ? journeyRoutes(journey, roman ? roadGraph! : null) : null),
-    [journey, roman, roadGraph],
-  );
+  const routes = useMemo(() => (journey && roadGraph ? journeyRoutes(journey, roadGraph) : null), [journey, roadGraph]);
 
   // Said at the top of the map, so what is marked is never a puzzle.
   const focusLabel = journey
@@ -522,7 +521,10 @@ function JourneyDetail({ slug, units, routes, roman }: { slug: string; units: Un
             across country.
           </p>
         ) : (
-          <p className="mb-4 text-xs text-ink-3">About {formatDistance(totalKm, units)} from stop to stop in straight lines; more by road.</p>
+          <p className="mb-4 text-xs text-ink-3">
+            About {formatDistance(totalKm, units)} in all: along the great routes where the way followed them, elsewhere from stop to stop in
+            straight lines (more on the ground).
+          </p>
         ))}
 
       <ol className="space-y-2.5">
@@ -570,11 +572,12 @@ function JourneyDetail({ slug, units, routes, roman }: { slug: string; units: Un
 function LegDistance({ route, roman, units }: { route: LegRoute; roman: boolean; units: Units }) {
   const km = route.km;
   const foot = `${daysText(km, TRAVEL[0].kmPerDay)} on foot`;
-  const text = !roman
-    ? `${formatDistance(km, units)} from the last stop, ${foot}`
-    : route.by === "road"
-      ? `${formatDistance(km, units)} by road, ${foot}`
-      : `${formatDistance(km, units)} in a straight line: ${foot}, or ${daysText(km, TRAVEL[2].kmPerDay)} by ship`;
+  const text =
+    route.by === "road"
+      ? `${formatDistance(km, units)} ${roman ? "by road" : "along the highway"}, ${foot}`
+      : roman
+        ? `${formatDistance(km, units)} in a straight line: ${foot}, or ${daysText(km, TRAVEL[2].kmPerDay)} by ship`
+        : `${formatDistance(km, units)} from the last stop, ${foot}`;
   return <p className="text-xs text-ink-4">{text}</p>;
 }
 
