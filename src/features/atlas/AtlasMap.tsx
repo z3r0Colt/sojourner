@@ -72,7 +72,8 @@ function placesGeoJSON(places: AtlasPlace[], selected: string | null, highlighte
         geometry: { type: "Point" as const, coordinates: [p.lon as number, p.lat as number] },
         properties: {
           slug: p.slug,
-          label: p.slug === selected ? displayName(p) : p.name,
+          // A name used for another place (Babylon for Rome) always says so.
+          label: p.slug === selected || p.qualifier?.startsWith("for ") ? displayName(p) : p.name,
           group: groupOf(p),
           // Seas and lakes are named across the water, not marked with a dot.
           sea: p.kinds.includes("body of water") ? 1 : 0,
