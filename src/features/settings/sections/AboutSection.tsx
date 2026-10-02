@@ -407,6 +407,10 @@ export function AboutSection() {
           Elevation from the Terrain Tiles on AWS: SRTM and GMTED2010 courtesy of the U.S. Geological Survey; ETOPO1, U.S. National Oceanic and
           Atmospheric Administration; EU-DEM produced using Copernicus data and information funded by the European Union.
         </Source>
+        <Source name="Bible atlas — imagery pack">
+          The whole biblical world from NASA's Blue Marble Next Generation (NASA Earth Observatory), public domain. The Holy Land is a cloud-free
+          mosaic made from Copernicus Sentinel-2 scenes of summer 2024: contains modified Copernicus Sentinel data 2024.
+        </Source>
         <Source name="Bible atlas — the map">
           Drawn with MapLibre GL JS, © MapLibre contributors, under the BSD 3-Clause licence. Its names are set in Noto Sans, © The Noto Project Authors, under the SIL Open
           Font License, as distributed by the OpenMapTiles fonts project; the licence ships beside the fonts.

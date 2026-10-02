@@ -275,8 +275,8 @@ export function buildStyle(c: AtlasColors, s: LayerSettings, terrain: TileSource
             },
           ]
         : []),
-      { id: "coast", type: "line", source: "land", paint: { "line-color": c.coast, "line-width": ["interpolate", ["linear"], ["zoom"], 3, 0.4, 8, 1.2] } },
-      { id: "lakes", type: "fill", source: "lakes", paint: { "fill-color": c.lake, "fill-outline-color": c.coast } },
+      { id: "coast", type: "line", source: "land", layout: { visibility: vis(s.base !== "satellite" || !imagery) }, paint: { "line-color": c.coast, "line-width": ["interpolate", ["linear"], ["zoom"], 3, 0.4, 8, 1.2] } },
+      { id: "lakes", type: "fill", source: "lakes", layout: { visibility: vis(s.base !== "satellite" || !imagery) }, paint: { "fill-color": c.lake, "fill-outline-color": c.coast } },
       {
         id: "rivers",
         type: "line",
@@ -572,6 +572,10 @@ export function applySettings(map: MapLibreMap, s: LayerSettings): void {
   const set = (id: string, on: boolean) => map.getLayer(id) && map.setLayoutProperty(id, "visibility", vis(on));
   set("hillshade", s.base === "terrain" || s.base === "satellite");
   set("imagery", s.base === "satellite");
+  // Over the pictures the drawn water and coastline only get in the way.
+  const pictures = s.base === "satellite" && !!map.getLayer("imagery");
+  set("lakes", !pictures);
+  set("coast", !pictures);
   if (map.getLayer("hillshade")) map.setPaintProperty("hillshade", "hillshade-exaggeration", s.base === "satellite" ? 0.25 : 0.55);
   // Relief in 3D: the land raised on the elevation tiles, seen at a tilt.
   const relief = s.relief3d && !!map.getSource("dem");
