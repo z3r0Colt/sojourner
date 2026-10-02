@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { useQueries, useQuery } from "@tanstack/react-query";
-import { ArrowRight, Check, ChevronLeft, CircleCheck, ExternalLink, LayoutPanelLeft, Lightbulb } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { ArrowRight, BookOpenCheck, Check, ChevronLeft, CircleCheck, ExternalLink, LayoutPanelLeft, Lightbulb, Printer, Users } from "lucide-react";
 import { api } from "../../api/client";
 import {
   useAddNoteTag,
@@ -10,24 +10,18 @@ import {
   useCreateCatechismMemory,
   useCreateNote,
   useCreatePrayerEntry,
-  useWestminsterCommentarySources,
 } from "../../api/queries";
 import { Button } from "../../components/ui/Button";
 import { cardClass, cx, linkClass, pageClass, sectionLabelClass, textareaClass } from "../../components/ui/classes";
 import { toast } from "../../components/ui/toast";
-import { useSetting } from "../../hooks/useSetting";
 import { bookName } from "../../lib/passage";
 import { escapeHtml } from "../../lib/escapeHtml";
 import { usePane, usePaneParams } from "../../workspace/PaneContext";
 import { useAddToMemory } from "../memory/useAddToMemory";
 import { localDate } from "../family/familyWorship";
 import {
-  EMPTY_GUIDE,
-  GUIDE_SETTING,
   questionsLabel,
   unitOf,
-  henryQuestion,
-  parseHenry,
   UNITS,
   lessonById,
   lessonTag,
@@ -38,10 +32,8 @@ import {
   sectionId,
   stepsDone,
   unmarkDone,
-  withLesson,
   type GuideState,
   type HenryAsk,
-  type HenryItem,
   type Lesson,
   type LessonProgress,
   type Passage,
@@ -51,13 +43,9 @@ import {
 } from "./course";
 import { useLiveCheck } from "./checks";
 import { layOutLesson, openStep } from "./openStep";
-
-function useGuide() {
-  const [state, setState, { isLoaded }] = useSetting<GuideState>(GUIDE_SETTING, EMPTY_GUIDE);
-  const update = (lessonId: string, change: (p: LessonProgress) => LessonProgress) =>
-    setState((prev) => withLesson(prev, lessonId, new Date().toISOString(), change));
-  return { state, isLoaded, update };
-}
+import { DeeperSection } from "./DeeperSection";
+import { LessonSheet, NotebookSheet } from "./GuidePrint";
+import { useGuide, useHenryQuestions } from "./useGuideData";
 
 export function GuideView() {
   const [params] = usePaneParams("guide");
@@ -69,10 +57,12 @@ export function GuideView() {
 // The course
 
 function CourseView() {
-  const { state } = useGuide();
+  const { state, setState } = useGuide();
   const [, setParams] = usePaneParams("guide");
+  const [printing, setPrinting] = useState(false);
   const next = nextLesson(state);
   const nextStarted = next ? state.lessons[next.id] : undefined;
+  const begun = Object.keys(state.lessons).length > 0;
 
   return (
     <div className={pageClass}>
@@ -102,6 +92,27 @@ function CourseView() {
           </Button>
         </div>
       )}
+
+      <div className="mb-8 flex flex-wrap items-center gap-x-4 gap-y-2">
+        <Button
+          icon={Printer}
+          disabled={!begun}
+          onClick={() => setPrinting(true)}
+          title={begun ? "Print the answers you have learned, with what you wrote, your notes and prayers, lesson by lesson" : "Begin a lesson first"}
+        >
+          Print my notebook
+        </Button>
+        <label className="flex items-center gap-2 text-sm text-ink-2">
+          <input
+            type="checkbox"
+            className="accent-accent"
+            checked={!!state.leader}
+            onChange={(e) => setState((prev) => ({ ...prev, leader: e.target.checked }))}
+          />
+          <Users className="h-4 w-4 text-ink-4" aria-hidden="true" />I lead a class or family through these lessons
+        </label>
+      </div>
+      {printing && <NotebookSheet state={state} onDone={() => setPrinting(false)} />}
 
       {UNITS.map((unit, i) => (
         <section key={unit.title} className="mb-6">
@@ -151,7 +162,8 @@ function CourseView() {
 // One lesson
 
 function LessonView({ lesson }: { lesson: Lesson }) {
-  const { state, isLoaded, update } = useGuide();
+  const { state, setState, isLoaded, update } = useGuide();
+  const [printing, setPrinting] = useState<"class" | "leader" | null>(null);
   const [, setParams] = usePaneParams("guide");
   const { data: commentarySources } = useCommentarySources();
   const progress = state.lessons[lesson.id];
@@ -185,12 +197,40 @@ function LessonView({ lesson }: { lesson: Lesson }) {
           {done} of {of} steps done
         </span>
       </div>
+      {state.leader && !lesson.review && (
+        <div className={cx(cardClass, "mb-6")}>
+          <p className="flex items-center gap-2 text-sm font-medium text-ink">
+            <Users className="h-4 w-4 text-ink-4" aria-hidden="true" /> Leading this lesson
+          </p>
+          <p className="mt-1 text-sm text-ink-2">
+            The handout has the opening question, the passages, the Catechism’s answers, the lesson’s questions with room to write, and what to learn by
+            heart. Your copy adds a plan for the hour and the answers.
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <Button size="sm" icon={Printer} onClick={() => setPrinting("class")}>
+              Print the handout
+            </Button>
+            <Button size="sm" icon={BookOpenCheck} onClick={() => setPrinting("leader")}>
+              Print the leader’s copy
+            </Button>
+          </div>
+        </div>
+      )}
+      {printing && <LessonSheet lesson={lesson} leader={printing === "leader"} onDone={() => setPrinting(null)} />}
 
       <ol className="space-y-3">
         {lesson.steps.map((step, i) => (
           <StepCard key={step.id} lesson={lesson} step={step} index={i} guide={state} progress={progress} update={(c) => update(lesson.id, c)} />
         ))}
       </ol>
+
+      <DeeperSection
+        lesson={lesson}
+        open={!!state.deeper}
+        onToggle={() => setState((prev) => ({ ...prev, deeper: !prev.deeper }))}
+        progress={progress}
+        update={(c) => update(lesson.id, c)}
+      />
 
       <div className="mt-6 flex flex-wrap items-center gap-3 border-t border-line pt-4">
         {progress?.completedAt ? (
@@ -491,32 +531,6 @@ function Quiz({
       </div>
     </div>
   );
-}
-
-/** Henry's questions as the app's own copy of his Scripture Catechism has
- * them; any not found (a different copy) are left out. */
-function useHenryQuestions(asks: HenryAsk[]): QuizQuestion[] {
-  const { data: sources } = useWestminsterCommentarySources();
-  const sourceId = sources?.find((s) => s.code === "henry")?.id ?? null;
-  const numbers = [...new Set(asks.map((a) => a.question))];
-  const entries = useQueries({
-    queries: numbers.map((n) => ({
-      queryKey: ["westminsterCommentary", sourceId, n],
-      queryFn: () => api.getWestminsterCommentary(sourceId as number, n),
-      enabled: sourceId != null,
-      staleTime: Infinity,
-    })),
-  });
-  const key = entries.map((e) => e.dataUpdatedAt).join(",");
-  return useMemo(() => {
-    const items = new Map<number, HenryItem[]>();
-    numbers.forEach((n, i) => items.set(n, (entries[i]?.data ?? []).flatMap((e) => parseHenry(e.body))));
-    return asks.flatMap((a) => {
-      const item = items.get(a.question)?.find((it) => it.ask === a.ask);
-      return item ? [henryQuestion(item)] : [];
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key, asks]);
 }
 
 /** Writing the step's note without leaving the Guide: an ordinary verse

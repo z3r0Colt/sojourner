@@ -207,6 +207,18 @@ export function lessonById(id: string): Lesson | undefined {
   return LESSONS.find((l) => l.id === id);
 }
 
+/** The lesson that teaches a Shorter Catechism question (never a review). */
+export function lessonForQuestion(question: number): Lesson | undefined {
+  return LESSONS.find((l) => !l.review && l.questions.includes(question));
+}
+
+/** The Shorter Catechism question a section id holds, or null for another
+ * document's section. */
+export function wscQuestion(id: number): number | null {
+  const n = id - WSC_FIRST_ID + 1;
+  return n >= 1 && n <= 107 ? n : null;
+}
+
 /** The tag a lesson's notes and prayers carry ("wsc-33"). */
 export function lessonTag(lesson: Lesson): string {
   return lesson.id;
@@ -236,7 +248,15 @@ export interface GuideState {
   lessons: Record<string, LessonProgress>;
   /** The lesson last opened, for "Continue". */
   current?: string;
+  /** Lessons show their "Go deeper" section open. */
+  deeper?: boolean;
+  /** The student leads a class: lessons offer a handout and a leader's copy. */
+  leader?: boolean;
 }
+
+/** Progress on a "Go deeper" item is kept with the lesson's steps under
+ * this prefix, so it never counts toward finishing the lesson. */
+export const DEEPER_PREFIX = "deeper:";
 
 export const EMPTY_GUIDE: GuideState = { lessons: {} };
 

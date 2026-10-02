@@ -14,6 +14,7 @@ import { DayGrid } from "../../components/ui/DayGrid";
 import { FamilyGuide, FurtherReading } from "./FamilyGuide";
 import { useFamilySession } from "./sessionStore";
 import { useFamilyWorship } from "./useFamilyWorship";
+import { lessonForQuestion, wscQuestion, type Lesson } from "../guide/course";
 import { toast } from "../../components/ui/toast";
 import { parseReference, useBookLookup } from "../../hooks/useReferenceParser";
 import { MEMORY_SETS } from "../memory/memorySets";
@@ -245,10 +246,16 @@ export function TonightSummary({ fw, compact }: { fw: FW; compact?: boolean }) {
     : tonight.day
       ? `${tonight.day.readings.map((r) => r.label).join("; ")}${tonight.readingTitle ? ` · ${tonight.readingTitle}` : ""}`
       : null;
-  const rows: { icon: typeof BookOpen; label: string; text: string }[] = [];
+  const rows: { icon: typeof BookOpen; label: string; text: string; lesson?: Lesson }[] = [];
   if (state.plan && reading) rows.push({ icon: BookOpen, label: "Read", text: reading });
   if (tonight.psalm != null) rows.push({ icon: Music, label: "Sing", text: `Psalm ${tonight.psalm}` });
-  if (tonight.learning) rows.push({ icon: ScrollText, label: "Catechism", text: `${tonight.learning.heading} of the ${tonight.catechismTitle}` });
+  if (tonight.learning) {
+    // The Shorter Catechism's question is taught in the guided study, for
+    // whoever leads to prepare from.
+    const question = state.catechism?.code === "wsc" ? wscQuestion(tonight.learning.id) : null;
+    const lesson = question != null ? lessonForQuestion(question) : undefined;
+    rows.push({ icon: ScrollText, label: "Catechism", text: `${tonight.learning.heading} of the ${tonight.catechismTitle}`, lesson });
+  }
   if (state.memory) {
     const m = state.memory;
     const book = books?.find((b) => b.id === m.bookId)?.name ?? "";
@@ -265,7 +272,22 @@ export function TonightSummary({ fw, compact }: { fw: FW; compact?: boolean }) {
         <li key={r.label} className="flex items-start gap-2">
           <r.icon className="mt-0.5 h-4 w-4 shrink-0 text-ink-4" aria-hidden="true" />
           <span className="w-20 shrink-0 text-ink-3">{r.label}</span>
-          <span className="min-w-0 flex-1 text-ink">{r.text}</span>
+          <span className="min-w-0 flex-1 text-ink">
+            {r.text}
+            {r.lesson && (
+              <>
+                {" · "}
+                <button
+                  type="button"
+                  className={cx(linkClass, "text-sm")}
+                  title="Study this question first in the guided study, or print its lesson as a handout"
+                  onClick={(e) => openContent("guide", { lessonId: r.lesson!.id }, { target: targetFor(e, "new") })}
+                >
+                  Lesson {r.lesson.number} in the guided study
+                </button>
+              </>
+            )}
+          </span>
         </li>
       ))}
     </ul>
