@@ -83,6 +83,7 @@ export const WSC_33: LessonData = {
       open: {
         pane: "book",
         title: "A Body of Divinity",
+        author: "Watson",
         find: "What is meant by justification?",
         fallback: { doc: "wsc", n: 33, commentary: "flavel" },
       },

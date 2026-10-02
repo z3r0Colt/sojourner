@@ -116,8 +116,7 @@ export async function openStep(open: StepOpen, guidePaneId: string): Promise<voi
       return;
     case "book": {
       const resources = await api.listResources().catch(() => []);
-      const want = open.title.toLowerCase();
-      const book = resources.find((r) => r.title.toLowerCase() === want) ?? resources.find((r) => r.title.toLowerCase().includes(want));
+      const book = findBook(resources, open.title, open.author);
       if (book) {
         openBeside("resource", { id: book.id, find: open.find ? { text: open.find, occurrence: 0 } : null }, guidePaneId);
         return;
@@ -166,4 +165,32 @@ export function layOutLesson(lesson: Lesson, commentarySources: CommentarySource
   const s = useWorkspaceStore.getState();
   const guide = s.panes.find((p) => p.kind === "guide");
   if (guide && findPane(s.panes, guide.id)) s.focusPane(guide.id);
+}
+
+/** A title as a library might give it: no leading article, one kind of
+ * apostrophe, one case. The library pack calls Watson's book "Lord's
+ * Prayer"; a lesson calls it "The Lord's Prayer". */
+function titleKey(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/^(the|a|an)\s+/, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
+ * The library book a lesson means: the same title, give or take an article,
+ * and, when the lesson names one, by that author -- so "The Lord's Prayer"
+ * is Watson's and never Bradford's "Godly Meditations upon the Lord's
+ * Prayer". A book whose title only contains the one wanted counts just when
+ * the author matches.
+ */
+export function findBook<T extends { title: string; author: string | null }>(books: T[], title: string, author?: string): T | undefined {
+  const want = titleKey(title);
+  const byAuthor = (b: T) => !author || (b.author ?? "").toLowerCase().includes(author.toLowerCase());
+  return (
+    books.find((b) => titleKey(b.title) === want && byAuthor(b)) ??
+    (author ? books.find((b) => byAuthor(b) && titleKey(b.title).includes(want)) : undefined)
+  );
 }

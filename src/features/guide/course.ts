@@ -51,10 +51,11 @@ export type StepOpen =
   | { pane: "encyclopedia"; slug: string }
   | { pane: "timeline"; eventId: number }
   | { pane: "memory" | "prayer" | "notes" | "highlights" | "harmony" | "sermons" }
-  /** A library book by (part of) its title, opened at a phrase. When the
+  /** A library book by its title (and its author's surname, to tell it
+   * from another book of the same name), opened at a phrase. When the
    * install lacks it, `fallback` -- a Standards commentary on a question --
    * opens instead. */
-  | { pane: "book"; title: string; find?: string; fallback: { doc: Standard; n: number; commentary: string } };
+  | { pane: "book"; title: string; author?: string; find?: string; fallback: { doc: Standard; n: number; commentary: string } };
 
 export interface QuizQuestion {
   q: string;
