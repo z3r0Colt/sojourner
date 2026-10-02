@@ -29,7 +29,7 @@ export const WSC_104: LessonData = {
     ),
     standards("Read the Larger Catechism Question 194, on the fifth petition, and notice how it begins with our debt.", "wlc", 194),
     teaching(105, "whyte", "Read Alexander Whyte on Question 105."),
-    classic("Read Watson’s sermon on the fifth petition.", "The Lord's Prayer", "Before I speak strictly to the", 105, "whyte"),
+    classic("Read Watson’s sermon on the fifth petition.", "The Lord's Prayer", "Before I speak strictly to the", 105, "flavel"),
     quiz(
       [
         {

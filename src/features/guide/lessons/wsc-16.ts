@@ -31,7 +31,7 @@ export const WSC_16: LessonData = {
       "The Confession",
     ),
     teaching(18, "whyte", "Read Alexander Whyte on Question 18, on each of its four parts."),
-    classic("Read Watson’s sermon on original sin.", "A Body of Divinity", "DID ALL MANKIND FALL IN ADAM'S FIRST TRANSGRESSION", 16, "whyte"),
+    classic("Read Watson’s sermon on original sin.", "A Body of Divinity", "DID ALL MANKIND FALL IN ADAM'S FIRST TRANSGRESSION", 16, "flavel"),
     quiz(
       [
         {

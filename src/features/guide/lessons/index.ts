@@ -1,4 +1,7 @@
-import { sortKey, type Lesson, type LessonData } from "../course";
+// Types only from ../course: it imports this module for the course itself,
+// so a value imported back from it would make the two depend on each
+// other's initialisation order.
+import type { Lesson, LessonData } from "../course";
 import { reviewLesson } from "./review";
 
 /** Every lesson as written: each file named for the first question it
@@ -16,6 +19,11 @@ const REVIEWS: { id: string; title: string; range: [number, number]; journal: bo
   { id: "review-3", title: "Review: The law", range: [39, 84], journal: true },
   { id: "review-4", title: "Review: The gospel and the means of grace", range: [85, 107], journal: true },
 ];
+
+/** Course order: by the first question taught, a review after its unit's last. */
+export function sortKey(l: LessonData): number {
+  return l.review ? Math.max(...l.questions) + 0.5 : l.questions[0];
+}
 
 function inRange(l: LessonData, [lo, hi]: [number, number]) {
   return l.questions[0] >= lo && l.questions[0] <= hi;

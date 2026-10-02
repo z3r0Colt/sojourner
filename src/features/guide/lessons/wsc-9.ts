@@ -49,7 +49,7 @@ export const WSC_9: LessonData = {
       "A Body of Divinity",
       "The next question is, WHAT",
       9,
-      "whyte",
+      "flavel",
     ),
     quiz(
       [

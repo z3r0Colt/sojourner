@@ -29,7 +29,7 @@ export const WSC_88: LessonData = {
     ),
     standards("The Larger Catechism says how the Word is to be read (Question 157) and heard (Question 160). Read Question 160, and compare it with your answer at the start.", "wlc", 160),
     teaching(90, "whyte", "Read Alexander Whyte on Question 90."),
-    classic("Watson preaches on the Word as the third way of escaping God’s wrath.", "The Ten Commandments", "The third way to escape the wrath and curse of God", 89, "whyte"),
+    classic("Watson preaches on the Word as the third way of escaping God’s wrath.", "The Ten Commandments", "The third way to escape the wrath and curse of God", 89, "flavel"),
     look(
       "sermons",
       "Keep what you hear",

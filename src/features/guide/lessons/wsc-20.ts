@@ -38,7 +38,7 @@ export const WSC_20: LessonData = {
       "The Confession",
     ),
     teaching(20, "whyte", "Read Alexander Whyte on Question 20."),
-    classic("Read Watson’s sermon on the covenant of grace.", "A Body of Divinity", "DID GOD LEAVE ALL MANKIND TO PERISH", 20, "whyte"),
+    classic("Read Watson’s sermon on the covenant of grace.", "A Body of Divinity", "DID GOD LEAVE ALL MANKIND TO PERISH", 20, "flavel"),
     quiz(
       [
         {

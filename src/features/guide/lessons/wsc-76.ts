@@ -29,7 +29,7 @@ export const WSC_76: LessonData = {
     ),
     standards("The Larger Catechism lists the sins of the tongue. Read Question 145 slowly; it is long, and searching.", "wlc", 145),
     teaching(77, "whyte", "Read Alexander Whyte on Question 77."),
-    classic("Read Watson’s sermon on the ninth commandment.", "The Ten Commandments", "THE tongue which at first was", 76, "whyte"),
+    classic("Read Watson’s sermon on the ninth commandment.", "The Ten Commandments", "THE tongue which at first was", 76, "flavel"),
     quiz(
       [
         {

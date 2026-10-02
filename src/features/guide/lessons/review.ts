@@ -5,17 +5,23 @@ import { look, pray, prayQuietly } from "./steps";
  * A unit's closing review, made from the unit's own lessons: the student's
  * "before you read" answers set beside what they would say now, the
  * catechism cards to practise, and a quiz of the first question of each
- * lesson's check together with the first of Henry's.
+ * lesson's check with a few of Henry's.
  */
+const HENRY_IN_REVIEW = 6;
+
 export function reviewLesson(id: string, title: string, range: [number, number], lessons: LessonData[], journal: boolean): LessonData {
   const own: QuizQuestion[] = [];
-  const henry: HenryAsk[] = [];
+  const allHenry: HenryAsk[] = [];
   for (const l of lessons) {
     const check = l.steps.find((s) => s.check?.type === "quiz")?.check;
     if (check?.type !== "quiz") continue;
     if (check.questions[0]) own.push(check.questions[0]);
-    if (check.henry?.[0]) henry.push(check.henry[0]);
+    if (check.henry?.[0]) allHenry.push(check.henry[0]);
   }
+  // At most six of Henry's, spread across the unit, so a long unit's review
+  // stays a review rather than an examination.
+  const step = Math.max(1, allHenry.length / HENRY_IN_REVIEW);
+  const henry = allHenry.length <= HENRY_IN_REVIEW ? allHenry : Array.from({ length: HENRY_IN_REVIEW }, (_, i) => allHenry[Math.floor(i * step)]);
   const questions = Array.from({ length: range[1] - range[0] + 1 }, (_, i) => range[0] + i);
   const prayer =
     "Thank God for what he has taught you in this unit, and ask him to fix it in your heart. Pray through the answers you have learned, one at a time.";

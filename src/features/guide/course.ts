@@ -305,11 +305,6 @@ export function henryQuestion(item: HenryItem): QuizQuestion {
   return { q: item.ask, choices: ["Yes", "No"], answer: item.yes ? 0 : 1, why: item.answer };
 }
 
-/** Course order: by the first question taught, a review after its unit's last. */
-export function sortKey(l: LessonData): number {
-  return l.review ? Math.max(...l.questions) + 0.5 : l.questions[0];
-}
-
 /** Whether a verse range overlaps a passage. */
 export function overlaps(passage: Passage, book: number, chapter: number, verseStart: number, verseEnd: number): boolean {
   if (passage.book !== book || passage.chapter !== chapter) return false;

@@ -35,7 +35,7 @@ export const WSC_57: LessonData = {
     ),
     standards("Read the Confession 21.7 and 21.8 on the Lord’s day, and notice what 21.8 says about preparing our hearts beforehand.", "wcf", 21, 7, "The Confession"),
     teaching(60, "whyte", "Read Alexander Whyte on Question 60."),
-    classic("Read Watson’s sermon on the fourth commandment.", "The Ten Commandments", "Remember the Sabbath-day to keep it holy", 57, "whyte"),
+    classic("Read Watson’s sermon on the fourth commandment.", "The Ten Commandments", "Remember the Sabbath-day to keep it holy", 57, "flavel"),
     quiz(
       [
         {

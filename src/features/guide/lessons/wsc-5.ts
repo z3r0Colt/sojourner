@@ -49,7 +49,7 @@ export const WSC_5: LessonData = {
       "A Body of Divinity",
       "HOW MANY PERSONS ARE THERE IN THE GODHEAD",
       6,
-      "whyte",
+      "flavel",
     ),
     quiz(
       [

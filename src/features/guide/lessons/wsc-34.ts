@@ -36,7 +36,7 @@ export const WSC_34: LessonData = {
       77,
     ),
     teaching(35, "whyte", "Read Alexander Whyte on Question 35."),
-    classic("Watson preaches on adoption from John 1:12.", "A Body of Divinity", "As many as received him to them gave he power to become the sons of God", 34, "whyte"),
+    classic("Watson preaches on adoption from John 1:12.", "A Body of Divinity", "As many as received him to them gave he power to become the sons of God", 34, "flavel"),
     quiz(
       [
         {

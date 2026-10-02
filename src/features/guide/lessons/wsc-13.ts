@@ -29,7 +29,7 @@ export const WSC_13: LessonData = {
       "The Confession",
     ),
     teaching(14, "whyte", "Read Alexander Whyte on Question 14: on “want of conformity” as well as transgression, and on the law as the measure of sin."),
-    classic("Watson’s sermon on Adam’s sin asks how so small an act could be so great a sin: “Was it such a great matter to pluck an apple? It was against an infinite God.”", "A Body of Divinity", "WHAT WAS THE SIN WHEREBY OUR FIRST PARENTS FELL", 15, "whyte"),
+    classic("Watson’s sermon on Adam’s sin asks how so small an act could be so great a sin: “Was it such a great matter to pluck an apple? It was against an infinite God.”", "A Body of Divinity", "WHAT WAS THE SIN WHEREBY OUR FIRST PARENTS FELL", 15, "flavel"),
     quiz(
       [
         {

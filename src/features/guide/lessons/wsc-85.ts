@@ -30,7 +30,7 @@ export const WSC_85: LessonData = {
     ),
     standards("Read the Confession 15.3: repentance is not “any satisfaction for sin, or any cause of the pardon thereof”, yet it is so necessary that none may expect pardon without it.", "wcf", 15, 3, "The Confession"),
     teaching(87, "whyte", "Read Alexander Whyte on Question 87."),
-    classic("Watson preaches on faith as the first thing God requires to escape his wrath.", "The Ten Commandments", "What does God require of us, that we may escape his wrath and curse due to us for our sin", 86, "whyte"),
+    classic("Watson preaches on faith as the first thing God requires to escape his wrath.", "The Ten Commandments", "What does God require of us, that we may escape his wrath and curse due to us for our sin", 86, "flavel"),
     look(
       "cited",
       "What the old writers said",

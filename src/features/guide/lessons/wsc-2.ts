@@ -41,7 +41,7 @@ export const WSC_2: LessonData = {
       "A Body of Divinity",
       "WHAT RULE HAS GOD GIVEN TO DIRECT US",
       2,
-      "whyte",
+      "flavel",
       "Resources holds the old books. A step opens one at the right page, and the book remembers where you stopped. Classic readings are optional: take them when you have time.",
     ),
     quiz(

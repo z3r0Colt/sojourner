@@ -29,7 +29,7 @@ export const WSC_106: LessonData = {
     ),
     standards("Read the Larger Catechism Question 196, the last question of the Larger Catechism, on the conclusion of the Lord’s Prayer.", "wlc", 196),
     teaching(107, "whyte", "Read Alexander Whyte on Question 107, the last of his commentary."),
-    classic("Read Watson’s sermon on the sixth petition.", "The Lord's Prayer", "This petition consists of two parts. First, Deprecatory", 106, "whyte"),
+    classic("Read Watson’s sermon on the sixth petition.", "The Lord's Prayer", "This petition consists of two parts. First, Deprecatory", 106, "flavel"),
     quiz(
       [
         {

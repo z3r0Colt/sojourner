@@ -43,7 +43,7 @@ export const WSC_29: LessonData = {
       "The Confession",
     ),
     teaching(31, "whyte", "Read Alexander Whyte on Question 31."),
-    classic("Watson preaches on effectual calling from Romans 8:30, “Them he also called.”", "A Body of Divinity", "WHAT IS EFFECTUAL CALLING", 31, "whyte"),
+    classic("Watson preaches on effectual calling from Romans 8:30, “Them he also called.”", "A Body of Divinity", "WHAT IS EFFECTUAL CALLING", 31, "flavel"),
     quiz(
       [
         {

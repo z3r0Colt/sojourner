@@ -29,7 +29,7 @@ export const WSC_70: LessonData = {
     ),
     standards("Read the Confession 24.1 and 24.2, on what marriage is and why God gave it.", "wcf", 24, 1, "The Confession"),
     teaching(71, "whyte", "Read Alexander Whyte on Question 71."),
-    classic("Watson begins his sermon on the seventh commandment: “God is a pure, holy spirit, and has an infinite antipathy against all uncleanness.” Read on.", "The Ten Commandments", "God is a pure, holy spirit, and has an infinite antipathy", 70, "whyte"),
+    classic("Watson begins his sermon on the seventh commandment: “God is a pure, holy spirit, and has an infinite antipathy against all uncleanness.” Read on.", "The Ten Commandments", "God is a pure, holy spirit, and has an infinite antipathy", 70, "flavel"),
     quiz(
       [
         {

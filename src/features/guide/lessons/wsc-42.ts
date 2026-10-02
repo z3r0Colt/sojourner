@@ -30,7 +30,7 @@ export const WSC_42: LessonData = {
     ),
     standards("The Larger Catechism gives eight rules for reading the commandments rightly. Read Question 99, and notice rule 4: where a duty is commanded, the contrary sin is forbidden, and the other way round.", "wlc", 99),
     teaching(44, "whyte", "Read Alexander Whyte on Question 44."),
-    classic("Watson preaches on the preface from Exodus 20:1–2.", "The Ten Commandments", "And God spake all these words", 43, "whyte"),
+    classic("Watson preaches on the preface from Exodus 20:1–2.", "The Ten Commandments", "And God spake all these words", 43, "flavel"),
     quiz(
       [
         {

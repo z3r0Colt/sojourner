@@ -28,7 +28,7 @@ export const WSC_96: LessonData = {
     ),
     standards("Read the Larger Catechism Question 172: may one who doubts whether he is in Christ come to the Lord’s Supper? Its answer is full of comfort for the weak.", "wlc", 172),
     teaching(96, "whyte", "Read Alexander Whyte on Question 96."),
-    classic("Read Watson’s sermon on the Lord’s Supper.", "The Ten Commandments", "Having spoken to the sacrament of baptism", 96, "whyte"),
+    classic("Read Watson’s sermon on the Lord’s Supper.", "The Ten Commandments", "Having spoken to the sacrament of baptism", 96, "flavel"),
     quiz(
       [
         {

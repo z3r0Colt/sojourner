@@ -48,7 +48,7 @@ export const WSC_7: LessonData = {
       "A Body of Divinity",
       "WHAT ARE THE DECREES OF GOD",
       7,
-      "whyte",
+      "flavel",
     ),
     quiz(
       [

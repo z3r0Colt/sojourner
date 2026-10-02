@@ -31,7 +31,7 @@ export const WSC_21: LessonData = {
       "The Confession",
     ),
     teaching(21, "whyte", "Read Alexander Whyte on Question 21."),
-    classic("Watson preaches on Christ the Mediator of the covenant.", "A Body of Divinity", "Jesus Christ is the sum and quintessence of the gospel", 21, "whyte"),
+    classic("Watson preaches on Christ the Mediator of the covenant.", "A Body of Divinity", "Jesus Christ is the sum and quintessence of the gospel", 21, "flavel"),
     quiz(
       [
         {

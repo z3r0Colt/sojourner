@@ -29,7 +29,7 @@ export const WSC_98: LessonData = {
     ),
     standards("Read the Larger Catechism Question 180: what is it to pray in the name of Christ?", "wlc", 180),
     teaching(100, "whyte", "Read Alexander Whyte on Question 100."),
-    classic("Watson begins his sermons on the Lord’s Prayer with its preface.", "The Lord's Prayer", "Having gone over the chief grounds and fundamentals of religion", 100, "whyte"),
+    classic("Watson begins his sermons on the Lord’s Prayer with its preface.", "The Lord's Prayer", "Having gone over the chief grounds and fundamentals of religion", 100, "flavel"),
     quiz(
       [
         {

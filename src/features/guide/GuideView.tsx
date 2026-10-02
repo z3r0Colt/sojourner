@@ -238,11 +238,39 @@ function openLabel(open: StepOpen, books: ReturnType<typeof useBooks>["data"]): 
     case "psalter":
       return `Psalm ${open.psalm}`;
     case "search":
-      return `Search “${open.query}”`;
+      return `Search “${open.query.replace(/"/g, "")}”`;
     case "book":
       return `Open ${open.title}`;
-    default:
-      return "Open";
+    case "commentary":
+      return `Commentary on ${ref(open.passage)}`;
+    case "citations":
+      return `Cited in your library: ${ref(open.passage)}`;
+    case "factbook-for-passage":
+      return `People and places in ${ref(open.passage)}`;
+    case "timeline-for-passage":
+      return `Timeline for ${ref(open.passage)}`;
+    case "encyclopedia-for-passage":
+      return `Encyclopedia on ${ref(open.passage)}`;
+    case "factbook":
+      return "Open the Factbook";
+    case "atlas":
+      return "Open the Atlas";
+    case "encyclopedia":
+      return "Open the encyclopedia";
+    case "timeline":
+      return "Open the Timeline";
+    case "memory":
+      return "Open Memory";
+    case "prayer":
+      return "Open the prayer journal";
+    case "notes":
+      return "Open Notes";
+    case "highlights":
+      return "Open Highlights";
+    case "harmony":
+      return "Open the Harmony";
+    case "sermons":
+      return "Open Sermons";
   }
 }
 

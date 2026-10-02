@@ -38,7 +38,7 @@ export const WSC_12: LessonData = {
       "The Confession",
     ),
     teaching(12, "whyte", "Read Alexander Whyte on Question 12."),
-    classic("Read Watson’s sermon on the covenant of works.", "A Body of Divinity", "WHAT SPECIAL ACT OF PROVIDENCE", 12, "whyte"),
+    classic("Read Watson’s sermon on the covenant of works.", "A Body of Divinity", "WHAT SPECIAL ACT OF PROVIDENCE", 12, "flavel"),
     quiz(
       [
         {

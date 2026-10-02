@@ -35,7 +35,7 @@ export const WSC_37: LessonData = {
     ),
     standards("Read the Confession 32.1, on the state of the soul after death, and 33.2, on the last judgment.", "wcf", 32, 1, "The Confession"),
     teaching(37, "whyte", "Read Alexander Whyte on Question 37, especially on “still united to Christ”."),
-    classic("Watson preaches on the death of the righteous from Philippians 1:21, “to die is gain.”", "A Body of Divinity", "Paul was a great admirer of Christ", 37, "whyte"),
+    classic("Watson preaches on the death of the righteous from Philippians 1:21, “to die is gain.”", "A Body of Divinity", "Paul was a great admirer of Christ", 37, "flavel"),
     quiz(
       [
         {
