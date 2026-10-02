@@ -14,14 +14,21 @@ Two kinds of road, both drawn in the Atlas under Layers:
   * The great routes of the Old Testament that every Bible atlas draws -- the
     Way of the Sea, the King's Highway, the ridge route of the patriarchs, the
     Way of Shur -- set down here as the stations they are traditionally drawn
-    through, using the Atlas's own coordinates for those places. Their
-    courses between stations are approximate, and marked so.
+    through, using the Atlas's own coordinates for those places. Between two
+    stations the route follows the Roman roads where they serve: the Romans
+    paved the old highways rather than laying new ones (the coast road on the
+    Way of the Sea, the Via Nova Traiana on the King's Highway, the road from
+    Jerusalem to Neapolis on the ridge). Where no Roman road serves -- across
+    Sinai, say -- the route is a straight line between its stations. Either
+    way the course is approximate, and marked so.
 
 Usage (from the repo root):
     python tools/build-atlas-roads.py <AWMC roads.geojson>
 """
 
+import heapq
 import json
+import math
 import os
 import sys
 
@@ -41,6 +48,122 @@ OT_ROUTES = [
     ("The Way of Shur", ["beersheba-1", "shur", "goshen-1"]),
     ("The Jericho road", ["jerusalem", "jericho-1"]),
 ]
+
+
+# Routing between stations, as the Atlas routes journeys (src/features/atlas/routes.ts):
+# road ends this close are one junction, a loose end joins a road this near,
+# and going across country counts this much more than its distance.
+JOIN_DEGREES = 0.004
+LINK_KM = 5
+OFF_ROAD = 1.6
+OFF_ROAD_KM = 25
+
+
+def km(a, b):
+    r = math.radians
+    h = math.sin(r(b[1] - a[1]) / 2) ** 2 + math.cos(r(a[1])) * math.cos(r(b[1])) * math.sin(r(b[0] - a[0]) / 2) ** 2
+    return 2 * 6371.0088 * math.asin(min(1, math.sqrt(h)))
+
+
+class Roads:
+    """The Roman roads as a graph, for finding the way between two stations."""
+
+    def __init__(self, lines):
+        self.pts, self.edges, keys = [], [], {}
+
+        def node(p):
+            k = (round(p[0] / JOIN_DEGREES), round(p[1] / JOIN_DEGREES))
+            if k not in keys:
+                keys[k] = len(self.pts)
+                self.pts.append(p)
+                self.edges.append([])
+            return keys[k]
+
+        for line in lines:
+            prev = None
+            for p in line:
+                i = node(p)
+                if prev is not None and prev != i:
+                    d = km(self.pts[prev], self.pts[i])
+                    self.edges[prev].append((i, d))
+                    self.edges[i].append((prev, d))
+                prev = i
+        self.cells = {}
+        for i, p in enumerate(self.pts):
+            self.cells.setdefault((math.floor(p[0] * 10), math.floor(p[1] * 10)), []).append(i)
+        # Join loose ends to the nearest road they are not already joined to.
+        parent = list(range(len(self.pts)))
+
+        def find(i):
+            while parent[i] != i:
+                parent[i] = parent[parent[i]]
+                i = parent[i]
+            return i
+
+        for i, es in enumerate(self.edges):
+            for j, _ in es:
+                parent[find(i)] = find(j)
+        for i in range(len(self.pts)):
+            if len(self.edges[i]) > 1:
+                continue
+            best, best_km = None, LINK_KM
+            for j in self.near(self.pts[i], 1):
+                if find(j) == find(i):
+                    continue
+                d = km(self.pts[i], self.pts[j])
+                if d < best_km:
+                    best, best_km = j, d
+            if best is not None:
+                self.edges[i].append((best, best_km))
+                self.edges[best].append((i, best_km))
+                parent[find(i)] = find(best)
+
+    def near(self, p, reach):
+        cx, cy = math.floor(p[0] * 10), math.floor(p[1] * 10)
+        return [i for dx in range(-reach, reach + 1) for dy in range(-reach, reach + 1) for i in self.cells.get((cx + dx, cy + dy), [])]
+
+    def way(self, a, b):
+        """The course from a to b: A* through the roads, free to go across
+        country at the OFF_ROAD cost; the straight line when that is best."""
+        straight = km(a, b)
+        if straight < 3:
+            return [a, b], False
+        start, goal = -1, -2
+        pos = {start: a, goal: b}
+
+        def at(i):
+            return pos[i] if i < 0 else self.pts[i]
+
+        reach = math.ceil(OFF_ROAD_KM / 11) + 1
+        near_goal = {i for i in self.near(b, reach) if km(self.pts[i], b) <= OFF_ROAD_KM}
+        cost, prev = {start: 0.0}, {}
+        heap = [(straight, start)]
+        ceiling = straight * OFF_ROAD
+        while heap:
+            est, i = heapq.heappop(heap)
+            if i == goal or est > ceiling + 1e-9:
+                break
+            if est - km(at(i), b) > cost[i] + 1e-9:
+                continue
+            if i == start:
+                out = [(goal, straight, True)] + [(j, km(a, self.pts[j]), True) for j in self.near(a, reach)]
+                out = [o for o in out if o[0] == goal or o[1] <= OFF_ROAD_KM]
+            else:
+                out = [(j, d, False) for j, d in self.edges[i]]
+                if i in near_goal:
+                    out.append((goal, km(self.pts[i], b), True))
+            for j, d, off in out:
+                c = cost[i] + d * (OFF_ROAD if off else 1)
+                if c < cost.get(j, math.inf):
+                    cost[j] = c
+                    prev[j] = i
+                    heapq.heappush(heap, (c + km(at(j), b), j))
+        if goal not in prev or prev[goal] == start:
+            return [a, b], False
+        path = [goal]
+        while path[-1] != start:
+            path.append(prev[path[-1]])
+        return [at(i) for i in reversed(path)], True
 
 
 def rounded(coords):
@@ -74,19 +197,30 @@ def main(awmc_path):
         )
     roman = len(features)
 
+    roads = Roads(
+        line
+        for f in features
+        for line in ([f["geometry"]["coordinates"]] if f["geometry"]["type"] == "LineString" else f["geometry"]["coordinates"])
+    )
     places = {p["slug"]: p for p in json.load(open(PLACES, encoding="utf-8"))}
     for name, stations in OT_ROUTES:
-        line = []
+        points = []
         for s in stations:
             if isinstance(s, list):
-                line.append(s)
+                points.append(tuple(s))
                 continue
             p = places.get(s)
             if not p or p["lat"] is None:
                 sys.exit(f"{name}: no place {s}")
-            line.append([round(p["lon"], 4), round(p["lat"], 4)])
+            points.append((round(p["lon"], 4), round(p["lat"], 4)))
+        line, by_road = [list(points[0])], 0
+        for a, b in zip(points, points[1:]):
+            course, on_road = roads.way(a, b)
+            by_road += on_road
+            line += [list(p) for p in course[1:]]
+        print(f"  {name}: {by_road} of {len(points) - 1} stages along Roman roads")
         features.append(
-            {"type": "Feature", "geometry": {"type": "LineString", "coordinates": line}, "properties": {"kind": "ot", "name": name, "major": 1, "known": 0}}
+            {"type": "Feature", "geometry": {"type": "LineString", "coordinates": rounded(line)}, "properties": {"kind": "ot", "name": name, "major": 1, "known": 0}}
         )
 
     with open(OUT, "w", encoding="utf-8", newline="\n") as f:
