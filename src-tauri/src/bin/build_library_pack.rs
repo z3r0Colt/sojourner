@@ -105,6 +105,8 @@ fn main() -> anyhow::Result<()> {
         &db_path,
         &book_files,
         pack::PackManifest {
+            kind: "library".into(),
+            map: None,
             format: pack::PACK_FORMAT,
             id: pack_id.clone(),
             name: pack_name.clone(),

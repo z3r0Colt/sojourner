@@ -1376,6 +1376,12 @@ export function usePackStatuses() {
   return useQuery({ queryKey: ["packStatuses"], queryFn: api.packStatuses });
 }
 
+/** The installed map packs (terrain, imagery), for the Atlas. */
+export function useMapPacks() {
+  const { data } = usePackStatuses();
+  return (data ?? []).filter((p) => p.installed && p.kind === "map" && p.map);
+}
+
 /**
  * Everything a pack install or removal changes.
  *

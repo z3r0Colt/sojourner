@@ -3,8 +3,10 @@ import { useQuery } from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { ArrowLeft, MapPin, Route, Search } from "lucide-react";
 import { api } from "../../api/client";
+import { convertFileSrc } from "@tauri-apps/api/core";
 import {
   useAtlasJourneys,
+  useMapPacks,
   useAtlasPlaceVerses,
   useAtlasPlaces,
   useBooks,
@@ -59,6 +61,13 @@ export function AtlasView() {
   const layers = useMemo(() => completeLayers(storedLayers), [storedLayers]);
   const [units, setUnits] = useSetting<Units>("atlas.units", "mi");
   const [groupShown, setGroupShown] = useState<PlaceGroup | "all">("all");
+  const mapPacks = useMapPacks();
+  const packSource = (layer: string) => {
+    const pack = mapPacks.find((p) => p.map?.layer === layer);
+    return pack?.id && pack.map ? { tiles: `${convertFileSrc(pack.id, "sjtiles")}/{z}/{x}/{y}`, ...pack.map } : null;
+  };
+  const terrain = packSource("terrain");
+  const imagery = packSource("imagery");
   // Beside a Bible pane the atlas gets a study column, not a page. Below the
   // width the three-column layout needs, the map keeps the space and the one
   // remaining column shows the detail when something is picked, the list
@@ -279,7 +288,8 @@ export function AtlasView() {
             fitToken={fitToken}
             fitTargets={fitTargets}
             fitMode={fitMode}
-            terrainTiles={null}
+            terrain={terrain}
+            imagery={imagery}
           />
         ) : (
           <LoadingState className="p-8" label="Loading the map…" />

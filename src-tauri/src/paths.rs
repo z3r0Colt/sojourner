@@ -109,3 +109,37 @@ pub fn installed_packs(app: &AppHandle) -> Vec<(String, PathBuf)> {
     }
     out
 }
+
+/// Where map packs (terrain, imagery) are installed: `maps/<id>/`, each laid
+/// out as a pack (`pack.json`, `tiles.db`).
+pub fn maps_dir(app: &AppHandle) -> Option<PathBuf> {
+    Some(app.path().app_data_dir().ok()?.join("maps"))
+}
+
+pub fn map_pack_dir(app: &AppHandle, id: &str) -> Option<PathBuf> {
+    let safe: String = id.chars().filter(|c| c.is_ascii_alphanumeric() || *c == '-' || *c == '_').collect();
+    if safe.is_empty() {
+        return None;
+    }
+    Some(maps_dir(app)?.join(safe))
+}
+
+/// Every installed map pack: (id, folder).
+pub fn installed_map_packs(app: &AppHandle) -> Vec<(String, PathBuf)> {
+    let Some(base) = maps_dir(app) else { return Vec::new() };
+    let Ok(dir) = std::fs::read_dir(base) else { return Vec::new() };
+    let mut out: Vec<(String, PathBuf)> = dir
+        .flatten()
+        .filter(|e| e.path().is_dir() && crate::pack::is_installed(&e.path()))
+        .map(|e| (e.file_name().to_string_lossy().to_string(), e.path()))
+        .collect();
+    out.sort();
+    out
+}
+
+/// `base/<name>` for a plain folder name (letters, digits, '-', '_'); None
+/// for anything that could reach elsewhere ("..", "a/b", "").
+pub fn safe_child(base: &std::path::Path, name: &str) -> Option<PathBuf> {
+    let ok = !name.is_empty() && name.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_');
+    ok.then(|| base.join(name))
+}

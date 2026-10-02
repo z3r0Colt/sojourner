@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { listen } from "@tauri-apps/api/event";
-import { BookMarked, FilePlus, Trash2 } from "lucide-react";
+import { BookMarked, FilePlus, Map as MapIcon, Trash2 } from "lucide-react";
 import { api } from "../../../api/client";
 import { usePackStatuses, useInvalidateAfterPackChange } from "../../../api/queries";
 import type { PackProgress, PackStatus } from "../../../api/types";
@@ -26,15 +26,16 @@ function formatDate(iso: string): string {
 /** What each stage is called while the reader waits for it. */
 const STAGE_LABEL: Record<PackProgress["stage"], string> = {
   checking: "Checking the file…",
-  extracting: "Unpacking the books…",
-  installing: "Putting them in place…",
+  extracting: "Unpacking…",
+  installing: "Putting it in place…",
   cataloguing: "Adding them to your library…",
   done: "Done",
 };
 
 export function PacksSection() {
   const { data: packs, isLoading } = usePackStatuses();
-  const installed = (packs ?? []).filter((p) => p.installed);
+  const installed = (packs ?? []).filter((p) => p.installed && p.kind !== "map");
+  const maps = (packs ?? []).filter((p) => p.installed && p.kind === "map");
   const invalidate = useInvalidateAfterPackChange();
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState<PackProgress | null>(null);
@@ -64,7 +65,9 @@ export function PacksSection() {
       const outcome = await api.installPack(picked.token);
       invalidate();
       toast.success(
-        `${outcome.name} ${outcome.version} ${outcome.replaced ? "updated" : "installed"} — ${outcome.book_count} books, searchable in full.`,
+        outcome.book_count > 0
+          ? `${outcome.name} ${outcome.version} ${outcome.replaced ? "updated" : "installed"} — ${outcome.book_count} books, searchable in full.`
+          : `${outcome.name} ${outcome.version} ${outcome.replaced ? "updated" : "installed"} — open the Atlas and choose it under Layers.`,
       );
     } catch (e) {
       toast.error(`Install failed: ${e instanceof Error ? e.message : String(e)}`);
@@ -75,7 +78,13 @@ export function PacksSection() {
   }
 
   async function handleRemove(status: PackStatus) {
-    const proceed = await confirmDialog({
+    const isMap = status.kind === "map";
+    const proceed = await confirmDialog(isMap ? {
+      title: `Remove the ${status.name ?? "map"} pack?`,
+      message: `This frees ${formatBytes(status.bytes_on_disk ?? 0)}. The Atlas keeps working, without it; you can install it again at any time.`,
+      confirmLabel: "Remove",
+      danger: true,
+    } : {
       title: `Remove ${status.name ?? "this shelf"}?`,
       message:
         `This deletes ${status.book_count ?? 0} books and frees ${formatBytes(status.bytes_on_disk ?? 0)}. ` +
@@ -181,6 +190,41 @@ export function PacksSection() {
           </Button>
         </>
       )}
+
+      <h2 className="mb-1 mt-8 text-lg font-semibold text-ink">Map packs</h2>
+      <p className="mb-4 text-sm text-ink-3">
+        The Atlas works without them. The terrain pack shades the hills and valleys and can raise the land in 3D; the imagery pack adds a
+        satellite view. Install them the same way, from the file.
+      </p>
+      {maps.length > 0 ? (
+        <ul className="space-y-2">
+          {maps.map((status) => (
+            <li key={status.id ?? status.name ?? ""} className={cardClass}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-ink">
+                    {status.name} <span className="font-normal text-ink-3">{status.version}</span>
+                  </p>
+                  <p className="mt-0.5 text-sm text-ink-3">
+                    {(status.map?.tile_count ?? 0).toLocaleString()} map tiles · {formatBytes(status.bytes_on_disk ?? 0)} on disk
+                  </p>
+                  {status.map?.attribution && <p className="mt-1 text-xs text-ink-4">{status.map.attribution}</p>}
+                </div>
+                <Button variant="danger-ghost" icon={Trash2} onClick={() => handleRemove(status)} disabled={busy}>
+                  Remove
+                </Button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="flex items-center gap-2 text-sm text-ink-3">
+          <MapIcon className="h-4 w-4" aria-hidden="true" /> No map packs installed.
+        </p>
+      )}
+      <Button className="mt-3" icon={FilePlus} onClick={handleInstall} disabled={busy}>
+        Install a map pack…
+      </Button>
     </div>
   );
 }

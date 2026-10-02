@@ -19,7 +19,7 @@ import { useThemeVersion } from "../timeline/timelineTheme";
 import bordersData from "./borders.json";
 import { TRAVEL, bearingWord, daysText, distanceKm, formatDistance, pathKm, type LonLat, type Units } from "./geo";
 import { displayName, groupOf, kindsText, minZoom } from "./places";
-import { applySettings, atlasColors, buildStyle, type LayerSettings } from "./style";
+import { applySettings, atlasColors, buildStyle, type LayerSettings, type TileSource } from "./style";
 import { LayersPanel } from "./LayersPanel";
 
 // MapLibre looks for its worker beside its own file, which is not where a
@@ -56,8 +56,10 @@ interface Props {
   fitToken: number;
   fitTargets: AtlasPlace[];
   fitMode: "frame" | "center";
-  /** Terrarium elevation tiles from the terrain pack, when it is installed. */
-  terrainTiles: string | null;
+  /** Elevation tiles from the terrain pack, when it is installed. */
+  terrain: TileSource | null;
+  /** Satellite tiles from the imagery pack, when it is installed. */
+  imagery: TileSource | null;
 }
 
 function placesGeoJSON(places: AtlasPlace[], selected: string | null, highlighted: Set<string>) {
@@ -159,7 +161,7 @@ function arrowImage(color: string) {
 }
 
 export function AtlasMap(props: Props) {
-  const { places, selected, highlighted, journey, settings, units, onSelect, fitToken, fitTargets, fitMode, terrainTiles } = props;
+  const { places, selected, highlighted, journey, settings, units, onSelect, fitToken, fitTargets, fitMode, terrain, imagery } = props;
   const container = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const [ready, setReady] = useState(0);
@@ -172,14 +174,14 @@ export function AtlasMap(props: Props) {
   latest.current = { places, onSelect, measuring };
 
   const colors = useMemo(() => atlasColors(), [theme]); // eslint-disable-line react-hooks/exhaustive-deps
-  const styleKey = `${theme}:${settings.labelSize}:${terrainTiles ?? ""}`;
+  const styleKey = `${theme}:${settings.labelSize}:${terrain?.tiles ?? ""}:${imagery?.tiles ?? ""}`;
 
   // The map itself, once.
   useEffect(() => {
     if (!container.current) return;
     const map = new MapLibre({
       container: container.current,
-      style: buildStyle(colors, settings, terrainTiles ? { tiles: terrainTiles } : null),
+      style: buildStyle(colors, settings, terrain, imagery),
       bounds: HOLY_LAND,
       fitBoundsOptions: { padding: 30 },
       minZoom: 2.5,
@@ -239,7 +241,11 @@ export function AtlasMap(props: Props) {
     map.on("styleimagemissing", (e: { id: string }) => {
       if (e.id === "arrow" && !map.hasImage("arrow")) map.addImage("arrow", arrowImage(atlasColors().dark ? "#111" : "#fff"));
     });
-    map.on("load", () => setReady((n) => n + 1));
+    map.on("load", () => {
+      setReady((n) => n + 1);
+      // The credits start folded behind their (i) button, not across the map.
+      container.current?.querySelector(".maplibregl-ctrl-attrib")?.classList.remove("maplibregl-compact-show");
+    });
 
     const ro = new ResizeObserver(() => map.resize());
     ro.observe(container.current);
@@ -260,7 +266,7 @@ export function AtlasMap(props: Props) {
       firstStyle.current = false;
       return;
     }
-    map.setStyle(buildStyle(colors, settings, terrainTiles ? { tiles: terrainTiles } : null));
+    map.setStyle(buildStyle(colors, settings, terrain, imagery));
     map.once("style.load", () => setReady((n) => n + 1));
   }, [styleKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -355,7 +361,15 @@ export function AtlasMap(props: Props) {
 
       {panel === "layers" && (
         <div className="absolute left-14 top-3 max-h-[calc(100%-1.5rem)] w-72 overflow-y-auto rounded-lg border border-line bg-surface shadow-lg">
-          <LayersPanel settings={settings} onChange={props.onSettings} units={units} onUnits={props.onUnits} terrainInstalled={!!terrainTiles} onClose={() => setPanel(null)} />
+          <LayersPanel
+            settings={settings}
+            onChange={props.onSettings}
+            units={units}
+            onUnits={props.onUnits}
+            terrainInstalled={!!terrain}
+            imageryInstalled={!!imagery}
+            onClose={() => setPanel(null)}
+          />
         </div>
       )}
 

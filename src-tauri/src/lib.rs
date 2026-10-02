@@ -15,6 +15,7 @@ pub mod plain;
 pub mod refparse;
 pub mod resources;
 pub mod text;
+pub mod tiles;
 pub mod tts;
 pub mod update;
 
@@ -54,6 +55,34 @@ fn ready_to_close(window: tauri::Window) {
 pub fn run() {
     crate::tts::point_voice_at_lexicon();
     tauri::Builder::default()
+        .manage(tiles::TileStore::default())
+        // The Atlas's terrain and imagery, from the map packs the reader
+        // installed (see `tiles`). A tile is a small read; it is done off the
+        // main thread so a map full of them never holds up the window.
+        .register_asynchronous_uri_scheme_protocol("sjtiles", |ctx, request, responder| {
+            let app = ctx.app_handle().clone();
+            let path = request.uri().path().to_string();
+            tauri::async_runtime::spawn_blocking(move || {
+                let response = |status: u16, body: Vec<u8>, kind: &str| {
+                    tauri::http::Response::builder()
+                        .status(status)
+                        .header("Content-Type", kind)
+                        // The map fetches from its worker, on the app's origin.
+                        .header("Access-Control-Allow-Origin", "*")
+                        .header("Cache-Control", "max-age=31536000, immutable")
+                        .body(body)
+                        .unwrap()
+                };
+                let found = tiles::parse_path(&path).and_then(|(pack, z, x, y)| {
+                    let maps = paths::maps_dir(&app)?;
+                    app.state::<tiles::TileStore>().tile(&maps, &pack, z, x, y).ok().flatten()
+                });
+                responder.respond(match found {
+                    Some((data, format)) => response(200, data, tiles::content_type(&format)),
+                    None => response(404, Vec::new(), "text/plain"),
+                });
+            });
+        })
         .plugin(tauri_plugin_opener::init())
         // `tauri_plugin_dialog` stays: `commands::file_picker` uses DialogExt
         // to run the file dialogs in Rust. There is deliberately no fs plugin

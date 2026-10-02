@@ -25,6 +25,7 @@ export function LayersPanel({
   units,
   onUnits,
   terrainInstalled,
+  imageryInstalled,
   onClose,
 }: {
   settings: LayerSettings;
@@ -32,15 +33,17 @@ export function LayersPanel({
   units: Units;
   onUnits: (u: Units) => void;
   terrainInstalled: boolean;
+  imageryInstalled: boolean;
   onClose: () => void;
 }) {
   const set = (patch: Partial<LayerSettings>) => onChange({ ...s, ...patch });
   // Terrain is the default, but without its pack the map is plain.
-  const shownBase: BaseMap = s.base === "terrain" && !terrainInstalled ? "plain" : s.base === "satellite" ? "plain" : s.base;
+  const shownBase: BaseMap =
+    (s.base === "terrain" && !terrainInstalled) || (s.base === "satellite" && !imageryInstalled) ? (terrainInstalled ? "terrain" : "plain") : s.base;
   const bases: { value: BaseMap; label: string; available: boolean; note?: string }[] = [
     { value: "plain", label: "Plain", available: true },
     { value: "terrain", label: "Terrain", available: terrainInstalled, note: "Needs the terrain pack" },
-    { value: "satellite", label: "Satellite", available: false, note: "Needs the imagery pack" },
+    { value: "satellite", label: "Satellite", available: imageryInstalled, note: "Needs the imagery pack" },
   ];
 
   return (
@@ -71,7 +74,10 @@ export function LayersPanel({
             </button>
           ))}
         </div>
-        {!terrainInstalled && <p className="mt-1 text-xs text-ink-4">Terrain and satellite views come with optional map packs.</p>}
+        {terrainInstalled && <Check label="Raise the land in 3D" checked={s.relief3d} onChange={(v) => set({ relief3d: v })} />}
+        {(!terrainInstalled || !imageryInstalled) && (
+          <p className="mt-1 text-xs text-ink-4">Terrain and satellite views come with optional map packs, installed from Settings, Packs.</p>
+        )}
       </Section>
 
       <Section title="Places in Scripture">

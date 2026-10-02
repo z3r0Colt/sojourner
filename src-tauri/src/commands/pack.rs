@@ -21,10 +21,37 @@ pub fn pack_status(app: AppHandle) -> AppResult<PackStatus> {
     Ok(pack::status(&pack_dir(&app)?))
 }
 
-/// Every installed pack, the Puritan and Reformed one first.
+/// Every installed pack: the book shelves, the Puritan and Reformed one
+/// first, then the map packs.
 #[tauri::command]
 pub fn pack_statuses(app: AppHandle) -> AppResult<Vec<PackStatus>> {
-    Ok(crate::paths::installed_packs(&app).iter().map(|(_, dir)| pack::status(dir)).collect())
+    let books = crate::paths::installed_packs(&app);
+    let maps = crate::paths::installed_map_packs(&app);
+    Ok(books.iter().chain(maps.iter()).map(|(_, dir)| pack::status(dir)).collect())
+}
+
+/// Installs a map pack: the same staging and swap as a book pack, with the
+/// tile server letting go of the old tiles rather than the database
+/// detaching a library.
+fn install_map_pack(app: &AppHandle, archive: &std::path::Path, id: &str) -> AppResult<InstallOutcome> {
+    let dir = crate::paths::map_pack_dir(app, id).ok_or_else(|| anyhow::anyhow!("could not resolve a folder for the {id} map pack"))?;
+    let mut report = |progress: pack::PackProgress| {
+        let _ = app.emit(PROGRESS_EVENT, progress);
+    };
+    let staged = pack::stage(archive, &dir, &mut report)?;
+    let tiles = app.state::<crate::tiles::TileStore>();
+    let outcome = pack::commit(
+        &dir,
+        staged,
+        &mut report,
+        &mut || {
+            tiles.forget(id);
+            Ok(())
+        },
+        &mut || Ok(()),
+    )?;
+    report(pack::PackProgress { stage: "done", file: None, files_done: 0, files_total: 0, bytes_done: outcome.bytes, bytes_total: outcome.bytes });
+    Ok(outcome)
 }
 
 /// Attaches every installed pack and makes user.db agree with all of them.
@@ -62,7 +89,13 @@ pub async fn install_pack(app: AppHandle, token: String) -> AppResult<InstallOut
     };
     // Which shelf this pack is decides where it goes: the Puritan pack
     // (`library`) where it always went, any other in a folder of its own.
-    let id = pack::peek_manifest(&archive)?.id;
+    let manifest = pack::peek_manifest(&archive)?;
+    let id = manifest.id;
+    if manifest.kind == "map" {
+        return tauri::async_runtime::spawn_blocking(move || install_map_pack(&app, &archive, &id))
+            .await
+            .map_err(|e| anyhow::anyhow!("the install did not finish: {e}"))?;
+    }
     let dir = crate::paths::shelf_pack_dir(&app, &id).ok_or_else(|| anyhow::anyhow!("could not resolve a folder for the {id} pack"))?;
 
     tauri::async_runtime::spawn_blocking(move || -> AppResult<InstallOutcome> {
@@ -121,6 +154,20 @@ pub async fn install_pack(app: AppHandle, token: String) -> AppResult<InstallOut
 #[tauri::command]
 pub async fn remove_pack(app: AppHandle, id: Option<String>) -> AppResult<()> {
     let id = id.unwrap_or_else(|| "library".into());
+    // A map pack: no books, no rows to retire.
+    if let Some(map_dir) = crate::paths::map_pack_dir(&app, &id).filter(|d| pack::is_installed(d)) {
+        return tauri::async_runtime::spawn_blocking(move || -> AppResult<()> {
+            let tiles = app.state::<crate::tiles::TileStore>();
+            pack::remove(&map_dir, &mut || {
+                tiles.forget(&id);
+                Ok(())
+            })?;
+            println!("[pack] removed the {id} map pack");
+            Ok(())
+        })
+        .await
+        .map_err(|e| anyhow::anyhow!("the removal did not finish: {e}"))?;
+    }
     let dir = crate::paths::shelf_pack_dir(&app, &id).ok_or_else(|| anyhow::anyhow!("no {id} pack"))?;
     tauri::async_runtime::spawn_blocking(move || -> AppResult<()> {
         let db = app.state::<DbState>();

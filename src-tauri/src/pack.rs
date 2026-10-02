@@ -30,6 +30,15 @@
 //! `library` (see [`crate::db::attach_library`]) and every query that reads a
 //! shipped book resolves against it unqualified.
 //!
+//! ## Map packs
+//!
+//! The Atlas's terrain and imagery come the same way, as packs of `kind`
+//! "map": the same zip, manifest, checksums and swap, carrying `tiles.db`
+//! (map tiles by zoom, column and row) where a book pack carries
+//! `library.db` and its books. They install under `maps/<id>/` rather than
+//! `library/`, and are read by the `sjtiles` URI scheme ([`crate::tiles`]),
+//! not attached to the database.
+//!
 //! ## What it must never do
 //!
 //! Damage a library that was already installed. An interrupted install, a
@@ -49,6 +58,10 @@ pub const LIBRARY_DB: &str = "library.db";
 pub const BOOKS_DIR: &str = "books";
 /// The manifest, at the root of the zip.
 pub const MANIFEST: &str = "pack.json";
+/// A map pack's tiles, inside the pack folder and inside the zip.
+pub const TILES_DB: &str = "tiles.db";
+/// Every member any kind of pack installs, for the swap and the removal.
+const MEMBERS: [&str; 4] = [MANIFEST, LIBRARY_DB, BOOKS_DIR, TILES_DB];
 /// Where a pack is unpacked before it replaces the installed one.
 const STAGING_DIR: &str = ".staging";
 /// Where the outgoing pack waits while the new one takes its place.
@@ -69,9 +82,37 @@ pub struct PackFile {
     pub sha256: String,
 }
 
+/// What a map pack holds, from its manifest.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MapPackInfo {
+    /// "terrain" (elevation) or "imagery" (satellite pictures).
+    pub layer: String,
+    /// The tiles' image format: "png", "webp", "jpg".
+    pub format: String,
+    /// How an elevation tile encodes height: "terrarium" or "mapbox".
+    #[serde(default)]
+    pub encoding: Option<String>,
+    pub minzoom: u32,
+    pub maxzoom: u32,
+    /// The credit its sources require, shown on the map.
+    pub attribution: String,
+    #[serde(default)]
+    pub tile_count: u64,
+}
+
+fn library_kind() -> String {
+    "library".into()
+}
+
 /// `pack.json`: what this pack is, and what is in it.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PackManifest {
+    /// "library" (books) or "map" (tiles). Packs written before map packs
+    /// existed say nothing, and are books.
+    #[serde(default = "library_kind")]
+    pub kind: String,
+    #[serde(default)]
+    pub map: Option<MapPackInfo>,
     pub format: u32,
     pub id: String,
     pub name: String,
@@ -95,6 +136,8 @@ pub struct PackStatus {
     /// The pack's id: `library` for the Puritan and Reformed shelf, the
     /// shelf's own id for the others.
     pub id: Option<String>,
+    pub kind: Option<String>,
+    pub map: Option<MapPackInfo>,
     pub installed: bool,
     pub name: Option<String>,
     pub version: Option<String>,
@@ -107,6 +150,8 @@ impl PackStatus {
     fn none() -> Self {
         PackStatus {
             id: None,
+            kind: None,
+            map: None,
             installed: false,
             name: None,
             version: None,
@@ -160,7 +205,7 @@ pub fn read_installed_manifest(pack_dir: &Path) -> Option<PackManifest> {
 /// installed" is what lets the next install clean it up rather than trip
 /// over it.
 pub fn is_installed(pack_dir: &Path) -> bool {
-    pack_dir.join(LIBRARY_DB).is_file() && manifest_path(pack_dir).is_file()
+    (pack_dir.join(LIBRARY_DB).is_file() || pack_dir.join(TILES_DB).is_file()) && manifest_path(pack_dir).is_file()
 }
 
 /// What Settings shows about the installed pack.
@@ -173,6 +218,8 @@ pub fn status(pack_dir: &Path) -> PackStatus {
     };
     PackStatus {
         id: Some(manifest.id.clone()),
+        kind: Some(manifest.kind.clone()),
+        map: manifest.map.clone(),
         installed: true,
         name: Some(manifest.name),
         version: Some(manifest.version),
@@ -183,7 +230,7 @@ pub fn status(pack_dir: &Path) -> PackStatus {
         // would put a number in front of them that removing the pack would
         // not free.
         bytes_on_disk: Some(
-            [MANIFEST, LIBRARY_DB, BOOKS_DIR]
+            MEMBERS
                 .iter()
                 .map(|name| {
                     let path = pack_dir.join(name);
@@ -248,6 +295,11 @@ fn read_and_check_manifest(archive: &mut zip::ZipArchive<std::fs::File>) -> anyh
     drop(entry);
 
     let manifest: PackManifest = serde_json::from_str(&text).context("the pack's manifest is not readable")?;
+    anyhow::ensure!(
+        manifest.kind == "library" || (manifest.kind == "map" && manifest.map.is_some()),
+        "this pack is of a kind this version of Sojourner does not know ({}) -- update the app first",
+        manifest.kind
+    );
     anyhow::ensure!(
         manifest.format <= PACK_FORMAT,
         "this pack was built for a newer version of Sojourner (pack format {}, this build reads {PACK_FORMAT}) -- update the app first",
@@ -350,6 +402,9 @@ fn extract_verified(
 /// `library/` folder would pass every checksum and install a library of
 /// nothing.
 fn check_staged_db(staging: &Path, manifest: &PackManifest) -> anyhow::Result<()> {
+    if manifest.kind == "map" {
+        return check_staged_tiles(staging);
+    }
     let db_path = staging.join(LIBRARY_DB);
     anyhow::ensure!(db_path.is_file(), "the pack has no {LIBRARY_DB} in it");
 
@@ -367,6 +422,19 @@ fn check_staged_db(staging: &Path, manifest: &PackManifest) -> anyhow::Result<()
         .query_row("SELECT COUNT(*) FROM library_resources", [], |r| r.get(0))
         .context("the pack's library database has no books table")?;
     anyhow::ensure!(books > 0, "the pack's library is empty");
+    Ok(())
+}
+
+/// A map pack's tiles: a database with tiles in it.
+fn check_staged_tiles(staging: &Path) -> anyhow::Result<()> {
+    let db_path = staging.join(TILES_DB);
+    anyhow::ensure!(db_path.is_file(), "the pack has no {TILES_DB} in it");
+    let conn = rusqlite::Connection::open_with_flags(&db_path, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY)
+        .context("the pack's tiles could not be opened")?;
+    let tiles: i64 = conn
+        .query_row("SELECT COUNT(*) FROM tiles", [], |r| r.get(0))
+        .context("the pack's tile database has no tiles table")?;
+    anyhow::ensure!(tiles > 0, "the pack has no tiles");
     Ok(())
 }
 
@@ -533,7 +601,7 @@ pub fn install(
 /// atomic and instant -- the alternative, copying 700 MB into place, would
 /// need twice the disk and would leave a half-written library if it failed.
 fn swap_in(pack_dir: &Path, staging: &Path, retiring: &Path) -> anyhow::Result<()> {
-    let members = [MANIFEST, LIBRARY_DB, BOOKS_DIR];
+    let members = MEMBERS;
 
     // The outgoing database's write-ahead log and shared-memory file, which a
     // clean DETACH removes for itself. This is for the copy that a crash left
@@ -541,8 +609,10 @@ fn swap_in(pack_dir: &Path, staging: &Path, retiring: &Path) -> anyhow::Result<(
     // here it would pair with the *new* library.db, which is corruption
     // rather than an error. Nothing is lost by deleting them -- a pack is
     // read-only content, so a WAL holds nothing the reader wrote.
-    for sidecar in [format!("{LIBRARY_DB}-wal"), format!("{LIBRARY_DB}-shm")] {
-        let _ = std::fs::remove_file(pack_dir.join(sidecar));
+    for db in [LIBRARY_DB, TILES_DB] {
+        for sidecar in [format!("{db}-wal"), format!("{db}-shm")] {
+            let _ = std::fs::remove_file(pack_dir.join(sidecar));
+        }
     }
 
     std::fs::create_dir_all(retiring)?;
@@ -585,9 +655,8 @@ fn swap_in(pack_dir: &Path, staging: &Path, retiring: &Path) -> anyhow::Result<(
 pub fn remove(pack_dir: &Path, detach: &mut dyn FnMut() -> anyhow::Result<()>) -> anyhow::Result<()> {
     anyhow::ensure!(is_installed(pack_dir), "no resource pack is installed");
     detach()?;
-    let wal = format!("{LIBRARY_DB}-wal");
-    let shm = format!("{LIBRARY_DB}-shm");
-    for name in [MANIFEST, LIBRARY_DB, BOOKS_DIR, STAGING_DIR, RETIRING_DIR, wal.as_str(), shm.as_str()] {
+    let sidecars: Vec<String> = [LIBRARY_DB, TILES_DB].iter().flat_map(|db| [format!("{db}-wal"), format!("{db}-shm")]).collect();
+    for name in MEMBERS.iter().copied().chain([STAGING_DIR, RETIRING_DIR]).chain(sidecars.iter().map(String::as_str)) {
         let path = pack_dir.join(name);
         let result = if path.is_dir() {
             std::fs::remove_dir_all(&path)
@@ -735,6 +804,8 @@ mod tests {
             &db_path,
             &[books.join("a-book.epub")],
             PackManifest {
+                kind: "library".into(),
+                map: None,
                 format: PACK_FORMAT,
                 id: "library".into(),
                 name: "Test Library".into(),
@@ -752,6 +823,56 @@ mod tests {
 
     fn noop() -> anyhow::Result<()> {
         Ok(())
+    }
+
+    /// A map pack: pack.json of kind "map" and a tiles.db, zipped by hand as
+    /// tools/build-terrain-pack.py writes one.
+    fn build_a_map_pack(dir: &Path) -> PathBuf {
+        let tiles = dir.join("tiles-source.db");
+        let conn = rusqlite::Connection::open(&tiles).unwrap();
+        conn.execute_batch(
+            "CREATE TABLE tiles (z INTEGER, x INTEGER, y INTEGER, data BLOB, PRIMARY KEY (z, x, y));
+             CREATE TABLE metadata (name TEXT PRIMARY KEY, value TEXT);
+             INSERT INTO metadata VALUES ('format', 'webp');
+             INSERT INTO tiles VALUES (0, 0, 0, x'00');",
+        )
+        .unwrap();
+        drop(conn);
+        let bytes = std::fs::read(&tiles).unwrap();
+        let manifest = serde_json::json!({
+            "format": 1, "kind": "map", "id": "terrain", "name": "Terrain", "version": "1.0.0",
+            "built_at": "2026-10-02T00:00:00+00:00", "library_schema": 0, "book_count": 0,
+            "bytes": bytes.len(),
+            "files": [{ "path": TILES_DB, "bytes": bytes.len(), "sha256": hex(Sha256::digest(&bytes)) }],
+            "map": { "layer": "terrain", "format": "webp", "encoding": "terrarium", "minzoom": 0, "maxzoom": 11,
+                     "attribution": "test", "tile_count": 1 }
+        });
+        let out = dir.join("terrain.sjpack");
+        let mut zip = zip::ZipWriter::new(std::fs::File::create(&out).unwrap());
+        let opts = zip::write::SimpleFileOptions::default().compression_method(zip::CompressionMethod::Stored);
+        zip.start_file(MANIFEST, opts).unwrap();
+        std::io::Write::write_all(&mut zip, manifest.to_string().as_bytes()).unwrap();
+        zip.start_file(TILES_DB, opts).unwrap();
+        std::io::Write::write_all(&mut zip, &bytes).unwrap();
+        zip.finish().unwrap();
+        out
+    }
+
+    #[test]
+    fn a_map_pack_installs_and_says_what_it_is() {
+        let dir = scratch("map");
+        let archive = build_a_map_pack(&dir);
+        assert_eq!(peek_manifest(&archive).unwrap().kind, "map");
+        let pack_dir = dir.join("maps").join("terrain");
+        let outcome = install(&archive, &pack_dir, &mut |_| {}, &mut || Ok(()), &mut || Ok(())).unwrap();
+        assert_eq!(outcome.book_count, 0);
+        assert!(is_installed(&pack_dir));
+        let status = status(&pack_dir);
+        assert_eq!(status.kind.as_deref(), Some("map"));
+        assert_eq!(status.map.as_ref().map(|m| m.layer.as_str()), Some("terrain"));
+        remove(&pack_dir, &mut || Ok(())).unwrap();
+        assert!(!pack_dir.exists());
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]

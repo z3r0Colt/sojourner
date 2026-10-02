@@ -11,6 +11,16 @@ import { PLACE_GROUPS, type PlaceGroup, type Testament } from "./places";
  */
 
 export type BaseMap = "plain" | "terrain" | "satellite";
+
+/** A map pack's tiles, as the map reads them. */
+export interface TileSource {
+  tiles: string;
+  format: string;
+  encoding: string | null;
+  minzoom: number;
+  maxzoom: number;
+  attribution: string;
+}
 export type Confidence = "certain" | "probable" | "possible" | "proposed";
 
 export interface LayerSettings {
@@ -25,6 +35,8 @@ export interface LayerSettings {
   physicalNames: boolean;
   labels: boolean;
   labelSize: number;
+  /** The land raised in relief, when the terrain pack is installed. */
+  relief3d: boolean;
   testament: Testament;
   /** The least certain identification still drawn. */
   confidence: Confidence;
@@ -40,6 +52,7 @@ export const DEFAULT_LAYERS: LayerSettings = {
   physicalNames: true,
   labels: true,
   labelSize: 12,
+  relief3d: false,
   testament: "both",
   confidence: "proposed",
 };
@@ -153,7 +166,7 @@ function vis(on: boolean): "visible" | "none" {
   return on ? "visible" : "none";
 }
 
-export function buildStyle(c: AtlasColors, s: LayerSettings, terrain: { tiles: string } | null): StyleSpecification {
+export function buildStyle(c: AtlasColors, s: LayerSettings, terrain: TileSource | null, imagery: TileSource | null): StyleSpecification {
   const size = s.labelSize;
   const placeColor: ExpressionSpecification = [
     "case",
@@ -196,20 +209,56 @@ export function buildStyle(c: AtlasColors, s: LayerSettings, terrain: { tiles: s
       regions: { type: "geojson", data: EMPTY },
       journey: { type: "geojson", data: EMPTY },
       measure: { type: "geojson", data: EMPTY },
-      ...(terrain ? { dem: { type: "raster-dem" as const, tiles: [terrain.tiles], tileSize: 256, encoding: "terrarium" as const, maxzoom: 11 } } : {}),
+      ...(terrain
+        ? {
+            dem: {
+              type: "raster-dem" as const,
+              tiles: [terrain.tiles],
+              tileSize: 256,
+              encoding: (terrain.encoding === "mapbox" ? "mapbox" : "terrarium") as "mapbox" | "terrarium",
+              minzoom: terrain.minzoom,
+              maxzoom: terrain.maxzoom,
+              // The sources' full credit is in Settings (Packs, and About).
+              attribution: "Terrain: USGS (SRTM, GMTED2010), NOAA (ETOPO1), Copernicus (EU-DEM)",
+            },
+          }
+        : {}),
+      ...(imagery
+        ? {
+            imagery: {
+              type: "raster" as const,
+              tiles: [imagery.tiles],
+              tileSize: 256,
+              minzoom: imagery.minzoom,
+              maxzoom: imagery.maxzoom,
+              attribution: imagery.attribution,
+            },
+          }
+        : {}),
     },
     layers: [
       { id: "water", type: "background", paint: { "background-color": c.water } },
       { id: "land", type: "fill", source: "land", paint: { "fill-color": c.land, "fill-antialias": true } },
+      ...(imagery
+        ? [
+            {
+              id: "imagery",
+              type: "raster" as const,
+              source: "imagery",
+              layout: { visibility: vis(s.base === "satellite") },
+              paint: { "raster-opacity": 1, "raster-fade-duration": 150 },
+            },
+          ]
+        : []),
       ...(terrain
         ? [
             {
               id: "hillshade",
               type: "hillshade" as const,
               source: "dem",
-              layout: { visibility: vis(s.base === "terrain") },
+              layout: { visibility: vis(s.base === "terrain" || s.base === "satellite") },
               paint: {
-                "hillshade-exaggeration": 0.55,
+                "hillshade-exaggeration": s.base === "satellite" ? 0.25 : 0.55,
                 "hillshade-shadow-color": c.dark ? "#000000" : "#5a4a35",
                 "hillshade-highlight-color": c.dark ? "#3a3f44" : "#ffffff",
                 "hillshade-accent-color": c.dark ? "#1a1a1a" : "#6b5b45",
@@ -473,7 +522,14 @@ export function buildStyle(c: AtlasColors, s: LayerSettings, terrain: { tiles: s
  * the view does not flash as a whole new style would make it. */
 export function applySettings(map: MapLibreMap, s: LayerSettings): void {
   const set = (id: string, on: boolean) => map.getLayer(id) && map.setLayoutProperty(id, "visibility", vis(on));
-  set("hillshade", s.base === "terrain");
+  set("hillshade", s.base === "terrain" || s.base === "satellite");
+  set("imagery", s.base === "satellite");
+  if (map.getLayer("hillshade")) map.setPaintProperty("hillshade", "hillshade-exaggeration", s.base === "satellite" ? 0.25 : 0.55);
+  // Relief in 3D: the land raised on the elevation tiles, seen at a tilt.
+  const relief = s.relief3d && !!map.getSource("dem");
+  map.setTerrain(relief ? { source: "dem", exaggeration: 1.4 } : null);
+  if (relief && map.getPitch() < 20) map.easeTo({ pitch: 55, duration: 600 });
+  if (!relief && map.getPitch() > 0) map.easeTo({ pitch: 0, duration: 400 });
   set("provinces", s.modernBorders);
   set("borders", s.modernBorders);
   // A selected land's outline shows whether or not the others do.

@@ -1241,9 +1241,23 @@ export interface IllustrationUse {
 export type PickKind = "markdown" | "database" | "pptx" | "html" | "resource" | "library_xml" | "pack";
 
 /** The installed book library pack, or the absence of one. */
+/** What a map pack holds (terrain or imagery tiles), from its manifest. */
+export interface MapPackInfo {
+  layer: "terrain" | "imagery" | string;
+  format: string;
+  encoding: string | null;
+  minzoom: number;
+  maxzoom: number;
+  attribution: string;
+  tile_count: number;
+}
+
 export interface PackStatus {
   /** "library" for the Puritan and Reformed shelf; each other shelf's own id. */
   id: string | null;
+  /** "library" (books) or "map" (terrain or imagery for the Atlas). */
+  kind: string | null;
+  map: MapPackInfo | null;
   installed: boolean;
   name: string | null;
   version: string | null;
