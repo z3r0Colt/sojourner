@@ -5,14 +5,22 @@ Two sources, both free to redistribute:
   * The whole biblical world, zoom 0-8: NASA's Blue Marble Next Generation
     (July 2004, with topography and bathymetry), about 500 m a pixel. Public
     domain (NASA Earth Observatory).
-  * The Holy Land, zoom 9-12 (about 38 m a pixel): a cloud-free mosaic made
-    here from Copernicus Sentinel-2 scenes of summer 2024 -- for each area the
-    clearest scene, read straight from the open archive's cloud-optimised
-    GeoTIFFs (earth-search.aws.element84.com; sentinel-cogs on AWS), the
-    "visual" true-colour product. "Contains modified Copernicus Sentinel
-    data 2024" is the credit the Copernicus licence asks for.
+  * The Bible lands, zoom 9 and deeper: a cloud-free mosaic made here from
+    Copernicus Sentinel-2 scenes, mostly of summer 2024 -- for each area the
+    clearest whole scene, read straight from the open archive's
+    cloud-optimised GeoTIFFs (earth-search.aws.element84.com; sentinel-cogs
+    on AWS), the "visual" true-colour product. The Holy Land goes to zoom 14,
+    Sentinel-2's own 10 m; the lands of Paul's journeys, Syria, Sinai and the
+    delta to zoom 12; the Nile valley, Mesopotamia and Italy to zoom 11 (see
+    REGIONS). "Contains modified Copernicus Sentinel data 2024" is the credit
+    the Copernicus licence asks for.
 
-Past zoom 8 outside the Holy Land the map shows the Blue Marble enlarged.
+Elsewhere past zoom 8, and over open sea, the map shows the level above
+enlarged.
+
+The detail tiles are built into detail.db in the cache, so a build that is
+stopped (it takes hours) picks up where it left off; delete detail.db and
+scenes.json to start over.
 
 Tiles are JPEG in a tiles.db, in a resource pack of kind "map" (see
 src-tauri/src/pack.rs), installed from Settings, Packs.
@@ -24,6 +32,7 @@ Usage (from the repo root):
 """
 
 import argparse
+import collections
 import concurrent.futures
 import datetime
 import hashlib
@@ -33,6 +42,7 @@ import math
 import os
 import sqlite3
 import sys
+import threading
 import urllib.request
 
 import numpy as np
@@ -50,15 +60,26 @@ BLUE_MARBLE = "https://eoimages.gsfc.nasa.gov/images/imagerecords/73000/73751/wo
 BM_TILES = {"B1": (-90.0, 0.0, 0.0, 90.0), "C1": (0.0, 0.0, 90.0, 90.0)}
 WORLD = (-20.0, 0.0, 80.0, 58.0)
 WORLD_MAXZOOM = 8
-DETAIL = (33.8, 29.3, 37.0, 34.0)  # the Holy Land, Lebanon, Transjordan
-DETAIL_ZOOMS = (9, 12)
+# Where the Sentinel-2 mosaic goes, and how deep: (name, bbox, deepest zoom).
+# z14 is Sentinel-2's own 10 m; z12 is about 31 m a pixel, z11 about 62 m.
+REGIONS = [
+    ("the Holy Land, Lebanon and Transjordan", (33.8, 29.3, 37.0, 34.0), 14),
+    ("Syria, Sinai and the Nile delta", (29.0, 27.5, 40.0, 37.5), 12),
+    ("Asia Minor, Greece and Cyprus", (19.5, 34.5, 36.0, 42.0), 12),
+    ("the Nile to Thebes", (30.0, 24.5, 34.0, 31.5), 11),
+    ("Mesopotamia and Elam", (38.0, 29.5, 49.0, 37.5), 11),
+    ("Italy, Sicily and Malta", (12.0, 35.5, 17.0, 42.5), 11),
+]
+DETAIL_MINZOOM = 9
+MAXZOOM = max(z for *_, z in REGIONS)
+WORKERS = 12
 STAC = "https://earth-search.aws.element84.com/v1/search"
 SEASON = "2024-05-15T00:00:00Z/2024-09-30T23:59:59Z"
 FALLBACK_SEASON = "2023-04-01T00:00:00Z/2024-10-31T23:59:59Z"
 JPEG_QUALITY = 82
 
 ATTRIBUTION = (
-    "Imagery: NASA Blue Marble Next Generation (public domain); the Holy Land from Copernicus Sentinel-2 "
+    "Imagery: NASA Blue Marble Next Generation (public domain); the Bible lands from Copernicus Sentinel-2 "
     "(contains modified Copernicus Sentinel data 2024)."
 )
 
@@ -68,6 +89,10 @@ os.environ.setdefault("CPL_VSIL_CURL_ALLOWED_EXTENSIONS", ".tif")
 os.environ.setdefault("GDAL_HTTP_MULTIRANGE", "YES")
 os.environ.setdefault("GDAL_HTTP_MERGE_CONSECUTIVE_RANGES", "YES")
 os.environ.setdefault("VSI_CACHE", "TRUE")
+# One download cache for all threads, big enough to hold the blocks of the
+# scenes in use (a block of a scene is 1-3 MB; neighbouring tiles share them).
+os.environ.setdefault("CPL_VSIL_CURL_CACHE_SIZE", str(512 << 20))
+os.environ.setdefault("GDAL_CACHEMAX", "512")
 
 
 def tile_bounds_3857(z, x, y):
@@ -165,10 +190,10 @@ def world_tiles(raster):
 # --- Sentinel-2 ----------------------------------------------------------------
 
 
-def search(season, max_cloud):
+def search(bbox, season, max_cloud):
     body = {
         "collections": ["sentinel-2-c1-l2a"],
-        "bbox": list(DETAIL),
+        "bbox": list(bbox),
         "datetime": season,
         "query": {"eo:cloud_cover": {"lt": max_cloud}},
         "limit": 100,
@@ -178,13 +203,27 @@ def search(season, max_cloud):
     while url:
         req = urllib.request.Request(url, data=json.dumps(body).encode(), headers={"Content-Type": "application/json"})
         page = json.load(urllib.request.urlopen(req, timeout=120))
-        items += page["features"]
+        # Only what the build uses: a full record is tens of kilobytes.
+        items += [
+            {
+                "id": it["id"],
+                "bbox": it["bbox"],
+                "href": it["assets"]["visual"]["href"],
+                "properties": {k: it["properties"].get(k) for k in ("eo:cloud_cover", "datetime", "grid:code", "s2:mgrs_tile", "s2:nodata_pixel_percentage")},
+            }
+            for it in page["features"]
+        ]
         nxt = next((l for l in page.get("links", []) if l.get("rel") == "next"), None)
         url, body = (nxt["href"], nxt.get("body", body)) if nxt else (None, None)
     return items
 
 
-def search_scenes():
+def search_scenes(cache):
+    """The scenes to build from, best first within each grid square. The
+    search is cached, so a resumed build reads from the same scenes."""
+    path = os.path.join(cache, "scenes.json")
+    if os.path.isfile(path):
+        return json.load(open(path, encoding="utf-8"))
     # The clearest scenes of one dry season first; then, for the squares
     # those leave short (some see no clear pass all summer), nearly clear
     # scenes from two years, which a tile reaches only where it is still empty.
@@ -196,9 +235,13 @@ def search_scenes():
     def order(it):
         return (nodata(it) > 10, it["properties"]["eo:cloud_cover"], it["properties"]["datetime"])
 
-    clear = [it for it in search(SEASON, 2) if nodata(it) < 95]
-    seen = {it["id"] for it in clear}
-    spare = [it for it in search(FALLBACK_SEASON, 10) if it["id"] not in seen and nodata(it) < 95]
+    clear, spare, seen = [], [], set()
+    for season, max_cloud, into in ((SEASON, 2, clear), (FALLBACK_SEASON, 10, spare)):
+        for _, bbox, _ in REGIONS:
+            for it in search(bbox, season, max_cloud):
+                if it["id"] not in seen and nodata(it) < 95:
+                    seen.add(it["id"])
+                    into.append(it)
     items = sorted(clear, key=order) + sorted(spare, key=order)
     by_square = {}
     for it in items:
@@ -207,32 +250,84 @@ def search_scenes():
     print(f"Sentinel-2: {len(clear)} clear and {len(spare)} nearly clear scenes over {len(by_square)} grid squares", flush=True)
     # Up to twenty per square: a tile is filled from as many as it takes,
     # and stops at the first that leave it whole.
-    return [it for its in by_square.values() for it in its[:20]]
+    scenes = [{"id": it["id"], "bbox": it["bbox"], "href": it["href"]} for its in by_square.values() for it in its[:20]]
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(scenes, f)
+    return scenes
 
 
-def scene_bounds(item):
-    w, s, e, n = item["bbox"]
-    return w, s, e, n
+class SceneIndex:
+    """Scenes by one-degree cell, in their order, so a tile looks only at the
+    scenes near it."""
+
+    def __init__(self, scenes):
+        self.scenes = scenes
+        self.cells = {}
+        for i, sc in enumerate(scenes):
+            w, s, e, n = sc["bbox"]
+            for cx in range(math.floor(w), math.floor(e) + 1):
+                for cy in range(math.floor(s), math.floor(n) + 1):
+                    self.cells.setdefault((cx, cy), []).append(i)
+
+    def near(self, w, s, e, n):
+        found = set()
+        for cx in range(math.floor(w), math.floor(e) + 1):
+            for cy in range(math.floor(s), math.floor(n) + 1):
+                found.update(self.cells.get((cx, cy), ()))
+        return [self.scenes[i] for i in sorted(found)]
 
 
-def detail_tile(z, x, y, scenes, opened):
+def overview_for(z):
+    """The coarsest of a scene's levels (10 m, then 20, 40, 80, 160) still as
+    fine as a tile at zoom z: about 31 m a pixel at z12 in these latitudes."""
+    level = 12 - z
+    return None if level < 0 else min(level, 3)
+
+
+_local = threading.local()
+
+
+def open_scene(href, level):
+    """A scene opened once a thread and kept while it is in use: neighbouring
+    tiles read the same scenes, and opening one costs a round trip."""
+    cache = getattr(_local, "open", None)
+    if cache is None:
+        cache = _local.open = collections.OrderedDict()
+    key = (href, level)
+    if key in cache:
+        cache.move_to_end(key)
+        return cache[key]
+    src = rasterio.open(href) if level is None else rasterio.open(href, overview_level=level)
+    cache[key] = src
+    if len(cache) > 16:
+        cache.popitem(last=False)[1].close()
+    return src
+
+
+def lonlat_bounds(z, x, y):
     w, s, e, n = tile_bounds_3857(z, x, y)
-    lon_w, lat_s = (w / 6378137) * 180 / math.pi, math.degrees(2 * math.atan(math.exp(s / 6378137)) - math.pi / 2)
-    lon_e, lat_n = (e / 6378137) * 180 / math.pi, math.degrees(2 * math.atan(math.exp(n / 6378137)) - math.pi / 2)
+
+    def lat(m):
+        return math.degrees(2 * math.atan(math.exp(m / 6378137)) - math.pi / 2)
+
+    return w / 6378137 * 180 / math.pi, lat(s), e / 6378137 * 180 / math.pi, lat(n)
+
+
+def detail_tile(z, x, y, index):
+    """The tile warped from the scenes over it, best first, and how much of
+    it they cover."""
+    lon_w, lat_s, lon_e, lat_n = lonlat_bounds(z, x, y)
     rgb = np.zeros((3, 256, 256), dtype=np.uint8)
     filled = np.zeros((256, 256), dtype=bool)
-    for it in scenes:
-        sw, ss, se, sn = scene_bounds(it)
+    level = overview_for(z)
+    for sc in index.near(lon_w, lat_s, lon_e, lat_n):
+        sw, ss, se, sn = sc["bbox"]
         if se < lon_w or sw > lon_e or sn < lat_s or ss > lat_n:
             continue
-        href = it["assets"]["visual"]["href"]
         try:
-            # The first overview (20 m) is ample for a 38 m tile, and a
-            # fraction of the bytes.
-            src = opened.setdefault(href, rasterio.open(href, overview_level=0))
-            arr = warp_tile(src, z, x, y)
+            arr = warp_tile(open_scene(sc["href"], level), z, x, y)
         except Exception as ex:  # noqa: BLE001 -- one scene failing should not end the build
-            print(f"  {z}/{x}/{y}: {it['id']}: {ex}", flush=True)
+            print(f"  {z}/{x}/{y}: {sc['id']}: {ex}", flush=True)
             continue
         valid = arr.max(axis=0) > 0
         take = valid & ~filled
@@ -243,39 +338,77 @@ def detail_tile(z, x, y, scenes, opened):
     return np.transpose(rgb, (1, 2, 0)), filled.mean()
 
 
-def detail_tiles(scenes):
-    zmin, zmax = DETAIL_ZOOMS
-    top = tiles_in(zmax, *DETAIL)
-    print(f"Sentinel-2: {len(top)} tiles at z{zmax}", flush=True)
-    images = {}
-    coverage = []
+def wanted_tiles():
+    """Every detail tile, by zoom: each region's levels from z9 to its deepest."""
+    wanted = {}
+    for _, bbox, maxzoom in REGIONS:
+        for z in range(DETAIL_MINZOOM, maxzoom + 1):
+            wanted.setdefault(z, set()).update(tiles_in(z, *bbox))
+    return wanted
 
-    def work(t):
-        opened = {}
-        img, cov = detail_tile(*t, scenes, opened)
-        for src in opened.values():
-            src.close()
-        return t, img, cov
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=12) as pool:
-        for i, (t, img, cov) in enumerate(pool.map(work, top)):
-            images[t] = img
-            coverage.append(cov)
-            if (i + 1) % 200 == 0:
-                print(f"  {i + 1}/{len(top)}", flush=True)
-    print(f"  mean coverage {np.mean(coverage):.3f}", flush=True)
+def build_detail(db, index, world):
+    """Writes the detail tiles into `db`, deepest zoom first. A tile whose four
+    children were built is made from them, halved; any other (a region's
+    deepest level, or the edge of a deeper region) is warped from the scenes.
+    A tile with no imagery at all (open sea) is stored empty and left out of
+    the pack, and the map shows the level above it enlarged. Tiles already in
+    `db` are kept, so a stopped build picks up where it left off."""
+    wanted = wanted_tiles()
+    done = set(db.execute("SELECT z, x, y FROM detail"))
+    print(f"Sentinel-2: {sum(len(t) for t in wanted.values())} tiles over z{DETAIL_MINZOOM}-{MAXZOOM}, {len(done)} already built", flush=True)
 
-    # The coarser levels from the finer: each tile is its four children, halved.
-    for z in range(zmax - 1, zmin - 1, -1):
-        for (cz, cx, cy) in tiles_in(z, *DETAIL):
-            canvas = np.zeros((512, 512, 3), dtype=np.uint8)
-            for dx in (0, 1):
-                for dy in (0, 1):
-                    child = images.get((z + 1, 2 * cx + dx, 2 * cy + dy))
-                    if child is not None:
-                        canvas[dy * 256:(dy + 1) * 256, dx * 256:(dx + 1) * 256] = child
-            images[(z, cx, cy)] = np.asarray(Image.fromarray(canvas).resize((256, 256), Image.LANCZOS))
-    return images
+    def child_image(z, x, y):
+        row = db.execute("SELECT data FROM detail WHERE z = ? AND x = ? AND y = ?", (z, x, y)).fetchone()
+        if row and row[0]:
+            return Image.open(io.BytesIO(row[0])).convert("RGB"), True
+        base = parent_world(z, x, y, world)
+        return (Image.open(io.BytesIO(base)).convert("RGB") if base else None), False
+
+    def from_children(z, x, y):
+        canvas = Image.new("RGB", (512, 512))
+        any_imagery = False
+        for dx in (0, 1):
+            for dy in (0, 1):
+                img, imagery = child_image(z + 1, 2 * x + dx, 2 * y + dy)
+                any_imagery |= imagery
+                if img is not None:
+                    canvas.paste(img, (dx * 256, dy * 256))
+        return jpeg(np.asarray(canvas.resize((256, 256), Image.LANCZOS))) if any_imagery else None
+
+    def warped(group):
+        out = []
+        for t in group:
+            img, cov = detail_tile(*t, index)
+            out.append((t, blend_onto(parent_world(*t, world), img) if cov > 0 else None, cov))
+        return out
+
+    for z in sorted(wanted, reverse=True):
+        below = wanted.get(z + 1, set())
+        todo = [t for t in wanted[z] if t not in done]
+        halve = sorted(t for t in todo if all((z + 1, 2 * t[1] + dx, 2 * t[2] + dy) in below for dx in (0, 1) for dy in (0, 1)))
+        warp = set(todo) - set(halve)
+        # Neighbours go to the same thread, eight by eight, so the blocks of a
+        # scene it has read serve the next tile too.
+        groups = {}
+        for t in sorted(warp):
+            groups.setdefault((t[1] // 8, t[2] // 8), []).append(t)
+        print(f"  z{z}: {len(warp)} to warp, {len(halve)} from the level below", flush=True)
+        coverage = []
+        with concurrent.futures.ThreadPoolExecutor(max_workers=WORKERS) as pool:
+            for results in pool.map(warped, groups.values()):
+                for t, data, cov in results:
+                    db.execute("INSERT INTO detail VALUES (?, ?, ?, ?)", (*t, data))
+                    coverage.append(cov)
+                    if len(coverage) % 1000 == 0:
+                        db.commit()
+                        print(f"    {len(coverage)}/{len(warp)}, mean coverage {np.mean(coverage):.3f}", flush=True)
+        db.commit()
+        if coverage:
+            print(f"    mean coverage {np.mean(coverage):.3f}", flush=True)
+        for t in halve:
+            db.execute("INSERT INTO detail VALUES (?, ?, ?, ?)", (*t, from_children(*t)))
+        db.commit()
 
 
 def blend_onto(world_jpeg, detail):
@@ -323,7 +456,13 @@ def main():
     os.makedirs(args.cache, exist_ok=True)
 
     world = world_tiles(world_raster(args.cache))
-    detail = detail_tiles(search_scenes())
+    index = SceneIndex(search_scenes(args.cache))
+
+    # The detail tiles are built into a database of their own in the cache,
+    # which a stopped build resumes from; the pack's tiles.db is made from it.
+    work = sqlite3.connect(os.path.join(args.cache, "detail.db"))
+    work.execute("CREATE TABLE IF NOT EXISTS detail (z INTEGER NOT NULL, x INTEGER NOT NULL, y INTEGER NOT NULL, data BLOB, PRIMARY KEY (z, x, y)) WITHOUT ROWID")
+    build_detail(work, index, world)
 
     db_path = os.path.join(args.cache, "tiles.db")
     if os.path.exists(db_path):
@@ -334,16 +473,19 @@ def main():
         "CREATE TABLE metadata (name TEXT PRIMARY KEY, value TEXT);"
     )
     db.executemany("INSERT INTO tiles VALUES (?, ?, ?, ?)", [(z, x, y, d) for (z, x, y), d in world.items()])
-    db.executemany(
-        "INSERT INTO tiles VALUES (?, ?, ?, ?)",
-        [(z, x, y, blend_onto(parent_world(z, x, y, world), img)) for (z, x, y), img in detail.items()],
-    )
-    meta = {"name": "Satellite imagery", "format": "jpg", "minzoom": "0", "maxzoom": str(DETAIL_ZOOMS[1]), "attribution": ATTRIBUTION}
+    wanted = wanted_tiles()
+    detail = 0
+    for z, x, y, data in work.execute("SELECT z, x, y, data FROM detail WHERE data IS NOT NULL"):
+        if (z, x, y) in wanted.get(z, ()):
+            db.execute("INSERT OR REPLACE INTO tiles VALUES (?, ?, ?, ?)", (z, x, y, data))
+            detail += 1
+    work.close()
+    meta = {"name": "Satellite imagery", "format": "jpg", "minzoom": "0", "maxzoom": str(MAXZOOM), "attribution": ATTRIBUTION}
     db.executemany("INSERT INTO metadata VALUES (?, ?)", meta.items())
     db.commit()
     db.execute("VACUUM")
     db.close()
-    count = len(world) + len(detail)
+    count = len(world) + detail
     size = os.path.getsize(db_path)
     print(f"tiles.db: {count} tiles, {size / 1e6:.0f} MB", flush=True)
 
@@ -358,7 +500,7 @@ def main():
         "book_count": 0,
         "bytes": size,
         "files": [{"path": "tiles.db", "bytes": size, "sha256": sha256(db_path)}],
-        "map": {"layer": "imagery", "format": "jpg", "encoding": None, "minzoom": 0, "maxzoom": DETAIL_ZOOMS[1], "attribution": ATTRIBUTION, "tile_count": count},
+        "map": {"layer": "imagery", "format": "jpg", "encoding": None, "minzoom": 0, "maxzoom": MAXZOOM, "attribution": ATTRIBUTION, "tile_count": count},
     }
     out = os.path.join(ROOT, "packs", f"Sojourner-Imagery-{args.version}.sjpack")
     with __import__("zipfile").ZipFile(out, "w", compression=0, allowZip64=True) as z:
