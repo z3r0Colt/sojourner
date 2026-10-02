@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, BookOpenCheck, Check, ChevronLeft, CircleCheck, ExternalLink, LayoutPanelLeft, Lightbulb, Printer, Users } from "lucide-react";
 import { api } from "../../api/client";
@@ -50,7 +50,13 @@ import { useGuide, useHenryQuestions } from "./useGuideData";
 export function GuideView() {
   const [params] = usePaneParams("guide");
   const lesson = params.lessonId ? lessonById(params.lessonId) : undefined;
-  return <div className="h-full overflow-y-auto">{lesson ? <LessonView lesson={lesson} /> : <CourseView />}</div>;
+  // A lesson opens at its top, not where the last one was left (its "next
+  // lesson" button is at the bottom).
+  const scroller = useRef<HTMLDivElement>(null);
+  useEffect(() => scroller.current?.scrollTo(0, 0), [lesson?.id]);
+  // Keyed by lesson: every lesson's steps share ids ("before", "check"), so
+  // without it the next lesson would inherit this one's quiz picks and drafts.
+  return <div ref={scroller} className="h-full overflow-y-auto">{lesson ? <LessonView key={lesson.id} lesson={lesson} /> : <CourseView />}</div>;
 }
 
 // ---------------------------------------------------------------------------
@@ -468,9 +474,20 @@ function Quiz({
   onSubmit: (picks: number[], questions: QuizQuestion[]) => void;
 }) {
   const henryQuestions = useHenryQuestions(henry);
+  // Radio groups are per document: two Guide panes must not share names.
+  const radioName = useId();
   const questions = useMemo(() => [...own, ...henryQuestions], [own, henryQuestions]);
   const [picks, setPicks] = useState<number[]>(saved ?? []);
   const [shown, setShown] = useState(saved != null);
+  // The stored progress can load after the lesson first renders (a lesson
+  // pane restored at startup): show the saved answers once it does.
+  const savedKey = saved ? saved.join(",") : null;
+  useEffect(() => {
+    if (!saved) return;
+    setPicks(saved);
+    setShown(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [savedKey]);
   const all = questions.every((_, i) => picks[i] != null);
   const score = questions.filter((q, i) => picks[i] === q.answer).length;
 
@@ -496,7 +513,7 @@ function Quiz({
                 >
                   <input
                     type="radio"
-                    name={`q${qi}`}
+                    name={`${radioName}-${qi}`}
                     className="mt-1 accent-accent"
                     checked={picked}
                     onChange={() => {

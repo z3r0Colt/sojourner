@@ -44,15 +44,19 @@ export function useSetting<T>(
 
   const mutation = useMutation({
     mutationFn: (next: T) => api.setSetting(key, JSON.stringify(next)),
-    onMutate: async (next: T) => {
+    onMutate: async () => {
+      // A read still in flight would land over the new value; cancelling it
+      // reverts the cache to before the read, so the newest value is put
+      // back. (Writes made in the same tick resume in order, so the last
+      // one is what stays.)
+      if (!qc.isFetching({ queryKey })) return;
+      const latest = qc.getQueryData<{ value: T | undefined }>(queryKey);
       await qc.cancelQueries({ queryKey });
-      const previous = qc.getQueryData<{ value: T | undefined }>(queryKey);
-      qc.setQueryData<{ value: T | undefined }>(queryKey, { value: next });
-      return { previous };
+      if (latest) qc.setQueryData(queryKey, latest);
     },
-    onError: (_err, _next, ctx) => {
-      if (ctx?.previous) qc.setQueryData(queryKey, ctx.previous);
-    },
+    // The cache may hold later writes than the one that failed: read back
+    // what was actually stored.
+    onError: () => qc.invalidateQueries({ queryKey }),
   });
 
   const stored = query.data?.value;
@@ -64,6 +68,9 @@ export function useSetting<T>(
       const current = qc.getQueryData<{ value: T | undefined }>(queryKey)?.value;
       const prev = current === undefined ? defaultValue : current;
       const resolved = typeof next === "function" ? (next as (p: T) => T)(prev) : next;
+      // Into the cache now, not after an await, so a second update in the
+      // same tick builds on this one instead of on the value before it.
+      qc.setQueryData<{ value: T | undefined }>(queryKey, { value: resolved });
       mutate(resolved);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
