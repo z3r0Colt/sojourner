@@ -80,10 +80,12 @@ export function classic(
   find: string,
   question: number,
   fallback: keyof typeof AUTHORS = "flavel",
+  tip?: string,
 ): Step {
   return look("classic", "A classic reading", text, { pane: "book", title: book, find, fallback: { doc: "wsc", n: question, commentary: fallback } }, {
     openLabel: "Open Watson",
     optional: true,
+    tip,
   });
 }
 

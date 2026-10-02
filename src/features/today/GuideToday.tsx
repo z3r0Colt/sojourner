@@ -4,7 +4,7 @@ import { cardClass, cx } from "../../components/ui/classes";
 import { useSetting } from "../../hooks/useSetting";
 import { openContent, targetFor } from "../../workspace/openContent";
 import { usePane } from "../../workspace/PaneContext";
-import { EMPTY_GUIDE, GUIDE_SETTING, nextLesson, stepsDone, type GuideState } from "../guide/course";
+import { EMPTY_GUIDE, GUIDE_SETTING, nextLesson, questionsLabel, stepsDone, type GuideState } from "../guide/course";
 
 /** "Continue: Lesson 18, Justification" on Today, for a student who has
  * begun the guided study. Nothing shows before then, and nothing counts
@@ -30,7 +30,7 @@ export function GuideToday() {
             Lesson {next.number}: {next.title}
           </p>
           <p className="text-xs text-ink-3">
-            Shorter Catechism {next.questions.join(", ")}
+            {next.review ? "Review of" : "Shorter Catechism"} {questionsLabel(next)}
             {progress ? ` · ${done} of ${of} steps done` : ""}
           </p>
         </div>

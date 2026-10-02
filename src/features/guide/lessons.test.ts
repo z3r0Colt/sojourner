@@ -36,9 +36,9 @@ describe("the lessons as written", () => {
     for (const l of LESSONS) if (!l.review) expect(l.steps.map((s) => s.id), l.id).toContain("before");
   });
 
-  it("teach every Shorter Catechism question once, when the course is complete", () => {
+  it("teach every Shorter Catechism question exactly once", () => {
     const taught = LESSONS.filter((l) => !l.review).flatMap((l) => l.questions);
-    expect(new Set(taught).size).toBe(taught.length);
+    expect([...taught].sort((a, b) => a - b)).toEqual(Array.from({ length: 107 }, (_, i) => i + 1));
   });
 
   // `DUMP_LESSONS=path npx vitest run lessons.test` writes the lessons, with
