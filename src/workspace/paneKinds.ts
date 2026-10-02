@@ -169,9 +169,9 @@ export const PANE_KINDS: Registry = {
   },
   mine: {
     kind: "mine",
-    label: "Mine",
+    label: "My study",
     icon: StickyNote,
-    title: (p, ctx) => passageTitle("Mine", p, ctx),
+    title: (p, ctx) => passageTitle("My study", p, ctx),
     defaultWidth: 420,
     acceptsPassage: true,
     listed: true,

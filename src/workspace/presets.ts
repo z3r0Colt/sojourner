@@ -79,7 +79,7 @@ export const PRESET_WORKSPACES: readonly SavedWorkspace[] = [
   },
   {
     name: "Sermon prep",
-    description: "Bible, Matthew Henry, the manuscript, and Mine -- all in group A, so the sermon leads the study panes.",
+    description: "Bible, Matthew Henry, the manuscript, and My study -- all in group A, so the sermon leads the study panes.",
     tree: indexTree("two-by-two", [1000, 700, 700, 420]),
     panes: [
       { kind: "bible", params: {}, linkGroup: A },

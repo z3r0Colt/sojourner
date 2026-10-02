@@ -53,7 +53,7 @@ export const TOUR_STEPS: Step[] = [
     title: "Study beside the text",
     body: (
       <>
-        These icons open Commentary, Cross references, Confessions, or Mine (your own notes on the chapter) beside the text. <Kbd>Ctrl</Kbd>+click any link, sidebar item, or reference to open it in a new pane.
+        These icons open Commentary, Cross references, Confessions, or My study (your own notes and highlights on the chapter) beside the text. <Kbd>Ctrl</Kbd>+click any link, sidebar item, or reference to open it in a new pane.
       </>
     ),
     missing: "The Add pane strip sits on the right edge of the Bible page.",

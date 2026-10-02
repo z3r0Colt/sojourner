@@ -332,7 +332,7 @@ export const TUTORIAL: TutorialCategory[] = [
         title: "Open a study pane",
         what: "A study pane sits beside the text and follows the verse you select.",
         steps: [
-          "Click one of the icons on the right edge of the window: Commentary, Cross references, Encyclopedia for passage, People and places, Cited in your library, Timeline for passage, Confessions on this passage, Atlas, Mine, and in the Psalms the Metrical Psalter for passage. Press [Ctrl]+[B] to add a Commentary pane or focus the study pane that is open.",
+          "Click one of the icons on the right edge of the window: Commentary, Cross references, Encyclopedia for passage, People and places, Cited in your library, Timeline for passage, Confessions on this passage, Atlas, My study, and in the Psalms the Metrical Psalter for passage. Press [Ctrl]+[B] to add a Commentary pane or focus the study pane that is open.",
           "The new pane opens to the right of the one you are in, or below it when that pane is narrow.",
           "The pane's ⋯ menu offers Show instead, which changes what it shows to any page.",
         ],
@@ -422,7 +422,7 @@ export const TUTORIAL: TutorialCategory[] = [
         what: "A workspace is the panes and their arrangement, saved under a name.",
         steps: [
           "Click Workspaces in the top bar.",
-          "Presets: Devotion (the Bible alone), Sermon prep (Bible, Matthew Henry, Sermons, and Mine in a two by two, all in group A), Word study (Bible, Interlinear, and Lexicon side by side), and Family worship (the family worship page alone).",
+          "Presets: Devotion (the Bible alone), Sermon prep (Bible, Matthew Henry, Sermons, and My study in a two by two, all in group A), Word study (Bible, Interlinear, and Lexicon side by side), and Family worship (the family worship page alone).",
           "Click Save current as… to keep what you have open under a name; each saved row has rename and delete buttons.",
           "Switching keeps the chapter you are reading in every Bible pane that shares a link group with one in the new arrangement.",
           "Saved workspaces are stored with your data, so they survive a reinstall and travel with backups. The workspace you have open always comes back on launch.",
@@ -485,18 +485,18 @@ export const TUTORIAL: TutorialCategory[] = [
         id: "notes-mentions",
         title: "Notes that mention a verse",
         what: "A reference written inside any note marks that verse wherever you read it.",
-        steps: ["Write a reference such as Romans 8:28 in a note.", "That verse gets a faint dot by its number in the text.", "A Mine pane lists such notes under Mentioned in."],
+        steps: ["Write a reference such as Romans 8:28 in a note.", "That verse gets a faint dot by its number in the text.", "A My study pane lists such notes under Mentioned in."],
       },
       {
         id: "mine",
-        title: "Mine: your notes beside the text",
-        what: "The Mine pane shows everything of yours on the chapter you are reading.",
+        title: "My study: your notes beside the text",
+        what: "The My study pane shows everything of yours on the chapter you are reading.",
         steps: [
-          "Click Mine on the right edge.",
+          "Click My study on the right edge.",
           "Notes, chapter notes, and highlights appear in verse order, with the selected verse's items pinned to the top, then notes elsewhere that mention this chapter under Mentioned in, then the sermons preached from or quoting it.",
           "Each note has Edit and Jump; New note for v. N writes a note on the selected verse.",
         ],
-        links: [{ label: "Mine", to: "/study/mine" }],
+        links: [{ label: "My study", to: "/study/mine" }],
       },
       {
         id: "trash",
@@ -1208,7 +1208,7 @@ export const TUTORIAL: TutorialCategory[] = [
         steps: [
           "Click Mark as preached. The prep track and status follow it to Preached.",
           "The History list holds every rehearsal and preaching with its minutes; the Reflection box under it waits for what landed, what to cut, and what to say next time. The reflection is searchable with the rest of the sermon.",
-          "The Mine pane and the Bible's Related row list the sermons preached from a chapter; a highlight on a verse you later preached from is marked in a sermon on the Highlights page.",
+          "The My study pane and the Bible's Related row list the sermons preached from a chapter; a highlight on a verse you later preached from is marked in a sermon on the Highlights page.",
         ],
       },
       {

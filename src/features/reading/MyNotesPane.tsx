@@ -156,7 +156,7 @@ export function MyNotesPane({ book, chapter, activeVerse }: { book: Book; chapte
     <div className="flex h-full w-full flex-col">
       <div className="flex items-center justify-between gap-2 border-b border-line px-3 py-2 text-xs text-ink-3">
         <span className="truncate">
-          Mine · {book.name} {chapter}
+          My study · {book.name} {chapter}
           {activeVerse ? `:${activeVerse}` : ""}
         </span>
         <Button
