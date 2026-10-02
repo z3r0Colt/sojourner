@@ -82,7 +82,7 @@ export function FurtherReading() {
           <span className="text-ink-3">
             {" "}
             by James W. Alexander (1847): why a household should worship together, and how.
-            {!alexander && " It is on the Puritan and Reformed shelf; install or update it from Settings → Book library."}
+            {!alexander && " It is on the Puritan and Reformed shelf; install or update it from Settings → Library packs."}
           </span>
         </span>
       </li>

@@ -18,8 +18,9 @@ import { cx } from "../../components/ui/classes";
 import { useThemeVersion } from "../timeline/timelineTheme";
 import bordersData from "./borders.json";
 import { TRAVEL, bearingWord, daysText, distanceKm, formatDistance, pathKm, type LonLat, type Units } from "./geo";
-import { displayName, groupOf, kindsText, minZoom } from "./places";
-import { applySettings, atlasColors, buildStyle, type LayerSettings, type TileSource } from "./style";
+import { displayName, groupOf, kindsText, minZoom, type PlaceGroup } from "./places";
+import type { LegRoute } from "./routes";
+import { applySettings, atlasColors, buildStyle, placeImage, type LayerSettings, type TileSource } from "./style";
 import { LayersPanel } from "./LayersPanel";
 
 // MapLibre looks for its worker beside its own file, which is not where a
@@ -48,6 +49,13 @@ interface Props {
   selected: AtlasPlace | null;
   highlighted: Set<string>;
   journey: AtlasJourney | null;
+  /** The journey's legs as drawn, from its first located stop: by road where
+   * the Roman roads served, or straight; null until worked out. */
+  routes: LegRoute[] | null;
+  /** Whether the journey's travellers went by the Roman roads. */
+  roman: boolean;
+  /** What the map is showing in focus, said at its top: "Places in Acts 16". */
+  focusLabel: string | null;
   settings: LayerSettings;
   onSettings: (next: LayerSettings) => void;
   units: Units;
@@ -62,7 +70,22 @@ interface Props {
   imagery: TileSource | null;
 }
 
-function placesGeoJSON(places: AtlasPlace[], selected: string | null, highlighted: Set<string>) {
+/** The colour a place's dot takes, by its group: a key into atlasColors. */
+const TONE: Partial<Record<PlaceGroup, string>> = {
+  mountains: "mountain",
+  waters: "waterPlace",
+  camps: "camp",
+  sites: "site",
+  valleys: "featureLabel",
+};
+
+/**
+ * The places, each marked for how the map should draw it: in focus (named in
+ * the chapter beside the map, a stop on the journey shown, or selected), or
+ * faded back while something else is in focus.
+ */
+function placesGeoJSON(places: AtlasPlace[], selected: string | null, focus: Set<string>, fade: boolean) {
+  const focusing = fade && focus.size > 0;
   return {
     type: "FeatureCollection" as const,
     features: places
@@ -75,6 +98,7 @@ function placesGeoJSON(places: AtlasPlace[], selected: string | null, highlighte
           // A name used for another place (Babylon for Rome) always says so.
           label: p.slug === selected || p.qualifier?.startsWith("for ") ? displayName(p) : p.name,
           group: groupOf(p),
+          tone: focus.has(p.slug) || p.slug === selected ? "accent" : TONE[groupOf(p)] ?? "ink2",
           // Seas and lakes are named across the water, not marked with a dot.
           sea: p.kinds.includes("body of water") ? 1 : 0,
           rank: p.verse_count,
@@ -83,7 +107,8 @@ function placesGeoJSON(places: AtlasPlace[], selected: string | null, highlighte
           ot: p.ot_verses,
           nt: p.nt_verses,
           selected: p.slug === selected ? 1 : 0,
-          highlighted: highlighted.has(p.slug) ? 1 : 0,
+          focus: focus.has(p.slug) || p.slug === selected ? 1 : 0,
+          dim: focusing && !focus.has(p.slug) && p.slug !== selected ? 1 : 0,
         },
       })),
   };
@@ -106,14 +131,26 @@ function regionsGeoJSON(places: AtlasPlace[], selected: string | null, highlight
   };
 }
 
-function journeyGeoJSON(journey: AtlasJourney | null) {
+/** The journey: a line for each leg -- along the roads, or straight -- and
+ * its numbered stops. */
+function journeyGeoJSON(journey: AtlasJourney | null, routes: LegRoute[] | null, roman: boolean) {
   if (!journey) return { type: "FeatureCollection" as const, features: [] };
   const stops = journey.legs.filter((l) => l.lon != null && l.lat != null);
-  const line = stops.map((l) => [l.lon as number, l.lat as number]);
+  const legs = stops.slice(1).map((l, i) => {
+    const route = routes?.[i];
+    const coords = route?.coords ?? [
+      [stops[i].lon as number, stops[i].lat as number],
+      [l.lon as number, l.lat as number],
+    ];
+    // An Old Testament leg is a line between stops; a Roman-era one is a
+    // road, or open where no road served (by sea, or across country).
+    const way = !roman ? "line" : route?.by === "road" ? "road" : "open";
+    return { type: "Feature" as const, geometry: { type: "LineString" as const, coordinates: coords }, properties: { way } };
+  });
   return {
     type: "FeatureCollection" as const,
     features: [
-      ...(line.length > 1 ? [{ type: "Feature" as const, geometry: { type: "LineString" as const, coordinates: line }, properties: {} }] : []),
+      ...legs,
       ...stops.map((l, i) => ({
         type: "Feature" as const,
         geometry: { type: "Point" as const, coordinates: [l.lon as number, l.lat as number] },
@@ -162,7 +199,7 @@ function arrowImage(color: string) {
 }
 
 export function AtlasMap(props: Props) {
-  const { places, selected, highlighted, journey, settings, units, onSelect, fitToken, fitTargets, fitMode, terrain, imagery } = props;
+  const { places, selected, highlighted, journey, routes, roman, focusLabel, settings, units, onSelect, fitToken, fitTargets, fitMode, terrain, imagery } = props;
   const container = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const [ready, setReady] = useState(0);
@@ -175,7 +212,8 @@ export function AtlasMap(props: Props) {
   latest.current = { places, onSelect, measuring };
 
   const colors = useMemo(() => atlasColors(), [theme]); // eslint-disable-line react-hooks/exhaustive-deps
-  const styleKey = `${theme}:${settings.labelSize}:${terrain?.tiles ?? ""}:${imagery?.tiles ?? ""}`;
+  // The type size is not here: it changes in place (applySettings).
+  const styleKey = `${theme}:${terrain?.tiles ?? ""}:${imagery?.tiles ?? ""}`;
 
   // The map itself, once.
   useEffect(() => {
@@ -202,7 +240,7 @@ export function AtlasMap(props: Props) {
     if (import.meta.env.DEV) (window as unknown as { __atlasMap?: MapLibreMap }).__atlasMap = map;
 
     const hover = new Popup({ closeButton: false, closeOnClick: false, offset: 10, className: "atlas-hover" });
-    const interactive = ["places-dot", "places-label", "lands-label", "seas-label"];
+    const interactive = ["places-focus", "places", "places-faint", "lands-label", "seas-label"];
     const placeAt = (e: MapMouseEvent) => {
       const hit = map.queryRenderedFeatures(e.point, { layers: interactive.filter((l) => map.getLayer(l)) })[0];
       const slug = hit?.properties?.slug as string | undefined;
@@ -240,7 +278,10 @@ export function AtlasMap(props: Props) {
       if (place) latest.current.onSelect(place);
     });
     map.on("styleimagemissing", (e: { id: string }) => {
-      if (e.id === "arrow" && !map.hasImage("arrow")) map.addImage("arrow", arrowImage(atlasColors().dark ? "#111" : "#fff"));
+      if (map.hasImage(e.id)) return;
+      if (e.id === "arrow") map.addImage("arrow", arrowImage(atlasColors().dark ? "#111" : "#fff"));
+      const dot = placeImage(e.id, atlasColors());
+      if (dot) map.addImage(e.id, dot, { pixelRatio: 2 });
     });
     map.on("load", () => {
       setReady((n) => n + 1);
@@ -267,7 +308,9 @@ export function AtlasMap(props: Props) {
       firstStyle.current = false;
       return;
     }
-    map.setStyle(buildStyle(colors, settings, terrain, imagery));
+    // Not diffed: a diff keeps the old style's empty sources in place of the
+    // data set since, and fires no load to set it again.
+    map.setStyle(buildStyle(colors, settings, terrain, imagery), { diff: false });
     map.once("style.load", () => setReady((n) => n + 1));
   }, [styleKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -279,17 +322,22 @@ export function AtlasMap(props: Props) {
 
   // The data: places, regions, the journey, the measured line.
   const selectedSlug = selected?.slug ?? null;
+  // In focus: a journey's stops while one is shown, else the chapter's places.
+  const focus = useMemo(
+    () => (journey ? new Set(journey.legs.map((l) => l.place_slug).filter((s): s is string => !!s)) : highlighted),
+    [journey, highlighted],
+  );
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
-    (map.getSource("places") as GeoJSONSource | undefined)?.setData(placesGeoJSON(places, selectedSlug, highlighted));
-    (map.getSource("regions") as GeoJSONSource | undefined)?.setData(regionsGeoJSON(places, selectedSlug, highlighted));
-  }, [places, selectedSlug, highlighted, ready]);
+    (map.getSource("places") as GeoJSONSource | undefined)?.setData(placesGeoJSON(places, selectedSlug, focus, settings.fadeOthers));
+    (map.getSource("regions") as GeoJSONSource | undefined)?.setData(regionsGeoJSON(places, selectedSlug, focus));
+  }, [places, selectedSlug, focus, settings.fadeOthers, ready]);
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
-    (map.getSource("journey") as GeoJSONSource | undefined)?.setData(journeyGeoJSON(journey));
-  }, [journey, ready]);
+    (map.getSource("journey") as GeoJSONSource | undefined)?.setData(journeyGeoJSON(journey, routes, roman));
+  }, [journey, routes, roman, ready]);
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
@@ -359,6 +407,12 @@ export function AtlasMap(props: Props) {
         />
         <ToolButton icon={Maximize} label="Show the whole biblical world" onClick={() => mapRef.current?.fitBounds(WORLD, { padding: 20, duration: 700 })} />
       </div>
+
+      {focusLabel && (
+        <div className="pointer-events-none absolute left-1/2 top-3 max-w-[calc(100%-9rem)] -translate-x-1/2 truncate rounded-full border border-line bg-surface/95 px-3 py-1 text-xs font-medium text-ink-2 shadow-sm">
+          {focusLabel}
+        </div>
+      )}
 
       {panel === "layers" && (
         <div className="absolute left-14 top-3 max-h-[calc(100%-1.5rem)] w-72 overflow-y-auto rounded-lg border border-line bg-surface shadow-lg">

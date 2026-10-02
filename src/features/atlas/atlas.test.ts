@@ -51,8 +51,8 @@ describe("places", () => {
 
   it("shows the most-read places first", () => {
     expect(minZoom({ verse_count: 800 })).toBe(0);
-    expect(minZoom({ verse_count: 58 })).toBe(4);
-    expect(minZoom({ verse_count: 1 })).toBe(9);
+    expect(minZoom({ verse_count: 58 })).toBe(5);
+    expect(minZoom({ verse_count: 1 })).toBe(10);
     expect(Number.isInteger(minZoom({ verse_count: 7 }))).toBe(true);
   });
 

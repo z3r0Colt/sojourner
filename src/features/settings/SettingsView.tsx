@@ -13,7 +13,7 @@ type Section = "preferences" | "library" | "books" | "backups" | "tutorial" | "a
 const SECTIONS: { key: Section; label: string; icon: LucideIcon }[] = [
   { key: "preferences", label: "Reading", icon: BookOpen },
   { key: "library", label: "Library", icon: Library },
-  { key: "books", label: "Book library", icon: BookMarked },
+  { key: "books", label: "Library packs", icon: BookMarked },
   { key: "backups", label: "Data & backups", icon: Database },
   { key: "tutorial", label: "Tutorial", icon: GraduationCap },
   { key: "about", label: "About", icon: Info },

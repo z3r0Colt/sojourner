@@ -27,7 +27,8 @@ import { atlasRef } from "../sermons/sourceIdentity";
 import { AtlasMap } from "./AtlasMap";
 import { TRAVEL, bearingWord, daysText, distanceKm, formatDistance, type Units } from "./geo";
 import { PLACE_GROUPS, displayName, groupLabel, groupOf, kindsText, type PlaceGroup } from "./places";
-import { completeLayers, type LayerSettings } from "./style";
+import { ROMAN_ERAS, journeyRoutes, loadRoadGraph, type LegRoute } from "./routes";
+import { DATA, completeLayers, type LayerSettings } from "./style";
 
 /** What the confidence ratings mean, said plainly rather than as a score. */
 const CONFIDENCE_NOTE: Record<AtlasConfidence, string> = {
@@ -92,6 +93,31 @@ export function AtlasView() {
   // What the linked Bible pane is showing.
   const { data: passagePlaces } = usePlacesInPassage(params.bookId, params.chapter);
   const highlighted = useMemo(() => new Set((passagePlaces ?? []).map((p) => p.slug)), [passagePlaces]);
+  const chapterName = params.bookId && params.chapter ? `${bookName(books, params.bookId)} ${params.chapter}` : null;
+
+  // A New Testament journey goes by the Roman roads: the road network is
+  // read when the first such journey is shown, and kept.
+  const roman = !!journey && ROMAN_ERAS.has(journey.era);
+  const { data: roadGraph } = useQuery({
+    queryKey: ["atlasRoadGraph"],
+    queryFn: () => loadRoadGraph(`${DATA}/roads.geojson`),
+    enabled: roman,
+    staleTime: Infinity,
+    gcTime: Infinity,
+  });
+  const routes = useMemo(
+    () => (journey && (!roman || roadGraph) ? journeyRoutes(journey, roman ? roadGraph! : null) : null),
+    [journey, roman, roadGraph],
+  );
+
+  // Said at the top of the map, so what is marked is never a puzzle.
+  const focusLabel = journey
+    ? journey.title
+    : chapterName && passagePlaces
+      ? passagePlaces.length
+        ? `${chapterName}: ${passagePlaces.length} ${passagePlaces.length === 1 ? "place" : "places"} marked`
+        : `No places on the map in ${chapterName}`
+      : null;
 
   useEffect(() => {
     const t = setTimeout(() => setDebounced(query), 200);
@@ -205,6 +231,11 @@ export function AtlasView() {
               </select>
               {isFetching && <LoadingState className="pt-2" label="Searching…" />}
             </div>
+            {compact && chapterName && !!passagePlaces?.length && (
+              <div className="max-h-48 overflow-y-auto border-b border-line p-3">
+                <PassagePlaces chapter={chapterName} places={passagePlaces} onPick={(p) => selectPlace(p)} />
+              </div>
+            )}
             <div ref={listRef} className="min-h-0 flex-1 overflow-y-auto">
               {!places && <LoadingState />}
               {places && list.length === 0 && <EmptyState compact title="No places match" />}
@@ -280,6 +311,9 @@ export function AtlasView() {
             selected={selected}
             highlighted={highlighted}
             journey={journey}
+            routes={routes}
+            roman={roman}
+            focusLabel={focusLabel}
             settings={layers}
             onSettings={setStoredLayers}
             units={units}
@@ -308,9 +342,12 @@ export function AtlasView() {
             All places
           </button>
         )}
-        {journey && <JourneyDetail slug={journey.slug} units={units} />}
+        {journey && <JourneyDetail slug={journey.slug} units={units} routes={routes} roman={roman} />}
         {!journey && selected && <PlaceDetail place={selected} books={books} units={units} />}
-        {!journey && !selected && (
+        {!journey && !selected && chapterName && !!passagePlaces?.length && (
+          <PassagePlaces chapter={chapterName} places={passagePlaces} onPick={(p) => selectPlace(p)} />
+        )}
+        {!journey && !selected && !(chapterName && passagePlaces?.length) && (
           <EmptyState
             icon={MapPin}
             compact
@@ -424,20 +461,50 @@ function PlaceDetail({ place, books, units }: { place: AtlasPlace; books: Return
   );
 }
 
-function JourneyDetail({ slug, units }: { slug: string; units: Units }) {
+/** The places named in the chapter beside the map, which the map marks. */
+function PassagePlaces({ chapter, places, onPick }: { chapter: string; places: AtlasPlace[]; onPick: (place: AtlasPlace) => void }) {
+  const sorted = [...places].sort((a, b) => a.name.localeCompare(b.name));
+  return (
+    <div>
+      <h2 className="text-sm font-semibold text-ink">Places in {chapter}</h2>
+      <p className="mb-2 text-xs text-ink-4">Marked on the map in colour; the rest fade back. Pick one for its card.</p>
+      <ul className="space-y-0.5">
+        {sorted.map((p) => (
+          <li key={p.slug}>
+            <button type="button" onClick={() => onPick(p)} className="w-full rounded px-1.5 py-1 text-left hover:bg-hover">
+              <span className="block text-sm text-accent">
+                {p.name}
+                {p.qualifier && <span className="text-ink-3"> ({p.qualifier})</span>}
+              </span>
+              <span className="block text-xs text-ink-4">{kindsText(p) || groupLabel(groupOf(p))}</span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function JourneyDetail({ slug, units, routes, roman }: { slug: string; units: Units; routes: LegRoute[] | null; roman: boolean }) {
   const { data: journeys } = useAtlasJourneys();
   const { data: books } = useBooks();
   const journey = journeys?.find((j) => j.slug === slug);
   if (!journey) return <LoadingState />;
   const located = journey.legs.filter((l) => l.lon != null && l.lat != null);
   let totalKm = 0;
-  const legKm = journey.legs.map((leg) => {
+  // Each leg's way from the stop before: along the road where the journey
+  // went by road, else the straight line.
+  const legRoute = journey.legs.map((leg): LegRoute | null => {
     const i = located.indexOf(leg);
     if (i <= 0) return null;
     const prev = located[i - 1];
-    const km = distanceKm({ lon: prev.lon as number, lat: prev.lat as number }, { lon: leg.lon as number, lat: leg.lat as number });
-    totalKm += km;
-    return km;
+    const route = routes?.[i - 1] ?? {
+      coords: [],
+      km: distanceKm({ lon: prev.lon as number, lat: prev.lat as number }, { lon: leg.lon as number, lat: leg.lat as number }),
+      by: "direct" as const,
+    };
+    totalKm += route.km;
+    return route;
   });
 
   return (
@@ -448,9 +515,15 @@ function JourneyDetail({ slug, units }: { slug: string; units: Units }) {
       </div>
       <p className="mb-1 text-xs text-ink-4">{journey.reference}</p>
       <p className="mb-2 text-sm leading-relaxed text-ink-2">{journey.summary}</p>
-      {totalKm > 0 && (
-        <p className="mb-4 text-xs text-ink-3">About {formatDistance(totalKm, units)} from stop to stop in straight lines; more by road.</p>
-      )}
+      {totalKm > 0 &&
+        (roman ? (
+          <p className="mb-4 text-xs text-ink-3">
+            About {formatDistance(totalKm, units)} in all, along the Roman roads where they ran. A dashed leg is one no road served: by sea, or
+            across country.
+          </p>
+        ) : (
+          <p className="mb-4 text-xs text-ink-3">About {formatDistance(totalKm, units)} from stop to stop in straight lines; more by road.</p>
+        ))}
 
       <ol className="space-y-2.5">
         {journey.legs.map((leg, i) => (
@@ -485,17 +558,24 @@ function JourneyDetail({ slug, units }: { slug: string; units: Units }) {
                 </button>
               )}
               {leg.note && <p className="text-xs leading-relaxed text-ink-3">{leg.note}</p>}
-              {legKm[i] != null && legKm[i]! >= 1 && (
-                <p className="text-xs text-ink-4">
-                  {formatDistance(legKm[i]!, units)} from the last stop, {daysText(legKm[i]!, TRAVEL[0].kmPerDay)} on foot
-                </p>
-              )}
+              {legRoute[i] && legRoute[i]!.km >= 1 && <LegDistance route={legRoute[i]!} roman={roman} units={units} />}
             </div>
           </li>
         ))}
       </ol>
     </div>
   );
+}
+
+function LegDistance({ route, roman, units }: { route: LegRoute; roman: boolean; units: Units }) {
+  const km = route.km;
+  const foot = `${daysText(km, TRAVEL[0].kmPerDay)} on foot`;
+  const text = !roman
+    ? `${formatDistance(km, units)} from the last stop, ${foot}`
+    : route.by === "road"
+      ? `${formatDistance(km, units)} by road, ${foot}`
+      : `${formatDistance(km, units)} in a straight line: ${foot}, or ${daysText(km, TRAVEL[2].kmPerDay)} by ship`;
+  return <p className="text-xs text-ink-4">{text}</p>;
 }
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {

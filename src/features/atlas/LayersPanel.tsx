@@ -85,6 +85,11 @@ export function LayersPanel({
           <Check key={g.key} label={g.label} checked={s.groups[g.key]} onChange={(v) => set({ groups: { ...s.groups, [g.key]: v } })} />
         ))}
         <Check label="Outlines of ancient lands" checked={s.regions} onChange={(v) => set({ regions: v })} />
+        <Check
+          label="Fade other places when a chapter or journey is shown"
+          checked={s.fadeOthers}
+          onChange={(v) => set({ fadeOthers: v })}
+        />
         <label className="mt-1.5 flex items-center gap-2 text-xs text-ink-3">
           Testament
           <select value={s.testament} onChange={(e) => set({ testament: e.target.value as Testament })} className={cx(selectSmClass, "flex-1")}>

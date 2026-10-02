@@ -134,7 +134,7 @@ function LibraryLink({ fileName, paneId }: { fileName: string; paneId: string })
           className={linkClass}
           onClick={(e) => openFromTimeline(() => openContent("settings", { section: "books" }, { target: targetFor(e, "new"), from: paneId }))}
         >
-          Settings → Book library
+          Settings → Library packs
         </button>
         .
       </span>

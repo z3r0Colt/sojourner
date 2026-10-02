@@ -285,7 +285,7 @@ export function AboutSection() {
         </p>
         <p>
           The book library is a set of separate downloads, one per shelf, so the app itself stays small: Puritan and Reformed works, the Church Fathers,
-          ancient literature around the Bible, and nineteenth-century histories. Install any of them from Settings → Book library; nothing is fetched from
+          ancient literature around the Bible, and nineteenth-century histories. Install any of them from Settings → Library packs; nothing is fetched from
           here. Beside every verse, the books on those shelves that cite it are counted and listed.
         </p>
       </div>

@@ -44,6 +44,8 @@ export interface LayerSettings {
   testament: Testament;
   /** The least certain identification still drawn. */
   confidence: Confidence;
+  /** With a chapter's places or a journey on the map, the rest fade back. */
+  fadeOthers: boolean;
 }
 
 export const DEFAULT_LAYERS: LayerSettings = {
@@ -61,6 +63,7 @@ export const DEFAULT_LAYERS: LayerSettings = {
   relief3d: false,
   testament: "both",
   confidence: "proposed",
+  fadeOthers: true,
 };
 
 /** A stored settings object made whole: settings saved by an older version
@@ -137,7 +140,7 @@ const FONT_ITALIC = ["Noto Sans Italic"];
 /** Where the base map's files are: absolute, because the map fetches them
  * from a worker started from a blob: URL, against which a path like
  * "/atlas/land.geojson" does not resolve. */
-const DATA = typeof location === "undefined" ? "/atlas" : `${location.origin}/atlas`;
+export const DATA = typeof location === "undefined" ? "/atlas" : `${location.origin}/atlas`;
 
 function geojson(file: string) {
   return { type: "geojson" as const, data: `${DATA}/${file}.geojson` };
@@ -147,7 +150,8 @@ const EMPTY = { type: "FeatureCollection" as const, features: [] };
 
 /** Which places are drawn, from the settings: their group, their Testament,
  * how sure the identification is, and how far in the map is zoomed. A place
- * named in the passage being read, or selected, is drawn regardless. */
+ * in focus -- named in the passage being read, a stop on the journey shown,
+ * or selected -- is drawn regardless. */
 export function placeFilter(s: LayerSettings, kind: "points" | "lands" | "seas"): FilterSpecification {
   const groups = PLACE_GROUPS.map((g) => g.key).filter((g) => s.groups[g]);
   const confidence = ["certain", "probable", "possible", "proposed"].slice(0, ["certain", "probable", "possible", "proposed"].indexOf(s.confidence) + 1);
@@ -160,7 +164,7 @@ export function placeFilter(s: LayerSettings, kind: "points" | "lands" | "seas")
     testament,
     [">=", ["zoom"], ["get", "minzoom"]],
   ];
-  const always: ExpressionSpecification = ["any", ["==", ["get", "highlighted"], 1], ["==", ["get", "selected"], 1]];
+  const always: ExpressionSpecification = ["==", ["get", "focus"], 1];
   const ofKind: ExpressionSpecification =
     kind === "lands"
       ? ["==", ["get", "group"], "lands"]
@@ -170,36 +174,113 @@ export function placeFilter(s: LayerSettings, kind: "points" | "lands" | "seas")
   return ["all", ofKind, ["any", shown, always]] as FilterSpecification;
 }
 
+/** The point places of one of the three layers that draw them: faded back,
+ * named in the ordinary way, or in focus. */
+export function pointsFilter(s: LayerSettings, layer: "faint" | "named" | "focus"): FilterSpecification {
+  const which =
+    layer === "faint"
+      ? [["==", ["get", "dim"], 1]]
+      : layer === "focus"
+        ? [["==", ["get", "focus"], 1]]
+        : [["!=", ["get", "dim"], 1], ["!=", ["get", "focus"], 1]];
+  return ["all", placeFilter(s, "points"), ...which] as unknown as FilterSpecification;
+}
+
 function vis(on: boolean): "visible" | "none" {
   return on ? "visible" : "none";
 }
 
-export function buildStyle(c: AtlasColors, s: LayerSettings, terrain: TileSource | null, imagery: TileSource | null): StyleSpecification {
-  const size = s.labelSize;
-  const placeColor: ExpressionSpecification = [
-    "case",
-    ["==", ["get", "selected"], 1],
-    c.accent,
-    ["==", ["get", "highlighted"], 1],
-    c.accent,
-    [
-      "match",
-      ["get", "group"],
-      "mountains",
-      c.mountain,
-      "waters",
-      c.waterPlace,
-      "camps",
-      c.camp,
-      "sites",
-      c.site,
-      "valleys",
-      c.featureLabel,
-      c.ink2,
-    ],
-  ];
-  const certain: ExpressionSpecification = ["in", ["get", "confidence"], ["literal", ["certain", "probable"]]];
+function demSource(terrain: TileSource, credited: boolean) {
+  return {
+    type: "raster-dem" as const,
+    tiles: [terrain.tiles],
+    tileSize: 256,
+    encoding: (terrain.encoding === "mapbox" ? "mapbox" : "terrarium") as "mapbox" | "terrarium",
+    minzoom: terrain.minzoom,
+    maxzoom: terrain.maxzoom,
+    // The sources' full credit is in Settings (Packs, and About); once is enough here.
+    ...(credited ? { attribution: "Terrain: USGS (SRTM, GMTED2010), NOAA (ETOPO1), Copernicus (EU-DEM)" } : {}),
+  };
+}
 
+/** Each label layer's type size, from the size picked in Layers: set when the
+ * style is built, and changed in place after without rebuilding the map. */
+export function labelSizes(size: number): Record<string, number | ExpressionSpecification> {
+  return {
+    "roads-label": size - 1.5,
+    "towns-label": size - 1.5,
+    "marine-label": ["interpolate", ["linear"], ["zoom"], 3, size - 1, 7, size + 2],
+    "features-label": size - 2,
+    "countries-label": size - 1,
+    "lands-label": ["interpolate", ["linear"], ["get", "rank"], 1, size - 2, 60, size + 1, 300, size + 4],
+    "seas-label": ["interpolate", ["linear"], ["get", "rank"], 1, size - 1, 30, size + 1, 100, size + 3],
+    places: ["interpolate", ["linear"], ["get", "rank"], 1, size - 1, 60, size, 300, size + 2],
+    "places-focus": ["interpolate", ["linear"], ["get", "rank"], 1, size, 60, size + 1, 300, size + 2],
+  };
+}
+
+/** A place's dot is an image named for its colour and fill (see
+ * placeImage), drawn when the map first asks for it. */
+const PLACE_ICON: ExpressionSpecification = [
+  "concat",
+  "pt-",
+  ["get", "tone"],
+  ["case", ["in", ["get", "confidence"], ["literal", ["certain", "probable"]]], "-f", "-o"],
+];
+
+function placeLayout(s: LayerSettings, size: number | ExpressionSpecification, focus: boolean) {
+  return {
+    "icon-image": PLACE_ICON,
+    "icon-size": ["interpolate", ["linear"], ["get", "rank"], 1, focus ? 0.8 : 0.6, 40, focus ? 0.95 : 0.8, 200, focus ? 1.15 : 1] as ExpressionSpecification,
+    // Without names the dots alone are the map, and all of them are shown.
+    "icon-allow-overlap": focus || !s.labels,
+    "icon-padding": 1,
+    "text-field": s.labels ? (["get", "label"] as ExpressionSpecification) : "",
+    "text-font": ["case", ["any", ["==", ["get", "selected"], 1], [">=", ["get", "rank"], 60]], ["literal", FONT_BOLD], ["literal", FONT]] as ExpressionSpecification,
+    "text-size": size,
+    "text-variable-anchor": ["left", "right", "top", "bottom"] as ("left" | "right" | "top" | "bottom")[],
+    "text-radial-offset": focus ? 0.9 : 0.6,
+    "text-justify": "auto" as const,
+    "text-padding": focus ? 2 : 4,
+    // A place in focus keeps its dot even where its name will not fit.
+    "text-optional": focus,
+    "symbol-sort-key": ["case", ["==", ["get", "selected"], 1], -100000, ["-", 0, ["get", "rank"]]] as ExpressionSpecification,
+  };
+}
+
+/** The image for a place's dot: "pt-<tone>-f" filled, "pt-<tone>-o" open
+ * (an identification less than probable), in the tone's colour. */
+export function placeImage(id: string, c: AtlasColors): ImageData | null {
+  const m = /^pt-(\w+)-([fo])$/.exec(id);
+  if (!m) return null;
+  const color = (c as unknown as Record<string, string>)[m[1]] ?? c.ink2;
+  const ratio = 2;
+  const size = 16 * ratio;
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = size;
+  const ctx = canvas.getContext("2d")!;
+  const r = 5 * ratio;
+  ctx.beginPath();
+  ctx.arc(size / 2, size / 2, r, 0, Math.PI * 2);
+  if (m[2] === "f") {
+    // A filled dot inside a ring of the halo colour, to stand off the map.
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.lineWidth = 1.6 * ratio;
+    ctx.strokeStyle = c.halo;
+    ctx.stroke();
+  } else {
+    ctx.fillStyle = c.land;
+    ctx.fill();
+    ctx.lineWidth = 1.8 * ratio;
+    ctx.strokeStyle = color;
+    ctx.stroke();
+  }
+  return ctx.getImageData(0, 0, size, size);
+}
+
+export function buildStyle(c: AtlasColors, s: LayerSettings, terrain: TileSource | null, imagery: TileSource | null): StyleSpecification {
+  const sizes = labelSizes(s.labelSize);
   return {
     version: 8,
     glyphs: `${DATA}/fonts/{fontstack}/{range}.pbf`,
@@ -218,18 +299,12 @@ export function buildStyle(c: AtlasColors, s: LayerSettings, terrain: TileSource
       regions: { type: "geojson", data: EMPTY },
       journey: { type: "geojson", data: EMPTY },
       measure: { type: "geojson", data: EMPTY },
+      // The same elevation twice: MapLibre shades and raises the land
+      // better from a source each than from one shared.
       ...(terrain
         ? {
-            dem: {
-              type: "raster-dem" as const,
-              tiles: [terrain.tiles],
-              tileSize: 256,
-              encoding: (terrain.encoding === "mapbox" ? "mapbox" : "terrarium") as "mapbox" | "terrarium",
-              minzoom: terrain.minzoom,
-              maxzoom: terrain.maxzoom,
-              // The sources' full credit is in Settings (Packs, and About).
-              attribution: "Terrain: USGS (SRTM, GMTED2010), NOAA (ETOPO1), Copernicus (EU-DEM)",
-            },
+            dem: demSource(terrain, true),
+            "dem-shade": demSource(terrain, false),
           }
         : {}),
       ...(imagery
@@ -264,7 +339,7 @@ export function buildStyle(c: AtlasColors, s: LayerSettings, terrain: TileSource
             {
               id: "hillshade",
               type: "hillshade" as const,
-              source: "dem",
+              source: "dem-shade",
               layout: { visibility: vis(s.base === "terrain" || s.base === "satellite") },
               paint: {
                 "hillshade-exaggeration": s.base === "satellite" ? 0.25 : 0.55,
@@ -341,12 +416,29 @@ export function buildStyle(c: AtlasColors, s: LayerSettings, terrain: TileSource
         },
       },
       {
+        id: "journey-casing",
+        type: "line",
+        source: "journey",
+        filter: ["all", ["==", ["geometry-type"], "LineString"], ["!=", ["get", "way"], "open"]],
+        layout: { "line-join": "round", "line-cap": "round" },
+        paint: { "line-color": c.halo, "line-width": ["interpolate", ["linear"], ["zoom"], 3, 4, 9, 7] },
+      },
+      {
         id: "journey-line",
         type: "line",
         source: "journey",
-        filter: ["==", ["geometry-type"], "LineString"],
+        filter: ["all", ["==", ["geometry-type"], "LineString"], ["!=", ["get", "way"], "open"]],
         layout: { "line-join": "round", "line-cap": "round" },
-        paint: { "line-color": c.accent, "line-width": ["interpolate", ["linear"], ["zoom"], 3, 2, 9, 4], "line-opacity": 0.85 },
+        paint: { "line-color": c.accent, "line-width": ["interpolate", ["linear"], ["zoom"], 3, 2, 9, 4], "line-opacity": 0.9 },
+      },
+      // A leg of a Roman-era journey that no road serves: by sea, or across country.
+      {
+        id: "journey-open",
+        type: "line",
+        source: "journey",
+        filter: ["all", ["==", ["geometry-type"], "LineString"], ["==", ["get", "way"], "open"]],
+        layout: { "line-join": "round", "line-cap": "round" },
+        paint: { "line-color": c.accent, "line-width": ["interpolate", ["linear"], ["zoom"], 3, 1.8, 9, 3.2], "line-opacity": 0.85, "line-dasharray": [2, 2] },
       },
       {
         id: "journey-arrows",
@@ -374,7 +466,7 @@ export function buildStyle(c: AtlasColors, s: LayerSettings, terrain: TileSource
           "symbol-placement": "line",
           "text-field": ["get", "name"],
           "text-font": FONT_ITALIC,
-          "text-size": size - 1.5,
+          "text-size": sizes["roads-label"],
           "symbol-spacing": 400,
           "text-letter-spacing": 0.05,
         },
@@ -396,7 +488,7 @@ export function buildStyle(c: AtlasColors, s: LayerSettings, terrain: TileSource
           visibility: vis(s.modernTowns && s.labels),
           "text-field": ["get", "name"],
           "text-font": FONT_ITALIC,
-          "text-size": size - 1.5,
+          "text-size": sizes["towns-label"],
           "text-offset": [0, 0.9],
           "text-anchor": "top",
           "symbol-sort-key": ["get", "rank"],
@@ -412,7 +504,7 @@ export function buildStyle(c: AtlasColors, s: LayerSettings, terrain: TileSource
           visibility: vis(s.physicalNames && s.labels),
           "text-field": ["get", "name"],
           "text-font": FONT_ITALIC,
-          "text-size": ["interpolate", ["linear"], ["zoom"], 3, size - 1, 7, size + 2],
+          "text-size": sizes["marine-label"],
           "text-letter-spacing": 0.15,
           "text-max-width": 8,
           "symbol-sort-key": ["get", "rank"],
@@ -428,7 +520,7 @@ export function buildStyle(c: AtlasColors, s: LayerSettings, terrain: TileSource
           visibility: vis(s.physicalNames && s.labels),
           "text-field": ["upcase", ["get", "name"]],
           "text-font": FONT_ITALIC,
-          "text-size": size - 2,
+          "text-size": sizes["features-label"],
           "text-letter-spacing": 0.2,
           "text-max-width": 9,
           "symbol-sort-key": ["get", "rank"],
@@ -444,7 +536,7 @@ export function buildStyle(c: AtlasColors, s: LayerSettings, terrain: TileSource
           visibility: vis(s.modernCountries && s.labels),
           "text-field": ["upcase", ["get", "name"]],
           "text-font": FONT_BOLD,
-          "text-size": size - 1,
+          "text-size": sizes["countries-label"],
           "text-letter-spacing": 0.25,
           "text-max-width": 8,
           "symbol-sort-key": ["get", "rank"],
@@ -460,16 +552,17 @@ export function buildStyle(c: AtlasColors, s: LayerSettings, terrain: TileSource
           visibility: vis(s.labels),
           "text-field": ["upcase", ["get", "label"]],
           "text-font": FONT_ITALIC,
-          "text-size": ["interpolate", ["linear"], ["get", "rank"], 1, size - 2, 60, size + 1, 300, size + 4],
+          "text-size": sizes["lands-label"],
           "text-letter-spacing": 0.22,
           "text-max-width": 9,
           "symbol-sort-key": ["-", 0, ["get", "rank"]],
           "text-padding": 6,
         },
         paint: {
-          "text-color": ["case", ["any", ["==", ["get", "selected"], 1], ["==", ["get", "highlighted"], 1]], c.accent, c.region],
+          "text-color": ["case", ["==", ["get", "focus"], 1], c.accent, c.region],
           "text-halo-color": c.halo,
           "text-halo-width": 1.2,
+          "text-opacity": ["case", ["==", ["get", "dim"], 1], 0.35, 1],
         },
       },
       {
@@ -481,56 +574,56 @@ export function buildStyle(c: AtlasColors, s: LayerSettings, terrain: TileSource
           visibility: vis(s.labels),
           "text-field": ["get", "label"],
           "text-font": FONT_ITALIC,
-          "text-size": ["interpolate", ["linear"], ["get", "rank"], 1, size - 1, 30, size + 1, 100, size + 3],
+          "text-size": sizes["seas-label"],
           "text-letter-spacing": 0.12,
           "text-max-width": 7,
           "symbol-sort-key": ["-", 0, ["get", "rank"]],
         },
         paint: {
-          "text-color": ["case", ["any", ["==", ["get", "selected"], 1], ["==", ["get", "highlighted"], 1]], c.accent, c.waterLabel],
+          "text-color": ["case", ["==", ["get", "focus"], 1], c.accent, c.waterLabel],
           "text-halo-color": c.water,
           "text-halo-width": 1,
+          "text-opacity": ["case", ["==", ["get", "dim"], 1], 0.35, 1],
         },
       },
+      // Places out of focus, while a chapter or a journey is shown: faint
+      // dots for context, unnamed, never in the way.
       {
-        id: "places-dot",
+        id: "places-faint",
         type: "circle",
         source: "places",
-        filter: placeFilter(s, "points"),
+        filter: pointsFilter(s, "faint"),
         paint: {
-          "circle-radius": [
-            "+",
-            ["case", ["==", ["get", "selected"], 1], 2.5, ["==", ["get", "highlighted"], 1], 1.2, 0],
-            ["interpolate", ["linear"], ["get", "rank"], 1, 2.6, 40, 3.8, 200, 5],
-          ],
-          "circle-color": ["case", certain, placeColor, c.land],
-          "circle-stroke-color": placeColor,
-          "circle-stroke-width": ["case", certain, 1.2, 1.6],
-          "circle-opacity": ["case", ["==", ["get", "confidence"], "proposed"], 0.75, 1],
-          "circle-stroke-opacity": ["case", ["==", ["get", "confidence"], "proposed"], 0.75, 1],
+          "circle-radius": ["interpolate", ["linear"], ["get", "rank"], 1, 1.8, 200, 3],
+          "circle-color": c.ink3,
+          "circle-opacity": 0.4,
         },
       },
+      // Every other place is a dot and a name that stand or fall together,
+      // the way a road map names a town or leaves it off: where names would
+      // crowd, the lesser place gives way, dot and all, until the reader
+      // zooms in and there is room.
       {
-        id: "places-label",
+        id: "places",
         type: "symbol",
         source: "places",
-        filter: placeFilter(s, "points"),
-        layout: {
-          visibility: vis(s.labels),
-          "text-field": ["get", "label"],
-          "text-font": ["case", ["any", ["==", ["get", "selected"], 1], [">=", ["get", "rank"], 60]], ["literal", FONT_BOLD], ["literal", FONT]],
-          "text-size": ["interpolate", ["linear"], ["get", "rank"], 1, size - 1, 60, size + 1, 300, size + 3],
-          "text-variable-anchor": ["left", "right", "top", "bottom"],
-          "text-radial-offset": 0.7,
-          "text-justify": "auto",
-          "symbol-sort-key": ["case", ["==", ["get", "selected"], 1], -100000, ["==", ["get", "highlighted"], 1], -50000, ["-", 0, ["get", "rank"]]],
-          "text-padding": 3,
-        },
+        filter: pointsFilter(s, "named"),
+        layout: placeLayout(s, sizes.places, false),
         paint: {
-          "text-color": ["case", ["any", ["==", ["get", "selected"], 1], ["==", ["get", "highlighted"], 1]], c.accent, ["==", ["get", "group"], "waters"], c.waterLabel, c.ink],
+          "text-color": ["case", ["==", ["get", "group"], "waters"], c.waterLabel, c.ink],
           "text-halo-color": c.halo,
           "text-halo-width": 1.4,
+          "icon-opacity": ["case", ["==", ["get", "confidence"], "proposed"], 0.75, 1],
         },
+      },
+      // The places in focus: always drawn, and named wherever there is room.
+      {
+        id: "places-focus",
+        type: "symbol",
+        source: "places",
+        filter: pointsFilter(s, "focus"),
+        layout: placeLayout(s, sizes["places-focus"], true),
+        paint: { "text-color": c.accent, "text-halo-color": c.halo, "text-halo-width": 1.6 },
       },
       {
         id: "journey-stops",
@@ -601,10 +694,16 @@ export function applySettings(map: MapLibreMap, s: LayerSettings): void {
   set("features-label", s.physicalNames && s.labels);
   set("countries-label", s.modernCountries && s.labels);
   set("lands-label", s.labels);
-  set("places-label", s.labels);
   set("seas-label", s.labels);
   map.setFilter("seas-label", placeFilter(s, "seas"));
   map.setFilter("lands-label", placeFilter(s, "lands"));
-  map.setFilter("places-dot", placeFilter(s, "points"));
-  map.setFilter("places-label", placeFilter(s, "points"));
+  map.setFilter("places-faint", pointsFilter(s, "faint"));
+  map.setFilter("places", pointsFilter(s, "named"));
+  map.setFilter("places-focus", pointsFilter(s, "focus"));
+  for (const id of ["places", "places-focus"]) {
+    map.setLayoutProperty(id, "text-field", s.labels ? ["get", "label"] : "");
+    map.setLayoutProperty(id, "icon-allow-overlap", id === "places-focus" || !s.labels);
+  }
+  // The type size, in place: a whole new style would only flash.
+  for (const [id, size] of Object.entries(labelSizes(s.labelSize))) if (map.getLayer(id)) map.setLayoutProperty(id, "text-size", size);
 }

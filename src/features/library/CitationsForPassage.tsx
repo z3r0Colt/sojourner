@@ -74,7 +74,7 @@ export function CitationsForPassage({ book, chapter, activeVerse }: { book: Book
         compact
         icon={Library}
         title={`Nothing in your library cites ${where}`}
-        description="Books on the installed shelves, and your own books, are listed here where they cite the passage. Install more shelves in Settings → Book library."
+        description="Books on the installed shelves, and your own books, are listed here where they cite the passage. Install more shelves in Settings → Library packs."
       />
     );
   }

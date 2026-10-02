@@ -409,7 +409,7 @@ export function ResourceLibraryView() {
           <p className="mt-1 text-ink-3">
             The library is a separate download.{" "}
             <PaneLink to="/settings?section=books" className="text-accent hover:underline">
-              Install it from Settings → Book library
+              Install it from Settings → Library packs
             </PaneLink>
             .
           </p>

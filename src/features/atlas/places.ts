@@ -70,12 +70,12 @@ export function minZoom(place: Pick<AtlasPlace, "verse_count">): number {
   // Whole zoom levels: the map tests a filter's zoom once per level.
   const n = place.verse_count;
   if (n >= 100) return 0;
-  if (n >= 40) return 4;
-  if (n >= 15) return 5;
-  if (n >= 6) return 6;
-  if (n >= 3) return 7;
-  if (n >= 2) return 8;
-  return 9;
+  if (n >= 40) return 5;
+  if (n >= 15) return 6;
+  if (n >= 6) return 7;
+  if (n >= 3) return 8;
+  if (n >= 2) return 9;
+  return 10;
 }
 
 export const CONFIDENCE_ORDER = ["certain", "probable", "possible", "proposed", "unidentified"] as const;

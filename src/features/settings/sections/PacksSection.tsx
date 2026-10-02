@@ -112,7 +112,7 @@ export function PacksSection() {
 
   return (
     <div>
-      <h2 className="mb-1 text-lg font-semibold text-ink">Book library</h2>
+      <h2 className="mb-1 text-lg font-semibold text-ink">Library packs</h2>
       <p className="mb-4 text-sm text-ink-3">
         The book library comes as separate downloads, one per shelf: Puritan and Reformed, Church Fathers, Ancient literature,
         and Nineteenth century. Install any or all of them; each can be removed on its own. Everything
