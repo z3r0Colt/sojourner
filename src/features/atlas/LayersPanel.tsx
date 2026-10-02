@@ -106,6 +106,12 @@ export function LayersPanel({
         <p className="mt-1 text-xs text-ink-4">A hollow marker is a site that is only possible or proposed.</p>
       </Section>
 
+      <Section title="Roads">
+        <Check label="The great Old Testament routes" checked={s.otRoutes} onChange={(v) => set({ otRoutes: v })} />
+        <Check label="Roman roads" checked={s.romanRoads} onChange={(v) => set({ romanRoads: v })} />
+        <p className="mt-1 text-xs text-ink-4">The Old Testament routes are drawn through their traditional stations; their exact courses are not known. A faint Roman road is one whose course is conjectured.</p>
+      </Section>
+
       <Section title="Today">
         <Check label="Modern towns and cities" checked={s.modernTowns} onChange={(v) => set({ modernTowns: v })} />
         <Check label="Modern borders" checked={s.modernBorders} onChange={(v) => set({ modernBorders: v })} />

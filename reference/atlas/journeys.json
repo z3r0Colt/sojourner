@@ -6,18 +6,212 @@
   "reference": "Genesis 11-25",
   "summary": "Called out of a settled city to a land he would never own, Abraham spent the rest of his life in a tent between the promise and its keeping. The only ground in Canaan he ever held was the field he bought to bury Sarah in.",
   "legs": [
-   { "name": "Ur", "ref": "Gen.11.31", "note": "Terah takes his household out of Ur toward Canaan" },
-   { "name": "Haran", "ref": "Gen.11.31", "note": "They settle short of the land, and Terah dies there" },
-   { "name": "Shechem", "ref": "Gen.12.6", "note": "The LORD appears: to your offspring I will give this land" },
-   { "name": "Bethel", "ref": "Gen.12.8", "note": "He builds an altar and calls on the name of the LORD" },
-   { "name": "Egypt", "ref": "Gen.12.10", "note": "Famine drives him out of the land he was promised" },
-   { "name": "Bethel", "ref": "Gen.13.3", "note": "Back to the altar he had made at the first" },
-   { "name": "Dan", "ref": "Gen.14.14", "note": "He arms his household and pursues the kings to rescue Lot" },
-   { "name": "Hebron", "ref": "Gen.13.18", "note": "He settles by the oaks of Mamre" },
-   { "name": "Gerar", "ref": "Gen.20.1", "note": "He sojourns among the Philistines and calls Sarah his sister" },
-   { "name": "Beersheba", "ref": "Gen.21.31", "note": "The well of the oath sworn between him and Abimelech" },
-   { "name": "Moriah", "ref": "Gen.22.2", "note": "Take now your son, your only son Isaac, whom you love" },
-   { "name": "Hebron", "ref": "Gen.23.19", "note": "He buries Sarah in the cave of Machpelah, the one field he owned" }
+   {
+    "name": "Ur",
+    "ref": "Gen.11.31",
+    "note": "Terah takes his household out of Ur toward Canaan"
+   },
+   {
+    "name": "Haran",
+    "ref": "Gen.11.31",
+    "note": "They settle short of the land, and Terah dies there"
+   },
+   {
+    "name": "Shechem",
+    "ref": "Gen.12.6",
+    "note": "The LORD appears: to your offspring I will give this land"
+   },
+   {
+    "name": "Bethel",
+    "ref": "Gen.12.8",
+    "note": "He builds an altar and calls on the name of the LORD"
+   },
+   {
+    "name": "Egypt",
+    "ref": "Gen.12.10",
+    "note": "Famine drives him out of the land he was promised"
+   },
+   {
+    "name": "Bethel",
+    "ref": "Gen.13.3",
+    "note": "Back to the altar he had made at the first"
+   },
+   {
+    "name": "Dan",
+    "ref": "Gen.14.14",
+    "note": "He arms his household and pursues the kings to rescue Lot"
+   },
+   {
+    "name": "Hebron",
+    "ref": "Gen.13.18",
+    "note": "He settles by the oaks of Mamre"
+   },
+   {
+    "name": "Gerar",
+    "ref": "Gen.20.1",
+    "note": "He sojourns among the Philistines and calls Sarah his sister"
+   },
+   {
+    "name": "Beersheba",
+    "ref": "Gen.21.31",
+    "note": "The well of the oath sworn between him and Abimelech"
+   },
+   {
+    "name": "Moriah",
+    "ref": "Gen.22.2",
+    "note": "Take now your son, your only son Isaac, whom you love"
+   },
+   {
+    "name": "Hebron",
+    "ref": "Gen.23.19",
+    "note": "He buries Sarah in the cave of Machpelah, the one field he owned"
+   }
+  ]
+ },
+ {
+  "slug": "abraham-rescues-lot",
+  "title": "Abraham Rescues Lot",
+  "era": "The patriarchs",
+  "reference": "Genesis 14",
+  "summary": "Four kings from the east carried Lot off from Sodom. Abraham armed his trained servants, pursued them the length of the land and beyond Damascus, and on the way home was blessed by Melchizedek, king of Salem.",
+  "legs": [
+   {
+    "name": "Mamre",
+    "ref": "Gen.14.13",
+    "note": "Abram dwelt in the plain of Mamre when the news came"
+   },
+   {
+    "name": "Dan",
+    "ref": "Gen.14.14",
+    "note": "He pursued them unto Dan"
+   },
+   {
+    "name": "Hobah",
+    "ref": "Gen.14.15",
+    "note": "He smote them and pursued them unto Hobah, on the left hand of Damascus"
+   },
+   {
+    "name": "Salem",
+    "ref": "Gen.14.18",
+    "note": "Melchizedek king of Salem brought forth bread and wine"
+   }
+  ]
+ },
+ {
+  "slug": "jacobs-flight-and-return",
+  "title": "Jacob's Flight and Return",
+  "era": "The patriarchs",
+  "reference": "Genesis 28-35",
+  "summary": "Fleeing Esau, Jacob slept at Bethel and saw the ladder to heaven. Twenty years later he came back from Haran with a family and flocks, wrestled with God at the Jabbok, and went up again to Bethel.",
+  "legs": [
+   {
+    "name": "Beersheba",
+    "ref": "Gen.28.10",
+    "note": "Jacob went out from Beersheba toward Haran"
+   },
+   {
+    "name": "Bethel",
+    "ref": "Gen.28.19",
+    "note": "The ladder set up on the earth; he called the place Bethel"
+   },
+   {
+    "name": "Haran",
+    "ref": "Gen.29.4",
+    "note": "He served Laban twenty years"
+   },
+   {
+    "name": "Gilead",
+    "ref": "Gen.31.21",
+    "note": "He fled, and set his face toward the mount Gilead"
+   },
+   {
+    "name": "Mahanaim",
+    "ref": "Gen.32.2",
+    "note": "The angels of God met him"
+   },
+   {
+    "name": "Penuel",
+    "ref": "Gen.32.30",
+    "note": "I have seen God face to face"
+   },
+   {
+    "name": "Succoth",
+    "ref": "Gen.33.17",
+    "note": "He built him an house, and booths for his cattle"
+   },
+   {
+    "name": "Shechem",
+    "ref": "Gen.33.18",
+    "note": "He came to Shalem, a city of Shechem, and bought a field"
+   },
+   {
+    "name": "Bethel",
+    "ref": "Gen.35.6",
+    "note": "He built an altar there, and God renewed the promise"
+   },
+   {
+    "name": "Ephrath",
+    "ref": "Gen.35.16",
+    "note": "Rachel died in childbirth on the way to Ephrath"
+   },
+   {
+    "name": "Mamre",
+    "ref": "Gen.35.27",
+    "note": "He came to Isaac his father at Mamre"
+   }
+  ]
+ },
+ {
+  "slug": "joseph-sold-into-egypt",
+  "title": "Joseph Sold into Egypt",
+  "era": "The patriarchs",
+  "reference": "Genesis 37",
+  "summary": "Sent by his father to see how his brothers fared, Joseph followed them from Shechem to Dothan, where they sold him to merchants going down to Egypt.",
+  "legs": [
+   {
+    "name": "Hebron",
+    "ref": "Gen.37.14",
+    "note": "Jacob sent him out of the vale of Hebron"
+   },
+   {
+    "name": "Shechem",
+    "ref": "Gen.37.14",
+    "note": "He came to Shechem, but his brothers had gone"
+   },
+   {
+    "name": "Dothan",
+    "ref": "Gen.37.17",
+    "note": "He found them in Dothan, on the caravan road"
+   },
+   {
+    "name": "Egypt",
+    "ref": "Gen.37.28",
+    "note": "Sold to the Ishmeelites for twenty pieces of silver"
+   }
+  ]
+ },
+ {
+  "slug": "jacob-goes-down-to-egypt",
+  "title": "Jacob Goes Down to Egypt",
+  "era": "The patriarchs",
+  "reference": "Genesis 46-50",
+  "summary": "Told that Joseph was alive, Jacob went down to Egypt with all his house, and was settled in Goshen. When he died, his sons carried him back to be buried with Abraham and Isaac.",
+  "legs": [
+   {
+    "name": "Beersheba",
+    "ref": "Gen.46.1",
+    "note": "He offered sacrifices; God said, fear not to go down into Egypt"
+   },
+   {
+    "name": "Goshen",
+    "ref": "Gen.46.28",
+    "note": "Joseph went up to meet him in Goshen"
+   },
+   {
+    "name": "Machpelah",
+    "ref": "Gen.50.13",
+    "note": "Buried in the cave of the field of Machpelah"
+   }
   ]
  },
  {
@@ -27,19 +221,107 @@
   "reference": "Exodus 12 - Deuteronomy 34",
   "summary": "Numbers 33 records the stages of the journey as Moses wrote them down, station by station. Many of those camps can no longer be placed on any map, and the ones that can are set down here; forty years of it lie between Kadesh-barnea and the plains of Moab.",
   "legs": [
-   { "name": "Rameses", "ref": "Exod.12.37", "note": "They set out by night, about six hundred thousand on foot" },
-   { "name": "Succoth", "ref": "Exod.12.37", "note": "The first camp out of Egypt" },
-   { "name": "Etham", "ref": "Exod.13.20", "note": "On the edge of the wilderness" },
-   { "name": "Pi-hahiroth", "ref": "Exod.14.2", "note": "Hemmed in against the sea, with Pharaoh behind them" },
-   { "name": "Marah", "ref": "Exod.15.23", "note": "They could not drink the water, for it was bitter" },
-   { "name": "Elim", "ref": "Exod.15.27", "note": "Twelve springs of water and seventy palm trees" },
-   { "name": "Rephidim", "ref": "Exod.17.1", "note": "Water from the rock, and Amalek at the rear" },
-   { "name": "Mount Sinai", "ref": "Exod.19.20", "note": "The LORD comes down, and the law is given" },
-   { "name": "Kadesh-barnea", "ref": "Num.32.8", "note": "The spies return, the people refuse, and a generation turns back" },
-   { "name": "Mount Hor", "ref": "Num.20.22", "note": "Aaron dies on the mountain in the sight of all the congregation" },
-   { "name": "Ezion-geber", "ref": "Num.33.35", "note": "South to the gulf, skirting the land of Edom" },
-   { "name": "Moab", "ref": "Num.22.1", "note": "They encamp in the plains of Moab, across the Jordan from Jericho" },
-   { "name": "Mount Nebo", "ref": "Deut.34.1", "note": "Moses sees the land, and is not permitted to enter it" }
+   {
+    "name": "Rameses",
+    "ref": "Exod.12.37",
+    "note": "They set out by night, about six hundred thousand on foot"
+   },
+   {
+    "name": "Succoth",
+    "ref": "Exod.12.37",
+    "note": "The first camp out of Egypt"
+   },
+   {
+    "name": "Etham",
+    "ref": "Exod.13.20",
+    "note": "On the edge of the wilderness"
+   },
+   {
+    "name": "Pi-hahiroth",
+    "ref": "Exod.14.2",
+    "note": "Hemmed in against the sea, with Pharaoh behind them"
+   },
+   {
+    "name": "Marah",
+    "ref": "Exod.15.23",
+    "note": "They could not drink the water, for it was bitter"
+   },
+   {
+    "name": "Elim",
+    "ref": "Exod.15.27",
+    "note": "Twelve springs of water and seventy palm trees"
+   },
+   {
+    "name": "Rephidim",
+    "ref": "Exod.17.1",
+    "note": "Water from the rock, and Amalek at the rear"
+   },
+   {
+    "name": "Mount Sinai",
+    "ref": "Exod.19.20",
+    "note": "The LORD comes down, and the law is given"
+   },
+   {
+    "name": "Kadesh-barnea",
+    "ref": "Num.32.8",
+    "note": "The spies return, the people refuse, and a generation turns back"
+   },
+   {
+    "name": "Mount Hor",
+    "ref": "Num.20.22",
+    "note": "Aaron dies on the mountain in the sight of all the congregation"
+   },
+   {
+    "name": "Ezion-geber",
+    "ref": "Num.33.35",
+    "note": "South to the gulf, skirting the land of Edom"
+   },
+   {
+    "name": "Moab",
+    "ref": "Num.22.1",
+    "note": "They encamp in the plains of Moab, across the Jordan from Jericho"
+   },
+   {
+    "name": "Mount Nebo",
+    "ref": "Deut.34.1",
+    "note": "Moses sees the land, and is not permitted to enter it"
+   }
+  ]
+ },
+ {
+  "slug": "the-spies",
+  "title": "The Twelve Spies",
+  "era": "The exodus",
+  "reference": "Numbers 13",
+  "summary": "Sent from the wilderness of Paran to search the land, the spies went from its south to its north, and came back with a cluster of grapes, and an evil report.",
+  "legs": [
+   {
+    "name": "Paran",
+    "ref": "Num.13.3",
+    "note": "Moses sent them from the wilderness of Paran"
+   },
+   {
+    "name": "Rehob",
+    "ref": "Num.13.21",
+    "note": "They searched the land unto Rehob"
+   },
+   {
+    "name": "Hebron",
+    "ref": "Num.13.22",
+    "note": "Where the children of Anak were"
+   },
+   {
+    "name": "Valley of Eshcol",
+    "ref": "Num.13.23",
+    "note": "They cut down a branch with one cluster of grapes",
+    "slug": "valley-of-eshcol"
+   },
+   {
+    "name": "Kadesh-barnea",
+    "ref": "Num.32.8",
+    "note": "They returned to Kadesh after forty days",
+    "slug": "kadesh-barnea"
+   }
   ]
  },
  {
@@ -49,15 +331,51 @@
   "reference": "Joshua 3-18",
   "summary": "The campaign as Joshua fought it: a crossing, a centre, then south and north. It begins with a river stopped and ends with the tent of meeting pitched at Shiloh.",
   "legs": [
-   { "name": "Shittim", "ref": "Josh.3.1", "note": "They set out from Shittim and come to the Jordan" },
-   { "name": "Gilgal", "ref": "Josh.4.19", "note": "Twelve stones set up where they came out of the river" },
-   { "name": "Jericho", "ref": "Josh.6.1", "note": "The walls fall down flat on the seventh day" },
-   { "name": "Ai", "ref": "Josh.8.1", "note": "Taken at the second attempt, after Achan's sin is judged" },
-   { "name": "Mount Ebal", "ref": "Josh.8.30", "note": "The blessings and the curses read to all the assembly" },
-   { "name": "Gibeon", "ref": "Josh.10.1", "note": "The long day, when the sun stood still" },
-   { "name": "Makkedah", "ref": "Josh.10.16", "note": "The five kings taken from the cave" },
-   { "name": "Hazor", "ref": "Josh.11.10", "note": "The head of all those kingdoms, burned with fire" },
-   { "name": "Shiloh", "ref": "Josh.18.1", "note": "The tent of meeting set up, and the land divided by lot" }
+   {
+    "name": "Shittim",
+    "ref": "Josh.3.1",
+    "note": "They set out from Shittim and come to the Jordan"
+   },
+   {
+    "name": "Gilgal",
+    "ref": "Josh.4.19",
+    "note": "Twelve stones set up where they came out of the river"
+   },
+   {
+    "name": "Jericho",
+    "ref": "Josh.6.1",
+    "note": "The walls fall down flat on the seventh day"
+   },
+   {
+    "name": "Ai",
+    "ref": "Josh.8.1",
+    "note": "Taken at the second attempt, after Achan's sin is judged"
+   },
+   {
+    "name": "Mount Ebal",
+    "ref": "Josh.8.30",
+    "note": "The blessings and the curses read to all the assembly"
+   },
+   {
+    "name": "Gibeon",
+    "ref": "Josh.10.1",
+    "note": "The long day, when the sun stood still"
+   },
+   {
+    "name": "Makkedah",
+    "ref": "Josh.10.16",
+    "note": "The five kings taken from the cave"
+   },
+   {
+    "name": "Hazor",
+    "ref": "Josh.11.10",
+    "note": "The head of all those kingdoms, burned with fire"
+   },
+   {
+    "name": "Shiloh",
+    "ref": "Josh.18.1",
+    "note": "The tent of meeting set up, and the land divided by lot"
+   }
   ]
  },
  {
@@ -67,14 +385,143 @@
   "reference": "1 Samuel 4-7; 2 Samuel 6",
   "summary": "Carried into battle as a charm, captured, and passed from city to city by Philistines who could not keep it and could not be rid of it. Twenty years later David brought it up to Jerusalem.",
   "legs": [
-   { "name": "Shiloh", "ref": "1Sam.4.4", "note": "Brought out from the house of God to the camp" },
-   { "name": "Ebenezer", "ref": "1Sam.5.1", "note": "Captured in the rout of Israel" },
-   { "name": "Ashdod", "ref": "1Sam.5.1", "note": "Set beside Dagon, who falls before it twice" },
-   { "name": "Gath", "ref": "1Sam.5.8", "note": "Moved on when Ashdod is struck" },
-   { "name": "Ekron", "ref": "1Sam.5.10", "note": "The Ekronites cry out: they have brought it to kill us" },
-   { "name": "Beth-shemesh", "ref": "1Sam.6.12", "note": "Sent home on a new cart drawn by two milk cows" },
-   { "name": "Kiriath-jearim", "ref": "1Sam.7.1", "note": "It stays in the house of Abinadab twenty years" },
-   { "name": "Jerusalem", "ref": "2Sam.6.12", "note": "David brings it up with gladness, dancing before the LORD" }
+   {
+    "name": "Shiloh",
+    "ref": "1Sam.4.4",
+    "note": "Brought out from the house of God to the camp"
+   },
+   {
+    "name": "Ebenezer",
+    "ref": "1Sam.5.1",
+    "note": "Captured in the rout of Israel"
+   },
+   {
+    "name": "Ashdod",
+    "ref": "1Sam.5.1",
+    "note": "Set beside Dagon, who falls before it twice"
+   },
+   {
+    "name": "Gath",
+    "ref": "1Sam.5.8",
+    "note": "Moved on when Ashdod is struck"
+   },
+   {
+    "name": "Ekron",
+    "ref": "1Sam.5.10",
+    "note": "The Ekronites cry out: they have brought it to kill us"
+   },
+   {
+    "name": "Beth-shemesh",
+    "ref": "1Sam.6.12",
+    "note": "Sent home on a new cart drawn by two milk cows"
+   },
+   {
+    "name": "Kiriath-jearim",
+    "ref": "1Sam.7.1",
+    "note": "It stays in the house of Abinadab twenty years"
+   },
+   {
+    "name": "Jerusalem",
+    "ref": "2Sam.6.12",
+    "note": "David brings it up with gladness, dancing before the LORD"
+   }
+  ]
+ },
+ {
+  "slug": "gideon",
+  "title": "Gideon's Pursuit of Midian",
+  "era": "The judges",
+  "reference": "Judges 7-8",
+  "summary": "With three hundred men, trumpets and lamps, Gideon routed the camp of Midian in the valley of Jezreel, and chased its kings down the Jordan and across it.",
+  "legs": [
+   {
+    "name": "Harod",
+    "ref": "Judg.7.1",
+    "note": "They pitched beside the well of Harod"
+   },
+   {
+    "name": "Beth-shittah",
+    "ref": "Judg.7.22",
+    "note": "The host fled to Beth-shittah"
+   },
+   {
+    "name": "Abel-meholah",
+    "ref": "Judg.7.22",
+    "note": "And to the border of Abel-meholah"
+   },
+   {
+    "name": "Succoth",
+    "ref": "Judg.8.5",
+    "note": "The men of Succoth refused them bread"
+   },
+   {
+    "name": "Penuel",
+    "ref": "Judg.8.8",
+    "note": "So did the men of Penuel"
+   },
+   {
+    "name": "Karkor",
+    "ref": "Judg.8.10",
+    "note": "Zebah and Zalmunna were in Karkor"
+   }
+  ]
+ },
+ {
+  "slug": "ruth-and-naomi",
+  "title": "Naomi and Ruth",
+  "era": "The judges",
+  "reference": "Ruth 1",
+  "summary": "In a famine Elimelech took his family from Bethlehem to Moab. Ten years later his widow came home, and Ruth the Moabitess with her: thy people shall be my people.",
+  "legs": [
+   {
+    "name": "Bethlehem",
+    "ref": "Ruth.1.1",
+    "note": "A certain man of Bethlehemjudah went to sojourn in Moab"
+   },
+   {
+    "name": "Moab",
+    "ref": "Ruth.1.1",
+    "note": "They dwelt there about ten years"
+   },
+   {
+    "name": "Bethlehem",
+    "ref": "Ruth.1.19",
+    "note": "They came to Bethlehem in the beginning of barley harvest"
+   }
+  ]
+ },
+ {
+  "slug": "samuels-circuit",
+  "title": "Samuel's Circuit",
+  "era": "The judges",
+  "reference": "1 Samuel 7",
+  "summary": "Samuel judged Israel all the days of his life, going year by year in a circuit of three towns, and coming home to Ramah.",
+  "legs": [
+   {
+    "name": "Ramah",
+    "ref": "1Sam.7.17",
+    "note": "His return was to Ramah, for there was his house"
+   },
+   {
+    "name": "Bethel",
+    "ref": "1Sam.7.16",
+    "note": "He went from year to year in circuit to Bethel"
+   },
+   {
+    "name": "Gilgal",
+    "ref": "1Sam.7.16",
+    "note": "And Gilgal"
+   },
+   {
+    "name": "Mizpah",
+    "ref": "1Sam.7.16",
+    "note": "And Mizpeh, and judged Israel in all those places"
+   },
+   {
+    "name": "Ramah",
+    "ref": "1Sam.7.17",
+    "note": "There he built an altar unto the LORD"
+   }
   ]
  },
  {
@@ -84,14 +531,97 @@
   "reference": "1 Samuel 19-27",
   "summary": "The anointed king spent years as a fugitive in his own country, hiding in caves and strongholds and finally among the Philistines. Many of the psalms were written on this road.",
   "legs": [
-   { "name": "Ramah", "ref": "1Sam.19.18", "note": "He flees to Samuel and tells him all that Saul had done" },
-   { "name": "Nob", "ref": "1Sam.21.1", "note": "He eats the bread of the Presence and takes Goliath's sword" },
-   { "name": "Gath", "ref": "1Sam.21.10", "note": "He feigns madness before Achish and escapes" },
-   { "name": "Adullam", "ref": "1Sam.22.1", "note": "Everyone in distress or in debt gathers to him in the cave" },
-   { "name": "Keilah", "ref": "1Sam.23.5", "note": "He saves the city, and the city would have given him up" },
-   { "name": "Maon", "ref": "1Sam.23.25", "note": "Saul on one side of the mountain, David on the other" },
-   { "name": "Engedi", "ref": "1Sam.24.1", "note": "He cuts Saul's robe and will not lift a hand against the LORD's anointed" },
-   { "name": "Ziklag", "ref": "1Sam.27.6", "note": "Achish gives him the town, and there he waits out Saul's reign" }
+   {
+    "name": "Ramah",
+    "ref": "1Sam.19.18",
+    "note": "He flees to Samuel and tells him all that Saul had done"
+   },
+   {
+    "name": "Nob",
+    "ref": "1Sam.21.1",
+    "note": "He eats the bread of the Presence and takes Goliath's sword"
+   },
+   {
+    "name": "Gath",
+    "ref": "1Sam.21.10",
+    "note": "He feigns madness before Achish and escapes"
+   },
+   {
+    "name": "Adullam",
+    "ref": "1Sam.22.1",
+    "note": "Everyone in distress or in debt gathers to him in the cave"
+   },
+   {
+    "name": "Keilah",
+    "ref": "1Sam.23.5",
+    "note": "He saves the city, and the city would have given him up"
+   },
+   {
+    "name": "Maon",
+    "ref": "1Sam.23.25",
+    "note": "Saul on one side of the mountain, David on the other"
+   },
+   {
+    "name": "Engedi",
+    "ref": "1Sam.24.1",
+    "note": "He cuts Saul's robe and will not lift a hand against the LORD's anointed"
+   },
+   {
+    "name": "Ziklag",
+    "ref": "1Sam.27.6",
+    "note": "Achish gives him the town, and there he waits out Saul's reign"
+   }
+  ]
+ },
+ {
+  "slug": "absaloms-revolt",
+  "title": "Absalom's Revolt",
+  "era": "The united kingdom",
+  "reference": "2 Samuel 15-19",
+  "summary": "Absalom was proclaimed king in Hebron. David fled Jerusalem over the Mount of Olives and across the Jordan to Mahanaim; in the forest of Ephraim the rebellion ended, and David came back over the Jordan.",
+  "legs": [
+   {
+    "name": "Hebron",
+    "ref": "2Sam.15.9",
+    "note": "Absalom went to Hebron, and was proclaimed king"
+   },
+   {
+    "name": "Jerusalem",
+    "ref": "2Sam.15.14",
+    "note": "David said, Arise, and let us flee"
+   },
+   {
+    "name": "Mount of Olives",
+    "ref": "2Sam.15.30",
+    "note": "David went up weeping, barefoot, his head covered",
+    "slug": "mount-of-olives"
+   },
+   {
+    "name": "Bahurim",
+    "ref": "2Sam.16.5",
+    "note": "Shimei came out cursing"
+   },
+   {
+    "name": "Mahanaim",
+    "ref": "2Sam.17.24",
+    "note": "David came to Mahanaim"
+   },
+   {
+    "name": "Ephraim",
+    "ref": "2Sam.18.6",
+    "note": "The battle was in the wood of Ephraim; Absalom died",
+    "slug": "ephraim-3"
+   },
+   {
+    "name": "Gilgal",
+    "ref": "2Sam.19.15",
+    "note": "Judah came to Gilgal to bring the king over Jordan"
+   },
+   {
+    "name": "Jerusalem",
+    "ref": "2Sam.20.3",
+    "note": "David came to his house at Jerusalem"
+   }
   ]
  },
  {
@@ -101,14 +631,144 @@
   "reference": "1 Kings 17-19",
   "summary": "Fed by ravens, sustained by a widow with nothing, vindicated by fire on Carmel, and then running for his life to the same mountain where the law was given, to be asked what he was doing there.",
   "legs": [
-   { "name": "Tishbe", "ref": "1Kgs.17.1", "note": "Elijah the Tishbite, of the inhabitants of Gilead" },
-   { "name": "Cherith", "ref": "1Kgs.17.3", "note": "Hidden by the brook, and the ravens brought him bread and meat" },
-   { "name": "Zarephath", "ref": "1Kgs.17.9", "note": "A widow of Sidon feeds him out of an emptying jar" },
-   { "name": "Mount Carmel", "ref": "1Kgs.18.19", "note": "The LORD, he is God: the contest with the prophets of Baal" },
-   { "name": "Jezreel", "ref": "1Kgs.18.45", "note": "He outruns Ahab's chariot before the rain" },
-   { "name": "Beersheba", "ref": "1Kgs.19.3", "note": "He leaves his servant and goes a day's journey into the wilderness" },
-   { "name": "Mount Horeb", "ref": "1Kgs.19.8", "note": "Forty days to the mount of God, and a low whisper" },
-   { "name": "Abel-meholah", "ref": "1Kgs.19.16", "note": "He casts his cloak on Elisha, who was plowing" }
+   {
+    "name": "Tishbe",
+    "ref": "1Kgs.17.1",
+    "note": "Elijah the Tishbite, of the inhabitants of Gilead"
+   },
+   {
+    "name": "Cherith",
+    "ref": "1Kgs.17.3",
+    "note": "Hidden by the brook, and the ravens brought him bread and meat"
+   },
+   {
+    "name": "Zarephath",
+    "ref": "1Kgs.17.9",
+    "note": "A widow of Sidon feeds him out of an emptying jar"
+   },
+   {
+    "name": "Mount Carmel",
+    "ref": "1Kgs.18.19",
+    "note": "The LORD, he is God: the contest with the prophets of Baal"
+   },
+   {
+    "name": "Jezreel",
+    "ref": "1Kgs.18.45",
+    "note": "He outruns Ahab's chariot before the rain"
+   },
+   {
+    "name": "Beersheba",
+    "ref": "1Kgs.19.3",
+    "note": "He leaves his servant and goes a day's journey into the wilderness"
+   },
+   {
+    "name": "Mount Horeb",
+    "ref": "1Kgs.19.8",
+    "note": "Forty days to the mount of God, and a low whisper"
+   },
+   {
+    "name": "Abel-meholah",
+    "ref": "1Kgs.19.16",
+    "note": "He casts his cloak on Elisha, who was plowing"
+   }
+  ]
+ },
+ {
+  "slug": "elijah-taken-up",
+  "title": "Elijah Taken Up",
+  "era": "The divided kingdom",
+  "reference": "2 Kings 2",
+  "summary": "On the day the LORD took Elijah up by a whirlwind, Elisha would not leave him: from Gilgal to Bethel, to Jericho, and across the Jordan, which parted for them.",
+  "legs": [
+   {
+    "name": "Gilgal",
+    "ref": "2Kgs.2.1",
+    "note": "Elijah went with Elisha from Gilgal"
+   },
+   {
+    "name": "Bethel",
+    "ref": "2Kgs.2.2",
+    "note": "The LORD hath sent me to Bethel"
+   },
+   {
+    "name": "Jericho",
+    "ref": "2Kgs.2.4",
+    "note": "The LORD hath sent me to Jericho"
+   },
+   {
+    "name": "Jordan",
+    "ref": "2Kgs.2.6",
+    "note": "The waters divided; a chariot of fire parted them asunder"
+   },
+   {
+    "name": "Jericho",
+    "ref": "2Kgs.2.18",
+    "note": "Elisha came back and healed the waters"
+   }
+  ]
+ },
+ {
+  "slug": "jonah",
+  "title": "Jonah",
+  "era": "The divided kingdom",
+  "reference": "Jonah 1-3",
+  "summary": "Sent east to Nineveh, Jonah went down to Joppa and took ship for Tarshish, at the far end of the known sea. After the storm and the great fish, he went to Nineveh after all.",
+  "legs": [
+   {
+    "name": "Gath-hepher",
+    "ref": "2Kgs.14.25",
+    "note": "Jonah the prophet, of Gath-hepher"
+   },
+   {
+    "name": "Joppa",
+    "ref": "Jonah.1.3",
+    "note": "He went down to Joppa, and found a ship"
+   },
+   {
+    "name": "Tarshish",
+    "ref": "Jonah.1.3",
+    "note": "Going to Tarshish, from the presence of the LORD"
+   },
+   {
+    "name": "Nineveh",
+    "ref": "Jonah.3.3",
+    "note": "Jonah arose, and went unto Nineveh"
+   }
+  ]
+ },
+ {
+  "slug": "israel-to-assyria",
+  "title": "Israel Carried to Assyria",
+  "era": "The divided kingdom",
+  "reference": "2 Kings 17",
+  "summary": "After a three-year siege Samaria fell, and the king of Assyria carried Israel away and placed them in the far north of his empire.",
+  "legs": [
+   {
+    "name": "Samaria",
+    "ref": "2Kgs.17.5",
+    "note": "He besieged Samaria three years"
+   },
+   {
+    "name": "Halah",
+    "ref": "2Kgs.17.6",
+    "note": "And placed them in Halah"
+   },
+   {
+    "name": "Habor",
+    "ref": "2Kgs.17.6",
+    "note": "And in Habor by the river of Gozan"
+   },
+   {
+    "name": "Gozan",
+    "ref": "2Kgs.17.6",
+    "note": "The river of Gozan"
+   },
+   {
+    "name": "Media",
+    "ref": "2Kgs.17.6",
+    "note": "And in the cities of the Medes",
+    "slug": "media"
+   }
   ]
  },
  {
@@ -118,11 +778,104 @@
   "reference": "2 Kings 17; 2 Kings 25; Ezra 1-2",
   "summary": "Two kingdoms carried away a century and a half apart, north to Assyria and east to Babylon, and one remnant permitted to go home and build again on the same hill.",
   "legs": [
-   { "name": "Samaria", "ref": "2Kgs.17.6", "note": "The king of Assyria captured Samaria and carried Israel away" },
-   { "name": "Assyria", "ref": "2Kgs.17.6", "note": "Settled in Halah, on the Habor, and in the cities of the Medes" },
-   { "name": "Jerusalem", "ref": "2Kgs.25.1", "note": "Nebuchadnezzar lays siege, and the wall is broken through" },
-   { "name": "Babylon", "ref": "2Kgs.25.11", "note": "The rest of the people carried into exile" },
-   { "name": "Jerusalem", "ref": "Ezra.2.1", "note": "These are the people who came up out of the captivity, each to his own town" }
+   {
+    "name": "Samaria",
+    "ref": "2Kgs.17.6",
+    "note": "The king of Assyria captured Samaria and carried Israel away"
+   },
+   {
+    "name": "Assyria",
+    "ref": "2Kgs.17.6",
+    "note": "Settled in Halah, on the Habor, and in the cities of the Medes"
+   },
+   {
+    "name": "Jerusalem",
+    "ref": "2Kgs.25.1",
+    "note": "Nebuchadnezzar lays siege, and the wall is broken through"
+   },
+   {
+    "name": "Babylon",
+    "ref": "2Kgs.25.11",
+    "note": "The rest of the people carried into exile"
+   },
+   {
+    "name": "Jerusalem",
+    "ref": "Ezra.2.1",
+    "note": "These are the people who came up out of the captivity, each to his own town"
+   }
+  ]
+ },
+ {
+  "slug": "judah-to-babylon",
+  "title": "Judah Carried to Babylon",
+  "era": "Exile and return",
+  "reference": "2 Kings 25",
+  "summary": "When Jerusalem fell, Zedekiah fled toward the Jordan and was taken. He was brought to Nebuchadnezzar at Riblah, and from there to Babylon in chains, with the people.",
+  "legs": [
+   {
+    "name": "Jerusalem",
+    "ref": "2Kgs.25.4",
+    "note": "The city was broken up, and the king fled by night"
+   },
+   {
+    "name": "Jericho",
+    "ref": "2Kgs.25.5",
+    "note": "He was overtaken in the plains of Jericho"
+   },
+   {
+    "name": "Riblah",
+    "ref": "2Kgs.25.6",
+    "note": "They brought him to the king of Babylon to Riblah"
+   },
+   {
+    "name": "Babylon",
+    "ref": "2Kgs.25.7",
+    "note": "They bound him with fetters of brass, and carried him to Babylon"
+   }
+  ]
+ },
+ {
+  "slug": "ezras-return",
+  "title": "Ezra's Return",
+  "era": "Exile and return",
+  "reference": "Ezra 7-8",
+  "summary": "Ezra the scribe led a company home from Babylon, fasting at the river Ahava rather than ask the king for soldiers, and came to Jerusalem in four months.",
+  "legs": [
+   {
+    "name": "Babylon",
+    "ref": "Ezra.7.9",
+    "note": "On the first day of the first month began he to go up",
+    "slug": "babylon-1"
+   },
+   {
+    "name": "Ahava",
+    "ref": "Ezra.8.15",
+    "note": "We abode in tents three days by the river Ahava"
+   },
+   {
+    "name": "Jerusalem",
+    "ref": "Ezra.8.32",
+    "note": "We came to Jerusalem, and abode there three days"
+   }
+  ]
+ },
+ {
+  "slug": "nehemiahs-journey",
+  "title": "Nehemiah's Journey",
+  "era": "Exile and return",
+  "reference": "Nehemiah 1-2",
+  "summary": "The king's cupbearer at Shushan heard that Jerusalem's wall was broken down, and asked leave to go and build it.",
+  "legs": [
+   {
+    "name": "Susa",
+    "ref": "Neh.1.1",
+    "note": "As I was in Shushan the palace"
+   },
+   {
+    "name": "Jerusalem",
+    "ref": "Neh.2.11",
+    "note": "I came to Jerusalem, and viewed the walls by night"
+   }
   ]
  },
  {
@@ -132,11 +885,31 @@
   "reference": "Matthew 2; Luke 1-2",
   "summary": "A census moves a carpenter's household ninety miles south at the worst possible time, and a dream moves it again, out of the land and back, so that what the prophets said would be fulfilled.",
   "legs": [
-   { "name": "Nazareth", "ref": "Luke.1.26", "note": "Gabriel is sent to a virgin in a town of Galilee" },
-   { "name": "Bethlehem", "ref": "Luke.2.4", "note": "Because he was of the house and lineage of David" },
-   { "name": "Jerusalem", "ref": "Luke.2.22", "note": "Presented in the temple; Simeon and Anna see him" },
-   { "name": "Egypt", "ref": "Matt.2.14", "note": "Out of Egypt I called my son" },
-   { "name": "Nazareth", "ref": "Matt.2.23", "note": "He shall be called a Nazarene" }
+   {
+    "name": "Nazareth",
+    "ref": "Luke.1.26",
+    "note": "Gabriel is sent to a virgin in a town of Galilee"
+   },
+   {
+    "name": "Bethlehem",
+    "ref": "Luke.2.4",
+    "note": "Because he was of the house and lineage of David"
+   },
+   {
+    "name": "Jerusalem",
+    "ref": "Luke.2.22",
+    "note": "Presented in the temple; Simeon and Anna see him"
+   },
+   {
+    "name": "Egypt",
+    "ref": "Matt.2.14",
+    "note": "Out of Egypt I called my son"
+   },
+   {
+    "name": "Nazareth",
+    "ref": "Matt.2.23",
+    "note": "He shall be called a Nazarene"
+   }
   ]
  },
  {
@@ -146,13 +919,41 @@
   "reference": "Matthew 4-16; Mark; Luke 4-9; John 2",
   "summary": "Most of the ministry happened within a day's walk of one lake, among a handful of fishing towns. Capernaum, not Jerusalem, is called his own city.",
   "legs": [
-   { "name": "Nazareth", "ref": "Luke.4.16", "note": "He reads Isaiah in the synagogue, and they try to throw him off the cliff" },
-   { "name": "Capernaum", "ref": "Matt.4.13", "note": "He leaves Nazareth and settles here, by the sea" },
-   { "name": "Cana", "ref": "John.2.1", "note": "The first of his signs, and his disciples believed in him" },
-   { "name": "Gennesaret", "ref": "Luke.5.1", "note": "The crowd presses on him to hear the word of God" },
-   { "name": "Nain", "ref": "Luke.7.11", "note": "Young man, I say to you, arise" },
-   { "name": "Bethsaida", "ref": "Mark.8.22", "note": "A blind man healed in two stages, outside the village" },
-   { "name": "Caesarea Philippi", "ref": "Matt.16.13", "note": "Who do you say that I am?" }
+   {
+    "name": "Nazareth",
+    "ref": "Luke.4.16",
+    "note": "He reads Isaiah in the synagogue, and they try to throw him off the cliff"
+   },
+   {
+    "name": "Capernaum",
+    "ref": "Matt.4.13",
+    "note": "He leaves Nazareth and settles here, by the sea"
+   },
+   {
+    "name": "Cana",
+    "ref": "John.2.1",
+    "note": "The first of his signs, and his disciples believed in him"
+   },
+   {
+    "name": "Gennesaret",
+    "ref": "Luke.5.1",
+    "note": "The crowd presses on him to hear the word of God"
+   },
+   {
+    "name": "Nain",
+    "ref": "Luke.7.11",
+    "note": "Young man, I say to you, arise"
+   },
+   {
+    "name": "Bethsaida",
+    "ref": "Mark.8.22",
+    "note": "A blind man healed in two stages, outside the village"
+   },
+   {
+    "name": "Caesarea Philippi",
+    "ref": "Matt.16.13",
+    "note": "Who do you say that I am?"
+   }
   ]
  },
  {
@@ -162,13 +963,94 @@
   "reference": "Luke 17-19; John 12; Matthew 21",
   "summary": "He set his face to go to Jerusalem, and went by the road through Samaria that most Galileans avoided, arriving at the feast to be received as a king for five days.",
   "legs": [
-   { "name": "Galilee", "ref": "Luke.17.11", "note": "He passed along between Samaria and Galilee" },
-   { "name": "Samaria", "ref": "Luke.17.11", "note": "Ten lepers meet him, and one returns to give thanks" },
-   { "name": "Jericho", "ref": "Luke.19.1", "note": "Zacchaeus climbs a sycamore to see him pass" },
-   { "name": "Bethany", "ref": "John.12.1", "note": "Six days before the Passover, where Lazarus was" },
-   { "name": "Bethphage", "ref": "Matt.21.1", "note": "He sends two disciples for the colt" },
-   { "name": "Mount of Olives", "ref": "Matt.21.1", "note": "The descent where the whole multitude began to rejoice" },
-   { "name": "Jerusalem", "ref": "Matt.21.10", "note": "The whole city was stirred up, saying, Who is this?" }
+   {
+    "name": "Galilee",
+    "ref": "Luke.17.11",
+    "note": "He passed along between Samaria and Galilee"
+   },
+   {
+    "name": "Samaria",
+    "ref": "Luke.17.11",
+    "note": "Ten lepers meet him, and one returns to give thanks"
+   },
+   {
+    "name": "Jericho",
+    "ref": "Luke.19.1",
+    "note": "Zacchaeus climbs a sycamore to see him pass"
+   },
+   {
+    "name": "Bethany",
+    "ref": "John.12.1",
+    "note": "Six days before the Passover, where Lazarus was"
+   },
+   {
+    "name": "Bethphage",
+    "ref": "Matt.21.1",
+    "note": "He sends two disciples for the colt"
+   },
+   {
+    "name": "Mount of Olives",
+    "ref": "Matt.21.1",
+    "note": "The descent where the whole multitude began to rejoice"
+   },
+   {
+    "name": "Jerusalem",
+    "ref": "Matt.21.10",
+    "note": "The whole city was stirred up, saying, Who is this?"
+   }
+  ]
+ },
+ {
+  "slug": "jesus-early-ministry",
+  "title": "From Nazareth to Capernaum",
+  "era": "The life of Christ",
+  "reference": "Mark 1; John 1-2",
+  "summary": "Jesus came from Nazareth to be baptized by John beyond the Jordan, called his first disciples there, turned water into wine at Cana, and went down to Capernaum.",
+  "legs": [
+   {
+    "name": "Nazareth",
+    "ref": "Mark.1.9",
+    "note": "Jesus came from Nazareth of Galilee"
+   },
+   {
+    "name": "Bethany",
+    "ref": "John.1.28",
+    "note": "Bethabara beyond Jordan, where John was baptizing"
+   },
+   {
+    "name": "Cana",
+    "ref": "John.2.1",
+    "note": "The marriage in Cana of Galilee"
+   },
+   {
+    "name": "Capernaum",
+    "ref": "John.2.12",
+    "note": "He went down to Capernaum"
+   }
+  ]
+ },
+ {
+  "slug": "through-samaria",
+  "title": "Through Samaria",
+  "era": "The life of Christ",
+  "reference": "John 4",
+  "summary": "Leaving Judea for Galilee, Jesus must needs go through Samaria, and sat on Jacob's well at Sychar.",
+  "legs": [
+   {
+    "name": "Judea",
+    "ref": "John.4.3",
+    "note": "He left Judaea"
+   },
+   {
+    "name": "Sychar",
+    "ref": "John.4.5",
+    "note": "He came to a city of Samaria, called Sychar"
+   },
+   {
+    "name": "Cana",
+    "ref": "John.4.46",
+    "note": "Jesus came again into Cana of Galilee"
+   }
   ]
  },
  {
@@ -178,18 +1060,66 @@
   "reference": "Acts 13-14",
   "summary": "Sent out by the church at Antioch with Barnabas, across Cyprus and up into the highlands of Asia Minor. They came back the way they went, strengthening the churches they had been driven out of.",
   "legs": [
-   { "name": "Antioch", "ref": "Acts.13.1", "note": "The Holy Spirit said, Set apart for me Barnabas and Saul" },
-   { "name": "Seleucia", "ref": "Acts.13.4", "note": "The port of Antioch; from there they sailed to Cyprus" },
-   { "name": "Salamis", "ref": "Acts.13.5", "note": "They proclaimed the word in the synagogues of the Jews" },
-   { "name": "Paphos", "ref": "Acts.13.6", "note": "Elymas struck blind; the proconsul believes" },
-   { "name": "Perga", "ref": "Acts.13.13", "note": "John left them here and returned to Jerusalem" },
-   { "name": "Antioch", "ref": "Acts.13.14", "note": "Antioch of Pisidia: the great synagogue sermon, and expulsion" },
-   { "name": "Iconium", "ref": "Acts.14.1", "note": "A great number believed, and the city was divided" },
-   { "name": "Lystra", "ref": "Acts.14.6", "note": "Taken for gods, then Paul is stoned and dragged out of the city" },
-   { "name": "Derbe", "ref": "Acts.14.20", "note": "They preached the gospel and made many disciples" },
-   { "name": "Perga", "ref": "Acts.14.25", "note": "Back through every city, appointing elders" },
-   { "name": "Attalia", "ref": "Acts.14.25", "note": "Down to the coast to take ship" },
-   { "name": "Antioch", "ref": "Acts.14.26", "note": "They declared how God had opened a door of faith to the Gentiles" }
+   {
+    "name": "Antioch",
+    "ref": "Acts.13.1",
+    "note": "The Holy Spirit said, Set apart for me Barnabas and Saul"
+   },
+   {
+    "name": "Seleucia",
+    "ref": "Acts.13.4",
+    "note": "The port of Antioch; from there they sailed to Cyprus"
+   },
+   {
+    "name": "Salamis",
+    "ref": "Acts.13.5",
+    "note": "They proclaimed the word in the synagogues of the Jews"
+   },
+   {
+    "name": "Paphos",
+    "ref": "Acts.13.6",
+    "note": "Elymas struck blind; the proconsul believes"
+   },
+   {
+    "name": "Perga",
+    "ref": "Acts.13.13",
+    "note": "John left them here and returned to Jerusalem"
+   },
+   {
+    "name": "Antioch",
+    "ref": "Acts.13.14",
+    "note": "Antioch of Pisidia: the great synagogue sermon, and expulsion"
+   },
+   {
+    "name": "Iconium",
+    "ref": "Acts.14.1",
+    "note": "A great number believed, and the city was divided"
+   },
+   {
+    "name": "Lystra",
+    "ref": "Acts.14.6",
+    "note": "Taken for gods, then Paul is stoned and dragged out of the city"
+   },
+   {
+    "name": "Derbe",
+    "ref": "Acts.14.20",
+    "note": "They preached the gospel and made many disciples"
+   },
+   {
+    "name": "Perga",
+    "ref": "Acts.14.25",
+    "note": "Back through every city, appointing elders"
+   },
+   {
+    "name": "Attalia",
+    "ref": "Acts.14.25",
+    "note": "Down to the coast to take ship"
+   },
+   {
+    "name": "Antioch",
+    "ref": "Acts.14.26",
+    "note": "They declared how God had opened a door of faith to the Gentiles"
+   }
   ]
  },
  {
@@ -199,22 +1129,86 @@
   "reference": "Acts 15:36 - 18:22",
   "summary": "A disagreement over John Mark splits the team, and the road that follows carries the gospel out of Asia into Europe: Philippi, Thessalonica, Athens, and eighteen months at Corinth.",
   "legs": [
-   { "name": "Antioch", "ref": "Acts.15.35", "note": "Paul and Barnabas part company; Silas goes with Paul" },
-   { "name": "Derbe", "ref": "Acts.16.1", "note": "Revisiting the churches of the first journey" },
-   { "name": "Lystra", "ref": "Acts.16.1", "note": "Timothy joins them, well spoken of by the brothers" },
-   { "name": "Troas", "ref": "Acts.16.8", "note": "The vision of a man of Macedonia: come over and help us" },
-   { "name": "Neapolis", "ref": "Acts.16.11", "note": "They make a straight run and land in Europe" },
-   { "name": "Philippi", "ref": "Acts.16.12", "note": "Lydia, the slave girl, the beating, and the midnight earthquake" },
-   { "name": "Amphipolis", "ref": "Acts.17.1", "note": "Passing through on the Egnatian Way" },
-   { "name": "Apollonia", "ref": "Acts.17.1", "note": "Passing through on the Egnatian Way" },
-   { "name": "Thessalonica", "ref": "Acts.17.1", "note": "Three Sabbaths of reasoning from the Scriptures" },
-   { "name": "Berea", "ref": "Acts.17.10", "note": "More noble, examining the Scriptures daily" },
-   { "name": "Athens", "ref": "Acts.17.15", "note": "The Areopagus, and the altar to an unknown god" },
-   { "name": "Corinth", "ref": "Acts.18.1", "note": "Eighteen months with Aquila and Priscilla" },
-   { "name": "Cenchreae", "ref": "Acts.18.18", "note": "He cut his hair, for he was under a vow" },
-   { "name": "Ephesus", "ref": "Acts.18.19", "note": "A brief stop; he promises to return if God wills" },
-   { "name": "Caesarea", "ref": "Acts.18.22", "note": "He landed and went up and greeted the church" },
-   { "name": "Antioch", "ref": "Acts.18.22", "note": "Home again to the sending church" }
+   {
+    "name": "Antioch",
+    "ref": "Acts.15.35",
+    "note": "Paul and Barnabas part company; Silas goes with Paul"
+   },
+   {
+    "name": "Derbe",
+    "ref": "Acts.16.1",
+    "note": "Revisiting the churches of the first journey"
+   },
+   {
+    "name": "Lystra",
+    "ref": "Acts.16.1",
+    "note": "Timothy joins them, well spoken of by the brothers"
+   },
+   {
+    "name": "Troas",
+    "ref": "Acts.16.8",
+    "note": "The vision of a man of Macedonia: come over and help us"
+   },
+   {
+    "name": "Neapolis",
+    "ref": "Acts.16.11",
+    "note": "They make a straight run and land in Europe"
+   },
+   {
+    "name": "Philippi",
+    "ref": "Acts.16.12",
+    "note": "Lydia, the slave girl, the beating, and the midnight earthquake"
+   },
+   {
+    "name": "Amphipolis",
+    "ref": "Acts.17.1",
+    "note": "Passing through on the Egnatian Way"
+   },
+   {
+    "name": "Apollonia",
+    "ref": "Acts.17.1",
+    "note": "Passing through on the Egnatian Way"
+   },
+   {
+    "name": "Thessalonica",
+    "ref": "Acts.17.1",
+    "note": "Three Sabbaths of reasoning from the Scriptures"
+   },
+   {
+    "name": "Berea",
+    "ref": "Acts.17.10",
+    "note": "More noble, examining the Scriptures daily"
+   },
+   {
+    "name": "Athens",
+    "ref": "Acts.17.15",
+    "note": "The Areopagus, and the altar to an unknown god"
+   },
+   {
+    "name": "Corinth",
+    "ref": "Acts.18.1",
+    "note": "Eighteen months with Aquila and Priscilla"
+   },
+   {
+    "name": "Cenchreae",
+    "ref": "Acts.18.18",
+    "note": "He cut his hair, for he was under a vow"
+   },
+   {
+    "name": "Ephesus",
+    "ref": "Acts.18.19",
+    "note": "A brief stop; he promises to return if God wills"
+   },
+   {
+    "name": "Caesarea",
+    "ref": "Acts.18.22",
+    "note": "He landed and went up and greeted the church"
+   },
+   {
+    "name": "Antioch",
+    "ref": "Acts.18.22",
+    "note": "Home again to the sending church"
+   }
   ]
  },
  {
@@ -224,19 +1218,71 @@
   "reference": "Acts 18:23 - 21:16",
   "summary": "Three years in Ephesus, long enough for all Asia to hear and for the silversmiths to riot, then back through Macedonia and Greece and home by sea, knowing that chains waited in Jerusalem.",
   "legs": [
-   { "name": "Antioch", "ref": "Acts.18.23", "note": "He set out again, strengthening all the disciples" },
-   { "name": "Ephesus", "ref": "Acts.19.1", "note": "Two years in the hall of Tyrannus; the riot of the silversmiths" },
-   { "name": "Macedonia", "ref": "Acts.20.1", "note": "He encouraged the churches with much speech" },
-   { "name": "Philippi", "ref": "Acts.20.6", "note": "They sailed away after the days of Unleavened Bread" },
-   { "name": "Troas", "ref": "Acts.20.6", "note": "Paul talks until midnight, and Eutychus falls from the window" },
-   { "name": "Assos", "ref": "Acts.20.13", "note": "Paul goes by land and meets the ship there" },
-   { "name": "Mitylene", "ref": "Acts.20.14", "note": "Coasting down past the islands" },
-   { "name": "Miletus", "ref": "Acts.20.15", "note": "The farewell to the Ephesian elders: you will see my face no more" },
-   { "name": "Patara", "ref": "Acts.21.1", "note": "They find a ship crossing to Phoenicia" },
-   { "name": "Tyre", "ref": "Acts.21.3", "note": "Seven days, and the whole church kneeling on the beach to pray" },
-   { "name": "Ptolemais", "ref": "Acts.21.7", "note": "One day with the brothers" },
-   { "name": "Caesarea", "ref": "Acts.21.8", "note": "Agabus binds his own hands with Paul's belt" },
-   { "name": "Jerusalem", "ref": "Acts.21.17", "note": "The brothers received us gladly" }
+   {
+    "name": "Antioch",
+    "ref": "Acts.18.23",
+    "note": "He set out again, strengthening all the disciples"
+   },
+   {
+    "name": "Ephesus",
+    "ref": "Acts.19.1",
+    "note": "Two years in the hall of Tyrannus; the riot of the silversmiths"
+   },
+   {
+    "name": "Macedonia",
+    "ref": "Acts.20.1",
+    "note": "He encouraged the churches with much speech"
+   },
+   {
+    "name": "Philippi",
+    "ref": "Acts.20.6",
+    "note": "They sailed away after the days of Unleavened Bread"
+   },
+   {
+    "name": "Troas",
+    "ref": "Acts.20.6",
+    "note": "Paul talks until midnight, and Eutychus falls from the window"
+   },
+   {
+    "name": "Assos",
+    "ref": "Acts.20.13",
+    "note": "Paul goes by land and meets the ship there"
+   },
+   {
+    "name": "Mitylene",
+    "ref": "Acts.20.14",
+    "note": "Coasting down past the islands"
+   },
+   {
+    "name": "Miletus",
+    "ref": "Acts.20.15",
+    "note": "The farewell to the Ephesian elders: you will see my face no more"
+   },
+   {
+    "name": "Patara",
+    "ref": "Acts.21.1",
+    "note": "They find a ship crossing to Phoenicia"
+   },
+   {
+    "name": "Tyre",
+    "ref": "Acts.21.3",
+    "note": "Seven days, and the whole church kneeling on the beach to pray"
+   },
+   {
+    "name": "Ptolemais",
+    "ref": "Acts.21.7",
+    "note": "One day with the brothers"
+   },
+   {
+    "name": "Caesarea",
+    "ref": "Acts.21.8",
+    "note": "Agabus binds his own hands with Paul's belt"
+   },
+   {
+    "name": "Jerusalem",
+    "ref": "Acts.21.17",
+    "note": "The brothers received us gladly"
+   }
   ]
  },
  {
@@ -246,18 +1292,180 @@
   "reference": "Acts 27-28",
   "summary": "A prisoner's passage west that runs into the autumn gales, fourteen days driven before a nor'easter, and a shipwreck on Malta. He reached Rome as he had asked to, and not at all as he expected.",
   "legs": [
-   { "name": "Caesarea", "ref": "Acts.27.1", "note": "Handed over to a centurion of the Augustan Cohort" },
-   { "name": "Sidon", "ref": "Acts.27.3", "note": "Julius treated Paul kindly and let him go to his friends" },
-   { "name": "Myra", "ref": "Acts.27.5", "note": "They transfer to a ship of Alexandria sailing for Italy" },
-   { "name": "Cnidus", "ref": "Acts.27.7", "note": "The wind did not allow them to go farther" },
-   { "name": "Salmone", "ref": "Acts.27.7", "note": "They sail under the lee of Crete" },
-   { "name": "Fair Havens", "ref": "Acts.27.8", "note": "Paul advises wintering here, and is overruled" },
-   { "name": "Malta", "ref": "Acts.28.1", "note": "All escaped to land; the viper, and the father of Publius" },
-   { "name": "Syracuse", "ref": "Acts.28.12", "note": "Three days after wintering three months on the island" },
-   { "name": "Rhegium", "ref": "Acts.28.13", "note": "A south wind springs up on the second day" },
-   { "name": "Puteoli", "ref": "Acts.28.13", "note": "Brothers there invite them to stay seven days" },
-   { "name": "Three Taverns", "ref": "Acts.28.15", "note": "On seeing them Paul thanked God and took courage" },
-   { "name": "Rome", "ref": "Acts.28.16", "note": "Two whole years, proclaiming the kingdom without hindrance" }
+   {
+    "name": "Caesarea",
+    "ref": "Acts.27.1",
+    "note": "Handed over to a centurion of the Augustan Cohort"
+   },
+   {
+    "name": "Sidon",
+    "ref": "Acts.27.3",
+    "note": "Julius treated Paul kindly and let him go to his friends"
+   },
+   {
+    "name": "Myra",
+    "ref": "Acts.27.5",
+    "note": "They transfer to a ship of Alexandria sailing for Italy"
+   },
+   {
+    "name": "Cnidus",
+    "ref": "Acts.27.7",
+    "note": "The wind did not allow them to go farther"
+   },
+   {
+    "name": "Salmone",
+    "ref": "Acts.27.7",
+    "note": "They sail under the lee of Crete"
+   },
+   {
+    "name": "Fair Havens",
+    "ref": "Acts.27.8",
+    "note": "Paul advises wintering here, and is overruled"
+   },
+   {
+    "name": "Malta",
+    "ref": "Acts.28.1",
+    "note": "All escaped to land; the viper, and the father of Publius"
+   },
+   {
+    "name": "Syracuse",
+    "ref": "Acts.28.12",
+    "note": "Three days after wintering three months on the island"
+   },
+   {
+    "name": "Rhegium",
+    "ref": "Acts.28.13",
+    "note": "A south wind springs up on the second day"
+   },
+   {
+    "name": "Puteoli",
+    "ref": "Acts.28.13",
+    "note": "Brothers there invite them to stay seven days"
+   },
+   {
+    "name": "Three Taverns",
+    "ref": "Acts.28.15",
+    "note": "On seeing them Paul thanked God and took courage"
+   },
+   {
+    "name": "Rome",
+    "ref": "Acts.28.16",
+    "note": "Two whole years, proclaiming the kingdom without hindrance"
+   }
+  ]
+ },
+ {
+  "slug": "philip",
+  "title": "Philip the Evangelist",
+  "era": "The apostolic church",
+  "reference": "Acts 8",
+  "summary": "Scattered by persecution, Philip preached Christ in Samaria, was sent to the desert road to Gaza to meet the Ethiopian, and preached in every city up the coast to Caesarea.",
+  "legs": [
+   {
+    "name": "Jerusalem",
+    "ref": "Acts.8.1",
+    "note": "A great persecution against the church which was at Jerusalem"
+   },
+   {
+    "name": "Samaria",
+    "ref": "Acts.8.5",
+    "note": "Philip went down to the city of Samaria"
+   },
+   {
+    "name": "Gaza",
+    "ref": "Acts.8.26",
+    "note": "Go toward the south, unto the way that goeth down to Gaza"
+   },
+   {
+    "name": "Azotus",
+    "ref": "Acts.8.40",
+    "note": "Philip was found at Azotus",
+    "slug": "ashdod"
+   },
+   {
+    "name": "Caesarea",
+    "ref": "Acts.8.40",
+    "note": "Preaching in all the cities, till he came to Caesarea"
+   }
+  ]
+ },
+ {
+  "slug": "peter-to-caesarea",
+  "title": "Peter to Caesarea",
+  "era": "The apostolic church",
+  "reference": "Acts 9-11",
+  "summary": "Peter went down to Lydda and healed Aeneas, to Joppa and raised Dorcas, and from Joppa was sent for by Cornelius, a Gentile, at Caesarea.",
+  "legs": [
+   {
+    "name": "Lydda",
+    "ref": "Acts.9.32",
+    "note": "He came down also to the saints which dwelt at Lydda",
+    "slug": "lod"
+   },
+   {
+    "name": "Joppa",
+    "ref": "Acts.9.38",
+    "note": "Dorcas raised; he tarried many days in Joppa"
+   },
+   {
+    "name": "Caesarea",
+    "ref": "Acts.10.24",
+    "note": "Cornelius waited for them, and had called his kinsmen"
+   },
+   {
+    "name": "Jerusalem",
+    "ref": "Acts.11.2",
+    "note": "Peter was come up to Jerusalem"
+   }
+  ]
+ },
+ {
+  "slug": "pauls-conversion",
+  "title": "Paul's Conversion and Early Years",
+  "era": "The apostolic church",
+  "reference": "Acts 9; Galatians 1",
+  "summary": "Saul set out for Damascus to bind the disciples and was met by the risen Christ on the road. After a time in Arabia and Damascus he went up to Jerusalem, and was sent home to Tarsus, until Barnabas brought him to Antioch.",
+  "legs": [
+   {
+    "name": "Jerusalem",
+    "ref": "Acts.9.2",
+    "note": "He desired of the high priest letters to Damascus"
+   },
+   {
+    "name": "Damascus",
+    "ref": "Acts.9.3",
+    "note": "As he came near Damascus, a light from heaven"
+   },
+   {
+    "name": "Arabia",
+    "ref": "Gal.1.17",
+    "note": "I went into Arabia, and returned again unto Damascus"
+   },
+   {
+    "name": "Damascus",
+    "ref": "Acts.9.25",
+    "note": "Let down by the wall in a basket"
+   },
+   {
+    "name": "Jerusalem",
+    "ref": "Acts.9.26",
+    "note": "He assayed to join himself to the disciples"
+   },
+   {
+    "name": "Caesarea",
+    "ref": "Acts.9.30",
+    "note": "The brethren brought him down to Caesarea"
+   },
+   {
+    "name": "Tarsus",
+    "ref": "Acts.9.30",
+    "note": "And sent him forth to Tarsus"
+   },
+   {
+    "name": "Antioch",
+    "ref": "Acts.11.26",
+    "note": "Barnabas brought him unto Antioch"
+   }
   ]
  }
 ]

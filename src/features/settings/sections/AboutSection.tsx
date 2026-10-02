@@ -399,6 +399,10 @@ export function AboutSection() {
         <Source name="Bible atlas — coastlines, rivers, modern borders and towns">
           Made with Natural Earth. Free vector and raster map data at naturalearthdata.com. Public domain.
         </Source>
+        <Source name="Bible atlas — Roman roads">
+          From the geodata of the Ancient World Mapping Center, University of North Carolina at Chapel Hill, under the Open Database License (ODbL)
+          v1.0; the Atlas's road file is a derivative of it and is under the same licence, which ships beside it.
+        </Source>
         <Source name="Bible atlas — terrain pack">
           Elevation from the Terrain Tiles on AWS: SRTM and GMTED2010 courtesy of the U.S. Geological Survey; ETOPO1, U.S. National Oceanic and
           Atmospheric Administration; EU-DEM produced using Copernicus data and information funded by the European Union.

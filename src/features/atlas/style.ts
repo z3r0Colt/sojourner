@@ -28,6 +28,10 @@ export interface LayerSettings {
   groups: Record<PlaceGroup, boolean>;
   /** Ancient lands drawn as areas. */
   regions: boolean;
+  /** Roman roads (AWMC), from zoom 5. */
+  romanRoads: boolean;
+  /** The great Old Testament routes: the Way of the Sea, the King's Highway... */
+  otRoutes: boolean;
   modernTowns: boolean;
   modernBorders: boolean;
   modernCountries: boolean;
@@ -46,6 +50,8 @@ export const DEFAULT_LAYERS: LayerSettings = {
   base: "terrain",
   groups: Object.fromEntries(PLACE_GROUPS.map((g) => [g.key, g.key !== "sites" && g.key !== "camps"])) as Record<PlaceGroup, boolean>,
   regions: false,
+  romanRoads: true,
+  otRoutes: true,
   modernTowns: false,
   modernBorders: false,
   modernCountries: false,
@@ -116,6 +122,8 @@ export function atlasColors() {
     waterPlace: dark ? "#5b9cbb" : "#2f7aa0",
     camp: dark ? "#b58f6b" : "#9a6f45",
     site: dark ? "#b07a8f" : "#8f4a64",
+    road: dark ? "#9a7b55" : "#a0703f",
+    route: dark ? "#c9935a" : "#b0542f",
     measure: dark ? "#ffd166" : "#d1495b",
   };
 }
@@ -204,6 +212,7 @@ export function buildStyle(c: AtlasColors, s: LayerSettings, terrain: TileSource
       countries: geojson("countries"),
       towns: geojson("towns"),
       marine: geojson("marine"),
+      roads: geojson("roads"),
       features: geojson("features"),
       places: { type: "geojson", data: EMPTY },
       regions: { type: "geojson", data: EMPTY },
@@ -291,6 +300,28 @@ export function buildStyle(c: AtlasColors, s: LayerSettings, terrain: TileSource
         paint: { "line-color": c.border, "line-width": ["interpolate", ["linear"], ["zoom"], 3, 0.8, 8, 1.6], "line-dasharray": [3, 1.5, 1, 1.5] },
       },
       {
+        id: "roman-roads",
+        type: "line",
+        source: "roads",
+        minzoom: 4.5,
+        filter: ["==", ["get", "kind"], "roman"],
+        layout: { visibility: vis(s.romanRoads), "line-join": "round", "line-cap": "round" },
+        paint: {
+          "line-color": c.road,
+          "line-width": ["interpolate", ["linear"], ["zoom"], 5, ["case", ["==", ["get", "major"], 1], 1.1, 0.6], 9, ["case", ["==", ["get", "major"], 1], 2.4, 1.3]],
+          // Dashes cannot vary by feature, so a conjectured course is fainter.
+          "line-opacity": ["case", ["==", ["get", "known"], 1], 0.85, 0.4],
+        },
+      },
+      {
+        id: "ot-routes",
+        type: "line",
+        source: "roads",
+        filter: ["==", ["get", "kind"], "ot"],
+        layout: { visibility: vis(s.otRoutes), "line-join": "round", "line-cap": "round" },
+        paint: { "line-color": c.route, "line-width": ["interpolate", ["linear"], ["zoom"], 4, 1.4, 9, 3], "line-opacity": 0.75, "line-dasharray": [2.5, 1.5] },
+      },
+      {
         id: "regions-fill",
         type: "fill",
         source: "regions",
@@ -331,6 +362,23 @@ export function buildStyle(c: AtlasColors, s: LayerSettings, terrain: TileSource
         filter: ["==", ["geometry-type"], "LineString"],
         layout: { "line-cap": "round" },
         paint: { "line-color": c.measure, "line-width": 2.5, "line-dasharray": [2, 1.5] },
+      },
+      {
+        id: "roads-label",
+        type: "symbol",
+        source: "roads",
+        minzoom: 5.5,
+        filter: ["all", ["!=", ["get", "name"], ""], ["any", ["==", ["get", "kind"], "ot"], ["==", ["get", "major"], 1]]],
+        layout: {
+          visibility: vis(s.labels && (s.romanRoads || s.otRoutes)),
+          "symbol-placement": "line",
+          "text-field": ["get", "name"],
+          "text-font": FONT_ITALIC,
+          "text-size": size - 1.5,
+          "symbol-spacing": 400,
+          "text-letter-spacing": 0.05,
+        },
+        paint: { "text-color": ["case", ["==", ["get", "kind"], "ot"], c.route, c.road], "text-halo-color": c.halo, "text-halo-width": 1.3 },
       },
       {
         id: "towns",
@@ -530,6 +578,13 @@ export function applySettings(map: MapLibreMap, s: LayerSettings): void {
   map.setTerrain(relief ? { source: "dem", exaggeration: 1.4 } : null);
   if (relief && map.getPitch() < 20) map.easeTo({ pitch: 55, duration: 600 });
   if (!relief && map.getPitch() > 0) map.easeTo({ pitch: 0, duration: 400 });
+  set("roman-roads", s.romanRoads);
+  set("ot-routes", s.otRoutes);
+  set("roads-label", s.labels && (s.romanRoads || s.otRoutes));
+  if (map.getLayer("roads-label")) {
+    const kinds = [...(s.otRoutes ? ["ot"] : []), ...(s.romanRoads ? ["roman"] : [])];
+    map.setFilter("roads-label", ["all", ["!=", ["get", "name"], ""], ["in", ["get", "kind"], ["literal", kinds]], ["any", ["==", ["get", "kind"], "ot"], ["==", ["get", "major"], 1]]]);
+  }
   set("provinces", s.modernBorders);
   set("borders", s.modernBorders);
   // A selected land's outline shows whether or not the others do.
