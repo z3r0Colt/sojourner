@@ -22,7 +22,10 @@ import { EmptyState, LoadingState } from "../../components/ui/EmptyState";
 import { cx, inputSmClass, selectSmClass } from "../../components/ui/classes";
 import { StudyActions } from "../sermons/StudyActions";
 import { atlasRef } from "../sermons/sourceIdentity";
-import { MapCanvas } from "./MapCanvas";
+import { AtlasMap } from "./AtlasMap";
+import { TRAVEL, bearingWord, daysText, distanceKm, formatDistance, type Units } from "./geo";
+import { PLACE_GROUPS, displayName, groupLabel, groupOf, kindsText, type PlaceGroup } from "./places";
+import { completeLayers, type LayerSettings } from "./style";
 
 /** What the confidence ratings mean, said plainly rather than as a score. */
 const CONFIDENCE_NOTE: Record<AtlasConfidence, string> = {
@@ -33,24 +36,10 @@ const CONFIDENCE_NOTE: Record<AtlasConfidence, string> = {
   unidentified: "No one now knows where this was.",
 };
 
-const CATEGORY_LABEL: Record<string, string> = {
-  settlement: "Town or city",
-  region: "Region",
-  water: "River or water",
-  mountain: "Mountain or valley",
-  other: "Place",
-};
-
 type Tab = "places" | "journeys";
 
-/** Bigger type means fewer names fit, so the map thins them out to match. */
-const LABEL_SIZES = [
-  { value: 10, label: "Small" },
-  { value: 12, label: "Medium" },
-  { value: 14, label: "Large" },
-  { value: 17, label: "Larger" },
-  { value: 20, label: "Largest" },
-];
+/** Distances in the place card are measured from here. */
+const JERUSALEM = { lon: 35.2304, lat: 31.7767 };
 
 /**
  * The atlas: a map of the biblical world, the places named in it, and the
@@ -66,9 +55,10 @@ export function AtlasView() {
   const { data: places } = useAtlasPlaces();
   const { data: journeys } = useAtlasJourneys();
   const { data: books } = useBooks();
-  const [showLabels, setShowLabels] = useSetting("atlas.labels", true);
-  const [labelSize, setLabelSize] = useSetting("atlas.labelSize", 12);
-  const [showBorders, setShowBorders] = useSetting("atlas.borders", true);
+  const [storedLayers, setStoredLayers] = useSetting<Partial<LayerSettings> | null>("atlas.layers", null);
+  const layers = useMemo(() => completeLayers(storedLayers), [storedLayers]);
+  const [units, setUnits] = useSetting<Units>("atlas.units", "mi");
+  const [groupShown, setGroupShown] = useState<PlaceGroup | "all">("all");
   // Beside a Bible pane the atlas gets a study column, not a page. Below the
   // width the three-column layout needs, the map keeps the space and the one
   // remaining column shows the detail when something is picked, the list
@@ -105,7 +95,8 @@ export function AtlasView() {
     enabled: debounced.trim().length > 1,
   });
 
-  const list = debounced.trim().length > 1 ? searchResults ?? [] : places ?? [];
+  const searched = debounced.trim().length > 1 ? searchResults ?? [] : places ?? [];
+  const list = groupShown === "all" ? searched : searched.filter((p) => groupOf(p) === groupShown);
   const rows = useVirtualizer({
     count: list.length,
     getScrollElement: () => listRef.current,
@@ -190,6 +181,19 @@ export function AtlasView() {
                   className={cx(inputSmClass, "w-full pl-7")}
                 />
               </div>
+              <select
+                aria-label="Kind of place"
+                value={groupShown}
+                onChange={(e) => setGroupShown(e.target.value as PlaceGroup | "all")}
+                className={cx(selectSmClass, "mt-2 w-full")}
+              >
+                <option value="all">All places</option>
+                {PLACE_GROUPS.map((g) => (
+                  <option key={g.key} value={g.key}>
+                    {g.label}
+                  </option>
+                ))}
+              </select>
               {isFetching && <LoadingState className="pt-2" label="Searching…" />}
             </div>
             <div ref={listRef} className="min-h-0 flex-1 overflow-y-auto">
@@ -218,6 +222,7 @@ export function AtlasView() {
                         )}
                       >
                         {place.name}
+                        {place.qualifier && <span className="text-ink-3"> ({place.qualifier})</span>}
                         {highlighted.has(place.slug) && (
                           <span className="ml-1.5 align-middle text-[10px] text-accent" title="Named in the passage being read">
                             ●
@@ -225,7 +230,7 @@ export function AtlasView() {
                         )}
                       </span>
                       <span className="block text-xs text-ink-4">
-                        {CATEGORY_LABEL[place.category] ?? "Place"} · {place.verse_count}{" "}
+                        {groupLabel(groupOf(place))} · {place.verse_count}{" "}
                         {place.verse_count === 1 ? "verse" : "verses"}
                       </span>
                     </button>
@@ -256,59 +261,25 @@ export function AtlasView() {
           </div>
         )}
 
-        <div className="border-t border-line px-3 py-2">
-          <label className="flex items-center gap-2 text-xs text-ink-3">
-            <input
-              type="checkbox"
-              checked={showLabels}
-              onChange={(e) => setShowLabels(e.target.checked)}
-              className="h-3.5 w-3.5 accent-accent"
-            />
-            Show place names on the map
-          </label>
-          <label className="mt-1.5 flex items-center gap-2 text-xs text-ink-3">
-            <input
-              type="checkbox"
-              checked={showBorders}
-              onChange={(e) => setShowBorders(e.target.checked)}
-              className="h-3.5 w-3.5 accent-accent"
-            />
-            Show region borders
-          </label>
-          {showLabels && (
-            <label className="mt-2 flex items-center gap-2 text-xs text-ink-3">
-              Name size
-              <select
-                value={labelSize}
-                onChange={(e) => setLabelSize(Number(e.target.value))}
-                className={cx(selectSmClass, "flex-1")}
-              >
-                {LABEL_SIZES.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
-        </div>
       </SidePanel>
       )}
 
       <div className="min-w-0 flex-1">
         {places ? (
-          <MapCanvas
+          <AtlasMap
             places={places}
             selected={selected}
             highlighted={highlighted}
             journey={journey}
-            showLabels={showLabels}
-            showBorders={showBorders}
-            labelSize={labelSize}
+            settings={layers}
+            onSettings={setStoredLayers}
+            units={units}
+            onUnits={setUnits}
             onSelect={(place) => selectPlace(place, "map")}
             fitToken={fitToken}
             fitTargets={fitTargets}
             fitMode={fitMode}
+            terrainTiles={null}
           />
         ) : (
           <LoadingState className="p-8" label="Loading the map…" />
@@ -327,8 +298,8 @@ export function AtlasView() {
             All places
           </button>
         )}
-        {journey && <JourneyDetail slug={journey.slug} />}
-        {!journey && selected && <PlaceDetail place={selected} books={books} />}
+        {journey && <JourneyDetail slug={journey.slug} units={units} />}
+        {!journey && selected && <PlaceDetail place={selected} books={books} units={units} />}
         {!journey && !selected && (
           <EmptyState
             icon={MapPin}
@@ -347,22 +318,25 @@ export function AtlasView() {
   );
 }
 
-function PlaceDetail({ place, books }: { place: AtlasPlace; books: ReturnType<typeof useBooks>["data"] }) {
+function PlaceDetail({ place, books, units }: { place: AtlasPlace; books: ReturnType<typeof useBooks>["data"]; units: Units }) {
   const { data: verses } = useAtlasPlaceVerses(place.slug);
   const { data: inEncyclopedia } = useIsbeEntryByTerm(place.name);
 
   return (
     <div>
       <div className="mb-2 flex items-start gap-2">
-        <h2 className="min-w-0 flex-1 text-lg font-semibold text-ink">{place.name}</h2>
+        <h2 className="min-w-0 flex-1 text-lg font-semibold text-ink">
+          {place.name}
+          {place.qualifier && <span className="block text-sm font-normal text-ink-3">{place.qualifier}</span>}
+        </h2>
         <StudyActions
           what={place.name}
           item={() => ({
             kind: "atlas",
             refId: atlasRef(place.slug),
-            label: `${place.name}, Bible atlas`,
+            label: `${displayName(place)}, Bible atlas`,
             excerpt: [
-              CATEGORY_LABEL[place.category] ?? "Place",
+              kindsText(place) || groupLabel(groupOf(place)),
               place.modern_name ? `identified with ${place.modern_name}` : null,
               place.lat != null ? `${place.lat.toFixed(3)}, ${place.lon?.toFixed(3)}` : null,
             ]
@@ -373,7 +347,7 @@ function PlaceDetail({ place, books }: { place: AtlasPlace; books: ReturnType<ty
       </div>
 
       <dl className="mb-4 space-y-1.5 text-sm">
-        <Row label="Kind">{place.kinds.join(", ") || CATEGORY_LABEL[place.category]}</Row>
+        <Row label="Kind">{kindsText(place) || groupLabel(groupOf(place))}</Row>
         {place.modern_name && (
           <Row label="Today">
             {place.modern_name}
@@ -389,6 +363,15 @@ function PlaceDetail({ place, books }: { place: AtlasPlace; books: ReturnType<ty
           <Row label="Coordinates">
             {place.lat.toFixed(4)}, {place.lon.toFixed(4)}
             {place.approximate && <span className="text-ink-4"> (approximate)</span>}
+          </Row>
+        )}
+        {place.lat != null && place.lon != null && place.slug !== "jerusalem" && groupOf(place) !== "lands" && (
+          <Row label="From Jerusalem">
+            {formatDistance(distanceKm(JERUSALEM, { lon: place.lon, lat: place.lat }), units)}{" "}
+            {bearingWord(JERUSALEM, { lon: place.lon, lat: place.lat })}
+            <span className="block text-xs text-ink-4">
+              in a straight line; {daysText(distanceKm(JERUSALEM, { lon: place.lon, lat: place.lat }), TRAVEL[0].kmPerDay)} on foot
+            </span>
           </Row>
         )}
         <Row label="Confidence">
@@ -431,11 +414,21 @@ function PlaceDetail({ place, books }: { place: AtlasPlace; books: ReturnType<ty
   );
 }
 
-function JourneyDetail({ slug }: { slug: string }) {
+function JourneyDetail({ slug, units }: { slug: string; units: Units }) {
   const { data: journeys } = useAtlasJourneys();
   const { data: books } = useBooks();
   const journey = journeys?.find((j) => j.slug === slug);
   if (!journey) return <LoadingState />;
+  const located = journey.legs.filter((l) => l.lon != null && l.lat != null);
+  let totalKm = 0;
+  const legKm = journey.legs.map((leg) => {
+    const i = located.indexOf(leg);
+    if (i <= 0) return null;
+    const prev = located[i - 1];
+    const km = distanceKm({ lon: prev.lon as number, lat: prev.lat as number }, { lon: leg.lon as number, lat: leg.lat as number });
+    totalKm += km;
+    return km;
+  });
 
   return (
     <div>
@@ -444,7 +437,10 @@ function JourneyDetail({ slug }: { slug: string }) {
         <h2 className="text-lg font-semibold text-ink">{journey.title}</h2>
       </div>
       <p className="mb-1 text-xs text-ink-4">{journey.reference}</p>
-      <p className="mb-4 text-sm leading-relaxed text-ink-2">{journey.summary}</p>
+      <p className="mb-2 text-sm leading-relaxed text-ink-2">{journey.summary}</p>
+      {totalKm > 0 && (
+        <p className="mb-4 text-xs text-ink-3">About {formatDistance(totalKm, units)} from stop to stop in straight lines; more by road.</p>
+      )}
 
       <ol className="space-y-2.5">
         {journey.legs.map((leg, i) => (
@@ -479,6 +475,11 @@ function JourneyDetail({ slug }: { slug: string }) {
                 </button>
               )}
               {leg.note && <p className="text-xs leading-relaxed text-ink-3">{leg.note}</p>}
+              {legKm[i] != null && legKm[i]! >= 1 && (
+                <p className="text-xs text-ink-4">
+                  {formatDistance(legKm[i]!, units)} from the last stop, {daysText(legKm[i]!, TRAVEL[0].kmPerDay)} on foot
+                </p>
+              )}
             </div>
           </li>
         ))}

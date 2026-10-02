@@ -349,8 +349,10 @@ pub fn import(conn: &mut Connection, dir: &Path) -> anyhow::Result<usize> {
             dictionary.entry(k).or_default().push(slug);
         }
     }
+    // Only a name one place bears: "Aphek" is four places, and a link by
+    // name alone could not say which.
     let atlas: HashMap<String, String> = conn
-        .prepare("SELECT lower(name), slug FROM atlas_places")?
+        .prepare("SELECT lower(name), MIN(slug) FROM atlas_places WHERE same_as IS NULL GROUP BY lower(name) HAVING COUNT(*) = 1")?
         .query_map([], |r| Ok((r.get(0)?, r.get(1)?)))?
         .collect::<Result<_, _>>()?;
 

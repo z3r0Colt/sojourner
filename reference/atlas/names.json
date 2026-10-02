@@ -1,0 +1,1231 @@
+{
+ "achzib-1": {
+  "name": "Achzib",
+  "qualifier": "in Judah"
+ },
+ "achzib-2": {
+  "name": "Achzib",
+  "qualifier": "in Asher"
+ },
+ "ai-1": {
+  "name": "Ai",
+  "qualifier": "near Bethel"
+ },
+ "ai-2": {
+  "name": "Ai",
+  "qualifier": "in Ammon"
+ },
+ "ai-3": {
+  "name": "Ai",
+  "same_as": "ai-1"
+ },
+ "aijalon-1": {
+  "name": "Aijalon",
+  "qualifier": "in Dan"
+ },
+ "aijalon-2": {
+  "name": "Aijalon",
+  "qualifier": "in Zebulun"
+ },
+ "ain-1": {
+  "name": "Ain",
+  "qualifier": "on the northern border"
+ },
+ "ain-2": {
+  "name": "Ain",
+  "qualifier": "in Judah"
+ },
+ "ain-3": {
+  "name": "Ain",
+  "same_as": "ain-2"
+ },
+ "antioch-1": {
+  "name": "Antioch",
+  "qualifier": "in Syria"
+ },
+ "antioch-2": {
+  "name": "Antioch",
+  "qualifier": "in Pisidia"
+ },
+ "aphek-1": {
+  "name": "Aphek",
+  "qualifier": "in Asher"
+ },
+ "aphek-2": {
+  "name": "Aphek",
+  "qualifier": "in Sharon"
+ },
+ "aphek-3": {
+  "name": "Aphek",
+  "qualifier": "in Aram"
+ },
+ "aphek-4": {
+  "name": "Aphek",
+  "qualifier": "in Lebanon"
+ },
+ "arabia-1": {
+  "name": "Arabia",
+  "qualifier": "the peninsula"
+ },
+ "arabia-2": {
+  "name": "Arabia",
+  "qualifier": "Petraea"
+ },
+ "arad-1": {
+  "name": "Arad"
+ },
+ "arad-2": {
+  "name": "Arad",
+  "same_as": "arad-1"
+ },
+ "aroer-1": {
+  "name": "Aroer",
+  "qualifier": "on the Arnon River"
+ },
+ "aroer-2": {
+  "name": "Aroer",
+  "qualifier": "east of Rabbah"
+ },
+ "aroer-3": {
+  "name": "Aroer",
+  "qualifier": "southeast of Beersheba"
+ },
+ "aroer-4": {
+  "name": "Aroer",
+  "same_as": "aroer-3"
+ },
+ "ashnah-1": {
+  "name": "Ashnah",
+  "qualifier": "southwest of Gibeon"
+ },
+ "ashnah-2": {
+  "name": "Ashnah",
+  "qualifier": "east of Lachish"
+ },
+ "ataroth-1": {
+  "name": "Ataroth",
+  "qualifier": "in Gad"
+ },
+ "ataroth-2": {
+  "name": "Ataroth",
+  "qualifier": "in Ephraim"
+ },
+ "ataroth-3": {
+  "name": "Ataroth",
+  "same_as": "ataroth-2"
+ },
+ "baalah-1": {
+  "name": "Baalah",
+  "qualifier": "of Judah"
+ },
+ "baalah-2": {
+  "name": "Baalah",
+  "qualifier": "near Gibeon"
+ },
+ "baalath-1": {
+  "name": "Baalath",
+  "same_as": "baalath-2"
+ },
+ "baalath-2": {
+  "name": "Baalath"
+ },
+ "babylon-1": {
+  "name": "Babylon",
+  "qualifier": "on the Euphrates"
+ },
+ "babylon-2": {
+  "name": "Babylon",
+  "same_as": "babylon-3"
+ },
+ "babylon-3": {
+  "name": "Babylon",
+  "qualifier": "for Rome"
+ },
+ "bealoth-1": {
+  "name": "Bealoth"
+ },
+ "bealoth-2": {
+  "name": "Bealoth",
+  "same_as": "bealoth-1"
+ },
+ "beer-1": {
+  "name": "Beer",
+  "qualifier": "south of Heshbon"
+ },
+ "beer-2": {
+  "name": "Beer",
+  "qualifier": "near Beth-shan"
+ },
+ "beersheba-1": {
+  "name": "Beersheba"
+ },
+ "beersheba-2": {
+  "name": "Beersheba",
+  "same_as": "beersheba-1"
+ },
+ "beth-aven-1": {
+  "name": "Beth-aven",
+  "qualifier": "near Bethel"
+ },
+ "beth-aven-2": {
+  "name": "Beth-aven",
+  "qualifier": "north of Jerusalem"
+ },
+ "beth-dagon-1": {
+  "name": "Beth-dagon",
+  "qualifier": "of Judah"
+ },
+ "beth-dagon-2": {
+  "name": "Beth-dagon",
+  "qualifier": "of Asher"
+ },
+ "beth-shemesh-1": {
+  "name": "Beth-shemesh",
+  "qualifier": "in Judah"
+ },
+ "beth-shemesh-2": {
+  "name": "Beth-shemesh",
+  "qualifier": "in Issachar"
+ },
+ "beth-shemesh-3": {
+  "name": "Beth-shemesh",
+  "qualifier": "in Naphtali"
+ },
+ "bethany-1": {
+  "name": "Bethany",
+  "qualifier": "on the Mt. of Olives"
+ },
+ "bethany-2": {
+  "name": "Bethany",
+  "qualifier": "beyond the Jordan"
+ },
+ "bethel-1": {
+  "name": "Bethel",
+  "qualifier": "north of Jerusalem"
+ },
+ "bethel-2": {
+  "name": "Bethel",
+  "qualifier": "in Judah"
+ },
+ "bethel-3": {
+  "name": "Bethel",
+  "same_as": "bethel-1"
+ },
+ "bether-1": {
+  "name": "Bether"
+ },
+ "bether-2": {
+  "name": "Bether",
+  "same_as": "bether-1"
+ },
+ "bethlehem-1": {
+  "name": "Bethlehem",
+  "qualifier": "of Judah"
+ },
+ "bethlehem-2": {
+  "name": "Bethlehem",
+  "same_as": "bethlehem-3"
+ },
+ "bethlehem-3": {
+  "name": "Bethlehem",
+  "qualifier": "of Zebulun"
+ },
+ "bethsaida-1": {
+  "name": "Bethsaida"
+ },
+ "bethsaida-2": {
+  "name": "Bethsaida",
+  "same_as": "bethsaida-1"
+ },
+ "bezek-1": {
+  "name": "Bezek"
+ },
+ "bezek-2": {
+  "name": "Bezek",
+  "same_as": "bezek-1"
+ },
+ "bozrah-1": {
+  "name": "Bozrah",
+  "qualifier": "in Edom"
+ },
+ "bozrah-2": {
+  "name": "Bozrah",
+  "qualifier": "in Moab"
+ },
+ "cabul-1": {
+  "name": "Cabul",
+  "qualifier": "the town"
+ },
+ "cabul-2": {
+  "name": "Cabul",
+  "qualifier": "the land"
+ },
+ "calneh-1": {
+  "name": "Calneh",
+  "qualifier": "in Shinar"
+ },
+ "calneh-2": {
+  "name": "Calneh",
+  "qualifier": "in Syria"
+ },
+ "carmel-1": {
+  "name": "Carmel"
+ },
+ "city-of-palms-1": {
+  "name": "City of Palms"
+ },
+ "city-of-palms-2": {
+  "name": "City of Palms",
+  "same_as": "city-of-palms-1"
+ },
+ "cush-1": {
+  "name": "Cush",
+  "qualifier": "south of Egypt"
+ },
+ "cush-2": {
+  "name": "Cush",
+  "qualifier": "of Eden"
+ },
+ "debir-1": {
+  "name": "Debir",
+  "qualifier": "in the hill country of Judah"
+ },
+ "debir-2": {
+  "name": "Debir",
+  "qualifier": "on Judah’s border"
+ },
+ "debir-3": {
+  "name": "Debir",
+  "qualifier": "in Gad"
+ },
+ "dibon-1": {
+  "name": "Dibon",
+  "qualifier": "north of the Arnon River"
+ },
+ "dibon-2": {
+  "name": "Dibon",
+  "qualifier": "in Judah"
+ },
+ "dibon-3": {
+  "name": "Dibon",
+  "same_as": "dibon-1"
+ },
+ "dumah-1": {
+  "name": "Dumah",
+  "qualifier": "of Judah"
+ },
+ "dumah-2": {
+  "name": "Dumah",
+  "qualifier": "of Seir"
+ },
+ "ebenezer-1": {
+  "name": "Ebenezer",
+  "qualifier": "near Aphek"
+ },
+ "ebenezer-2": {
+  "name": "Ebenezer",
+  "qualifier": "the stone"
+ },
+ "eden-1": {
+  "name": "Eden",
+  "qualifier": "the garden"
+ },
+ "eden-2": {
+  "name": "Eden",
+  "qualifier": "on the Euphrates"
+ },
+ "eder-1": {
+  "name": "Eder",
+  "qualifier": "the tower, near Bethlehem"
+ },
+ "eder-2": {
+  "name": "Eder",
+  "qualifier": "in the Negeb"
+ },
+ "edrei-1": {
+  "name": "Edrei",
+  "qualifier": "in Bashan"
+ },
+ "edrei-2": {
+  "name": "Edrei",
+  "qualifier": "of Naphtali"
+ },
+ "en-gannim-1": {
+  "name": "En-gannim",
+  "qualifier": "in Judah"
+ },
+ "en-gannim-2": {
+  "name": "En-gannim",
+  "qualifier": "in Issachar"
+ },
+ "ephraim-1": {
+  "name": "Ephraim",
+  "qualifier": "the town"
+ },
+ "ephraim-2": {
+  "name": "Ephraim",
+  "same_as": "ephraim-1"
+ },
+ "ephraim-3": {
+  "name": "Ephraim",
+  "qualifier": "the forest"
+ },
+ "ephron-1": {
+  "name": "Ephron",
+  "qualifier": "on Judah’s border"
+ },
+ "ephron-2": {
+  "name": "Ephron",
+  "qualifier": "near Bethel"
+ },
+ "etam-1": {
+  "name": "Etam",
+  "qualifier": "the rock"
+ },
+ "etam-2": {
+  "name": "Etam",
+  "qualifier": "in Simeon"
+ },
+ "etam-3": {
+  "name": "Etam",
+  "same_as": "etam-2"
+ },
+ "ether-1": {
+  "name": "Ether"
+ },
+ "ether-2": {
+  "name": "Ether",
+  "same_as": "ether-1"
+ },
+ "galilee-1": {
+  "name": "Galilee"
+ },
+ "galilee-2": {
+  "name": "Galilee",
+  "same_as": "galilee-1"
+ },
+ "gath-1": {
+  "name": "Gath",
+  "qualifier": "of the Philistines"
+ },
+ "gath-2": {
+  "name": "Gath",
+  "qualifier": "near Samaria"
+ },
+ "gath-3": {
+  "name": "Gath",
+  "same_as": "gath-1"
+ },
+ "gath-rimmon-1": {
+  "name": "Gath-rimmon",
+  "qualifier": "near Joppa"
+ },
+ "gath-rimmon-2": {
+  "name": "Gath-rimmon",
+  "qualifier": "southeast of Megiddo"
+ },
+ "geba-1": {
+  "name": "Geba",
+  "qualifier": "in Benjamin"
+ },
+ "geba-2": {
+  "name": "Geba",
+  "qualifier": "or Gibeon"
+ },
+ "geba-3": {
+  "name": "Geba",
+  "same_as": "geba-1"
+ },
+ "geba-4": {
+  "name": "Geba",
+  "same_as": "geba-1"
+ },
+ "gebal-1": {
+  "name": "Gebal",
+  "qualifier": "Byblos"
+ },
+ "gebal-2": {
+  "name": "Gebal",
+  "qualifier": "in Edom"
+ },
+ "gederah-1": {
+  "name": "Gederah",
+  "qualifier": "northeast of Lachish"
+ },
+ "gederah-2": {
+  "name": "Gederah",
+  "qualifier": "near Gibeon"
+ },
+ "gederah-3": {
+  "name": "Gederah",
+  "same_as": "gederah-1"
+ },
+ "gedor-1": {
+  "name": "Gedor",
+  "qualifier": "in Judah"
+ },
+ "gedor-2": {
+  "name": "Gedor",
+  "qualifier": "in Simeon"
+ },
+ "gedor-3": {
+  "name": "Gedor",
+  "same_as": "gedor-1"
+ },
+ "gedor-4": {
+  "name": "Gedor",
+  "same_as": "gedor-1"
+ },
+ "gibeah-1": {
+  "name": "Gibeah",
+  "qualifier": "in Benjamin"
+ },
+ "gibeah-2": {
+  "name": "Gibeah",
+  "qualifier": "in Judah"
+ },
+ "gibeah-3": {
+  "name": "Gibeah",
+  "qualifier": "near Bethel"
+ },
+ "gibeah-4": {
+  "name": "Gibeah",
+  "same_as": "gibeah-1"
+ },
+ "gihon-1": {
+  "name": "Gihon",
+  "qualifier": "the river of Eden"
+ },
+ "gihon-2": {
+  "name": "Gihon",
+  "qualifier": "the spring at Jerusalem"
+ },
+ "gilead-1": {
+  "name": "Gilead"
+ },
+ "gilead-2": {
+  "name": "Gilead",
+  "same_as": "gilead-1"
+ },
+ "gilgal-1": {
+  "name": "Gilgal",
+  "qualifier": "near Jericho"
+ },
+ "gilgal-2": {
+  "name": "Gilgal",
+  "qualifier": "in Ephraim"
+ },
+ "gilgal-3": {
+  "name": "Gilgal",
+  "qualifier": "near Jerusalem"
+ },
+ "gilgal-4": {
+  "name": "Gilgal",
+  "same_as": "gilgal-1"
+ },
+ "goiim-1": {
+  "name": "Goiim",
+  "qualifier": "of Tidal"
+ },
+ "goiim-2": {
+  "name": "Goiim",
+  "qualifier": "in Galilee"
+ },
+ "goshen-1": {
+  "name": "Goshen",
+  "qualifier": "of Egypt"
+ },
+ "goshen-2": {
+  "name": "Goshen",
+  "qualifier": "the land"
+ },
+ "goshen-3": {
+  "name": "Goshen",
+  "qualifier": "the town"
+ },
+ "ham-1": {
+  "name": "Ham",
+  "qualifier": "east of the Jordan"
+ },
+ "ham-2": {
+  "name": "Ham",
+  "qualifier": "Egypt"
+ },
+ "hamath-1": {
+  "name": "Hamath"
+ },
+ "hamath-2": {
+  "name": "Hamath",
+  "same_as": "hamath-1"
+ },
+ "hammath-1": {
+  "name": "Hammath"
+ },
+ "hammath-2": {
+  "name": "Hammath",
+  "same_as": "hammath-1"
+ },
+ "hammon-1": {
+  "name": "Hammon",
+  "qualifier": "south of Tyre"
+ },
+ "hammon-2": {
+  "name": "Hammon",
+  "qualifier": "south of Capernaum"
+ },
+ "harod-1": {
+  "name": "Harod",
+  "qualifier": "the spring"
+ },
+ "harod-2": {
+  "name": "Harod",
+  "qualifier": "near Jerusalem"
+ },
+ "havilah-1": {
+  "name": "Havilah",
+  "qualifier": "of Eden"
+ },
+ "havilah-2": {
+  "name": "Havilah",
+  "qualifier": "in Arabia"
+ },
+ "havilah-3": {
+  "name": "Havilah",
+  "same_as": "havilah-2"
+ },
+ "hazazon-tamar-1": {
+  "name": "Hazazon-tamar",
+  "qualifier": "in the Arabah"
+ },
+ "hazazon-tamar-2": {
+  "name": "Hazazon-tamar",
+  "qualifier": "En-gedi"
+ },
+ "hazor-1": {
+  "name": "Hazor",
+  "qualifier": "of Galilee"
+ },
+ "hazor-2": {
+  "name": "Hazor",
+  "qualifier": "in Negeb"
+ },
+ "hazor-3": {
+  "name": "Hazor",
+  "qualifier": "Kerioth-hezron"
+ },
+ "hazor-4": {
+  "name": "Hazor",
+  "qualifier": "of Benjamin"
+ },
+ "hazor-5": {
+  "name": "Hazor",
+  "qualifier": "in Arabia"
+ },
+ "holon-1": {
+  "name": "Holon",
+  "qualifier": "northwest of Hebron"
+ },
+ "holon-2": {
+  "name": "Holon",
+  "qualifier": "in Moab"
+ },
+ "holy-place-1": {
+  "name": "Holy Place",
+  "qualifier": "of the Tabernacle"
+ },
+ "holy-place-2": {
+  "name": "Holy Place",
+  "qualifier": "of the Temple"
+ },
+ "horonaim-1": {
+  "name": "Horonaim",
+  "qualifier": "in Moab"
+ },
+ "horonaim-2": {
+  "name": "Horonaim",
+  "qualifier": "near Beth-horon"
+ },
+ "jabneel-1": {
+  "name": "Jabneel",
+  "qualifier": "in Judah"
+ },
+ "jabneel-2": {
+  "name": "Jabneel",
+  "qualifier": "in Naphtali"
+ },
+ "janoah-1": {
+  "name": "Janoah",
+  "qualifier": "of Ephraim"
+ },
+ "janoah-2": {
+  "name": "Janoah",
+  "qualifier": "of Galilee"
+ },
+ "jarmuth-1": {
+  "name": "Jarmuth",
+  "qualifier": "in Judah"
+ },
+ "jarmuth-2": {
+  "name": "Jarmuth",
+  "qualifier": "in Issachar"
+ },
+ "jericho-1": {
+  "name": "Jericho",
+  "qualifier": "of the Old Testament"
+ },
+ "jericho-2": {
+  "name": "Jericho",
+  "qualifier": "of the Gospels"
+ },
+ "jezreel-1": {
+  "name": "Jezreel",
+  "same_as": "jezreel-3"
+ },
+ "jezreel-2": {
+  "name": "Jezreel",
+  "qualifier": "in Issachar"
+ },
+ "jezreel-3": {
+  "name": "Jezreel",
+  "qualifier": "in Judah"
+ },
+ "jokmeam-1": {
+  "name": "Jokmeam"
+ },
+ "jokmeam-2": {
+  "name": "Jokmeam",
+  "same_as": "jokmeam-1"
+ },
+ "joktheel-1": {
+  "name": "Joktheel"
+ },
+ "judea-1": {
+  "name": "Judea"
+ },
+ "judea-2": {
+  "name": "Judea",
+  "same_as": "judea-1"
+ },
+ "kadesh-2": {
+  "name": "Kadesh"
+ },
+ "kanah-1": {
+  "name": "Kanah",
+  "qualifier": "the brook"
+ },
+ "kanah-2": {
+  "name": "Kanah",
+  "qualifier": "in Asher"
+ },
+ "kedesh-1": {
+  "name": "Kedesh",
+  "qualifier": "in Galilee"
+ },
+ "kedesh-2": {
+  "name": "Kedesh",
+  "qualifier": "in Judah"
+ },
+ "kedesh-3": {
+  "name": "Kedesh",
+  "qualifier": "in Issachar"
+ },
+ "kedesh-4": {
+  "name": "Kedesh",
+  "qualifier": "in Naphtali"
+ },
+ "kedesh-5": {
+  "name": "Kedesh",
+  "same_as": "kedesh-1"
+ },
+ "kir-1": {
+  "name": "Kir",
+  "qualifier": "in Mesopotamia"
+ },
+ "kir-2": {
+  "name": "Kir",
+  "qualifier": "of Moab"
+ },
+ "kiriathaim-1": {
+  "name": "Kiriathaim",
+  "qualifier": "in Reuben"
+ },
+ "kiriathaim-2": {
+  "name": "Kiriathaim",
+  "qualifier": "in Naphtali"
+ },
+ "libnah-1": {
+  "name": "Libnah",
+  "qualifier": "in the Shephelah"
+ },
+ "libnah-2": {
+  "name": "Libnah",
+  "qualifier": "a camp in the wilderness"
+ },
+ "lud-1": {
+  "name": "Lud"
+ },
+ "lud-2": {
+  "name": "Lud",
+  "same_as": "lud-1"
+ },
+ "luz-1": {
+  "name": "Luz",
+  "qualifier": "Bethel"
+ },
+ "luz-2": {
+  "name": "Luz",
+  "qualifier": "in the land of the Hittites"
+ },
+ "mahaneh-dan-1": {
+  "name": "Mahaneh-dan"
+ },
+ "mahaneh-dan-2": {
+  "name": "Mahaneh-dan",
+  "same_as": "mahaneh-dan-1"
+ },
+ "meribah-1": {
+  "name": "Meribah",
+  "qualifier": "at Kadesh"
+ },
+ "meribah-2": {
+  "name": "Meribah",
+  "qualifier": "at Rephidim"
+ },
+ "migdol-1": {
+  "name": "Migdol"
+ },
+ "migdol-2": {
+  "name": "Migdol",
+  "same_as": "migdol-1"
+ },
+ "migdol-3": {
+  "name": "Migdol",
+  "same_as": "migdol-1"
+ },
+ "migron-1": {
+  "name": "Migron"
+ },
+ "migron-2": {
+  "name": "Migron",
+  "same_as": "migron-1"
+ },
+ "mizpah-1": {
+  "name": "Mizpah",
+  "qualifier": "of Gilead"
+ },
+ "mizpah-2": {
+  "name": "Mizpah",
+  "qualifier": "in northern Galilee"
+ },
+ "mizpah-3": {
+  "name": "Mizpah",
+  "qualifier": "in Benjamin"
+ },
+ "mizpah-4": {
+  "name": "Mizpah",
+  "qualifier": "Galeed"
+ },
+ "mizpeh-1": {
+  "name": "Mizpeh",
+  "qualifier": "in Benjamin"
+ },
+ "mizpeh-2": {
+  "name": "Mizpeh",
+  "qualifier": "of Judah"
+ },
+ "mizpeh-3": {
+  "name": "Mizpeh",
+  "qualifier": "of Moab"
+ },
+ "moab-1": {
+  "name": "Moab",
+  "qualifier": "the land"
+ },
+ "moab-2": {
+  "name": "Moab",
+  "qualifier": "the plains"
+ },
+ "moreh-1": {
+  "name": "Moreh",
+  "qualifier": "at Shechem"
+ },
+ "moreh-2": {
+  "name": "Moreh",
+  "qualifier": "the hill"
+ },
+ "most-holy-place-1": {
+  "name": "Most Holy Place",
+  "qualifier": "of the Tabernacle"
+ },
+ "most-holy-place-2": {
+  "name": "Most Holy Place",
+  "qualifier": "of the Temple"
+ },
+ "mount-hor-1": {
+  "name": "Mount Hor",
+  "qualifier": "on the border of Edom"
+ },
+ "mount-hor-2": {
+  "name": "Mount Hor",
+  "qualifier": "in the north"
+ },
+ "mount-seir-1": {
+  "name": "Mount Seir",
+  "qualifier": "of Edom"
+ },
+ "mount-seir-2": {
+  "name": "Mount Seir",
+  "qualifier": "in Judah"
+ },
+ "naamah-1": {
+  "name": "Naamah",
+  "qualifier": "in Judah"
+ },
+ "naamah-2": {
+  "name": "Naamah",
+  "qualifier": "home of Zophar"
+ },
+ "nebo-1": {
+  "name": "Nebo",
+  "qualifier": "of Moab"
+ },
+ "nebo-2": {
+  "name": "Nebo",
+  "qualifier": "in Judah"
+ },
+ "nebo-3": {
+  "name": "Nebo",
+  "same_as": "nebo-2"
+ },
+ "nobah-1": {
+  "name": "Nobah"
+ },
+ "nobah-2": {
+  "name": "Nobah",
+  "same_as": "nobah-1"
+ },
+ "ophrah-1": {
+  "name": "Ophrah",
+  "qualifier": "in Benjamin"
+ },
+ "ophrah-2": {
+  "name": "Ophrah",
+  "qualifier": "in Manasseh"
+ },
+ "rabbah-1": {
+  "name": "Rabbah",
+  "qualifier": "in Ammon"
+ },
+ "rabbah-2": {
+  "name": "Rabbah",
+  "qualifier": "in Judah"
+ },
+ "ramah-1": {
+  "name": "Ramah",
+  "qualifier": "in Benjamin"
+ },
+ "ramah-2": {
+  "name": "Ramah",
+  "qualifier": "in Asher"
+ },
+ "ramah-3": {
+  "name": "Ramah",
+  "qualifier": "in Naphtali"
+ },
+ "ramah-4": {
+  "name": "Ramah",
+  "same_as": "ramah-1"
+ },
+ "ramah-5": {
+  "name": "Ramah",
+  "qualifier": "in Gilead"
+ },
+ "ramah-6": {
+  "name": "Ramah",
+  "qualifier": "in Simeon or the Negev"
+ },
+ "ramah-7": {
+  "name": "Ramah",
+  "same_as": "ramah-1"
+ },
+ "ramah-8": {
+  "name": "Ramah",
+  "qualifier": "near Jerusalem"
+ },
+ "ramah-9": {
+  "name": "Ramah",
+  "same_as": "ramah-1"
+ },
+ "ramoth-1": {
+  "name": "Ramoth",
+  "qualifier": "near Beth-shan"
+ },
+ "ramoth-2": {
+  "name": "Ramoth",
+  "qualifier": "east of Beersheba"
+ },
+ "ramoth-3": {
+  "name": "Ramoth",
+  "qualifier": "in Gilead"
+ },
+ "red-sea-1": {
+  "name": "Red Sea",
+  "qualifier": "Gulf of Suez"
+ },
+ "red-sea-2": {
+  "name": "Red Sea",
+  "qualifier": "Gulf of Aqaba"
+ },
+ "red-sea-3": {
+  "name": "Red Sea",
+  "same_as": "red-sea-1"
+ },
+ "rehob-1": {
+  "name": "Rehob",
+  "qualifier": "in the north"
+ },
+ "rehob-2": {
+  "name": "Rehob",
+  "qualifier": "in northern Asher"
+ },
+ "rehob-3": {
+  "name": "Rehob",
+  "qualifier": "in southern Asher"
+ },
+ "rehoboth-1": {
+  "name": "Rehoboth",
+  "qualifier": "southwest of Beersheba"
+ },
+ "rehoboth-2": {
+  "name": "Rehoboth",
+  "qualifier": "on the Euphrates"
+ },
+ "rhodes-1": {
+  "name": "Rhodes"
+ },
+ "rhodes-2": {
+  "name": "Rhodes",
+  "same_as": "rhodes-1"
+ },
+ "riblah-1": {
+  "name": "Riblah",
+  "qualifier": "in Hamath"
+ },
+ "riblah-2": {
+  "name": "Riblah",
+  "qualifier": "on the eastern border"
+ },
+ "rimmon-1": {
+  "name": "Rimmon",
+  "qualifier": "the rock"
+ },
+ "rimmon-2": {
+  "name": "Rimmon",
+  "qualifier": "in Simeon"
+ },
+ "rimmon-3": {
+  "name": "Rimmon",
+  "qualifier": "in Zebulun"
+ },
+ "river-2": {
+  "name": "River",
+  "qualifier": "the Euphrates"
+ },
+ "river-3": {
+  "name": "River",
+  "qualifier": "in Edom"
+ },
+ "samaria-1": {
+  "name": "Samaria",
+  "qualifier": "the city"
+ },
+ "samaria-2": {
+  "name": "Samaria",
+  "qualifier": "the land"
+ },
+ "sela-1": {
+  "name": "Sela"
+ },
+ "sela-2": {
+  "name": "Sela",
+  "same_as": "sela-1"
+ },
+ "sela-3": {
+  "name": "Sela",
+  "same_as": "sela-1"
+ },
+ "shaaraim-1": {
+  "name": "Shaaraim",
+  "qualifier": "in Judah"
+ },
+ "shaaraim-2": {
+  "name": "Shaaraim",
+  "qualifier": "in Simeon"
+ },
+ "shamir-1": {
+  "name": "Shamir",
+  "qualifier": "in Judah"
+ },
+ "shamir-2": {
+  "name": "Shamir",
+  "qualifier": "in Ephraim"
+ },
+ "sharon-1": {
+  "name": "Sharon",
+  "qualifier": "the plain"
+ },
+ "sharon-2": {
+  "name": "Sharon",
+  "qualifier": "east of the Jordan"
+ },
+ "sheba-1": {
+  "name": "Sheba",
+  "qualifier": "the kingdom"
+ },
+ "sheba-2": {
+  "name": "Sheba",
+  "qualifier": "in Simeon"
+ },
+ "shihor-1": {
+  "name": "Shihor"
+ },
+ "shihor-2": {
+  "name": "Shihor",
+  "same_as": "shihor-1"
+ },
+ "socoh-1": {
+  "name": "Socoh",
+  "qualifier": "in the Shephelah"
+ },
+ "socoh-2": {
+  "name": "Socoh",
+  "qualifier": "in Judah"
+ },
+ "socoh-3": {
+  "name": "Socoh",
+  "qualifier": "in Sharon"
+ },
+ "south-1": {
+  "name": "South",
+  "qualifier": "the Negeb"
+ },
+ "south-2": {
+  "name": "South",
+  "qualifier": "Sheba"
+ },
+ "south-3": {
+  "name": "South",
+  "qualifier": "Egypt"
+ },
+ "succoth-1": {
+  "name": "Succoth",
+  "qualifier": "on the Jordan"
+ },
+ "succoth-2": {
+  "name": "Succoth",
+  "qualifier": "in Egypt"
+ },
+ "syria-1": {
+  "name": "Syria"
+ },
+ "syria-2": {
+  "name": "Syria",
+  "same_as": "syria-1"
+ },
+ "tabor-2": {
+  "name": "Tabor",
+  "qualifier": "in Zebulun"
+ },
+ "tabor-3": {
+  "name": "Tabor",
+  "qualifier": "the oak"
+ },
+ "tamar-1": {
+  "name": "Tamar",
+  "same_as": "tamar-2"
+ },
+ "tamar-2": {
+  "name": "Tamar"
+ },
+ "tappuah-1": {
+  "name": "Tappuah",
+  "qualifier": "in Ephraim"
+ },
+ "tappuah-2": {
+  "name": "Tappuah",
+  "qualifier": "in Judah"
+ },
+ "tarshish-1": {
+  "name": "Tarshish"
+ },
+ "tarshish-2": {
+  "name": "Tarshish",
+  "same_as": "tarshish-1"
+ },
+ "timnah-1": {
+  "name": "Timnah",
+  "qualifier": "in Judah"
+ },
+ "timnah-2": {
+  "name": "Timnah",
+  "same_as": "timnah-3"
+ },
+ "timnah-3": {
+  "name": "Timnah",
+  "qualifier": "of Judah and Tamar"
+ },
+ "tiphsah-1": {
+  "name": "Tiphsah",
+  "qualifier": "of Solomon"
+ },
+ "tiphsah-2": {
+  "name": "Tiphsah",
+  "qualifier": "of Menahem"
+ },
+ "ur-1": {
+  "name": "Ur"
+ },
+ "ur-2": {
+  "name": "Ur",
+  "same_as": "ur-1"
+ },
+ "zanoah-1": {
+  "name": "Zanoah",
+  "qualifier": "in the Shephelah"
+ },
+ "zanoah-2": {
+  "name": "Zanoah",
+  "qualifier": "in the hill country"
+ },
+ "zaphon-1": {
+  "name": "Zaphon",
+  "qualifier": "in Gad"
+ },
+ "zaphon-2": {
+  "name": "Zaphon",
+  "qualifier": "the mountain"
+ },
+ "zeredah-1": {
+  "name": "Zeredah",
+  "qualifier": "in Ephraim"
+ },
+ "zeredah-2": {
+  "name": "Zeredah",
+  "qualifier": "in the Jordan valley"
+ },
+ "zin-1": {
+  "name": "Zin"
+ },
+ "zin-2": {
+  "name": "Zin",
+  "same_as": "zin-1"
+ },
+ "ziph-1": {
+  "name": "Ziph",
+  "qualifier": "near Hebron"
+ },
+ "ziph-2": {
+  "name": "Ziph",
+  "qualifier": "in the Negeb"
+ }
+}

@@ -5,7 +5,13 @@ use crate::models::{AtlasJourney, AtlasJourneyLeg, AtlasPlace, AtlasPlaceVerse};
 use rusqlite::{params, Connection, OptionalExtension};
 
 const PLACE_COLS: &str = "p.id, p.slug, p.name, p.article, p.kinds, p.category, p.lon, p.lat,
-                          p.approximate, p.confidence, p.modern_name, p.modern_alternatives, p.verse_count";
+                          p.approximate, p.confidence, p.modern_name, p.modern_alternatives, p.verse_count, p.qualifier,
+                          (SELECT COUNT(*) FROM atlas_place_verses v WHERE v.place_id = p.id AND v.book_id <= 39),
+                          (SELECT COUNT(*) FROM atlas_place_verses v WHERE v.place_id = p.id AND v.book_id > 39)";
+
+/// A slug as given, or the place it is the same site as: an entry merged
+/// into another (see CONTENT_MIGRATION_0031) is still found by its own slug.
+const CANONICAL_SLUG: &str = "(SELECT COALESCE(same_as, slug) FROM atlas_places WHERE slug = ?1)";
 
 fn map_place(r: &rusqlite::Row) -> rusqlite::Result<AtlasPlace> {
     Ok(AtlasPlace {
@@ -24,6 +30,9 @@ fn map_place(r: &rusqlite::Row) -> rusqlite::Result<AtlasPlace> {
         modern_name: r.get(10)?,
         modern_alternatives: r.get(11)?,
         verse_count: r.get(12)?,
+        qualifier: r.get(13)?,
+        ot_verses: r.get(14)?,
+        nt_verses: r.get(15)?,
     })
 }
 
@@ -32,7 +41,7 @@ fn map_place(r: &rusqlite::Row) -> rusqlite::Result<AtlasPlace> {
 /// round trip on every pan.
 pub fn list_atlas_places(conn: &Connection) -> anyhow::Result<Vec<AtlasPlace>> {
     let mut stmt = conn.prepare(&format!(
-        "SELECT {PLACE_COLS} FROM atlas_places p ORDER BY p.name COLLATE NOCASE"
+        "SELECT {PLACE_COLS} FROM atlas_places p WHERE p.same_as IS NULL ORDER BY p.name COLLATE NOCASE, p.qualifier"
     ))?;
     let rows = stmt.query_map([], map_place)?;
     Ok(rows.collect::<Result<Vec<_>, _>>()?)
@@ -41,7 +50,7 @@ pub fn list_atlas_places(conn: &Connection) -> anyhow::Result<Vec<AtlasPlace>> {
 pub fn get_atlas_place(conn: &Connection, slug: &str) -> anyhow::Result<Option<AtlasPlace>> {
     Ok(conn
         .query_row(
-            &format!("SELECT {PLACE_COLS} FROM atlas_places p WHERE p.slug = ?1"),
+            &format!("SELECT {PLACE_COLS} FROM atlas_places p WHERE p.slug = {CANONICAL_SLUG}"),
             params![slug],
             map_place,
         )
@@ -49,12 +58,12 @@ pub fn get_atlas_place(conn: &Connection, slug: &str) -> anyhow::Result<Option<A
 }
 
 pub fn get_atlas_place_verses(conn: &Connection, slug: &str) -> anyhow::Result<Vec<AtlasPlaceVerse>> {
-    let mut stmt = conn.prepare(
+    let mut stmt = conn.prepare(&format!(
         "SELECT v.book_id, v.chapter, v.verse
          FROM atlas_place_verses v JOIN atlas_places p ON p.id = v.place_id
-         WHERE p.slug = ?1
-         ORDER BY v.book_id, v.chapter, v.verse",
-    )?;
+         WHERE p.slug = {CANONICAL_SLUG}
+         ORDER BY v.book_id, v.chapter, v.verse"
+    ))?;
     let rows = stmt.query_map(params![slug], |r| {
         Ok(AtlasPlaceVerse {
             book_id: r.get(0)?,
@@ -96,7 +105,7 @@ pub fn search_atlas_places(conn: &Connection, query: &str, limit: i64) -> anyhow
     let match_expr = super::search::build_match_expr(query);
     let mut stmt = conn.prepare(&format!(
         "SELECT {PLACE_COLS} FROM atlas_fts JOIN atlas_places p ON p.rowid = atlas_fts.rowid
-         WHERE atlas_fts MATCH ?1 ORDER BY bm25(atlas_fts) LIMIT ?2"
+         WHERE atlas_fts MATCH ?1 AND p.same_as IS NULL ORDER BY bm25(atlas_fts) LIMIT ?2"
     ))?;
     let rows = stmt.query_map(params![match_expr, limit], map_place)?;
     Ok(rows.collect::<Result<Vec<_>, _>>()?)

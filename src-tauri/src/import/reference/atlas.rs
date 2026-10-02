@@ -6,6 +6,11 @@
 //! hand: no open dataset traces the routes, so they are set down here from
 //! the text, as ordered lists of place names and the verse that records each
 //! leg.
+//!
+//! `names.json` (from `tools/build-atlas-names.py`) gives the places OpenBible
+//! numbers ("Aphek 1") their names as a reader knows them: a qualifier for a
+//! site that shares its name ("Aphek", "in Sharon"), or the slug of the place
+//! an entry is the same site as, whose verses it then joins.
 
 use rusqlite::{params, Connection};
 use serde::Deserialize;
@@ -27,6 +32,16 @@ struct RawPlace {
     modern_name: Option<String>,
     modern_alternatives: i64,
     verses: Vec<RawVerse>,
+}
+
+/// A numbered place's name, from names.json.
+#[derive(Deserialize)]
+struct PlaceName {
+    name: String,
+    #[serde(default)]
+    qualifier: Option<String>,
+    #[serde(default)]
+    same_as: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -65,8 +80,47 @@ fn base_name(name: &str) -> String {
 pub fn import(conn: &mut Connection, dir: &Path) -> anyhow::Result<(usize, usize)> {
     let books = super::crossrefs::load_book_lookup(conn)?;
     let places: Vec<RawPlace> = serde_json::from_str(&std::fs::read_to_string(dir.join("places.json"))?)?;
+    let names_path = dir.join("names.json");
+    let names: HashMap<String, PlaceName> = if names_path.is_file() {
+        serde_json::from_str(&std::fs::read_to_string(&names_path)?)?
+    } else {
+        HashMap::new()
+    };
 
-    // Indexes the journey importer needs, built while inserting.
+    // Where each place's verses are filed: itself, or the place it is the
+    // same site as.
+    let index_of: HashMap<&str, usize> = places.iter().enumerate().map(|(i, p)| (p.slug.as_str(), i)).collect();
+    let canonical: Vec<usize> = places
+        .iter()
+        .enumerate()
+        .map(|(i, p)| {
+            let target = names.get(&p.slug).and_then(|n| n.same_as.as_deref());
+            match target {
+                Some(slug) => index_of.get(slug).copied().ok_or_else(|| anyhow::anyhow!("names.json: {} is same_as unknown {slug}", p.slug)),
+                None => Ok(i),
+            }
+        })
+        .collect::<anyhow::Result<_>>()?;
+
+    // Each place's references, resolved and gathered under the place they are
+    // filed under, without repeats. A few fall in books outside the
+    // Protestant canon this app carries; those are skipped, not an error.
+    let mut filed: Vec<Vec<(i64, i64, i64)>> = vec![Vec::new(); places.len()];
+    for (i, place) in places.iter().enumerate() {
+        for verse in &place.verses {
+            if let Some((osis, chapter, number)) = super::crossrefs::parse_ref(&verse.osis) {
+                if let Some(&book_id) = books.get(osis) {
+                    let list = &mut filed[canonical[i]];
+                    if !list.contains(&(book_id, chapter, number)) {
+                        list.push((book_id, chapter, number));
+                    }
+                }
+            }
+        }
+    }
+
+    // Indexes the journey importer needs: a leg names a place, and the place
+    // it lands on is the one its verses are filed under.
     let mut by_base: HashMap<String, Vec<usize>> = HashMap::new();
     let mut by_verse: HashMap<(i64, i64, i64), Vec<usize>> = HashMap::new();
 
@@ -75,36 +129,20 @@ pub fn import(conn: &mut Connection, dir: &Path) -> anyhow::Result<(usize, usize
         let mut place_stmt = tx.prepare(
             "INSERT INTO atlas_places
                (id, slug, name, article, kinds, category, lon, lat, approximate,
-                confidence, modern_name, modern_alternatives, verse_count)
-             VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13)
-             ON CONFLICT(id) DO UPDATE SET
-               slug=excluded.slug, name=excluded.name, lon=excluded.lon, lat=excluded.lat,
-               confidence=excluded.confidence, modern_name=excluded.modern_name,
-               verse_count=excluded.verse_count",
+                confidence, modern_name, modern_alternatives, verse_count, qualifier, same_as)
+             VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13,?14,?15)",
         )?;
         let mut verse_stmt =
             tx.prepare("INSERT INTO atlas_place_verses (place_id, book_id, chapter, verse) VALUES (?1,?2,?3,?4)")?;
 
-        for (index, place) in places.iter().enumerate() {
-            // Resolve the references before writing anything: the verse rows
-            // point at the place row, so the place has to exist first, and
-            // its stored count has to match what actually gets written.
-            let resolved: Vec<(i64, i64, i64)> = place
-                .verses
-                .iter()
-                .filter_map(|verse| {
-                    let (osis, chapter, number) = super::crossrefs::parse_ref(&verse.osis)?;
-                    // A few references fall in books outside the Protestant
-                    // canon this app carries; those are skipped, not an error.
-                    let book_id = *books.get(osis)?;
-                    Some((book_id, chapter, number))
-                })
-                .collect();
-
+        // Every place before any verse: a verse row points at its place.
+        for (i, place) in places.iter().enumerate() {
+            let named = names.get(&place.slug);
+            let same_as = (canonical[i] != i).then(|| places[canonical[i]].slug.clone());
             place_stmt.execute(params![
                 place.id,
                 place.slug,
-                place.name,
+                named.map(|n| n.name.as_str()).unwrap_or(&place.name),
                 place.article,
                 serde_json::to_string(&place.kinds)?,
                 place.category,
@@ -114,19 +152,22 @@ pub fn import(conn: &mut Connection, dir: &Path) -> anyhow::Result<(usize, usize
                 place.confidence,
                 place.modern_name,
                 place.modern_alternatives,
-                resolved.len() as i64,
+                filed[i].len() as i64,
+                named.and_then(|n| n.qualifier.as_deref()),
+                same_as,
             ])?;
-
-            for &(book_id, chapter, number) in &resolved {
+            by_base.entry(base_name(&place.name)).or_default().push(canonical[i]);
+        }
+        for (i, place) in places.iter().enumerate() {
+            for &(book_id, chapter, number) in &filed[i] {
                 verse_stmt.execute(params![place.id, book_id, chapter, number])?;
-                by_verse.entry((book_id, chapter, number)).or_default().push(index);
+                by_verse.entry((book_id, chapter, number)).or_default().push(i);
             }
-            by_base.entry(base_name(&place.name)).or_default().push(index);
         }
     }
     tx.commit()?;
 
-    let journeys = import_journeys(conn, dir, &places, &books, &by_base, &by_verse)?;
+    let journeys = import_journeys(conn, dir, &places, &canonical, &books, &by_base, &by_verse)?;
     Ok((places.len(), journeys))
 }
 
@@ -134,6 +175,7 @@ fn import_journeys(
     conn: &mut Connection,
     dir: &Path,
     places: &[RawPlace],
+    canonical: &[usize],
     books: &HashMap<String, i64>,
     by_base: &HashMap<String, Vec<usize>>,
     by_verse: &HashMap<(i64, i64, i64), Vec<usize>>,
@@ -171,7 +213,7 @@ fn import_journeys(
                 let position = super::crossrefs::parse_ref(&leg.reference)
                     .and_then(|(osis, chapter, verse)| books.get(osis).map(|&b| (b, chapter, verse)));
 
-                let place_index = resolve_leg(leg, position, places, by_base, by_verse).ok_or_else(|| {
+                let place_index = resolve_leg(leg, position, places, canonical, by_base, by_verse).ok_or_else(|| {
                     anyhow::anyhow!(
                         "journey \"{}\": leg \"{}\" at {} matches no place -- \
                          fix the name, or pin it with an explicit \"slug\"",
@@ -217,14 +259,17 @@ fn resolve_leg(
     leg: &RawLeg,
     position: Option<(i64, i64, i64)>,
     places: &[RawPlace],
+    canonical: &[usize],
     by_base: &HashMap<String, Vec<usize>>,
     by_verse: &HashMap<(i64, i64, i64), Vec<usize>>,
 ) -> Option<usize> {
     if let Some(slug) = &leg.slug {
-        return places.iter().position(|p| &p.slug == slug);
+        return places.iter().position(|p| &p.slug == slug).map(|i| canonical[i]);
     }
     let wanted = base_name(&leg.name);
-    let candidates = by_base.get(&wanted)?;
+    let mut candidates = by_base.get(&wanted)?.clone();
+    candidates.sort_unstable();
+    candidates.dedup();
 
     if let Some(key) = position {
         if let Some(here) = by_verse.get(&key) {
@@ -234,6 +279,7 @@ fn resolve_leg(
             }
         }
     }
+    // Three entries that are one site are one candidate.
     match candidates.as_slice() {
         [only] => Some(*only),
         _ => None,

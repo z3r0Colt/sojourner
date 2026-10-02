@@ -1481,6 +1481,43 @@ CREATE TABLE westminster_parallels (
 CREATE INDEX idx_westminster_parallels_section ON westminster_parallels(section_id);
 "#;
 
+// Atlas places without "Aphek 1" and "Aphek 2" (reference/atlas/names.json,
+// made by tools/build-atlas-names.py). A place that shares its name with
+// other sites carries a `qualifier` ("in Sharon"); an entry that OpenBible
+// counted separately but is the same site as another has `same_as`, that
+// place's slug: its verses are filed under that place, it is left out of the
+// lists, and its slug still leads there (notes and sermons link by slug).
+// The search index takes the qualifier too, so "Aphek Sharon" finds it.
+//
+// The atlas rows are deleted so `build_content_db --update`, whose importer
+// runs only into an empty table, imports them again with the new columns.
+// Nothing outside content.db refers to these rows except by slug.
+pub const CONTENT_MIGRATION_0031: &str = r#"
+DELETE FROM atlas_journey_legs;
+DELETE FROM atlas_journeys;
+DELETE FROM atlas_place_verses;
+DELETE FROM atlas_places;
+ALTER TABLE atlas_places ADD COLUMN qualifier TEXT;
+ALTER TABLE atlas_places ADD COLUMN same_as TEXT;
+DROP TRIGGER atlas_places_ai;
+DROP TRIGGER atlas_places_au;
+DROP TRIGGER atlas_places_ad;
+DROP TABLE atlas_fts;
+CREATE VIRTUAL TABLE atlas_fts USING fts5(
+  name, qualifier, modern_name, content='atlas_places', content_rowid='rowid'
+);
+CREATE TRIGGER atlas_places_ai AFTER INSERT ON atlas_places BEGIN
+  INSERT INTO atlas_fts(rowid, name, qualifier, modern_name) VALUES (new.rowid, new.name, new.qualifier, new.modern_name);
+END;
+CREATE TRIGGER atlas_places_au AFTER UPDATE ON atlas_places BEGIN
+  INSERT INTO atlas_fts(atlas_fts, rowid, name, qualifier, modern_name) VALUES('delete', old.rowid, old.name, old.qualifier, old.modern_name);
+  INSERT INTO atlas_fts(rowid, name, qualifier, modern_name) VALUES (new.rowid, new.name, new.qualifier, new.modern_name);
+END;
+CREATE TRIGGER atlas_places_ad AFTER DELETE ON atlas_places BEGIN
+  INSERT INTO atlas_fts(atlas_fts, rowid, name, qualifier, modern_name) VALUES('delete', old.rowid, old.name, old.qualifier, old.modern_name);
+END;
+"#;
+
 pub const CONTENT_MIGRATIONS: &[&str] = &[
     CONTENT_MIGRATION_0001,
     CONTENT_MIGRATION_0002,
@@ -1512,6 +1549,7 @@ pub const CONTENT_MIGRATIONS: &[&str] = &[
     CONTENT_MIGRATION_0028,
     CONTENT_MIGRATION_0029,
     CONTENT_MIGRATION_0030,
+    CONTENT_MIGRATION_0031,
 ];
 
 // library.db: the books that ship with the app, in a file of their own.

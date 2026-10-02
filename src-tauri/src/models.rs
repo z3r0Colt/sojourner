@@ -444,6 +444,13 @@ pub struct AtlasPlace {
     pub modern_name: Option<String>,
     pub modern_alternatives: i64,
     pub verse_count: i64,
+    /// Where it is, for a place that shares its name with other sites ("in
+    /// Sharon" for one of the four Apheks).
+    pub qualifier: Option<String>,
+    /// How many of its verses are in the Old Testament and in the New, for
+    /// showing one Testament's places on the map.
+    pub ot_verses: i64,
+    pub nt_verses: i64,
 }
 
 #[derive(Debug, Clone, Serialize)]

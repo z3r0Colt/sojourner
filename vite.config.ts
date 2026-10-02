@@ -46,6 +46,11 @@ function devContentSecurityPolicy() {
 export default defineConfig(() => ({
   plugins: [react(), tailwindcss(), devContentSecurityPolicy()],
 
+  // The Atlas's map engine runs in a worker, which src/features/atlas
+  // imports with `?worker&url` so Vite bundles it whole; ES output, because
+  // MapLibre starts it as a module worker.
+  worker: { format: "es" as const },
+
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
   //
   // 1. prevent Vite from obscuring rust errors

@@ -396,8 +396,12 @@ export function AboutSection() {
           <ExternalLink href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0</ExternalLink>{" "}
           licence. Some underlying data comes from OpenStreetMap contributors, under the Open Database License.
         </Source>
-        <Source name="Bible atlas — coastlines and rivers">
+        <Source name="Bible atlas — coastlines, rivers, modern borders and towns">
           Made with Natural Earth. Free vector and raster map data at naturalearthdata.com. Public domain.
+        </Source>
+        <Source name="Bible atlas — the map">
+          Drawn with MapLibre GL JS, © MapLibre contributors, under the BSD 3-Clause licence. Its names are set in Noto Sans, © The Noto Project Authors, under the SIL Open
+          Font License, as distributed by the OpenMapTiles fonts project; the licence ships beside the fonts.
         </Source>
         <Source name="Ezra SIL">
           The font the Hebrew is set in, with its vowel points and cantillation: Ezra SIL 2.51, © SIL International, used under the SIL Open Font

@@ -30,6 +30,7 @@
     "epubjs": "^0.3.93",
     "jszip": "^3.10.1",
     "lucide-react": "^1.44.0",
+    "maplibre-gl": "^6.11.2",
     "pdfjs-dist": "^6.3.289",
     "pptxgenjs": "4.0.1",
     "react": "^19.1.0",

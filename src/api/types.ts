@@ -675,6 +675,10 @@ export interface AtlasPlace {
   modern_name: string | null;
   modern_alternatives: number;
   verse_count: number;
+  /** Where it is, when other sites share its name: "in Sharon". */
+  qualifier: string | null;
+  ot_verses: number;
+  nt_verses: number;
 }
 
 export interface AtlasPlaceVerse {

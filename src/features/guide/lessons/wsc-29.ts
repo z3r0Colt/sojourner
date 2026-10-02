@@ -20,9 +20,11 @@ export const WSC_29: LessonData = {
     look(
       "damascus",
       "Where it happened",
-      "Find Damascus in the Atlas. How far was Saul from Jerusalem, and how long would the journey have taken?",
+      "Find Damascus in the Atlas. How far was Saul from Jerusalem, and how long would the journey have taken? The place card gives the distance from Jerusalem; or use the ruler to measure it yourself, point by point along the road north.",
       { pane: "atlas", slug: "damascus" },
-      { tip: "The Atlas shows the places of Scripture on a map, with the verses that name each one." },
+      {
+        tip: "The Atlas shows the places of Scripture on a map, with the verses that name each one. Its ruler measures any distance, with the days it took on foot; the Layers button shows modern towns and borders too.",
+      },
     ),
     read(
       "No man can come",
