@@ -92,6 +92,10 @@ const LOCATION_CHARS = 1200;
 const RESIZE_SETTLE_MS = 150;
 /** Locations are generated after the book is on screen, not before it. */
 const LOCATIONS_DELAY_MS = 1200;
+/** epub.js rests this long after each section it measures (its own default
+ * is 100 ms: forty seconds for the 405 sections of Josephus, with the
+ * percent bar off all the while). A frame's rest keeps the page responsive. */
+const LOCATIONS_PAUSE_MS = 16;
 /** How much of the visible height a page-down moves, keeping a couple of
  * lines of overlap so the eye can pick up where it left off. */
 const PAGE_OVERLAP_PX = 56;
@@ -984,9 +988,11 @@ export function EpubReader({
         // Reading every section to work out how long the book is costs a
         // second or two, so it happens once the reader is already reading.
         locationsTimer = window.setTimeout(() => {
+          (book.locations as unknown as { pause: number }).pause = LOCATIONS_PAUSE_MS;
           book.locations
             .generate(LOCATION_CHARS)
             .then(() => {
+              measuredBooks.add(book);
               if (disposed) return;
               const cfi = rendition.location?.start?.cfi;
               setProgress((prev) => ({ ...prev, percent: cfi ? percentOf(book, cfi) : prev.percent }));
@@ -1203,6 +1209,7 @@ export function EpubReader({
             step={1}
             value={Math.round((percent ?? 0) * 1000)}
             disabled={!canScrub}
+            title={canScrub ? undefined : "Working out how long the book is…"}
             aria-label="Position in the book"
             className="h-1 min-w-0 flex-1 accent-accent disabled:opacity-40"
             onChange={(e) => setScrub(Number(e.target.value))}
@@ -1311,11 +1318,16 @@ async function findAndShow(book: Book, rendition: Rendition, find: { text: strin
   setTimeout(reveal, 1200);
 }
 
+/** Books whose locations have all been generated. */
+const measuredBooks = new WeakSet<Book>();
+
 /** How far through the book a CFI sits, or null before the locations that
- * answer that have been generated. */
+ * answer that have all been generated. Not just some: epub.js fills its list
+ * section by section but sets the total only at the end, so a book part-way
+ * measured put every place at 0%, and the bar, scrubbed, went to the start. */
 function percentOf(book: Book, cfi: string): number | null {
   try {
-    if (book.locations.length() === 0) return null;
+    if (!measuredBooks.has(book) || book.locations.length() === 0) return null;
     const value = book.locations.percentageFromCfi(cfi);
     return Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : null;
   } catch {
