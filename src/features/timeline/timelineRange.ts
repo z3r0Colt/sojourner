@@ -123,6 +123,26 @@ export function zoomAbout(r: TimelineViewRange, at: number, k: number, full: Tim
   return clampRange({ start: at - (at - r.start) * k, end: at + (r.end - at) * k }, full);
 }
 
+/**
+ * Two fingers on a touch screen: the view `from` (where the pinch began)
+ * stretched by how far the fingers have spread -- `startGap` apart then,
+ * `gap` now -- with the year that was between them, `at`, kept between them
+ * as they move (`fraction` of the way across). So one gesture zooms and pans
+ * at once, as a map does.
+ */
+export function pinchRange(
+  from: TimelineViewRange,
+  at: number,
+  startGap: number,
+  gap: number,
+  fraction: number,
+  full: TimelineViewRange = FULL_RANGE,
+): TimelineViewRange {
+  const span = ((from.end - from.start) * Math.max(startGap, 1)) / Math.max(gap, 1);
+  const start = at - fraction * span;
+  return clampRange({ start, end: start + span }, full);
+}
+
 /** The view, the same width, centred on `year`: a click on the overview. */
 export function centreOn(r: TimelineViewRange, year: number, full: TimelineViewRange = FULL_RANGE): TimelineViewRange {
   const span = r.end - r.start;

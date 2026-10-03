@@ -7,6 +7,8 @@ import type { Book, Timeline, TimelineEra, TimelineEvent } from "../../api/types
 import { EmptyState, LoadingState } from "../../components/ui/EmptyState";
 import { formatChapterRef } from "../../lib/passage";
 import { usePane, usePaneParams } from "../../workspace/PaneContext";
+import { useCompact } from "../../hooks/useCompact";
+import { cx } from "../../components/ui/classes";
 import { openContent, openPassage, targetFor } from "../../workspace/openContent";
 import { ChurchEventDetail } from "./ChurchEventDetail";
 import { ChurchMarksKey } from "./ChurchMarksKey";
@@ -122,6 +124,7 @@ export function TimelineView() {
   }, [showChurch, fittedTo, bibleLine]);
 
   const select = useCallback((e: TimelineEvent | null) => setParams({ eventId: e?.id ?? null }), [setParams]);
+  const compact = useCompact();
 
   if (isLoading) return <LoadingState className="p-8" />;
   if (!timeline || !allOfIt || allOfIt.events.length === 0) {
@@ -155,14 +158,18 @@ export function TimelineView() {
         onSelect={select}
         onEraClick={(era) => setRange(fit(eraFrame(era)))}
       />
-      <div className="max-h-[45%] min-h-[72px] overflow-y-auto border-t border-line">
+      {/* On a phone the detail keeps one height whatever is in it: sized to
+          its content, it took more of the screen with each event tapped, and
+          the canvas above, shrinking, packed its rows afresh under the
+          finger. */}
+      <div className={cx("overflow-y-auto border-t border-line", compact ? "h-[42%] shrink-0" : "max-h-[45%] min-h-[72px]")}>
         {selected ? (
           <EventDetail timeline={timeline} event={selected} onSelect={(e) => { select(e); setRange(rangeAround(e.start_year, e.end_year, 60, line)); }} />
         ) : (
           <div className="space-y-2 p-4">
             <p className="text-sm text-ink-3">
-              Click an event for its verses, people and places{churchShown && ", or a church event for the source that dates it"}. Click an era to
-              fit it. Wheel to zoom, drag to move. The Bible's dates are approximate, as the Theographic Bible Metadata gives them: a traditional
+              {compact ? "Tap" : "Click"} an event for its verses, people and places{churchShown && ", or a church event for the source that dates it"}.{" "}
+              {compact ? "Tap" : "Click"} an era to fit it. {compact ? "Pinch to zoom, drag to move." : "Wheel to zoom, drag to move."} The Bible's dates are approximate, as the Theographic Bible Metadata gives them: a traditional
               chronology, Ussher's for the early ages.{churchShown && " Church history's dates are its sources' own, and each event quotes the words it is dated by."}
             </p>
             {churchShown && <ChurchMarksKey />}

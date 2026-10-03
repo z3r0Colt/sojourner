@@ -14,6 +14,7 @@ import {
   wheelIntent,
   widestRange,
   zoomAbout,
+  pinchRange,
 } from "./timelineRange";
 
 // Pinned to a year, so the tests do not move with the calendar.
@@ -223,5 +224,29 @@ describe("the wheel", () => {
   it("always pans over the overview strip, and ignores a delta of nothing", () => {
     expect(wheelIntent(wheel(0, 100), 800, true)).toEqual({ pan: 100 });
     expect(wheelIntent(wheel(0, 0), 800)).toBeNull();
+  });
+});
+
+describe("a pinch", () => {
+  const full = { start: -1000, end: 1000 };
+  it("zooms in as the fingers spread, keeping the year between them under them", () => {
+    // Fingers 100px apart a quarter of the way across, over the year -500.
+    const r = pinchRange({ start: -1000, end: 0 }, -750, 100, 200, 0.25, full);
+    expect(r.end - r.start).toBeCloseTo(500);
+    expect(r.start + 0.25 * (r.end - r.start)).toBeCloseTo(-750);
+  });
+
+  it("zooms out as they close, and pans as they move together", () => {
+    const out = pinchRange({ start: -500, end: 0 }, -250, 200, 100, 0.5, full);
+    expect(out.end - out.start).toBeCloseTo(1000);
+    const moved = pinchRange({ start: -500, end: 0 }, -250, 100, 100, 0.75, full);
+    expect(moved.end - moved.start).toBeCloseTo(500);
+    expect(moved.start + 0.75 * 500).toBeCloseTo(-250);
+  });
+
+  it("is held to the line like any other view, and never divides by a closed pinch", () => {
+    const r = pinchRange({ start: -1000, end: 0 }, -500, 100, 0, 0.5, full);
+    expect(Number.isFinite(r.start) && Number.isFinite(r.end)).toBe(true);
+    expect(sameRange(pinchRange({ start: -1000, end: 1000 }, 0, 100, 10, 0.5, full), clampRange({ start: -1e9, end: 1e9 }, full))).toBe(true);
   });
 });

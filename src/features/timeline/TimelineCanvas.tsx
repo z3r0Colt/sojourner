@@ -3,7 +3,7 @@ import type { Timeline, TimelineEra, TimelineEvent } from "../../api/types";
 import { eventHoverText } from "./churchHistory";
 import { TimelineOverview } from "./TimelineOverview";
 import { fitLabel, importance, inReach, packBandsWithSelection, spanLabel, ticks, yearLabel, type Placed } from "./timelineLayout";
-import { extentOf, lineFor, panBy, rangeForKey, sameRange, wheelIntent, zoomAbout, type TimelineViewRange } from "./timelineRange";
+import { extentOf, lineFor, panBy, pinchRange, rangeForKey, sameRange, wheelIntent, zoomAbout, type TimelineViewRange } from "./timelineRange";
 import { timelineColors, useThemeVersion, type TimelineColors } from "./timelineTheme";
 import { timelineTracks } from "./timelineTracks";
 
@@ -494,8 +494,17 @@ export function TimelineCanvas({
 
   // Pointer: drag to pan, wheel to zoom (or, with Shift or sideways, to pan).
   // A drag belongs to the pointer that pressed: a second finger on a touch
-  // screen is not a second drag the view would jump between.
+  // screen is not a second drag the view would jump between, but the start
+  // of a pinch, which zooms about the year between the fingers (a phone has
+  // no wheel). After a pinch nothing is selected by the fingers lifting.
   const drag = useRef<{ id: number; x: number; range: TimelineViewRange; moved: boolean } | null>(null);
+  const touches = useRef(new Map<number, { x: number; y: number }>());
+  const pinch = useRef<{ range: TimelineViewRange; at: number; gap: number } | null>(null);
+  const pinchState = () => {
+    const [a, b] = [...touches.current.values()];
+    const rect = canvasRef.current!.getBoundingClientRect();
+    return { gap: Math.hypot(a.x - b.x, a.y - b.y), fraction: ((a.x + b.x) / 2 - rect.left) / Math.max(rect.width, 1) };
+  };
   const rangeRef = useRef(range);
   rangeRef.current = range;
 
@@ -570,12 +579,35 @@ export function TimelineCanvas({
           aria-label={`Timeline from ${yearLabel(range.start)} to ${yearLabel(range.end)}. Arrow keys move along it, Page Up and Page Down a screen at a time, Home and End to its ends, plus and minus zoom.`}
           className="absolute left-0 top-0 block cursor-grab touch-none rounded-md outline-none focus-visible:ring-2 focus-visible:ring-accent active:cursor-grabbing"
           onPointerDown={(ev) => {
+            if (ev.pointerType === "touch") {
+              touches.current.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+              if (touches.current.size === 2) {
+                // The second finger: a pinch, in place of the first's drag.
+                ev.currentTarget.setPointerCapture(ev.pointerId);
+                const r = rangeRef.current;
+                const { gap, fraction } = pinchState();
+                pinch.current = { range: r, at: r.start + fraction * (r.end - r.start), gap };
+                drag.current = null;
+                setHover(null);
+                return;
+              }
+              if (touches.current.size > 2) return;
+            }
             // The main button only, and one pointer at a time.
             if (ev.button !== 0 || (drag.current && drag.current.id !== ev.pointerId)) return;
             ev.currentTarget.setPointerCapture(ev.pointerId);
             drag.current = { id: ev.pointerId, x: ev.clientX, range: rangeRef.current, moved: false };
           }}
           onPointerMove={(ev) => {
+            if (touches.current.has(ev.pointerId)) touches.current.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+            const p = pinch.current;
+            if (p) {
+              if (touches.current.size >= 2) {
+                const { gap, fraction } = pinchState();
+                moveTo(pinchRange(p.range, p.at, p.gap, gap, fraction, line));
+              }
+              return;
+            }
             const d = drag.current;
             // A drag whose button is no longer down lost its release somewhere
             // (outside the window, say): it ends here, rather than the view
@@ -597,6 +629,13 @@ export function TimelineCanvas({
           }}
           onPointerLeave={() => setHover(null)}
           onPointerUp={(ev) => {
+            touches.current.delete(ev.pointerId);
+            // The pinch ends when its fingers have all lifted; until then the
+            // one left on the screen neither drags nor selects.
+            if (pinch.current) {
+              if (touches.current.size === 0) pinch.current = null;
+              return;
+            }
             // A click is a press and a release here, by the same pointer,
             // without a drag between: a drag that began somewhere else and
             // was let go over the canvas selects nothing (nor clears the
@@ -612,6 +651,8 @@ export function TimelineCanvas({
           // A touch the browser takes back, or capture lost to anything else,
           // ends the drag where it is.
           onPointerCancel={(ev) => {
+            touches.current.delete(ev.pointerId);
+            if (touches.current.size === 0) pinch.current = null;
             if (drag.current?.id === ev.pointerId) drag.current = null;
           }}
           onLostPointerCapture={(ev) => {
