@@ -831,6 +831,24 @@ export function EpubReader({
 
     rendition.on("keydown", (event: KeyboardEvent) => handleKeyRef.current(event));
 
+    // On a touch screen a quick sideways swipe turns to the next section or
+    // back, as Next and Previous do; an up-and-down one scrolls, as ever.
+    let swipe: { x: number; y: number; at: number } | null = null;
+    rendition.on("touchstart", (event: TouchEvent) => {
+      const t = event.touches[0];
+      swipe = event.touches.length === 1 && t ? { x: t.screenX, y: t.screenY, at: Date.now() } : null;
+    });
+    rendition.on("touchend", (event: TouchEvent) => {
+      const t = event.changedTouches[0];
+      const from = swipe;
+      swipe = null;
+      if (!from || !t || Date.now() - from.at > 600) return;
+      const dx = t.screenX - from.x;
+      const dy = t.screenY - from.y;
+      if (Math.abs(dx) < 60 || Math.abs(dx) < 2 * Math.abs(dy)) return;
+      void (dx < 0 ? rendition.next() : rendition.prev());
+    });
+
     rendition.hooks.content.register((contents: Contents) => {
       const doc = contents.document;
       // Both of these read the book's own styling, so they run before the

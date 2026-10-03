@@ -231,7 +231,10 @@ export function AppShell() {
   }, [shellLoaded]);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-bg text-ink">
+    // The visible height (dvh), not the screen's: on a phone 100vh runs on
+    // under the browser's own toolbar, and took with it whatever sits at the
+    // foot of a pane -- a book's Previous and Next, the read-aloud bar.
+    <div className="flex h-dvh overflow-hidden bg-bg text-ink">
       {!distractionFreeMode && !compact && <Sidebar />}
       {compact && menuOpen && (
         <div className="fixed inset-0 z-50 flex">

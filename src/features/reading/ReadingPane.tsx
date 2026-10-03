@@ -89,6 +89,8 @@ import { checkboxClass, cx, selectSmClass } from "../../components/ui/classes";
 import { formatRef, joinVerses, toPassageRef } from "../../lib/passage";
 import { usePane, usePaneNavigate, usePaneParams } from "../../workspace/PaneContext";
 import { openContent, openPassage, targetFor } from "../../workspace/openContent";
+import { PANE_KINDS, STUDY_STRIP_KINDS } from "../../workspace/paneKinds";
+import { useCompact } from "../../hooks/useCompact";
 import type { Note, Footnote, Translation } from "../../api/types";
 
 /** How long after a click on the text a second click still makes it a
@@ -603,6 +605,7 @@ export function ReadingPane() {
   }, [currentFind, matches, verses, paragraphMode, rowVirtualizer]);
 
   const ttsHere = useTtsReadingHere(paneId, "scripture");
+  const phone = useCompact();
   const ttsCurrentSegmentId = useTtsStore((s) => (ttsHere ? (s.segments[s.currentSegmentIndex]?.id ?? null) : null));
   useEffect(() => {
     if (ttsHere && typeof ttsCurrentSegmentId === "number") {
@@ -1097,6 +1100,33 @@ export function ReadingPane() {
                 >
                   <Maximize2 className="h-4 w-4 text-ink-3" aria-hidden="true" /> Focus mode
                 </PopoverItem>
+                {phone && (
+                  // A phone has no room for the strip of study panes beside
+                  // the Bible: they are here instead, each opened as a page
+                  // of its own that follows the chapter.
+                  <>
+                    <div className="my-1 h-px bg-line" aria-hidden="true" />
+                    <PopoverLabel>Study this chapter</PopoverLabel>
+                    {STUDY_STRIP_KINDS.filter((k) => k !== "metrical" || book.id === 19).map((kind) => {
+                      const meta = PANE_KINDS[kind];
+                      const KindIcon = meta.icon;
+                      return (
+                        <PopoverItem
+                          key={kind}
+                          onClick={() => {
+                            close();
+                            const s = useWorkspaceStore.getState();
+                            const open = s.panes.find((p) => p.kind === kind);
+                            if (open) s.focusPane(open.id);
+                            else openContent(kind, {}, { target: "new", from: paneId });
+                          }}
+                        >
+                          <KindIcon className="h-4 w-4 text-ink-3" aria-hidden="true" /> {meta.label}
+                        </PopoverItem>
+                      );
+                    })}
+                  </>
+                )}
                 {translations && translations.length > 1 && (
                   <>
                     <div className="my-1 h-px bg-line" aria-hidden="true" />
