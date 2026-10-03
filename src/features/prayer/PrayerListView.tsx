@@ -1,3 +1,4 @@
+import { onDesktop } from "../../lib/platform";
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { Check, HandHeart, Pencil, Plus, Printer, RotateCcw, Trash2, Users } from "lucide-react";
@@ -239,7 +240,7 @@ export function PrayerListView() {
           <span />
         )}
         <div className="flex items-center gap-2">
-          {hasAny && (
+          {hasAny && onDesktop && (
             <Button icon={Printer} onClick={() => setPrinting(true)} title="Print the active list grouped by category, with a box to tick beside each name">
               Print
             </Button>

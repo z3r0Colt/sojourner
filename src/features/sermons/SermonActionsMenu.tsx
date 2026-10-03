@@ -1,3 +1,4 @@
+import { onDesktop } from "../../lib/platform";
 import { useState } from "react";
 import { ChevronDown, Download, FileText, MoreHorizontal, Presentation, Printer, TabletSmartphone } from "lucide-react";
 import { api } from "../../api/client";
@@ -152,70 +153,75 @@ export function SermonActionsMenu({
         width="w-60"
         trigger={({ toggle, open }) => (
           <Button size="sm" variant="ghost" icon={MoreHorizontal} onClick={toggle} aria-haspopup="menu" aria-expanded={open}>
-            Print & export
+            {onDesktop ? "Print & export" : "Present"}
             <ChevronDown className="h-3.5 w-3.5 text-ink-4" aria-hidden="true" />
           </Button>
         )}
       >
         {(close) => (
           <>
-            <PopoverLabel>On paper</PopoverLabel>
-            <PopoverItem
-              onClick={() => {
-                close();
-                print("manuscript");
-              }}
-            >
-              <Printer className="h-4 w-4 text-ink-3" aria-hidden="true" /> Print the manuscript
-            </PopoverItem>
-            <PopoverItem
-              onClick={() => {
-                close();
-                print("outline");
-              }}
-            >
-              <FileText className="h-4 w-4 text-ink-3" aria-hidden="true" /> Print the outline
-            </PopoverItem>
-            <PopoverItem
-              onClick={() => {
-                close();
-                print("handout");
-              }}
-            >
-              <FileText className="h-4 w-4 text-ink-3" aria-hidden="true" /> Print the handout
-            </PopoverItem>
-            <PopoverItem
-              onClick={() => {
-                close();
-                print("handout-key");
-              }}
-            >
-              <FileText className="h-4 w-4 text-ink-3" aria-hidden="true" /> Handout with the answer key
-            </PopoverItem>
-            <div className="mt-1 space-y-1.5 rounded-md bg-surface-2/70 px-2 py-1.5 text-xs text-ink-3">
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={passageText}
-                  onChange={(e) => setPassageText(e.target.checked)}
-                  className="accent-accent"
-                />
-                Print each passage in full
-              </label>
-              <label className="flex items-center gap-2">
-                <span>Lines to write on</span>
-                <input
-                  type="number"
-                  min={0}
-                  max={12}
-                  value={noteLines}
-                  onChange={(e) => setNoteLines(Math.min(12, Math.max(0, Number(e.target.value) || 0)))}
-                  aria-label="Lines to write on after each point"
-                  className={cx(inputSmClass, "w-14")}
-                />
-              </label>
-            </div>
-            <div className="my-1 h-px bg-line" aria-hidden="true" />
+            {/* Paper and files need this computer; a browser elsewhere can still present. */}
+            {onDesktop && (
+              <>
+                <PopoverLabel>On paper</PopoverLabel>
+                <PopoverItem
+                  onClick={() => {
+                    close();
+                    print("manuscript");
+                  }}
+                >
+                  <Printer className="h-4 w-4 text-ink-3" aria-hidden="true" /> Print the manuscript
+                </PopoverItem>
+                <PopoverItem
+                  onClick={() => {
+                    close();
+                    print("outline");
+                  }}
+                >
+                  <FileText className="h-4 w-4 text-ink-3" aria-hidden="true" /> Print the outline
+                </PopoverItem>
+                <PopoverItem
+                  onClick={() => {
+                    close();
+                    print("handout");
+                  }}
+                >
+                  <FileText className="h-4 w-4 text-ink-3" aria-hidden="true" /> Print the handout
+                </PopoverItem>
+                <PopoverItem
+                  onClick={() => {
+                    close();
+                    print("handout-key");
+                  }}
+                >
+                  <FileText className="h-4 w-4 text-ink-3" aria-hidden="true" /> Handout with the answer key
+                </PopoverItem>
+                <div className="mt-1 space-y-1.5 rounded-md bg-surface-2/70 px-2 py-1.5 text-xs text-ink-3">
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={passageText}
+                      onChange={(e) => setPassageText(e.target.checked)}
+                      className="accent-accent"
+                    />
+                    Print each passage in full
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <span>Lines to write on</span>
+                    <input
+                      type="number"
+                      min={0}
+                      max={12}
+                      value={noteLines}
+                      onChange={(e) => setNoteLines(Math.min(12, Math.max(0, Number(e.target.value) || 0)))}
+                      aria-label="Lines to write on after each point"
+                      className={cx(inputSmClass, "w-14")}
+                    />
+                  </label>
+                </div>
+                <div className="my-1 h-px bg-line" aria-hidden="true" />
+              </>
+            )}
             <PopoverLabel>On the screen</PopoverLabel>
             <PopoverItem
               onClick={() => {
@@ -225,37 +231,41 @@ export function SermonActionsMenu({
             >
               <Presentation className="h-4 w-4 text-ink-3" aria-hidden="true" /> Present the slides
             </PopoverItem>
-            <div className="my-1 h-px bg-line" aria-hidden="true" />
-            <PopoverLabel>As a file</PopoverLabel>
-            <PopoverItem
-              onClick={() => {
-                close();
-                void exportMarkdown();
-              }}
-            >
-              <Download className="h-4 w-4 text-ink-3" aria-hidden="true" /> Export as Markdown…
-            </PopoverItem>
-            <PopoverItem
-              onClick={() => {
-                close();
-                void exportSlides();
-              }}
-            >
-              <Presentation className="h-4 w-4 text-ink-3" aria-hidden="true" />
-              {exporting ? "Writing the slides…" : "Export slides as .pptx…"}
-            </PopoverItem>
-            <PopoverItem
-              onClick={() => {
-                close();
-                void exportPodium();
-              }}
-            >
-              <TabletSmartphone className="h-4 w-4 text-ink-3" aria-hidden="true" /> Podium file for a phone or tablet…
-            </PopoverItem>
-            <p className="px-2 pb-1 text-xs text-ink-4">
-              One web page with the passages written in, paged by a tap or a swipe, with a clock. Email, AirDrop, or copy it to
-              the device; it needs no internet.
-            </p>
+            {onDesktop && (
+              <>
+                <div className="my-1 h-px bg-line" aria-hidden="true" />
+                <PopoverLabel>As a file</PopoverLabel>
+                <PopoverItem
+                  onClick={() => {
+                    close();
+                    void exportMarkdown();
+                  }}
+                >
+                  <Download className="h-4 w-4 text-ink-3" aria-hidden="true" /> Export as Markdown…
+                </PopoverItem>
+                <PopoverItem
+                  onClick={() => {
+                    close();
+                    void exportSlides();
+                  }}
+                >
+                  <Presentation className="h-4 w-4 text-ink-3" aria-hidden="true" />
+                  {exporting ? "Writing the slides…" : "Export slides as .pptx…"}
+                </PopoverItem>
+                <PopoverItem
+                  onClick={() => {
+                    close();
+                    void exportPodium();
+                  }}
+                >
+                  <TabletSmartphone className="h-4 w-4 text-ink-3" aria-hidden="true" /> Podium file for a phone or tablet…
+                </PopoverItem>
+                <p className="px-2 pb-1 text-xs text-ink-4">
+                  One web page with the passages written in, paged by a tap or a swipe, with a clock. Email, AirDrop, or copy it to
+                  the device; it needs no internet.
+                </p>
+              </>
+            )}
           </>
         )}
       </Popover>

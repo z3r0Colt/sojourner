@@ -5,7 +5,7 @@
 // of the app (ttsStore, ReadAloudWords, TtsPlayerBar) only depends on this
 // interface, not on Web Speech specifics.
 
-import { invoke } from "@tauri-apps/api/core";
+import { invoke } from "../../lib/platform";
 
 export interface TtsVoice {
   id: string; // voiceURI for web speech; provider voice id for cloud engines

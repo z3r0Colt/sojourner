@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject, type ReactNode } from "react";
-import { convertFileSrc } from "@tauri-apps/api/core";
+import { convertFileSrc } from "../../lib/platform";
 import ePub from "epubjs";
 import type Book from "epubjs/types/book";
 import type Contents from "epubjs/types/contents";

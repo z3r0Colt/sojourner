@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { openUrl } from "@tauri-apps/plugin-opener";
+import { onDesktop, openUrl } from "../../../lib/platform";
 import { create } from "zustand";
 import { Check, Download, Globe, Mail, RefreshCw } from "lucide-react";
 import { api } from "../../../api/client";
@@ -65,9 +65,12 @@ function Updates({ version }: { version: string | null }) {
         <p className="text-sm text-ink-2">
           Version <span className="font-medium text-ink">{version ?? "—"}</span>
         </p>
-        <Button icon={RefreshCw} onClick={check} disabled={checking}>
-          {checking ? "Checking…" : "Check for updates"}
-        </Button>
+        {/* Updates are installed on the computer Sojourner runs on. */}
+        {onDesktop && (
+          <Button icon={RefreshCw} onClick={check} disabled={checking}>
+            {checking ? "Checking…" : "Check for updates"}
+          </Button>
+        )}
       </div>
 
       <div aria-live="polite">

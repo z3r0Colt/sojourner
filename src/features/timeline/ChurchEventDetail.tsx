@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { openUrl } from "@tauri-apps/plugin-opener";
+import { openUrl } from "../../lib/platform";
 import { BookOpen, ExternalLink as ExternalLinkIcon, ScrollText } from "lucide-react";
 import { useLibraryCatalog, usePackStatuses, useResources, useWestminsterDocuments } from "../../api/queries";
 import type { Timeline, TimelineCitation, TimelineEvent } from "../../api/types";

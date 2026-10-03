@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, ArrowRight, Compass, Keyboard, Search } from "lucide-react";
+import { ArrowLeft, ArrowRight, Compass, Keyboard, Menu, Search } from "lucide-react";
 import { useBooks, useBookmarks, useCreateBookmark, useDeleteBookmark, useTranslations } from "../api/queries";
 import { useUiStore } from "../state/uiStore";
 import { STUDY_KINDS, findPane, resolveBiblePane, useReaderTranslationId, useWorkspaceStore } from "../state/workspaceStore";
@@ -26,6 +26,9 @@ import { toast } from "../components/ui/toast";
 import { stepChapter } from "../features/reading/chapterStep";
 import { resetZoom, zoomActionFor, zoomText } from "../features/reading/zoom";
 import { isTypingTarget } from "../lib/keyboard";
+import { onDesktop } from "../lib/platform";
+import { useCompact } from "../hooks/useCompact";
+import { useLiveSync } from "../lib/liveSync";
 import { installCloseHandshake } from "../lib/appClose";
 import { splashReady } from "../lib/splash";
 import { useNoteRefsBackfill } from "../features/notes/useNoteRefsBackfill";
@@ -63,10 +66,15 @@ export function AppShell() {
   useLandingPageOnLaunch();
   useAutomaticBackup();
   useBackupReminder();
+  // In step with other devices on the network (Settings → Other devices).
+  useLiveSync();
   useFirstRunTour();
   const [, setTourDone] = useTourDone();
 
   const [paletteOpen, setPaletteOpen] = useState(false);
+  // A phone (a browser on another device): the sidebar is a drawer.
+  const compact = useCompact();
+  const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
 
@@ -209,7 +217,8 @@ export function AppShell() {
 
   // Closing the window is a handshake now, so that a manuscript's last save
   // finishes before the webview goes -- see `lib/appClose.ts`.
-  useEffect(() => installCloseHandshake(), []);
+  // (Only the desktop window closes; a browser tab has nothing to wait for.)
+  useEffect(() => (onDesktop ? installCloseHandshake() : undefined), []);
 
   // The splash screen comes down once the database has answered with the two
   // things the shell cannot draw without. An error counts as an answer: what
@@ -223,25 +232,42 @@ export function AppShell() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-bg text-ink">
-      {!distractionFreeMode && <Sidebar />}
+      {!distractionFreeMode && !compact && <Sidebar />}
+      {compact && menuOpen && (
+        <div className="fixed inset-0 z-50 flex">
+          <Sidebar drawer onNavigate={() => setMenuOpen(false)} />
+          <button type="button" aria-label="Close the menu" className="flex-1 bg-black/40" onClick={() => setMenuOpen(false)} />
+        </div>
+      )}
 
       <div className="flex min-w-0 flex-1 flex-col">
         {!distractionFreeMode && (
           <header className="flex h-11 shrink-0 items-center gap-1 border-b border-line bg-surface px-2">
+            {compact && <IconButton icon={Menu} label="Menu" onClick={() => setMenuOpen(true)} />}
             <IconButton icon={ArrowLeft} label="Back (Alt+Left)" onClick={goBack} disabled={!canGoBack} />
             <IconButton icon={ArrowRight} label="Forward (Alt+Right)" onClick={goForward} disabled={!canGoForward} />
             <div className="min-w-0 flex-1" />
-            <Button variant="ghost" icon={Compass} onClick={() => setPaletteOpen(true)} title="Jump to a reference, Strong's number, or term (Ctrl+K)" data-tour="goto">
-              Go to
-              <Kbd>Ctrl K</Kbd>
-            </Button>
-            <Button variant="ghost" icon={Search} onClick={() => setSearchOpen(true)} title="Search Scripture, commentary, notes, prayers, resources, and confessions (Ctrl+F)" data-tour="search">
-              Search
-              <Kbd>Ctrl F</Kbd>
-            </Button>
-            <WorkspacesMenu />
-            <LayoutPicker />
-            <IconButton icon={Keyboard} label="Keyboard shortcuts (Ctrl+/)" onClick={() => setShortcutsOpen(true)} data-tour="shortcuts" />
+            {compact ? (
+              // No keyboard, and no room for arranging panes.
+              <>
+                <IconButton icon={Compass} label="Go to a reference" onClick={() => setPaletteOpen(true)} />
+                <IconButton icon={Search} label="Search" onClick={() => setSearchOpen(true)} />
+              </>
+            ) : (
+              <>
+                <Button variant="ghost" icon={Compass} onClick={() => setPaletteOpen(true)} title="Jump to a reference, Strong's number, or term (Ctrl+K)" data-tour="goto">
+                  Go to
+                  <Kbd>Ctrl K</Kbd>
+                </Button>
+                <Button variant="ghost" icon={Search} onClick={() => setSearchOpen(true)} title="Search Scripture, commentary, notes, prayers, resources, and confessions (Ctrl+F)" data-tour="search">
+                  Search
+                  <Kbd>Ctrl F</Kbd>
+                </Button>
+                <WorkspacesMenu />
+                <LayoutPicker />
+                <IconButton icon={Keyboard} label="Keyboard shortcuts (Ctrl+/)" onClick={() => setShortcutsOpen(true)} data-tour="shortcuts" />
+              </>
+            )}
           </header>
         )}
 
@@ -284,7 +310,8 @@ export function AppShell() {
       <GatherRound />
       <RunLogHost />
       <RefPreviewHost />
-      <TourOverlay onFinish={() => setTourDone(true)} />
+      {/* The tour points at the desktop layout's sidebar and header. */}
+      {!compact && <TourOverlay onFinish={() => setTourDone(true)} />}
     </div>
   );
 }

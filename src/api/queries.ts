@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useQuery, useQueries, useQueryClient, useMutation } from "@tanstack/react-query";
 import { api } from "./client";
+import { onDesktop } from "../lib/platform";
 import type {
   Verse,
   Passage,
@@ -1363,7 +1364,8 @@ export function useDeleteSearchHistory() {
 }
 
 export function useBackups() {
-  return useQuery({ queryKey: ["backups"], queryFn: api.listBackups });
+  // Backups are files on the desktop: a browser on another device has none.
+  return useQuery({ queryKey: ["backups"], queryFn: api.listBackups, enabled: onDesktop });
 }
 
 /** Whether the book library pack is installed, and which one. */
@@ -1426,7 +1428,7 @@ export function useStats() {
 }
 
 export function useBackupSyncFolder() {
-  return useQuery({ queryKey: ["backupSyncFolder"], queryFn: api.getBackupSyncFolder });
+  return useQuery({ queryKey: ["backupSyncFolder"], queryFn: api.getBackupSyncFolder, enabled: onDesktop });
 }
 
 export function useSetBackupSyncFolder() {

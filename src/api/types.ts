@@ -1304,6 +1304,17 @@ export interface PickedPath {
  * Nothing here downloads or installs anything: `url` is a page for the reader
  * to visit. `latest` is null when no release has been published yet, which is
  * not an error and not an update. */
+/** Settings → Other devices: Sojourner in a browser elsewhere on the network
+ * (src-tauri/src/remote.rs). */
+export interface RemoteStatus {
+  enabled: boolean;
+  running: boolean;
+  port: number;
+  /** One per address this computer has, each with the key. */
+  links: string[];
+  error: string | null;
+}
+
 export interface UpdateCheck {
   current: string;
   latest: string | null;

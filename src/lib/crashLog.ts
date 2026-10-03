@@ -1,4 +1,4 @@
-import { invoke } from "@tauri-apps/api/core";
+import { invoke } from "./platform";
 
 /** A window error that is no crash, and is not written down as one: the
  * browser's "ResizeObserver loop completed with undelivered notifications"

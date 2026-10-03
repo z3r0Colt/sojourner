@@ -1,3 +1,4 @@
+import { onDesktop } from "../../lib/platform";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
@@ -926,10 +927,14 @@ export function ReadingPane() {
           </span>
         </label>
       ))}
-      <div className="my-1 h-px bg-line" aria-hidden="true" />
-      <PopoverItem onClick={() => setPrinting(true)}>
-        <Printer className="h-4 w-4 text-ink-3" aria-hidden="true" /> Print this chapter
-      </PopoverItem>
+      {onDesktop && (
+        <>
+          <div className="my-1 h-px bg-line" aria-hidden="true" />
+          <PopoverItem onClick={() => setPrinting(true)}>
+            <Printer className="h-4 w-4 text-ink-3" aria-hidden="true" /> Print this chapter
+          </PopoverItem>
+        </>
+      )}
     </>
   );
 

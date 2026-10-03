@@ -1,4 +1,4 @@
-import { openUrl } from "@tauri-apps/plugin-opener";
+import { openUrl } from "../../lib/platform";
 import dyslexicRegular from "../../assets/fonts/OpenDyslexic-Regular.woff2?url";
 import dyslexicBold from "../../assets/fonts/OpenDyslexic-Bold.woff2?url";
 import dyslexicItalic from "../../assets/fonts/OpenDyslexic-Italic.woff2?url";

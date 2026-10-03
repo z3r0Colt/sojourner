@@ -1,5 +1,5 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
-import { convertFileSrc } from "@tauri-apps/api/core";
+import { convertFileSrc } from "../../lib/platform";
 import { Button } from "../../components/ui/Button";
 
 const SPEEDS = [0.75, 1, 1.25, 1.5, 2] as const;

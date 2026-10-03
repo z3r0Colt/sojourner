@@ -1,5 +1,6 @@
 import {
   AlignJustify,
+  MonitorSmartphone,
   ArrowLeftToLine,
   ArrowRightToLine,
   Bookmark,
@@ -49,6 +50,7 @@ import {
 import type { QueryClient } from "@tanstack/react-query";
 import type { CommentarySource, ReadingPlan, ReadingPlanProgress, Sermon } from "../../api/types";
 import { api } from "../../api/client";
+import { onDesktop } from "../../lib/platform";
 import { toast } from "../../components/ui/toast";
 import { PRESET_WORKSPACES, applyWorkspace, type SavedWorkspace } from "../../workspace/presets";
 import { useWorkspaceDialog } from "../../workspace/WorkspacesMenu";
@@ -382,13 +384,16 @@ const SPACINGS: { value: LineSpacing; label: string }[] = [
   { value: "relaxed", label: "Relaxed" },
 ];
 
-const SETTINGS_SECTIONS: { key: string; label: string; icon: LucideIcon }[] = [
+/** `desktop`: a section only the computer Sojourner runs on can use (it
+ * reads or writes files there), left out in a browser on another device. */
+const SETTINGS_SECTIONS: { key: string; label: string; icon: LucideIcon; desktop?: boolean }[] = [
   { key: "preferences", label: "Reading", icon: BookOpen },
-  { key: "library", label: "Library", icon: Library },
-  { key: "backups", label: "Data & backups", icon: Database },
+  { key: "library", label: "Library", icon: Library, desktop: true },
+  { key: "backups", label: "Data & backups", icon: Database, desktop: true },
+  { key: "devices", label: "Other devices", icon: MonitorSmartphone, desktop: true },
   { key: "tutorial", label: "Tutorial", icon: GraduationCap },
   { key: "about", label: "About", icon: Info },
-];
+].filter((s) => onDesktop || !s.desktop);
 
 /** Chapter steps, bookmark, search, shortcuts: the shell's own keys. */
 export function navigationCommands(ctx: CommandContext): Command[] {
@@ -788,7 +793,7 @@ export function appCommands(ctx: CommandContext): Command[] {
     run: () => beginFamilyWorship(true),
   });
 
-  out.push({
+  if (onDesktop) out.push({
     id: "backup-now",
     group: "Data",
     label: "Back up now",

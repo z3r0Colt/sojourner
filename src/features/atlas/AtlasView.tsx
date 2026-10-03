@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { ArrowLeft, MapPin, Route, Search } from "lucide-react";
 import { api } from "../../api/client";
-import { convertFileSrc } from "@tauri-apps/api/core";
+import { convertFileSrc } from "../../lib/platform";
 import {
   useAtlasJourneys,
   useMapPacks,

@@ -1,3 +1,4 @@
+import { onDesktop } from "../../lib/platform";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { BookHeart, Download, Pencil, Plus, Trash2 } from "lucide-react";
@@ -150,9 +151,11 @@ export function PrayerJournalView() {
               <Button size="sm" variant="ghost" icon={Pencil} onClick={() => setEditing(e)}>
                 Edit
               </Button>
-              <Button size="sm" variant="ghost" icon={Download} onClick={() => exportEntry(e)}>
-                Export
-              </Button>
+              {onDesktop && (
+                <Button size="sm" variant="ghost" icon={Download} onClick={() => exportEntry(e)}>
+                  Export
+                </Button>
+              )}
               <Button
                 size="sm"
                 variant="danger-ghost"

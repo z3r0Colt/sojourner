@@ -77,7 +77,7 @@ const GROUPS: { label: string; items: NavItem[] }[] = [
   },
 ];
 
-function NavLink({ item, collapsed }: { item: NavItem; collapsed: boolean }) {
+function NavLink({ item, collapsed, onNavigate }: { item: NavItem; collapsed: boolean; onNavigate?: () => void }) {
   const { pathname } = useLocation();
   const active = item.end
     ? pathname === item.to || ["/commentary", "/study", "/interlinear"].some((p) => pathname.startsWith(p))
@@ -93,6 +93,7 @@ function NavLink({ item, collapsed }: { item: NavItem; collapsed: boolean }) {
       aria-label={badge ? `${item.label}, ${badge.title}` : undefined}
       onClick={(e) => {
         if (e.ctrlKey || e.metaKey) openInNewPane(e, item.to);
+        onNavigate?.();
       }}
       onAuxClick={(e) => {
         if (e.button === 1) openInNewPane(e, item.to);
@@ -123,8 +124,11 @@ function useMemoryDueBadge(): NavItem["badge"] {
   return { count, title: `${count} due for review today` };
 }
 
-export function Sidebar() {
-  const collapsed = useUiStore((s) => s.sidebarCollapsed);
+/** `drawer`: on a phone, the sidebar slides over the page from a menu button
+ * (see AppShell); it is always shown whole, and choosing a page closes it. */
+export function Sidebar({ drawer, onNavigate }: { drawer?: boolean; onNavigate?: () => void } = {}) {
+  const storedCollapsed = useUiStore((s) => s.sidebarCollapsed);
+  const collapsed = !drawer && storedCollapsed;
   const toggleSidebar = useUiStore((s) => s.toggleSidebar);
   const ToggleIcon = collapsed ? PanelLeftOpen : PanelLeftClose;
   const memoryBadge = useMemoryDueBadge();
@@ -134,7 +138,8 @@ export function Sidebar() {
     <nav
       aria-label="Main"
       className={cx(
-        "flex h-full shrink-0 flex-col border-r border-line bg-surface-2/60",
+        "flex h-full shrink-0 flex-col border-r border-line",
+        drawer ? "bg-surface" : "bg-surface-2/60",
         collapsed ? "w-14 items-center px-2" : "w-52 px-2.5",
       )}
     >
@@ -158,7 +163,7 @@ export function Sidebar() {
 
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto py-1">
         <div className={cx("flex flex-col", collapsed && "items-center")}>
-          <NavLink item={TODAY} collapsed={collapsed} />
+          <NavLink item={TODAY} collapsed={collapsed} onNavigate={onNavigate} />
         </div>
         {GROUPS.map((g) => (
           <div key={g.label} className={cx("flex flex-col gap-0.5", collapsed && "items-center")} data-tour={`sidebar-${g.label.toLowerCase()}`}>
@@ -168,7 +173,7 @@ export function Sidebar() {
               <div className="mb-1 h-px w-6 bg-line" aria-hidden="true" />
             )}
             {g.items.map((item) => (
-              <NavLink key={item.to} item={badges[item.to] ? { ...item, badge: badges[item.to] } : item} collapsed={collapsed} />
+              <NavLink key={item.to} item={badges[item.to] ? { ...item, badge: badges[item.to] } : item} collapsed={collapsed} onNavigate={onNavigate} />
             ))}
           </div>
         ))}
@@ -176,21 +181,23 @@ export function Sidebar() {
 
       <div className={cx("flex flex-col gap-0.5 border-t border-line py-2", collapsed && "items-center")}>
         <div data-tour="settings" className={cx("flex flex-col", collapsed && "items-center")}>
-          <NavLink item={{ to: "/settings", label: "Settings", icon: Settings }} collapsed={collapsed} />
+          <NavLink item={{ to: "/settings", label: "Settings", icon: Settings }} collapsed={collapsed} onNavigate={onNavigate} />
         </div>
-        <button
-          type="button"
-          onClick={toggleSidebar}
-          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          className={cx(
-            "flex items-center gap-2.5 rounded-md text-sm text-ink-3 hover:bg-hover hover:text-ink",
-            collapsed ? "h-9 w-9 justify-center" : "h-8 px-2.5",
-          )}
-        >
-          <ToggleIcon className="h-[18px] w-[18px]" aria-hidden="true" />
-          {!collapsed && <span>Collapse</span>}
-        </button>
+        {!drawer && (
+          <button
+            type="button"
+            onClick={toggleSidebar}
+            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            className={cx(
+              "flex items-center gap-2.5 rounded-md text-sm text-ink-3 hover:bg-hover hover:text-ink",
+              collapsed ? "h-9 w-9 justify-center" : "h-8 px-2.5",
+            )}
+          >
+            <ToggleIcon className="h-[18px] w-[18px]" aria-hidden="true" />
+            {!collapsed && <span>Collapse</span>}
+          </button>
+        )}
       </div>
     </nav>
   );

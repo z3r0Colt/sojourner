@@ -1,3 +1,4 @@
+import { onDesktop } from "../../lib/platform";
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useBooks, usePassages, useSermons } from "../../api/queries";
@@ -87,15 +88,17 @@ export function SeriesMemoryModal({ series, onClose }: { series: SermonSeries; o
           <Button variant="ghost" onClick={onClose}>
             Close
           </Button>
-          <Button
-            disabled={!isLoaded || rows.every((r) => !r.ref.trim())}
-            onClick={() => {
-              save();
-              setPrinting(true);
-            }}
-          >
-            Print cards for the congregation
-          </Button>
+          {onDesktop && (
+            <Button
+              disabled={!isLoaded || rows.every((r) => !r.ref.trim())}
+              onClick={() => {
+                save();
+                setPrinting(true);
+              }}
+            >
+              Print cards for the congregation
+            </Button>
+          )}
           <Button variant="primary" disabled={!isLoaded || adding || rows.some((r) => !r.valid)} onClick={() => void addAll()}>
             {adding ? "Adding…" : "Add them to my Memory deck"}
           </Button>

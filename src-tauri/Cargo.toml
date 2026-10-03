@@ -101,6 +101,10 @@ semver = "1"
 # bundled Misaki dictionary: permissively licensed, no C toolchain to install,
 # and nothing fetched at run time -- the model ships in the installer.
 kokoro-en = { version = "0.1", default-features = false }
+# The small server behind Settings → Other devices (see `crate::remote`):
+# blocking, a thread per request, and no async runtime of its own, for the
+# same reasons `ureq` is the HTTP client.
+tiny_http = "0.12"
 
 # Reads the Windows accent color from the registry (Settings → Reading →
 # "Accent color: Windows accent", F3.8).

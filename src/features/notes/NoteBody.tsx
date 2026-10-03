@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from "react";
-import { openUrl } from "@tauri-apps/plugin-opener";
+import { openUrl } from "../../lib/platform";
 import { useBooks } from "../../api/queries";
 import { usePaneNavigate } from "../../workspace/PaneContext";
 import { openPassage, targetFor } from "../../workspace/openContent";

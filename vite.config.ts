@@ -71,6 +71,11 @@ export default defineConfig(() => ({
       // 3. tell Vite to ignore watching `src-tauri`
       ignored: ["**/src-tauri/**"],
     },
+    // 4. Settings → Other devices in dev: a browser opening this server gets
+    // its commands, files and tiles from the app's own (src-tauri/src/remote.rs),
+    // as it does from the built page the app serves itself. The `sj_key`
+    // cookie is the app's to set: open the app's port with `?key=` once.
+    proxy: Object.fromEntries(["/api", "/files", "/sjtiles"].map((p) => [p, "http://127.0.0.1:8765"])),
   },
 
   // The frontend's unit tests (`npm test`). jsdom, because what is tested

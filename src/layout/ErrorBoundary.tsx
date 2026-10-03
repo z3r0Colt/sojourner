@@ -15,7 +15,7 @@
  * ever called inside a `try`.
  */
 import { Component, useEffect, useState, type CSSProperties, type ErrorInfo, type ReactNode } from "react";
-import { invoke } from "@tauri-apps/api/core";
+import { invoke } from "../lib/platform";
 // Imports nothing itself and does nothing when the splash is absent, so it
 // keeps this file's rule of depending on as little of the app as possible.
 import { splashReady } from "../lib/splash";

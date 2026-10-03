@@ -1,3 +1,4 @@
+import { onDesktop } from "../../lib/platform";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { ArrowDown, ArrowUp, BookOpen, Brain, HandHeart, HouseHeart, Maximize2, Music, Play, Plus, Printer, ScrollText, X } from "lucide-react";
 import { useBooks, usePrayerListPeople, useReadingPlanDays, useReadingPlans } from "../../api/queries";
@@ -164,9 +165,12 @@ function Overview({ fw }: { fw: FW }) {
       title="Family worship"
       lead={logSummary(log)}
       actions={
-        <Button icon={Printer} onClick={() => setPrinting(true)} title="Print the week: readings, the psalm, the catechism questions, and the names to pray for">
-          Print this week
-        </Button>
+        // Printing is the desktop's: a browser on another device leaves it out.
+        onDesktop && (
+          <Button icon={Printer} onClick={() => setPrinting(true)} title="Print the week: readings, the psalm, the catechism questions, and the names to pray for">
+            Print this week
+          </Button>
+        )
       }
     >
       <section className="mb-7">

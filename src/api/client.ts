@@ -1,4 +1,4 @@
-import { invoke } from "@tauri-apps/api/core";
+import { invoke } from "../lib/platform";
 import type {
   Book,
   BookCoverage,
@@ -71,6 +71,7 @@ import type {
   TrashContents,
   TrashKind,
   UpdateCheck,
+  RemoteStatus,
   CrossReference,
   MetricalPsalmVersion,
   PsalmTune,
@@ -626,6 +627,13 @@ export const api = {
   checkForUpdate: () => invoke<UpdateCheck>("check_for_update"),
   /** The running version, for About to show. Touches no network. */
   appVersion: () => invoke<string>("app_version"),
+
+  // --- Other devices (desktop only) -----------------------------------------
+  remoteStatus: () => invoke<RemoteStatus>("remote_status"),
+  remoteSetEnabled: (enabled: boolean) => invoke<RemoteStatus>("remote_set_enabled", { enabled }),
+  remoteNewKey: () => invoke<RemoteStatus>("remote_new_key"),
+  /** Changes whenever anything is written, from any device (see liveSync). */
+  dataVersion: () => invoke<number>("data_version"),
   /** The Windows accent color as "#rrggbb", or null off Windows (F3.8). */
   getSystemAccent: () => invoke<string | null>("get_system_accent"),
 

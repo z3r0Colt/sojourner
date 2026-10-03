@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { snippetHtml } from "../../lib/snippet";
 import { usePaneNavigate } from "../../workspace/PaneContext";
 import { useQuery } from "@tanstack/react-query";
-import { convertFileSrc } from "@tauri-apps/api/core";
+import { convertFileSrc, onDesktop } from "../../lib/platform";
 import { Book, ChevronDown, FileText, Film, FolderOpen, Headphones, HelpCircle, Library, MoreVertical, Pencil, Play, Plus, RefreshCw, Trash2, Users, type LucideIcon } from "lucide-react";
 import { api } from "../../api/client";
 import {
@@ -368,12 +368,17 @@ export function ResourceLibraryView() {
               <p>Open a resource to attach it to a passage. Linked resources then appear under that chapter's title while reading.</p>
             </div>
           </Popover>
-          <Button icon={FolderOpen} disabled={busy} onClick={handleImportFolder}>
-            Import folder
-          </Button>
-          <Button variant="primary" icon={Plus} disabled={busy} onClick={handleAdd}>
-            Add resource
-          </Button>
+          {/* Files are added on the computer Sojourner runs on. */}
+          {onDesktop && (
+            <>
+              <Button icon={FolderOpen} disabled={busy} onClick={handleImportFolder}>
+                Import folder
+              </Button>
+              <Button variant="primary" icon={Plus} disabled={busy} onClick={handleAdd}>
+                Add resource
+              </Button>
+            </>
+          )}
         </>
       }
     >
@@ -566,14 +571,16 @@ export function ResourceLibraryView() {
               </>
             }
             action={
-              <div className="flex gap-2">
-                <Button icon={FolderOpen} onClick={handleImportFolder}>
-                  Import a folder
-                </Button>
-                <Button variant="primary" icon={Plus} onClick={handleAdd}>
-                  Add a file
-                </Button>
-              </div>
+              onDesktop && (
+                <div className="flex gap-2">
+                  <Button icon={FolderOpen} onClick={handleImportFolder}>
+                    Import a folder
+                  </Button>
+                  <Button variant="primary" icon={Plus} onClick={handleAdd}>
+                    Add a file
+                  </Button>
+                </div>
+              )
             }
           />
         )}
@@ -643,7 +650,7 @@ function ResourceRow({
             <button
               type="button"
               disabled={reextracting}
-              onClick={onRetry}
+              onClick={onDesktop ? onRetry : undefined}
               title="No text could be extracted, so search can't look inside it. Try reading it again."
               className="shrink-0 rounded px-1 text-xs text-amber-700 hover:underline disabled:no-underline disabled:opacity-60 dark:text-amber-400"
             >
@@ -688,7 +695,7 @@ function ResourceRow({
               >
                 <Pencil className="h-4 w-4" aria-hidden="true" /> Edit details…
               </PopoverItem>
-              {!r.bundled && (
+              {!r.bundled && onDesktop && (
                 <PopoverItem
                   danger
                   onClick={() => {

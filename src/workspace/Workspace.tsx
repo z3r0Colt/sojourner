@@ -14,6 +14,9 @@ import { PANE_KINDS, PANE_KIND_LIST_LISTED, STUDY_STRIP_KINDS, parseRoute, route
 import { openContent } from "./openContent";
 import { DIVIDER_PX, RATIO_MAX, RATIO_MIN, minSize, type BranchNode, type LayoutNode, type LeafNode } from "./layoutTree";
 import { DragOverlay } from "./DragOverlay";
+import { useTitleContext } from "./PaneHeader";
+import { paneTitle } from "./paneKinds";
+import { useCompact } from "../hooks/useCompact";
 
 /**
  * The workspace: the panes arranged by the split tree (layoutTree.ts),
@@ -353,6 +356,22 @@ export function Workspace() {
   const { width: containerWidth } = useElementSize(containerRef);
   const maximized = findPane(panes, maximizedPaneId);
   const showHeader = panes.length > 1 && !distractionFreeMode;
+  const compact = useCompact();
+  const focusedPaneId = useWorkspaceStore((s) => s.focusedPaneId);
+
+  // A phone: one pane at a time, the full width of the screen, and a row of
+  // the others to switch to.
+  if (compact) {
+    // The focused pane, not a maximized one: on a phone every pane is
+    // maximized, and what was just opened is what was just focused.
+    const shown = findPane(panes, focusedPaneId) ?? panes[0];
+    return (
+      <div className="flex h-full min-h-0 flex-col">
+        {panes.length > 1 && <CompactPaneBar panes={panes} shownId={shown?.id} />}
+        <div className="flex min-h-0 min-w-0 flex-1">{shown && <Pane key={shown.id} pane={shown} showHeader={false} />}</div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-full min-h-0" data-leaves={panes.length}>
@@ -379,6 +398,42 @@ export function Workspace() {
         </Button>
       )}
       <DragOverlay />
+    </div>
+  );
+}
+
+/** The open panes on a phone, as a row to switch between and close. */
+function CompactPaneBar({ panes, shownId }: { panes: PaneModel[]; shownId: string | undefined }) {
+  const ctx = useTitleContext();
+  const focusPane = useWorkspaceStore((s) => s.focusPane);
+  const closePane = useWorkspaceStore((s) => s.closePane);
+  return (
+    <div role="tablist" aria-label="Open panes" className="flex shrink-0 gap-1 overflow-x-auto border-b border-line bg-surface-2/60 px-2 py-1.5">
+      {panes.map((p) => {
+        const active = p.id === shownId;
+        return (
+          <div
+            key={p.id}
+            className={cx(
+              "flex shrink-0 items-center rounded-full border text-sm",
+              active ? "border-accent/40 bg-accent-soft text-accent" : "border-line text-ink-2",
+            )}
+          >
+            <button
+              type="button"
+              role="tab"
+              aria-selected={active}
+              onClick={() => focusPane(p.id)}
+              className="max-w-[12rem] truncate py-1 pl-3 pr-1"
+            >
+              {paneTitle(p, ctx)}
+            </button>
+            <button type="button" onClick={() => closePane(p.id)} aria-label={`Close ${paneTitle(p, ctx)}`} className="rounded-full p-1.5 text-ink-3">
+              <X className="h-3.5 w-3.5" aria-hidden="true" />
+            </button>
+          </div>
+        );
+      })}
     </div>
   );
 }

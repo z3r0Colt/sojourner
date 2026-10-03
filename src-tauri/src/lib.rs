@@ -13,6 +13,7 @@ pub mod pack;
 pub mod paths;
 pub mod plain;
 pub mod refparse;
+pub mod remote;
 pub mod resources;
 pub mod text;
 pub mod tiles;
@@ -56,6 +57,7 @@ pub fn run() {
     crate::tts::point_voice_at_lexicon();
     tauri::Builder::default()
         .manage(tiles::TileStore::default())
+        .manage(remote::RemoteState::default())
         // The Atlas's terrain and imagery, from the map packs the reader
         // installed (see `tiles`). A tile is a small read; it is done off the
         // main thread so a map full of them never holds up the window.
@@ -299,6 +301,9 @@ pub fn run() {
             std::thread::spawn(move || {
                 commands::library::rescan_imports_after_upgrade(&rescan, &content_db_path);
             });
+
+            // Other devices on the network, if the reader left it on.
+            remote::start_if_enabled(app.handle());
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -570,6 +575,10 @@ pub fn run() {
             commands::export::export_prayer_entry,
             commands::update::check_for_update,
             commands::update::app_version,
+            remote::remote_status,
+            remote::remote_set_enabled,
+            remote::remote_new_key,
+            remote::data_version,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

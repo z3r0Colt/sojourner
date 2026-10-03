@@ -1,3 +1,4 @@
+import { onDesktop } from "../../lib/platform";
 import { useMemo, useState } from "react";
 import { Download, NotebookPen, Pencil } from "lucide-react";
 import { api } from "../../api/client";
@@ -215,9 +216,11 @@ export function NotesListView() {
                   <Button size="sm" variant="ghost" icon={Pencil} onClick={() => setEditingChapter(n)}>
                     Edit
                   </Button>
-                  <Button size="sm" variant="ghost" icon={Download} onClick={() => exportChapterNote(n)}>
-                    Export
-                  </Button>
+                  {onDesktop && (
+                    <Button size="sm" variant="ghost" icon={Download} onClick={() => exportChapterNote(n)}>
+                      Export
+                    </Button>
+                  )}
                 </div>
               </li>
             ))}
@@ -257,9 +260,11 @@ export function NotesListView() {
                       <Button size="sm" variant="ghost" icon={Pencil} onClick={() => setEditing(n)}>
                         Edit
                       </Button>
-                      <Button size="sm" variant="ghost" icon={Download} onClick={() => exportNote(n)}>
-                        Export
-                      </Button>
+                      {onDesktop && (
+                        <Button size="sm" variant="ghost" icon={Download} onClick={() => exportNote(n)}>
+                          Export
+                        </Button>
+                      )}
                     </div>
                   </li>
                 );

@@ -19,6 +19,7 @@ import { escapeHtml } from "../../lib/escapeHtml";
 import { usePane, usePaneParams } from "../../workspace/PaneContext";
 import { useAddToMemory } from "../memory/useAddToMemory";
 import { localDate } from "../family/familyWorship";
+import { onDesktop } from "../../lib/platform";
 import {
   questionsLabel,
   unitOf,
@@ -53,7 +54,11 @@ export function GuideView() {
   // A lesson opens at its top, not where the last one was left (its "next
   // lesson" button is at the bottom).
   const scroller = useRef<HTMLDivElement>(null);
-  useEffect(() => scroller.current?.scrollTo(0, 0), [lesson?.id]);
+  // (Braced: scrollTo returns a promise in current WebView2, and an effect
+  // that returns anything but a function breaks React on unmount.)
+  useEffect(() => {
+    scroller.current?.scrollTo(0, 0);
+  }, [lesson?.id]);
   // Keyed by lesson: every lesson's steps share ids ("before", "check"), so
   // without it the next lesson would inherit this one's quiz picks and drafts.
   return <div ref={scroller} className="h-full overflow-y-auto">{lesson ? <LessonView key={lesson.id} lesson={lesson} /> : <CourseView />}</div>;
@@ -99,25 +104,29 @@ function CourseView() {
         </div>
       )}
 
-      <div className="mb-8 flex flex-wrap items-center gap-x-4 gap-y-2">
-        <Button
-          icon={Printer}
-          disabled={!begun}
-          onClick={() => setPrinting(true)}
-          title={begun ? "Print the answers you have learned, with what you wrote, your notes and prayers, lesson by lesson" : "Begin a lesson first"}
-        >
-          Print my notebook
-        </Button>
-        <label className="flex items-center gap-2 text-sm text-ink-2">
-          <input
-            type="checkbox"
-            className="accent-accent"
-            checked={!!state.leader}
-            onChange={(e) => setState((prev) => ({ ...prev, leader: e.target.checked }))}
-          />
-          <Users className="h-4 w-4 text-ink-4" aria-hidden="true" />I lead a class or family through these lessons
-        </label>
-      </div>
+      {/* The notebook and the leader's sheets are printed, so they are the
+          desktop's: a browser on another device leaves them out. */}
+      {onDesktop && (
+        <div className="mb-8 flex flex-wrap items-center gap-x-4 gap-y-2">
+          <Button
+            icon={Printer}
+            disabled={!begun}
+            onClick={() => setPrinting(true)}
+            title={begun ? "Print the answers you have learned, with what you wrote, your notes and prayers, lesson by lesson" : "Begin a lesson first"}
+          >
+            Print my notebook
+          </Button>
+          <label className="flex items-center gap-2 text-sm text-ink-2">
+            <input
+              type="checkbox"
+              className="accent-accent"
+              checked={!!state.leader}
+              onChange={(e) => setState((prev) => ({ ...prev, leader: e.target.checked }))}
+            />
+            <Users className="h-4 w-4 text-ink-4" aria-hidden="true" />I lead a class or family through these lessons
+          </label>
+        </div>
+      )}
       {printing && <NotebookSheet state={state} onDone={() => setPrinting(false)} />}
 
       {UNITS.map((unit, i) => (
@@ -203,7 +212,7 @@ function LessonView({ lesson }: { lesson: Lesson }) {
           {done} of {of} steps done
         </span>
       </div>
-      {state.leader && !lesson.review && (
+      {onDesktop && state.leader && !lesson.review && (
         <div className={cx(cardClass, "mb-6")}>
           <p className="flex items-center gap-2 text-sm font-medium text-ink">
             <Users className="h-4 w-4 text-ink-4" aria-hidden="true" /> Leading this lesson

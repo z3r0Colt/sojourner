@@ -1,23 +1,30 @@
-import { BookMarked, BookOpen, Database, GraduationCap, Info, Library, type LucideIcon } from "lucide-react";
+import { BookMarked, BookOpen, Database, GraduationCap, Info, Library, MonitorSmartphone, type LucideIcon } from "lucide-react";
 import { LibrarySection } from "./sections/LibrarySection";
 import { PacksSection } from "./sections/PacksSection";
 import { PreferencesSection } from "./sections/PreferencesSection";
 import { BackupsSection } from "./sections/BackupsSection";
 import { AboutSection } from "./sections/AboutSection";
 import { TutorialSection } from "./sections/TutorialSection";
+import { DevicesSection } from "./sections/DevicesSection";
+import { onDesktop } from "../../lib/platform";
 import { cx } from "../../components/ui/classes";
 import { usePaneParams } from "../../workspace/PaneContext";
 
-type Section = "preferences" | "library" | "books" | "backups" | "tutorial" | "about";
+type Section = "preferences" | "library" | "books" | "backups" | "devices" | "tutorial" | "about";
 
-const SECTIONS: { key: Section; label: string; icon: LucideIcon }[] = [
-  { key: "preferences", label: "Reading", icon: BookOpen },
-  { key: "library", label: "Library", icon: Library },
-  { key: "books", label: "Library packs", icon: BookMarked },
-  { key: "backups", label: "Data & backups", icon: Database },
-  { key: "tutorial", label: "Tutorial", icon: GraduationCap },
-  { key: "about", label: "About", icon: Info },
-];
+/** `desktop`: only on the computer Sojourner runs on, since it installs,
+ * reads or writes files there; a browser on another device leaves it out. */
+const SECTIONS: { key: Section; label: string; icon: LucideIcon; desktop?: boolean }[] = (
+  [
+    { key: "preferences", label: "Reading", icon: BookOpen },
+    { key: "library", label: "Library", icon: Library, desktop: true },
+    { key: "books", label: "Library packs", icon: BookMarked, desktop: true },
+    { key: "backups", label: "Data & backups", icon: Database, desktop: true },
+    { key: "devices", label: "Other devices", icon: MonitorSmartphone, desktop: true },
+    { key: "tutorial", label: "Tutorial", icon: GraduationCap },
+    { key: "about", label: "About", icon: Info },
+  ] as { key: Section; label: string; icon: LucideIcon; desktop?: boolean }[]
+).filter((s) => onDesktop || !s.desktop);
 
 function isSection(v: string | null): v is Section {
   return SECTIONS.some((s) => s.key === v);
@@ -59,6 +66,7 @@ export function SettingsView() {
           {section === "books" && <PacksSection />}
           {section === "preferences" && <PreferencesSection />}
           {section === "backups" && <BackupsSection />}
+          {section === "devices" && <DevicesSection />}
           {section === "tutorial" && <TutorialSection />}
           {section === "about" && <AboutSection />}
         </div>
