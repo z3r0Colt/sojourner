@@ -33,7 +33,19 @@ import { confirmDelete } from "../../components/ui/confirm";
 import { toast } from "../../components/ui/toast";
 import { cardClass, cx, inputClass } from "../../components/ui/classes";
 import type { Resource, ResourceKind, BulkImportOutcome } from "../../api/types";
-import { fileExtension, filterByKind, formatDuration, groupResources, kindSummary, kindTabOf, knownAuthors, topicsOf, type ResourceGroup } from "./resourceGrouping";
+import {
+  fileExtension,
+  filterByKind,
+  formatDuration,
+  groupResources,
+  kindSummary,
+  kindTabOf,
+  knownAuthors,
+  matchesTitleOrAuthor,
+  splitAuthor,
+  topicsOf,
+  type ResourceGroup,
+} from "./resourceGrouping";
 
 const KIND_ICON: Record<ResourceKind, LucideIcon> = {
   epub: Book,
@@ -269,9 +281,10 @@ export function ResourceLibraryView() {
 
   const groups: ResourceGroup[] = useMemo(() => {
     const byKind = filterByKind(all, kindTab);
-    const filtered = activeTag ? byKind.filter((r) => topicsOf(r, tagsById, catalog).includes(activeTag)) : byKind;
+    const byTag = activeTag ? byKind.filter((r) => topicsOf(r, tagsById, catalog).includes(activeTag)) : byKind;
+    const filtered = query.trim() ? byTag.filter((r) => matchesTitleOrAuthor(r, query)) : byTag;
     return groupResources(filtered, groupBy, tagsById, catalog);
-  }, [all, kindTab, activeTag, tagsById, groupBy, catalog]);
+  }, [all, kindTab, activeTag, tagsById, groupBy, catalog, query]);
 
   // The topics to filter by: the subjects of the books on hand, and the reader's own tags.
   const topics = useMemo(() => {
@@ -340,6 +353,7 @@ export function ResourceLibraryView() {
 
   const hasAny = all.length > 0;
   const searching = debounced.trim().length > 1;
+  const filtering = query.trim().length > 0;
   const packInstalled = anyPackInstalled;
   // Books this reader has rows for -- tags, notes, bookmarks and all -- whose
   // files are in a pack that is not installed. On an upgrade from a build that
@@ -436,29 +450,8 @@ export function ResourceLibraryView() {
       )}
 
       {hasAny && (
-        <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search inside your books…" className={cx(inputClass, "mb-4 w-full")} />
+        <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search titles, authors, and inside your books…" className={cx(inputClass, "mb-4 w-full")} />
       )}
-      {isFetching && <LoadingState className="mb-2 py-0" label="Searching…" />}
-      {searching && (
-        <ul className="mb-6 space-y-1">
-          {deepResults?.map((r) => (
-            <li key={r.resource_id}>
-              <button type="button" onClick={(e) => navigate(`/resources/${r.resource_id}`, e)} className={cx(cardClass, "block w-full text-left hover:bg-hover/40")}>
-                <div className="flex items-center gap-2 font-medium text-ink">
-                  <KindIcon kind={r.kind} />
-                  {r.title}
-                </div>
-                <div
-                  className="mt-0.5 text-sm text-ink-2"
-                  dangerouslySetInnerHTML={{ __html: snippetHtml(r.snippet) }}
-                />
-              </button>
-            </li>
-          ))}
-          {deepResults?.length === 0 && <EmptyState compact title="No matches inside your books" />}
-        </ul>
-      )}
-
       <TagFilterBar tags={topics} activeTag={activeTag} onSelect={setActiveTag} label="Topics" />
 
       {hasAny && (
@@ -489,7 +482,8 @@ export function ResourceLibraryView() {
 
       <div className="space-y-4">
         {groups.map((group, i) => {
-          const isCollapsed = group.label ? !expanded.has(group.key) : false;
+          // A search shows what it found, open.
+          const isCollapsed = group.label && !filtering ? !expanded.has(group.key) : false;
           const newSection = group.section && group.section !== groups[i - 1]?.section;
           const sectionCount = newSection ? new Set(groups.filter((g) => g.section === group.section).flatMap((g) => g.items.map((x) => x.id))).size : 0;
           return (
@@ -531,7 +525,7 @@ export function ResourceLibraryView() {
                       packInstalled={packInstalled}
                       reextracting={reextracting === r.id}
                       tags={tagsById.get(r.id) ?? []}
-                      showAuthor={groupBy !== "author"}
+                      byline={groupBy !== "author" ? r.author : r.author ? splitAuthor(r.author).role : null}
                       onOpen={(e) => navigate(`/resources/${r.id}`, e)}
                       onEdit={() => setEditing(r)}
                       onRetry={() => retryExtract(r.id, r.title)}
@@ -584,8 +578,36 @@ export function ResourceLibraryView() {
             }
           />
         )}
-        {hasAny && groups.length === 0 && <EmptyState compact title={activeTag ? "No resources carry that topic tag" : `Nothing under ${kindTab} yet`} />}
+        {hasAny && groups.length === 0 &&
+          (filtering ? (
+            <p className="pl-1 text-sm text-ink-3">No titles or authors match “{query.trim()}”.</p>
+          ) : (
+            <EmptyState compact title={activeTag ? "No resources carry that topic tag" : `Nothing under ${kindTab} yet`} />
+          ))}
       </div>
+
+      {(isFetching || searching) && (
+        <section className="mt-6">
+          <h2 className="mb-2 border-b border-line pb-1 text-xs font-semibold uppercase tracking-wide text-ink-3">Inside the books</h2>
+          {isFetching && <LoadingState className="mb-2 py-0" label="Searching…" />}
+          {searching && (
+            <ul className="space-y-1">
+              {deepResults?.map((r) => (
+                <li key={r.resource_id}>
+                  <button type="button" onClick={(e) => navigate(`/resources/${r.resource_id}`, e)} className={cx(cardClass, "block w-full text-left hover:bg-hover/40")}>
+                    <div className="flex items-center gap-2 font-medium text-ink">
+                      <KindIcon kind={r.kind} />
+                      {r.title}
+                    </div>
+                    <div className="mt-0.5 text-sm text-ink-2" dangerouslySetInnerHTML={{ __html: snippetHtml(r.snippet) }} />
+                  </button>
+                </li>
+              ))}
+              {deepResults?.length === 0 && <EmptyState compact title="No matches inside your books" />}
+            </ul>
+          )}
+        </section>
+      )}
 
       {editing && <EditDetailsModal resource={editing} authors={authors} onClose={() => setEditing(null)} />}
       {assigning && <SetAuthorModal items={assigning} authors={authors} onClose={() => setAssigning(null)} />}
@@ -598,7 +620,7 @@ function ResourceRow({
   packInstalled,
   reextracting,
   tags,
-  showAuthor,
+  byline,
   onOpen,
   onEdit,
   onRetry,
@@ -611,7 +633,9 @@ function ResourceRow({
   packInstalled: boolean;
   reextracting: boolean;
   tags: string[];
-  showAuthor: boolean;
+  /** Shown after the title: the author, or under an author's heading only
+   * their part in it ("ed.", "tr. William Whiston"). */
+  byline: string | null;
   onOpen: (e: React.MouseEvent) => void;
   onEdit: () => void;
   onRetry: () => void;
@@ -628,7 +652,7 @@ function ResourceRow({
         <KindIcon kind={r.kind} />
         <button type="button" onClick={onOpen} className="min-w-0 flex-1 truncate text-left text-sm font-medium text-ink hover:text-accent hover:underline">
           {r.title}
-          {showAuthor && r.author && <span className="ml-1.5 font-normal text-ink-3">· {r.author}</span>}
+          {byline && <span className="ml-1.5 font-normal text-ink-3">· {byline}</span>}
         </button>
         {media && (
           <span className="shrink-0 text-xs tabular-nums text-ink-3" title="Length and file type">

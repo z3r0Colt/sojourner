@@ -1,6 +1,18 @@
 import { describe, expect, it } from "vitest";
 import type { CatalogEntry, Resource } from "../../api/types";
-import { NO_AUTHOR, NO_TOPIC, YOUR_BOOKS, filterByKind, formatDuration, groupResources, kindSummary, knownAuthors } from "./resourceGrouping";
+import {
+  NO_AUTHOR,
+  NO_TOPIC,
+  YOUR_BOOKS,
+  authorHeading,
+  filterByKind,
+  formatDuration,
+  groupResources,
+  kindSummary,
+  knownAuthors,
+  matchesTitleOrAuthor,
+  splitAuthor,
+} from "./resourceGrouping";
 
 const r = (id: number, kind: Resource["kind"], title: string, author: string | null, added_at = "2026-01-01"): Resource => ({
   id,
@@ -54,6 +66,44 @@ describe("groupResources", () => {
   it("gives an empty library no groups", () => {
     expect(groupResources([], "author", new Map())).toEqual([]);
     expect(groupResources([], "recent", new Map())).toEqual([]);
+  });
+});
+
+describe("authors, last name first", () => {
+  it("inverts a plain name and keeps initials together", () => {
+    expect(authorHeading("John Owen")).toBe("Owen, John");
+    expect(authorHeading("C. H. Spurgeon")).toBe("Spurgeon, C. H.");
+    expect(authorHeading("Robert Murray M'Cheyne")).toBe("M'Cheyne, Robert Murray");
+    expect(authorHeading("Wilhelmus à Brakel")).toBe("à Brakel, Wilhelmus");
+    expect(authorHeading("Martin Luther King Jr.")).toBe("King, Martin Luther, Jr.");
+  });
+
+  it("leaves single names, inverted names, several people and 'of' names alone", () => {
+    expect(authorHeading("Tacitus (tr. Thomas Gordon)")).toBe("Tacitus");
+    expect(authorHeading("Owen, John")).toBe("Owen, John");
+    expect(authorHeading("Schaff and Wace (eds.)")).toBe("Schaff and Wace");
+    expect(authorHeading("Philo of Alexandria (tr. C. D. Yonge)")).toBe("Philo of Alexandria");
+    expect(authorHeading("Pliny the Younger")).toBe("Pliny the Younger");
+    expect(authorHeading("  ")).toBeNull();
+  });
+
+  it("puts an author's edited books under their name, sorted by surname", () => {
+    expect(splitAuthor("Philip Schaff (ed.)")).toEqual({ name: "Philip Schaff", role: "ed." });
+    const books = [r(1, "epub", "Creeds", "Philip Schaff (ed.)"), r(2, "epub", "History", "Philip Schaff"), r(3, "epub", "Institutes", "John Calvin"), r(4, "epub", "Economy", "Wilhelmus à Brakel")];
+    const groups = groupResources(books, "author", new Map());
+    expect(groups.map((g) => g.label)).toEqual(["à Brakel, Wilhelmus", "Calvin, John", "Schaff, Philip"]);
+    expect(groups[2].items.map((x) => x.id)).toEqual([1, 2]);
+  });
+});
+
+describe("matchesTitleOrAuthor", () => {
+  it("finds every word in the title or author, ignoring case and accents", () => {
+    const book = r(1, "epub", "The Bruised Reed", "Richard Sibbes");
+    expect(matchesTitleOrAuthor(book, "bruised")).toBe(true);
+    expect(matchesTitleOrAuthor(book, "reed sibbes")).toBe(true);
+    expect(matchesTitleOrAuthor(book, "smoking flax")).toBe(false);
+    expect(matchesTitleOrAuthor(r(2, "epub", "Economy", "Wilhelmus à Brakel"), "a brakel")).toBe(true);
+    expect(matchesTitleOrAuthor(book, "  ")).toBe(false);
   });
 });
 
