@@ -279,6 +279,41 @@ export function placeImage(id: string, c: AtlasColors): ImageData | null {
   return ctx.getImageData(0, 0, size, size);
 }
 
+/** The image behind a journey's stop numbers. */
+export const STOP_PILL = "stop-pill";
+
+/**
+ * A badge in the accent colour, ringed with the halo to stand off the map:
+ * round, with a middle that stretches sideways so it can hold "1, 14" as
+ * well as "3". Drawn at twice the size for sharp edges.
+ */
+export function stopPillImage(c: AtlasColors): { data: ImageData; options: { pixelRatio: number; stretchX: [number, number][]; content: [number, number, number, number] } } {
+  const ratio = 2;
+  const h = 21 * ratio;
+  const w = h + 2 * ratio;
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d")!;
+  const line = 1.5 * ratio;
+  const r = h / 2 - line / 2;
+  ctx.beginPath();
+  ctx.arc(h / 2, h / 2, r, Math.PI / 2, (Math.PI * 3) / 2);
+  ctx.lineTo(w - h / 2, h / 2 - r);
+  ctx.arc(w - h / 2, h / 2, r, (Math.PI * 3) / 2, Math.PI / 2);
+  ctx.closePath();
+  ctx.fillStyle = c.accent;
+  ctx.fill();
+  ctx.lineWidth = line;
+  ctx.strokeStyle = c.halo;
+  ctx.stroke();
+  const mid = w / 2;
+  return {
+    data: ctx.getImageData(0, 0, w, h),
+    options: { pixelRatio: ratio, stretchX: [[mid - ratio, mid + ratio]], content: [h / 2 - 2 * ratio, 0, w - h / 2 + 2 * ratio, h] },
+  };
+}
+
 export function buildStyle(c: AtlasColors, s: LayerSettings, terrain: TileSource | null, imagery: TileSource | null): StyleSpecification {
   const sizes = labelSizes(s.labelSize);
   return {
@@ -298,6 +333,9 @@ export function buildStyle(c: AtlasColors, s: LayerSettings, terrain: TileSource
       places: { type: "geojson", data: EMPTY },
       regions: { type: "geojson", data: EMPTY },
       journey: { type: "geojson", data: EMPTY },
+      // Its numbered stops, as badges joined where they would overlap at this
+      // zoom (see stopBadges.ts); set afresh as the map is zoomed.
+      "journey-stops": { type: "geojson", data: EMPTY },
       measure: { type: "geojson", data: EMPTY },
       // The same elevation twice: MapLibre shades and raises the land
       // better from a source each than from one shared.
@@ -625,19 +663,26 @@ export function buildStyle(c: AtlasColors, s: LayerSettings, terrain: TileSource
         layout: placeLayout(s, sizes["places-focus"], true),
         paint: { "text-color": c.accent, "text-halo-color": c.halo, "text-halo-width": 1.6 },
       },
+      // A round badge for a stop, a longer one for stops drawn together
+      // ("1, 14"): the pill stretches to its numbers. Badges never overlap,
+      // as they are joined first, so none is hidden for room.
       {
         id: "journey-stops",
-        type: "circle",
-        source: "journey",
-        filter: ["==", ["geometry-type"], "Point"],
-        paint: { "circle-radius": 9, "circle-color": c.accent, "circle-stroke-color": c.halo, "circle-stroke-width": 1.5 },
-      },
-      {
-        id: "journey-numbers",
         type: "symbol",
-        source: "journey",
-        filter: ["==", ["geometry-type"], "Point"],
-        layout: { "text-field": ["to-string", ["get", "n"]], "text-font": FONT_BOLD, "text-size": 10, "text-allow-overlap": true },
+        source: "journey-stops",
+        layout: {
+          "icon-image": STOP_PILL,
+          "icon-text-fit": "width",
+          "icon-text-fit-padding": [0, 5, 0, 5],
+          "icon-allow-overlap": true,
+          "icon-ignore-placement": true,
+          "text-field": ["get", "label"],
+          "text-font": FONT_BOLD,
+          "text-size": 10.5,
+          "text-allow-overlap": true,
+          "text-ignore-placement": true,
+          "symbol-sort-key": ["get", "first"],
+        },
         paint: { "text-color": c.dark ? "#111" : "#fff" },
       },
       {

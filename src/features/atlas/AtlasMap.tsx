@@ -20,7 +20,8 @@ import bordersData from "./borders.json";
 import { TRAVEL, bearingWord, daysText, distanceKm, formatDistance, pathKm, type LonLat, type Units } from "./geo";
 import { displayName, groupOf, kindsText, minZoom, type PlaceGroup } from "./places";
 import type { LegRoute } from "./routes";
-import { applySettings, atlasColors, buildStyle, placeImage, type LayerSettings, type TileSource } from "./style";
+import { applySettings, atlasColors, buildStyle, placeImage, STOP_PILL, stopPillImage, type LayerSettings, type TileSource } from "./style";
+import { stopBadges } from "./stopBadges";
 import { LayersPanel } from "./LayersPanel";
 
 // MapLibre looks for its worker beside its own file, which is not where a
@@ -131,8 +132,8 @@ function regionsGeoJSON(places: AtlasPlace[], selected: string | null, highlight
   };
 }
 
-/** The journey: a line for each leg -- along the roads, or straight -- and
- * its numbered stops. */
+/** The journey: a line for each leg -- along the roads, or straight. Its
+ * numbered stops are drawn apart, as badges (`stopsGeoJSON`). */
 function journeyGeoJSON(journey: AtlasJourney | null, routes: LegRoute[] | null, roman: boolean) {
   if (!journey) return { type: "FeatureCollection" as const, features: [] };
   const stops = journey.legs.filter((l) => l.lon != null && l.lat != null);
@@ -147,16 +148,29 @@ function journeyGeoJSON(journey: AtlasJourney | null, routes: LegRoute[] | null,
     const way = route?.by === "road" ? "road" : roman ? "open" : "line";
     return { type: "Feature" as const, geometry: { type: "LineString" as const, coordinates: coords }, properties: { way } };
   });
+  return { type: "FeatureCollection" as const, features: legs };
+}
+
+/** The journey's stops as the map shows them at its present zoom: one badge
+ * for stops that would overlap ("1, 14", "3–5"), at the earliest of them. */
+function stopsGeoJSON(journey: AtlasJourney | null, map: MapLibreMap) {
+  const stops = (journey?.legs ?? []).filter((l) => l.lon != null && l.lat != null);
+  const onScreen = stops.map((l, i) => {
+    const p = map.project([l.lon as number, l.lat as number]);
+    return { n: i + 1, x: p.x, y: p.y, lonLat: [l.lon as number, l.lat as number] as [number, number] };
+  });
+  const at = new Map(onScreen.map((s) => [s.n, s.lonLat]));
+  const badges = stopBadges(onScreen);
   return {
-    type: "FeatureCollection" as const,
-    features: [
-      ...legs,
-      ...stops.map((l, i) => ({
+    key: badges.map((b) => b.label).join("|"),
+    data: {
+      type: "FeatureCollection" as const,
+      features: badges.map((b) => ({
         type: "Feature" as const,
-        geometry: { type: "Point" as const, coordinates: [l.lon as number, l.lat as number] },
-        properties: { n: i + 1 },
+        geometry: { type: "Point" as const, coordinates: at.get(b.ns[0])! },
+        properties: { label: b.label, first: b.ns[0] },
       })),
-    ],
+    },
   };
 }
 
@@ -280,6 +294,11 @@ export function AtlasMap(props: Props) {
     map.on("styleimagemissing", (e: { id: string }) => {
       if (map.hasImage(e.id)) return;
       if (e.id === "arrow") map.addImage("arrow", arrowImage(atlasColors().dark ? "#111" : "#fff"));
+      if (e.id === STOP_PILL) {
+        const pill = stopPillImage(atlasColors());
+        map.addImage(STOP_PILL, pill.data, pill.options);
+        return;
+      }
       const dot = placeImage(e.id, atlasColors());
       if (dot) map.addImage(e.id, dot, { pixelRatio: 2 });
     });
@@ -338,6 +357,31 @@ export function AtlasMap(props: Props) {
     if (!map || !ready) return;
     (map.getSource("journey") as GeoJSONSource | undefined)?.setData(journeyGeoJSON(journey, routes, roman));
   }, [journey, routes, roman, ready]);
+  // The stops' badges, joined and parted as the zoom (or the tilt and turn
+  // of the map) brings stops together or apart. Set only when what they say
+  // changes, not on every frame of a zoom.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    let shown: string | null = null;
+    const update = () => {
+      const source = map.getSource("journey-stops") as GeoJSONSource | undefined;
+      if (!source) return;
+      const { key, data } = stopsGeoJSON(journey, map);
+      if (key === shown) return;
+      shown = key;
+      source.setData(data);
+    };
+    update();
+    map.on("zoom", update);
+    map.on("rotate", update);
+    map.on("pitch", update);
+    return () => {
+      map.off("zoom", update);
+      map.off("rotate", update);
+      map.off("pitch", update);
+    };
+  }, [journey, ready]);
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
