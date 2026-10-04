@@ -189,14 +189,9 @@ This runs `build:content` first (see `build.beforeBuildCommand` in `src-tauri/ta
 
 Release installers are built by GitHub Actions (`.github/workflows/release.yml`) rather than on a developer's own machine, so what readers download is built from the source in this repository; 0.3.4 is the first release made this way. `.github/RELEASING.md` gives the steps, from the version bump to the draft release; the local `npm run tauri build` above is for trying an installer before that.
 
-## Code signing policy
+## Code signing
 
-Free code signing provided by [SignPath.io](https://about.signpath.io/), certificate by [SignPath Foundation](https://signpath.org/).
-
-The project is applying to the SignPath Foundation; until it is accepted and signing is switched on, the installer is unsigned (see [Download](#download)). Only installers built by the Release workflow from this repository are submitted for signing, and each release is approved by hand.
-
-- Committers and reviewers: [Colt McClish](https://github.com/z3r0Colt)
-- Approvers: [Colt McClish](https://github.com/z3r0Colt)
+Release installers are to be signed with a Certum code-signing certificate (SimplySign) issued to Colt McClish. Until that is in place, the installer is unsigned (see [Download](#download)).
 
 **Privacy policy.** This program will not transfer any information to other networked systems unless specifically requested by the user or the person installing or operating it. The one such request is *Check for updates* in Settings → About, which asks GitHub for the latest release.
 
@@ -214,7 +209,7 @@ NSIS is the only target. Tauri's WiX MSI installs per-machine and asks for eleva
 
 Two pieces of Windows packaging depend on something outside this repository:
 
-- **Code signing.** An unsigned installer triggers a Windows SmartScreen warning. Release installers are to be signed in GitHub Actions through the SignPath Foundation: the *Sign with SignPath* job in `.github/workflows/release.yml` runs once the repository's SignPath variables are set, and until then it is skipped and the draft release carries the unsigned installer. `.github/RELEASING.md`, under *Code signing with SignPath*, says how to switch it on. Only the installer is signed: `Sojourner.exe` and the uninstaller inside it are not yet, for the reason RELEASING.md gives. A certificate thumbprint (`bundle.windows.certificateThumbprint`) or `signtool` only matters for signing a local build by hand; see the [Tauri Windows code-signing guide](https://v2.tauri.app/distribute/sign/windows/).
+- **Code signing.** An unsigned installer triggers a Windows SmartScreen warning. Release installers are to be signed with a Certum SimplySign certificate; the signing is not wired up yet, so the draft release carries the unsigned installer. (The *Sign with SignPath* job still in `.github/workflows/release.yml` is from an earlier plan and stays skipped, since its variables are not set.) A certificate thumbprint (`bundle.windows.certificateThumbprint`) or `signtool` only matters for signing a local build by hand; see the [Tauri Windows code-signing guide](https://v2.tauri.app/distribute/sign/windows/).
 - **Auto-updater.** Tauri's updater plugin needs a signing keypair (`tauri signer generate`) whose private key must be kept secret and used to sign every release, plus a hosted JSON endpoint describing available updates and a place to host the signed artifacts. None of that infrastructure exists yet; adding `tauri-plugin-updater` with a placeholder key would make the app *appear* to check for updates while silently doing nothing, which is worse than not having it, so it's left out until real hosting is in place. See the [Tauri updater guide](https://v2.tauri.app/plugin/updater/). What does exist is a manual check: *Check for updates* on Settings → About asks the GitHub releases API for this repository's latest tag (`src-tauri/src/update.rs`), compares it with the running version, and offers the release page in the browser. It runs only when pressed, and it is the one network request the app can make.
 
 Already in place: per-user install and an offline-capable WebView2 bootstrap (`tauri.conf.json`'s `bundle.windows`), `PRAGMA user_version`-based schema migrations (`src-tauri/src/db/mod.rs`), and crash logs for both backend panics and uncaught frontend errors, written to `<app data dir>/logs/` (see *Open logs folder* under Settings → Data & backups) with no data ever leaving the device.
