@@ -128,7 +128,7 @@ export function TimelineView() {
 
   if (isLoading) return <LoadingState className="p-8" />;
   if (!timeline || !allOfIt || allOfIt.events.length === 0) {
-    return <EmptyState icon={CalendarRange} title="No timeline in this build" description="The timeline is built into the app's content; rebuild content to add it." />;
+    return <EmptyState icon={CalendarRange} title="The timeline is missing" description="Reinstalling Sojourner restores it. Your notes are not affected." />;
   }
   // The canvas takes what the toolbar and the detail leave, down to a height
   // that still shows a few rows; the detail gives way before it does. In a
@@ -169,8 +169,8 @@ export function TimelineView() {
           <div className="space-y-2 p-4">
             <p className="text-sm text-ink-3">
               {compact ? "Tap" : "Click"} an event for its verses, people and places{churchShown && ", or a church event for the source that dates it"}.{" "}
-              {compact ? "Tap" : "Click"} an era to fit it. {compact ? "Pinch to zoom, drag to move." : "Wheel to zoom, drag to move."} The Bible's dates are approximate, as the Theographic Bible Metadata gives them: a traditional
-              chronology, Ussher's for the early ages.{churchShown && " Church history's dates are its sources' own, and each event quotes the words it is dated by."}
+              {compact ? "Tap" : "Click"} an era to fit it. {compact ? "Pinch to zoom, drag to move." : "Wheel to zoom, drag to move."} Biblical dates are approximate, following
+              Ussher's traditional chronology.
             </p>
             {churchShown && <ChurchMarksKey />}
           </div>

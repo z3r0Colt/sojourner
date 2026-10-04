@@ -156,9 +156,7 @@ export function AppCrashScreen({ error }: { error: unknown }) {
       <div style={{ maxWidth: "34rem", width: "100%" }}>
         <h1 style={{ margin: 0, fontSize: "1.25rem", fontWeight: 600 }}>Something went wrong</h1>
         <p style={{ marginTop: "0.5rem", color: "var(--color-ink-2, #3f434a)" }}>
-          The app ran into an error it could not recover from on its own. Your notes, sermons and
-          highlights live in the database and are not affected -- reloading should bring the window
-          back.
+          Something went wrong. Your notes and sermons are safe; reloading should fix it.
         </p>
         <ErrorText error={error} />
         <LogsPath />

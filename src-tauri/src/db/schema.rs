@@ -2727,6 +2727,18 @@ CREATE TABLE sermon_ideas (
 CREATE INDEX idx_sermon_ideas_sermon ON sermon_ideas(sermon_id);
 "#;
 
+// One track for a sermon: the stage. The status column stays, so older
+// backups and the Stats count still read it, but it now follows the stage
+// (Rehearsed is Ready, Preached is Preached, the rest Draft) and keeps only
+// Archived as a choice of its own. This brings old rows into line.
+pub const USER_MIGRATION_0023: &str = r#"
+UPDATE sermons SET status = CASE
+  WHEN status = 'archived' THEN 'archived'
+  WHEN stage = 'preached' THEN 'preached'
+  WHEN stage = 'rehearsed' THEN 'ready'
+  ELSE 'draft' END;
+"#;
+
 pub const USER_MIGRATIONS: &[&str] = &[
     USER_MIGRATION_0001,
     USER_MIGRATION_0002,
@@ -2750,4 +2762,5 @@ pub const USER_MIGRATIONS: &[&str] = &[
     USER_MIGRATION_0020,
     USER_MIGRATION_0021,
     USER_MIGRATION_0022,
+    USER_MIGRATION_0023,
 ];

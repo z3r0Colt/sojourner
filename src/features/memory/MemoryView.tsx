@@ -264,8 +264,7 @@ export function MemoryView() {
           Also practise where it is: every other time, see the words and say the reference
         </label>
         <p className="w-full text-xs text-ink-4">
-          The words you learn are the words of that translation. Four verses or more, or a whole chapter, are learned a part at a time: the next part comes
-          once you have the one before, and the whole passage last.
+          Longer passages are learned a few verses at a time.
         </p>
         {error && <p className="w-full text-sm text-danger">{error}</p>}
       </div>

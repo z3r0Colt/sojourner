@@ -53,7 +53,7 @@ export function SeriesSection({ paneId }: { paneId: string }) {
           compact
           icon={Layers}
           title="No series yet"
-          description="A series is a preaching calendar. Once its sermons have texts and dates, one click turns it into a reading plan your congregation can follow through the week."
+          description="Group a run of sermons, then turn their texts and dates into a reading plan for the congregation."
         />
       )}
 
@@ -296,15 +296,13 @@ function SeriesPlanModal({ series, onClose }: { series: SermonSeries; onClose: (
     >
       {!draft ? (
         <p className="text-sm text-ink-2">
-          This series has no dated sermons with a text yet. Give each sermon a date and the passage it preaches, and the
-          plan writes itself from them.
+          Give each sermon in the series a date and a text first.
         </p>
       ) : (
         <>
           <p className="mb-3 text-sm text-ink-2">
-            A family that reads next Sunday's text during the week hears the sermon differently. This builds a custom
-            reading plan from the series' texts, which then shows up on Today and on the Reading plans page like any
-            other plan.
+            Builds a reading plan from the series' texts, so the church can read ahead to each Sunday. It appears on
+            Today and on Reading plans.
           </p>
           <fieldset className="mb-3">
             <legend className="mb-1 text-xs font-medium text-ink-3">Shape</legend>

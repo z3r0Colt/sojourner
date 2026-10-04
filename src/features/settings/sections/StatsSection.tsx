@@ -176,7 +176,7 @@ export function StatsSection() {
           icon={BarChart3}
           compact
           title="Nothing to count yet"
-          description="Once you read, highlight, take notes, pray, or memorize, this block shows your notes and highlights by book, the days you read, and your totals."
+          description="Your reading days and notes by book will show here once you start."
         />
       )}
       {stats && hasStudyData(stats) && (

@@ -213,7 +213,7 @@ function TableRow({
     <button
       type="button"
       data-table-row=""
-      title={row.echo ? "The same word as the phrase beside this one translates: the KJV gives it two phrases" : undefined}
+      title={row.echo ? "The KJV translates this word twice" : undefined}
       {...props}
       className={cx(rowClass, "group cursor-pointer hover:bg-hover")}
     >

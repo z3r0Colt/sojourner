@@ -110,8 +110,7 @@ export function SeriesMemoryModal({ series, onClose }: { series: SermonSeries; o
       ) : (
         <>
           <p className="mb-3 text-sm text-ink-2">
-            A verse a week, learned by the church as the series goes. Each starts as the sermon's text (or its first verse, for a long text); change
-            any of them. Printing makes a sheet of cards, one per Sunday, to cut apart and hand out.
+            A verse a week for the church to learn, taken from each sermon's text. Change any of them, or print them as cards to hand out.
           </p>
           <ol className="space-y-2">
             {rows.map(({ sermon, ref, valid }, i) => (

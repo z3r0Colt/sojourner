@@ -120,7 +120,7 @@ export function LexiconView() {
               <div className="truncate text-xs text-ink-3">{strongsText(r).definition}</div>
             </button>
           ))}
-          {!results?.length && debounced.trim().length > 1 && !directIdMatch && !isFetching && <EmptyState compact title="No matches" />}
+          {!results?.length && debounced.trim().length > 1 && !directIdMatch && !isFetching && <EmptyState compact title="No matches" description="Try fewer letters, or a Strong's number like G26 or H2617." />}
           {debounced.trim().length <= 1 && !id && (
             <p className="p-3 text-xs text-ink-3">Search by English meaning, transliteration, or Strong's number. Or click any word in interlinear view while reading.</p>
           )}

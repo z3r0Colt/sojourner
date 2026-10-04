@@ -64,7 +64,7 @@ function LinkGroupToggle({ pane }: { pane: Pane }) {
           ))}
           <p className="px-2 pb-1 pt-1.5 text-xs text-ink-3">
             {leads
-              ? "A sermon leads its group without following it: the passage under your cursor turns the panes beside it, and a verse clicked there never moves the manuscript."
+              ? "Panes in this group follow the passage you are writing about. The sermon itself never moves."
               : follows
                 ? "Panes in one group follow each other's passage. An unlinked pane stays where it is."
                 : "This pane shows no passage; its group only decides where links opened from it go."}

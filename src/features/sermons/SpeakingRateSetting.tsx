@@ -23,8 +23,7 @@ export function SpeakingRateSetting() {
         </p>
       ) : (
         <p className="text-sm text-ink-3">
-          Nothing measured yet. Time two runs of a sermon -- a rehearsal or a preaching -- and the app works your rate out
-          from them instead.
+          Nothing measured yet. Time two rehearsals or preachings and your real rate is used instead.
         </p>
       )}
       <label className="flex flex-wrap items-center gap-2 text-sm text-ink-2">
@@ -53,8 +52,7 @@ export function SpeakingRateSetting() {
         )}
       </label>
       <p className="text-xs text-ink-3">
-        A measured rate always wins. Runs that work out slower than 80 or faster than 220 words a minute are treated as
-        mis-timed and left out; delete one from a sermon's History list to drop it for good.
+        Runs that look mis-timed are left out. To drop one, delete it from the sermon's History.
       </p>
     </div>
   );

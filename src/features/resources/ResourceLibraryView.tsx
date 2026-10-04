@@ -422,8 +422,8 @@ export function ResourceLibraryView() {
       {awaitingPack > 0 && (
         <div className="mb-4 rounded-lg border border-amber-500/40 bg-amber-500/5 p-3 text-sm">
           <p className="text-ink">
-            {awaitingPack} {awaitingPack === 1 ? "book is" : "books are"} part of the book library, which isn't installed on this
-            computer. They can't be opened or searched until it is — everything you've written about them is kept meanwhile.
+            {awaitingPack} {awaitingPack === 1 ? "book needs" : "books need"} the book library, which isn't installed. Your notes on
+            them are kept.
           </p>
           <p className="mt-1 text-ink-3">
             The library is a separate download.{" "}
@@ -603,7 +603,7 @@ export function ResourceLibraryView() {
                   </button>
                 </li>
               ))}
-              {deepResults?.length === 0 && <EmptyState compact title="No matches inside your books" />}
+              {deepResults?.length === 0 && <EmptyState compact title="No matches inside your books" description="Try fewer or different words." />}
             </ul>
           )}
         </section>

@@ -114,7 +114,7 @@ export function LayersPanel({
       <Section title="Roads">
         <Check label="The great Old Testament routes" checked={s.otRoutes} onChange={(v) => set({ otRoutes: v })} />
         <Check label="Roman roads" checked={s.romanRoads} onChange={(v) => set({ romanRoads: v })} />
-        <p className="mt-1 text-xs text-ink-4">The Old Testament routes are drawn through their traditional stations; their exact courses are not known. A faint Roman road is one whose course is conjectured.</p>
+        <p className="mt-1 text-xs text-ink-4">Old Testament routes are traditional; a faint Roman road is conjectured.</p>
       </Section>
 
       <Section title="Today">

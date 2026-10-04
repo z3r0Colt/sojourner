@@ -52,7 +52,7 @@ export function CompareVerseModal({
         </div>
       )}
       {!results && <LoadingState />}
-      {results?.length === 0 && <EmptyState compact title="No translation has this verse" />}
+      {results?.length === 0 && <EmptyState compact title="No translation has this verse" description="Some translations number verses differently. Try the verse before or after." />}
       {mode === "editions" && greek.length >= 2 ? (
         <EditionDiffView editions={greek} translations={translations ?? []} typography={typography} />
       ) : (

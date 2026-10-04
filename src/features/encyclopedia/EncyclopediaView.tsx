@@ -224,7 +224,7 @@ export function EncyclopediaView() {
           <EmptyState
             icon={BookMarked}
             title="Bible encyclopedia"
-            description="The International Standard Bible Encyclopedia (1915): 9,349 articles on the people, places, books, and doctrines of Scripture. Browse by letter or search on the left. References inside an article are clickable."
+            description="The International Standard Bible Encyclopedia (1915). Browse or search on the left."
           />
         )}
         {entry && (

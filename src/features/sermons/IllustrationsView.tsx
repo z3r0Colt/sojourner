@@ -112,7 +112,7 @@ export function IllustrationsView() {
           description={
             searching
               ? "Try fewer words, or clear the filters."
-              : "Select anything you are reading -- a paragraph of a book, a confession, a dictionary entry -- and choose “Save as illustration”. It keeps the source, so the citation writes itself when you use it."
+              : "Select text anywhere and choose “Save as illustration”. Its source comes with it."
           }
           action={
             searching ? undefined : (

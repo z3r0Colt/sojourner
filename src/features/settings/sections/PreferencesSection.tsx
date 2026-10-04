@@ -244,7 +244,7 @@ export function PreferencesSection() {
       </div>
 
       <h2 className="mb-1 mt-8 text-lg font-semibold text-ink">Accessibility</h2>
-      <p className="mb-2 text-sm text-ink-3">The high-contrast themes and the dyslexia-friendly font are in the lists above. Windows' own "Reduce motion" setting is honored automatically; this switch forces it.</p>
+      <p className="mb-2 text-sm text-ink-3">High-contrast themes and a dyslexia-friendly font are in the lists above.</p>
       <div className="divide-y divide-line">
         <Toggle
           label="Reduce motion"

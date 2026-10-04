@@ -256,7 +256,7 @@ function BibleDictionaries({ slug, switcher }: { slug: string | undefined; switc
           <EmptyState
             icon={BookA}
             title="Bible dictionary"
-            description="Browse by letter or search on the left. Scripture references inside an entry are clickable. For what an English word of the King James Bible meant, switch the index to Webster 1828."
+            description="Browse or search on the left. For old English words in the KJV, switch the index to Webster 1828."
           />
         )}
         {entry && (

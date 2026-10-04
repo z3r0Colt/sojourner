@@ -223,7 +223,7 @@ export function MobiTextReader({
       >
         <div className="mx-auto min-h-full w-full max-w-[70ch] rounded-sm border border-line bg-surface px-10 py-10 shadow-lg" style={{ zoom: zoom / 100 }}>
           {text == null && <LoadingState />}
-          {text === "" && <EmptyState title="No readable text could be extracted from this file" />}
+          {text === "" && <EmptyState title="This file has no readable text" description="Convert it to EPUB (Calibre does this for free) and add that instead." />}
           <div className="reading-font space-y-4 text-ink" style={typography} onClick={readFromClick}>
             {book.paragraphs.map((runs, i) => (
               <p key={i}>

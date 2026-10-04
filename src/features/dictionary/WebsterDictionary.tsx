@@ -443,7 +443,7 @@ function WebsterEntryView({ entryId, onOpenEntry }: { entryId: number | null; on
           <EmptyState
             icon={BookType}
             title="Webster's 1828 dictionary"
-            description="Noah Webster's American Dictionary of the English Language: the King James Bible's English as its readers still spoke it. To prevent is to go before, conversation is manner of life, charity is love, and to let is to hinder. Look a word up or browse on the left, or double-click a word in an English Bible."
+            description="What the King James Bible's English meant to its readers. Look a word up on the left, or double-click a word while reading."
           />
         )}
         {entryId != null && isLoading && <LoadingState />}

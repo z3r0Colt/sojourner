@@ -246,7 +246,7 @@ export function SermonSidePanel({
             </div>
             {rows.length === 0 && (
               <p className="p-2 text-xs text-ink-3">
-                Every passage you insert and everything you send from the commentary, the confessions, the lexicon, or a book lands here as the sermon's bibliography.
+                Passages and quotations you add to the sermon are listed here as its sources.
               </p>
             )}
             <ul className="space-y-0.5">

@@ -27,10 +27,9 @@ export function ConfessionForPassagePanel({ book, chapter, activeVerse }: { book
             compact
             icon={ScrollText}
             title="Click a verse to see where the Confessions cite it"
-            description="Westminster Confession and Catechism proof texts that point to the selected verse."
           />
         )}
-        {activeVerse != null && matches && sorted.length === 0 && <EmptyState compact title="No Confession or Catechism proofs cite this verse" />}
+        {activeVerse != null && matches && sorted.length === 0 && <EmptyState compact title="No Confession or Catechism proofs cite this verse" description="Try a verse nearby." />}
         <ul className="space-y-0.5">
           {sorted.map((m) => (
             <li key={`${m.section_id}-${m.marker}`} className="flex items-start gap-1">

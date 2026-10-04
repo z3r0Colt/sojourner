@@ -12,7 +12,7 @@ import type { Sermon } from "../../api/types";
 
 /** "Mark as preached" (SB5.3): writes the preaching down -- the date it was
  * actually preached, the church, and how long it took -- and the prep track
- * and the status follow it to Preached. */
+ * moves to Preached. */
 export function MarkPreachedButton({ sermon, wordCount }: { sermon: Sermon; wordCount: number }) {
   const [open, setOpen] = useState(false);
   const preached = sermon.events.some((e) => e.kind === "preaching");

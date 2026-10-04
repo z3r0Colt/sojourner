@@ -257,7 +257,7 @@ export function SermonPane() {
               compact={paneWidth < 640}
             />
             <div className="mt-3" />
-            <SermonHeader key={sermon.id} draft={draft} patch={patch} paneWidth={paneWidth} paneHeight={paneHeight} />
+            <SermonHeader key={sermon.id} draft={draft} stage={sermon.stage} patch={patch} paneWidth={paneWidth} paneHeight={paneHeight} />
             <RichTextEditor
               ref={editorRef}
               mode="document"

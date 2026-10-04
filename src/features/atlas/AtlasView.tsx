@@ -237,7 +237,7 @@ export function AtlasView() {
             )}
             <div ref={listRef} className="min-h-0 flex-1 overflow-y-auto">
               {!places && <LoadingState />}
-              {places && list.length === 0 && <EmptyState compact title="No places match" />}
+              {places && list.length === 0 && <EmptyState compact title="No places match" description="Try another spelling, or set the kind to All places." />}
               <div style={{ position: "relative", height: rows.getTotalSize() }}>
                 {rows.getVirtualItems().map((item) => {
                   const place = list[item.index];
@@ -517,13 +517,11 @@ function JourneyDetail({ slug, units, routes, roman }: { slug: string; units: Un
       {totalKm > 0 &&
         (roman ? (
           <p className="mb-4 text-xs text-ink-3">
-            About {formatDistance(totalKm, units)} in all, along the Roman roads where they ran. A dashed leg is one no road served: by sea, or
-            across country.
+            About {formatDistance(totalKm, units)} in all. Dashed legs went by sea or across country.
           </p>
         ) : (
           <p className="mb-4 text-xs text-ink-3">
-            About {formatDistance(totalKm, units)} in all: along the great routes where the way followed them, elsewhere from stop to stop in
-            straight lines (more on the ground).
+            About {formatDistance(totalKm, units)} in all, measured partly in straight lines, so the real distance was longer.
           </p>
         ))}
 

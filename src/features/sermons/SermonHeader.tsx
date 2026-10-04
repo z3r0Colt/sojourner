@@ -6,8 +6,8 @@ import { parseReference, useBookLookup } from "../../hooks/useReferenceParser";
 import { IconButton } from "../../components/ui/Button";
 import { cx, inputSmClass, selectSmClass } from "../../components/ui/classes";
 import { openContent, targetFor } from "../../workspace/openContent";
-import { passageLabel } from "./sermonFormat";
-import type { PassageRef, SermonStatus } from "../../api/types";
+import { passageLabel, STAGE_LABEL } from "./sermonFormat";
+import type { PassageRef, SermonStage } from "../../api/types";
 import type { SermonDraft } from "./sermonDraft";
 
 /** The venue a new sermon starts with -- almost always the same church as
@@ -16,15 +16,13 @@ export const LAST_VENUE_SETTING = "sermon_last_venue";
 /** Asked for once, then filled into every sermon (SB1.2). */
 export const PREACHER_NAME_SETTING = "preacher_name";
 
-const STATUSES: SermonStatus[] = ["draft", "ready", "preached", "archived"];
-
 /** What the folded details hold, on one line: "Sun, Sep 27 · Grace Church ·
- * Romans · Draft". */
-function detailsSummary(draft: SermonDraft, series: { id: number; title: string }[] | undefined): string {
+ * Romans · Study". */
+function detailsSummary(draft: SermonDraft, stage: SermonStage, series: { id: number; title: string }[] | undefined): string {
   const date = draft.preachDate ? new Date(`${draft.preachDate}T00:00`).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }) : null;
   const seriesTitle = series?.find((s) => s.id === draft.seriesId)?.title ?? null;
-  const status = draft.status[0].toUpperCase() + draft.status.slice(1);
-  return [date, draft.venue, seriesTitle, status].filter(Boolean).join(" · ");
+  const where = draft.status === "archived" ? "Archived" : STAGE_LABEL[stage];
+  return [date, draft.venue, seriesTitle, where].filter(Boolean).join(" · ");
 }
 
 /** Title, text, big idea, and the details row (SB1.2). In a pane under
@@ -33,11 +31,13 @@ function detailsSummary(draft: SermonDraft, series: { id: number; title: string 
  * manuscript keeps its writing space. */
 export function SermonHeader({
   draft,
+  stage,
   patch,
   paneWidth,
   paneHeight,
 }: {
   draft: SermonDraft;
+  stage: SermonStage;
   patch: (fields: Partial<SermonDraft>) => void;
   paneWidth: number;
   paneHeight: number;
@@ -188,19 +188,14 @@ export function SermonHeader({
         />
       </label>
       <label className="flex items-center gap-1.5">
-        <span>Status</span>
-        <select
-          value={draft.status}
-          onChange={(e) => patch({ status: e.target.value as SermonStatus })}
-          aria-label="Status"
-          className={cx(selectSmClass, "w-28")}
-        >
-          {STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {s[0].toUpperCase() + s.slice(1)}
-            </option>
-          ))}
-        </select>
+        <input
+          type="checkbox"
+          checked={draft.status === "archived"}
+          // The status otherwise follows the stage; the database works it out.
+          onChange={(e) => patch({ status: e.target.checked ? "archived" : "draft" })}
+          className="h-3.5 w-3.5 accent-accent"
+        />
+        <span>Archived</span>
       </label>
       <div className="flex flex-wrap items-center gap-1">
         {draft.tags.map((tag) => (
@@ -314,7 +309,7 @@ export function SermonHeader({
           >
             {detailsOpen ? <ChevronDown className="h-3.5 w-3.5 shrink-0" aria-hidden="true" /> : <ChevronRight className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />}
             <span className="shrink-0">Details</span>
-            {!detailsOpen && <span className="truncate text-ink-4">· {detailsSummary(draft, series)}</span>}
+            {!detailsOpen && <span className="truncate text-ink-4">· {detailsSummary(draft, stage, series)}</span>}
           </button>
           {detailsOpen && <div className="mt-2">{details}</div>}
         </div>

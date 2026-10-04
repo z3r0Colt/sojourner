@@ -426,7 +426,7 @@ export function InterlinearView({
           {book.name} {chapter}
         </h1>
         {isLoading && <LoadingState />}
-        {!isLoading && verseNumbers.length === 0 && <EmptyState title="No interlinear data for this chapter" />}
+        {!isLoading && verseNumbers.length === 0 && <EmptyState title="No Hebrew or Greek for this chapter" description="Pick another chapter, or exit the interlinear to read it in English." />}
         {layout === "english"
           ? verseNumbers.map((vn) => (
               <div key={vn} data-verse-row={vn} className="mb-5 flex flex-wrap items-end gap-x-3 gap-y-2">

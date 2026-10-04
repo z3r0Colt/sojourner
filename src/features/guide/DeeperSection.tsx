@@ -208,8 +208,7 @@ export function DeeperSection({
                 Teach it
               </h3>
               <p className="mt-1 text-sm text-ink-2">
-                The best way to learn an answer is to teach it. Make a lesson outline in Sermons: the question and answer, the passages, the other Standards
-                to consult, and this lesson’s questions for discussion. Fill in the explanation and application, then print it as a handout.
+                Turn this lesson into an outline in Sermons, ready to fill in and print as a handout.
               </p>
               <div className="mt-2">
                 <Button size="sm" icon={Presentation} disabled={!answers || createSermon.isPending} onClick={teach}>

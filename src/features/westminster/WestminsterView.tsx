@@ -265,7 +265,7 @@ export function WestminsterView() {
         {sidebarMode === "topics" && (
           <div className="min-h-0 flex-1 overflow-y-auto p-2">
             <p className="mb-2 px-1 text-xs text-ink-3">
-              A topical index of the Standards: every Confession chapter, plus Shorter Catechism questions on doctrines the chapter list alone doesn't surface.
+              The Standards by subject.
             </p>
             {CATEGORY_ORDER.filter((c) => (topicsByCategory.get(c)?.length ?? 0) > 0).map((category) => (
               <div key={category} className="mb-3">
@@ -294,7 +294,7 @@ export function WestminsterView() {
       </SidePanel>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-8 py-6">
-        {!section && sections && sections.length === 0 && <EmptyState title="Nothing to show" />}
+        {!section && sections && sections.length === 0 && <EmptyState title="Nothing to show" description="Pick a document or a topic on the left." />}
         {!section && (!sections || sections.length > 0) && <LoadingState />}
         {section && (
           <div className="mx-auto w-full max-w-[70ch]">

@@ -80,9 +80,7 @@ function CourseView() {
       <p className={sectionLabelClass}>Guided study</p>
       <h1 className="reading-font mb-2 text-2xl font-semibold text-ink">The Westminster Shorter Catechism</h1>
       <p className="mb-6 text-sm text-ink-2">
-        A course through the Catechism, question by question. Each lesson walks you through the Scripture behind an answer with the app’s own
-        tools: the Bible, word study, cross references, the Confessions, the old commentators, notes, memory and prayer. Take a lesson when you have
-        time; nothing here keeps count of days.
+        A course through the Catechism, one question per lesson, using the Scripture behind each answer. Go at your own pace.
       </p>
 
       {next && (

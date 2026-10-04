@@ -1159,6 +1159,7 @@ export const TUTORIAL: TutorialCategory[] = [
           "Text, Study, Outline, Manuscript, Rehearsed, Preached: a text set, two sources sent, two points written, the words reaching 60% of your target, a rehearsal timed, a preaching logged.",
           "A line under the track says what the next stage is waiting for.",
           "Click a stage to set it by hand, including backwards; that sticks until something new happens.",
+          "To put a sermon away, tick Archived in its details. The Stage filter on the Sermons page finds it again.",
         ],
       },
       {
@@ -1206,7 +1207,7 @@ export const TUTORIAL: TutorialCategory[] = [
         title: "After the sermon",
         what: "Marking a sermon preached writes down the date, the church, and the time it took, and opens a reflection box.",
         steps: [
-          "Click Mark as preached. The prep track and status follow it to Preached.",
+          "Click Mark as preached. The prep track moves to Preached.",
           "The History list holds every rehearsal and preaching with its minutes; the Reflection box under it waits for what landed, what to cut, and what to say next time. The reflection is searchable with the rest of the sermon.",
           "The My study pane and the Bible's Related row list the sermons preached from a chapter; a highlight on a verse you later preached from is marked in a sermon on the Highlights page.",
         ],

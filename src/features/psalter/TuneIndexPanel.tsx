@@ -66,7 +66,7 @@ export function TuneIndexPanel({ zoom = 1 }: { zoom?: number }) {
         <div className="min-h-0 flex-1 overflow-y-auto">
           <div className="mx-auto max-w-3xl">
           {!tunes && <LoadingState />}
-          {tunes && tunes.length === 0 && <EmptyState compact title="No tunes are built in" />}
+          {tunes && tunes.length === 0 && <EmptyState compact title="The tunes are missing" description="Reinstalling Sojourner restores them. Your notes are not affected." />}
 
           {byMetre.map(([metre, group]) => (
             <section key={metre}>

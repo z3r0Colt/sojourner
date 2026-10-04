@@ -103,8 +103,7 @@ function Updates({ version }: { version: string | null }) {
       </div>
 
       <p className="mt-2 text-xs leading-relaxed text-ink-4">
-        Asks GitHub for the latest version number, and nothing else. Nothing about you is sent, and
-        nothing installs itself — you download the installer and run it when you choose.
+        Asks GitHub for the latest version number. Nothing installs itself.
       </p>
     </div>
   );
@@ -141,10 +140,6 @@ function Contact({ version }: { version: string | null }) {
           </dd>
         </div>
       </dl>
-      <p className="mt-2 text-xs leading-relaxed text-ink-4">
-        Both open outside the app — the site in your browser, the address in your mail program. Nothing is
-        sent from here, and nothing about you goes with them.
-      </p>
     </div>
   );
 }
@@ -277,9 +272,8 @@ export function AboutSection() {
           built for the sojourner making their way through this world toward the next (1 Peter 2:11; Hebrews 11:13).
         </p>
         <p>
-          Everything lives in one file on this device. There is no account, no sync service, and no network request this app makes of its own accord —
-          the update check above is the only one it can make, and only when you press it.
-          Your notes, highlights, and prayers stay yours. Back up or export any time from Settings → Data &amp; backups.
+          Everything lives in one file on this device. There is no account and no sync service, and the app goes online only when you press
+          Check for updates. Back up or export any time from Settings → Data &amp; backups.
         </p>
         <p>
           Included are multiple Bible translations, a timeline of the biblical events, classic commentaries (Matthew Henry, Jamieson-Fausset-Brown, Spurgeon's Treasury of David, and others),
@@ -287,9 +281,8 @@ export function AboutSection() {
           two harmonies of the Gospels, reading plans, and tools for prayer and Scripture memory.
         </p>
         <p>
-          The book library is a set of separate downloads, one per shelf, so the app itself stays small: Puritan and Reformed works, the Church Fathers,
-          ancient literature around the Bible, and nineteenth-century histories. Install any of them from Settings → Library packs; nothing is fetched from
-          here. Beside every verse, the books on those shelves that cite it are counted and listed.
+          The book library comes as separate downloads, one per shelf: Puritan and Reformed works, the Church Fathers,
+          ancient literature around the Bible, and nineteenth-century histories. Install them from Settings → Library packs.
         </p>
       </div>
 
@@ -433,13 +426,12 @@ export function AboutSection() {
 
       <h2 className="mb-1 mt-8 text-lg font-semibold text-ink">Considered and not included</h2>
       <p className="mb-3 text-sm text-ink-3">
-        Readers ask about these. They are left out because their terms do not allow an app to give them away, not because of their quality.
+        Left out because their terms don't allow an app to give them away.
       </p>
       <dl className="divide-y divide-line text-sm">
         <Source name="NET Bible">Free to read online, but its licence does not permit redistributing the whole text inside another program.</Source>
         <Source name="ESV, NIV, NASB, NKJV, NLT, CSB">
-          In copyright. A reader who holds a licensed copy in Zefania XML can add it from Settings → Library; it is marked as licensed there and never
-          leaves this computer.
+          In copyright. If you own a licensed copy in Zefania XML, you can add it from Settings → Library.
         </Source>
         <Source name="Danby's Mishnah (1933)">Not yet in the public domain.</Source>
         <Source name="Post-1929 English translations of Reformed works">

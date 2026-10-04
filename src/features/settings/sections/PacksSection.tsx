@@ -9,6 +9,9 @@ import { confirmDialog } from "../../../components/ui/confirm";
 import { toast } from "../../../components/ui/toast";
 import { EmptyState } from "../../../components/ui/EmptyState";
 import { cardClass } from "../../../components/ui/classes";
+import { openUrl } from "../../../lib/platform";
+
+const RELEASES_URL = "https://github.com/z3r0Colt/sojourner/releases/latest";
 
 /** Bytes as the reader would say them: "482 MB", "1.2 GB". */
 function formatBytes(bytes: number): string {
@@ -115,13 +118,21 @@ export function PacksSection() {
       <h2 className="mb-1 text-lg font-semibold text-ink">Library packs</h2>
       <p className="mb-4 text-sm text-ink-3">
         The book library comes as separate downloads, one per shelf: Puritan and Reformed, Church Fathers, Ancient literature,
-        and Nineteenth century. Install any or all of them; each can be removed on its own. Everything
-        else — every Bible translation, every commentary, the lexicons, the encyclopedia, the atlas and the confessions — is already
-        here and needs nothing added.
+        and Nineteenth century. Everything else is already built in.
       </p>
       <p className="mb-5 text-sm text-ink-3">
-        Download the packs you want from the Sojourner releases page, then install each from the file below. Nothing is fetched over the
-        network from here: this app makes no requests of its own, and a pack can just as well arrive on a USB stick.
+        Download the packs you want from the{" "}
+        <a
+          href={RELEASES_URL}
+          onClick={(e) => {
+            e.preventDefault();
+            openUrl(RELEASES_URL).catch(() => {});
+          }}
+          className="text-accent hover:underline"
+        >
+          Sojourner releases page
+        </a>
+        , then install each file below.
       </p>
 
       {busy && (
@@ -149,7 +160,7 @@ export function PacksSection() {
         <EmptyState
           icon={BookMarked}
           title="No book library installed"
-          description="Install a pack to add its shelf of works, searchable down to the sentence, linkable from any passage, and listed beside every verse they cite."
+          description="Install a pack to add its books. They become searchable and are listed beside the verses they cite."
           action={
             <Button variant="primary" icon={FilePlus} onClick={handleInstall}>
               Install from file…
@@ -193,8 +204,7 @@ export function PacksSection() {
 
       <h2 className="mb-1 mt-8 text-lg font-semibold text-ink">Map packs</h2>
       <p className="mb-4 text-sm text-ink-3">
-        The Atlas works without them. The terrain pack shades the hills and valleys and can raise the land in 3D; the imagery pack adds a
-        satellite view. Install them the same way, from the file.
+        Optional. Terrain adds hills and 3D; imagery adds a satellite view.
       </p>
       {maps.length > 0 ? (
         <ul className="space-y-2">

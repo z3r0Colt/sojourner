@@ -255,7 +255,7 @@ export function PrayerListView() {
         <EmptyState
           icon={Users}
           title="No one on your prayer list yet"
-          description="Keep people and requests here, separate from journal entries. Tap “Prayed today” to log it, and “Answered” to archive it with a note of how God answered."
+          description="Add people and requests to pray for. Mark one “Answered” to keep a note of how God answered."
           action={
             <Button variant="primary" icon={Plus} onClick={() => setEditing("new")}>
               Add the first person

@@ -140,8 +140,8 @@ export function CommentaryStandaloneView() {
           </div>
         )}
         <div ref={scrollerRef} className="min-h-0 flex-1 overflow-y-auto px-8 py-6">
-          {!source && <EmptyState icon={MessageSquareText} title="Choose a commentary" />}
-          {source && !book && <EmptyState icon={MessageSquareText} title={`Choose a book to read ${source.title}`} />}
+          {!source && <EmptyState icon={MessageSquareText} title="Choose a commentary" description="Pick one from the list on the left." />}
+          {source && !book && <EmptyState icon={MessageSquareText} title={`Choose a book to read ${source.title}`} description="Pick a book from the contents on the left." />}
           {book && (
             <div className="mx-auto w-full max-w-[70ch]">
               <div className="mb-0.5 text-xs font-semibold uppercase tracking-wide text-ink-3">{source?.title}</div>

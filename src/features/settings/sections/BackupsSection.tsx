@@ -86,8 +86,7 @@ export function BackupsSection() {
     <div>
       <h2 className="mb-1 text-lg font-semibold text-ink">Data &amp; backups</h2>
       <p className="mb-4 text-sm text-ink-3">
-        Everything you write lives in one file on this device and never leaves it. This app makes no network requests of its own and sends nothing anywhere.
-        That file is not encrypted: it sits in the app's data folder, readable by anyone who can read this computer's files.
+        Everything you write lives in one file on this device. It is not encrypted, so anyone who can read this computer's files can read it.
       </p>
       <div className="mb-4 flex flex-wrap gap-2">
         <Button variant="primary" icon={HardDrive} onClick={() => createBackup.mutate(undefined, { onSuccess: () => toast.success("Backup created") })} disabled={createBackup.isPending}>

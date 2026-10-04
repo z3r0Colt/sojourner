@@ -55,7 +55,7 @@ export function LibrarySection() {
     <div>
       <h2 className="mb-1 text-lg font-semibold text-ink">Library</h2>
       <p className="mb-4 text-sm text-ink-3">
-        Add Bible translations or commentaries from XML files. Formats are detected automatically (Zefania XML for Bibles, ThML for commentaries).
+        Add a Bible in Zefania XML, or a commentary in ThML (the format ccel.org offers its books in).
       </p>
       <div className="mb-5 flex gap-2">
         <Button variant="primary" icon={FilePlus} disabled={busy} onClick={handleAddFile}>
@@ -85,7 +85,7 @@ export function LibrarySection() {
               {t.name} <span className="text-ink-3">· {t.verse_count.toLocaleString()} verses</span>
               {t.license_status === "licensed" && (
                 <span
-                  title="A modern copyrighted translation. The app ships none of these — this one was imported on this computer, and whether it may be shared is your own arrangement with its publisher."
+                  title="A copyrighted translation you imported. It is not shipped with the app."
                   className={cx("ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-950/50 dark:text-amber-300")}
                 >
                   Licensed

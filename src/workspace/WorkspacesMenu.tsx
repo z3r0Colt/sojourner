@@ -223,7 +223,7 @@ export function WorkspacesMenu() {
           </PopoverItem>
           <p className="flex items-start gap-1.5 px-2 pb-1 pt-1.5 text-xs text-ink-3">
             <Check className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-            Switching keeps the chapter you are reading in each Bible pane that shares a link group. Saved workspaces travel with backups.
+            Switching keeps your place in the Bible. Workspaces are included in backups.
           </p>
         </>
       )}

@@ -97,7 +97,7 @@ export function LayoutPicker() {
               );
             })}
           </div>
-          <p className="px-2 pb-1 pt-2 text-xs text-ink-3">These are starting points. Split any pane from its ⋯ menu, or drag a pane by its grip onto another pane's edge, to arrange them however you like.</p>
+          <p className="px-2 pb-1 pt-2 text-xs text-ink-3">Starting points. Drag a pane's grip, or use its ⋯ menu, to rearrange.</p>
         </>
       )}
     </Popover>

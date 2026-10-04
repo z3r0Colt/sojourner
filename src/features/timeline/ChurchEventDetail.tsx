@@ -181,9 +181,8 @@ export function ChurchEventDetail({ timeline, event, compact }: { timeline: Time
         </section>
       )}
       <p className="text-xs text-ink-4">
-        Church history, dated as the source quoted dates it: Schaff's History and Creeds, the Nicene and Post-Nicene Fathers and the Schaff-Herzog
-        encyclopedia, and where those do not reach, in the twentieth century, two independent references that agree. The dates are the source's own, Julian where it reckons so; “c.” marks one it gives as
-        approximate or disputed, and on the line such an event's mark is drawn hollow, or its span fades at the ends.
+        Dated as the source above gives it. “c.” marks an approximate or disputed date, drawn hollow on the line. Sources are listed in
+        Settings → About.
       </p>
     </div>
   );

@@ -28,11 +28,10 @@ import {
   SERMON_STAGES,
   sermonTextLabel,
   STAGE_LABEL,
-  STATUS_LABEL,
 } from "./sermonFormat";
 import { countWords, manuscriptText } from "./editor/documentModel";
 import { IdeasPanel } from "./IdeasPanel";
-import type { Sermon, SermonStage, SermonStatus } from "../../api/types";
+import type { Sermon, SermonStage } from "../../api/types";
 
 /** Creates the row first and opens it, so there is never an unsaved
  * document waiting to be lost. Shared by the page, the palette, and Today. */
@@ -56,8 +55,8 @@ export function useNewSermon() {
 export function SermonsView() {
   const { id: paneId } = usePane();
   const [query, setQuery] = useState("");
-  const [status, setStatus] = useState<SermonStatus | "">("");
-  const [stage, setStage] = useState<SermonStage | "">("");
+  // One filter for the one track: a stage, or the archive.
+  const [stage, setStage] = useState<SermonStage | "archived" | "">("");
   const [seriesId, setSeriesId] = useState<number | "">("");
   const [bookId, setBookId] = useState<number | "">("");
   const [tag, setTag] = useState("");
@@ -70,8 +69,8 @@ export function SermonsView() {
   const { data: tags } = useSermonTags();
   const { data: sermons, isLoading } = useSermons({
     query: query.trim() || null,
-    status: status || null,
-    stage: stage || null,
+    status: stage === "archived" ? "archived" : null,
+    stage: stage && stage !== "archived" ? stage : null,
     series_id: seriesId === "" ? null : seriesId,
     book_id: bookId === "" ? null : bookId,
     tag: tag || null,
@@ -80,7 +79,7 @@ export function SermonsView() {
   });
   const newSermon = useNewSermon();
 
-  const filtering = Boolean(query.trim() || status || stage || seriesId !== "" || bookId !== "" || tag || year !== "");
+  const filtering = Boolean(query.trim() || stage || seriesId !== "" || bookId !== "" || tag || year !== "");
   const years = useMemo(() => {
     const set = new Set<number>();
     for (const s of sermons ?? []) if (s.preach_date) set.add(Number(s.preach_date.slice(0, 4)));
@@ -130,21 +129,14 @@ export function SermonsView() {
             className={cx(inputSmClass, "w-full pl-7")}
           />
         </div>
-        <select value={status} onChange={(e) => setStatus(e.target.value as SermonStatus | "")} aria-label="Status" className={selectSmClass}>
-          <option value="">Every status</option>
-          {(Object.keys(STATUS_LABEL) as SermonStatus[]).map((s) => (
-            <option key={s} value={s}>
-              {STATUS_LABEL[s]}
-            </option>
-          ))}
-        </select>
-        <select value={stage} onChange={(e) => setStage(e.target.value as SermonStage | "")} aria-label="Stage" className={selectSmClass}>
+        <select value={stage} onChange={(e) => setStage(e.target.value as SermonStage | "archived" | "")} aria-label="Stage" className={selectSmClass}>
           <option value="">Every stage</option>
           {SERMON_STAGES.map((s) => (
             <option key={s} value={s}>
               {STAGE_LABEL[s]}
             </option>
           ))}
+          <option value="archived">Archived</option>
         </select>
         <select
           value={seriesId}
@@ -215,7 +207,7 @@ export function SermonsView() {
           description={
             filtering
               ? "Try fewer words, or clear the filters above."
-              : "A sermon here is the study, gathered: its passages are live text in your translation, its citations reopen the commentary or confession they came from, it drives the panes beside it as you write, and once preached it can hand the congregation a reading plan for the series."
+              : "Start one, add its text, and the panes beside it follow your passage as you write."
           }
           action={
             filtering ? undefined : (
@@ -359,9 +351,9 @@ function SermonCard({ sermon, books, paneId }: { sermon: Sermon; books: ReturnTy
       <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
         <PrepTrack stage={sermon.stage} readOnly compact />
         <span className="ml-auto text-xs text-ink-3">
-          {STATUS_LABEL[sermon.status]}
-          {preached > 0 && ` · preached ${preached === 1 ? "once" : preached === 2 ? "twice" : `${preached} times`}`}
-          {words > 0 && ` · ${words.toLocaleString()} words`}
+          {sermon.status === "archived" && "Archived"}
+          {preached > 0 && `${sermon.status === "archived" ? " · " : ""}preached ${preached === 1 ? "once" : preached === 2 ? "twice" : `${preached} times`}`}
+          {words > 0 && `${sermon.status === "archived" || preached > 0 ? " · " : ""}${words.toLocaleString()} words`}
         </span>
       </div>
     </div>

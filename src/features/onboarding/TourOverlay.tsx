@@ -42,7 +42,7 @@ export const TOUR_STEPS: Step[] = [
     title: "Click a verse; linked panes follow it",
     body: (
       <>
-        Click a verse number for its menu: highlight, note, copy, compare, memorize, bookmark. Click anywhere on a verse to select it, and every linked commentary, cross-reference, or confession pane moves to it. <Kbd>↓</Kbd> and <Kbd>↑</Kbd> select the next and previous verse.
+        Click a verse to select it; linked panes move with it. Click the verse number for highlight, note, copy and more.
       </>
     ),
     missing: "Open the Bible to see this in place.",
@@ -53,7 +53,7 @@ export const TOUR_STEPS: Step[] = [
     title: "Study beside the text",
     body: (
       <>
-        These icons open Commentary, Cross references, Confessions, or My study (your own notes and highlights on the chapter) beside the text. <Kbd>Ctrl</Kbd>+click any link, sidebar item, or reference to open it in a new pane.
+        Open a commentary, cross references, the Confessions, or your own notes beside the text. <Kbd>Ctrl</Kbd>+click anything to open it in a new pane.
       </>
     ),
     missing: "The Add pane strip sits on the right edge of the Bible page.",
@@ -64,7 +64,7 @@ export const TOUR_STEPS: Step[] = [
     title: "Every pane has a header",
     body: (
       <>
-        The letter is the pane's link group: panes in one group follow each other's passage. The dotted grip at the left moves the pane: drag it onto another pane's edge to split that pane, or onto its middle to add it as a tab. Double-click the header to maximize; the ⋯ menu changes what the pane shows, splits it, or closes it.
+        The letter is the pane's link group: panes with the same letter follow each other. Drag the grip to move the pane; the ⋯ menu does the rest.
       </>
     ),
     missing: "Headers appear once a second pane is open.",
@@ -75,7 +75,7 @@ export const TOUR_STEPS: Step[] = [
     title: "Arrange the panes",
     body: (
       <>
-        Pick a quick arrangement here, from one pane to two by three. Then split, drag, and resize freely: every divider is its own, and up to eight panes fit. The Workspaces button beside it saves an arrangement under a name.
+        Pick a starting layout, then resize freely. Workspaces saves a layout by name.
       </>
     ),
     missing: "The layout button sits in the top bar, beside Workspaces.",
@@ -85,7 +85,7 @@ export const TOUR_STEPS: Step[] = [
     title: "The library",
     body: (
       <>
-        Works someone else wrote: the Westminster Confession and Catechisms and the creeds, a Hebrew and Greek lexicon, a Bible dictionary and Webster's 1828, the ISBE encyclopedia, the Factbook of people and places, a timeline from Creation through church history, an atlas of 1,342 places, and Resources for your own books, audio, and video.
+        Confessions, lexicons, dictionaries, the atlas, the timeline, and your own books under Resources.
       </>
     ),
     missing: "The Library group is in the sidebar on the left.",
@@ -95,7 +95,7 @@ export const TOUR_STEPS: Step[] = [
     title: "Your notebook",
     body: (
       <>
-        What you write: Notes on verses and chapters, every Highlight in one place, Sermons with a manuscript editor, rehearsal clock, and slides, and Illustrations kept apart from any one sermon.
+        Everything you write: notes, highlights, sermons, and illustrations.
       </>
     ),
     missing: "The Notebook group is in the sidebar on the left.",
@@ -105,7 +105,7 @@ export const TOUR_STEPS: Step[] = [
     title: "Daily practice",
     body: (
       <>
-        Reading plans (M'Cheyne, chronological, and your own), a Prayer journal and prayer list, Scripture and catechism Memory with spaced repetition, the Psalter to sing from, and Family worship. Today, at the top of the sidebar, gathers all of it for the day.
+        Reading plans, prayer, memory work, the Psalter, and family worship. Today gathers what is due.
       </>
     ),
     missing: "The Devotion group is in the sidebar on the left.",
@@ -115,7 +115,7 @@ export const TOUR_STEPS: Step[] = [
     title: "Settings and the tutorial",
     body: (
       <>
-        Theme, text, backups, added translations, the book library pack, and a full written tutorial with a step for every feature. Press <Kbd>Ctrl</Kbd>+<Kbd>/</Kbd> any time for the keyboard shortcuts.
+        Appearance, backups, the book library, and a full tutorial. <Kbd>Ctrl</Kbd>+<Kbd>/</Kbd> lists the keyboard shortcuts.
       </>
     ),
     missing: "Settings is at the bottom of the sidebar.",

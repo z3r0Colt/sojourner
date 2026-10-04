@@ -184,7 +184,6 @@ function Overview({ fw }: { fw: FW }) {
             <Button icon={Maximize2} onClick={() => begin({ large: true })} title="Fill the screen with large type, for a table or a television">
               Gather round
             </Button>
-            <span className="text-xs text-ink-3">Gather round fills the screen in large type, for the table or the television.</span>
           </div>
         </div>
         <Nudges fw={fw} />
@@ -784,7 +783,7 @@ function TalkQuestionsRow({
       setNote({ row: index, kept: true, text: `Question ${repeat.of + 1} already asks that. Change the words, or press Esc to keep the old ones.` });
       return false;
     }
-    if (!text.trim()) setNote({ row: index, kept: false, text: "A question cannot be left empty, so it keeps its words. To take it away, use its ×." });
+    if (!text.trim()) setNote({ row: index, kept: false, text: "To remove a question, use its ×." });
     else setNote((n) => (n?.kept && n.row !== index ? n : null));
     return true;
   }

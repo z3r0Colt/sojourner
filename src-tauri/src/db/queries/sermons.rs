@@ -239,6 +239,15 @@ pub fn get(conn: &Connection, id: i64) -> anyhow::Result<Option<Sermon>> {
     Ok(Some(sermon))
 }
 
+/// The status follows the stage; only Archived is set by hand (see
+/// USER_MIGRATION_0023).
+const SYNC_STATUS: &str = "UPDATE sermons SET status = CASE
+   WHEN status = 'archived' THEN 'archived'
+   WHEN stage = 'preached' THEN 'preached'
+   WHEN stage = 'rehearsed' THEN 'ready'
+   ELSE 'draft' END
+ WHERE id = ?1";
+
 pub fn create(conn: &Connection, input: &SermonInput) -> anyhow::Result<Sermon> {
     let now = chrono::Utc::now().to_rfc3339();
     let tx = conn.unchecked_transaction()?;
@@ -264,6 +273,7 @@ pub fn create(conn: &Connection, input: &SermonInput) -> anyhow::Result<Sermon> 
         ],
     )?;
     let id = tx.last_insert_rowid();
+    tx.execute(SYNC_STATUS, params![id])?;
     if let Some(passages) = &input.passages {
         set_passages(&tx, id, passages)?;
     }
@@ -323,6 +333,7 @@ pub fn update(conn: &Connection, id: i64, input: &SermonInput) -> anyhow::Result
             now
         ],
     )?;
+    tx.execute(SYNC_STATUS, params![id])?;
     if let Some(passages) = &input.passages {
         set_passages(&tx, id, passages)?;
     }
@@ -381,6 +392,7 @@ pub fn set_tags(conn: &Connection, sermon_id: i64, tags: &[String]) -> anyhow::R
 pub fn set_stage(conn: &Connection, id: i64, stage: &str) -> anyhow::Result<()> {
     let now = chrono::Utc::now().to_rfc3339();
     conn.execute("UPDATE sermons SET stage = ?2, updated_at = ?3 WHERE id = ?1", params![id, stage, now])?;
+    conn.execute(SYNC_STATUS, params![id])?;
     Ok(())
 }
 
@@ -532,7 +544,7 @@ pub fn add_event(
     // moves the track if the sermon has not been preached already.
     if kind == "preaching" {
         tx.execute(
-            "UPDATE sermons SET stage = 'preached', status = 'preached', updated_at = ?2 WHERE id = ?1",
+            "UPDATE sermons SET stage = 'preached', status = CASE WHEN status = 'archived' THEN 'archived' ELSE 'preached' END, updated_at = ?2 WHERE id = ?1",
             params![sermon_id, now],
         )?;
     } else {
@@ -540,6 +552,7 @@ pub fn add_event(
             "UPDATE sermons SET stage = 'rehearsed', updated_at = ?2 WHERE id = ?1 AND stage NOT IN ('rehearsed','preached')",
             params![sermon_id, now],
         )?;
+        tx.execute(SYNC_STATUS, params![sermon_id])?;
     }
     let event = tx.query_row(
         &format!("SELECT {EVENT_COLS} FROM sermon_events WHERE id = ?1"),
@@ -753,6 +766,25 @@ mod tests {
         let _ = std::fs::remove_dir_all(&dir);
     }
 
+    /// The status follows the stage; Archived alone is kept as set.
+    #[test]
+    fn status_follows_the_stage_except_archived() {
+        let (dir, conn) = scratch("sermon-status-test");
+        let sermon = create(&conn, &SermonInput { status: Some("ready".into()), ..Default::default() }).unwrap();
+        assert_eq!(sermon.status, "draft", "a sermon at Text is a draft");
+        set_stage(&conn, sermon.id, "preached").unwrap();
+        assert_eq!(get(&conn, sermon.id).unwrap().unwrap().status, "preached");
+        set_stage(&conn, sermon.id, "outline").unwrap();
+        assert_eq!(get(&conn, sermon.id).unwrap().unwrap().status, "draft");
+        update(&conn, sermon.id, &SermonInput { status: Some("archived".into()), ..Default::default() }).unwrap();
+        set_stage(&conn, sermon.id, "preached").unwrap();
+        assert_eq!(get(&conn, sermon.id).unwrap().unwrap().status, "archived");
+        update(&conn, sermon.id, &SermonInput { status: Some("draft".into()), ..Default::default() }).unwrap();
+        assert_eq!(get(&conn, sermon.id).unwrap().unwrap().status, "preached", "unarchived, it follows the stage again");
+        drop(conn);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
     /// An event moves the prep track and the status; deleting a series
     /// clears its sermons' link without touching the sermons themselves.
     #[test]
@@ -769,7 +801,9 @@ mod tests {
         assert_eq!(list_series(&conn).unwrap()[0].sermon_count, 1);
 
         add_event(&conn, sermon.id, "rehearsal", "2026-09-10", None, Some(1_860), Some(4_000), None).unwrap();
-        assert_eq!(get(&conn, sermon.id).unwrap().unwrap().stage, "rehearsed");
+        let rehearsed = get(&conn, sermon.id).unwrap().unwrap();
+        assert_eq!(rehearsed.stage, "rehearsed");
+        assert_eq!(rehearsed.status, "ready", "the status follows the stage");
         add_event(&conn, sermon.id, "preaching", "2026-09-13", Some("Grace Church"), Some(2_100), Some(4_000), None).unwrap();
         let after = get(&conn, sermon.id).unwrap().unwrap();
         assert_eq!(after.stage, "preached");

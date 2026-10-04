@@ -229,11 +229,11 @@ function TtsSettings() {
       <p className="mt-3 text-xs text-ink-3">
         {engineId === "webspeech" ? (
           <>
-            Uses the Windows voices installed on this device. No audio leaves the computer. For better ones, install a natural
-            voice in Windows Settings → Time &amp; language → Speech → Manage voices; it appears in this list on its own.
+            Uses the Windows voices on this device. For better ones, add a natural voice in Windows Settings → Time &amp; language →
+            Speech → Manage voices.
           </>
         ) : (
-          <>The natural voice runs on this device, from the model that shipped with the app. No audio leaves the computer.</>
+          <>The natural voice runs on this device.</>
         )}
       </p>
     </div>
