@@ -80,6 +80,13 @@ export interface BibleParams {
   activeVerse: number | null;
   paragraphMode: boolean;
   redLetterMode: boolean;
+  /** Color text: persons, places, times and numbers colored by category. */
+  colorTextMode?: boolean;
+  /** Color text families the reader has turned off ("god", "people", ...). */
+  colorHidden?: string[];
+  /** Who is speaking: God's words in small capitals, Scripture quoted in
+   * italics, speech within speech lighter. */
+  voiceMode?: boolean;
   /** Find-in-chapter query; undefined while the pane's find bar is closed. */
   findQuery?: string;
 }

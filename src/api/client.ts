@@ -46,6 +46,8 @@ import type {
   Harmony,
   HarmonyDetail,
   RedLetterRange,
+  ColorSpan,
+  ColorTermVerse,
   BackupInfo,
   Stats,
   AtlasJourney,
@@ -606,6 +608,11 @@ export const api = {
 
   getRedLetterRanges: (bookId: number, chapter: number) =>
     invoke<RedLetterRange[]>("get_red_letter_ranges", { bookId, chapter }),
+  getColorText: (translationId: number, bookId: number, chapter: number) =>
+    invoke<ColorSpan[]>("get_color_text", { translationId, bookId, chapter }),
+  getColorTermVerses: (code: string, term: string) => invoke<ColorTermVerse[]>("get_color_term_verses", { code, term }),
+  getColorVoices: (translationId: number, bookId: number, chapter: number) =>
+    invoke<ColorSpan[]>("get_color_voices", { translationId, bookId, chapter }),
 
   createBackup: () => invoke<string>("create_backup"),
   listBackups: () => invoke<BackupInfo[]>("list_backups"),

@@ -3,6 +3,7 @@ import { NodeViewWrapper, type NodeViewProps } from "@tiptap/react";
 import { ChevronDown, Trash2 } from "lucide-react";
 import {
   useBooks,
+  useColorText,
   useFootnotesForChapter,
   usePassagesIn,
   useRedLetterRanges,
@@ -10,6 +11,8 @@ import {
 } from "../../../api/queries";
 import { useReaderTranslationId } from "../../../state/workspaceStore";
 import { buildTokens } from "../../reading/verseTokens";
+import { SegmentText } from "../../reading/VerseRow";
+import { useUiStore } from "../../../state/uiStore";
 import { computeRedLetterSpans } from "../../reading/redLetterSpans";
 import { FootnotePopup } from "../../reading/FootnotePopup";
 import { formatRef, refKey } from "../../../lib/passage";
@@ -64,6 +67,9 @@ export function PassageBlock({ node, updateAttributes, deleteNode, editor }: Nod
   const isLoading = pinned != null ? own.isLoading : (passagesLoading ?? false);
   const { data: redLetterRanges } = useRedLetterRanges(ref?.book_id ?? null, ref?.chapter ?? null);
   const { data: footnotes } = useFootnotesForChapter(translationId, ref?.book_id ?? null, ref?.chapter ?? null);
+  // Color text, when the preacher has it on for sermons (Settings → Reading).
+  const colorOn = useUiStore((s) => s.colorTextInSermons);
+  const { data: colorSpans } = useColorText(colorOn ? translationId : null, ref?.book_id ?? null, ref?.chapter ?? null);
 
   const redLetterSpans = useMemo(() => {
     if (!passage?.verses.length || !redLetterRanges?.length) return new Map<number, { start: number; end: number }[]>();
@@ -84,7 +90,15 @@ export function PassageBlock({ node, updateAttributes, deleteNode, editor }: Nod
         {passage?.verses.map((verse) => (
           <span key={verse.verse}>
             <sup className="sermon-passage-number">{verse.verse}</sup>
-            {buildTokens(verse.text, [], verse.verse, footnotes?.[verse.verse] ?? [], redLetterSpans.get(verse.verse) ?? []).map(
+            {buildTokens(
+              verse.text,
+              [],
+              verse.verse,
+              footnotes?.[verse.verse] ?? [],
+              redLetterSpans.get(verse.verse) ?? [],
+              [],
+              (colorSpans ?? []).filter((s) => s.verse === verse.verse),
+            ).map(
               (token, i) =>
                 token.kind === "footnote" ? (
                   <sup
@@ -108,7 +122,7 @@ export function PassageBlock({ node, updateAttributes, deleteNode, editor }: Nod
                   </sup>
                 ) : (
                   <span key={`t${i}`} className={cx(token.segment.isRedLetter && "text-red-700 dark:text-red-400")}>
-                    {token.segment.text}
+                    <SegmentText segment={token.segment} />
                   </span>
                 ),
             )}{" "}

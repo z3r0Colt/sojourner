@@ -1,5 +1,6 @@
 pub mod backup;
 pub mod citations;
+pub mod color_text;
 mod commands;
 pub mod crash_log;
 pub mod db;
@@ -424,6 +425,9 @@ pub fn run() {
             commands::harmony::list_harmonies,
             commands::harmony::get_harmony,
             commands::red_letter::get_red_letter_ranges,
+            commands::color_text::get_color_text,
+            commands::color_text::get_color_term_verses,
+            commands::color_text::get_color_voices,
             commands::search::search,
             commands::search::search_facets,
             commands::search::suggest_search_words,

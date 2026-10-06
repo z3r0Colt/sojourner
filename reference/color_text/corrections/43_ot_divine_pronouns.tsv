@@ -1,0 +1,49 @@
+# Old Testament pronouns for God colored as a person's (and the reverse). Only clear cases.
+# Columns: ref <TAB> term <TAB> occurrence <TAB> from <TAB> to <TAB> note
+Judges 5:31	thine	1	PRONOUN	GOD_FATHER	"let all thine enemies perish, O LORD"
+Isaiah 45:15	thou	1	PRONOUN	GOD_FATHER	"thou art a God that hidest thyself, O God of Israel"
+Isaiah 45:15	thyself	1	PRONOUN	GOD_FATHER	(as above)
+Jeremiah 20:12	thy	1	PRONOUN	GOD_FATHER	"O LORD of hosts ... let me see thy vengeance"
+Jeremiah 20:12	thee	1	PRONOUN	GOD_FATHER	"unto thee have I opened my cause"
+Exodus 33:12	thou	5	GOD_FATHER	PRONOUN	God's words quoted to Moses: "thou hast also found grace in my sight"
+Exodus 33:12	my	1	PRONOUN	GOD_FATHER	"in my sight": God's
+Numbers 11:12	thou	1	PRONOUN	GOD_FATHER	"the land which thou swarest unto their fathers": Moses to God
+1 Kings 2:3	thou	1	GOD_FATHER	PRONOUN	"that thou mayest prosper": David to Solomon
+Psalms 18:25	thyself	1	PRONOUN	GOD_FATHER	"thou wilt shew thyself upright": God
+Psalms 71:23	thee	1	PRONOUN	GOD_FATHER	"when I sing unto thee": God
+Lamentations 2:18	thyself	1	GOD_FATHER	PRONOUN	"O wall of the daughter of Zion ... give thyself no rest"
+Lamentations 2:18	thine	1	GOD_FATHER	PRONOUN	the wall's eye, not God's
+Exodus 19:4	myself	1	PRONOUN	GOD_FATHER	God: "brought you unto myself"
+Numbers 8:17	myself	1	PRONOUN	GOD_FATHER	God: "I sanctified them for myself"
+Numbers 12:6	he	1	PRONOUN	GOD_FATHER	"And he said, Hear now my words": the LORD (12:5)
+Numbers 12:6	myself	1	PRONOUN	GOD_FATHER	God: "I the LORD will make myself known"
+2 Chronicles 7:12	myself	1	PRONOUN	GOD_FATHER	God: "chosen this place to myself"
+2 Chronicles 12:12	him	1	GOD_FATHER	PRONOUN	"the wrath of the LORD turned from him": Rehoboam
+Nehemiah 1:9	me	1	PRONOUN	GOD_FATHER	God's words quoted: "if ye turn unto me"
+Psalms 89:26	Thou	1	PRONOUN	GOD_FATHER	"He shall cry unto me, Thou art my father": said to God
+Psalms 89:26	father	1	GENERAL_PEOPLE	GOD_FATHER	God called Father
+Isaiah 33:10	myself	1	PRONOUN	GOD_FATHER	God: "now will I lift up myself"
+Isaiah 42:14	myself	1	PRONOUN	GOD_FATHER	God: "refrained myself"
+Isaiah 43:21	myself	1	PRONOUN	GOD_FATHER	God: "formed for myself"
+Isaiah 44:24	myself	1	PRONOUN	GOD_FATHER	God: "spreadeth abroad the earth by myself"
+Isaiah 45:23	myself	1	PRONOUN	GOD_FATHER	God: "I have sworn by myself"
+Isaiah 49:5	I	1	GOD_FATHER	PRONOUN	the Servant speaking ("the LORD that formed me ... to be his servant"); the NT applies 49:6 to the apostles (Acts 13:47), so he keeps a person's color, as at 49:3
+Isaiah 49:5	my	*	GOD_FATHER	PRONOUN	"my God shall be my strength": the Servant's
+Jeremiah 12:14	mine	1	PRONOUN	GOD_FATHER	"Thus saith the LORD against all mine evil neighbours"
+Jeremiah 12:14	I	1	PRONOUN	GOD_FATHER	"the inheritance which I have caused my people Israel to inherit": the LORD
+Jeremiah 12:14	my	1	PRONOUN	GOD_FATHER	"my people": the LORD's
+Jeremiah 22:5	myself	1	PRONOUN	GOD_FATHER	God: "I swear by myself"
+Jeremiah 23:2	my	1	PRONOUN	GOD_FATHER	"the pastors that feed my people": the LORD's
+Jeremiah 49:13	myself	1	PRONOUN	GOD_FATHER	God: "I have sworn by myself"
+Ezekiel 20:3	me	1	PRONOUN	GOD_FATHER	God: "Are ye come to inquire of me?"
+Ezekiel 20:5	myself	1	PRONOUN	GOD_FATHER	God: "made myself known"
+Ezekiel 20:8	me	1	PRONOUN	GOD_FATHER	God: "they rebelled against me"
+Ezekiel 20:9	myself	1	PRONOUN	GOD_FATHER	God: "I made myself known"
+Ezekiel 20:13	me	1	PRONOUN	GOD_FATHER	God: "rebelled against me"
+Ezekiel 20:21	me	1	PRONOUN	GOD_FATHER	God: "the children rebelled against me"
+Ezekiel 35:11	myself	1	PRONOUN	GOD_FATHER	God: "I will make myself known"
+Ezekiel 38:23	myself	*	PRONOUN	GOD_FATHER	God: "magnify myself, and sanctify myself"
+Hosea 8:2	thee	1	PRONOUN	GOD_FATHER	"Israel shall cry unto me, My God, we know thee"
+Hosea 13:10	king	1	GENERAL_PEOPLE	GOD_FATHER	"I will be thy king": God as King
+Amos 3:2	I	1	PRONOUN	GOD_FATHER	God: "You only have I known"
+Zechariah 11:7	I	1	GOD_FATHER	PRONOUN	"And I will feed the flock of slaughter": the prophet, who goes on "I took unto me two staves"

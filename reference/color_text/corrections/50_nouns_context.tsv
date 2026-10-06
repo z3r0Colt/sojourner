@@ -1,0 +1,124 @@
+# Nouns colored against the guide, or against how the same words are colored everywhere else (found by comparing every word with its neighbours).
+# NONE as "from" colors a word the source left plain; NONE as "to" takes a color off.
+# Columns: ref <TAB> term <TAB> occurrence <TAB> from <TAB> to <TAB> note
+Luke 6:45	abundance	1	NONE	QUANTITY	"of the abundance of the heart", as everywhere else
+Exodus 38:1	altar	1	NONE	GENERAL_PLACE_1	the altar, a place noun everywhere else
+Exodus 40:29	altar	1	NONE	GENERAL_PLACE_1	(as above)
+1 Kings 7:48	altar	1	NONE	GENERAL_PLACE_1	(as above)
+1 Chronicles 19:11	Ammon	1	PROPER_PLACE	PEOPLE_GROUP	"the children of Ammon": a people (guide 5.7)
+Jeremiah 25:21	Ammon	1	PROPER_PLACE	PEOPLE_GROUP	(as above)
+Matthew 24:38	ark	1	GENERAL_PLACE_1	NONE	Noah's ark is left plain in Genesis 6-9, as an object
+Luke 17:27	ark	1	GENERAL_PLACE_1	NONE	(as above)
+Revelation 6:8	beasts	1	DEMONIC	ANIMAL	"the beasts of the earth": wild animals, not the beast of Revelation 13
+Numbers 17:5	cease	1	GENERAL_TIME	NONE	a verb; verbs are never colored (guide 6)
+Jeremiah 31:7	chief	1	QUANTITY	GENERAL_PEOPLE	"the chief of the nations": Israel, a people
+Jeremiah 49:35	chief	1	GENERAL_PEOPLE	NONE	"the chief of their might": the main part of their strength, not a person
+Exodus 27:9	court	1	NONE	GENERAL_PLACE_1	the court of the tabernacle
+Mark 14:12	day	1	GENERAL_TIME	SPECIFIC_TIME	"the day of unleavened bread": a feast by name (guide 5.15)
+Mark 14:12	of	1	GENERAL_TIME	SPECIFIC_TIME	(as above)
+Mark 14:12	unleavened	1	GENERAL_TIME	SPECIFIC_TIME	(as above)
+Mark 14:12	bread	1	GENERAL_TIME	SPECIFIC_TIME	(as above)
+Luke 22:7	day	1	GENERAL_TIME	SPECIFIC_TIME	(as above)
+Luke 22:7	of	1	GENERAL_TIME	SPECIFIC_TIME	(as above)
+Luke 22:7	unleavened	1	GENERAL_TIME	SPECIFIC_TIME	(as above)
+Luke 22:7	bread	1	GENERAL_TIME	SPECIFIC_TIME	(as above)
+Matthew 27:62	day	1	GENERAL_TIME	SPECIFIC_TIME	"the day of the preparation": a day by name
+Matthew 27:62	of	1	GENERAL_TIME	SPECIFIC_TIME	(as above)
+Matthew 27:62	the	1	GENERAL_TIME	SPECIFIC_TIME	(as above)
+Matthew 27:62	preparation	1	GENERAL_TIME	SPECIFIC_TIME	(as above)
+Nehemiah 3:1	doors	1	NONE	GENERAL_PLACE_1	the doors, a place noun everywhere else
+Genesis 1:22	earth	1	NONE	GENERAL_PLACE_1	"multiply in the earth"
+Isaiah 14:21	face	1	GENERAL_PLACE_2	NONE	"the face of": left plain 99 times in 108
+Isaiah 23:17	face	1	GENERAL_PLACE_1	NONE	(as above)
+Isaiah 27:6	face	1	GENERAL_PLACE_1	NONE	(as above)
+Jeremiah 8:2	face	1	GENERAL_PLACE_2	NONE	(as above)
+Jeremiah 16:4	face	1	GENERAL_PLACE_2	NONE	(as above)
+Jeremiah 25:26	face	1	GENERAL_PLACE_2	NONE	(as above)
+Jeremiah 28:16	face	1	GENERAL_PLACE_2	NONE	(as above)
+Ezekiel 40:15	face	1	GENERAL_PLACE_1	NONE	(as above)
+Ezekiel 41:14	face	1	GENERAL_PLACE_1	NONE	(as above)
+Mark 12:34	far	1	GENERAL_PLACE_2	GENERAL_PLACE_1	"far" is a place word (guide 5.13), as at "not far from" everywhere else
+Isaiah 41:4	first	1	SPECIFIC_TIME	NUMBER	"the first, and ... the last": as at Revelation 1:11; 22:13
+Isaiah 41:4	last	1	SPECIFIC_TIME	GENERAL_TIME	(as above)
+Isaiah 44:6	first	1	SPECIFIC_TIME	NUMBER	(as above)
+Isaiah 44:6	last	1	SPECIFIC_TIME	GENERAL_TIME	(as above)
+Isaiah 48:12	first	1	SPECIFIC_TIME	NUMBER	(as above)
+Isaiah 48:12	last	1	SPECIFIC_TIME	GENERAL_TIME	(as above)
+Exodus 11:5	firstborn	1	NONE	ANIMAL	"the firstborn of beasts" (guide: firstling is an animal)
+Exodus 12:29	firstborn	1	NONE	ANIMAL	"the firstborn of cattle"
+Exodus 13:15	firstborn	1	NONE	ANIMAL	"the firstborn of beast"
+Matthew 25:34	foundation	1	GENERAL_PLACE_1	NONE	"from the foundation of the world": left plain everywhere else
+Luke 11:50	foundation	1	GENERAL_PLACE_1	NONE	(as above)
+Song of Solomon 8:11	fruit	1	NONE	PLANT	the fruit of the vineyard
+Song of Solomon 8:12	fruit	1	NONE	PLANT	(as above)
+Song of Solomon 6:11	fruits	1	NONE	PLANT	"the fruits of the valley"
+Joel 3:20	generation	*	GENERAL_PEOPLE	GENERAL_TIME	"from generation to generation": time, as everywhere else
+1 Peter 2:12	Gentiles	1	GENERAL_PEOPLE	PEOPLE_GROUP	a people group, as everywhere else
+1 Kings 2:19	hand	1	GENERAL_PLACE_2	NONE	"on his right hand": "right" is the place word; "hand" is a body part
+Haggai 2:4	hosts	1	GENERAL_PEOPLE	ANGELIC	"the LORD of hosts" (guide 5.4)
+Haggai 2:7	hosts	1	GENERAL_PEOPLE	ANGELIC	(as above)
+Haggai 2:8	hosts	1	GENERAL_PEOPLE	ANGELIC	(as above)
+Haggai 2:9	hosts	*	GENERAL_PEOPLE	ANGELIC	(as above)
+Haggai 2:23	hosts	1	GENERAL_PEOPLE	ANGELIC	(as above)
+2 Kings 19:31	hosts	1	NONE	ANGELIC	(as above)
+Exodus 18:25	Israel	1	PEOPLE_GROUP	PROPER_PLACE	"all Israel" is a place (guide 5.12)
+Genesis 49:7	Jacob	1	PROPER_PERSON	PROPER_PLACE	"divide them in Jacob, and scatter them in Israel": the nation (guide 5.12)
+Genesis 49:7	Israel	1	PROPER_PERSON	PROPER_PLACE	(as above)
+Ezra 6:21	Israel	1	PROPER_PERSON	PEOPLE_GROUP	"the children of Israel" (guide 5.7); at Genesis 45:21 they are Jacob's own sons and stay
+1 Chronicles 23:25	Israel	1	PEOPLE_GROUP	PROPER_PLACE	"the God of Israel" (guide 5.12)
+Ezekiel 11:22	Israel	1	PROPER_PERSON	PROPER_PLACE	"the God of Israel" (guide 5.12)
+1 Chronicles 17:9	Israel	1	PEOPLE_GROUP	PROPER_PLACE	"my people Israel", as in 17 places of 18
+1 Chronicles 4:27	Judah	1	PROPER_PERSON	PEOPLE_GROUP	"the children of Judah": the tribe
+Zechariah 10:6	Judah	1	PROPER_PERSON	PROPER_PLACE	"the house of Judah", as "the house of Israel" (guide 5.12)
+Romans 14:10	judgment	1	NONE	GENERAL_PLACE_1	"the judgment seat", as everywhere else
+Ezekiel 39:28	land	1	NONE	GENERAL_PLACE_1	"unto their own land"
+Matthew 25:33	left	1	NONE	GENERAL_PLACE_1	"on the left" (guide 5.13)
+Matthew 25:41	left	1	NONE	GENERAL_PLACE_1	(as above)
+Amos 8:5	new	1	NONE	GENERAL_TIME	"the new moon", as everywhere else
+Mark 15:22	place	1	NONE	GENERAL_PLACE_1	"The place of a skull"
+Romans 9:26	place	1	GENERAL_PLACE_2	GENERAL_PLACE_1	"in the place where": a place noun
+Jeremiah 4:26	presence	1	GENERAL_PLACE_2	NONE	"the presence of": left plain 61 times in 67
+Jeremiah 28:1	presence	1	GENERAL_PLACE_2	NONE	(as above)
+Jeremiah 28:5	presence	*	GENERAL_PLACE_2	NONE	(as above)
+Jeremiah 28:11	presence	1	GENERAL_PLACE_2	NONE	(as above)
+Jeremiah 32:12	presence	1	GENERAL_PLACE_2	NONE	(as above)
+Ezra 4:6	reign	1	GENERAL_TIME	NONE	"in the reign of": left plain everywhere else
+1 Chronicles 5:18	Reuben	1	PROPER_PERSON	PEOPLE_GROUP	"the sons of Reuben and the Gadites": the tribe
+Matthew 26:64	right	1	NONE	GENERAL_PLACE_1	"on the right hand of power" (guide 5.13)
+Mark 14:62	right	1	NONE	GENERAL_PLACE_1	(as above)
+Luke 22:69	right	1	NONE	GENERAL_PLACE_1	(as above)
+John 21:6	right	1	NONE	GENERAL_PLACE_1	"on the right side of the ship"
+Romans 5:7	righteous	1	NONE	GENERAL_PEOPLE	"a righteous man", as everywhere else
+Isaiah 11:4	rod	1	PLANT	NONE	"the rod of his mouth": not a branch
+Isaiah 14:29	rod	1	PLANT	NONE	"the rod of him that smote thee": a weapon
+Ezekiel 21:10	rod	1	PLANT	NONE	"the rod of my son": a sceptre
+1 Corinthians 14:16	room	1	GENERAL_PLACE_1	NONE	"he that occupieth the room of the unlearned": a position, not a place
+Luke 16:27	house	1	GENERAL_PLACE_1	GENERAL_PEOPLE	"my father's house: for I have five brethren": the family
+Jonah 4:5	side	1	GENERAL_PLACE_1	GENERAL_PLACE_2	"side" is a position word everywhere else
+Ezekiel 45:7	side	2	GENERAL_PLACE_1	GENERAL_PLACE_2	(as above)
+Ezekiel 47:1	side	1	GENERAL_PLACE_1	GENERAL_PLACE_2	(as above)
+Ezekiel 41:2	sides	1	GENERAL_PLACE_1	GENERAL_PLACE_2	(as above)
+Ezekiel 41:26	sides	1	GENERAL_PLACE_1	GENERAL_PLACE_2	(as above)
+Nehemiah 12:46	singers	1	PEOPLE_GROUP	GENERAL_PEOPLE	singers are a common noun for people, as everywhere else
+Mark 3:17	sons	1	NONE	GENERAL_PEOPLE	"The sons of thunder": James and John
+Ezekiel 13:19	souls	1	NONE	GENERAL_PEOPLE	"to slay the souls": persons, as everywhere else
+Ezekiel 13:20	souls	1	NONE	GENERAL_PEOPLE	(as above)
+Revelation 14:20	space	1	GENERAL_PLACE_1	MEASUREMENT	"by the space of 1,600 furlongs": a distance
+Matthew 25:43	stranger	1	NONE	GENERAL_PEOPLE	"I was a stranger", as at 25:35
+Exodus 40:18	tabernacle	1	NONE	GENERAL_PLACE_1	the tabernacle, a place noun everywhere else
+Exodus 40:21	tabernacle	1	NONE	GENERAL_PLACE_1	(as above)
+Exodus 33:7	Tabernacle	1	PROPER_PLACE	GENERAL_PLACE_1	"the Tabernacle of the congregation" is not a place name
+Exodus 40:22	tent	1	NONE	GENERAL_PLACE_1	"the tent of the congregation"
+Exodus 40:26	tent	1	NONE	GENERAL_PLACE_1	(as above)
+Leviticus 5:2	creeping things	1	NONE	ANIMAL	"creeping thing" (guide 5.10)
+Job 24:24	tops	1	GENERAL_PLACE_2	NONE	"the tops of the ears of corn": part of a plant
+Nehemiah 3:27	wall of	1	PROPER_PLACE	GENERAL_PLACE_1	"the wall of Ophel": a wall at a named place, as "the wall of" everywhere else
+Exodus 13:21	way	1	NONE	GENERAL_PLACE_1	"way(s)" is a place noun everywhere else (guide 5.13)
+Job 21:29	way	1	NONE	GENERAL_PLACE_1	(as above)
+Ezekiel 33:20	ways	1	NONE	GENERAL_PLACE_1	(as above)
+Ezekiel 18:23	ways	1	NONE	GENERAL_PLACE_1	(as above)
+Hosea 9:8	ways	1	NONE	GENERAL_PLACE_1	(as above)
+1 Kings 22:43	ways	1	NONE	GENERAL_PLACE_1	(as above)
+Hosea 14:9	ways	1	NONE	GENERAL_PLACE_1	(as above)
+Ezekiel 16:47	ways	1	NONE	GENERAL_PLACE_1	(as above)
+Hebrews 2:5	world	1	NONE	GENERAL_PLACE_1	"the world to come"

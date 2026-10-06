@@ -858,6 +858,26 @@ pub struct RedLetterRange {
     pub verse_end: i64,
 }
 
+/// One colored stretch of a verse for color text: offsets in UTF-16 units
+/// into the verse's text, the category code ("GF", "PN", ...), and the KJV
+/// term it stands for, lower-cased (see `crate::color_text`).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ColorSpan {
+    pub verse: i64,
+    pub start: i64,
+    pub end: i64,
+    pub code: String,
+    pub term: String,
+}
+
+/// A KJV verse a colored term appears in, in that color.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ColorTermVerse {
+    pub book_id: i64,
+    pub chapter: i64,
+    pub verse: i64,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HarmonyReading {
     pub book_id: i64,

@@ -2,7 +2,7 @@ import { onDesktop } from "../../lib/platform";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { Bookmark, BookmarkCheck, Columns2, Languages, Maximize2, MoreHorizontal, Paperclip, Printer, SlidersHorizontal, Sparkles, Square, StickyNote, TextSearch, Type, Volume2 } from "lucide-react";
+import { Bookmark, BookmarkCheck, ChevronDown, CircleHelp, Columns2, Languages, Maximize2, MessageSquareQuote, MoreHorizontal, Palette, Paperclip, Printer, SlidersHorizontal, Sparkles, Square, StickyNote, TextSearch, Type, Volume2 } from "lucide-react";
 import { THEME_OPTIONS, useReadingTypography, useUiStore } from "../../state/uiStore";
 import { resolveBiblePane, useWorkspaceStore } from "../../state/workspaceStore";
 import {
@@ -32,6 +32,8 @@ import {
   useInterlinearForChapter,
   useMorphologyForChapter,
   useRedLetterRanges,
+  useColorText,
+  useColorVoices,
   useTranslations,
   useTrashToast,
   useBacklinks,
@@ -56,6 +58,11 @@ import { HighlightPopup } from "./HighlightPopup";
 import { VerseContextMenu } from "./VerseContextMenu";
 import { CompareVerseModal } from "./CompareVerseModal";
 import { FootnotePopup } from "./FootnotePopup";
+import { ColorWordPopup } from "./ColorWordPopup";
+import { lineBoxAt } from "../../lib/popupPosition";
+import { coloredHtml, colorSpansByVerse as groupColorSpans, sliceSpans } from "./colorText";
+import { ColorTextBar, type Spotlight } from "./ColorTextBar";
+import { ColorTextGuide } from "./ColorTextGuide";
 import { NoteEditorModal } from "../notes/NoteEditorModal";
 import { NoteBody } from "../notes/NoteBody";
 import { RichTextEditor } from "../notes/RichTextEditor";
@@ -91,7 +98,7 @@ import { usePane, usePaneNavigate, usePaneParams } from "../../workspace/PaneCon
 import { openContent, openPassage, targetFor } from "../../workspace/openContent";
 import { PANE_KINDS, STUDY_STRIP_KINDS } from "../../workspace/paneKinds";
 import { useCompact } from "../../hooks/useCompact";
-import type { Note, Footnote, Translation } from "../../api/types";
+import type { ColorSpan, Note, Footnote, Translation } from "../../api/types";
 
 /** How long after a click on the text a second click still makes it a
  * double-click: Windows' default double-click time. A click steers the voice
@@ -132,14 +139,14 @@ interface NoteTarget {
 }
 
 /** Below this pane width the reading toolbar folds its tools into one
- * overflow menu, and below the second the Compare and Interlinear buttons
- * drop their labels. Measured, not guessed: the full row -- the chapter
- * controls at their floor (see `toolbar`), the translation dropdown and the
- * nine tools -- is some 675px wide with the tools as icons and 810px with
- * the two labels. At the 520px this once was, a pane between 520 and 740px
+ * overflow menu, and below the second the Compare, Interlinear and Color
+ * text buttons drop their labels. Measured, not guessed: the full row -- the
+ * chapter controls at their floor (see `toolbar`), the translation dropdown
+ * and the tools -- is some 740px wide with the tools as icons and 940px with
+ * the three labels. At the 520px this once was, a pane between 520 and 740px
  * wide cut off its last four or five tools. */
-const TOOLBAR_COMPACT_BELOW_PX = 690;
-const TOOLBAR_NARROW_BELOW_PX = 820;
+const TOOLBAR_COMPACT_BELOW_PX = 750;
+const TOOLBAR_NARROW_BELOW_PX = 950;
 
 /** The Bible chapter view, living in a pane. Everything about *what* is
  * shown (translation, chapter, selected verse, paragraph and red-letter
@@ -152,7 +159,7 @@ export function ReadingPane() {
   const compact = paneWidth > 0 && paneWidth < TOOLBAR_COMPACT_BELOW_PX;
   const narrow = paneWidth > 0 && paneWidth < TOOLBAR_NARROW_BELOW_PX;
   const [params, setParams] = usePaneParams("bible");
-  const { translationId, bookId, chapter, verse: scrollTarget, activeVerse, paragraphMode, redLetterMode, findQuery } = params;
+  const { translationId, bookId, chapter, verse: scrollTarget, activeVerse, paragraphMode, redLetterMode, colorTextMode, colorHidden, voiceMode, findQuery } = params;
   const paneNavigate = usePaneNavigate();
   const ready = useWorkspaceStore((s) => s.ready);
   const setLastTranslation = useWorkspaceStore((s) => s.setLastTranslation);
@@ -239,6 +246,29 @@ export function ReadingPane() {
   const { data: sermonsHere } = useSermonsForChapter(bookId, chapter);
   const { data: footnotes } = useFootnotesForChapter(translationId, bookId, chapter);
   const { data: redLetterRanges } = useRedLetterRanges(redLetterMode ? bookId : null, chapter);
+  // Color text: the chapter's colored words, less the families turned off.
+  const { data: colorSpans } = useColorText(colorTextMode ? translationId : null, bookId, chapter);
+  const colorSpansByVerse = useMemo(() => (colorTextMode ? groupColorSpans(colorSpans, colorHidden) : null), [colorTextMode, colorSpans, colorHidden]);
+  // Who is speaking: runs of text in a voice other than narration, by verse.
+  const { data: voiceSpans } = useColorVoices(voiceMode ? translationId : null, bookId, chapter);
+  const voiceSpansByVerse = useMemo(() => {
+    if (!voiceMode || !voiceSpans) return null;
+    const m = new Map<number, ColorSpan[]>();
+    for (const s of voiceSpans) m.set(s.verse, [...(m.get(s.verse) ?? []), s]);
+    return m;
+  }, [voiceMode, voiceSpans]);
+  const colorTextMarks = useUiStore((s) => s.colorTextMarks);
+  const setColorTextMarks = useUiStore((s) => s.setColorTextMarks);
+  const [colorGuideOpen, setColorGuideOpen] = useState(false);
+  // One term picked from "In this chapter", ringed wherever it stands.
+  const [spotlight, setSpotlight] = useState<Spotlight | null>(null);
+  useEffect(() => setSpotlight(null), [bookId, chapter, translationId, colorTextMode]);
+  function toggleColorFamily(family: string) {
+    const hidden = new Set(colorHidden ?? []);
+    if (hidden.has(family)) hidden.delete(family);
+    else hidden.add(family);
+    setParams({ colorHidden: Array.from(hidden) });
+  }
   const { data: bookmarks } = useBookmarks();
   function isRedLetterVerse(verseNum: number) {
     return !!redLetterRanges?.some((r) => verseNum >= r.verse_start && verseNum <= r.verse_end);
@@ -283,6 +313,36 @@ export function ReadingPane() {
   const [chapterNoteOpen, setChapterNoteOpen] = useState(false);
   const [showAllSuggested, setShowAllSuggested] = useState(false);
   const [activeFootnote, setActiveFootnote] = useState<{ footnote: Footnote; x: number; y: number; anchorTop: number } | null>(null);
+  // A colored word's card, opened by a single click on it -- after a pause,
+  // so the first click of a double-click (a word lookup) never opens it.
+  const [colorWord, setColorWord] = useState<{ code: string; term: string; word: string; verse: number; x: number; y: number; anchorTop: number } | null>(null);
+  const colorClickTimer = useRef<number | null>(null);
+  function cancelColorClick() {
+    if (colorClickTimer.current != null) window.clearTimeout(colorClickTimer.current);
+    colorClickTimer.current = null;
+  }
+  function handleColorClick(e: React.MouseEvent) {
+    if (!colorTextMode || e.detail !== 1) return;
+    const el = (e.target as HTMLElement).closest<HTMLElement>("[data-ct-code]");
+    if (!el) return;
+    const sel = window.getSelection();
+    if (sel && !sel.isCollapsed) return;
+    const code = el.dataset.ctCode!;
+    const term = el.dataset.ctTerm!;
+    // The whole colored word, though a highlight edge may split it in two.
+    const parts = Array.from(el.closest("[data-verse-text]")?.querySelectorAll<HTMLElement>(".ct") ?? []);
+    let at = parts.indexOf(el);
+    let word = el.textContent ?? "";
+    for (let i = at - 1; i >= 0 && parts[i].dataset.ctTerm === term && adjacent(parts[i], parts[i + 1]); i--) word = (parts[i].textContent ?? "") + word;
+    for (at = at + 1; at < parts.length && parts[at].dataset.ctTerm === term && adjacent(parts[at - 1], parts[at]); at++) word += parts[at].textContent ?? "";
+    const line = lineBoxAt(el.getClientRects(), e.clientY) ?? el.getBoundingClientRect();
+    cancelColorClick();
+    colorClickTimer.current = window.setTimeout(() => {
+      colorClickTimer.current = null;
+      const verse = Number(el.closest("[data-verse-text]")?.getAttribute("data-verse-text") ?? 0);
+      setColorWord({ code, term, word: word.trim(), verse, x: line.left, y: line.bottom + 4, anchorTop: line.top });
+    }, 250);
+  }
   const [verseMenu, setVerseMenu] = useState<{ verseNum: number; x: number; y: number } | null>(null);
   const [compareVerse, setCompareVerse] = useState<number | null>(null);
   const [printing, setPrinting] = useState(false);
@@ -368,12 +428,19 @@ export function ReadingPane() {
   }, [wordLookup]);
   useEffect(() => {
     setWordLookup(null);
+    setColorWord(null);
   }, [bookId, chapter, translationId]);
+  useEffect(() => {
+    if (!colorTextMode) setColorWord(null);
+  }, [colorTextMode]);
+  useEffect(() => cancelColorClick, []);
 
   function handleDoubleClick() {
     // A double-click is a word lookup, never a move of the voice (see
-    // setActiveVerse).
+    // setActiveVerse), nor a colored word's card.
     cancelSteer();
+    cancelColorClick();
+    setColorWord(null);
     const at = wordFromSelection(window.getSelection());
     if (!at) return;
     const rect = window.getSelection()!.getRangeAt(0).getBoundingClientRect();
@@ -414,6 +481,16 @@ export function ReadingPane() {
     overscan: 8,
     useFlushSync: false,
   });
+  // A term picked in "In this chapter": bring its first place into view.
+  useEffect(() => {
+    if (!spotlight || !colorSpans || !verses) return;
+    const first = colorSpans.find((s) => s.code === spotlight.code && s.term === spotlight.term);
+    const index = first ? verses.findIndex((v) => v.verse === first.verse) : -1;
+    if (index < 0) return;
+    if (paragraphMode) containerRef.current?.querySelector(`[data-verse-row="${first!.verse}"]`)?.scrollIntoView({ block: "center" });
+    else rowVirtualizer.scrollToIndex(index, { align: "center" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [spotlight]);
 
   // Choosing a verse while this pane is reading aloud moves the reader to
   // it, so the voice can be steered by pointing at the text rather than by
@@ -913,12 +990,84 @@ export function ReadingPane() {
     </div>
   );
 
+  // Color text, as prominent as the interlinear: one click turns it on, and
+  // the menu beside it holds its companions and the guide to the colors.
+  const colorTextOptions = (close: () => void) => (
+    <>
+      {[
+        { label: "Color text", checked: !!colorTextMode, onChange: () => setParams({ colorTextMode: !colorTextMode }), hint: "Who, what, where, when and how many" },
+        { label: "Who's speaking", checked: !!voiceMode, onChange: () => setParams({ voiceMode: !voiceMode }), hint: "God's words in small capitals, Scripture quoted in italics" },
+        { label: "Underline each family", checked: colorTextMarks, onChange: () => setColorTextMarks(!colorTextMarks), hint: "To tell the colors apart without seeing them" },
+      ].map((opt) => (
+        <label key={opt.label} className="flex cursor-pointer items-start gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-hover">
+          <input type="checkbox" className={cx(checkboxClass, "mt-0.5")} checked={opt.checked} onChange={opt.onChange} />
+          <span>
+            <span className="text-ink-2">{opt.label}</span>
+            <span className="block text-xs text-ink-3">{opt.hint}</span>
+          </span>
+        </label>
+      ))}
+      <div className="my-1 h-px bg-line" aria-hidden="true" />
+      <PopoverItem
+        onClick={() => {
+          setColorGuideOpen(true);
+          close();
+        }}
+      >
+        <CircleHelp className="h-4 w-4 text-ink-3" aria-hidden="true" /> What the colors mean
+      </PopoverItem>
+    </>
+  );
+  const colorTextControl = (
+    <div className="inline-flex items-center" data-tour="color-text">
+      {narrow ? (
+        <IconButton
+          icon={Palette}
+          label={colorTextMode ? "Color text: on. Click to turn it off" : "Color text: who, what, where, when and how many, each in its own color"}
+          active={!!colorTextMode}
+          onClick={() => setParams({ colorTextMode: !colorTextMode })}
+        />
+      ) : (
+        <Button
+          size="sm"
+          variant="ghost"
+          icon={Palette}
+          active={!!colorTextMode}
+          aria-pressed={!!colorTextMode}
+          onClick={() => setParams({ colorTextMode: !colorTextMode })}
+          title="Color text: who, what, where, when and how many, each in its own color"
+        >
+          Color text
+        </Button>
+      )}
+      <Popover
+        width="w-72"
+        align="left"
+        trigger={({ toggle, open }) => <IconButton icon={ChevronDown} size="sm" label="Color text options" active={open} onClick={toggle} />}
+      >
+        {(close) => colorTextOptions(close)}
+      </Popover>
+    </div>
+  );
+
   const viewOptions = (
     <>
       {[
         { label: "Paragraph mode", checked: paragraphMode, onChange: () => setParams({ paragraphMode: !paragraphMode }), hint: "Flowing prose instead of one verse per line" },
         { label: "Verse numbers", checked: showVerseNumbers, onChange: toggleVerseNumbers },
         { label: "Words of Jesus in red", checked: redLetterMode, onChange: () => setParams({ redLetterMode: !redLetterMode }) },
+        {
+          label: "Color text",
+          checked: !!colorTextMode,
+          onChange: () => setParams({ colorTextMode: !colorTextMode }),
+          hint: "Who, what, where, when and how many, each in its own color",
+        },
+        {
+          label: "Who's speaking",
+          checked: !!voiceMode,
+          onChange: () => setParams({ voiceMode: !voiceMode }),
+          hint: "God's words in small capitals, Scripture quoted in italics",
+        },
         { label: "Show highlights", checked: showHighlights, onChange: toggleShowHighlights },
         { label: "Show note markers", checked: showNoteSymbols, onChange: toggleShowNoteSymbols },
       ].map((opt) => (
@@ -948,7 +1097,11 @@ export function ReadingPane() {
         <PopoverItem
           key={t.id}
           onClick={() => {
-            openContent("bible", { translationId: t.id, bookId, chapter, activeVerse }, { target: "new", from: paneId, link: true });
+            openContent(
+              "bible",
+              { translationId: t.id, bookId, chapter, activeVerse, colorTextMode, colorHidden, voiceMode, redLetterMode },
+              { target: "new", from: paneId, link: true },
+            );
             close();
           }}
         >
@@ -1037,6 +1190,22 @@ export function ReadingPane() {
                   }}
                 >
                   <Languages className="h-4 w-4 text-ink-3" aria-hidden="true" /> Interlinear in a new pane
+                </PopoverItem>
+                <PopoverItem
+                  onClick={() => {
+                    setParams({ colorTextMode: !colorTextMode });
+                    close();
+                  }}
+                >
+                  <Palette className="h-4 w-4 text-ink-3" aria-hidden="true" /> {colorTextMode ? "Turn off color text" : "Color text"}
+                </PopoverItem>
+                <PopoverItem
+                  onClick={() => {
+                    setParams({ voiceMode: !voiceMode });
+                    close();
+                  }}
+                >
+                  <MessageSquareQuote className="h-4 w-4 text-ink-3" aria-hidden="true" /> {voiceMode ? "Turn off who's speaking" : "Who's speaking"}
                 </PopoverItem>
                 <PopoverItem
                   onClick={() => {
@@ -1169,6 +1338,7 @@ export function ReadingPane() {
               Interlinear
             </Button>
           )}
+          {colorTextControl}
           <div className="min-w-0 flex-1" />
           <IconButton icon={TextSearch} label="Find in this chapter (Ctrl+G)" active={findOpen} onClick={openFind} />
           <div className="relative">
@@ -1223,6 +1393,23 @@ export function ReadingPane() {
   return (
     <div className="flex h-full flex-col">
       {toolbar}
+      {(colorTextMode || voiceMode) && book && (
+        <ColorTextBar
+          colorOn={!!colorTextMode}
+          voiceOn={!!voiceMode}
+          spans={colorSpans}
+          verses={verses}
+          hidden={colorHidden ?? []}
+          onToggleFamily={toggleColorFamily}
+          spotlight={spotlight}
+          onSpotlight={setSpotlight}
+          bookId={book.id}
+          chapter={chapter}
+          onHelp={() => setColorGuideOpen(true)}
+          compact={narrow}
+        />
+      )}
+      {colorGuideOpen && <ColorTextGuide onClose={() => setColorGuideOpen(false)} />}
       {findOpen && (
         <FindBar
           query={findQuery}
@@ -1244,7 +1431,14 @@ export function ReadingPane() {
         />
       )}
       <div className="flex min-h-0 flex-1">
-        <div ref={containerRef} onMouseUp={handleMouseUp} onDoubleClick={handleDoubleClick} className="min-h-0 flex-1 overflow-y-auto px-8 py-6">
+        <div
+          ref={containerRef}
+          onMouseUp={handleMouseUp}
+          onClick={handleColorClick}
+          onDoubleClick={handleDoubleClick}
+          className={cx("min-h-0 flex-1 overflow-y-auto px-8 py-6", colorTextMode && colorTextMarks && "ct-marks")}
+        >
+          {spotlight && <style>{spotlightCss(spotlight)}</style>}
           <div className="mx-auto w-full max-w-[70ch]">
             <h1 className="reading-font mb-1 text-2xl font-semibold text-ink">
               {book.name} {chapter}
@@ -1290,6 +1484,8 @@ export function ReadingPane() {
                     activeVerse={activeVerse}
                     redLetterSpansByVerse={redLetterSpansByVerse}
                     findRangesByVerse={findByVerse}
+                    colorSpansByVerse={colorSpansByVerse}
+                    voiceSpansByVerse={voiceSpansByVerse}
                     backlinkVerses={backlinkVerses}
                     {...rowProps}
                   />
@@ -1301,6 +1497,8 @@ export function ReadingPane() {
                       footnotes={footnotes?.[v.verse]}
                       isActive={false}
                       redLetterSpans={redLetterSpansByVerse?.get(v.verse)}
+                      colorSpans={colorSpansByVerse?.get(v.verse)}
+                      voiceSpans={voiceSpansByVerse?.get(v.verse)}
                       hasBacklinks={backlinkVerses.has(v.verse)}
                       {...rowProps}
                     />
@@ -1329,6 +1527,8 @@ export function ReadingPane() {
                         ttsActive={ttsHere && ttsCurrentSegmentId === v.verse}
                         redLetterSpans={redLetterSpansByVerse?.get(v.verse)}
                         findRanges={findByVerse?.get(v.verse)}
+                        colorSpans={colorSpansByVerse?.get(v.verse)}
+                        voiceSpans={voiceSpansByVerse?.get(v.verse)}
                         hasBacklinks={backlinkVerses.has(v.verse)}
                         {...rowProps}
                       />
@@ -1362,7 +1562,18 @@ export function ReadingPane() {
                 ? verseText(pending.verseStart).slice(pending.charStart, pending.charEnd)
                 : joinVerses(verses, pending.verseStart, pending.verseEnd);
             const ref = formatRef([book], toPassageRef(book.id, chapter, pending.verseStart, pending.verseEnd));
-            copyPassage(text, ref, translationCode);
+            // With color text on, a paste into a document keeps the colors.
+            let html: string | undefined;
+            if (colorSpansByVerse) {
+              html =
+                pending.charStart != null && pending.charEnd != null
+                  ? coloredHtml(text, sliceSpans(colorSpansByVerse.get(pending.verseStart), pending.charStart, pending.charEnd))
+                  : (verses ?? [])
+                      .filter((v) => v.verse >= pending.verseStart && v.verse <= pending.verseEnd)
+                      .map((v) => coloredHtml(v.text.trim(), colorSpansByVerse.get(v.verse)))
+                      .join(" ");
+            }
+            copyPassage(text, ref, translationCode, html);
             toast.success(`Copied ${ref}`);
             window.getSelection()?.removeAllRanges();
             setPending(null);
@@ -1459,7 +1670,8 @@ export function ReadingPane() {
           }
           onCopy={() => {
             const ref = `${book.name} ${chapter}:${verseMenu.verseNum}`;
-            copyPassage(verseText(verseMenu.verseNum), ref, translationCode);
+            const text = verseText(verseMenu.verseNum);
+            copyPassage(text, ref, translationCode, colorSpansByVerse ? coloredHtml(text, colorSpansByVerse.get(verseMenu.verseNum)) : undefined);
             toast.success(`Copied ${ref}`);
           }}
           onMemorize={() => {
@@ -1527,6 +1739,20 @@ export function ReadingPane() {
                 }
               : null
           }
+        />
+      )}
+
+      {colorWord && (
+        <ColorWordPopup
+          {...colorWord}
+          bookId={bookId}
+          chapter={chapter}
+          translationId={translationId}
+          onOpen={(r, e) => {
+            setColorWord(null);
+            openPassage({ bookId: r.book_id, chapter: r.chapter, verse: r.verse_start }, { target: targetFor(e, paneId), from: paneId });
+          }}
+          onClose={() => setColorWord(null)}
         />
       )}
 
@@ -1713,4 +1939,19 @@ function ChapterNoteItem({
       </div>
     </div>
   );
+}
+
+/** Whether two colored pieces of a verse touch: one word split by a
+ * highlight's edge, rather than the same term twice. */
+function adjacent(a: HTMLElement, b: HTMLElement): boolean {
+  const range = document.createRange();
+  range.setStartAfter(a);
+  range.setEndBefore(b);
+  return range.toString() === "";
+}
+
+/** The rule that rings every word of the term picked in "In this chapter". */
+function spotlightCss(s: Spotlight): string {
+  const term = s.term.replace(/[^\p{L}\p{N} '-]/gu, "");
+  return `.ct[data-ct-code="${s.code}"][data-ct-term="${term}"]{border-radius:3px;box-shadow:0 0 0 2px color-mix(in srgb, var(--ct-c) 45%, transparent);background:color-mix(in srgb, var(--ct-c) 14%, transparent)}`;
 }

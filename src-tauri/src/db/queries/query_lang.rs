@@ -36,9 +36,44 @@
 //! | `lemma:λόγος`            | verses with that lemma                        |
 //! | `red:`                   | words of Christ                               |
 //! | `has:note`, `has:highlight`, `color:amber` | the reader's own marks      |
+//! | `tag:son`, `tag:places`  | verses where color text marks that kind of word |
+//! | `speaker:god`            | verses where God speaks (also `quote`, `speech`) |
 //! | `since:2026-01`, `series:romans` | notes, sermons and illustrations      |
 
 use serde::Serialize;
+
+/// `tag:` names: a color text family or one of its categories, the codes it
+/// stands for, and the chip shown for it.
+const COLOR_TAGS: &[(&[&str], &[&str], &str)] = &[
+    (&["god"], &["GF", "GS", "HS"], "naming God"),
+    (&["father"], &["GF"], "naming the Father"),
+    (&["son", "christ", "jesus"], &["GS"], "naming the Son"),
+    (&["spirit", "holyspirit", "ghost"], &["HS"], "naming the Holy Spirit"),
+    (&["angels", "spirits"], &["AN", "DE"], "naming angels or demons"),
+    (&["angel", "angelic"], &["AN"], "naming angels"),
+    (&["demon", "demons", "demonic", "idol", "idols"], &["DE"], "naming demons or false gods"),
+    (&["people", "who"], &["PN", "PG", "GP"], "naming people"),
+    (&["person", "persons", "name", "names"], &["PN"], "naming a person"),
+    (&["nation", "nations", "tribe", "tribes", "group"], &["PG"], "naming a nation or tribe"),
+    (&["nature", "what"], &["BE", "PL"], "naming animals or plants"),
+    (&["animal", "animals"], &["BE"], "naming animals"),
+    (&["plant", "plants"], &["PL"], "naming plants"),
+    (&["places", "where"], &["PP", "L1"], "naming places"),
+    (&["placename", "place-name", "city", "cities"], &["PP"], "naming a place"),
+    (&["time", "when"], &["T1", "T2"], "marking time"),
+    (&["date", "dates", "feast", "feasts"], &["T1"], "naming a time"),
+    (&["number", "numbers", "howmany"], &["NU", "ME"], "with numbers"),
+    (&["measure", "measures"], &["ME"], "with measures"),
+];
+
+/// `speaker:` names: the voice, and its chip.
+const SPEAKERS: &[(&[&str], &str, &str)] = &[
+    (&["god", "lord", "divine"], "god", "God speaking"),
+    (&["quote", "quoted", "scripture"], "quote", "Scripture quoted"),
+    (&["speech", "person", "people"], "speech", "someone speaking"),
+    (&["inner", "nested"], "inner", "speech within speech"),
+    (&["benediction", "blessing"], "benediction", "benedictions"),
+];
 
 /// How words without an operator of their own are matched.
 #[derive(Debug, Clone, Copy, Default)]
@@ -74,6 +109,10 @@ pub struct Filters {
     pub strongs: Vec<String>,
     pub lemmas: Vec<String>,
     pub red: bool,
+    /// Color text category codes ("GS", "PP", ...), any of them.
+    pub tags: Vec<String>,
+    /// Who speaks ("god", "quote", ...), any of them.
+    pub speakers: Vec<String>,
     pub has_note: bool,
     pub has_highlight: bool,
     pub color: Option<String>,
@@ -86,7 +125,7 @@ impl Filters {
     /// True when a filter narrows which verses can match -- enough to list
     /// verses even with no words to search for.
     pub fn narrows_verses(&self) -> bool {
-        !self.strongs.is_empty() || !self.lemmas.is_empty() || self.red || self.has_note || self.has_highlight || self.color.is_some()
+        !self.strongs.is_empty() || !self.lemmas.is_empty() || self.red || !self.tags.is_empty() || !self.speakers.is_empty() || self.has_note || self.has_highlight || self.color.is_some()
     }
 }
 
@@ -311,7 +350,7 @@ fn tokenize(query: &str) -> Vec<Tok> {
                     let key_l = key.to_ascii_lowercase();
                     if matches!(
                         key_l.as_str(),
-                        "in" | "t" | "c" | "lemma" | "red" | "has" | "color" | "colour" | "since" | "series"
+                        "in" | "t" | "c" | "lemma" | "red" | "tag" | "speaker" | "has" | "color" | "colour" | "since" | "series"
                     ) {
                         out.push(Tok::Filter { key: key_l, value: value.to_string() });
                         continue;
@@ -680,6 +719,30 @@ fn apply_filter(q: &mut ParsedQuery, key: &str, value: &str) {
             f.red = true;
             q.chips.push("words of Christ".into());
         }
+        "tag" => {
+            for name in value.split(',').map(|s| s.trim().to_lowercase()).filter(|s| !s.is_empty()) {
+                match COLOR_TAGS.iter().find(|(names, _, _)| names.contains(&name.as_str())) {
+                    Some((_, codes, label)) => {
+                        q.chips.push((*label).to_string());
+                        f.tags.extend(codes.iter().map(|c| c.to_string()));
+                    }
+                    None => q.unknown.push(format!("tag:{name}")),
+                }
+            }
+            f.tags.sort();
+            f.tags.dedup();
+        }
+        "speaker" => {
+            for name in value.split(',').map(|s| s.trim().to_lowercase()).filter(|s| !s.is_empty()) {
+                match SPEAKERS.iter().find(|(names, _, _)| names.contains(&name.as_str())) {
+                    Some((_, voice, label)) => {
+                        q.chips.push((*label).to_string());
+                        f.speakers.push(voice.to_string());
+                    }
+                    None => q.unknown.push(format!("speaker:{name}")),
+                }
+            }
+        }
         "has" => match value.to_lowercase().as_str() {
             "note" | "notes" => {
                 f.has_note = true;
@@ -805,6 +868,16 @@ pub fn compile_regex(pattern: &str) -> anyhow::Result<regex::Regex> {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn color_text_filters() {
+        let q = super::parse("lamb tag:son speaker:god,quote tag:nope", super::ParseOptions::default());
+        assert_eq!(q.filters.tags, vec!["GS".to_string()]);
+        assert_eq!(q.filters.speakers, vec!["god".to_string(), "quote".to_string()]);
+        assert!(q.chips.iter().any(|c| c == "naming the Son"));
+        assert!(q.unknown.iter().any(|u| u == "tag:nope"));
+        assert!(q.filters.narrows_verses());
+    }
+
     use super::*;
 
     fn fts(q: &str) -> String {

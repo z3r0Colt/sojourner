@@ -1469,6 +1469,36 @@ export function useRedLetterRanges(bookId: number | null, chapter: number | null
   });
 }
 
+/** Color text for a chapter; `translationId` null while color text is off. */
+export function useColorText(translationId: number | null, bookId: number | null, chapter: number | null) {
+  return useQuery({
+    queryKey: ["colorText", translationId, bookId, chapter],
+    queryFn: () => api.getColorText(translationId!, bookId!, chapter!),
+    enabled: translationId != null && bookId != null && chapter != null,
+    staleTime: Infinity,
+  });
+}
+
+/** Who is speaking in a chapter; `translationId` null while it is off. */
+export function useColorVoices(translationId: number | null, bookId: number | null, chapter: number | null) {
+  return useQuery({
+    queryKey: ["colorVoices", translationId, bookId, chapter],
+    queryFn: () => api.getColorVoices(translationId!, bookId!, chapter!),
+    enabled: translationId != null && bookId != null && chapter != null,
+    staleTime: Infinity,
+  });
+}
+
+/** Every verse where a colored term has that color. */
+export function useColorTermVerses(code: string | null, term: string | null) {
+  return useQuery({
+    queryKey: ["colorTermVerses", code, term],
+    queryFn: () => api.getColorTermVerses(code!, term!),
+    enabled: code != null && term != null,
+    staleTime: Infinity,
+  });
+}
+
 // --- Sermon Builder -------------------------------------------------------
 //
 // Every sermon mutation invalidates the same keys: the list the Sermons page

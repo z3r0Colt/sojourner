@@ -1518,6 +1518,52 @@ CREATE TRIGGER atlas_places_ad AFTER DELETE ON atlas_places BEGIN
 END;
 "#;
 
+// Color text: the KJV's persons, places, times and numbers, each colored by
+// category (see crate::color_text and reference/color_text). Spans are byte
+// offsets into the KJV verse text, which is plain ASCII. `term` is the
+// colored words lower-cased, for "every verse where this word has this
+// color". color_lexicon holds the words that take one color nearly every
+// time, per language, for the translations colored from the KJV.
+pub const CONTENT_MIGRATION_0032: &str = r#"
+CREATE TABLE color_tags (
+  id          INTEGER PRIMARY KEY,
+  book_id     INTEGER NOT NULL REFERENCES books(id),
+  chapter     INTEGER NOT NULL,
+  verse       INTEGER NOT NULL,
+  char_start  INTEGER NOT NULL,
+  char_end    INTEGER NOT NULL,
+  code        TEXT NOT NULL,
+  term        TEXT NOT NULL
+);
+CREATE INDEX idx_color_tags_lookup ON color_tags(book_id, chapter, verse);
+CREATE INDEX idx_color_tags_term ON color_tags(term, code);
+CREATE TABLE color_lexicon (
+  lang  TEXT NOT NULL,
+  form  TEXT NOT NULL,
+  code  TEXT NOT NULL,
+  term  TEXT NOT NULL,
+  PRIMARY KEY (lang, form)
+) WITHOUT ROWID;
+"#;
+
+// Who is speaking, from the same source as color text: the KJV's runs of text
+// in a voice other than narration (God speaking, a person speaking, speech
+// within speech, Scripture quoted in a speech, a closing benediction). Byte
+// offsets into the KJV verse text, like color_tags.
+pub const CONTENT_MIGRATION_0033: &str = r#"
+CREATE TABLE color_voices (
+  id          INTEGER PRIMARY KEY,
+  book_id     INTEGER NOT NULL REFERENCES books(id),
+  chapter     INTEGER NOT NULL,
+  verse       INTEGER NOT NULL,
+  char_start  INTEGER NOT NULL,
+  char_end    INTEGER NOT NULL,
+  voice       TEXT NOT NULL
+);
+CREATE INDEX idx_color_voices_lookup ON color_voices(book_id, chapter, verse);
+CREATE INDEX idx_color_voices_voice ON color_voices(voice);
+"#;
+
 pub const CONTENT_MIGRATIONS: &[&str] = &[
     CONTENT_MIGRATION_0001,
     CONTENT_MIGRATION_0002,
@@ -1550,6 +1596,8 @@ pub const CONTENT_MIGRATIONS: &[&str] = &[
     CONTENT_MIGRATION_0029,
     CONTENT_MIGRATION_0030,
     CONTENT_MIGRATION_0031,
+    CONTENT_MIGRATION_0032,
+    CONTENT_MIGRATION_0033,
 ];
 
 // library.db: the books that ship with the app, in a file of their own.

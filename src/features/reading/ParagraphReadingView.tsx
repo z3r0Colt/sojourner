@@ -1,5 +1,5 @@
 import { StickyNote } from "lucide-react";
-import type { Highlight, Note, Verse, Footnote } from "../../api/types";
+import type { Highlight, Note, Verse, Footnote, ColorSpan } from "../../api/types";
 import { buildTokens } from "./verseTokens";
 import type { RedLetterSpan } from "./redLetterSpans";
 import type { FindRange } from "./findMatches";
@@ -29,6 +29,8 @@ function ParagraphVerse({
   onContextMenu,
   redLetterSpans,
   findRanges,
+  colorSpans,
+  voiceSpans,
   hasBacklinks,
 }: {
   verse: Verse;
@@ -45,9 +47,11 @@ function ParagraphVerse({
   onContextMenu?: (verseNum: number, x: number, y: number) => void;
   redLetterSpans?: RedLetterSpan[];
   findRanges?: FindRange[];
+  colorSpans?: ColorSpan[];
+  voiceSpans?: ColorSpan[];
   hasBacklinks?: boolean;
 }) {
-  const tokens = buildTokens(verse.text, highlights, verse.verse, footnotes ?? [], redLetterSpans, findRanges);
+  const tokens = buildTokens(verse.text, highlights, verse.verse, footnotes ?? [], redLetterSpans, findRanges, colorSpans, voiceSpans);
   const notesByHighlight = new Map(notes.filter((n) => n.highlight_id != null).map((n) => [n.highlight_id as number, n]));
   const verseLevelNote = notes.find(
     (n) => n.highlight_id == null && verse.verse >= n.verse_start && verse.verse <= n.verse_end,
@@ -176,6 +180,8 @@ export function ParagraphVerses({
   showNoteSymbols,
   redLetterSpansByVerse,
   findRangesByVerse,
+  colorSpansByVerse,
+  voiceSpansByVerse,
   backlinkVerses,
   onSelectVerse,
   onHighlightClick,
@@ -193,6 +199,8 @@ export function ParagraphVerses({
   showNoteSymbols: boolean;
   redLetterSpansByVerse?: Map<number, RedLetterSpan[]> | null;
   findRangesByVerse?: Map<number, FindRange[]> | null;
+  colorSpansByVerse?: Map<number, ColorSpan[]> | null;
+  voiceSpansByVerse?: Map<number, ColorSpan[]> | null;
   backlinkVerses?: Set<number>;
   onSelectVerse: (verseNum: number) => void;
   onHighlightClick: (highlightId: number, x: number, y: number, flipY: number) => void;
@@ -214,6 +222,8 @@ export function ParagraphVerses({
           showNoteSymbols={showNoteSymbols}
           redLetterSpans={redLetterSpansByVerse?.get(v.verse)}
           findRanges={findRangesByVerse?.get(v.verse)}
+          colorSpans={colorSpansByVerse?.get(v.verse)}
+          voiceSpans={voiceSpansByVerse?.get(v.verse)}
           hasBacklinks={backlinkVerses?.has(v.verse)}
           onSelectVerse={onSelectVerse}
           onHighlightClick={onHighlightClick}

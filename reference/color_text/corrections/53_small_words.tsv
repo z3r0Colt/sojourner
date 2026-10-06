@@ -1,0 +1,559 @@
+# Small position, time and amount words colored against the book's own practice for the same words in the same wording (found by comparing every word with its neighbours, each case read).
+# Kept as they are where the sense differs: "before the morning" (time), "as long as" (a length), "there" meaning a place vs "there is", "then" meaning therefore (1 Corinthians 15:18), "to pass that way" (a verb), and "so" (the book and the guide disagree; left alone).
+# Feast names move to specific time, as the guide says and as Passover, Pentecost and Purim already are.
+# Columns: ref <TAB> term <TAB> occurrence <TAB> from <TAB> to <TAB> note
+Matthew 21:33	about	1	NONE	GENERAL_PLACE_2	"round about and": position word in 38 of 39 places alike
+Ezekiel 16:53	again	1	NONE	GENERAL_TIME	"bring again the": time word in 12 of 13 places alike
+Judges 12:3	against	1	NONE	GENERAL_PLACE_2	"over against the": position word in 47 of 50 places alike
+Judges 12:3	over	1	NONE	GENERAL_PLACE_2	"over against": a position phrase, as everywhere else
+1 Kings 20:29	against	1	NONE	GENERAL_PLACE_2	"over against the": position word in 47 of 50 places alike
+1 Kings 20:29	over	1	NONE	GENERAL_PLACE_2	"over against": a position phrase, as everywhere else
+Ecclesiastes 7:14	against	1	NONE	GENERAL_PLACE_2	"over against the": position word in 47 of 50 places alike
+Ecclesiastes 7:14	over	1	NONE	GENERAL_PLACE_2	"over against": a position phrase, as everywhere else
+Mark 13:10	all	1	NONE	QUANTITY	"among all nations": amount word in 7 of 8 places alike
+Matthew 13:49	among	1	GENERAL_PLACE_2	NONE	"from among the": left plain in 32 of 33 places alike
+Romans 12:10	another	2	QUANTITY	NONE	"one another": left plain in 15 of 16 places alike
+1 Kings 6:27	another	1	QUANTITY	NONE	"one another in": left plain in 6 of 7 places alike
+Luke 10:19	any	1	QUANTITY	NONE	"by any means": left plain in 11 of 12 places alike
+Mark 13:5	any	1	QUANTITY	NONE	"lest any man": left plain in 6 of 7 places alike
+Luke 14:8	any	1	QUANTITY	NONE	"of any man": left plain in 6 of 7 places alike
+Luke 11:11	any	1	QUANTITY	NONE	"of any of": left plain in 7 of 8 places alike
+John 6:46	any	1	QUANTITY	NONE	"that any man": left plain in 7 of 8 places alike
+Ezekiel 39:28	any	1	NONE	GENERAL_TIME	"them any more": time word in 9 of 10 places alike
+Ezekiel 39:28	more	1	QUANTITY	GENERAL_TIME	"any more": a time phrase
+1 Samuel 9:13	as	1	GENERAL_TIME	NONE	"as soon": left plain in 6 of 7 places alike
+Acts 21:31	as	1	GENERAL_TIME	NONE	"and as they": left plain in 26 of 27 places alike
+Genesis 44:3	as	1	NONE	GENERAL_TIME	"soon as the": time word in 8 of 9 places alike
+Isaiah 58:9	away	1	GENERAL_PLACE_2	NONE	"take away from": left plain in 6 of 7 places alike
+Mark 4:15	away	1	GENERAL_PLACE_2	NONE	"taketh away the": left plain in 7 of 8 places alike
+Genesis 15:11	away	1	GENERAL_PLACE_2	NONE	"them away": left plain in 8 of 9 places alike
+Jeremiah 32:40	away	1	GENERAL_PLACE_2	NONE	"turn away from": left plain in 10 of 11 places alike
+Revelation 3:5	before	2	NONE	GENERAL_PLACE_2	"and before his": position word in 8 of 9 places alike
+2 Samuel 5:4	began	1	NONE	GENERAL_TIME	"he began to": time word in 59 of 60 places alike
+Numbers 7:89	between	1	NONE	GENERAL_PLACE_2	"from between the": position word in 6 of 7 places alike
+Jeremiah 17:19	by	1	GENERAL_PLACE_2	NONE	"and by the": left plain in 57 of 58 places alike
+Jeremiah 41:12	by	1	GENERAL_PLACE_2	NONE	"him by the": left plain in 22 of 23 places alike
+Jeremiah 19:2	by	1	GENERAL_PLACE_2	NONE	"is by the": left plain in 28 of 29 places alike
+Jeremiah 52:7	by	3	GENERAL_PLACE_2	NONE	"were by the": left plain in 7 of 8 places alike
+Revelation 5:8	down	1	GENERAL_PLACE_2	NONE	"fell down before": left plain in 8 of 9 places alike
+2 Kings 1:15	down	1	NONE	GENERAL_PLACE_2	"go down with": position word in 6 of 7 places alike
+Isaiah 14:30	down	1	GENERAL_PLACE_2	NONE	"lie down in": left plain in 7 of 8 places alike
+Luke 10:30	down	1	NONE	GENERAL_PLACE_2	"went down from": position word in 6 of 7 places alike
+Song of Solomon 6:11	down	1	NONE	GENERAL_PLACE_2	"went down into": position word in 10 of 11 places alike
+Luke 18:14	down	1	NONE	GENERAL_PLACE_2	"went down to": position word in 28 of 29 places alike
+Ruth 3:6	down	1	NONE	GENERAL_PLACE_2	"went down unto": position word in 6 of 7 places alike
+Ezekiel 21:25	end	1	NONE	GENERAL_TIME	"an end": time word in 8 of 9 places alike
+2 Chronicles 20:23	end	1	NONE	GENERAL_TIME	"an end of": time word in 41 of 46 places alike
+Isaiah 38:12	end	1	NONE	GENERAL_TIME	"an end of": time word in 41 of 46 places alike
+Isaiah 38:13	end	1	NONE	GENERAL_TIME	"an end of": time word in 41 of 46 places alike
+Ezekiel 20:17	end	1	NONE	GENERAL_TIME	"an end of": time word in 41 of 46 places alike
+Hebrews 6:16	end	1	NONE	GENERAL_TIME	"an end of": time word in 41 of 46 places alike
+Matthew 7:26	every	1	NONE	QUANTITY	"and every one": amount word in 34 of 35 places alike
+Matthew 7:8	every	1	NONE	QUANTITY	"for every one": amount word in 15 of 16 places alike
+2 Corinthians 4:8	every	1	NONE	QUANTITY	"on every side": amount word in 31 of 32 places alike
+Exodus 3:11	forth	1	GENERAL_PLACE_2	NONE	"bring forth the": left plain in 8 of 9 places alike
+Zechariah 14:2	forth	1	NONE	GENERAL_PLACE_2	"go forth into": position word in 8 of 9 places alike
+Jeremiah 1:9	forth	1	GENERAL_PLACE_2	NONE	"put forth his": left plain in 13 of 14 places alike
+Ezekiel 11:13	full	1	NONE	QUANTITY	"a full end": amount word in 7 of 8 places alike
+Jeremiah 6:11	full	1	QUANTITY	NONE	"am full of": left plain in 6 of 7 places alike
+Jeremiah 5:27	full	1	QUANTITY	NONE	"is full of": left plain in 23 of 26 places alike
+Jeremiah 6:11	full	2	QUANTITY	NONE	"is full of": left plain in 23 of 26 places alike
+Jeremiah 23:10	full	1	QUANTITY	NONE	"is full of": left plain in 23 of 26 places alike
+Jeremiah 31:8	great	1	QUANTITY	NONE	"a great company": left plain in 6 of 7 places alike
+Jeremiah 44:15	great	1	QUANTITY	NONE	"a great multitude": left plain in 21 of 22 places alike
+Jeremiah 50:41	great	1	QUANTITY	NONE	"a great nation": left plain in 6 of 7 places alike
+Ezekiel 46:10	in	2	GENERAL_PLACE_2	NONE	"go in and": left plain in 15 of 16 places alike
+Jeremiah 30:8	come to pass in that	1	GENERAL_TIME	NONE	"pass in that": left plain in 22 of 23 places alike
+Jeremiah 29:14	into	1	GENERAL_PLACE_2	NONE	"again into the": left plain in 6 of 7 places alike
+Jeremiah 41:7	into	1	GENERAL_PLACE_2	NONE	"came into the": left plain in 41 of 43 places alike
+Jeremiah 43:7	into	1	GENERAL_PLACE_2	NONE	"came into the": left plain in 41 of 43 places alike
+Jeremiah 38:9	into	1	GENERAL_PLACE_2	NONE	"cast into the": left plain in 27 of 28 places alike
+Jeremiah 51:51	into	1	GENERAL_PLACE_2	NONE	"come into the": left plain in 56 of 57 places alike
+Jeremiah 36:12	into	1	GENERAL_PLACE_2	NONE	"down into the": left plain in 16 of 17 places alike
+Jeremiah 8:14	into	1	GENERAL_PLACE_2	NONE	"enter into the": left plain in 42 of 45 places alike
+Jeremiah 14:18	into	2	GENERAL_PLACE_2	NONE	"enter into the": left plain in 42 of 45 places alike
+Jeremiah 17:25	into	1	GENERAL_PLACE_2	NONE	"enter into the": left plain in 42 of 45 places alike
+Jeremiah 37:16	into	1	GENERAL_PLACE_2	NONE	"entered into the": left plain in 40 of 41 places alike
+Jeremiah 48:44	into	1	GENERAL_PLACE_2	NONE	"fall into the": left plain in 12 of 13 places alike
+Jeremiah 6:25	into	1	GENERAL_PLACE_2	NONE	"forth into the": left plain in 12 of 14 places alike
+Jeremiah 14:18	into	1	GENERAL_PLACE_2	NONE	"forth into the": left plain in 12 of 14 places alike
+Jeremiah 16:8	into	1	GENERAL_PLACE_2	NONE	"go into the": left plain in 30 of 35 places alike
+Jeremiah 36:5	into	1	GENERAL_PLACE_2	NONE	"go into the": left plain in 30 of 35 places alike
+Jeremiah 37:12	into	1	GENERAL_PLACE_2	NONE	"go into the": left plain in 30 of 35 places alike
+Jeremiah 42:14	into	1	GENERAL_PLACE_2	NONE	"go into the": left plain in 30 of 35 places alike
+Jeremiah 44:12	into	1	GENERAL_PLACE_2	NONE	"go into the": left plain in 30 of 35 places alike
+Jeremiah 26:24	into	1	GENERAL_PLACE_2	NONE	"him into the": left plain in 30 of 33 places alike
+Jeremiah 38:6	into	1	GENERAL_PLACE_2	NONE	"him into the": left plain in 30 of 33 places alike
+Jeremiah 38:14	into	1	GENERAL_PLACE_2	NONE	"him into the": left plain in 30 of 33 places alike
+Jeremiah 36:23	into	1	GENERAL_PLACE_2	NONE	"it into the": left plain in 31 of 33 places alike
+Jeremiah 51:63	into	1	GENERAL_PLACE_2	NONE	"it into the": left plain in 31 of 33 places alike
+Jeremiah 16:5	into	1	GENERAL_PLACE_2	NONE	"not into the": left plain in 6 of 7 places alike
+Jeremiah 24:5	into	1	GENERAL_PLACE_2	NONE	"place into the": left plain in 6 of 7 places alike
+Jeremiah 22:25	into	1	GENERAL_PLACE_2	NONE	"thee into the": left plain in 13 of 15 places alike
+Jeremiah 38:16	into	1	GENERAL_PLACE_2	NONE	"thee into the": left plain in 13 of 15 places alike
+Jeremiah 21:4	into	1	GENERAL_PLACE_2	NONE	"them into the": left plain in 60 of 68 places alike
+Jeremiah 22:7	into	1	GENERAL_PLACE_2	NONE	"them into the": left plain in 60 of 68 places alike
+Jeremiah 29:21	into	1	GENERAL_PLACE_2	NONE	"them into the": left plain in 60 of 68 places alike
+Jeremiah 34:20	into	1	GENERAL_PLACE_2	NONE	"them into the": left plain in 60 of 68 places alike
+Jeremiah 35:2	into	1	GENERAL_PLACE_2	NONE	"them into the": left plain in 60 of 68 places alike
+Jeremiah 35:4	into	1	GENERAL_PLACE_2	NONE	"them into the": left plain in 60 of 68 places alike
+Jeremiah 41:7	into	2	GENERAL_PLACE_2	NONE	"them into the": left plain in 60 of 68 places alike
+Jeremiah 46:26	into	1	GENERAL_PLACE_2	NONE	"them into the": left plain in 60 of 68 places alike
+Jeremiah 35:11	into	1	GENERAL_PLACE_2	NONE	"up into the": left plain in 34 of 35 places alike
+Jeremiah 43:3	into	1	GENERAL_PLACE_2	NONE	"us into the": left plain in 7 of 8 places alike
+Jeremiah 38:11	into	1	GENERAL_PLACE_2	NONE	"went into the": left plain in 47 of 48 places alike
+Isaiah 11:6	little	1	GENERAL_PEOPLE	NONE	"a little child": left plain in 6 of 7 places alike
+Job 24:24	little	1	NONE	QUANTITY	"a little while": amount word in 18 of 19 places alike
+John 8:11	more	1	NONE	GENERAL_TIME	"no more": time word in 23 of 25 places alike
+John 8:11	no	1	NONE	GENERAL_TIME	"no more" / "any more" is a time phrase, as everywhere else
+John 16:10	more	1	NONE	GENERAL_TIME	"no more": time word in 23 of 25 places alike
+John 16:10	no	1	NONE	GENERAL_TIME	"no more" / "any more" is a time phrase, as everywhere else
+Proverbs 15:11	much	1	NONE	QUANTITY	"how much more": amount word in 18 of 20 places alike
+Proverbs 21:27	much	1	NONE	QUANTITY	"how much more": amount word in 18 of 20 places alike
+Ezekiel 26:13	no	1	NONE	GENERAL_TIME	"be no more": time word in 36 of 37 places alike
+Isaiah 10:20	no	1	NONE	GENERAL_TIME	"shall no more": time word in 26 of 29 places alike
+Lamentations 4:15	no	1	NONE	GENERAL_TIME	"shall no more": time word in 26 of 29 places alike
+Lamentations 4:15	more	1	QUANTITY	GENERAL_TIME	"no more" / "any more" is a time phrase, as everywhere else
+John 16:25	no	1	NONE	GENERAL_TIME	"shall no more": time word in 26 of 29 places alike
+John 16:25	more	1	NONE	GENERAL_TIME	"no more" / "any more" is a time phrase, as everywhere else
+1 Samuel 26:21	no	1	NONE	GENERAL_TIME	"will no more": time word in 8 of 9 places alike
+1 Samuel 26:21	more	1	QUANTITY	GENERAL_TIME	"no more" / "any more" is a time phrase, as everywhere else
+Numbers 23:19	of	1	NONE	GENERAL_PEOPLE	"son of man": people in 100 of 109 places alike
+Job 25:6	of	1	NONE	GENERAL_PEOPLE	"son of man": people in 100 of 109 places alike
+Job 35:8	of	1	NONE	GENERAL_PEOPLE	"son of man": people in 100 of 109 places alike
+Psalms 8:4	of	2	NONE	GENERAL_PEOPLE	"son of man": people in 100 of 109 places alike
+Psalms 80:17	of	2	NONE	GENERAL_PEOPLE	"son of man": people in 100 of 109 places alike
+Psalms 144:3	of	2	NONE	GENERAL_PEOPLE	"son of man": people in 100 of 109 places alike
+Psalms 146:3	of	1	NONE	GENERAL_PEOPLE	"son of man": people in 100 of 109 places alike
+Daniel 7:13	of	1	NONE	GOD_SON	"son of man": people in 100 of 109 places alike
+Daniel 7:13	man	1	GENERAL_PEOPLE	GOD_SON	"one like the Son of man": the whole title, as at 7:13 in the source's Son color
+Hebrews 2:6	of	2	NONE	GENERAL_PEOPLE	"son of man": people in 100 of 109 places alike
+Jeremiah 23:23	off	1	GENERAL_PLACE_2	GENERAL_PLACE_1	"afar off": place word in 13 of 14 places alike
+Jeremiah 28:10	off	1	GENERAL_PLACE_2	NONE	"from off the": left plain in 31 of 34 places alike
+Jeremiah 28:12	off	1	GENERAL_PLACE_2	NONE	"from off the": left plain in 31 of 34 places alike
+Jeremiah 28:16	off	1	GENERAL_PLACE_2	NONE	"from off the": left plain in 31 of 34 places alike
+Jeremiah 30:8	off	1	GENERAL_PLACE_2	NONE	"from off thy": left plain in 6 of 7 places alike
+Genesis 3:22	one	1	NONE	QUANTITY	"as one of": amount word in 15 of 16 places alike
+Nehemiah 4:18	one	1	NONE	QUANTITY	"every one had": amount word in 6 of 7 places alike
+Numbers 25:5	one	1	QUANTITY	NONE	"every one his": left plain in 12 of 13 places alike
+Genesis 30:33	one	1	QUANTITY	NONE	"every one that": left plain in 81 of 91 places alike
+Genesis 30:35	one	1	QUANTITY	NONE	"every one that": left plain in 81 of 91 places alike
+Exodus 30:13	one	1	QUANTITY	NONE	"every one that": left plain in 81 of 91 places alike
+Exodus 30:14	one	1	QUANTITY	NONE	"every one that": left plain in 81 of 91 places alike
+Exodus 31:14	one	1	QUANTITY	NONE	"every one that": left plain in 81 of 91 places alike
+Exodus 38:26	one	1	QUANTITY	NONE	"every one that": left plain in 81 of 91 places alike
+Numbers 4:39	one	1	QUANTITY	NONE	"every one that": left plain in 81 of 91 places alike
+1 Kings 9:8	one	1	QUANTITY	NONE	"every one that": left plain in 81 of 91 places alike
+Isaiah 2:12	one	1	GENERAL_TIME	NONE	"every one that": left plain in 81 of 91 places alike
+Ezekiel 45:20	one	1	QUANTITY	NONE	"every one that": left plain in 81 of 91 places alike
+Acts 10:28	one	1	NONE	QUANTITY	"unto one of": amount word in 9 of 10 places alike
+Jeremiah 52:25	out	1	GENERAL_PLACE_2	NONE	"also out of": left plain in 7 of 8 places alike
+Genesis 2:9	out	1	GENERAL_PLACE_2	NONE	"and out of": left plain in 79 of 83 places alike
+Genesis 2:19	out	1	GENERAL_PLACE_2	NONE	"and out of": left plain in 79 of 83 places alike
+Jeremiah 16:16	out	1	GENERAL_PLACE_2	NONE	"and out of": left plain in 79 of 83 places alike
+Jeremiah 30:19	out	1	GENERAL_PLACE_2	NONE	"and out of": left plain in 79 of 83 places alike
+Matthew 12:44	out	1	GENERAL_PLACE_2	NONE	"came out and": left plain in 9 of 10 places alike
+Genesis 30:16	out	1	GENERAL_PLACE_2	NONE	"came out of": left plain in 36 of 41 places alike
+Genesis 34:7	out	1	GENERAL_PLACE_2	NONE	"came out of": left plain in 36 of 41 places alike
+Genesis 35:9	out	1	GENERAL_PLACE_2	NONE	"came out of": left plain in 36 of 41 places alike
+Matthew 15:22	out	1	GENERAL_PLACE_2	NONE	"came out of": left plain in 36 of 41 places alike
+Matthew 27:53	out	1	GENERAL_PLACE_2	NONE	"came out of": left plain in 36 of 41 places alike
+Matthew 8:34	out	1	GENERAL_PLACE_2	NONE	"came out to": left plain in 6 of 7 places alike
+Matthew 12:24	out	1	GENERAL_PLACE_2	NONE	"cast out devils": left plain in 11 of 12 places alike
+Genesis 47:1	out	1	GENERAL_PLACE_2	NONE	"come out of": left plain in 37 of 43 places alike
+Jeremiah 36:6	out	1	GENERAL_PLACE_2	NONE	"come out of": left plain in 37 of 43 places alike
+Mark 1:25	out	1	GENERAL_PLACE_2	NONE	"come out of": left plain in 37 of 43 places alike
+Mark 7:15	out	1	GENERAL_PLACE_2	NONE	"come out of": left plain in 37 of 43 places alike
+Mark 9:25	out	1	GENERAL_PLACE_2	NONE	"come out of": left plain in 37 of 43 places alike
+Luke 4:35	out	1	GENERAL_PLACE_2	NONE	"come out of": left plain in 37 of 43 places alike
+Genesis 24:13	out	1	GENERAL_PLACE_2	NONE	"come out to": left plain in 9 of 10 places alike
+Jeremiah 17:19	out	1	GENERAL_PLACE_2	NONE	"go out and": left plain in 10 of 11 places alike
+Genesis 9:10	out	1	GENERAL_PLACE_2	NONE	"go out of": left plain in 13 of 15 places alike
+Luke 9:5	out	1	GENERAL_PLACE_2	NONE	"go out of": left plain in 13 of 15 places alike
+Genesis 22:11	out	1	GENERAL_PLACE_2	NONE	"him out of": left plain in 42 of 45 places alike
+Genesis 37:14	out	1	GENERAL_PLACE_2	NONE	"him out of": left plain in 42 of 45 places alike
+Mark 12:8	out	1	GENERAL_PLACE_2	NONE	"him out of": left plain in 42 of 45 places alike
+Jeremiah 36:21	out	1	GENERAL_PLACE_2	NONE	"it out of": left plain in 12 of 13 places alike
+Genesis 19:24	out	1	GENERAL_PLACE_2	NONE	"lord out of": left plain in 9 of 10 places alike
+Genesis 40:14	out	1	GENERAL_PLACE_2	NONE	"me out of": left plain in 25 of 28 places alike
+Genesis 47:30	out	1	GENERAL_PLACE_2	NONE	"me out of": left plain in 25 of 28 places alike
+Jeremiah 1:14	Out	1	GENERAL_PLACE_2	NONE	"me out of": left plain in 25 of 28 places alike
+Genesis 2:23	out	1	GENERAL_PLACE_2	NONE	"taken out of": left plain in 9 of 10 places alike
+Matthew 10:1	out	1	GENERAL_PLACE_2	NONE	"them out and": left plain in 8 of 9 places alike
+Genesis 48:12	out	1	GENERAL_PLACE_2	NONE	"them out from": left plain in 12 of 14 places alike
+Jeremiah 52:3	out	1	GENERAL_PLACE_2	NONE	"them out from": left plain in 12 of 14 places alike
+Genesis 19:12	out	1	GENERAL_PLACE_2	NONE	"them out of": left plain in 60 of 66 places alike
+Genesis 40:17	out	1	GENERAL_PLACE_2	NONE	"them out of": left plain in 60 of 66 places alike
+Genesis 41:3	out	1	GENERAL_PLACE_2	NONE	"them out of": left plain in 60 of 66 places alike
+Jeremiah 7:22	out	1	GENERAL_PLACE_2	NONE	"them out of": left plain in 60 of 66 places alike
+Jeremiah 31:32	out	1	GENERAL_PLACE_2	NONE	"them out of": left plain in 60 of 66 places alike
+Jeremiah 32:37	out	1	GENERAL_PLACE_2	NONE	"them out of": left plain in 60 of 66 places alike
+Matthew 17:5	out	1	GENERAL_PLACE_2	NONE	"voice out of": left plain in 8 of 9 places alike
+Matthew 22:10	out	1	GENERAL_PLACE_2	NONE	"went out into": left plain in 13 of 15 places alike
+Matthew 26:30	out	1	GENERAL_PLACE_2	NONE	"went out into": left plain in 13 of 15 places alike
+Genesis 34:6	out	1	GENERAL_PLACE_2	NONE	"went out unto": left plain in 10 of 11 places alike
+2 Samuel 10:17	over	1	NONE	GENERAL_PLACE_2	"passed over jordan": position word in 9 of 10 places alike
+Genesis 50:20	pass	1	NONE	GENERAL_TIME	"to pass as": time word in 49 of 53 places alike
+Genesis 50:20	to	2	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Joshua 3:13	pass	1	NONE	GENERAL_TIME	"to pass as": time word in 49 of 53 places alike
+Joshua 3:13	to	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Joshua 3:13	come	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+1 Kings 18:12	pass	1	NONE	GENERAL_TIME	"to pass as": time word in 49 of 53 places alike
+1 Kings 18:12	to	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+1 Kings 18:12	come	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+2 Chronicles 5:13	pass	1	NONE	GENERAL_TIME	"to pass as": time word in 49 of 53 places alike
+2 Chronicles 5:13	to	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Hosea 1:5	pass	1	NONE	GENERAL_TIME	"to pass at": time word in 27 of 29 places alike
+Hosea 1:5	to	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Hosea 1:5	come	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Zephaniah 1:12	pass	1	NONE	GENERAL_TIME	"to pass at": time word in 27 of 29 places alike
+Zephaniah 1:12	to	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Zephaniah 1:12	come	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Hosea 2:21	pass	1	NONE	GENERAL_TIME	"to pass in": time word in 77 of 88 places alike
+Hosea 2:21	to	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Hosea 2:21	come	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Joel 3:18	pass	1	NONE	GENERAL_TIME	"to pass in": time word in 77 of 88 places alike
+Joel 3:18	to	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Joel 3:18	come	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Amos 8:9	pass	1	NONE	GENERAL_TIME	"to pass in": time word in 77 of 88 places alike
+Amos 8:9	to	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Amos 8:9	come	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Micah 5:10	pass	1	NONE	GENERAL_TIME	"to pass in": time word in 77 of 88 places alike
+Micah 5:10	to	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Micah 5:10	come	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Zephaniah 1:8	pass	1	NONE	GENERAL_TIME	"to pass in": time word in 77 of 88 places alike
+Zephaniah 1:8	to	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Zephaniah 1:8	come	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Zephaniah 1:10	pass	1	NONE	GENERAL_TIME	"to pass in": time word in 77 of 88 places alike
+Zephaniah 1:10	to	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Zephaniah 1:10	come	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Zechariah 12:9	pass	1	NONE	GENERAL_TIME	"to pass in": time word in 77 of 88 places alike
+Zechariah 12:9	to	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Zechariah 12:9	come	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Zechariah 13:2	pass	1	NONE	GENERAL_TIME	"to pass in": time word in 77 of 88 places alike
+Zechariah 13:2	to	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Zechariah 13:2	come	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Zechariah 13:4	pass	1	NONE	GENERAL_TIME	"to pass in": time word in 77 of 88 places alike
+Zechariah 13:4	to	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Zechariah 13:4	come	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Zechariah 14:6	pass	1	NONE	GENERAL_TIME	"to pass in": time word in 77 of 88 places alike
+Zechariah 14:6	to	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Zechariah 14:6	come	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Zechariah 14:13	pass	1	NONE	GENERAL_TIME	"to pass in": time word in 77 of 88 places alike
+Zechariah 14:13	to	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Zechariah 14:13	come	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+2 Samuel 1:2	pass	1	NONE	GENERAL_TIME	"to pass on": time word in 28 of 29 places alike
+2 Samuel 1:2	to	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Joshua 6:5	pass	1	NONE	GENERAL_TIME	"to pass that": time word in 114 of 134 places alike
+Joshua 6:5	to	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Joshua 6:5	come	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Joshua 23:15	pass	1	NONE	GENERAL_TIME	"to pass that": time word in 114 of 134 places alike
+Joshua 23:15	to	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Joshua 23:15	come	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+1 Kings 19:17	pass	1	NONE	GENERAL_TIME	"to pass that": time word in 114 of 134 places alike
+1 Kings 19:17	to	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+1 Kings 19:17	come	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+2 Kings 19:25	pass	1	NONE	GENERAL_TIME	"to pass that": time word in 114 of 134 places alike
+2 Kings 19:25	to	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Isaiah 37:26	pass	1	NONE	GENERAL_TIME	"to pass that": time word in 114 of 134 places alike
+Isaiah 37:26	to	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Hosea 1:10	pass	1	NONE	GENERAL_TIME	"to pass that": time word in 114 of 134 places alike
+Hosea 1:10	to	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Hosea 1:10	come	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Joel 2:32	pass	1	NONE	GENERAL_TIME	"to pass that": time word in 114 of 134 places alike
+Joel 2:32	to	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Joel 2:32	come	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Micah 4:1	pass	1	NONE	GENERAL_TIME	"to pass that": time word in 114 of 134 places alike
+Micah 4:1	to	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Micah 4:1	come	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Nahum 3:7	pass	1	NONE	GENERAL_TIME	"to pass that": time word in 114 of 134 places alike
+Nahum 3:7	to	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Nahum 3:7	come	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Zechariah 7:13	pass	1	NONE	GENERAL_TIME	"to pass that": time word in 114 of 134 places alike
+Zechariah 7:13	to	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Zechariah 7:13	come	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Zechariah 8:13	pass	1	NONE	GENERAL_TIME	"to pass that": time word in 114 of 134 places alike
+Zechariah 8:13	to	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Zechariah 8:13	come	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Zechariah 8:20	pass	1	NONE	GENERAL_TIME	"to pass that": time word in 114 of 134 places alike
+Zechariah 8:20	to	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Zechariah 8:20	come	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Zechariah 8:23	pass	1	NONE	GENERAL_TIME	"to pass that": time word in 114 of 134 places alike
+Zechariah 8:23	to	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Zechariah 8:23	come	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Zechariah 13:3	pass	1	NONE	GENERAL_TIME	"to pass that": time word in 114 of 134 places alike
+Zechariah 13:3	to	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Zechariah 13:3	come	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Zechariah 13:8	pass	1	NONE	GENERAL_TIME	"to pass that": time word in 114 of 134 places alike
+Zechariah 13:8	to	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Zechariah 13:8	come	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Zechariah 14:7	pass	1	NONE	GENERAL_TIME	"to pass that": time word in 114 of 134 places alike
+Zechariah 14:7	to	2	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Zechariah 14:7	come	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Zechariah 14:16	pass	1	NONE	GENERAL_TIME	"to pass that": time word in 114 of 134 places alike
+Zechariah 14:16	to	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Zechariah 14:16	come	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+John 15:25	pass	1	NONE	GENERAL_TIME	"to pass that": time word in 114 of 134 places alike
+John 15:25	to	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+John 15:25	cometh	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Romans 9:26	pass	1	NONE	GENERAL_TIME	"to pass that": time word in 114 of 134 places alike
+Romans 9:26	to	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Romans 9:26	come	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+1 Corinthians 15:54	pass	1	NONE	GENERAL_TIME	"to pass the": time word in 10 of 11 places alike
+1 Corinthians 15:54	to	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Joshua 8:5	pass	1	NONE	GENERAL_TIME	"to pass when": time word in 164 of 167 places alike
+Joshua 8:5	to	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Joshua 8:5	come	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+1 Kings 1:21	pass	1	NONE	GENERAL_TIME	"to pass when": time word in 164 of 167 places alike
+1 Kings 1:21	to	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+1 Kings 1:21	come	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Lamentations 3:37	pass	1	NONE	GENERAL_TIME	"to pass when": time word in 164 of 167 places alike
+Lamentations 3:37	to	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Lamentations 3:37	cometh	1	NONE	GENERAL_TIME	"came to pass" is a time phrase (guide 5.16)
+Isaiah 10:19	rest	1	QUANTITY	NONE	"the rest of": left plain in 95 of 97 places alike
+1 Peter 4:2	rest	1	QUANTITY	NONE	"the rest of": left plain in 95 of 97 places alike
+Matthew 21:33	round	1	NONE	GENERAL_PLACE_2	"it round about": position word in 12 of 13 places alike
+Exodus 17:10	So	1	NONE	GENERAL_TIME	"so joshua": time word in 11 of 12 places alike
+Jeremiah 41:7	so	1	NONE	GENERAL_TIME	"was so when": time word in 9 of 10 places alike
+Nehemiah 13:19	some	1	NONE	QUANTITY	"and some of": amount word in 22 of 25 places alike
+Mark 15:35	some	1	NONE	QUANTITY	"and some of": amount word in 22 of 25 places alike
+John 7:44	some	1	NONE	QUANTITY	"and some of": amount word in 22 of 25 places alike
+Joshua 13:15	the	1	PEOPLE_GROUP	NONE	"of the children": left plain in 377 of 378 places alike
+Judges 19:26	the	1	GENERAL_TIME	NONE	"of the day": left plain in 20 of 22 places alike
+Job 7:4	the	1	GENERAL_TIME	NONE	"of the day": left plain in 20 of 22 places alike
+Deuteronomy 18:7	then	1	NONE	GENERAL_TIME	"then he": time word in 44 of 48 places alike
+Job 33:16	then	1	NONE	GENERAL_TIME	"then he": time word in 44 of 48 places alike
+Job 33:24	then	1	NONE	GENERAL_TIME	"then he": time word in 44 of 48 places alike
+Job 36:9	then	1	NONE	GENERAL_TIME	"then he": time word in 44 of 48 places alike
+Leviticus 20:5	then	1	NONE	GENERAL_TIME	"then i": time word in 42 of 47 places alike
+Leviticus 25:21	then	1	NONE	GENERAL_TIME	"then i": time word in 42 of 47 places alike
+Leviticus 26:4	then	1	NONE	GENERAL_TIME	"then i": time word in 42 of 47 places alike
+Leviticus 26:28	then	1	NONE	GENERAL_TIME	"then i": time word in 42 of 47 places alike
+Proverbs 8:30	then	1	NONE	GENERAL_TIME	"then i": time word in 42 of 47 places alike
+Leviticus 14:4	then	1	NONE	GENERAL_TIME	"then shall": time word in 49 of 54 places alike
+Deuteronomy 19:19	then	1	NONE	GENERAL_TIME	"then shall": time word in 49 of 54 places alike
+Deuteronomy 21:19	then	1	NONE	GENERAL_TIME	"then shall": time word in 49 of 54 places alike
+Deuteronomy 22:15	then	1	NONE	GENERAL_TIME	"then shall": time word in 49 of 54 places alike
+Deuteronomy 25:9	then	1	NONE	GENERAL_TIME	"then shall": time word in 49 of 54 places alike
+Leviticus 13:13	then	1	NONE	GENERAL_TIME	"then the": time word in 154 of 172 places alike
+Leviticus 13:25	then	1	NONE	GENERAL_TIME	"then the": time word in 154 of 172 places alike
+Leviticus 13:30	then	1	NONE	GENERAL_TIME	"then the": time word in 154 of 172 places alike
+Leviticus 13:36	then	1	NONE	GENERAL_TIME	"then the": time word in 154 of 172 places alike
+Leviticus 13:39	then	1	NONE	GENERAL_TIME	"then the": time word in 154 of 172 places alike
+Leviticus 13:43	Then	1	NONE	GENERAL_TIME	"then the": time word in 154 of 172 places alike
+Leviticus 13:54	then	1	NONE	GENERAL_TIME	"then the": time word in 154 of 172 places alike
+Leviticus 14:36	then	1	NONE	GENERAL_TIME	"then the": time word in 154 of 172 places alike
+Leviticus 14:38	then	1	NONE	GENERAL_TIME	"then the": time word in 154 of 172 places alike
+Leviticus 14:40	then	1	NONE	GENERAL_TIME	"then the": time word in 154 of 172 places alike
+Leviticus 14:44	then	1	NONE	GENERAL_TIME	"then the": time word in 154 of 172 places alike
+Leviticus 27:23	then	1	NONE	GENERAL_TIME	"then the": time word in 154 of 172 places alike
+Deuteronomy 19:12	then	1	NONE	GENERAL_TIME	"then the": time word in 154 of 172 places alike
+Deuteronomy 22:29	then	1	NONE	GENERAL_TIME	"then the": time word in 154 of 172 places alike
+Deuteronomy 25:8	Then	1	NONE	GENERAL_TIME	"then the": time word in 154 of 172 places alike
+Deuteronomy 28:59	then	1	NONE	GENERAL_TIME	"then the": time word in 154 of 172 places alike
+Psalms 124:4	then	1	NONE	GENERAL_TIME	"then the": time word in 154 of 172 places alike
+Psalms 124:5	then	1	NONE	GENERAL_TIME	"then the": time word in 154 of 172 places alike
+Deuteronomy 12:11	then	1	NONE	GENERAL_TIME	"then there": time word in 10 of 11 places alike
+Deuteronomy 22:21	then	1	NONE	GENERAL_TIME	"then they": time word in 38 of 42 places alike
+2 Samuel 24:6	then	1	NONE	GENERAL_TIME	"then they": time word in 38 of 42 places alike
+Psalms 124:3	then	1	NONE	GENERAL_TIME	"then they": time word in 38 of 42 places alike
+Judges 16:1	Then	1	NONE	GENERAL_TIME	"then went": time word in 19 of 20 places alike
+Exodus 17:6	there	2	GENERAL_PLACE_2	NONE	"and there shall": left plain in 54 of 63 places alike
+Exodus 28:32	there	1	GENERAL_PLACE_2	NONE	"and there shall": left plain in 54 of 63 places alike
+1 Samuel 9:4	there	1	NONE	GENERAL_PLACE_2	"and there they": position word in 14 of 16 places alike
+2 Samuel 5:21	there	1	NONE	GENERAL_PLACE_2	"and there they": position word in 14 of 16 places alike
+Exodus 36:30	there	1	GENERAL_PLACE_2	NONE	"and there were": left plain in 50 of 52 places alike
+1 Samuel 22:2	there	1	GENERAL_PLACE_2	NONE	"and there were": left plain in 50 of 52 places alike
+Genesis 45:11	there	1	NONE	GENERAL_PLACE_2	"and there will": position word in 6 of 7 places alike
+Matthew 12:45	there	1	NONE	GENERAL_PLACE_2	"dwell there and": position word in 7 of 8 places alike
+Numbers 20:5	there	1	GENERAL_PLACE_2	NONE	"is there any": left plain in 22 of 23 places alike
+Exodus 30:34	there	1	GENERAL_PLACE_2	NONE	"shall there be": left plain in 20 of 21 places alike
+Exodus 30:12	there	1	GENERAL_PLACE_2	NONE	"that there be": left plain in 17 of 18 places alike
+Acts 17:11	These	1	GENERAL_PEOPLE	NONE	"these were": left plain in 16 of 17 places alike
+2 Kings 20:1	those	1	NONE	GENERAL_TIME	"in those days": time word in 56 of 61 places alike
+Nehemiah 13:15	those	1	NONE	GENERAL_TIME	"in those days": time word in 56 of 61 places alike
+Nehemiah 13:23	those	1	NONE	GENERAL_TIME	"in those days": time word in 56 of 61 places alike
+Matthew 3:1	those	1	NONE	GENERAL_TIME	"in those days": time word in 56 of 61 places alike
+Mark 8:1	those	1	NONE	GENERAL_TIME	"in those days": time word in 56 of 61 places alike
+Deuteronomy 18:10	through	1	NONE	GENERAL_PLACE_2	"pass through the": position word in 20 of 21 places alike
+Psalms 78:21	up	1	NONE	GENERAL_PLACE_2	"came up against": position word in 9 of 10 places alike
+Judges 1:1	up	1	NONE	GENERAL_PLACE_2	"go up for": position word in 9 of 10 places alike
+Leviticus 9:22	up	1	GENERAL_PLACE_2	NONE	"lifted up his": left plain in 39 of 41 places alike
+Habakkuk 3:10	up	1	GENERAL_PLACE_2	NONE	"lifted up his": left plain in 39 of 41 places alike
+Ezekiel 10:16	up	1	GENERAL_PLACE_2	NONE	"lifted up their": left plain in 23 of 25 places alike
+Ezekiel 10:19	up	1	GENERAL_PLACE_2	NONE	"lifted up their": left plain in 23 of 25 places alike
+Isaiah 14:22	up	1	GENERAL_PLACE_2	NONE	"rise up against": left plain in 20 of 22 places alike
+Jeremiah 51:1	up	2	GENERAL_PLACE_2	NONE	"rise up against": left plain in 20 of 22 places alike
+2 Chronicles 5:4	up	1	GENERAL_PLACE_2	NONE	"took up the": left plain in 9 of 10 places alike
+Judges 1:4	up	1	NONE	GENERAL_PLACE_2	"went up and": position word in 26 of 27 places alike
+Genesis 17:22	up	1	NONE	GENERAL_PLACE_2	"went up from": position word in 16 of 18 places alike
+Genesis 26:23	up	1	NONE	GENERAL_PLACE_2	"went up from": position word in 16 of 18 places alike
+Luke 18:10	up	1	NONE	GENERAL_PLACE_2	"went up into": position word in 20 of 21 places alike
+Genesis 19:30	up	1	NONE	GENERAL_PLACE_2	"went up out": position word in 6 of 7 places alike
+Genesis 46:29	up	1	NONE	GENERAL_PLACE_2	"went up to": position word in 32 of 35 places alike
+Genesis 49:4	up	2	NONE	GENERAL_PLACE_2	"went up to": position word in 32 of 35 places alike
+1 Chronicles 14:8	up	1	NONE	GENERAL_PLACE_2	"went up to": position word in 32 of 35 places alike
+Genesis 38:12	up	1	NONE	GENERAL_PLACE_2	"went up unto": position word in 7 of 8 places alike
+Jeremiah 6:11	upon	2	GENERAL_PLACE_2	NONE	"and upon the": left plain in 72 of 82 places alike
+Jeremiah 7:20	upon	4	GENERAL_PLACE_2	NONE	"and upon the": left plain in 72 of 82 places alike
+Jeremiah 7:20	upon	5	GENERAL_PLACE_2	NONE	"and upon the": left plain in 72 of 82 places alike
+Jeremiah 10:25	upon	2	GENERAL_PLACE_2	NONE	"and upon the": left plain in 72 of 82 places alike
+Jeremiah 17:1	upon	2	GENERAL_PLACE_2	NONE	"and upon the": left plain in 72 of 82 places alike
+Jeremiah 26:15	upon	3	GENERAL_PLACE_2	NONE	"and upon the": left plain in 72 of 82 places alike
+Jeremiah 36:31	upon	2	GENERAL_PLACE_2	NONE	"and upon the": left plain in 72 of 82 places alike
+Jeremiah 36:31	upon	3	GENERAL_PLACE_2	NONE	"and upon the": left plain in 72 of 82 places alike
+Jeremiah 48:37	upon	2	GENERAL_PLACE_2	NONE	"and upon the": left plain in 72 of 82 places alike
+Jeremiah 50:35	upon	2	GENERAL_PLACE_2	NONE	"and upon the": left plain in 72 of 82 places alike
+Jeremiah 48:32	upon	2	GENERAL_PLACE_2	NONE	"and upon thy": left plain in 14 of 15 places alike
+Jeremiah 25:26	upon	1	GENERAL_PLACE_2	NONE	"are upon the": left plain in 12 of 14 places alike
+Jeremiah 27:5	upon	1	GENERAL_PLACE_2	NONE	"are upon the": left plain in 12 of 14 places alike
+Jeremiah 48:43	upon	1	GENERAL_PLACE_2	NONE	"be upon thee": left plain in 10 of 11 places alike
+Jeremiah 51:35	upon	2	GENERAL_PLACE_2	NONE	"blood upon the": left plain in 17 of 18 places alike
+Jeremiah 48:18	upon	1	GENERAL_PLACE_2	NONE	"come upon thee": left plain in 18 of 19 places alike
+Jeremiah 40:3	upon	1	GENERAL_PLACE_2	NONE	"come upon you": left plain in 12 of 13 places alike
+Jeremiah 50:35	upon	1	GENERAL_PLACE_2	NONE	"is upon the": left plain in 23 of 25 places alike
+Jeremiah 50:36	upon	1	GENERAL_PLACE_2	NONE	"is upon the": left plain in 23 of 25 places alike
+Jeremiah 31:39	upon	1	GENERAL_PLACE_2	NONE	"it upon the": left plain in 40 of 41 places alike
+Jeremiah 29:16	upon	1	GENERAL_PLACE_2	NONE	"sitteth upon the": left plain in 6 of 7 places alike
+Genesis 50:9	very	1	NONE	QUANTITY	"a very great": amount word in 23 of 24 places alike
+Leviticus 4:14	when	1	NONE	GENERAL_TIME	"when the": time word in 37 of 43 places alike
+Leviticus 13:9	When	1	NONE	GENERAL_TIME	"when the": time word in 37 of 43 places alike
+Deuteronomy 7:1	When	1	NONE	GENERAL_TIME	"when the": time word in 37 of 43 places alike
+Deuteronomy 12:29	When	1	NONE	GENERAL_TIME	"when the": time word in 37 of 43 places alike
+Deuteronomy 19:1	When	1	NONE	GENERAL_TIME	"when the": time word in 37 of 43 places alike
+Deuteronomy 23:9	When	1	NONE	GENERAL_TIME	"when the": time word in 37 of 43 places alike
+Leviticus 14:34	When	1	NONE	GENERAL_TIME	"when ye": time word in 8 of 9 places alike
+Leviticus 15:13	when	1	NONE	GENERAL_TIME	"and when he": time word in 224 of 226 places alike
+Deuteronomy 12:10	when	2	NONE	GENERAL_TIME	"and when he": time word in 224 of 226 places alike
+Leviticus 2:8	when	1	NONE	GENERAL_TIME	"and when it": time word in 15 of 16 places alike
+Deuteronomy 24:2	when	1	NONE	GENERAL_TIME	"and when she": time word in 30 of 31 places alike
+Leviticus 13:3	when	1	NONE	GENERAL_TIME	"and when the": time word in 169 of 173 places alike
+Deuteronomy 7:2	when	1	NONE	GENERAL_TIME	"and when the": time word in 169 of 173 places alike
+Deuteronomy 20:13	when	1	NONE	GENERAL_TIME	"and when the": time word in 169 of 173 places alike
+Deuteronomy 23:11	when	2	NONE	GENERAL_TIME	"and when the": time word in 169 of 173 places alike
+Deuteronomy 15:13	when	1	NONE	GENERAL_TIME	"and when thou": time word in 27 of 28 places alike
+Deuteronomy 30:1	when	1	NONE	GENERAL_TIME	"pass when all": time word in 7 of 8 places alike
+Deuteronomy 29:19	when	1	NONE	GENERAL_TIME	"pass when he": time word in 17 of 18 places alike
+Deuteronomy 11:29	when	1	NONE	GENERAL_TIME	"pass when the": time word in 39 of 40 places alike
+Exodus 12:17	feast	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Exodus 12:17	of	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Exodus 12:17	unleavened	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Exodus 12:17	bread	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Exodus 23:15	feast	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Exodus 23:15	of	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Exodus 23:15	unleavened	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Exodus 23:15	bread	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Exodus 34:25	feast	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Exodus 34:25	of	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Exodus 34:25	the	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Leviticus 23:6	feast	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Leviticus 23:6	of	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Leviticus 23:6	unleavened	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Leviticus 23:6	bread	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Leviticus 23:34	feast	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Leviticus 23:34	of	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Leviticus 23:34	tabernacles	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Deuteronomy 16:10	feast	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Deuteronomy 16:10	of	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Deuteronomy 16:13	feast	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Deuteronomy 16:13	of	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Deuteronomy 16:13	tabernacles	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Deuteronomy 16:16	feast	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Deuteronomy 16:16	of	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Deuteronomy 16:16	unleavened	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Deuteronomy 16:16	bread	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Deuteronomy 16:16	feast	2	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Deuteronomy 16:16	of	2	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Deuteronomy 16:16	feast	3	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Deuteronomy 16:16	of	3	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Deuteronomy 16:16	tabernacles	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Deuteronomy 31:10	feast	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Deuteronomy 31:10	of	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Deuteronomy 31:10	tabernacles	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+2 Chronicles 8:13	feast	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+2 Chronicles 8:13	of	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+2 Chronicles 8:13	unleavened	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+2 Chronicles 8:13	bread	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+2 Chronicles 8:13	feast	2	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+2 Chronicles 8:13	of	2	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+2 Chronicles 8:13	feast	3	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+2 Chronicles 8:13	of	3	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+2 Chronicles 8:13	tabernacles	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+2 Chronicles 30:13	feast	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+2 Chronicles 30:13	of	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+2 Chronicles 30:13	unleavened	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+2 Chronicles 30:13	bread	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+2 Chronicles 30:21	feast	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+2 Chronicles 30:21	of	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+2 Chronicles 30:21	unleavened	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+2 Chronicles 30:21	bread	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+2 Chronicles 35:17	feast	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+2 Chronicles 35:17	of	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+2 Chronicles 35:17	unleavened	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+2 Chronicles 35:17	bread	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Ezra 3:4	feast	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Ezra 3:4	of	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Ezra 3:4	tabernacles	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Ezra 6:22	feast	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Ezra 6:22	of	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Ezra 6:22	unleavened	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Ezra 6:22	bread	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Zechariah 14:16	feast	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Zechariah 14:16	of	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Zechariah 14:16	tabernacles	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Zechariah 14:18	feast	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Zechariah 14:18	of	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Zechariah 14:18	tabernacles	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Zechariah 14:19	feast	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Zechariah 14:19	of	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Zechariah 14:19	tabernacles	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Matthew 26:2	feast	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Matthew 26:2	of	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Matthew 26:2	the	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Matthew 26:17	feast	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Matthew 26:17	of	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Matthew 26:17	unleavened	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Matthew 26:17	bread	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Mark 14:1	feast	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Mark 14:1	of	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Mark 14:1	the	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Luke 2:41	feast	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Luke 2:41	of	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Luke 2:41	the	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Luke 22:1	feast	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Luke 22:1	of	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Luke 22:1	unleavened	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Luke 22:1	bread	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+John 7:2	feast	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+John 7:2	of	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+John 7:2	tabernacles	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+John 10:22	feast	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+John 10:22	of	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+John 10:22	the	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+John 10:22	dedication	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+John 13:1	feast	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+John 13:1	of	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+John 13:1	the	1	GENERAL_TIME	SPECIFIC_TIME	a feast by name is a specific time (guide 5.15), as Passover, Pentecost and Purim are
+Genesis 19:31	Our	1	NONE	PRONOUN	a pronoun for people left plain (the only such ones in the Bible)
+Genesis 24:25	She	1	NONE	PRONOUN	a pronoun for people left plain (the only such ones in the Bible)
+Genesis 42:36	Me	1	NONE	PRONOUN	a pronoun for people left plain (the only such ones in the Bible)
+Numbers 1:46	they	1	NONE	PRONOUN	a pronoun for people left plain (the only such ones in the Bible)
+Deuteronomy 21:7	Our	1	NONE	PRONOUN	a pronoun for people left plain (the only such ones in the Bible)
+Deuteronomy 32:27	Our	1	NONE	PRONOUN	a pronoun for people left plain (the only such ones in the Bible)
+Joshua 2:14	Our	1	NONE	PRONOUN	a pronoun for people left plain (the only such ones in the Bible)
+Judges 13:14	She	1	NONE	PRONOUN	a pronoun for people left plain (the only such ones in the Bible)
+Judges 16:23	Our	1	NONE	PRONOUN	a pronoun for people left plain (the only such ones in the Bible)
+Judges 16:24	Our	1	NONE	PRONOUN	a pronoun for people left plain (the only such ones in the Bible)
+2 Samuel 18:27	Me	1	NONE	PRONOUN	a pronoun for people left plain (the only such ones in the Bible)
+1 Chronicles 2:49	She	1	NONE	PRONOUN	a pronoun for people left plain (the only such ones in the Bible)
+Psalms 119:136	mine	1	NONE	PRONOUN	a pronoun for people left plain (the only such ones in the Bible)
+Proverbs 20:22	I	1	NONE	PRONOUN	a pronoun for people left plain (the only such ones in the Bible)
+Ezekiel 22:26	Her	1	NONE	PRONOUN	a pronoun for people left plain (the only such ones in the Bible)
+Ezekiel 22:27	Her	1	NONE	PRONOUN	a pronoun for people left plain (the only such ones in the Bible)
+Ezekiel 33:12	he	1	NONE	PRONOUN	a pronoun for people left plain (the only such ones in the Bible)
+Mark 11:31	ye	1	NONE	PRONOUN	a pronoun for people left plain (the only such ones in the Bible)
+Mark 11:31	him	1	NONE	PRONOUN	a pronoun for people left plain (the only such ones in the Bible)
+John 8:11	She	1	NONE	PRONOUN	a pronoun for people left plain (the only such ones in the Bible)
+2 Corinthians 4:8	we	1	NONE	PRONOUN	a pronoun for people left plain (the only such ones in the Bible)
+3 John 1:14	Our	1	NONE	PRONOUN	a pronoun for people left plain (the only such ones in the Bible)
+Revelation 7:16	They	1	NONE	PRONOUN	a pronoun for people left plain (the only such ones in the Bible)

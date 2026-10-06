@@ -17,7 +17,7 @@
 export type TutorialLink =
   | { label: string; to: string }
   | { label: string; passage: { bookId: number; chapter: number; verse?: number } }
-  | { label: string; press: "goto" | "search" | "shortcuts" | "layout" | "workspaces" | "add-pane" }
+  | { label: string; press: "goto" | "search" | "shortcuts" | "layout" | "workspaces" | "add-pane" | "color-text" }
   | { label: string; tour: true };
 
 export interface TutorialEntry {
@@ -247,6 +247,26 @@ export const TUTORIAL: TutorialCategory[] = [
           "Settings → Reading → Bible text holds the defaults, plus Show highlights, Show note markers, and Show original words and parsing in interlinear view.",
         ],
         links: [{ label: "Settings → Reading", to: "/settings?section=preferences" }],
+      },
+      {
+        id: "color-text",
+        title: "Color text",
+        what: "Every person, place, time and number colored by what it is: Who? What? Where? When? How many?",
+        steps: [
+          "Click Color text in the reading toolbar (in a narrow pane, it is in the ... menu). Click it again to turn it off. Each Bible pane has its own.",
+          "God is purple (the Father violet, the Son plum, the Holy Spirit indigo), angels and demons olive, people blue, animals and plants teal, places green, time brown, numbers crimson. Within a family, the most specific words are brightest: Jerusalem, then city, then there.",
+          "Click a colored word for what it is and every verse where it has that color; a person or place also opens in the Factbook or on the map.",
+          "The strip under the toolbar shows how much of each family the chapter holds. Click a family to hide or show it. In this chapter lists everyone and everywhere the chapter names; pick one to ring it wherever it stands.",
+          "The menu beside the button turns on Who's speaking: God's words in small capitals, Scripture quoted in a speech in italics, speech within speech a shade lighter.",
+          "It works in every translation, the KJV's coloring carried to the others word by word and to the Greek and Hebrew through Strong's numbers.",
+          "Search with tag:son, tag:places or speaker:god to find verses by what they name or who speaks.",
+          "Settings → Reading → Bible text can underline each family in its own style (for telling the colors apart without seeing them) and color sermon passages and family worship, which then asks Who? What? Where? of the reading.",
+        ],
+        links: [
+          { label: "Try it in Genesis 22", passage: { bookId: 1, chapter: 22 } },
+          { label: "Turn color text on or off", press: "color-text" },
+          { label: "Settings → Reading", to: "/settings?section=preferences" },
+        ],
       },
       {
         id: "find",

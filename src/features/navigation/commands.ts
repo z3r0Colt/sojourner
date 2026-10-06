@@ -531,6 +531,30 @@ export function viewCommands(): Command[] {
         toast.info(redLetterMode ? "Red letters off" : "Words of Jesus in red");
       },
     });
+    const colorTextMode = bible.params.colorTextMode === true;
+    out.push({
+      id: "toggle-color-text",
+      group,
+      label: colorTextMode ? "Color text: off" : "Color text: on",
+      icon: Type,
+      keywords: "toggle color colour text persons places times numbers who what where when how many",
+      run: () => {
+        useWorkspaceStore.getState().setPaneParams(bible.id, "bible", { colorTextMode: !colorTextMode });
+        toast.info(colorTextMode ? "Color text off" : "Color text on");
+      },
+    });
+    const voiceMode = bible.params.voiceMode === true;
+    out.push({
+      id: "toggle-voices",
+      group,
+      label: voiceMode ? "Who's speaking: off" : "Who's speaking: on",
+      icon: Type,
+      keywords: "toggle speaker speaking voice god's words quoted scripture small caps",
+      run: () => {
+        useWorkspaceStore.getState().setPaneParams(bible.id, "bible", { voiceMode: !voiceMode });
+        toast.info(voiceMode ? "Speakers off" : "Who's speaking on");
+      },
+    });
   }
 
   const toggles: { id: string; on: boolean; onLabel: string; offLabel: string; icon: LucideIcon; keywords: string; run: () => void }[] = [

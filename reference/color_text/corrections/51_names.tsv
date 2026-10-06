@@ -1,0 +1,38 @@
+# Names left plain, or colored as a person when they are a place (and the reverse). Checked against the app's Factbook and the verse itself.
+# Columns: ref <TAB> term <TAB> occurrence <TAB> from <TAB> to <TAB> note
+1 Corinthians 9:1	Christ	1	NONE	GOD_SON	"Jesus Christ our Lord", left plain
+Acts 9:10	Ananias	1	NONE	PROPER_PERSON	the Lord calls him by name; the first "Ananias" is colored
+Matthew 27:46	Eli	*	NONE	GOD_FATHER	"Eli, Eli": "My God, my God", as the translation that follows is colored
+Mark 15:34	Eloi	*	NONE	GOD_FATHER	"Eloi, Eloi": "My God, my God"
+Numbers 21:27	Sihon	1	PROPER_PLACE	PROPER_PERSON	"the city of Sihon": the king (Jeremiah 48:45 "the midst of Sihon" is his realm and stays)
+Numbers 21:28	Sihon	1	PROPER_PLACE	PROPER_PERSON	(as above)
+1 Samuel 6:14	Joshua	1	PROPER_PLACE	PROPER_PERSON	"the field of Joshua, a Beth-shemite": a man
+1 Samuel 6:18	Joshua	1	PROPER_PLACE	PROPER_PERSON	(as above)
+Joshua 15:13	Arba	1	PROPER_PLACE	PROPER_PERSON	"the city of Arba the father of Anak": a man
+Joshua 21:11	Arba	1	PROPER_PLACE	PROPER_PERSON	(as above)
+1 Kings 16:24	Shemer	1	PROPER_PLACE	PROPER_PERSON	"bought the hill Samaria of Shemer": the owner, as later in the verse
+Judges 20:25	Gibeah	1	PROPER_PERSON	PROPER_PLACE	Saul's town
+1 Samuel 10:26	Gibeah	1	PROPER_PERSON	PROPER_PLACE	(as above)
+2 Samuel 21:6	Gibeah	1	PROPER_PERSON	PROPER_PLACE	"Gibeah of Saul"
+2 Samuel 23:29	Gibeah	1	PROPER_PERSON	PROPER_PLACE	(as above)
+2 Chronicles 13:2	Gibeah	1	PROPER_PERSON	PROPER_PLACE	(as above)
+Genesis 19:38	Ammon	1	PROPER_PERSON	PEOPLE_GROUP	"the children of Ammon" (guide 5.7)
+Joshua 17:7	Asher	1	GENERAL_PLACE_1	PROPER_PLACE	"from Asher to Michmethah": a named place
+1 Chronicles 21:6	Levi	1	PROPER_PLACE	PEOPLE_GROUP	"Levi and Benjamin counted he not": the tribes
+1 Chronicles 21:6	Benjamin	1	PROPER_PLACE	PEOPLE_GROUP	(as above)
+1 Chronicles 2:23	Geshur	1	PROPER_PERSON	PROPER_PLACE	"he took Geshur, and Aram, with the towns": kingdoms
+1 Chronicles 2:23	Aram	1	PROPER_PERSON	PROPER_PLACE	(as above)
+Joshua 13:21	Evi	1	PROPER_PLACE	PROPER_PERSON	"the princes of Midian, Evi, and Rekem, and Zur, and Hur, and Reba": men
+Joshua 13:21	Rekem	1	PROPER_PLACE	PROPER_PERSON	(as above)
+Joshua 13:21	Zur	1	PROPER_PLACE	PROPER_PERSON	(as above)
+Joshua 13:21	Hur	1	PROPER_PLACE	PROPER_PERSON	(as above)
+Joshua 13:21	Reba	1	PROPER_PLACE	PROPER_PERSON	(as above)
+Numbers 21:23	Jahaz	1	PROPER_PERSON	PROPER_PLACE	"he came to Jahaz": a town
+Deuteronomy 23:4	Pethor	1	PROPER_PERSON	PROPER_PLACE	"of Pethor of Mesopotamia": a town
+Joshua 9:10	Ashtaroth	1	PROPER_PERSON	PROPER_PLACE	"Og ... which was at Ashtaroth": a town
+2 Samuel 16:5	Bahurim	1	PROPER_PERSON	PROPER_PLACE	"came to Bahurim": a town
+2 Samuel 23:20	Kabzeel	1	PROPER_PERSON	PROPER_PLACE	"of Kabzeel": a town
+2 Kings 21:19	Jotbah	1	PROPER_PERSON	PROPER_PLACE	"of Jotbah": a town
+1 Chronicles 5:26	Halah	1	PROPER_PERSON	PROPER_PLACE	the places of the exile
+1 Chronicles 5:26	Habor	1	PROPER_PERSON	PROPER_PLACE	(as above)
+1 Chronicles 5:26	Hara	1	PROPER_PERSON	PROPER_PLACE	(as above)

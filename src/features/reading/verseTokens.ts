@@ -1,4 +1,4 @@
-import type { Highlight, Footnote } from "../../api/types";
+import type { Highlight, Footnote, ColorSpan } from "../../api/types";
 import type { RedLetterSpan } from "./redLetterSpans";
 import type { FindRange } from "./findMatches";
 
@@ -11,6 +11,11 @@ export interface Segment {
   /** Find-in-chapter: this segment is inside a match ("current" for the
    * one stepped to). Marks nest inside highlights like red letters do. */
   find: "match" | "current" | null;
+  /** Color text: the category and KJV term of the colored word this
+   * segment is part of. */
+  tag: { code: string; term: string } | null;
+  /** Who is speaking this segment ("god", "quote", ...), when not narration. */
+  voice: string | null;
 }
 
 export type Token = { kind: "text"; segment: Segment } | { kind: "footnote"; footnote: Footnote };
@@ -22,6 +27,8 @@ export function buildTokens(
   footnotes: Footnote[],
   redLetterSpans: RedLetterSpan[] = [],
   findRanges: FindRange[] = [],
+  colorSpans: ColorSpan[] = [],
+  voiceSpans: ColorSpan[] = [],
 ): Token[] {
   const relevant = highlights.filter((h) => verseNum >= h.verse_start && verseNum <= h.verse_end);
 
@@ -39,6 +46,10 @@ export function buildTokens(
   for (const r of findRanges) {
     boundaries.add(Math.max(0, Math.min(text.length, r.start)));
     boundaries.add(Math.max(0, Math.min(text.length, r.end)));
+  }
+  for (const c of [...colorSpans, ...voiceSpans]) {
+    boundaries.add(Math.max(0, Math.min(text.length, c.start)));
+    boundaries.add(Math.max(0, Math.min(text.length, c.end)));
   }
   const notesByOffset = new Map<number, Footnote[]>();
   for (const f of footnotes) {
@@ -67,6 +78,8 @@ export function buildTokens(
         ) ?? relevant.find((h) => h.char_start == null);
       const isRedLetter = redLetterSpans.some((s) => start >= s.start && end <= s.end);
       const found = findRanges.find((r) => start >= r.start && end <= r.end);
+      const colored = colorSpans.find((c) => start >= c.start && end <= c.end);
+      const voiced = voiceSpans.find((c) => start >= c.start && end <= c.end);
       tokens.push({
         kind: "text",
         segment: {
@@ -76,6 +89,8 @@ export function buildTokens(
           highlightId: covering?.id ?? null,
           isRedLetter,
           find: found ? (found.current ? "current" : "match") : null,
+          tag: colored ? { code: colored.code, term: colored.term } : null,
+          voice: voiced?.code ?? null,
         },
       });
     }

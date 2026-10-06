@@ -97,6 +97,14 @@ interface UiState {
   copyFormat: CopyFormat;
   /** Append the translation code to the reference when copying ("John 3:16 KJV"). */
   copyIncludeTranslation: boolean;
+  /** Color text: each family also underlined in its own style, for readers
+   * who cannot tell some of the colors apart. */
+  colorTextMarks: boolean;
+  /** Color text in a sermon's passage blocks. */
+  colorTextInSermons: boolean;
+  /** Color text in family worship's reading, with its Who? What? Where?
+   * questions. */
+  colorTextInFamily: boolean;
   /** Forces reduced motion (no transitions, no toast slide) regardless of
    * the OS setting, which applies on its own (F3.6). */
   reduceMotion: boolean;
@@ -173,6 +181,9 @@ interface UiState {
   setReadingFont: (f: ReadingFont) => void;
   setCopyFormat: (f: CopyFormat) => void;
   setCopyIncludeTranslation: (on: boolean) => void;
+  setColorTextMarks: (on: boolean) => void;
+  setColorTextInSermons: (on: boolean) => void;
+  setColorTextInFamily: (on: boolean) => void;
   toggleVerseNumbers: () => void;
   toggleShowHighlights: () => void;
   toggleShowNoteSymbols: () => void;
@@ -224,6 +235,9 @@ export const useUiStore = create<UiState>((set) => ({
   showCantillation: stored.showCantillation ?? true,
   copyFormat: stored.copyFormat ?? "text-ref",
   copyIncludeTranslation: stored.copyIncludeTranslation ?? false,
+  colorTextMarks: stored.colorTextMarks ?? false,
+  colorTextInSermons: stored.colorTextInSermons ?? false,
+  colorTextInFamily: stored.colorTextInFamily ?? false,
   reduceMotion: stored.reduceMotion ?? false,
   accentSource: stored.accentSource ?? "app",
   distractionFreeMode: false,
@@ -365,6 +379,18 @@ export const useUiStore = create<UiState>((set) => ({
   setCopyIncludeTranslation: (copyIncludeTranslation) => {
     persist({ copyIncludeTranslation });
     set({ copyIncludeTranslation });
+  },
+  setColorTextMarks: (colorTextMarks) => {
+    persist({ colorTextMarks });
+    set({ colorTextMarks });
+  },
+  setColorTextInSermons: (colorTextInSermons) => {
+    persist({ colorTextInSermons });
+    set({ colorTextInSermons });
+  },
+  setColorTextInFamily: (colorTextInFamily) => {
+    persist({ colorTextInFamily });
+    set({ colorTextInFamily });
   },
   toggleVerseNumbers: () =>
     set((s) => {

@@ -229,6 +229,26 @@ fn verse_conditions(q: &ParsedQuery, scope: &VerseSearchScope) -> (String, Vec<B
                           AND v.verse BETWEEN r.verse_start AND r.verse_end)",
         );
     }
+    if !f.tags.is_empty() {
+        let marks = vec!["?"; f.tags.len()].join(",");
+        sql.push_str(&format!(
+            " AND EXISTS (SELECT 1 FROM color_tags ct WHERE ct.book_id = v.book_id AND ct.chapter = v.chapter
+                          AND ct.verse = v.verse AND ct.code IN ({marks}))"
+        ));
+        for t in &f.tags {
+            params.push(Box::new(t.clone()));
+        }
+    }
+    if !f.speakers.is_empty() {
+        let marks = vec!["?"; f.speakers.len()].join(",");
+        sql.push_str(&format!(
+            " AND EXISTS (SELECT 1 FROM color_voices cv WHERE cv.book_id = v.book_id AND cv.chapter = v.chapter
+                          AND cv.verse = v.verse AND cv.voice IN ({marks}))"
+        ));
+        for s in &f.speakers {
+            params.push(Box::new(s.clone()));
+        }
+    }
     if f.has_note {
         sql.push_str(&format!(
             " AND EXISTS (SELECT 1 FROM notes n WHERE n.book_id = v.book_id AND n.chapter = v.chapter

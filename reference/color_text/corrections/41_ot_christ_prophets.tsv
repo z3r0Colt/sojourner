@@ -1,0 +1,92 @@
+# Old Testament words the New Testament applies to Christ take the Son color: the Prophets.
+# Rule as in 40_: only the words the NT applies to him, and pronouns for him in a passage the source already colors as his; titles of God keep the Father color.
+# Columns: ref <TAB> term <TAB> occurrence <TAB> from <TAB> to <TAB> note (with the NT reference)
+Isaiah 7:14	son	1	GENERAL_PEOPLE	GOD_SON	"a virgin shall ... bring forth a son" (Matt 1:23); "the Lord himself" stays
+Isaiah 7:14	his	1	GOD_FATHER	GOD_SON	"they shall call his name Emmanuel" (Matt 1:23)
+Isaiah 8:17	I	*	PRONOUN	GOD_SON	"I will put my trust in him", said by Christ (Heb 2:13)
+Isaiah 8:18	I	1	PRONOUN	GOD_SON	"Behold I and the children which God hath given me" (Heb 2:13)
+Isaiah 8:18	me	1	PRONOUN	GOD_SON	(Heb 2:13)
+Isaiah 9:6	his	*	GOD_FATHER	GOD_SON	the child, the son given: "upon his shoulder", "his name shall be called Wonderful" (the names already in the Son's color)
+Isaiah 9:7	his	*	GOD_FATHER	GOD_SON	"his government", "his kingdom" upon the throne of David (Luke 1:32-33); "the LORD of hosts" stays
+Isaiah 11:2	him	1	GOD_FATHER	GOD_SON	the Branch of 11:1, already the Son's color
+Isaiah 11:3	him	1	GOD_FATHER	GOD_SON	the Branch
+Isaiah 11:3	he	1	GOD_FATHER	GOD_SON	the Branch
+Isaiah 11:3	his	*	GOD_FATHER	GOD_SON	the Branch
+Isaiah 11:4	he	*	GOD_FATHER	GOD_SON	the Branch (2 Thess 2:8, "the breath of his lips")
+Isaiah 11:4	his	*	GOD_FATHER	GOD_SON	the Branch
+Isaiah 11:5	his	*	GOD_FATHER	GOD_SON	the Branch
+Isaiah 11:10	root	1	PLANT	GOD_SON	"There shall be a root of Jesse ... he that shall rise to reign" (Rom 15:12); cf. Rev 5:5; 22:16
+Isaiah 11:10	his	1	PRONOUN	GOD_SON	the root of Jesse (Rom 15:12)
+Isaiah 42:1	servant	1	GENERAL_PEOPLE	GOD_SON	"Behold my servant" fulfilled in Jesus (Matt 12:17-18)
+Isaiah 42:1	whom	*	GOD_FATHER	GOD_SON	the servant, "in whom my soul is well pleased" (Matt 12:18)
+Isaiah 42:1	elect	1	GENERAL_PEOPLE	GOD_SON	"mine elect" (Matt 12:18; Luke 9:35)
+Isaiah 42:1	him	1	GOD_FATHER	GOD_SON	(Matt 12:18)
+Isaiah 42:1	he	1	GOD_FATHER	GOD_SON	(Matt 12:18)
+Isaiah 42:2	He	1	GOD_FATHER	GOD_SON	(Matt 12:19)
+Isaiah 42:2	his	1	GOD_FATHER	GOD_SON	(Matt 12:19)
+Isaiah 42:3	he	*	GOD_FATHER	GOD_SON	(Matt 12:20)
+Isaiah 42:4	He	1	GOD_FATHER	GOD_SON	(Matt 12:21)
+Isaiah 42:4	he	1	GOD_FATHER	GOD_SON	(Matt 12:21)
+Isaiah 42:4	his	1	GOD_FATHER	GOD_SON	"in his name shall the Gentiles trust" (Matt 12:21)
+Isaiah 52:13	servant	1	GENERAL_PEOPLE	GOD_SON	the Servant of 52:13-53:12, preached as Jesus (Acts 8:32-35)
+Isaiah 52:13	he	1	GOD_FATHER	GOD_SON	the Servant (Acts 8:35)
+Isaiah 52:14	thee	1	PRONOUN	GOD_SON	the Servant addressed
+Isaiah 52:14	his	*	GOD_FATHER	GOD_SON	the Servant's marred visage
+Isaiah 52:15	he	1	GOD_FATHER	GOD_SON	(Rom 15:21)
+Isaiah 52:15	him	1	GOD_FATHER	GOD_SON	(Rom 15:21)
+Isaiah 53:2	he	*	GOD_FATHER	GOD_SON	the Servant (John 12:38; Acts 8:35); "before him" is the LORD and stays
+Isaiah 53:2	him	2	GOD_FATHER	GOD_SON	"when we shall see him"
+Isaiah 53:2	him	3	GOD_FATHER	GOD_SON	"that we should desire him"
+Isaiah 53:3	He	1	GOD_FATHER	GOD_SON	the Servant (Acts 8:35)
+Isaiah 53:3	man	1	GENERAL_PEOPLE	GOD_SON	"a man of sorrows", the Servant himself
+Isaiah 53:3	him	*	GOD_FATHER	GOD_SON	the Servant
+Isaiah 53:3	he	1	GOD_FATHER	GOD_SON	the Servant
+Isaiah 53:4	he	1	GOD_FATHER	GOD_SON	"Himself took our infirmities" (Matt 8:17)
+Isaiah 53:4	him	1	GOD_FATHER	GOD_SON	(Matt 8:17)
+Isaiah 53:5	he	*	GOD_FATHER	GOD_SON	"by whose stripes ye were healed" (1 Pet 2:24)
+Isaiah 53:5	him	1	GOD_FATHER	GOD_SON	(1 Pet 2:24)
+Isaiah 53:5	his	1	GOD_FATHER	GOD_SON	(1 Pet 2:24)
+Isaiah 53:6	him	1	GOD_FATHER	GOD_SON	(1 Pet 2:25)
+Isaiah 53:7	He	1	GOD_FATHER	GOD_SON	"he was led as a sheep to the slaughter" (Acts 8:32)
+Isaiah 53:7	he	*	GOD_FATHER	GOD_SON	(Acts 8:32)
+Isaiah 53:7	his	*	GOD_FATHER	GOD_SON	(Acts 8:32)
+Isaiah 53:8	He	1	GOD_FATHER	GOD_SON	(Acts 8:33)
+Isaiah 53:8	his	1	GOD_FATHER	GOD_SON	"who shall declare his generation?" (Acts 8:33)
+Isaiah 53:8	he	*	GOD_FATHER	GOD_SON	(Acts 8:33)
+Isaiah 53:9	he	*	GOD_FATHER	GOD_SON	"who did no sin, neither was guile found in his mouth" (1 Pet 2:22)
+Isaiah 53:9	his	*	GOD_FATHER	GOD_SON	(1 Pet 2:22)
+Isaiah 53:10	him	*	GOD_FATHER	GOD_SON	the Servant bruised; "he hath put him to grief" and "thou" are the LORD and stay
+Isaiah 53:10	his	*	GOD_FATHER	GOD_SON	the Servant
+Isaiah 53:10	he	2	GOD_FATHER	GOD_SON	"he shall see his seed"
+Isaiah 53:10	he	3	GOD_FATHER	GOD_SON	"he shall prolong his days"
+Isaiah 53:11	He	1	GOD_FATHER	GOD_SON	the Servant
+Isaiah 53:11	his	*	GOD_FATHER	GOD_SON	the Servant
+Isaiah 53:11	servant	1	GENERAL_PEOPLE	GOD_SON	"my righteous servant"
+Isaiah 53:11	he	1	GOD_FATHER	GOD_SON	"he shall bear their iniquities" (1 Pet 2:24)
+Isaiah 53:12	him	1	GOD_FATHER	GOD_SON	the Servant; "I" is the LORD and stays
+Isaiah 53:12	he	*	GOD_FATHER	GOD_SON	"he was reckoned among the transgressors" (Luke 22:37; Mark 15:28)
+Isaiah 53:12	his	1	GOD_FATHER	GOD_SON	(Luke 22:37)
+Isaiah 59:20	Redeemer	1	GOD_FATHER	GOD_SON	"There shall come out of Sion the Deliverer" (Rom 11:26)
+Isaiah 61:1	me	*	PRONOUN	GOD_SON	"This day is this scripture fulfilled in your ears" (Luke 4:18-21)
+Hosea 11:1	son	1	GENERAL_PEOPLE	GOD_SON	"Out of Egypt have I called my son" (Matt 2:15); "I loved him" is Israel and stays
+Micah 5:2	he	1	GOD_FATHER	GOD_SON	the ruler born in Bethlehem (Matt 2:6)
+Micah 5:2	ruler	1	GENERAL_PEOPLE	GOD_SON	"a Governor, that shall rule my people Israel" (Matt 2:6)
+Micah 5:2	whose	1	GOD_FATHER	GOD_SON	his goings forth from everlasting
+Micah 5:3	his	1	PRONOUN	GOD_SON	the ruler's brethren; "he" giving them up is the LORD and stays
+Micah 5:4	he	*	PRONOUN	GOD_SON	the ruler shall feed (shepherd) Israel (Matt 2:6)
+Micah 5:4	his	1	PRONOUN	GOD_SON	"the LORD his God"
+Zechariah 9:9	King	1	GENERAL_PEOPLE	GOD_SON	"Behold, thy King cometh" (Matt 21:5; John 12:15)
+Zechariah 9:9	he	1	GOD_FATHER	GOD_SON	(Matt 21:5)
+Zechariah 11:12	me my	1	PRONOUN	GOD_SON	"the price of him that was valued" (Matt 27:9)
+Zechariah 11:12	my	1	PRONOUN	GOD_SON	thirty pieces of silver for him (Matt 27:9)
+Zechariah 11:13	I	1	GOD_FATHER	GOD_SON	"a goodly price that I was prised at": the price of him that was valued (Matt 27:9)
+Zechariah 12:10	me	1	GOD_FATHER	GOD_SON	"They shall look on him whom they pierced" (John 19:37; Rev 1:7)
+Zechariah 12:10	whom	1	GOD_FATHER	GOD_SON	(John 19:37)
+Zechariah 12:10	him	*	GOD_FATHER	GOD_SON	(John 19:37)
+Zechariah 13:7	shepherd	*	GENERAL_PEOPLE	GOD_SON	"I will smite the shepherd" (Matt 26:31; Mark 14:27)
+Zechariah 13:7	man	1	GENERAL_PEOPLE	GOD_SON	"the man that is my fellow", the same shepherd
+Zechariah 13:7	fellow	1	GENERAL_PEOPLE	GOD_SON	the same shepherd
+Daniel 7:13	him	1	GOD_FATHER	GOD_SON	the Son of man brought near; "before him" is the Ancient of days and stays
+Daniel 7:14	him	*	GOD_FATHER	GOD_SON	the Son of man (Matt 26:64)
+Daniel 7:14	his	*	GOD_FATHER	GOD_SON	the Son of man's dominion
+Malachi 3:1	Lord	1	GOD_FATHER	GOD_SON	"the Lord, whom ye seek ... the messenger of the covenant", whose "whom" and "his temple" are already in the Son's color (Matt 11:10; Mark 1:2); "Lord" said of Jesus takes his color

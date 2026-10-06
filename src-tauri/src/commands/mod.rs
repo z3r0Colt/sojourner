@@ -40,6 +40,7 @@ mod tests {
 pub mod annotations;
 pub mod backup;
 pub mod catechism_memory;
+pub mod color_text;
 pub mod diagnostics;
 pub mod export;
 pub mod file_picker;

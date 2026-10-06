@@ -102,6 +102,8 @@ export const OPERATOR_HELP: { syntax: string; means: string; example: string }[]
   { syntax: "c:henry", means: "these commentaries", example: "adoption c:henry" },
   { syntax: "G26 / H2617", means: "verses whose Greek or Hebrew has that Strong's number", example: "G26 in:john" },
   { syntax: "red:", means: "the words of Christ", example: "red: verily" },
+  { syntax: "tag:son", means: "verses color text marks for that kind of word (god, son, spirit, angels, people, person, nation, nature, places, time, numbers)", example: "lamb tag:son" },
+  { syntax: "speaker:god", means: "verses where God speaks (also speaker:quote for Scripture quoted)", example: "speaker:god in:isaiah" },
   { syntax: "has:note", means: "verses you have written notes on", example: "has:note" },
   { syntax: "color:yellow", means: "verses you highlighted in a colour", example: "color:yellow" },
   { syntax: "since:2026-01", means: "notes and prayers written since", example: "since:2026-01 grace" },

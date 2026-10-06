@@ -179,6 +179,9 @@ export function PreferencesSection() {
   const setPaneParams = useWorkspaceStore((s) => s.setPaneParams);
   const paragraphMode = bible?.params.paragraphMode ?? false;
   const redLetterMode = bible?.params.redLetterMode ?? false;
+  const colorTextMode = bible?.params.colorTextMode ?? false;
+  const voiceMode = bible?.params.voiceMode ?? false;
+  const { colorTextMarks, setColorTextMarks, colorTextInSermons, setColorTextInSermons, colorTextInFamily, setColorTextInFamily } = useUiStore();
   const noBible = !bible;
 
   return (
@@ -259,7 +262,7 @@ export function PreferencesSection() {
 
       <h2 className="mb-1 mt-8 text-lg font-semibold text-ink">Bible text</h2>
       <p className="mb-2 text-sm text-ink-3">
-        Paragraph mode and red letters belong to each Bible pane, so a second pane can show the same chapter differently. These two switches change the pane you are reading in
+        Paragraph mode, red letters, color text and "Who's speaking" belong to each Bible pane, so a second pane can show the same chapter differently. Those switches change the pane you are reading in
         {noBible ? " (open a Bible pane to use them)" : ""}.
       </p>
       <div className="divide-y divide-line">
@@ -277,6 +280,37 @@ export function PreferencesSection() {
           checked={redLetterMode}
           disabled={noBible}
           onChange={() => bible && setPaneParams(bible.id, "bible", { redLetterMode: !redLetterMode })}
+        />
+        <Toggle
+          label="Color text"
+          hint="Who, what, where, when and how many, each in its own color, in this Bible pane"
+          checked={colorTextMode}
+          disabled={noBible}
+          onChange={() => bible && setPaneParams(bible.id, "bible", { colorTextMode: !colorTextMode })}
+        />
+        <Toggle
+          label="Underline each color family"
+          hint="God solid, angels dotted, nature wavy, places dashed, time double, numbers over the line: for telling the colors apart without seeing them"
+          checked={colorTextMarks}
+          onChange={() => setColorTextMarks(!colorTextMarks)}
+        />
+        <Toggle
+          label="Color text in sermon passages"
+          checked={colorTextInSermons}
+          onChange={() => setColorTextInSermons(!colorTextInSermons)}
+        />
+        <Toggle
+          label="Color text in family worship"
+          hint="Colors tonight's reading and asks Who? What? Where? When? How many? of it"
+          checked={colorTextInFamily}
+          onChange={() => setColorTextInFamily(!colorTextInFamily)}
+        />
+        <Toggle
+          label="Who's speaking"
+          hint="God's words in small capitals, Scripture quoted in italics, speech within speech lighter, in this Bible pane"
+          checked={voiceMode}
+          disabled={noBible}
+          onChange={() => bible && setPaneParams(bible.id, "bible", { voiceMode: !voiceMode })}
         />
         <Toggle label="Show highlights" checked={showHighlights} onChange={toggleShowHighlights} />
         <Toggle label="Show note markers" checked={showNoteSymbols} onChange={toggleShowNoteSymbols} />

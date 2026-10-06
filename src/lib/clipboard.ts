@@ -37,18 +37,48 @@ export function formatPassage(text: string, reference: string, format: CopyForma
   }
 }
 
-export async function copyPassage(text: string, reference: string, format: CopyFormat): Promise<void> {
-  await navigator.clipboard.writeText(formatPassage(text, reference, format));
+/** `formatPassage` for a passage already in HTML (color text): the same
+ * layout, so a paste into a document matches a paste as plain text. */
+export function formatPassageHtml(html: string, reference: string, format: CopyFormat): string {
+  const ref = reference.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+  switch (format) {
+    case "text":
+      return html;
+    case "text-ref":
+      return `${html} (${ref})`;
+    case "ref-text":
+      return `${ref} — ${html}`;
+    case "markdown":
+      return `<blockquote>${html}<br>— ${ref}</blockquote>`;
+  }
+}
+
+export async function copyPassage(text: string, reference: string, format: CopyFormat, html?: string): Promise<void> {
+  const plain = formatPassage(text, reference, format);
+  if (html && typeof ClipboardItem !== "undefined") {
+    try {
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          "text/plain": new Blob([plain], { type: "text/plain" }),
+          "text/html": new Blob([formatPassageHtml(html, reference, format)], { type: "text/html" }),
+        }),
+      ]);
+      return;
+    } catch {
+      // Fall through to plain text where rich copying is refused.
+    }
+  }
+  await navigator.clipboard.writeText(plain);
 }
 
 /** `copy(text, reference, translationCode)` bound to the reader's format
  * and "Include translation" preferences. */
-export function useCopyPassage(): (text: string, reference: string, translationCode?: string | null) => Promise<void> {
+export function useCopyPassage(): (text: string, reference: string, translationCode?: string | null, html?: string) => Promise<void> {
   const format = useUiStore((s) => s.copyFormat);
   const includeTranslation = useUiStore((s) => s.copyIncludeTranslation);
   return useCallback(
-    (text: string, reference: string, translationCode?: string | null) =>
-      copyPassage(text, copyReference(reference, includeTranslation ? translationCode : null), format),
+    (text: string, reference: string, translationCode?: string | null, html?: string) =>
+      copyPassage(text, copyReference(reference, includeTranslation ? translationCode : null), format, html),
     [format, includeTranslation],
   );
 }

@@ -398,6 +398,105 @@ html[data-reading-font="dyslexic"] .reading-font {
   font-family: var(--font-reading-dyslexic);
 }
 
+/* Color text (features/reading/colorText.ts): the Fresh Look palette, each
+   family's shades bright to dark. `-ink` is the light-theme shade in every
+   theme, for a word inside a highlight, whose ground stays light. */
+:root {
+  --ct-GF: #7a36bf;
+  --ct-GF-ink: #7a36bf;
+  --ct-GS: #b0307a;
+  --ct-GS-ink: #b0307a;
+  --ct-HS: #4b48c4;
+  --ct-HS-ink: #4b48c4;
+  --ct-AN: #a19638;
+  --ct-AN-ink: #a19638;
+  --ct-DE: #736b28;
+  --ct-DE-ink: #736b28;
+  --ct-PN: #218fd9;
+  --ct-PN-ink: #218fd9;
+  --ct-PG: #1f87cc;
+  --ct-PG-ink: #1f87cc;
+  --ct-GP: #1b76b2;
+  --ct-GP-ink: #1b76b2;
+  --ct-PR: #244a7f;
+  --ct-PR-ink: #244a7f;
+  --ct-BE: #469594;
+  --ct-BE-ink: #469594;
+  --ct-PL: #007b78;
+  --ct-PL-ink: #007b78;
+  --ct-PP: #2fa648;
+  --ct-PP-ink: #2fa648;
+  --ct-L1: #247f38;
+  --ct-L1-ink: #247f38;
+  --ct-L2: #195928;
+  --ct-L2-ink: #195928;
+  --ct-T1: #995226;
+  --ct-T1-ink: #995226;
+  --ct-T2: #733e1d;
+  --ct-T2-ink: #733e1d;
+  --ct-NU: #9c0f2e;
+  --ct-NU-ink: #9c0f2e;
+  --ct-ME: #7f0b25;
+  --ct-ME-ink: #7f0b25;
+  --ct-QU: #66091d;
+  --ct-QU-ink: #66091d;
+}
+html[data-theme="dark"],
+html[data-theme="oled"],
+html[data-theme="contrast-dark"] {
+  --ct-GF: #c7a5e9;
+  --ct-GS: #f08cc4;
+  --ct-HS: #a8a6f5;
+  --ct-AN: #ded794;
+  --ct-DE: #bdb46a;
+  --ct-PN: #a1d1f2;
+  --ct-PG: #86c2ec;
+  --ct-GP: #6fb3e3;
+  --ct-PR: #7b9fd6;
+  --ct-BE: #9dd7d7;
+  --ct-PL: #62c7c3;
+  --ct-PP: #8ce29e;
+  --ct-L1: #68c97c;
+  --ct-L2: #58a86a;
+  --ct-T1: #e1a077;
+  --ct-T2: #c98a5f;
+  --ct-NU: #f07a93;
+  --ct-ME: #dc6680;
+  --ct-QU: #c45670;
+}
+.ct {
+  color: var(--ct-c);
+  cursor: pointer;
+}
+.ct:hover {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+mark.highlight .ct {
+  color: var(--ct-ink);
+}
+/* Underlines by family (Settings: "Underline each family"), so the families
+   can be told apart without the colors. People, the commonest, stay plain. */
+.ct-marks .ct[data-ct-family="god"] { text-decoration: underline solid; text-underline-offset: 0.18em; }
+.ct-marks .ct[data-ct-family="angels"] { text-decoration: underline dotted; text-underline-offset: 0.18em; }
+.ct-marks .ct[data-ct-family="nature"] { text-decoration: underline wavy; text-underline-offset: 0.18em; text-decoration-thickness: 1px; }
+.ct-marks .ct[data-ct-family="places"] { text-decoration: underline dashed; text-underline-offset: 0.18em; }
+.ct-marks .ct[data-ct-family="time"] { text-decoration: underline double; text-underline-offset: 0.18em; }
+.ct-marks .ct[data-ct-family="number"] { text-decoration: overline solid; }
+
+/* Who is speaking (the reading view's "Who's speaking"): God's words in small
+   capitals, as the Fresh Look edition sets them; Scripture quoted inside a
+   speech in italics; speech within speech a step lighter; a closing
+   benediction in a heavier weight. */
+.voice-god { font-variant-caps: small-caps; letter-spacing: 0.01em; }
+.voice-quote { font-style: italic; }
+.voice-inner { opacity: 0.78; }
+.voice-benediction { font-weight: 600; }
+
+/* One term picked from "In this chapter": every place it stands, ringed. */
+.ct.ct-spot { border-radius: 3px; box-shadow: 0 0 0 2px color-mix(in srgb, var(--ct-c) 45%, transparent); background: color-mix(in srgb, var(--ct-c) 12%, transparent); }
+
 mark.highlight {
   background-color: var(--hl-color, #fef08a);
   color: #1f2937;

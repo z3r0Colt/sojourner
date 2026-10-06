@@ -1,0 +1,34 @@
+# Old Testament passages the source already colors as Christ's, whose other words for him disagreed.
+# Nouns that name him (man, servant, Branch, King) take his color; an office he holds ("a priest") stays a common noun, as at Psalm 110:4.
+# Columns: ref <TAB> term <TAB> occurrence <TAB> from <TAB> to <TAB> note
+Genesis 49:10	him	1	PRONOUN	GOD_SON	"unto him shall the gathering of the people be": Shiloh
+Numbers 24:17	him	*	GOD_FATHER	GOD_SON	"I shall see him": the Star out of Jacob
+Numbers 24:18	his	1	GOD_FATHER	PRONOUN	"a possession for his enemies": Seir's enemies, not God's
+Numbers 24:19	he	1	PRONOUN	GOD_SON	"he that shall have dominion": the Sceptre of 24:17
+Joshua 5:13	his	*	GOD_FATHER	GOD_SON	the captain of the LORD's host (a man already in the Son's color); "over against him" is Joshua and stays
+Joshua 5:13	him	*	GOD_FATHER	GOD_SON	the captain
+Joshua 5:13	thou	1	GOD_FATHER	GOD_SON	the captain
+Joshua 5:14	he	1	GOD_FATHER	GOD_SON	the captain
+Joshua 5:14	I	1	GOD_FATHER	GOD_SON	"as captain of the host of the LORD am I now come"
+Joshua 5:14	him	1	GOD_FATHER	GOD_SON	the captain
+Joshua 5:14	his	1	GOD_FATHER	GOD_SON	"my lord unto his servant": the captain's servant
+Job 19:25	he	1	GOD_FATHER	GOD_SON	"my redeemer ... he shall stand at the latter day"
+Isaiah 19:20	he	2	GOD_FATHER	GOD_SON	"he shall deliver them": the saviour; the first "he" (the LORD sends) stays
+Daniel 9:26	himself	1	GOD_FATHER	GOD_SON	"Messiah be cut off, but not for himself"
+Daniel 9:27	he	*	GOD_FATHER	GOD_SON	the Messiah of 9:26 confirms the covenant (Calvin, Henry and older Reformed readers; some read the coming prince, but never the Father)
+Hosea 2:16	me	*	GOD_FATHER	GOD_SON	"thou shalt call me Ishi": the one named Ishi, already in the Son's color
+Zechariah 3:8	servant	1	GENERAL_PEOPLE	GOD_SON	"my servant the BRANCH"
+Zechariah 6:12	man	1	GENERAL_PEOPLE	GOD_SON	"Behold the man whose name is The BRANCH" (cf. John 19:5)
+Zechariah 6:12	whose	1	GOD_FATHER	GOD_SON	the BRANCH
+Zechariah 6:12	he	*	GOD_FATHER	GOD_SON	the BRANCH
+Zechariah 6:12	his	1	GOD_FATHER	GOD_SON	the BRANCH
+Zechariah 6:13	he	*	GOD_FATHER	GOD_SON	the BRANCH, priest and king
+Zechariah 6:13	his	*	GOD_FATHER	GOD_SON	the BRANCH's throne
+Jeremiah 23:5	righteous	1	GOD_FATHER	GOD_SON	"a righteous Branch" (the guide's Branch title)
+Jeremiah 23:5	Branch	1	GOD_FATHER	GOD_SON	the Branch raised unto David
+Jeremiah 23:5	King	1	GOD_FATHER	GOD_SON	"a King shall reign": the Branch
+Jeremiah 23:6	his	*	GOD_FATHER	GOD_SON	the Branch
+Jeremiah 23:6	he	1	GOD_FATHER	GOD_SON	the Branch
+Jeremiah 23:6	THE LORD OUR RIGHTEOUSNESS	1	GOD_FATHER	GOD_SON	the Branch's own name, as the names of Isaiah 9:6 take the Son's color (at Jeremiah 33:16 it is Jerusalem's name and stays)
+Jeremiah 33:15	Branch of righteousness	1	GOD_FATHER	GOD_SON	the Branch
+Jeremiah 33:15	he	1	PRONOUN	GOD_SON	the Branch

@@ -38,7 +38,9 @@ function LinkChip({ link }: { link: TutorialLink }) {
       return;
     }
     if ("press" in link) {
-      document.querySelector<HTMLElement>(`[data-tour="${link.press}"]`)?.click();
+      // The tour's mark may be on a group (Color text and its menu): press its first button.
+      const el = document.querySelector<HTMLElement>(`[data-tour="${link.press}"]`);
+      (el?.matches("button") ? el : el?.querySelector<HTMLElement>("button"))?.click();
       return;
     }
     // The chord swaps the default: a plain click opens beside, a modified

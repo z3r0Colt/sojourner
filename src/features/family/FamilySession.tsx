@@ -1,4 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
+import { useQueries } from "@tanstack/react-query";
+import { api } from "../../api/client";
+import { useReaderTranslationId } from "../../state/workspaceStore";
+import { ColoredText, LookCloser } from "./LookCloser";
 import { ArrowLeft, ArrowRight, BookOpen, Brain, Check, HandHeart, Maximize2, Minimize2, Minus, Music, Plus, ScrollText, X } from "lucide-react";
 import { useBooks, useCreatePrayerListPerson, usePassages } from "../../api/queries";
 import type { WestminsterSectionSummary } from "../../api/types";
@@ -231,6 +235,19 @@ function ReadStep({ tonight, large }: { tonight: Tonight; large: boolean }) {
   const refs = useMemo(() => readings.flatMap(readingRefs), [readings]);
   const { byKey, isLoading } = usePassages(refs);
   const label = readings.map((r) => r.label).join("; ");
+  // Color text, when the family has it on: the reading's colors, and the
+  // Who? What? Where? questions they answer.
+  const colorOn = useUiStore((s) => s.colorTextInFamily);
+  const translationId = useReaderTranslationId();
+  const colorQueries = useQueries({
+    queries: refs.map((r) => ({
+      queryKey: ["colorText", translationId, r.book_id, r.chapter],
+      queryFn: () => api.getColorText(translationId!, r.book_id, r.chapter),
+      enabled: colorOn && translationId != null,
+      staleTime: Infinity,
+    })),
+  });
+  const colorFor = (n: number, verse: number) => (colorQueries[n]?.data ?? []).filter((s) => s.verse === verse);
   const bookName = (id: number) => books?.find((b) => b.id === id)?.name ?? "";
   const segments = refs.flatMap((ref) =>
     (byKey.get(refKey(ref))?.verses ?? []).map((v) => ({ id: `${v.chapter}:${v.verse}`, text: v.text, label: `${bookName(v.book_id)} ${v.chapter}:${v.verse}` })),
@@ -263,7 +280,7 @@ function ReadStep({ tonight, large }: { tonight: Tonight; large: boolean }) {
       </div>
       <div className="reading-font text-ink" style={large ? { lineHeight: 1.55 } : typography}>
         {isLoading && <p className="text-ink-3">Loading…</p>}
-        {refs.map((ref) => {
+        {refs.map((ref, n) => {
           const passage = byKey.get(refKey(ref));
           return (
             <div key={refKey(ref)} className="mb-[0.8em]">
@@ -276,7 +293,7 @@ function ReadStep({ tonight, large }: { tonight: Tonight; large: boolean }) {
                 {passage?.verses.map((v) => (
                   <span key={v.verse}>
                     <sup className="mr-[0.2em] select-none font-sans text-[0.6em] font-semibold text-ink-4">{v.verse}</sup>
-                    {v.text}{" "}
+                    {colorOn ? <ColoredText text={v.text} verse={v.verse} spans={colorFor(n, v.verse)} /> : v.text}{" "}
                   </span>
                 ))}
               </p>
@@ -284,6 +301,14 @@ function ReadStep({ tonight, large }: { tonight: Tonight; large: boolean }) {
           );
         })}
       </div>
+      {colorOn && (
+        <LookCloser
+          readings={refs.flatMap((r, n) => {
+            const passage = byKey.get(refKey(r));
+            return passage ? [{ passage, spans: colorQueries[n]?.data ?? [] }] : [];
+          })}
+        />
+      )}
       {/* The family's own questions, or faith, love and hope, each default
           led by its one word so a child can say which one is being asked. */}
       <section className="mt-[1em] rounded-lg border border-line bg-surface-2 p-[0.8em]">

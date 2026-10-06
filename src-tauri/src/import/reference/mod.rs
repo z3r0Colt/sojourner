@@ -1,5 +1,6 @@
 pub mod atlas;
 pub mod church_history;
+pub mod color_text;
 pub mod confessions;
 pub mod crossrefs;
 pub mod dictionary;
@@ -218,6 +219,14 @@ pub fn import_all(conn: &mut Connection, reference_dir: &Path) -> anyhow::Result
     } else {
         0
     };
+
+    // After the KJV, the interlinear phrases and the morphology words: the
+    // spans are checked against the first, the word lists counted through the
+    // other two.
+    if table_count(conn, "color_tags") == 0 {
+        color_text::import(conn, &reference_dir.join("color_text"))
+            .map_err(|e| anyhow::anyhow!("color text import failed: {e:#}"))?;
+    }
 
     let thayers_entries = if table_count(conn, "thayers_entries") == 0 {
         thayers::import(conn, &reference_dir.join("thayers").join("thayers.xml"))

@@ -1,21 +1,40 @@
 import { Library, StickyNote } from "lucide-react";
-import type { Highlight, Note, Verse, Footnote } from "../../api/types";
+import type { Highlight, Note, Verse, Footnote, ColorSpan } from "../../api/types";
 import { ReadAloudWords } from "../tts/ReadAloudWords";
 import { buildTokens, type Segment } from "./verseTokens";
 import type { RedLetterSpan } from "./redLetterSpans";
 import type { FindRange } from "./findMatches";
 import { cx } from "../../components/ui/classes";
 import { lineBoxAt } from "../../lib/popupPosition";
+import { colorCategory, colorStyle } from "./colorText";
 
 /** A segment's text, wrapped in a find mark when it is inside a match. The
- * current match carries `data-find-current` so the pane can scroll to it. */
+ * current match carries `data-find-current` so the pane can scroll to it.
+ * A word color text colors is wrapped once more, carrying its category and
+ * term for the pane's click handler (see ReadingPane's ColorWordPopup). */
 export function SegmentText({ segment }: { segment: Segment }) {
-  if (!segment.find) return <>{segment.text}</>;
   const current = segment.find === "current";
-  return (
+  const text = segment.find ? (
     <mark className={cx("find", current && "find-current")} {...(current ? { "data-find-current": "" } : {})}>
       {segment.text}
     </mark>
+  ) : (
+    segment.text
+  );
+  const voiced = segment.voice ? <span className={`voice-${segment.voice}`}>{text}</span> : text;
+  if (!segment.tag) return <>{voiced}</>;
+  const category = colorCategory(segment.tag.code);
+  return (
+    <span
+      className="ct"
+      data-ct-code={segment.tag.code}
+      data-ct-term={segment.tag.term}
+      data-ct-family={category?.family}
+      title={category?.name}
+      style={colorStyle(segment.tag.code)}
+    >
+      {voiced}
+    </span>
   );
 }
 
@@ -36,6 +55,8 @@ export function VerseRow({
   ttsActive,
   redLetterSpans,
   findRanges,
+  colorSpans,
+  voiceSpans,
   hasBacklinks,
   citationCounts,
   onCitationsClick,
@@ -61,13 +82,17 @@ export function VerseRow({
   redLetterSpans?: RedLetterSpan[];
   /** Find-in-chapter matches within this verse. */
   findRanges?: FindRange[];
+  /** Color text: this verse's colored words. */
+  colorSpans?: ColorSpan[];
+  /** Who is speaking, where not narration. */
+  voiceSpans?: ColorSpan[];
   /** How many times the reader's library cites each verse of the chapter. */
   citationCounts?: Map<number, number>;
   onCitationsClick?: (verseNum: number) => void;
   /** A note elsewhere mentions this verse (backlinks): a faint dot by the number. */
   hasBacklinks?: boolean;
 }) {
-  const tokens = buildTokens(verse.text, showHighlights ? highlights : [], verse.verse, footnotes ?? [], redLetterSpans, findRanges);
+  const tokens = buildTokens(verse.text, showHighlights ? highlights : [], verse.verse, footnotes ?? [], redLetterSpans, findRanges, colorSpans, voiceSpans);
   const notesByHighlight = new Map(notes.filter((n) => n.highlight_id != null).map((n) => [n.highlight_id as number, n]));
   const verseLevelNote = notes.find(
     (n) => n.highlight_id == null && verse.verse >= n.verse_start && verse.verse <= n.verse_end,

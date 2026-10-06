@@ -49,6 +49,18 @@ export const TOUR_STEPS: Step[] = [
     needsBible: true,
   },
   {
+    target: "color-text",
+    title: "Color text",
+    body: (
+      <>
+        Every person, place, time and number in its own color: <b>Who? What? Where? When? How many?</b> Click a colored word for more, and open the
+        menu beside the button for <b>Who's speaking</b>, which sets God's own words in small capitals.
+      </>
+    ),
+    missing: "Open the Bible: Color text sits in its toolbar, beside Interlinear.",
+    needsBible: true,
+  },
+  {
     target: "add-pane",
     title: "Study beside the text",
     body: (

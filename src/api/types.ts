@@ -445,6 +445,24 @@ export interface Stats {
   illustrations_total: number;
 }
 
+/** One colored stretch of a verse for color text: UTF-16 offsets into the
+ * verse's text, the category code ("GF", "PN", ...), and the KJV term it
+ * stands for, lower-cased (see features/reading/colorText.ts). */
+export interface ColorSpan {
+  verse: number;
+  start: number;
+  end: number;
+  code: string;
+  term: string;
+}
+
+/** A KJV verse a colored term appears in, in that color. */
+export interface ColorTermVerse {
+  book_id: number;
+  chapter: number;
+  verse: number;
+}
+
 export interface RedLetterRange {
   verse_start: number;
   verse_end: number;
