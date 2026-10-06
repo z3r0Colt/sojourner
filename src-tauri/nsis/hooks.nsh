@@ -6,6 +6,15 @@
 ; open. The generated uninstaller only deletes what it installed, so those
 ; two files stayed behind and kept the install folder alive after uninstall.
 
+; No "verifying installer" pass at startup. NSIS reads the whole file
+; (600 MB) to check its CRC before the first page shows: 1.4 s against
+; 0.2 s without it here, and longer from a slow disk or a USB stick, on
+; top of the virus scan Windows makes of a new download. A download cut
+; short still fails, when its files are unpacked; the release notes give
+; the SHA-256 for checking a copy. This file is included at the top level
+; of the generated installer.nsi, where an installer attribute can go.
+CRCCheck off
+
 ; Before the files land, whether first install or upgrade: a write-ahead log
 ; left by a copy of content.db that is about to be replaced must not be
 ; replayed onto the new one. If the app is still running these fail quietly

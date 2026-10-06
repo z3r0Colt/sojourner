@@ -93,6 +93,12 @@ export function sliceSpans(spans: ColorSpan[] | undefined, start: number, end: n
     .map((s) => ({ ...s, start: Math.max(s.start, start) - start, end: Math.min(s.end, end) - start }));
 }
 
+/** A term without its possessive ending: "abraham's" is "abraham", so "In
+ * this chapter" lists the two once and rings both. */
+export function termBase(term: string): string {
+  return term.replace(/[’']s$/, "");
+}
+
 export function colorCategory(code: string): ColorCategory | undefined {
   return BY_CODE.get(code);
 }

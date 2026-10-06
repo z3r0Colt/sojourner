@@ -29,10 +29,11 @@ narration are lined up the same way, as "voices".
 
 Output: {"categories": [...], "verses": {"Genesis 1:1": [[start, end, "T2"], ...]},
 "voices": {"Genesis 1:3": [[start, end, "god"], ...]}},
-offsets into the KJV verse text exactly as bibles/King James Version (1769).xml
-has it (plain ASCII, so the same in Python, Rust and JavaScript). The importer
+offsets into the KJV verse text of bibles/King James Version (1769).xml with its
+spaces collapsed and trimmed, as the app stores it (plain ASCII, so the same in
+Python, Rust and JavaScript). The importer
 (src-tauri/src/import/reference/color_text.rs) checks each span against the
-verses table and drops any that don't fit.
+verses table and drops any that don't fit or that cut a word.
 """
 
 import difflib
@@ -166,7 +167,9 @@ def load_kjv():
             name = "Psalms"
         for ch in book.iter("CHAPTER"):
             for v in ch.iter("VERS"):
-                verses[f"{name} {ch.get('cnumber')}:{v.get('vnumber')}"] = "".join(v.itertext())
+                # Spaces collapsed and trimmed, as the app's importer stores
+                # the verse (zefania.rs); Psalm 127:1 opens with a space.
+                verses[f"{name} {ch.get('cnumber')}:{v.get('vnumber')}"] = " ".join("".join(v.itertext()).split())
     return verses
 
 

@@ -41,6 +41,18 @@ fn split_ref(r: &str) -> Option<(&str, i64, i64)> {
     Some((book, c.parse().ok()?, v.parse().ok()?))
 }
 
+/// Whether `start..end` lies inside `text` and starts and ends on a word's
+/// edge.
+fn fits(text: &str, start: usize, end: usize) -> bool {
+    let word = |s: &str| s.chars().next().is_some_and(char::is_alphanumeric);
+    start < end
+        && end <= text.len()
+        && text.is_char_boundary(start)
+        && text.is_char_boundary(end)
+        && !(word(&text[start..]) && text[..start].chars().next_back().is_some_and(char::is_alphanumeric))
+        && !(word(&text[end..]) && text[..end].chars().next_back().is_some_and(char::is_alphanumeric))
+}
+
 pub fn import(conn: &mut Connection, dir: &Path) -> anyhow::Result<usize> {
     let file: ColorFile = serde_json::from_str(&std::fs::read_to_string(dir.join("kjv_color.json"))?)?;
     let kjv_id: i64 = conn.query_row("SELECT id FROM translations WHERE code = 'KJV'", [], |r| r.get(0))?;
@@ -56,7 +68,8 @@ pub fn import(conn: &mut Connection, dir: &Path) -> anyhow::Result<usize> {
     };
 
     // The spans, each checked against the verse it claims: inside the text,
-    // on character boundaries, around at least one letter or digit.
+    // whole words (a span a letter out, from text that differs from the
+    // KJV here, would color half of one), around at least one letter or digit.
     let mut tags: HashMap<(i64, i64, i64), Vec<Span>> = HashMap::new();
     let mut dropped = 0usize;
     for (r, spans) in &file.verses {
@@ -67,8 +80,7 @@ pub fn import(conn: &mut Connection, dir: &Path) -> anyhow::Result<usize> {
             continue;
         };
         for (start, end, code) in spans {
-            let fits = start < end && *end <= text.len() && text.is_char_boundary(*start) && text.is_char_boundary(*end);
-            if !fits || !text[*start..*end].chars().any(char::is_alphanumeric) {
+            if !fits(text, *start, *end) || !text[*start..*end].chars().any(char::is_alphanumeric) {
                 dropped += 1;
                 continue;
             }
@@ -97,7 +109,7 @@ pub fn import(conn: &mut Connection, dir: &Path) -> anyhow::Result<usize> {
             let Some(&book_id) = books.get(book) else { continue };
             let Some(text) = kjv.get(&(book_id, c, v)) else { continue };
             for (start, end, voice) in spans {
-                if start < end && *end <= text.len() && text.is_char_boundary(*start) && text.is_char_boundary(*end) {
+                if fits(text, *start, *end) {
                     stmt.execute(params![book_id, c, v, *start as i64, *end as i64, voice])?;
                     voices += 1;
                 }

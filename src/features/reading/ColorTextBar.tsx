@@ -8,13 +8,15 @@ import { cx } from "../../components/ui/classes";
 import { usePane } from "../../workspace/PaneContext";
 import { useUiStore } from "../../state/uiStore";
 import { openContent, targetFor } from "../../workspace/openContent";
-import { COLOR_FAMILIES, PRONOUN_TERMS, colorCategory, type ColorFamily } from "./colorText";
+import { COLOR_FAMILIES, PRONOUN_TERMS, colorCategory, termBase, type ColorFamily } from "./colorText";
 
 /** Codes too common to list as "in this chapter": pronouns and the small
  * words of position, sequence and amount. They still color the text. */
 const UNLISTED = new Set(["PR", "L2", "T2", "QU"]);
 
 
+/** A term picked in "In this chapter": its code, and its term without the
+ * possessive ending (see `termBase`), which rings "Noah" and "Noah's" both. */
 export interface Spotlight {
   code: string;
   term: string;
@@ -73,14 +75,17 @@ export function ColorTextBar({
     const seen = new Map<string, { code: string; term: string; word: string; count: number }>();
     for (const s of spans ?? []) {
       if (UNLISTED.has(s.code) || PRONOUN_TERMS.has(s.term)) continue;
+      // A hidden family's words aren't colored, so there is nothing to ring.
+      if (hidden.includes(colorCategory(s.code)?.family ?? "")) continue;
       // "Abraham's" is Abraham.
-      const key = `${s.code} ${s.term.replace(/[’']s$/, "")}`;
+      const term = termBase(s.term);
+      const key = `${s.code} ${term}`;
       const hit = seen.get(key);
       if (hit) hit.count += 1;
-      else seen.set(key, { code: s.code, term: s.term, word: ((text.get(s.verse) ?? "").slice(s.start, s.end) || s.term).replace(/[’']s$/, ""), count: 1 });
+      else seen.set(key, { code: s.code, term, word: termBase((text.get(s.verse) ?? "").slice(s.start, s.end) || s.term), count: 1 });
     }
     return Array.from(seen.values());
-  }, [spans, verses]);
+  }, [spans, verses, hidden]);
 
   const { data: named } = useQuery({
     queryKey: ["factbookForPassage", bookId, chapter],

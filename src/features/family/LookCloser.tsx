@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import type { ColorSpan, Passage } from "../../api/types";
 import { buildTokens } from "../reading/verseTokens";
 import { SegmentText } from "../reading/VerseRow";
-import { PRONOUN_TERMS } from "../reading/colorText";
+import { PRONOUN_TERMS, termBase } from "../reading/colorText";
 
 /** The questions color text answers, for a family reading: each with the
  * codes that answer it. Pronouns and the small words of place, time and
@@ -37,9 +37,12 @@ export function LookCloser({ readings }: { readings: { passage: Passage; spans: 
           if (!q.codes.includes(s.code) || PRONOUN_TERMS.has(s.term)) continue;
           const v = p.verses.find((x) => x.verse === s.verse);
           if (!v) continue;
-          const word = v.text.slice(s.start, s.end);
-          // One of each, the KJV's term deciding what counts as the same.
-          if (!words.has(s.term)) words.set(s.term, { word, code: s.code });
+          const word = termBase(v.text.slice(s.start, s.end));
+          // One of each as the reading spells it: two KJV terms can come out
+          // as one word ("LORD" and "JEHOVAH" are both the ASV's "Jehovah"),
+          // and "Abraham's" is Abraham.
+          const key = `${s.code} ${word.toLowerCase()}`;
+          if (!words.has(key)) words.set(key, { word, code: s.code });
         }
       });
       return Array.from(words.values());

@@ -1,5 +1,5 @@
 import { onDesktop } from "../../lib/platform";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { Bookmark, BookmarkCheck, ChevronDown, CircleHelp, Columns2, Languages, Maximize2, MessageSquareQuote, MoreHorizontal, Palette, Paperclip, Printer, SlidersHorizontal, Sparkles, Square, StickyNote, TextSearch, Type, Volume2 } from "lucide-react";
@@ -60,7 +60,7 @@ import { CompareVerseModal } from "./CompareVerseModal";
 import { FootnotePopup } from "./FootnotePopup";
 import { ColorWordPopup } from "./ColorWordPopup";
 import { lineBoxAt } from "../../lib/popupPosition";
-import { coloredHtml, colorSpansByVerse as groupColorSpans, sliceSpans } from "./colorText";
+import { coloredHtml, colorSpansByVerse as groupColorSpans, sliceSpans, termBase } from "./colorText";
 import { ColorTextBar, type Spotlight } from "./ColorTextBar";
 import { ColorTextGuide } from "./ColorTextGuide";
 import { NoteEditorModal } from "../notes/NoteEditorModal";
@@ -262,6 +262,9 @@ export function ReadingPane() {
   const [colorGuideOpen, setColorGuideOpen] = useState(false);
   // One term picked from "In this chapter", ringed wherever it stands.
   const [spotlight, setSpotlight] = useState<Spotlight | null>(null);
+  // The spotlight's rule reaches this pane's text only, not a second Bible
+  // pane's or a sermon passage's.
+  const spotlightScope = useId();
   useEffect(() => setSpotlight(null), [bookId, chapter, translationId, colorTextMode]);
   function toggleColorFamily(family: string) {
     const hidden = new Set(colorHidden ?? []);
@@ -426,12 +429,18 @@ export function ReadingPane() {
       window.removeEventListener("keydown", onKeyDown, true);
     };
   }, [wordLookup]);
+  // A card still waiting out its double-click delay is dropped too, or it
+  // would open over the next chapter, or with color text off.
   useEffect(() => {
     setWordLookup(null);
     setColorWord(null);
+    cancelColorClick();
   }, [bookId, chapter, translationId]);
   useEffect(() => {
-    if (!colorTextMode) setColorWord(null);
+    if (!colorTextMode) {
+      setColorWord(null);
+      cancelColorClick();
+    }
   }, [colorTextMode]);
   useEffect(() => cancelColorClick, []);
 
@@ -484,7 +493,7 @@ export function ReadingPane() {
   // A term picked in "In this chapter": bring its first place into view.
   useEffect(() => {
     if (!spotlight || !colorSpans || !verses) return;
-    const first = colorSpans.find((s) => s.code === spotlight.code && s.term === spotlight.term);
+    const first = colorSpans.find((s) => s.code === spotlight.code && termBase(s.term) === spotlight.term);
     const index = first ? verses.findIndex((v) => v.verse === first.verse) : -1;
     if (index < 0) return;
     if (paragraphMode) containerRef.current?.querySelector(`[data-verse-row="${first!.verse}"]`)?.scrollIntoView({ block: "center" });
@@ -1434,11 +1443,15 @@ export function ReadingPane() {
         <div
           ref={containerRef}
           onMouseUp={handleMouseUp}
-          onClick={handleColorClick}
+          // As the click goes down, not up: a highlight's own click (its
+          // popup) stops it on the way up, and a colored word inside a
+          // highlight opens its card as well.
+          onClickCapture={handleColorClick}
           onDoubleClick={handleDoubleClick}
           className={cx("min-h-0 flex-1 overflow-y-auto px-8 py-6", colorTextMode && colorTextMarks && "ct-marks")}
+          data-ct-scope={spotlightScope}
         >
-          {spotlight && <style>{spotlightCss(spotlight)}</style>}
+          {spotlight && <style>{spotlightCss(spotlight, spotlightScope)}</style>}
           <div className="mx-auto w-full max-w-[70ch]">
             <h1 className="reading-font mb-1 text-2xl font-semibold text-ink">
               {book.name} {chapter}
@@ -1570,7 +1583,7 @@ export function ReadingPane() {
                   ? coloredHtml(text, sliceSpans(colorSpansByVerse.get(pending.verseStart), pending.charStart, pending.charEnd))
                   : (verses ?? [])
                       .filter((v) => v.verse >= pending.verseStart && v.verse <= pending.verseEnd)
-                      .map((v) => coloredHtml(v.text.trim(), colorSpansByVerse.get(v.verse)))
+                      .map((v) => coloredHtml(v.text, colorSpansByVerse.get(v.verse)).trim())
                       .join(" ");
             }
             copyPassage(text, ref, translationCode, html);
@@ -1950,8 +1963,13 @@ function adjacent(a: HTMLElement, b: HTMLElement): boolean {
   return range.toString() === "";
 }
 
-/** The rule that rings every word of the term picked in "In this chapter". */
-function spotlightCss(s: Spotlight): string {
-  const term = s.term.replace(/[^\p{L}\p{N} '-]/gu, "");
-  return `.ct[data-ct-code="${s.code}"][data-ct-term="${term}"]{border-radius:3px;box-shadow:0 0 0 2px color-mix(in srgb, var(--ct-c) 45%, transparent);background:color-mix(in srgb, var(--ct-c) 14%, transparent)}`;
+/** The rule that rings every word of the term picked in "In this chapter",
+ * in its plain and possessive forms, inside the pane `scope` names. The
+ * term is escaped, not stripped: "five hundred: and three" is a term. */
+function spotlightCss(s: Spotlight, scope: string): string {
+  const pane = `[data-ct-scope="${CSS.escape(scope)}"]`;
+  const selectors = [s.term, `${s.term}'s`, `${s.term}’s`].map(
+    (term) => `${pane} .ct[data-ct-code="${CSS.escape(s.code)}"][data-ct-term="${CSS.escape(term)}"]`,
+  );
+  return `${selectors.join(",")}{border-radius:3px;box-shadow:0 0 0 2px color-mix(in srgb, var(--ct-c) 45%, transparent);background:color-mix(in srgb, var(--ct-c) 14%, transparent)}`;
 }

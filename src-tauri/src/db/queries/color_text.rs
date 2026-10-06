@@ -293,4 +293,75 @@ mod real {
             }
         }
     }
+
+    /// Every chapter of every translation: spans and voices inside the
+    /// verse, in order, not overlapping, starting and ending on a word, and
+    /// the slowest chapter:
+    /// `cargo test --release --lib color_text::real::every_chapter -- --ignored --nocapture`.
+    #[test]
+    #[ignore]
+    fn every_chapter_gives_well_formed_spans() {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap();
+        let dir = std::env::temp_dir().join(format!("sojourner-real-ct-{}", std::process::id()));
+        let conn = crate::db::open(&dir, &root.join("content").join("content.db")).unwrap();
+        let lexicon = load_lexicon(&conn).unwrap();
+        let mut chapters: Vec<(i64, i64)> = Vec::new();
+        let mut stmt = conn.prepare("SELECT DISTINCT book_id, chapter FROM verses ORDER BY book_id, chapter").unwrap();
+        for row in stmt.query_map([], |r| Ok((r.get(0)?, r.get(1)?))).unwrap() {
+            chapters.push(row.unwrap());
+        }
+        let mut bad = 0usize;
+        for t in verses::list_translations(&conn).unwrap() {
+            let start = std::time::Instant::now();
+            let mut slowest = (std::time::Duration::ZERO, (0, 0));
+            for &(b, c) in &chapters {
+                let vs = verses::get_chapter(&conn, t.id, b, c).unwrap();
+                if vs.is_empty() {
+                    continue;
+                }
+                let at = std::time::Instant::now();
+                let colors = chapter_colors(&conn, &lexicon, t.id, b, c).unwrap();
+                let voices = chapter_voices(&conn, t.id, b, c).unwrap();
+                if at.elapsed() > slowest.0 {
+                    slowest = (at.elapsed(), (b, c));
+                }
+                for (kind, spans) in [("color", &colors), ("voice", &voices)] {
+                    let mut last: Option<&ColorSpan> = None;
+                    for s in spans.iter() {
+                        let Some(v) = vs.iter().find(|v| v.verse == s.verse) else {
+                            bad += 1;
+                            println!("{} {b} {c}:{} {kind} span for a verse not in the chapter", t.code, s.verse);
+                            continue;
+                        };
+                        let units: Vec<u16> = v.text.encode_utf16().collect();
+                        // Letter against letter or digit against digit: SBLGNT's
+                        // "⸀1ἄλλῳ" is an apparatus mark against a word.
+                        let class = |i: usize| -> Option<bool> {
+                            let c = String::from_utf16_lossy(units.get(i..i + 1)?).chars().next()?;
+                            c.is_alphanumeric().then(|| c.is_numeric())
+                        };
+                        let joined = |i: usize| class(i - 1).is_some() && class(i - 1) == class(i);
+                        let (a, z) = (s.start as usize, s.end as usize);
+                        let mut problem = None;
+                        if !(a < z && z <= units.len()) {
+                            problem = Some("outside the verse");
+                        } else if last.is_some_and(|l| l.verse == s.verse && l.end > s.start) {
+                            problem = Some("overlaps the one before");
+                        } else if (a > 0 && joined(a)) || joined(z) {
+                            problem = Some("cuts a word");
+                        }
+                        if let Some(p) = problem {
+                            bad += 1;
+                            if bad < 60 {
+                                println!("{} {b} {c}:{} {kind} {}..{} {} {p}: {:?}", t.code, s.verse, a, z, s.code, v.text);
+                            }
+                        }
+                        last = Some(s);
+                    }
+                }
+            }
+            println!("{:7} {:?}, slowest {:?} in {:?}", t.code, start.elapsed(), slowest.1, slowest.0);
+        }
+        assert_eq!(bad, 0);
+    }
 }

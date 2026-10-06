@@ -71,7 +71,7 @@ export function ColorWordPopup({
   // in this verse), and a place's map.
   const named = NAMED.has(code);
   const { data: entity } = useQuery({
-    queryKey: ["factbookForWord", bookId, chapter, verse, term],
+    queryKey: ["factbookForWord", bookId, chapter, verse, term, code],
     queryFn: async () => {
       const here = await api.getFactbookForWord(bookId, chapter, verse, term, null);
       if (here) return here;
