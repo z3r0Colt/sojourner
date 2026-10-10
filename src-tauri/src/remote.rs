@@ -82,6 +82,9 @@ const DESKTOP_ONLY: &[&str] = &[
     "export_chapter_note",
     "export_prayer_entry",
     "check_for_update",
+    // The window's own loopback source for recordings (see `crate::media`);
+    // a browser has `/files/`.
+    "media_base_url",
     // This setting itself, and the key that lets a browser in.
     "remote_status",
     "remote_set_enabled",
@@ -364,7 +367,7 @@ fn query_param(query: &str, name: &str) -> Option<String> {
     })
 }
 
-fn percent_decode(s: &str) -> String {
+pub(crate) fn percent_decode(s: &str) -> String {
     let bytes = s.as_bytes();
     let mut out = Vec::with_capacity(bytes.len());
     let mut i = 0;
@@ -616,7 +619,7 @@ fn mime_for(path: &Path) -> &'static str {
 /// A library file, by the path the page would hand the asset protocol, and
 /// only within the scope that protocol allows. Byte ranges are honoured so a
 /// recording can be skipped through and a PDF read a part at a time.
-fn serve_file(app: &AppHandle, request: Request, path: PathBuf) {
+pub(crate) fn serve_file(app: &AppHandle, request: Request, path: PathBuf) {
     let allowed = path.is_absolute() && app.asset_protocol_scope().is_allowed(&path);
     let file = if allowed { File::open(&path).ok() } else { None };
     let Some(mut file) = file else {

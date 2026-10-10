@@ -1,5 +1,6 @@
 /**
- * Follow the Windows accent color (F3.8). With "Windows accent" chosen,
+ * Follow the system accent color (F3.8). With "Windows accent" (or, on
+ * Linux, "System accent") chosen,
  * the accent tokens on <html> are overridden inline: `--color-accent`
  * becomes the system color, corrected until it reads at 4.5:1 against
  * the theme's page ground, and the hover and soft variants are derived

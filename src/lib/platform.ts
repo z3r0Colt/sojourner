@@ -19,6 +19,18 @@ export const inBrowser = import.meta.env.MODE !== "test" && typeof window !== "u
 /** On the desktop: the window's own printer and file dialogs. */
 export const onDesktop = !inBrowser;
 
+/** Sojourner's own window on Windows, where wording may name Windows
+ * ("Match Windows", "Windows voices"). Elsewhere -- Linux, or a browser on
+ * a phone -- the same things are "the system's". */
+export const onWindows = onDesktop && typeof navigator !== "undefined" && /Windows/i.test(navigator.userAgent);
+
+/** Sojourner's own window on Linux (WebKitGTK). */
+export const onLinux = onDesktop && typeof navigator !== "undefined" && /Linux/i.test(navigator.userAgent) && !/Android/i.test(navigator.userAgent);
+
+/** "Windows" in Sojourner's window on Windows, "system" anywhere else:
+ * for wording like "the Windows voices" / "the system voices". */
+export const systemName = onWindows ? "Windows" : "system";
+
 export async function invoke<T>(cmd: string, args?: Record<string, unknown>): Promise<T> {
   if (!inBrowser) return tauriInvoke<T>(cmd, args);
   const response = await fetch(`/api/${encodeURIComponent(cmd)}`, {
@@ -70,6 +82,19 @@ export function convertFileSrc(filePath: string, protocol = "asset"): string {
   if (!inBrowser) return tauriConvertFileSrc(filePath, protocol);
   if (protocol === "sjtiles") return `${window.location.origin}/sjtiles/${encodeURIComponent(filePath)}`;
   return `${window.location.origin}/files/${encodeURIComponent(filePath)}`;
+}
+
+let mediaBase: Promise<string | null> | null = null;
+
+/** A recording on this computer, as a URL its `<audio>` or `<video>` can
+ * play. Linux's WebKitGTK plays nothing from the asset protocol, so there it
+ * comes from the app's own loopback listener instead (src-tauri/src/media.rs);
+ * everywhere else this is `convertFileSrc`. */
+export async function mediaFileSrc(filePath: string): Promise<string> {
+  if (!onLinux) return convertFileSrc(filePath);
+  mediaBase ??= tauriInvoke<string | null>("media_base_url").catch(() => null);
+  const base = await mediaBase;
+  return base ? `${base}/${encodeURIComponent(filePath)}` : convertFileSrc(filePath);
 }
 
 /** A web link, in the system browser or a new tab. */

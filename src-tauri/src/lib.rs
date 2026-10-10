@@ -8,6 +8,7 @@ mod error;
 pub mod export;
 pub mod import;
 pub mod library;
+pub mod media;
 pub mod models;
 pub mod morph;
 pub mod pack;
@@ -59,6 +60,7 @@ pub fn run() {
     tauri::Builder::default()
         .manage(tiles::TileStore::default())
         .manage(remote::RemoteState::default())
+        .manage(media::MediaServer::default())
         // The Atlas's terrain and imagery, from the map packs the reader
         // installed (see `tiles`). A tile is a small read; it is done off the
         // main thread so a map full of them never holds up the window.
@@ -583,6 +585,7 @@ pub fn run() {
             remote::remote_set_enabled,
             remote::remote_new_key,
             remote::data_version,
+            media::media_base_url,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

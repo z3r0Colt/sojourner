@@ -5,6 +5,7 @@ import { SLEEP_MINUTE_OPTIONS, useTtsStore } from "../../state/ttsStore";
 import { useWorkspaceStore } from "../../state/workspaceStore";
 import { ttsEngines, type TtsEngine, type TtsVoice } from "./ttsEngine";
 import { PronunciationOverrides } from "./PronunciationOverrides";
+import { onWindows } from "../../lib/platform";
 import { findPassages, fitAtWord, labelParts, passagePreview } from "./jumpList";
 import { IconButton, Button } from "../../components/ui/Button";
 import { Popover } from "../../components/ui/Popover";
@@ -228,10 +229,14 @@ function TtsSettings() {
 
       <p className="mt-3 text-xs text-ink-3">
         {engineId === "webspeech" ? (
-          <>
-            Uses the Windows voices on this device. For better ones, add a natural voice in Windows Settings → Time &amp; language →
-            Speech → Manage voices.
-          </>
+          onWindows ? (
+            <>
+              Uses the Windows voices on this device. For better ones, add a natural voice in Windows Settings → Time &amp; language →
+              Speech → Manage voices.
+            </>
+          ) : (
+            <>Uses the voices installed on this device.</>
+          )
         ) : (
           <>The natural voice runs on this device.</>
         )}

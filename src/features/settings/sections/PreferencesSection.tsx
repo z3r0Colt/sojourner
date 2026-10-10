@@ -10,6 +10,8 @@ import { NoteTemplatesEditor } from "../../notes/NoteTemplatesEditor";
 import { SermonTemplatesEditor } from "../../sermons/SermonTemplatesEditor";
 import { SpeakingRateSetting } from "../../sermons/SpeakingRateSetting";
 import { useLandingPage, type LandingPage } from "../../today/landing";
+import { onWindows, systemName } from "../../../lib/platform";
+import { api } from "../../../api/client";
 
 const COPY_EXAMPLE_TEXT = "For God so loved the world, that he gave his only begotten Son…";
 
@@ -172,6 +174,17 @@ export function PreferencesSection() {
     setAccentSource,
   } = useUiStore();
   const typography = useReadingTypography();
+  // Windows always has an accent; a Linux desktop may not (only KDE and
+  // GNOME 47+ keep one), and then the choice isn't offered.
+  const [systemAccent, setSystemAccent] = useState<string | null>(null);
+  useEffect(() => {
+    if (onWindows) return;
+    let alive = true;
+    api.getSystemAccent().then((hex) => alive && setSystemAccent(hex)).catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   // Paragraph mode and red letters belong to each Bible pane; these
   // switches change the pane the reader is working in.
@@ -202,19 +215,19 @@ export function PreferencesSection() {
             ))}
           </select>
         </Row>
-        <Row label="Accent color" hint="Links, active tabs, and primary buttons. The Windows accent is darkened or lightened per theme until it reads clearly.">
+        <Row label="Accent color" hint={`Links, active tabs, and primary buttons. The ${systemName} accent is darkened or lightened per theme until it reads clearly.`}>
           <select
             value={accentSource}
             onChange={(e) => {
               const next = e.target.value as AccentSource;
               setAccentSource(next);
-              toast.success(next === "windows" ? "Following the Windows accent color" : "Using the app's accent color");
+              toast.success(next === "windows" ? `Following the ${systemName} accent color` : "Using the app's accent color");
             }}
             className={selectClass}
             aria-label="Accent color"
           >
             <option value="app">App default</option>
-            <option value="windows">Windows accent</option>
+            {(onWindows || systemAccent || accentSource === "windows") && <option value="windows">{onWindows ? "Windows" : "System"} accent</option>}
           </select>
         </Row>
         <Row label="Text size" hint={`${fontSize}px`}>

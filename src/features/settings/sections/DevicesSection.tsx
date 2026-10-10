@@ -7,6 +7,7 @@ import type { RemoteStatus } from "../../../api/types";
 import { Button } from "../../../components/ui/Button";
 import { confirmDialog } from "../../../components/ui/confirm";
 import { toast } from "../../../components/ui/toast";
+import { onWindows } from "../../../lib/platform";
 
 /**
  * Settings → Other devices: Sojourner in a browser on a phone, a tablet or a
@@ -63,10 +64,17 @@ export function DevicesSection() {
 
       {status?.enabled && (
         <div className="mt-6 space-y-2 border-t border-line pt-4 text-sm text-ink-3">
-          <p>
-            The first time, Windows may ask whether to let Sojourner use the network. Allow it on <span className="text-ink-2">private networks</span>{" "}
-            (your home Wi-Fi), not public ones.
-          </p>
+          {onWindows ? (
+            <p>
+              The first time, Windows may ask whether to let Sojourner use the network. Allow it on <span className="text-ink-2">private networks</span>{" "}
+              (your home Wi-Fi), not public ones.
+            </p>
+          ) : (
+            <p>
+              If this computer runs a firewall (ufw or firewalld), let other devices on your home network reach Sojourner's port: it is the
+              number after the colon in the link.
+            </p>
+          )}
           <p>
             Anyone with the link can read and change what is in Sojourner, including the prayer journal. A device without it is asked for the key.
           </p>

@@ -1,6 +1,19 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
-import { convertFileSrc } from "../../lib/platform";
+import { mediaFileSrc } from "../../lib/platform";
 import { Button } from "../../components/ui/Button";
+
+/** `mediaFileSrc`, once it has answered (at once everywhere but Linux). */
+function useMediaFileSrc(filePath: string): string | undefined {
+  const [src, setSrc] = useState<{ path: string; url: string } | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    void mediaFileSrc(filePath).then((url) => !cancelled && setSrc({ path: filePath, url }));
+    return () => {
+      cancelled = true;
+    };
+  }, [filePath]);
+  return src?.path === filePath ? src.url : undefined;
+}
 
 const SPEEDS = [0.75, 1, 1.25, 1.5, 2] as const;
 
@@ -10,7 +23,7 @@ const SPEEDS = [0.75, 1, 1.25, 1.5, 2] as const;
  * can be stamped with the current time. */
 export const MediaPlayer = forwardRef<HTMLVideoElement | HTMLAudioElement, { filePath: string; kind: "video" | "audio" }>(
   ({ filePath, kind }, ref) => {
-    const src = convertFileSrc(filePath);
+    const src = useMediaFileSrc(filePath);
     const inner = useRef<HTMLVideoElement | HTMLAudioElement | null>(null);
     const [speed, setSpeed] = useState<number>(1);
     useImperativeHandle(ref, () => inner.current as HTMLVideoElement | HTMLAudioElement, []);

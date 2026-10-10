@@ -5,7 +5,7 @@
 // of the app (ttsStore, ReadAloudWords, TtsPlayerBar) only depends on this
 // interface, not on Web Speech specifics.
 
-import { invoke } from "../../lib/platform";
+import { invoke, systemName } from "../../lib/platform";
 
 export interface TtsVoice {
   id: string; // voiceURI for web speech; provider voice id for cloud engines
@@ -120,7 +120,7 @@ function waitForVoices(): Promise<void> {
 
 export class WebSpeechEngine implements TtsEngine {
   readonly id = "webspeech";
-  readonly label = "Windows voices (offline)";
+  readonly label = `${systemName === "Windows" ? "Windows" : "System"} voices (offline)`;
   readonly reportsWordBoundaries = true;
   readonly readsRespellings = true;
 

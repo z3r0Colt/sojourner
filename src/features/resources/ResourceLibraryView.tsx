@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { snippetHtml } from "../../lib/snippet";
 import { usePaneNavigate } from "../../workspace/PaneContext";
 import { useQuery } from "@tanstack/react-query";
-import { convertFileSrc, onDesktop } from "../../lib/platform";
+import { mediaFileSrc, onDesktop } from "../../lib/platform";
 import { Book, ChevronDown, FileText, Film, FolderOpen, Headphones, HelpCircle, Library, MoreVertical, Pencil, Play, Plus, RefreshCw, Trash2, Users, type LucideIcon } from "lucide-react";
 import { api } from "../../api/client";
 import {
@@ -77,7 +77,9 @@ function useMediaDuration(filePath: string, enabled: boolean): number | null {
     let cancelled = false;
     const el = document.createElement("audio");
     el.preload = "metadata";
-    el.src = convertFileSrc(filePath);
+    void mediaFileSrc(filePath).then((url) => {
+      if (!cancelled) el.src = url;
+    });
     el.addEventListener("loadedmetadata", () => {
       if (cancelled || !Number.isFinite(el.duration)) return;
       durations.set(filePath, el.duration);

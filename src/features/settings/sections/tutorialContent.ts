@@ -12,6 +12,8 @@
  * happens. When a feature changes, its entry changes the same day.
  */
 
+import { onWindows, systemName } from "../../../lib/platform";
+
 /** A page or section to open beside the tutorial (a route `parseRoute`
  * knows), a Bible reference, or a button in the top bar to press. */
 export type TutorialLink =
@@ -219,8 +221,10 @@ export const TUTORIAL: TutorialCategory[] = [
         steps: [
           "Click the Aa button in the reading toolbar, or open Settings → Reading.",
           "Press [Ctrl]+[=] for larger text and [Ctrl]+[-] for smaller, two pixels at a time; [Ctrl]+[0] resets to 18px. [Ctrl]+scroll over the text does the same.",
-          "Theme offers Match Windows, Light, Sepia, Dark, True black (OLED), High contrast, and High contrast, dark.",
-          "Accent color → Windows accent uses the color from Windows Settings → Personalization → Colors, adjusted per theme to stay readable.",
+          `Theme offers Match ${systemName}, Light, Sepia, Dark, True black (OLED), High contrast, and High contrast, dark.`,
+          onWindows
+            ? "Accent color → Windows accent uses the color from Windows Settings → Personalization → Colors, adjusted per theme to stay readable."
+            : "Accent color → System accent uses the accent chosen in your desktop's settings (KDE, or GNOME 47 and later), adjusted per theme to stay readable.",
         ],
         links: [{ label: "Settings → Reading", to: "/settings?section=preferences" }],
       },
@@ -231,7 +235,7 @@ export const TUTORIAL: TutorialCategory[] = [
         steps: [
           "Theme: choose High contrast or High contrast, dark for pure black and white with strong borders.",
           "Font: choose Dyslexia-friendly (the OpenDyslexic face) under Font.",
-          "Settings → Reading → Accessibility → Reduce motion turns off transitions and the toast slide. Windows' own reduce-motion setting is honored without it.",
+          `Settings → Reading → Accessibility → Reduce motion turns off transitions and the toast slide. ${onWindows ? "Windows'" : "The system's"} own reduce-motion setting is honored without it.`,
           "All three are also commands in the Go to box.",
         ],
         links: [{ label: "Settings → Reading", to: "/settings?section=preferences" }],
@@ -313,7 +317,7 @@ export const TUTORIAL: TutorialCategory[] = [
           "The player bar appears at the bottom of the window with play, pause, next, and previous.",
           "While it reads, click a verse, a commentary paragraph, or a paragraph of the book to move the voice there. The page follows the voice, turning as it goes.",
           "Jump to a passage, the list button in the player bar, lists every passage of the reading; type words or a heading to find one, and click it to go there.",
-          "Click the speed button in the bar for the settings: Engine (the bundled neural voice, or the voices installed in Windows), Voice, Speed, Pitch, and how the current word is highlighted.",
+          `Click the speed button in the bar for the settings: Engine (the bundled neural voice, or the voices installed in ${onWindows ? "Windows" : "the system"}), Voice, Speed, Pitch, and how the current word is highlighted.`,
           "Continue into the next chapter turns the page and keeps reading; Stop after is a sleep timer that fades the voice out over its last ten seconds.",
           "References are read as a reader says them: John viii. 23 is John 8, verse 23, and Roman numerals and ordinals such as 1st are said as words.",
         ],
@@ -1299,7 +1303,7 @@ export const TUTORIAL: TutorialCategory[] = [
         steps: [
           "Open Settings → Data & backups. Back up now takes a snapshot; Export and Import move the whole database as a file; Check integrity verifies it.",
           "Tick Back up automatically every N days: a few seconds after the app opens, if the newest backup is older than that, one is taken quietly and a toast says so. Ten are kept.",
-          "Also copy backups to a folder synced by OneDrive or Dropbox: click Choose folder.",
+          `Also copy backups to a folder synced by ${onWindows ? "OneDrive" : "Nextcloud"} or Dropbox: click Choose folder.`,
           "Recent backups lists each snapshot with Restore.",
           "With automatic backups off, a reminder appears once a month when your newest backup is more than thirty days old.",
         ],

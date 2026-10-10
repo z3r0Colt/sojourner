@@ -45,11 +45,13 @@ pub fn point_voice_at_lexicon() {
     let Ok(exe) = std::env::current_exe() else { return };
     let Some(dir) = exe.parent() else { return };
     // Tauri resolves resources next to the executable on Windows -- the same
-    // folder the model and content.db are copied into for `tauri dev`.
-    let lexicon = dir.join(LEXICON_FILE);
-    if !lexicon.is_file() {
+    // folder the model and content.db are copied into for `tauri dev`. A
+    // Linux package puts them in `lib/<product name>` beside `bin/` (under
+    // /usr for the .deb, under the mount point for the AppImage).
+    let candidates = [dir.join(LEXICON_FILE), dir.join("../lib/Sojourner").join(LEXICON_FILE)];
+    let Some(lexicon) = candidates.into_iter().find(|p| p.is_file()) else {
         return;
-    }
+    };
     unsafe { std::env::set_var("KOKORO_G2P_LEXICON", &lexicon) };
 }
 

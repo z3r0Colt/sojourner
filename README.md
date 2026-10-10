@@ -7,7 +7,7 @@
 
 # Sojourner
 
-*Bible Study Companion for Windows*
+*Bible Study Companion for Windows and Linux*
 
 A private, offline study companion for reading Scripture alongside the historic commentaries, confessions, and reference works of the church. Everything it needs is inside the installer. There is no account, no sync service, and no network traffic unless you press *Check for updates*: your notes, highlights, prayers, and sermons live in one file on your own computer, and you can back it up, export it, and restore it whenever you like.
 
@@ -16,10 +16,12 @@ A private, offline study companion for reading Scripture alongside the historic 
 Get the latest installer and the book library packs from the [releases page](../../releases/latest).
 
 - **Sojourner_x.y.z_x64-setup.exe** installs the app. Windows 10 or 11, 64-bit; per-user, no administrator rights; the WebView2 runtime is bundled, so it installs offline.
+- **Sojourner_x.y.z_amd64.deb** installs it on Ubuntu, Linux Mint, Debian and their relatives (Ubuntu 22.04, Mint 21, Debian 12 or newer, 64-bit): `sudo apt install ./Sojourner_x.y.z_amd64.deb`.
+- **Sojourner_x.y.z_amd64.AppImage** runs on most other 64-bit Linux systems without installing: make it executable (`chmod +x`) and open it. It needs `libfuse2` (on Ubuntu 24.04, `libfuse2t64`).
 - **Sojourner-Library-x.y.z.sjpack** is the optional library of 271 Puritan and Reformed works. Install it from inside the app: Settings → Book library → Install from file.
 - **Church-Fathers**, **Ancient-literature** and **Nineteenth-century** `.sjpack` files are further shelves, each installed and removed on its own: the Ante-Nicene and Nicene and Post-Nicene Fathers (38 volumes); Josephus, Philo, 1 Enoch, Tacitus, Pliny and Suetonius; Schaff's *History* and *Creeds* and Edersheim.
 
-The installer is not yet code-signed, so Windows SmartScreen warns on first run: choose *More info*, then *Run anyway*.
+The installer is not yet code-signed, so Windows SmartScreen warns on first run: choose *More info*, then *Run anyway*. The Linux packages are not signed either (that is usual on Linux); the release notes give each file's SHA-256 to check with `sha256sum`.
 
 From 0.3.4 on, the installer is built by GitHub Actions from the source in this repository (`.github/workflows/release.yml`), not on anyone's own computer. The library packs are built separately and attached to the release by hand.
 

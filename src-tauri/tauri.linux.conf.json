@@ -1,0 +1,28 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "mainBinaryName": "sojourner",
+  "bundle": {
+    "targets": [
+      "deb",
+      "appimage"
+    ],
+    "category": "Education",
+    "shortDescription": "Offline Bible study and sermon preparation",
+    "longDescription": "Sojourner is an offline Bible study companion: translations side by side, Greek and Hebrew with lexicons, commentaries, confessions and catechisms, a library of Reformed books, notes and sermon preparation, and a neural voice that reads aloud. Nothing it does needs the internet.",
+    "linux": {
+      "deb": {
+        "section": "text",
+        "depends": [
+          "gstreamer1.0-plugins-base",
+          "gstreamer1.0-plugins-good"
+        ],
+        "recommends": [
+          "gstreamer1.0-libav"
+        ]
+      },
+      "appimage": {
+        "bundleMediaFramework": true
+      }
+    }
+  }
+}

@@ -1,5 +1,6 @@
 import { onDesktop } from "../../lib/platform";
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { Bookmark, BookmarkCheck, ChevronDown, CircleHelp, Columns2, Languages, Maximize2, MessageSquareQuote, MoreHorizontal, Palette, Paperclip, Printer, SlidersHorizontal, Sparkles, Square, StickyNote, TextSearch, Type, Volume2 } from "lucide-react";
@@ -1399,6 +1400,37 @@ export function ReadingPane() {
     },
   };
 
+  // The whole chapter at once rather than virtualized: paragraph mode on
+  // screen, and the paper copy while printing.
+  const staticVerses =
+    !paragraphMode && !printing ? null : paragraphMode ? (
+      <ParagraphVerses
+        verses={verses ?? []}
+        footnotesByVerse={footnotes}
+        activeVerse={activeVerse}
+        redLetterSpansByVerse={redLetterSpansByVerse}
+        findRangesByVerse={findByVerse}
+        colorSpansByVerse={colorSpansByVerse}
+        voiceSpansByVerse={voiceSpansByVerse}
+        backlinkVerses={backlinkVerses}
+        {...rowProps}
+      />
+    ) : (
+      (verses ?? []).map((v) => (
+        <VerseRow
+          key={v.id}
+          verse={v}
+          footnotes={footnotes?.[v.verse]}
+          isActive={false}
+          redLetterSpans={redLetterSpansByVerse?.get(v.verse)}
+          colorSpans={colorSpansByVerse?.get(v.verse)}
+          voiceSpans={voiceSpansByVerse?.get(v.verse)}
+          hasBacklinks={backlinkVerses.has(v.verse)}
+          {...rowProps}
+        />
+      ))
+    );
+
   return (
     <div className="flex h-full flex-col">
       {toolbar}
@@ -1484,39 +1516,13 @@ export function ReadingPane() {
               <p className="text-sm text-ink-3">This translation does not include {book.name} {chapter}. Pick another translation in the toolbar.</p>
             )}
 
-            {paragraphMode || printing ? (
+            {paragraphMode ? (
               <div
-                className={cx("reading-font text-ink", printing && "print-root", originalText && "text-original")}
+                className={cx("reading-font text-ink", originalText && "text-original")}
                 dir={currentTranslation?.direction ?? "ltr"}
                 style={typography}
               >
-                {paragraphMode ? (
-                  <ParagraphVerses
-                    verses={verses ?? []}
-                    footnotesByVerse={footnotes}
-                    activeVerse={activeVerse}
-                    redLetterSpansByVerse={redLetterSpansByVerse}
-                    findRangesByVerse={findByVerse}
-                    colorSpansByVerse={colorSpansByVerse}
-                    voiceSpansByVerse={voiceSpansByVerse}
-                    backlinkVerses={backlinkVerses}
-                    {...rowProps}
-                  />
-                ) : (
-                  (verses ?? []).map((v) => (
-                    <VerseRow
-                      key={v.id}
-                      verse={v}
-                      footnotes={footnotes?.[v.verse]}
-                      isActive={false}
-                      redLetterSpans={redLetterSpansByVerse?.get(v.verse)}
-                      colorSpans={colorSpansByVerse?.get(v.verse)}
-                      voiceSpans={voiceSpansByVerse?.get(v.verse)}
-                      hasBacklinks={backlinkVerses.has(v.verse)}
-                      {...rowProps}
-                    />
-                  ))
-                )}
+                {staticVerses}
               </div>
             ) : (
               <div
@@ -1550,13 +1556,31 @@ export function ReadingPane() {
                 })}
               </div>
             )}
-            {!printing && verses && verses.length > 0 && books && (
+            {verses && verses.length > 0 && books && (
               <ChapterEndCard books={books} position={{ bookId, chapter }} onNavigate={(p, e) => openPassage(p, { target: targetFor(e, paneId), from: paneId })} />
             )}
-            {(printing || !verses || verses.length === 0) && <div className="h-24" />}
+            {(!verses || verses.length === 0) && <div className="h-24" />}
           </div>
         </div>
       </div>
+
+      {printing && createPortal(
+        // On <body>, out of the pane: a pane is `relative overflow-hidden`,
+        // which crops an absolutely positioned print root to one page (and
+        // in WebKitGTK to the pane's own narrow column as well).
+        <div
+          className={cx("print-root print-only reading-font", originalText && "text-original")}
+          dir={currentTranslation?.direction ?? "ltr"}
+          style={typography}
+          aria-hidden="true"
+        >
+          <h1 className="reading-font mb-3 text-2xl font-semibold">
+            {book.name} {chapter}
+          </h1>
+          {staticVerses}
+        </div>,
+        document.body,
+      )}
 
       {pending && (
         <SelectionToolbar

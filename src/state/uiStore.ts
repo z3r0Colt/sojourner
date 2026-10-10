@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { systemName } from "../lib/platform";
 
 /** "contrast" and "contrast-dark" are the high-contrast pair (F3.6). */
 export type Theme = "light" | "dark" | "oled" | "sepia" | "contrast" | "contrast-dark" | "system";
@@ -7,7 +8,7 @@ export type LineSpacing = "compact" | "normal" | "relaxed";
 export type ReadingFont = "serif" | "sans" | "dyslexic";
 
 export const THEME_OPTIONS: { value: Theme; label: string }[] = [
-  { value: "system", label: "Match Windows" },
+  { value: "system", label: `Match ${systemName}` },
   { value: "light", label: "Light" },
   { value: "sepia", label: "Sepia" },
   { value: "dark", label: "Dark" },

@@ -60,7 +60,7 @@ function ThemedRoot() {
   }, [readingFont]);
   // Accent (F3.8): re-applied whenever the theme changes, because the
   // contrast correction depends on the theme's ground; refreshed on focus
-  // so a change made in Windows Settings shows up on returning to the app.
+  // so a change made in the system settings shows up on returning to the app.
   const accentSource = useUiStore((s) => s.accentSource);
   React.useEffect(() => {
     if (accentSource !== "windows") {

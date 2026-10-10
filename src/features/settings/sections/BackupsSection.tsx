@@ -16,6 +16,7 @@ import {
   AUTO_BACKUP_SETTING,
 } from "../backupReminder";
 import { TrashSection } from "./TrashSection";
+import { onWindows } from "../../../lib/platform";
 import { StatsSection } from "./StatsSection";
 
 export function BackupsSection() {
@@ -162,7 +163,7 @@ export function BackupsSection() {
           )}
         </div>
         <p className="mt-2 text-xs text-ink-3">
-          Point this at a folder synced by OneDrive, Dropbox, or similar and every backup is copied there too. A simple way to carry your data to another computer.
+          Point this at a folder synced by {onWindows ? "OneDrive" : "Nextcloud"}, Dropbox, or similar and every backup is copied there too. A simple way to carry your data to another computer.
           Choosing a synced folder does send that provider a complete, unencrypted copy of your notes and prayer journal.
         </p>
       </div>

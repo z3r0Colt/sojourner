@@ -84,5 +84,13 @@ fn main() -> anyhow::Result<()> {
         anyhow::bail!("{failed} source file(s) failed to import -- see log above");
     }
 
+    // Shipped out of WAL mode. Even a read-only open of a WAL database must
+    // create its -shm file beside it, and a Linux package installs this file
+    // under /usr/lib, where the reader cannot write: the open fails and the
+    // app starts with no Bibles. A rollback-journal file reads anywhere; where
+    // the folder is writable (a Windows per-user install) `db::open` still
+    // switches it to WAL.
+    conn.pragma_update(None, "journal_mode", "DELETE")?;
+
     Ok(())
 }
