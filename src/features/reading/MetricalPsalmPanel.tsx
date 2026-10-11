@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { ChevronDown, ChevronUp, Download, Music, Pause, Play, Repeat } from "lucide-react";
+import { ChevronDown, ChevronUp, Download, Eye, EyeOff, Music, Pause, Play, Repeat } from "lucide-react";
 import { useMetricalPsalm, usePsalmTunes } from "../../api/queries";
 import { useReadingTypography } from "../../state/uiStore";
 import { Button } from "../../components/ui/Button";
@@ -28,6 +28,28 @@ function writeTunePreference(psalm: number, metre: string, tuneId: string) {
     localStorage.setItem(TUNE_PREFERENCE, JSON.stringify({ ...readTunePreference(), [metre]: tuneId, [`psalm:${psalm}`]: tuneId }));
   } catch {
     // A psalter that cannot remember the tune still sings it.
+  }
+}
+
+/** Whether Play goes on through the psalm, and whether the psalm's words are
+ *  shown in full under the staff: the reader's own choices, kept for next
+ *  time. Both are on until turned off. */
+const SING_THROUGH = "psalter.singThrough";
+const SHOW_WORDS = "psalter.showWords";
+
+function readChoice(key: string): boolean {
+  try {
+    return localStorage.getItem(key) !== "0";
+  } catch {
+    return true;
+  }
+}
+
+function writeChoice(key: string, on: boolean) {
+  try {
+    localStorage.setItem(key, on ? "1" : "0");
+  } catch {
+    // Forgotten next time, but honoured now.
   }
 }
 
@@ -118,8 +140,13 @@ export function MetricalPsalmPanel({
   const [tempo, setTempo] = useState<number | null>(null);
   // Semitones up or down, so a tune printed high can be brought within reach.
   const [transpose, setTranspose] = useState(0);
-  // Whether Play sings the one stanza or goes on through the whole psalm.
-  const [singThrough, setSingThrough] = useState(false);
+  // Whether Play goes on through the whole psalm or sings the one stanza.
+  // Through, unless the reader has chosen otherwise: someone new to the page
+  // should not have to find a button to learn there is more to sing.
+  const [singThrough, setSingThrough] = useState(() => readChoice(SING_THROUGH));
+  // The psalm's words in full under the staff. A long psalm's run on well
+  // past the staff, and a reader singing from the staff can fold them away.
+  const [showWords, setShowWords] = useState(() => readChoice(SHOW_WORDS));
   const [sounding, setSounding] = useState<ScheduledNote | null>(null);
   const player = useRef<TunePlayer | null>(null);
   const [playing, setPlaying] = useState(false);
@@ -178,26 +205,33 @@ export function MetricalPsalmPanel({
     return () => observer.disconnect();
   }, [singing]);
 
-  function play() {
+  function stop() {
+    player.current?.stop();
+    setPlaying(false);
+    setSounding(null);
+  }
+
+  /** Plays from the stanza at `from`: to the end of the psalm when singing
+   *  through, else that stanza alone. */
+  function playFrom(from: number) {
     if (!tune) return;
-    if (playing) {
-      player.current?.stop();
-      setPlaying(false);
-      setSounding(null);
-      return;
-    }
+    setStanzaIdx(from);
     setPlaying(true);
-    // Singing through starts where you are and carries on to the end.
-    const left = Math.max(stanzas.length - stanzaIdx, 1);
-    const remaining = Math.ceil(left / stanzaStep);
-    // Where the last pass has fewer stanzas than the tune takes, it sings
-    // only as many of the tune's lines as it has words for.
-    const short = left % stanzaStep;
-    const lastPassLines = short && version ? short * version.pattern.length : undefined;
-    const from = stanzaIdx;
-    const notes = singThrough
-      ? schedule(tune, beat, { transpose, passes: remaining, lastPassLines })
-      : schedule(shownTune ?? tune, beat, { transpose });
+    let notes: ScheduledNote[];
+    if (singThrough) {
+      const left = Math.max(stanzas.length - from, 1);
+      const remaining = Math.ceil(left / stanzaStep);
+      // Where the last pass has fewer stanzas than the tune takes, it sings
+      // only as many of the tune's lines as it has words for.
+      const short = left % stanzaStep;
+      const lastPassLines = short && version ? short * version.pattern.length : undefined;
+      notes = schedule(tune, beat, { transpose, passes: remaining, lastPassLines });
+    } else {
+      // The tune as the stanza is shown with it (see `shownTune`).
+      const lines = stanzas.slice(from, from + stanzaStep).flatMap((st) => st.lines).length;
+      const one = lines > 0 && lines < tune.lines.length ? { ...tune, lines: tune.lines.slice(0, lines) } : tune;
+      notes = schedule(one, beat, { transpose });
+    }
     player.current?.play(notes, {
       onNote: (note) => {
         setSounding(note);
@@ -207,8 +241,17 @@ export function MetricalPsalmPanel({
       onEnd: () => {
         setPlaying(false);
         setSounding(null);
+        // Back to where it began, so Play again sings it again.
+        setStanzaIdx(from);
       },
     });
+  }
+
+  /** Previous and Next: while the tune is playing, it goes on from the
+   *  stanza turned to rather than leaving the words behind. */
+  function turnStanza(to: number) {
+    if (playing) playFrom(to);
+    else setStanzaIdx(to);
   }
 
   function saveMidi(tune: PsalmTune) {
@@ -265,7 +308,12 @@ export function MetricalPsalmPanel({
                     </option>
                   ))}
                 </select>
-                <Button size="sm" variant="ghost" onClick={play} aria-label={playing ? "Stop" : "Play the tune"}>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => (playing ? stop() : playFrom(stanzaIdx))}
+                  aria-label={playing ? "Stop" : singThrough && stanzas.length > 1 ? "Play the psalm" : "Play the tune"}
+                >
                   {playing ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
                 </Button>
                 <label className="flex items-center gap-1.5 text-ink-3">
@@ -310,9 +358,13 @@ export function MetricalPsalmPanel({
                     size="sm"
                     variant="ghost"
                     active={singThrough}
-                    onClick={() => setSingThrough((v) => !v)}
+                    aria-pressed={singThrough}
+                    onClick={() => {
+                      setSingThrough(!singThrough);
+                      writeChoice(SING_THROUGH, !singThrough);
+                    }}
                     aria-label="Sing through every stanza"
-                    title="Sing through every stanza"
+                    title={singThrough ? "Sings every stanza in turn; click to sing only the stanza shown" : "Sings only the stanza shown; click to sing every stanza in turn"}
                   >
                     <Repeat className="h-3.5 w-3.5" />
                   </Button>
@@ -359,7 +411,7 @@ export function MetricalPsalmPanel({
                   size="sm"
                   variant="ghost"
                   disabled={stanzaIdx === 0}
-                  onClick={() => setStanzaIdx((i) => Math.max(0, i - stanzaStep))}
+                  onClick={() => turnStanza(Math.max(0, stanzaIdx - stanzaStep))}
                 >
                   Previous
                 </Button>
@@ -371,7 +423,7 @@ export function MetricalPsalmPanel({
                   size="sm"
                   variant="ghost"
                   disabled={stanzaIdx + stanzaStep >= stanzas.length}
-                  onClick={() => setStanzaIdx((i) => Math.min(stanzas.length - 1, i + stanzaStep))}
+                  onClick={() => turnStanza(Math.min(stanzas.length - 1, stanzaIdx + stanzaStep))}
                 >
                   Next
                 </Button>
@@ -393,36 +445,59 @@ export function MetricalPsalmPanel({
           </div>
         )}
 
-        <div className={`reading-font ${singing ? "min-h-[5rem] flex-1 overflow-y-auto p-3" : ""}`} style={typography}>
-          {/* The stanzas as a block centred under the staff, their lines
-              set flush left within it as the book sets them; prose verses
-              keep a readable measure. */}
-          <div className={`mx-auto [overflow-wrap:anywhere] ${version?.stanzas.length ? "w-fit max-w-full" : "max-w-[46em]"}`}>
-            {version?.stanzas.length
-              ? version.stanzas.map((stanza) => (
-                  <p
-                    key={stanza.number}
-                    className={`mb-3 ${
-                      tune && stanza.number > stanzaIdx && stanza.number <= stanzaIdx + stanzaStep ? "" : "text-ink-2"
-                    }`}
-                  >
-                    {stanza.lines.map((line, i) => (
-                      <span key={i} className="block">
-                        <MetricalLine line={line} numberStyle={numberStyle} />
-                      </span>
-                    ))}
-                  </p>
-                ))
-              : version?.verses.map((v) => (
-                  <p key={v.verse} className="mb-3 whitespace-pre-line">
-                    <sup className="mr-1 select-none font-sans text-xs font-semibold text-ink-4" style={numberStyle}>
-                    {v.verse}
-                  </sup>
-                    {v.text}
-                  </p>
-                ))}
+        {/* The Sing step keeps the words in their own scrolling room below
+            the staff; elsewhere they can be folded away. Only where there is
+            a staff carrying the stanza's words: without one, the words are
+            all there is to sing from. */}
+        {!singing && tune && shownTune && words.length > 0 && (
+          <div className="mb-3 flex justify-center">
+            <Button
+              size="sm"
+              variant="ghost"
+              icon={showWords ? EyeOff : Eye}
+              aria-expanded={showWords}
+              onClick={() => {
+                setShowWords(!showWords);
+                writeChoice(SHOW_WORDS, !showWords);
+              }}
+            >
+              {showWords ? "Hide the words" : stanzas.length > 1 ? `Show all ${stanzas.length} stanzas` : "Show the words"}
+            </Button>
           </div>
-        </div>
+        )}
+
+        {(singing || showWords || !tune || !shownTune || words.length === 0) && (
+          <div className={`reading-font ${singing ? "min-h-[5rem] flex-1 overflow-y-auto p-3" : ""}`} style={typography}>
+            {/* The stanzas as a block centred under the staff, their lines
+                set flush left within it as the book sets them; prose verses
+                keep a readable measure. */}
+            <div className={`mx-auto [overflow-wrap:anywhere] ${version?.stanzas.length ? "w-fit max-w-full" : "max-w-[46em]"}`}>
+              {version?.stanzas.length
+                ? version.stanzas.map((stanza) => (
+                    <p
+                      key={stanza.number}
+                      className={`mb-3 ${
+                        tune && stanza.number > stanzaIdx && stanza.number <= stanzaIdx + stanzaStep ? "" : "text-ink-2"
+                      }`}
+                    >
+                      {stanza.lines.map((line, i) => (
+                        <span key={i} className="block">
+                          <MetricalLine line={line} numberStyle={numberStyle} />
+                        </span>
+                      ))}
+                    </p>
+                  ))
+                : version?.verses.map((v) => (
+                    <p key={v.verse} className="mb-3 whitespace-pre-line">
+                      <sup className="mr-1 select-none font-sans text-xs font-semibold text-ink-4" style={numberStyle}>
+                      {v.verse}
+                    </sup>
+                      {v.text}
+                    </p>
+                  ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

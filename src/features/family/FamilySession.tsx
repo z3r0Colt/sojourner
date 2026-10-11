@@ -332,7 +332,7 @@ function ReadStep({ tonight, large }: { tonight: Tonight; large: boolean }) {
 function SingStep({ psalm, large, fontSize }: { psalm: number; large: boolean; fontSize?: number }) {
   return (
     <div className={cx(large && "flex min-h-0 flex-1 flex-col")}>
-      <StepHeading icon={Music} kicker="Sing" title={`Psalm ${psalm}`} sub="Press Play to hear the tune, then sing along. A new tune? Sing the first stanza twice." />
+      <StepHeading icon={Music} kicker="Sing" title={`Psalm ${psalm}`} sub="Press Play and sing along; it goes on through every stanza. A new tune? Listen to the first stanza before joining in." />
       {/* As tall as the window leaves room for, so a stanza's whole staff can
           be sung from without scrolling; the staff is drawn to fit it. */}
       <div
