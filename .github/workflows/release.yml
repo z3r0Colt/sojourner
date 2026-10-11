@@ -216,15 +216,18 @@ jobs:
         shell: pwsh
         run: Get-PSDrive -PSProvider FileSystem | Format-Table Name, @{n='Free GB';e={[math]::Round($_.Free/1GB,1)}}, @{n='Used GB';e={[math]::Round($_.Used/1GB,1)}}
 
-  # The Linux packages, beside the Windows build rather than after it. Ubuntu
-  # 22.04 because a binary only runs where glibc is at least as new as the
-  # one it was linked against: built here it opens on Ubuntu 22.04 and Mint
-  # 21 onwards, Debian 12, Fedora 36+. The bundle settings are in
+  # The Linux packages, beside the Windows build rather than after it. A
+  # binary only runs where glibc is at least as new as the one it was linked
+  # against, so the oldest runner that can build it sets the floor. That is
+  # 24.04: the prebuilt onnxruntime that ort-sys links for the voice needs
+  # glibc 2.38 (on 22.04 it fails to link, __isoc23_strtol). Built here it
+  # opens on Ubuntu 24.04 and Mint 22 onwards, Debian 13, Fedora 40+. The
+  # bundle settings are in
   # src-tauri/tauri.linux.conf.json. Nothing is signed: the draft gives each
   # file's SHA-256 instead.
   build-linux:
     name: Build the Linux packages
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 180
     permissions:
       contents: read
@@ -257,7 +260,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             build-essential pkg-config file libwebkit2gtk-4.1-dev libssl-dev libxdo-dev \
-            libayatana-appindicator3-dev librsvg2-dev libfuse2 patchelf \
+            libayatana-appindicator3-dev librsvg2-dev libfuse2t64 patchelf \
             gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-libav
 
       - name: Set up Node
