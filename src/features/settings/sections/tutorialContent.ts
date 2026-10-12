@@ -12,7 +12,7 @@
  * happens. When a feature changes, its entry changes the same day.
  */
 
-import { onWindows, systemName } from "../../../lib/platform";
+import { onWeb, onWindows, systemName } from "../../../lib/platform";
 
 /** A page or section to open beside the tutorial (a route `parseRoute`
  * knows), a Bible reference, or a button in the top bar to press. */
@@ -38,7 +38,7 @@ export interface TutorialCategory {
   entries: TutorialEntry[];
 }
 
-export const TUTORIAL: TutorialCategory[] = [
+const DESKTOP_TUTORIAL: TutorialCategory[] = [
   {
     title: "Getting around",
     entries: [
@@ -1351,3 +1351,55 @@ export const TUTORIAL: TutorialCategory[] = [
 export function entryText(entry: TutorialEntry): string {
   return [entry.title, entry.what, ...entry.steps].join("\n");
 }
+
+/** What differs on the web: entries about things it does not have are left
+ * out, and a few are told differently. The book library's shelves come with
+ * phase 7 of the web plan; their entries return then. */
+const NOT_ON_THE_WEB = new Set([
+  "translations",
+  "settings-library",
+  "book-library",
+  "resources-media",
+  "sermon-print",
+  "sermon-handout",
+  "sermon-slides",
+]);
+
+const ON_THE_WEB: Record<string, Partial<TutorialEntry>> = {
+  "resources-add": {
+    title: "Add a book",
+    what: "Resources holds your own EPUB books and PDFs.",
+    steps: [
+      "Open Resources in the sidebar and click Add a book, then choose one or more EPUB or PDF files.",
+      "The title and author are read from the file when it is added: an EPUB's metadata or a PDF's document properties. The file name is the fallback.",
+      "Books are indexed as they are added, so search can look inside them.",
+      "The books stay in this browser, on this device. Settings → Data & backups does not export them, so keep the originals.",
+    ],
+  },
+  citations: {
+    what: "Every book of your own that cites the verse you are reading.",
+    steps: [
+      "A small book icon and number after a verse shows how many times your library cites it. Click it to list them.",
+      "Or add the Cited in your library pane beside the text: it follows the passage, each with the words around the reference.",
+      "Click a citation to open the book at that place, with the reference marked.",
+      "Your own books are indexed once their text has been read, when you add them.",
+    ],
+    links: [],
+  },
+  "settings-backups": {
+    what: "Everything you write lives in this browser, on this device, and nowhere else; exporting copies it to a file.",
+    steps: [
+      "Open Settings → Data & backups. Export downloads all your study data as one file; Import replaces it with a file you exported before; Check integrity verifies it.",
+      "Keep exports somewhere safe, such as a cloud folder you trust: if the browser's data is cleared, the export is the only copy.",
+      "A reminder appears when you have study data and have not exported in thirty days.",
+      "Added to the home screen (or installed), the browser is far less likely to clear Sojourner's data than from a tab you open now and then.",
+    ],
+  },
+};
+
+export const TUTORIAL: TutorialCategory[] = onWeb
+  ? DESKTOP_TUTORIAL.map((c) => ({
+      ...c,
+      entries: c.entries.filter((e) => !NOT_ON_THE_WEB.has(e.id)).map((e) => ({ ...e, ...ON_THE_WEB[e.id] })),
+    }))
+  : DESKTOP_TUTORIAL;

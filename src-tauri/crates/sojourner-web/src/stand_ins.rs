@@ -120,8 +120,41 @@ pub fn dispatch(db: &DbState, cmd: &str, args: Value) -> Option<Reply> {
                     .map_err(|e| format!("{e:#}")),
             )
         }
+        "add_resource_file" => web_only::add_resource_file(db, cmd, args),
         _ => return None,
     })
+}
+
+/// Commands that have no desktop twin: the page does what the desktop's
+/// file dialog and `std::fs` do, and hands over the result.
+mod web_only {
+    use super::*;
+
+    /// Records a book or PDF the reader chose in the browser. The page keeps
+    /// the file itself (src/web/files.ts) and reads its text, as the desktop
+    /// does in `add_resource`; `file_path` is the key it keeps the file under.
+    pub fn add_resource_file(db: &DbState, cmd: &str, args: Value) -> Reply {
+        #[derive(Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        struct Args {
+            kind: String,
+            title: String,
+            author: Option<String>,
+            file_path: String,
+            text: Option<String>,
+        }
+        let a: Args = reply::args(cmd, args)?;
+        if !matches!(a.kind.as_str(), "epub" | "pdf") {
+            return Err(Value::String(format!("{} files can't be added on the web", a.kind)));
+        }
+        let author = a.author.map(|s| s.trim().to_string()).filter(|s| !s.is_empty());
+        let text = a.text.filter(|t| !t.trim().is_empty());
+        let conn = db.conn();
+        reply::result(
+            crate::db::queries::resources::create(&conn, &a.kind, a.title.trim(), author.as_deref(), &a.file_path, text.as_deref())
+                .map_err(|e| format!("{e:#}")),
+        )
+    }
 }
 
 fn quick_check_main(conn: &rusqlite::Connection) -> rusqlite::Result<Vec<String>> {
@@ -164,6 +197,26 @@ mod tests {
         }
         let both: Vec<&&str> = STAND_INS.iter().filter(|c| UNAVAILABLE.contains(c)).collect();
         assert!(both.is_empty(), "{both:?} both answered and unavailable");
+    }
+
+    #[test]
+    fn a_book_added_in_the_browser_is_recorded_and_searchable() {
+        let dir = crate::tests::temp_db_dir("web-add-resource");
+        let db = crate::tests::open(&dir);
+        let added = dispatch(
+            &db,
+            "add_resource_file",
+            json!({ "kind": "epub", "title": " Thoughts ", "author": " ", "filePath": "web-file:abc", "text": "grace upon grace" }),
+        )
+        .unwrap()
+        .unwrap();
+        assert_eq!(added["title"], "Thoughts");
+        assert_eq!(added["file_path"], "web-file:abc");
+        assert!(added["author"].is_null());
+        let found = crate::commands::dispatch(&db, "search_resources", json!({ "query": "grace", "limit": 10 })).unwrap().unwrap();
+        assert_eq!(found.as_array().map(Vec::len), Some(1));
+        let refused = dispatch(&db, "add_resource_file", json!({ "kind": "mobi", "title": "x", "filePath": "web-file:y" })).unwrap();
+        assert!(refused.is_err());
     }
 
     #[test]

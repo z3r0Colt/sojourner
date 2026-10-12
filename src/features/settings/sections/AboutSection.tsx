@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { onDesktop, openUrl } from "../../../lib/platform";
+import { onDesktop, onWeb, openUrl } from "../../../lib/platform";
 import { create } from "zustand";
 import { Check, Download, Globe, Mail, RefreshCw } from "lucide-react";
 import { api } from "../../../api/client";
@@ -268,12 +268,22 @@ export function AboutSection() {
 
       <div className="space-y-4 text-sm leading-relaxed text-ink-2">
         <p>
-          A private, offline study companion for reading Scripture alongside the historic commentaries, confessions, and reference works of the church,
+          A private study companion{onWeb ? "" : ", offline,"} for reading Scripture alongside the historic commentaries, confessions, and reference works of the church,
           built for the sojourner making their way through this world toward the next (1 Peter 2:11; Hebrews 11:13).
         </p>
         <p>
-          Everything lives in one file on this device. There is no account and no sync service, and the app goes online only when you press
-          Check for updates. Back up or export any time from Settings → Data &amp; backups.
+          {onWeb ? (
+            <>
+              Everything you write — notes, highlights, sermons, prayers — lives in this browser, on this device. There is no account and no sync
+              service. The books are read from data.gentleking.org as you open them, which Cloudflare logs the way any web server does; nothing
+              about you is sent. Export your data any time from Settings → Data &amp; backups.
+            </>
+          ) : (
+            <>
+              Everything lives in one file on this device. There is no account and no sync service, and the app goes online only when you press
+              Check for updates. Back up or export any time from Settings → Data &amp; backups.
+            </>
+          )}
         </p>
         <p>
           Included are multiple Bible translations, a timeline of the biblical events, classic commentaries (Matthew Henry, Jamieson-Fausset-Brown, Spurgeon's Treasury of David, and others),
@@ -282,7 +292,8 @@ export function AboutSection() {
         </p>
         <p>
           The book library comes as separate downloads, one per shelf: Puritan and Reformed works, the Church Fathers,
-          ancient literature around the Bible, and nineteenth-century histories. Install them from Settings → Library packs.
+          ancient literature around the Bible, and nineteenth-century histories.{" "}
+          {onWeb ? "They are not on the web version yet." : "Install them from Settings → Library packs."}
         </p>
       </div>
 
@@ -431,7 +442,7 @@ export function AboutSection() {
       <dl className="divide-y divide-line text-sm">
         <Source name="NET Bible">Free to read online, but its licence does not permit redistributing the whole text inside another program.</Source>
         <Source name="ESV, NIV, NASB, NKJV, NLT, CSB">
-          In copyright. If you own a licensed copy in Zefania XML, you can add it from Settings → Library.
+          In copyright. {onWeb ? "The desktop app can add a licensed copy you own, in Zefania XML." : "If you own a licensed copy in Zefania XML, you can add it from Settings → Library."}
         </Source>
         <Source name="Danby's Mishnah (1933)">Not yet in the public domain.</Source>
         <Source name="Post-1929 English translations of Reformed works">

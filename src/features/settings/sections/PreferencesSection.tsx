@@ -231,12 +231,12 @@ export function PreferencesSection() {
           </select>
         </Row>
         <Row label="Text size" hint={`${fontSize}px`}>
-          <input type="range" min={14} max={30} value={fontSize} onChange={(e) => setFontSize(Number(e.target.value))} className="w-64 accent-accent" />
+          <input type="range" min={14} max={30} value={fontSize} onChange={(e) => setFontSize(Number(e.target.value))} className="w-full max-w-64 accent-accent" />
         </Row>
         <Row label="Line spacing">
-          <div className="flex w-64 gap-1">
+          <div className="flex w-full max-w-64 flex-wrap gap-1">
             {(["compact", "normal", "relaxed"] as const).map((s) => (
-              <Button key={s} size="sm" active={lineSpacing === s} onClick={() => setLineSpacing(s)} className="flex-1 capitalize">
+              <Button key={s} size="sm" active={lineSpacing === s} onClick={() => setLineSpacing(s)} className="grow capitalize">
                 {s}
               </Button>
             ))}
@@ -245,7 +245,7 @@ export function PreferencesSection() {
         <Row label="Font" hint="Dyslexia-friendly is OpenDyslexic, weighted at the bottom so letters are harder to flip or swap.">
           <div className="flex w-full max-w-md flex-wrap gap-1" role="group" aria-label="Reading font">
             {READING_FONT_OPTIONS.map((f) => (
-              <Button key={f.value} size="sm" active={readingFont === f.value} onClick={() => setReadingFont(f.value)} className={cx("flex-1", f.value === "serif" && "font-serif")}>
+              <Button key={f.value} size="sm" active={readingFont === f.value} onClick={() => setReadingFont(f.value)} className={cx("grow", f.value === "serif" && "font-serif")}>
                 {f.label}
               </Button>
             ))}

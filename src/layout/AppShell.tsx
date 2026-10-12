@@ -270,11 +270,15 @@ export function AppShell() {
               <>
                 <Button variant="ghost" icon={Compass} onClick={() => setPaletteOpen(true)} title="Jump to a reference, Strong's number, or term (Ctrl+K)" data-tour="goto">
                   Go to
-                  <Kbd>Ctrl K</Kbd>
+                  <span className="contents max-[899px]:hidden">
+                    <Kbd>Ctrl K</Kbd>
+                  </span>
                 </Button>
                 <Button variant="ghost" icon={Search} onClick={() => setSearchOpen(true)} title="Search Scripture, commentary, notes, prayers, resources, and confessions (Ctrl+F)" data-tour="search">
                   Search
-                  <Kbd>Ctrl F</Kbd>
+                  <span className="contents max-[899px]:hidden">
+                    <Kbd>Ctrl F</Kbd>
+                  </span>
                 </Button>
                 <WorkspacesMenu />
                 <LayoutPicker />

@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { openUrl } from "../../lib/platform";
+import { onWeb, openUrl } from "../../lib/platform";
 import { BookOpen, ExternalLink as ExternalLinkIcon, ScrollText } from "lucide-react";
 import { useLibraryCatalog, usePackStatuses, useResources, useWestminsterDocuments } from "../../api/queries";
 import type { Timeline, TimelineCitation, TimelineEvent } from "../../api/types";
@@ -128,8 +128,13 @@ function LibraryLink({ fileName, paneId }: { fileName: string; paneId: string })
     <span className="inline-flex items-start gap-1.5 text-ink-3">
       <BookOpen className="mt-0.5 h-3.5 w-3.5 shrink-0 text-ink-4" aria-hidden="true" />
       <span>
-        <i>{libraryBookName(fileName)}</i> ships in the book library{shelf ? `, on the ${shelf} shelf` : ""}; install it from{" "}
-        <button
+        <i>{libraryBookName(fileName)}</i> ships in the book library{shelf ? `, on the ${shelf} shelf` : ""}
+        {onWeb ? (
+          ", which isn't on the web version yet."
+        ) : (
+          <>
+            ; install it from{" "}
+            <button
           type="button"
           className={linkClass}
           onClick={(e) => openFromTimeline(() => openContent("settings", { section: "books" }, { target: targetFor(e, "new"), from: paneId }))}
@@ -137,6 +142,8 @@ function LibraryLink({ fileName, paneId }: { fileName: string; paneId: string })
           Settings → Library packs
         </button>
         .
+          </>
+        )}
       </span>
     </span>
   );

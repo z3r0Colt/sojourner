@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject, type ReactNode } from "react";
-import { convertFileSrc } from "../../lib/platform";
+import { useFileSrc } from "../../hooks/useFileSrc";
 import ePub from "epubjs";
 import type Book from "epubjs/types/book";
 import type Contents from "epubjs/types/contents";
@@ -286,6 +286,7 @@ export function EpubReader({
   const bookRef = useRef<Book | null>(null);
   const renditionRef = useRef<Rendition | null>(null);
   const tocRef = useRef<EpubTocItem[]>([]);
+  const src = useFileSrc(filePath);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [chapter, setChapter] = useState<string | null>(null);
   const [progress, setProgress] = useState<Progress>(NO_PROGRESS);
@@ -797,7 +798,13 @@ export function EpubReader({
     setScrub(null);
     tocRef.current = [];
 
-    const book = ePub(convertFileSrc(filePath));
+    if (src == null) return;
+    if (src === "") {
+      setStatus("error");
+      return;
+    }
+    // A browser blob has no ".epub" to go by.
+    const book = ePub(src, { openAs: "epub" });
     bookRef.current = book;
     let disposed = false;
     let resizeTimer: number | null = null;
@@ -1038,7 +1045,7 @@ export function EpubReader({
       // in the same pane, and otherwise it goes on with what it has.
       if (readGenRef.current > 0 || takingOver) letGoOfLoading(readingRef.current.title, readingRef.current.paneId);
     };
-  }, [filePath]);
+  }, [filePath, src]);
 
   // Type size, spacing, font, measure and theme are restyling, not
   // re-rendering: the stylesheet is replaced in place and the reader keeps

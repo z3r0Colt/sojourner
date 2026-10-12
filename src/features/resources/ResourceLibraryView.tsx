@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { snippetHtml } from "../../lib/snippet";
 import { usePaneNavigate } from "../../workspace/PaneContext";
-import { useQuery } from "@tanstack/react-query";
-import { mediaFileSrc, onDesktop } from "../../lib/platform";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { mediaFileSrc, onDesktop, onWeb } from "../../lib/platform";
 import { Book, ChevronDown, FileText, Film, FolderOpen, Headphones, HelpCircle, Library, MoreVertical, Pencil, Play, Plus, RefreshCw, Trash2, Users, type LucideIcon } from "lucide-react";
 import { api } from "../../api/client";
 import {
@@ -230,6 +230,7 @@ export function ResourceLibraryView() {
   const deleteResource = useDeleteResource();
   const reextractResource = useReextractResource();
   const bulkImport = useBulkImportResources();
+  const qc = useQueryClient();
   const navigate = usePaneNavigate();
   const kindTab = useUiStore((s) => s.resourcesKindTab);
   const setKindTab = useUiStore((s) => s.setResourcesKindTab);
@@ -328,6 +329,30 @@ export function ResourceLibraryView() {
     }
   }
 
+  /** The web: the browser's own file chooser, and the page reads the books. */
+  const fileInput = useRef<HTMLInputElement>(null);
+  async function handleAddWeb(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    if (import.meta.env.VITE_TARGET === "web") {
+      const { addWebFile } = await import("../../web/files");
+      setBusy(true);
+      try {
+        for (const file of Array.from(files)) {
+          try {
+            const added = await addWebFile(file);
+            toast.success(`Added “${added.title}”${added.author ? ` by ${added.author}` : ""}`);
+            void qc.invalidateQueries({ queryKey: ["resources"] });
+          } catch (e) {
+            toast.error(e instanceof Error ? e.message : String(e));
+          }
+        }
+      } finally {
+        setBusy(false);
+        if (fileInput.current) fileInput.current.value = "";
+      }
+    }
+  }
+
   /** Ask for a resource's text again, and say plainly how it went. */
   async function retryExtract(id: number, title: string) {
     setReextracting(id);
@@ -375,16 +400,27 @@ export function ResourceLibraryView() {
             trigger={({ toggle, open: isOpen }) => <IconButton icon={HelpCircle} label="About resources" active={isOpen} onClick={toggle} />}
           >
             <div className="space-y-2 p-1 text-sm text-ink-2">
-              <p>Add EPUB, PDF, or MOBI books, or video and audio files. Text formats are indexed so you can search inside them.</p>
+              {onWeb ? (
+                <p>Add EPUB books or PDFs. They are indexed so you can search inside them, and stay in this browser, on this device only.</p>
+              ) : (
+                <p>Add EPUB, PDF, or MOBI books, or video and audio files. Text formats are indexed so you can search inside them.</p>
+              )}
               <p>The title and author are read from the file when it is added, and can be edited from the ⋮ menu on any item.</p>
-              <p>
-                “Import folder” adds every recognized file under a folder at once. The author is taken from each file's parent folder, so an{" "}
-                <code className="rounded bg-surface-2 px-1">Author/Book.epub</code> layout works well.
-              </p>
+              {!onWeb && (
+                <p>
+                  “Import folder” adds every recognized file under a folder at once. The author is taken from each file's parent folder, so an{" "}
+                  <code className="rounded bg-surface-2 px-1">Author/Book.epub</code> layout works well.
+                </p>
+              )}
               <p>Open a resource to attach it to a passage. Linked resources then appear under that chapter's title while reading.</p>
             </div>
           </Popover>
-          {/* Files are added on the computer Sojourner runs on. */}
+          {/* Files are added on the computer Sojourner runs on, or chosen in the browser. */}
+          {onWeb && (
+            <Button variant="primary" icon={Plus} disabled={busy} onClick={() => fileInput.current?.click()}>
+              Add a book
+            </Button>
+          )}
           {onDesktop && (
             <>
               <Button icon={FolderOpen} disabled={busy} onClick={handleImportFolder}>
@@ -398,6 +434,16 @@ export function ResourceLibraryView() {
         </>
       }
     >
+      {onWeb && (
+        <input
+          ref={fileInput}
+          type="file"
+          multiple
+          accept=".epub,.pdf,application/epub+zip,application/pdf"
+          className="hidden"
+          onChange={(e) => void handleAddWeb(e.target.files)}
+        />
+      )}
       {importReport && (
         <div className="mb-4 rounded-lg border border-line bg-surface-2 p-3 text-sm">
           <div className="flex items-center justify-between gap-3">
@@ -532,8 +578,16 @@ export function ResourceLibraryView() {
                       onEdit={() => setEditing(r)}
                       onRetry={() => retryExtract(r.id, r.title)}
                       onRemove={async () => {
-                        if (await confirmDelete(`“${r.title}”`, "The file itself stays where it is; only the library entry, its links, and tags are removed.")) {
-                          deleteResource.mutate(r.id, { onSuccess: () => toast.info(`Removed “${r.title}”`) });
+                        const note = onWeb
+                          ? "Its copy in this browser is deleted too, along with its links and tags. The file you added it from is untouched."
+                          : "The file itself stays where it is; only the library entry, its links, and tags are removed.";
+                        if (await confirmDelete(`“${r.title}”`, note)) {
+                          deleteResource.mutate(r.id, {
+                            onSuccess: () => {
+                              toast.info(`Removed “${r.title}”`);
+                              if (import.meta.env.VITE_TARGET === "web") void import("../../web/files").then((f) => f.removeFile(r.file_path)).catch(() => {});
+                            },
+                          });
                         }
                       }}
                       onAddTag={(tag) => addTag.mutate({ resourceId: r.id, tag })}
@@ -552,9 +606,10 @@ export function ResourceLibraryView() {
             title="Your library is empty"
             description={
               <>
-                Add EPUB, PDF, or MOBI books, or audio and video files. Books are indexed so you can search inside them, and any
-                resource can be linked to the passage it speaks to.
-                {!anyPackInstalled && (
+                {onWeb ? "Add EPUB books or PDFs." : "Add EPUB, PDF, or MOBI books, or audio and video files."} Books are indexed so you can
+                search inside them, and any resource can be linked to the passage it speaks to.
+                {onWeb && " They stay in this browser, on this device only. The Puritan and Reformed library isn't on the web version yet."}
+                {!onWeb && !anyPackInstalled && (
                   <>
                     {" "}
                     Several hundred Puritan and Reformed works are available as a separate download —{" "}
@@ -567,7 +622,11 @@ export function ResourceLibraryView() {
               </>
             }
             action={
-              onDesktop && (
+              onWeb ? (
+                <Button variant="primary" icon={Plus} disabled={busy} onClick={() => fileInput.current?.click()}>
+                  Add a book
+                </Button>
+              ) : onDesktop && (
                 <div className="flex gap-2">
                   <Button icon={FolderOpen} onClick={handleImportFolder}>
                     Import a folder
@@ -721,7 +780,7 @@ function ResourceRow({
               >
                 <Pencil className="h-4 w-4" aria-hidden="true" /> Edit details…
               </PopoverItem>
-              {!r.bundled && onDesktop && (
+              {!r.bundled && (onDesktop || onWeb) && (
                 <PopoverItem
                   danger
                   onClick={() => {

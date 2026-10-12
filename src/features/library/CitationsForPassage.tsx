@@ -1,3 +1,4 @@
+import { onWeb } from "../../lib/platform";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Library } from "lucide-react";
@@ -74,7 +75,7 @@ export function CitationsForPassage({ book, chapter, activeVerse }: { book: Book
         compact
         icon={Library}
         title={`Nothing in your library cites ${where}`}
-        description="Install more shelves from Settings → Library packs."
+        description={onWeb ? "Books you add under Resources show here when they cite it." : "Install more shelves from Settings → Library packs."}
       />
     );
   }

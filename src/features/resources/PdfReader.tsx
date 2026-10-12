@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
-import { convertFileSrc } from "../../lib/platform";
+import { useFileSrc } from "../../hooks/useFileSrc";
 import * as pdfjsLib from "pdfjs-dist";
 import type { TextItem } from "pdfjs-dist/types/src/display/api";
 // eslint-disable-next-line import/no-unresolved
@@ -170,6 +170,7 @@ export function PdfReader({
   /** Filled in with this PDF's read-aloud, for the reader sidebar. */
   readAloudRef?: MutableRefObject<ResourceReadAloudHandle | null>;
 }) {
+  const src = useFileSrc(filePath);
   const scrollRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -208,7 +209,12 @@ export function PdfReader({
   // load if it is still running and tears the worker down either way.
   useEffect(() => {
     let cancelled = false;
-    const url = convertFileSrc(filePath);
+    if (src == null) return;
+    if (src === "") {
+      setLoadError("This file is no longer in this browser's storage.");
+      return;
+    }
+    const url = src;
     setLoadError(null);
     // A reading of this PDF that the reader before this one, in this pane,
     // was still loading is this one's to carry on with once the PDF is open
@@ -246,7 +252,7 @@ export function PdfReader({
       // the same pane, and otherwise it goes on with what it has.
       if (readGenRef.current > 0 || takingOver) letGoOfLoading(readingRef.current.title, readingRef.current.paneId);
     };
-  }, [filePath]);
+  }, [filePath, src]);
 
   // Fit-to-width follows the pane as it is resized.
   useEffect(() => {
