@@ -1,12 +1,29 @@
 /** Messages between the page (`backend.ts`) and the backend's worker. */
 
+/** content/web/manifest.json, as `build_web_content` writes it (the worker
+ * reads it: httpvfs.rs). */
+export type ContentManifest = {
+  format: number;
+  version: string;
+  schema: number;
+  size: number;
+  pageSize: number;
+  chunkSize: number;
+  chunks: { file: string; size: number; sha256: string }[];
+  skeleton: { file: string; sha256: string; pages: number[] };
+  hot: [number, number][];
+};
+
 export type StartConfig = {
-  /** content.db, as an absolute URL. */
-  contentUrl: string;
-  /** Its interior b-tree pages in one file, and their page numbers. */
-  skeleton?: { url: string; pages: number[] };
+  /** Where content.db's pieces are: an absolute URL ending in `/`. */
+  contentBase: string;
+  manifest: ContentManifest;
   /** package.json's version, for Settings → About. */
   appVersion: string;
+  /** Overrides, for the harness: pages kept in memory, and in the browser's
+   * files (0 turns that cache off). */
+  cacheMb?: number;
+  diskCacheMb?: number;
 };
 
 export type ToWorker =
@@ -21,6 +38,11 @@ export type StartInfo = {
   storageError: string | null;
   sqlite: string;
   ms: number;
+  contentVersion: string;
+  /** What the persistent page cache holds, or null without one
+   * (`pageCacheError` says why: e.g. Sojourner open in another tab). */
+  pageCache: { pages: number; bytes: number } | null;
+  pageCacheError: string | null;
 };
 
 export type FromWorker =
@@ -32,4 +54,5 @@ export type FromWorker =
    * next one starts a new worker. */
   | { kind: "crashed"; id: number | null; error: string }
   /** Dev builds: what one command cost, for the request-counting harness. */
-  | { kind: "trace"; cmd: string; ms: number; requests: number; bytes: number };
+  /** `log`: the page runs fetched, `[first, last, hot]`. */
+  | { kind: "trace"; cmd: string; ms: number; requests: number; bytes: number; log?: [number, number, boolean][] };

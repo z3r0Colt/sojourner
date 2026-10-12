@@ -55,7 +55,7 @@ scope.onmessage = async (e) => {
   }
   if (tracing && !crashed) {
     const http = JSON.parse(http_stats(true));
-    post({ kind: "trace", cmd: m.cmd, ms: performance.now() - t0, requests: http.requests, bytes: http.bytes });
+    post({ kind: "trace", cmd: m.cmd, ms: performance.now() - t0, requests: http.requests, bytes: http.bytes, log: http.log });
   }
 };
 

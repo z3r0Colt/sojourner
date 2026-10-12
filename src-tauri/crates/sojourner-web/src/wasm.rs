@@ -3,10 +3,12 @@
 //!
 //! One connection, as on the desktop: user.db is `main`, on the browser's
 //! private file system (OPFS) through the `opfs-sahpool` VFS; content.db is
-//! ATTACHed as `content`, read a page at a time over HTTP by `httpvfs`.
+//! ATTACHed as `content`, read a page at a time over HTTP by `httpvfs`,
+//! each page kept in OPFS by `pagecache` once fetched.
 
 use crate::db::{self, DbState};
 use crate::httpvfs;
+use crate::pagecache::PageCache;
 use rusqlite::{Connection, OpenFlags};
 use serde::Deserialize;
 use serde_json::{json, Value};
@@ -24,23 +26,24 @@ thread_local! {
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct StartConfig {
-    /// content.db, as an absolute URL.
-    content_url: String,
-    /// Its interior b-tree pages, fetched in one request and kept: then a
-    /// lookup costs only its leaf pages.
-    skeleton: Option<Skeleton>,
+    /// Where content.db's pieces are, as an absolute URL ending in `/`.
+    content_base: String,
+    /// The manifest.json found there.
+    manifest: httpvfs::Manifest,
+    /// Pages kept in memory.
     #[serde(default = "default_cache_mb")]
     cache_mb: usize,
     #[serde(default = "default_readahead")]
     readahead_max: usize,
+    /// Pages kept in the browser's files, so each is fetched once; 0 for none.
+    #[serde(default = "default_disk_cache_mb")]
+    disk_cache_mb: usize,
     /// For `app_version`.
     app_version: Option<String>,
 }
 
-#[derive(Deserialize)]
-struct Skeleton {
-    url: String,
-    pages: Vec<u64>,
+fn default_disk_cache_mb() -> usize {
+    512
 }
 
 fn default_cache_mb() -> usize {
@@ -109,17 +112,33 @@ pub async fn start(config: String) -> Result<String, String> {
     db::prepare_user_db(&mut conn).map_err(|e| error_json(format!("{e:#}")))?;
     let migrate_ms = now_ms() - t_migrate;
 
+    // Built for another version of the app: its queries would fail one at a
+    // time ("no such table") rather than say why.
+    let schema = db::schema::CONTENT_MIGRATIONS.len() as i64;
+    if cfg.manifest.schema != schema {
+        return Err(error_json(format!(
+            "The books at {} are schema {}, and this version of Sojourner needs {schema}. Reload the page to update it.",
+            cfg.content_base, cfg.manifest.schema
+        )));
+    }
     httpvfs::configure(cfg.readahead_max, cfg.cache_mb << 20);
     httpvfs::register().map_err(error_json)?;
     httpvfs::stats_reset();
     let t_content = now_ms();
-    httpvfs::open_file("content.db", &cfg.content_url).map_err(error_json)?;
-    if let Some(s) = &cfg.skeleton {
-        httpvfs::preload("content.db", &s.url, &s.pages).map_err(error_json)?;
-    }
+    let (disk, cache_error) = if cfg.disk_cache_mb == 0 {
+        (None, None)
+    } else {
+        match PageCache::open("content", &cfg.manifest.version, cfg.manifest.page_size as usize, cfg.disk_cache_mb << 20).await {
+            Ok(c) => (Some(c), None),
+            Err(e) => (None, Some(e)),
+        }
+    };
+    httpvfs::open_file("content.db", &cfg.content_base, &cfg.manifest, disk).map_err(error_json)?;
+    httpvfs::preload("content.db", &cfg.content_base, &cfg.manifest.skeleton).map_err(error_json)?;
     conn.execute("ATTACH DATABASE 'file:content.db?vfs=http&immutable=1' AS content", [])
         .map_err(error_json)?;
     db::forget_missing_translations(&conn);
+    httpvfs::flush();
     let content_ms = now_ms() - t_content;
     let content_http = httpvfs::stats();
 
@@ -133,6 +152,9 @@ pub async fn start(config: String) -> Result<String, String> {
         "migrateMs": migrate_ms,
         "contentMs": content_ms,
         "contentHttp": content_http,
+        "contentVersion": cfg.manifest.version,
+        "pageCache": httpvfs::disk_usage("content.db").map(|(pages, bytes)| json!({ "pages": pages, "bytes": bytes })),
+        "pageCacheError": cache_error,
     })
     .to_string())
 }
@@ -146,7 +168,10 @@ pub fn call(cmd: &str, args: &str) -> Result<String, String> {
         let d = d.borrow();
         let db = d.as_ref().ok_or_else(|| error_json("Sojourner has not started"))?;
         let args: Value = if args.is_empty() { Value::Null } else { serde_json::from_str(args).map_err(error_json)? };
-        match crate::dispatch(db, cmd, args) {
+        let reply = crate::dispatch(db, cmd, args);
+        // The pages this command fetched, kept for next time.
+        httpvfs::flush();
+        match reply {
             Ok(v) => Ok(v.to_string()),
             Err(e) => Err(e.to_string()),
         }

@@ -3,11 +3,16 @@
  * (src/lib/platform.ts) lands here, and goes to the worker in worker.ts.
  * Loaded only in the web build.
  */
+import pinnedContent from "./content.json";
 import type { FromWorker, StartConfig, StartInfo, ToWorker } from "./protocol";
 
-/** Where content.db and its skeleton are served from. The dev server
- * serves content/web/ here (vite.config.ts). */
-const CONTENT_BASE = import.meta.env.VITE_CONTENT_BASE ?? "/dev-content/";
+/** Where content.db's pieces and manifest are: in dev, content/web/ as the
+ * dev server serves it (vite.config.ts); in a build, the content version
+ * this app was made with (content.json, written by
+ * `npm run upload:content:web`) on R2. $VITE_CONTENT_BASE overrides both,
+ * e.g. to try R2 from `npm run dev:web`. */
+const CONTENT_BASE =
+  import.meta.env.VITE_CONTENT_BASE ?? (import.meta.env.DEV ? "/dev-content/" : `${pinnedContent.base}${pinnedContent.version}/`);
 
 type Pending = { resolve: (v: unknown) => void; reject: (e: unknown) => void };
 
@@ -17,17 +22,16 @@ let nextId = 1;
 const pending = new Map<number, Pending>();
 
 async function config(): Promise<StartConfig> {
-  const base = new URL(CONTENT_BASE, window.location.href);
-  const contentUrl = new URL("content.db", base).href;
-  const appVersion = import.meta.env.VITE_APP_VERSION;
-  // The skeleton is an optimization: without it, everything still works.
+  const base = new URL(CONTENT_BASE, window.location.href).href;
+  let manifest: StartConfig["manifest"];
   try {
-    const r = await fetch(new URL("skeleton.json", base));
-    if (r.ok) return { contentUrl, appVersion, skeleton: { url: new URL("skeleton.bin", base).href, pages: await r.json() } };
-  } catch {
-    // No skeleton.
+    const r = await fetch(new URL("manifest.json", base));
+    if (!r.ok) throw `HTTP ${r.status}`;
+    manifest = await r.json();
+  } catch (e) {
+    throw `Couldn't load the books from ${new URL(base).host} (${e instanceof Error ? e.message : String(e)}). Are you online?`;
   }
-  return { contentUrl, appVersion };
+  return { contentBase: base, manifest, appVersion: import.meta.env.VITE_APP_VERSION };
 }
 
 function failAll(error: unknown) {
@@ -54,6 +58,8 @@ function boot(): Promise<StartInfo> {
       const m = e.data;
       switch (m.kind) {
         case "started":
+          // Dev builds: for the harness, as the trace below.
+          if (import.meta.env.DEV) (window as { __sojournerStart?: StartInfo }).__sojournerStart = m.info;
           resolve(m.info);
           break;
         case "failed":

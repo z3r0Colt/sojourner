@@ -24,6 +24,8 @@ pub mod commands {
 #[cfg(target_arch = "wasm32")]
 mod httpvfs;
 #[cfg(target_arch = "wasm32")]
+mod pagecache;
+#[cfg(target_arch = "wasm32")]
 mod wasm;
 
 use db::DbState;

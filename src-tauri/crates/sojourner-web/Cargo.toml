@@ -39,7 +39,18 @@ web-sys = { version = "0.3", features = [
   "WorkerGlobalScope",
   "Performance",
   "console",
+  # The persistent page cache (src/pagecache.rs).
+  "StorageManager",
+  "WorkerNavigator",
+  "FileSystemDirectoryHandle",
+  "FileSystemFileHandle",
+  "FileSystemSyncAccessHandle",
+  "FileSystemGetDirectoryOptions",
+  "FileSystemGetFileOptions",
+  "FileSystemReadWriteOptions",
 ] }
+# Checks the skeleton against the manifest.
+sha2 = "0.10"
 # chrono's clock on wasm32 reads JavaScript's Date; without `wasmbind`,
 # `Local::now()` (every timestamp a note or highlight is saved with) panics.
 chrono = { version = "0.4", default-features = false, features = ["clock", "std", "wasmbind"] }
