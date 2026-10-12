@@ -811,7 +811,7 @@ mod tests {
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).unwrap();
         let mut conn = db::open_content_db(&dir.join("content.db")).unwrap();
-        let repo = Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap();
+        let repo = Path::new(env!("CARGO_MANIFEST_DIR")).ancestors().nth(3).unwrap();
         for code in confessions() {
             conn.execute("INSERT INTO westminster_documents (code, title) VALUES (?1, ?1)", [&code]).unwrap();
         }

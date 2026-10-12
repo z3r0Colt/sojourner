@@ -137,7 +137,7 @@ mod tests {
     /// Confession reference a paragraph that exists.
     #[test]
     fn the_table_covers_both_catechisms() {
-        let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../reference/westminster");
+        let dir = Path::new(env!("CARGO_MANIFEST_DIR")).ancestors().nth(3).unwrap().join("reference/westminster");
         let groups: Vec<Group> = serde_json::from_str(&std::fs::read_to_string(dir.join("parallels.json")).unwrap()).unwrap();
         let mut wsc: Vec<i64> = groups.iter().flat_map(|g| g.wsc.iter().copied()).collect();
         wsc.sort_unstable();

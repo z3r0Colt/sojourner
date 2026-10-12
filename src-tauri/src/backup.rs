@@ -411,4 +411,44 @@ mod tests {
         drop(reopened);
         let _ = std::fs::remove_dir_all(&dir);
     }
+
+    /// The same file must also be refused at *import* time. By the time
+    /// `run_migrations` sees it, the swap has already happened and user.db is
+    /// gone -- the refusal there is an app that will not start. Refusing in
+    /// `validate_candidate_db` leaves the reader's own database in place.
+    #[test]
+    fn staging_a_newer_database_is_refused_before_it_replaces_anything() {
+        let dir = std::env::temp_dir().join(format!("sojourner-newer-import-test-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let content_db_path = dir.join("content.db");
+        db::open_content_db(&content_db_path).unwrap();
+
+        // A candidate file from a later build.
+        let incoming = dir.join("incoming.db");
+        {
+            let other = dir.join("other");
+            drop(db::open(&other, &content_db_path).unwrap());
+            std::fs::copy(other.join("user.db"), &incoming).unwrap();
+            let raw = rusqlite::Connection::open(&incoming).unwrap();
+            raw.pragma_update(None, "user_version", (db::schema::USER_MIGRATIONS.len() + 3) as i64)
+                .unwrap();
+        }
+
+        let live = dir.join("live");
+        std::fs::create_dir_all(&live).unwrap();
+        let err = crate::backup::stage_import(&live, &incoming).unwrap_err();
+        let message = format!("{err:#}");
+        assert!(
+            message.contains("newer version of the app"),
+            "the refusal must say why: {message}",
+        );
+        // And nothing was staged, so the next launch swaps nothing in.
+        assert!(
+            !live.join("user.db.pending-import").is_file(),
+            "a refused file must not be left staged",
+        );
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
 }

@@ -1,23 +1,17 @@
+// The database, queries, models and pure helpers live in `sojourner-core`;
+// re-exported under their old names so `crate::db::...` still resolves.
+pub use sojourner_core::{citations, color_text, db, error, import, models, morph, plain, refparse, text};
+
 pub mod backup;
-pub mod citations;
-pub mod color_text;
 mod commands;
 pub mod crash_log;
-pub mod db;
-mod error;
 pub mod export;
-pub mod import;
 pub mod library;
 pub mod media;
-pub mod models;
-pub mod morph;
 pub mod pack;
 pub mod paths;
-pub mod plain;
-pub mod refparse;
 pub mod remote;
 pub mod resources;
-pub mod text;
 pub mod tiles;
 pub mod tts;
 pub mod update;

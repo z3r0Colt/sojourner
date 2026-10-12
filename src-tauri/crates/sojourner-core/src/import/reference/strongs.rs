@@ -672,7 +672,7 @@ mod tests {
     use super::*;
 
     fn repo_reference() -> std::path::PathBuf {
-        Path::new(env!("CARGO_MANIFEST_DIR")).join("..").join("reference").join("strongs")
+        Path::new(env!("CARGO_MANIFEST_DIR")).ancestors().nth(3).unwrap().join("reference").join("strongs")
     }
 
     fn hebrew() -> &'static Vec<Entry> {

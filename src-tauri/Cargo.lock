@@ -4384,6 +4384,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "sojourner-core"
+version = "0.4.2"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "once_cell",
+ "quick-xml 0.36.2",
+ "regex",
+ "roxmltree",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "unicode-normalization",
+]
+
+[[package]]
 name = "soup3"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4694,6 +4711,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2 0.10.9",
+ "sojourner-core",
  "tauri",
  "tauri-build",
  "tauri-plugin-dialog",

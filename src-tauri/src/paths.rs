@@ -1,6 +1,10 @@
 use std::path::PathBuf;
 use tauri::{AppHandle, Manager};
 
+// The pure helpers live in the core crate; re-exported so `paths::safe_child`
+// and friends keep working for the commands.
+pub use sojourner_core::paths::{is_reader_import, safe_child};
+
 /// Folders scanned for importable Bible/commentary XML: the bundled resource
 /// copies (first-run seed data, read-only once installed) plus a writable
 /// per-user "imports" folder under the app data dir, which is where "Add
@@ -26,13 +30,6 @@ pub fn default_import_roots(app: &AppHandle) -> Vec<PathBuf> {
     roots
 }
 
-/// True for a file the reader added themselves: one that sits in the
-/// "imports" folder under the app data dir, not among the bundled copies
-/// content.db was built from. The same test `rescan_imports_after_upgrade`
-/// picks its files by.
-pub fn is_reader_import(path: &str) -> bool {
-    std::path::Path::new(path).components().any(|c| c.as_os_str() == "imports")
-}
 
 /// Location of the bundled Strong's/dictionary/interlinear reference data.
 pub fn reference_dir(app: &AppHandle) -> Option<PathBuf> {
@@ -135,11 +132,4 @@ pub fn installed_map_packs(app: &AppHandle) -> Vec<(String, PathBuf)> {
         .collect();
     out.sort();
     out
-}
-
-/// `base/<name>` for a plain folder name (letters, digits, '-', '_'); None
-/// for anything that could reach elsewhere ("..", "a/b", "").
-pub fn safe_child(base: &std::path::Path, name: &str) -> Option<PathBuf> {
-    let ok = !name.is_empty() && name.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_');
-    ok.then(|| base.join(name))
 }

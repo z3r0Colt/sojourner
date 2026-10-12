@@ -81,7 +81,7 @@ mod tests {
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).unwrap();
         let mut conn = db::open_content_db(&dir.join("content.db")).unwrap();
-        let source = Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap().join("reference").join("family_worship");
+        let source = Path::new(env!("CARGO_MANIFEST_DIR")).ancestors().nth(3).unwrap().join("reference").join("family_worship");
 
         import(&mut conn, &source).unwrap();
 

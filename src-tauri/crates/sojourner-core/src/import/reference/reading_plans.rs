@@ -157,7 +157,8 @@ mod tests {
 
     fn reference_dir() -> std::path::PathBuf {
         std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-            .parent()
+            .ancestors()
+            .nth(3)
             .unwrap()
             .join("reference")
             .join("reading_plans")

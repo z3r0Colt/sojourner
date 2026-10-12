@@ -854,7 +854,7 @@ mod tests {
         // read as something else, a search for it would find what it did
         // not ask for.
         let glossary: serde_json::Value =
-            serde_json::from_str(include_str!("../../../../src/features/lexicon/parsingGlossary.json")).unwrap();
+            serde_json::from_str(include_str!("../../../../../../src/features/lexicon/parsingGlossary.json")).unwrap();
         let explained = |key: &str| {
             ["terms", "hebrew_and_aramaic"].iter().any(|block| glossary[block].as_object().is_some_and(|terms| terms.contains_key(key)))
         };
@@ -1036,7 +1036,7 @@ mod real {
     #[test]
     #[ignore]
     fn logos_and_ephesians_imperatives() {
-        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap();
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).ancestors().nth(3).unwrap();
         let dir = std::env::temp_dir().join(format!("sojourner-real-ws-{}", std::process::id()));
         let conn = crate::db::open(&dir, &root.join("content").join("content.db")).unwrap();
         let t = std::time::Instant::now();
@@ -1070,7 +1070,7 @@ mod real {
     #[test]
     #[ignore]
     fn hebrew_fields_and_older_values() {
-        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap();
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).ancestors().nth(3).unwrap();
         let dir = std::env::temp_dir().join(format!("sojourner-real-ws-heb-{}", std::process::id()));
         let conn = crate::db::open(&dir, &root.join("content").join("content.db")).unwrap();
         let values = morph_field_values(&conn, "hebrew").unwrap();

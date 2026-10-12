@@ -969,7 +969,7 @@ mod real_content {
     use super::*;
 
     fn open() -> Connection {
-        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap();
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).ancestors().nth(3).unwrap();
         let dir = std::env::temp_dir().join(format!("sojourner-real-search-{}", std::process::id()));
         crate::db::open(&dir, &root.join("content").join("content.db")).unwrap()
     }

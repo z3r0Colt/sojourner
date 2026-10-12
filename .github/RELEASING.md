@@ -7,7 +7,7 @@ The workflow never publishes anything. It ends with a **draft** release, and a p
 ## Cutting a release
 
 1. **Bump the version** in all three places, to the same number: `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`. The build stops at once if they disagree, or if the tag does not match them.
-2. **Check it locally** before tagging: `npm test`, `npx tsc --noEmit` and `cargo test --manifest-path src-tauri/Cargo.toml`. A local `npm run tauri build` is still the quickest way to try an installer by hand.
+2. **Check it locally** before tagging: `npm test`, `npx tsc --noEmit` and `cargo test --workspace --manifest-path src-tauri/Cargo.toml`. A local `npm run tauri build` is still the quickest way to try an installer by hand.
 3. **Commit and push** to `master`. The runner builds from git alone, so a file that exists only on this machine fails the build half an hour in, after `build:content` has compiled. Commit every new file, `.ts` modules, JSON the frontend imports and `tools/*.d.mts` type files included, then check:
 
    ```

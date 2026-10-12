@@ -357,7 +357,7 @@ mod tests {
         let path = std::env::temp_dir().join(format!("thayers-import-test-{}.db", std::process::id()));
         let _ = std::fs::remove_file(&path);
         let mut conn = crate::db::open_content_db(&path).unwrap();
-        let reference = Path::new(env!("CARGO_MANIFEST_DIR")).join("..").join("reference");
+        let reference = Path::new(env!("CARGO_MANIFEST_DIR")).ancestors().nth(3).unwrap().join("reference");
         crate::import::reference::strongs::import(&mut conn, &reference.join("strongs").join("hebrew.xml"), &reference.join("strongs").join("greek.xml")).unwrap();
         import(&mut conn, &reference.join("thayers").join("thayers.xml")).unwrap();
         let text = |id: &str| -> String { conn.query_row("SELECT plain_text FROM thayers_entries WHERE strongs_id = ?1", [id], |r| r.get(0)).unwrap_or_default() };

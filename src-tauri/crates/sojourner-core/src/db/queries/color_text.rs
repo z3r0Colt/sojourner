@@ -257,7 +257,7 @@ mod real {
     #[test]
     #[ignore]
     fn every_translation_is_colored() {
-        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap();
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).ancestors().nth(3).unwrap();
         let dir = std::env::temp_dir().join(format!("sojourner-real-ct-{}", std::process::id()));
         let conn = crate::db::open(&dir, &root.join("content").join("content.db")).unwrap();
         let lexicon = load_lexicon(&conn).unwrap();
@@ -301,7 +301,7 @@ mod real {
     #[test]
     #[ignore]
     fn every_chapter_gives_well_formed_spans() {
-        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap();
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).ancestors().nth(3).unwrap();
         let dir = std::env::temp_dir().join(format!("sojourner-real-ct-{}", std::process::id()));
         let conn = crate::db::open(&dir, &root.join("content").join("content.db")).unwrap();
         let lexicon = load_lexicon(&conn).unwrap();

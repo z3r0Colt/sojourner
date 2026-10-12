@@ -2312,7 +2312,7 @@ mod real {
     #[test]
     #[ignore]
     fn the_king_james_senses_are_found() {
-        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap();
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).ancestors().nth(3).unwrap();
         let dir = std::env::temp_dir().join(format!("sojourner-real-webster-{}", std::process::id()));
         let conn = crate::db::open(&dir, &root.join("content").join("content.db")).unwrap();
         let count: i64 = conn.query_row("SELECT COUNT(*) FROM webster_entries", [], |r| r.get(0)).unwrap();
@@ -2481,7 +2481,7 @@ mod real {
     fn every_kjv_word_is_looked_up() {
         use std::collections::HashMap;
         use std::io::Write;
-        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap();
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).ancestors().nth(3).unwrap();
         let dir = std::env::temp_dir().join(format!("sojourner-real-webster-probe-{}", std::process::id()));
         let conn = crate::db::open(&dir, &root.join("content").join("content.db")).unwrap();
         let mut counts: HashMap<String, usize> = HashMap::new();

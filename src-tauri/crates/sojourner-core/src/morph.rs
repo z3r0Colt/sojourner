@@ -1392,7 +1392,7 @@ mod tests {
 
     #[test]
     fn every_retagged_reading_has_its_glossary_entries() {
-        let glossary: serde_json::Value = serde_json::from_str(include_str!("../../src/features/lexicon/parsingGlossary.json")).unwrap();
+        let glossary: serde_json::Value = serde_json::from_str(include_str!("../../../../src/features/lexicon/parsingGlossary.json")).unwrap();
         let terms = glossary["terms"].as_object().unwrap();
         let samples = ["HAcmsa", "HAcmsc", "HAcbsc/Sp2ms", "HR/Acmsa", "HTc", "HTc/Sp2mp", "AAcbsc/Sp2ms"];
         for (n, coded, _) in RETAGGED {
@@ -1566,7 +1566,7 @@ mod tests {
     #[ignore]
     fn every_code_in_the_reference_files_decodes_and_has_its_glossary_entries() {
         use std::collections::{BTreeMap, BTreeSet};
-        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap().join("reference").join("morphology");
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).ancestors().nth(3).unwrap().join("reference").join("morphology");
         let mut codes: BTreeSet<String> = BTreeSet::new();
         for dir in ["hebrew-tahot", "greek-tagnt"] {
             for entry in std::fs::read_dir(root.join(dir)).unwrap().flatten() {
@@ -1600,7 +1600,7 @@ mod tests {
         codes.remove("");
         assert!(codes.len() > 4000, "only {} distinct codes read from {}", codes.len(), root.display());
 
-        let glossary: serde_json::Value = serde_json::from_str(include_str!("../../src/features/lexicon/parsingGlossary.json")).unwrap();
+        let glossary: serde_json::Value = serde_json::from_str(include_str!("../../../../src/features/lexicon/parsingGlossary.json")).unwrap();
         let terms = glossary["terms"].as_object().expect("parsingGlossary.json has a \"terms\" object");
         let semitic_terms = glossary["hebrew_and_aramaic"].as_object();
         // As parsingGlossary.ts looks a value up: a Hebrew or Aramaic word
