@@ -4,7 +4,8 @@
  * Loaded only in the web build.
  */
 import pinnedContent from "./content.json";
-import type { FromWorker, StartConfig, StartInfo, ToWorker } from "./protocol";
+import { claimTab } from "./tabLock";
+import type { DataOp, FromWorker, StartConfig, StartInfo, ToWorker } from "./protocol";
 
 /** Where content.db's pieces and manifest are: in dev, content/web/ as the
  * dev server serves it (vite.config.ts); in a build, the content version
@@ -20,6 +21,7 @@ let worker: Worker | null = null;
 let started: Promise<StartInfo> | null = null;
 let nextId = 1;
 const pending = new Map<number, Pending>();
+const pendingData = new Map<number, { resolve: (v: { bytes?: Uint8Array; json?: string }) => void; reject: (e: unknown) => void }>();
 
 async function config(): Promise<StartConfig> {
   const base = new URL(CONTENT_BASE, window.location.href).href;
@@ -37,9 +39,26 @@ async function config(): Promise<StartConfig> {
 function failAll(error: unknown) {
   for (const p of pending.values()) p.reject(error);
   pending.clear();
+  for (const p of pendingData.values()) p.reject(error);
+  pendingData.clear();
 }
 
-function boot(): Promise<StartInfo> {
+/** Stops the worker, which lets go of the reader's files (another tab has
+ * taken over: tabLock.ts). The next call would start a new one. */
+export function stopBackend() {
+  failAll("Sojourner is open in another tab.");
+  worker?.terminate();
+  worker = null;
+  started = null;
+}
+
+/** The reader's files are held by one worker at a time. One that was just
+ * stopped (another tab took over, or this one was reloaded) lets go a moment
+ * later, so a start that finds them held tries again before settling for
+ * keeping the data in memory. */
+const HELD_RETRIES = 10;
+
+function boot(attempt = 0): Promise<StartInfo> {
   const w = new Worker(new URL("./worker.ts", import.meta.url), { type: "module", name: "sojourner-backend" });
   worker = w;
   return new Promise<StartInfo>((resolve, reject) => {
@@ -58,6 +77,12 @@ function boot(): Promise<StartInfo> {
       const m = e.data;
       switch (m.kind) {
         case "started":
+          if (!m.info.persistent && attempt < HELD_RETRIES && /SyncAccessHandle/.test(m.info.storageError ?? "")) {
+            w.terminate();
+            if (worker === w) worker = null;
+            setTimeout(() => boot(attempt + 1).then(resolve, reject), 500);
+            break;
+          }
           // Dev builds: for the harness, as the trace below.
           if (import.meta.env.DEV) (window as { __sojournerStart?: StartInfo }).__sojournerStart = m.info;
           resolve(m.info);
@@ -73,6 +98,14 @@ function boot(): Promise<StartInfo> {
           if (!p) break;
           if (m.ok) p.resolve(JSON.parse(m.json));
           else p.reject(JSON.parse(m.json));
+          break;
+        }
+        case "data": {
+          const p = pendingData.get(m.id);
+          pendingData.delete(m.id);
+          if (!p) break;
+          if (m.ok) p.resolve({ bytes: m.bytes, json: m.json });
+          else p.reject(m.error);
           break;
         }
         case "crashed":
@@ -106,7 +139,14 @@ function traceCall(t: Trace) {
 
 /** How the backend started: whether the reader's data is stored, and so on. */
 export function backendInfo(): Promise<StartInfo> {
-  started ??= boot();
+  // Only the tab that holds the lock may open the reader's files (tabLock.ts):
+  // anything that calls the backend before the lock is settled waits for it,
+  // and one in a tab that doesn't hold it fails, without starting a worker.
+  started ??= claimTab().then((mine) => {
+    if (mine) return boot();
+    started = null;
+    return Promise.reject("Sojourner is open in another tab.");
+  });
   return started;
 }
 
@@ -119,4 +159,22 @@ export async function webInvoke<T>(cmd: string, args?: Record<string, unknown>):
     pending.set(id, { resolve: resolve as (v: unknown) => void, reject });
     w.postMessage({ kind: "call", id, cmd, args: JSON.stringify(args ?? {}) } satisfies ToWorker);
   });
+}
+
+/** The reader's own data as a file: `export` gives the bytes of a copy of
+ * user.db; `check` says whether a file the reader chose is one (resolving
+ * with its schema, or rejecting with why not); `import` replaces user.db
+ * with it, after which the page must reload (the worker answers nothing). */
+export async function dataOp(op: "export"): Promise<Uint8Array>;
+export async function dataOp(op: "check" | "import", bytes: Uint8Array): Promise<void>;
+export async function dataOp(op: DataOp, bytes?: Uint8Array): Promise<Uint8Array | void> {
+  await backendInfo();
+  const w = worker;
+  if (!w) throw "Sojourner's backend is not running";
+  const done = await new Promise<{ bytes?: Uint8Array }>((resolve, reject) => {
+    const id = nextId++;
+    pendingData.set(id, { resolve, reject });
+    w.postMessage({ kind: "data", id, op, bytes } satisfies ToWorker);
+  });
+  if (op === "export") return done.bytes ?? new Uint8Array();
 }

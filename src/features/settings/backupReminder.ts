@@ -5,6 +5,7 @@ import { useBackups, useStats } from "../../api/queries";
 import type { Stats } from "../../api/types";
 import { toast } from "../../components/ui/toast";
 import { useSetting } from "../../hooks/useSetting";
+import { onWeb } from "../../lib/platform";
 
 /**
  * The launch-time backup reminder (F3.5). Once per launch, when the newest
@@ -93,7 +94,7 @@ export function useBackupReminder() {
   const qc = useQueryClient();
 
   useEffect(() => {
-    if (shownThisLaunch || !backups || !stats || !isLoaded || !autoMeta.isLoaded) return;
+    if (onWeb || shownThisLaunch || !backups || !stats || !isLoaded || !autoMeta.isLoaded) return;
     if (autoBackup) return;
     shownThisLaunch = true;
     const newest = backups[0]?.created_at ?? null;

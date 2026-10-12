@@ -1,4 +1,4 @@
-import React from "react";
+import React, { lazy, Suspense } from "react";
 import ReactDOM from "react-dom/client";
 import { MutationCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider } from "react-router-dom";
@@ -13,6 +13,9 @@ import { api } from "./api/client";
 import { applyAccent } from "./lib/accent";
 import { splashNote } from "./lib/splash";
 import "./styles.css";
+
+// The web app runs in one tab at a time (src/web/tabLock.ts).
+const TabGate = import.meta.env.VITE_TARGET === "web" ? lazy(() => import("./web/TabGate")) : null;
 
 installCrashLogging();
 
@@ -97,7 +100,15 @@ function ThemedRoot() {
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <ThemedRoot />
+      {TabGate ? (
+        <Suspense fallback={null}>
+          <TabGate>
+            <ThemedRoot />
+          </TabGate>
+        </Suspense>
+      ) : (
+        <ThemedRoot />
+      )}
     </QueryClientProvider>
   </React.StrictMode>,
 );

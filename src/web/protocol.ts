@@ -29,7 +29,12 @@ export type StartConfig = {
 export type ToWorker =
   | { kind: "start"; config: StartConfig }
   /** `args`: the JSON of the arguments object. */
-  | { kind: "call"; id: number; cmd: string; args: string };
+  | { kind: "call"; id: number; cmd: string; args: string }
+  /** The reader's own data as a file (user.db): `export` answers with its
+   * bytes, `check` and `import` take the bytes of a file the reader chose. */
+  | { kind: "data"; id: number; op: DataOp; bytes?: Uint8Array };
+
+export type DataOp = "export" | "check" | "import";
 
 export type StartInfo = {
   /** False when the browser gave no private file storage: user.db is then
@@ -50,6 +55,7 @@ export type FromWorker =
   | { kind: "failed"; error: unknown }
   /** `json`: the answer's JSON (`ok`), or the error's (not `ok`). */
   | { kind: "reply"; id: number; ok: boolean; json: string }
+  | { kind: "data"; id: number; ok: boolean; bytes?: Uint8Array; json?: string; error?: string }
   /** The module stopped (a panic): every call in flight fails, and the
    * next one starts a new worker. */
   | { kind: "crashed"; id: number | null; error: string }

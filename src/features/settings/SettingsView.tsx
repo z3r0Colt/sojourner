@@ -6,25 +6,31 @@ import { BackupsSection } from "./sections/BackupsSection";
 import { AboutSection } from "./sections/AboutSection";
 import { TutorialSection } from "./sections/TutorialSection";
 import { DevicesSection } from "./sections/DevicesSection";
-import { onDesktop } from "../../lib/platform";
+import { lazy, Suspense } from "react";
+import { onDesktop, onWeb } from "../../lib/platform";
 import { cx } from "../../components/ui/classes";
 import { usePaneParams } from "../../workspace/PaneContext";
+
+// The web app's own version of Data & backups (src/web); the desktop bundle
+// has no reference to it.
+const WebBackups = import.meta.env.VITE_TARGET === "web" ? lazy(() => import("../../web/WebBackups")) : null;
 
 type Section = "preferences" | "library" | "books" | "backups" | "devices" | "tutorial" | "about";
 
 /** `desktop`: only on the computer Sojourner runs on, since it installs,
- * reads or writes files there; a browser on another device leaves it out. */
-const SECTIONS: { key: Section; label: string; icon: LucideIcon; desktop?: boolean }[] = (
+ * reads or writes files there; a browser on another device leaves it out.
+ * `web`: the web app has its own version of a desktop section. */
+const SECTIONS: { key: Section; label: string; icon: LucideIcon; desktop?: boolean; web?: boolean }[] = (
   [
     { key: "preferences", label: "Reading", icon: BookOpen },
     { key: "library", label: "Library", icon: Library, desktop: true },
     { key: "books", label: "Library packs", icon: BookMarked, desktop: true },
-    { key: "backups", label: "Data & backups", icon: Database, desktop: true },
+    { key: "backups", label: "Data & backups", icon: Database, desktop: true, web: true },
     { key: "devices", label: "Other devices", icon: MonitorSmartphone, desktop: true },
     { key: "tutorial", label: "Tutorial", icon: GraduationCap },
     { key: "about", label: "About", icon: Info },
-  ] as { key: Section; label: string; icon: LucideIcon; desktop?: boolean }[]
-).filter((s) => onDesktop || !s.desktop);
+  ] as { key: Section; label: string; icon: LucideIcon; desktop?: boolean; web?: boolean }[]
+).filter((s) => onDesktop || !s.desktop || (onWeb && s.web));
 
 function isSection(v: string | null): v is Section {
   return SECTIONS.some((s) => s.key === v);
@@ -65,7 +71,14 @@ export function SettingsView() {
           {section === "library" && <LibrarySection />}
           {section === "books" && <PacksSection />}
           {section === "preferences" && <PreferencesSection />}
-          {section === "backups" && <BackupsSection />}
+          {section === "backups" &&
+            (WebBackups ? (
+              <Suspense fallback={null}>
+                <WebBackups />
+              </Suspense>
+            ) : (
+              <BackupsSection />
+            ))}
           {section === "devices" && <DevicesSection />}
           {section === "tutorial" && <TutorialSection />}
           {section === "about" && <AboutSection />}

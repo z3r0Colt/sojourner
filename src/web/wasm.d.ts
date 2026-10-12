@@ -9,4 +9,10 @@ declare module "@sojourner/wasm" {
   export function call(cmd: string, args: string): string;
   /** HTTP traffic since the last reset, as JSON. */
   export function http_stats(reset: boolean): string;
+  /** A copy of user.db (throws the JSON of an error string). */
+  export function export_user_db(): Uint8Array;
+  /** Checks a file as a user.db; resolves with JSON `{schema}`. */
+  export function check_user_db(bytes: Uint8Array): string;
+  /** Replaces user.db with the file and closes the connection. */
+  export function import_user_db(bytes: Uint8Array): void;
 }

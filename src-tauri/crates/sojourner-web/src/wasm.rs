@@ -188,3 +188,102 @@ pub fn http_stats(reset: bool) -> String {
     }
     s
 }
+
+// ---- The reader's own data: export and import of user.db ------------------
+
+/// A scratch file in the OPFS pool, for `VACUUM INTO` and for a file being
+/// checked. The pool holds 6 files: user.db, its journal and these.
+const EXPORT_FILE: &str = "/export.db";
+const CHECK_FILE: &str = "/check.db";
+
+fn with_pool<T>(f: impl FnOnce(&sqlite_wasm_vfs::sahpool::OpfsSAHPoolUtil) -> Result<T, String>) -> Result<T, String> {
+    OPFS.with(|o| match o.borrow().as_ref() {
+        Some(util) => f(util),
+        None => Err("Your data isn't kept in this browser's files, so it can't be exported. \
+                     Try a current Chrome, Edge, Firefox or Safari."
+            .to_string()),
+    })
+}
+
+/// A consistent copy of user.db (what the desktop's "Export" writes: the
+/// same `VACUUM INTO`, so the same file format). The notes, highlights,
+/// sermons and the rest; none of the books.
+#[wasm_bindgen]
+pub fn export_user_db() -> Result<Vec<u8>, String> {
+    with_pool(|pool| {
+        let _ = pool.delete_db(EXPORT_FILE);
+        DB.with(|d| {
+            let d = d.borrow();
+            let db = d.as_ref().ok_or("Sojourner has not started")?;
+            let done = db.conn().execute("VACUUM main INTO ?1", [EXPORT_FILE]).map_err(|e| e.to_string());
+            done
+        })?;
+        let bytes = pool.export_db(EXPORT_FILE).map_err(|e| format!("{e:?}"));
+        let _ = pool.delete_db(EXPORT_FILE);
+        bytes
+    })
+    .map_err(error_json)
+}
+
+/// Whether `bytes` is one of this app's user databases, as the desktop's
+/// `validate_candidate_db` asks (opens as SQLite, has `settings`, not from a
+/// newer version), and a quick integrity check. Resolves with its schema
+/// version as JSON; rejects with the reason.
+fn check_candidate(pool: &sqlite_wasm_vfs::sahpool::OpfsSAHPoolUtil, bytes: &[u8]) -> Result<i64, String> {
+    if bytes.len() < 100 || !bytes.starts_with(b"SQLite format 3\0") {
+        return Err("That isn't a Sojourner data file (it isn't a SQLite database).".into());
+    }
+    pool.import_db(CHECK_FILE, bytes).map_err(|e| format!("Couldn't read that file: {e:?}"))?;
+    let checked = (|| -> Result<i64, String> {
+        let conn = Connection::open_with_flags_and_vfs(CHECK_FILE, OpenFlags::SQLITE_OPEN_READ_ONLY, c"opfs-sahpool")
+            .map_err(|e| e.to_string())?;
+        conn.query_row("SELECT COUNT(*) FROM settings", [], |_| Ok(()))
+            .map_err(|_| "That isn't a Sojourner data file (it has no settings).".to_string())?;
+        let version: i64 = conn.query_row("PRAGMA user_version", [], |r| r.get(0)).map_err(|e| e.to_string())?;
+        let known = db::schema::USER_MIGRATIONS.len() as i64;
+        if version > known {
+            return Err(format!(
+                "This file was written by a newer version of Sojourner (schema {version}; this one knows {known}). \
+                 Reload the page to update, and try again."
+            ));
+        }
+        let issues: Vec<String> = {
+            let mut stmt = conn.prepare("PRAGMA quick_check").map_err(|e| e.to_string())?;
+            let rows = stmt.query_map([], |r| r.get::<_, String>(0)).map_err(|e| e.to_string())?;
+            rows.filter_map(Result::ok).filter(|r| r != "ok").collect()
+        };
+        if !issues.is_empty() {
+            return Err(format!("That file is damaged: {}", issues.join("; ")));
+        }
+        Ok(version)
+    })();
+    let _ = pool.delete_db(CHECK_FILE);
+    checked
+}
+
+/// Checks a file the reader chose, before anything is replaced.
+#[wasm_bindgen]
+pub fn check_user_db(bytes: &[u8]) -> Result<String, String> {
+    with_pool(|pool| check_candidate(pool, bytes)).map(|v| json!({ "schema": v }).to_string()).map_err(error_json)
+}
+
+/// Replaces user.db with `bytes` (checked again here). The connection is
+/// closed first, so the worker answers nothing afterwards: the page reloads.
+/// The page exports the current data before calling this, as the desktop
+/// backs it up first.
+#[wasm_bindgen]
+pub fn import_user_db(bytes: &[u8]) -> Result<(), String> {
+    with_pool(|pool| {
+        check_candidate(pool, bytes)?;
+        // Closing the connection also detaches content.db.
+        let old = DB.with(|d| d.borrow_mut().take());
+        drop(old);
+        // A leftover journal would be replayed onto the new file.
+        let _ = pool.delete_db("/user.db-journal");
+        // `import_db` will not overwrite. The file checked above is good, and
+        // the page has already saved a copy of what is being replaced.
+        pool.delete_db("/user.db").map_err(|e| format!("Couldn't replace your data: {e:?}"))?;
+        pool.import_db("/user.db", bytes).map_err(|e| format!("Couldn't replace your data: {e:?}"))
+    })
+    .map_err(error_json)
+}

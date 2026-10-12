@@ -6,11 +6,11 @@
  *
  * Calls are answered one at a time, in order, as they arrive.
  */
-import init, { call, http_stats, start } from "@sojourner/wasm";
+import init, { call, check_user_db, export_user_db, http_stats, import_user_db, start } from "@sojourner/wasm";
 import type { FromWorker, ToWorker } from "./protocol";
 
 const scope = self as unknown as {
-  postMessage(message: FromWorker): void;
+  postMessage(message: FromWorker, transfer?: Transferable[]): void;
   onmessage: ((e: MessageEvent<ToWorker>) => void) | null;
 };
 const post = (m: FromWorker) => scope.postMessage(m);
@@ -39,6 +39,27 @@ scope.onmessage = async (e) => {
       post({ kind: "started", info });
     } catch (err) {
       post({ kind: "failed", error: parseError(err) });
+    }
+    return;
+  }
+  if (m.kind === "data") {
+    try {
+      switch (m.op) {
+        case "export": {
+          const bytes = export_user_db();
+          scope.postMessage({ kind: "data", id: m.id, ok: true, bytes }, [bytes.buffer]);
+          break;
+        }
+        case "check":
+          post({ kind: "data", id: m.id, ok: true, json: check_user_db(m.bytes ?? new Uint8Array()) });
+          break;
+        case "import":
+          import_user_db(m.bytes ?? new Uint8Array());
+          post({ kind: "data", id: m.id, ok: true });
+          break;
+      }
+    } catch (err) {
+      post({ kind: "data", id: m.id, ok: false, error: JSON.parse(typeof err === "string" ? err : JSON.stringify(String(err))) });
     }
     return;
   }

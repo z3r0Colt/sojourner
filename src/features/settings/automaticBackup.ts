@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useBackups, useCreateBackup, useStats } from "../../api/queries";
 import { toast } from "../../components/ui/toast";
+import { onWeb } from "../../lib/platform";
 import { useSetting } from "../../hooks/useSetting";
 import {
   AUTO_BACKUP_DAYS_DEFAULT,
@@ -56,7 +57,8 @@ export function useAutomaticBackup() {
 
   const { mutate } = createBackup;
   useEffect(() => {
-    if (ranThisLaunch || !backups || !stats) return;
+    // The web app has no backups folder: it reminds about exports instead.
+    if (onWeb || ranThisLaunch || !backups || !stats) return;
     // Never act on a default before the stored setting has loaded, or a
     // reader who turned this off would still get a backup on every launch.
     if (!enabledMeta.isLoaded || !daysMeta.isLoaded) return;

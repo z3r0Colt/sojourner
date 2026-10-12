@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, Compass, Keyboard, Menu, Search } from "lucide-react";
 import { useBooks, useBookmarks, useCreateBookmark, useDeleteBookmark, useTranslations } from "../api/queries";
 import { useUiStore } from "../state/uiStore";
@@ -27,6 +27,9 @@ import { stepChapter } from "../features/reading/chapterStep";
 import { resetZoom, zoomActionFor, zoomText } from "../features/reading/zoom";
 import { isTypingTarget } from "../lib/keyboard";
 import { onDesktop } from "../lib/platform";
+
+// The web app's data reminders (src/web); the desktop bundle has none of it.
+const WebDataWatch = import.meta.env.VITE_TARGET === "web" ? lazy(() => import("../web/WebDataWatch")) : null;
 import { useCompact } from "../hooks/useCompact";
 import { useLiveSync } from "../lib/liveSync";
 import { installCloseHandshake } from "../lib/appClose";
@@ -64,6 +67,8 @@ export function AppShell() {
   const canGoForward = (focusedPane?.future.length ?? 0) > 0;
   useNoteRefsBackfill();
   useLandingPageOnLaunch();
+  // The desktop's backups folder and reminder; the web app has its own
+  // (src/web/WebDataWatch), rendered below.
   useAutomaticBackup();
   useBackupReminder();
   // In step with other devices on the network (Settings → Other devices).
@@ -235,6 +240,11 @@ export function AppShell() {
     // under the browser's own toolbar, and took with it whatever sits at the
     // foot of a pane -- a book's Previous and Next, the read-aloud bar.
     <div className="flex h-dvh overflow-hidden bg-bg text-ink">
+      {WebDataWatch && (
+        <Suspense fallback={null}>
+          <WebDataWatch />
+        </Suspense>
+      )}
       {!distractionFreeMode && !compact && <Sidebar />}
       {compact && menuOpen && (
         <div className="fixed inset-0 z-50 flex">
