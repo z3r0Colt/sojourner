@@ -1564,6 +1564,76 @@ CREATE INDEX idx_color_voices_lookup ON color_voices(book_id, chapter, verse);
 CREATE INDEX idx_color_voices_voice ON color_voices(voice);
 "#;
 
+// What lets a query answer from an index instead of reading every row: on
+// the desktop a full scan is a few milliseconds, but the web build reads
+// content.db over the network a page at a time, and there a scan of a wide
+// table is megabytes (see docs/pwa-plan.md).
+//
+// verse_id_ranges and commentary_id_ranges: each translation's verse ids
+// and each commentary's entry ids as runs -- first..last, every id between
+// them that translation's (or commentary's) and in that one book
+// (`queries::id_ranges::stamp`, run at the end of the content build and
+// after a reader's import). With them a search keeps to a translation,
+// commentary or book by `rowid BETWEEN` on the full-text index itself
+// instead of joining every hit to its row, and counts hits per book without
+// reading them. The triggers drop a translation's or commentary's runs the
+// moment its rows change, so a run is never stale: without runs, search
+// takes the old way.
+//
+// The other indexes serve lists that read a few short columns out of tables
+// of long rows: the encyclopedia's and the dictionary's indexes, a
+// dictionary term looked up by name, the Westminster headings and the
+// Confession chapters a passage is cited in, and each lexicon's entry count.
+pub const CONTENT_MIGRATION_0034: &str = r#"
+CREATE TABLE verse_id_ranges (
+  translation_id  INTEGER NOT NULL,
+  first_id        INTEGER NOT NULL,
+  last_id         INTEGER NOT NULL,
+  book_id         INTEGER NOT NULL,
+  PRIMARY KEY (translation_id, first_id)
+) WITHOUT ROWID;
+CREATE TRIGGER verses_ranges_ai AFTER INSERT ON verses BEGIN
+  DELETE FROM verse_id_ranges WHERE translation_id = new.translation_id;
+END;
+CREATE TRIGGER verses_ranges_ad AFTER DELETE ON verses BEGIN
+  DELETE FROM verse_id_ranges WHERE translation_id = old.translation_id;
+END;
+CREATE TRIGGER verses_ranges_au AFTER UPDATE OF id, translation_id, book_id ON verses BEGIN
+  DELETE FROM verse_id_ranges WHERE translation_id IN (old.translation_id, new.translation_id);
+END;
+
+CREATE TABLE commentary_id_ranges (
+  source_id  INTEGER NOT NULL,
+  first_id   INTEGER NOT NULL,
+  last_id    INTEGER NOT NULL,
+  book_id    INTEGER NOT NULL,
+  PRIMARY KEY (source_id, first_id)
+) WITHOUT ROWID;
+CREATE TRIGGER commentary_ranges_ai AFTER INSERT ON commentary_entries BEGIN
+  DELETE FROM commentary_id_ranges
+  WHERE source_id = (SELECT commentary_source_id FROM commentary_sections WHERE id = new.section_id);
+END;
+CREATE TRIGGER commentary_ranges_ad AFTER DELETE ON commentary_entries BEGIN
+  DELETE FROM commentary_id_ranges
+  WHERE source_id = (SELECT commentary_source_id FROM commentary_sections WHERE id = old.section_id);
+END;
+CREATE TRIGGER commentary_ranges_au AFTER UPDATE OF id, section_id, book_id ON commentary_entries BEGIN
+  DELETE FROM commentary_id_ranges
+  WHERE source_id IN (SELECT commentary_source_id FROM commentary_sections WHERE id IN (old.section_id, new.section_id));
+END;
+CREATE TRIGGER commentary_sections_ranges_ad AFTER DELETE ON commentary_sections BEGIN
+  DELETE FROM commentary_id_ranges WHERE source_id = old.commentary_source_id;
+END;
+
+CREATE INDEX idx_isbe_index ON isbe_entries(sort_key COLLATE NOCASE, term, slug);
+DROP INDEX idx_isbe_sort;
+CREATE INDEX idx_dictionary_index ON dictionary_entries(term COLLATE NOCASE, slug, sources);
+CREATE INDEX idx_westminster_sections_list ON westminster_sections(document_id, sort_order, heading, prompt);
+CREATE INDEX idx_westminster_sections_heading ON westminster_sections(id, document_id, heading);
+CREATE INDEX idx_westminster_proofs_chapter ON westminster_proofs(book_id, chapter, section_id);
+CREATE INDEX idx_lexicon_entries_source ON lexicon_entries(source_id);
+"#;
+
 pub const CONTENT_MIGRATIONS: &[&str] = &[
     CONTENT_MIGRATION_0001,
     CONTENT_MIGRATION_0002,
@@ -1598,6 +1668,7 @@ pub const CONTENT_MIGRATIONS: &[&str] = &[
     CONTENT_MIGRATION_0031,
     CONTENT_MIGRATION_0032,
     CONTENT_MIGRATION_0033,
+    CONTENT_MIGRATION_0034,
 ];
 
 // library.db: the books that ship with the app, in a file of their own.

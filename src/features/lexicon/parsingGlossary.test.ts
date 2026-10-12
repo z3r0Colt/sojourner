@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import glossary from "./parsingGlossary.json";
-import morphSource from "../../../src-tauri/src/morph.rs?raw";
+import morphSource from "../../../src-tauri/crates/sojourner-core/src/morph.rs?raw";
 import { PARSING_FIELD_ORDER, lookupTerm, termsFor, type GlossaryEntry } from "./parsingGlossary";
 import type { MorphParsing } from "../../api/types";
 

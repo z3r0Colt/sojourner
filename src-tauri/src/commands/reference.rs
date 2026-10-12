@@ -214,13 +214,15 @@ pub fn get_morph_field_values(db: State<DbState>, language: String) -> AppResult
 #[tauri::command]
 pub async fn morph_search(app: tauri::AppHandle, query: crate::db::queries::word_study::MorphQuery) -> AppResult<crate::db::queries::word_study::MorphSearchPage> {
     use tauri::Manager;
-    tauri::async_runtime::spawn_blocking(move || -> AppResult<_> {
-        let db = app.state::<DbState>();
-        let conn = db.conn();
-        Ok(crate::db::queries::word_study::morph_search(&conn, &query)?)
-    })
-    .await
-    .map_err(|e| anyhow::anyhow!("the morphology search did not finish: {e}"))?
+    tauri::async_runtime::spawn_blocking(move || morph_search_blocking(app.state::<DbState>(), query))
+        .await
+        .map_err(|e| anyhow::anyhow!("the morphology search did not finish: {e}"))?
+}
+
+/// `morph_search`, on the calling thread (see `search::search_blocking`).
+pub fn morph_search_blocking(db: State<DbState>, query: crate::db::queries::word_study::MorphQuery) -> AppResult<crate::db::queries::word_study::MorphSearchPage> {
+    let conn = db.conn();
+    Ok(crate::db::queries::word_study::morph_search(&conn, &query)?)
 }
 
 #[tauri::command]

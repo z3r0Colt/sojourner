@@ -1,3 +1,4 @@
+use super::id_ranges::{self, IdRange};
 use super::query_lang::{self, ParseOptions, ParsedQuery};
 use super::NOT_DELETED;
 use crate::models::SearchResult;
@@ -350,11 +351,14 @@ pub fn search_verses(
     }
     let regex = q.regex.as_deref().map(query_lang::compile_regex).transpose()?;
     let vq = verse_query(q, &translation_ids, scope);
-    let order = if options.passage_order || !vq.indexed || q.original_script {
-        "v.book_id, v.chapter, v.verse, t.id"
-    } else {
-        "bm25(verses_fts)"
-    };
+    let by_relevance = vq.indexed && !options.passage_order && !q.original_script;
+    // The id breaks ties in relevance, so a page ends at the same verse
+    // whichever way below it was ranked.
+    let order = if by_relevance { "bm25(verses_fts), v.id" } else { "v.book_id, v.chapter, v.verse, t.id" };
+    let fts_table = if q.original_script { "verses_plain" } else { "verses_fts" };
+    // The translations and books asked for, as runs of verse ids when they
+    // can be: then the index alone ranks and counts (see `id_ranges`).
+    let ranges = if vq.indexed && !q.needs_post_filter() { verse_ranges(conn, q, &translation_ids, scope)? } else { None };
     // The whole verse, its matches marked: verses are short enough to show
     // entire, and the concordance view lines hits up on the first mark. A
     // Greek or Hebrew search matched the bare letters, so its marks are put
@@ -412,6 +416,31 @@ pub fn search_verses(
         return Ok(SearchPage { results, total });
     }
 
+    if let (true, Some(ranges)) = (by_relevance, &ranges) {
+        // Ranked by the index alone, then only the page's own verses read
+        // and marked. Marking every hit before keeping the best was what
+        // made a common word read megabytes of verses.
+        let ids = ranked_ids(conn, "verses_fts", &q.fts, ranges, limit)?;
+        let sql = format!(
+            "SELECT v.id, v.book_id, v.chapter, v.verse, t.code, {text_col}, t.id, v.text
+             FROM verses_fts CROSS JOIN verses v ON v.id = verses_fts.rowid
+             JOIN translations t ON t.id = v.translation_id
+             WHERE verses_fts MATCH ?1 AND verses_fts.rowid IN ({})",
+            id_list(&ids)
+        );
+        let found = conn
+            .prepare(&sql)?
+            .query_map([&q.fts], map)?
+            .map(|r| r.map(|(res, _)| res))
+            .collect::<Result<Vec<_>, _>>()?;
+        let mut results = in_order_of(&ids, found);
+        for r in &mut results {
+            r.snippet = escape_snippet(&r.snippet);
+        }
+        let total = if ids.len() as i64 >= limit { count_in(conn, "verses_fts", &q.fts, ranges)? } else { ids.len() as i64 };
+        return Ok(SearchPage { results, total });
+    }
+
     let sql = format!(
         "SELECT v.id, v.book_id, v.chapter, v.verse, t.code, {text_col}, t.id, v.text {} ORDER BY {order} LIMIT {limit}",
         vq.from
@@ -428,11 +457,61 @@ pub fn search_verses(
         r.snippet = escape_snippet(&r.snippet);
     }
     let total = if results.len() as i64 >= limit {
-        count_matches(conn, &format!("SELECT COUNT(*) {}", vq.from), &params)?
+        match &ranges {
+            Some(ranges) => count_in(conn, fts_table, &q.fts, ranges)?,
+            None => count_matches(conn, &format!("SELECT COUNT(*) {}", vq.from), &params)?,
+        }
     } else {
         results.len() as i64
     };
     Ok(SearchPage { results, total })
+}
+
+/// The translations and books a Scripture search keeps to, as runs of
+/// verse ids; None when its filters or its translations do not allow it.
+fn verse_ranges(conn: &Connection, q: &ParsedQuery, translation_ids: &[i64], scope: &VerseSearchScope) -> anyhow::Result<Option<Vec<IdRange>>> {
+    let Some(books) = id_ranges::verse_book_scope(conn, &q.filters, scope.book_id, scope.testament.as_deref())? else {
+        return Ok(None);
+    };
+    id_ranges::lookup(conn, false, translation_ids, books.as_ref())
+}
+
+/// The same for a commentary search.
+fn commentary_ranges(conn: &Connection, q: &ParsedQuery, source_ids: &[i64], scope: &VerseSearchScope) -> anyhow::Result<Option<Vec<IdRange>>> {
+    let Some(books) = id_ranges::commentary_book_scope(conn, &q.filters, scope.book_id, scope.testament.as_deref())? else {
+        return Ok(None);
+    };
+    id_ranges::lookup(conn, true, source_ids, books.as_ref())
+}
+
+/// The ids of the best `limit` matches within `ranges`, best first.
+fn ranked_ids(conn: &Connection, fts_table: &str, fts: &str, ranges: &[IdRange], limit: i64) -> anyhow::Result<Vec<i64>> {
+    let sql = format!(
+        "SELECT rowid FROM {fts_table} WHERE {fts_table} MATCH ?1 AND {} ORDER BY bm25({fts_table}), rowid LIMIT {limit}",
+        id_ranges::condition("rowid", ranges)
+    );
+    Ok(conn.prepare(&sql)?.query_map([fts], |r| r.get(0))?.collect::<Result<_, _>>()?)
+}
+
+/// Every match within `ranges`, by id: the index's own doclists, no rows.
+fn hit_ids(conn: &Connection, fts_table: &str, fts: &str, ranges: &[IdRange]) -> anyhow::Result<Vec<i64>> {
+    let sql = format!("SELECT rowid FROM {fts_table} WHERE {fts_table} MATCH ?1 AND {}", id_ranges::condition("rowid", ranges));
+    Ok(conn.prepare(&sql)?.query_map([fts], |r| r.get(0))?.collect::<Result<_, _>>()?)
+}
+
+fn count_in(conn: &Connection, fts_table: &str, fts: &str, ranges: &[IdRange]) -> anyhow::Result<i64> {
+    let sql = format!("SELECT count(*) FROM {fts_table} WHERE {fts_table} MATCH ?1 AND {}", id_ranges::condition("rowid", ranges));
+    Ok(conn.query_row(&sql, [fts], |r| r.get(0))?)
+}
+
+fn id_list(ids: &[i64]) -> String {
+    ids.iter().map(|id| id.to_string()).collect::<Vec<_>>().join(",")
+}
+
+/// `found`, in the order of `ids`.
+fn in_order_of(ids: &[i64], found: Vec<SearchResult>) -> Vec<SearchResult> {
+    let mut by_id: std::collections::HashMap<i64, SearchResult> = found.into_iter().map(|r| (r.entry_id, r)).collect();
+    ids.iter().filter_map(|id| by_id.remove(id)).collect()
 }
 
 /// Marks, in pointed Greek or Hebrew, the words whose bare letters are one
@@ -484,6 +563,13 @@ pub fn verse_facets(conn: &Connection, q: &ParsedQuery, translation_ids: &[i64],
     }
     let vq = verse_query(q, &translation_ids, scope);
     let params: Vec<&dyn rusqlite::ToSql> = vq.params.iter().map(|b| b.as_ref()).collect();
+    if vq.indexed && !q.needs_post_filter() {
+        if let Some(ranges) = verse_ranges(conn, q, &translation_ids, scope)? {
+            let fts_table = if q.original_script { "verses_plain" } else { "verses_fts" };
+            let (by_book, by_source) = id_ranges::tally(&ranges, hit_ids(conn, fts_table, &q.fts, &ranges)?.into_iter());
+            return Ok(Facets { by_book, by_source });
+        }
+    }
     if q.needs_post_filter() {
         let regex = q.regex.as_deref().map(query_lang::compile_regex).transpose()?;
         let mut stmt = conn.prepare(&format!("SELECT v.book_id, t.id, v.text {}", vq.from))?;
@@ -591,18 +677,10 @@ pub fn search_commentary(
     let order = if options.passage_order {
         "ce.book_id, ce.chapter, ce.verse_start, cs2.id"
     } else {
-        "bm25(commentary_fts)"
+        "bm25(commentary_fts), ce.id"
     };
-    let sql = format!(
-        "SELECT ce.id, ce.book_id, ce.chapter, ce.verse_start, cs2.title,
-                snippet(commentary_fts, 0, char(2), char(3), '…', 12), cs2.id
-         {from}
-         ORDER BY {order}
-         LIMIT {limit}"
-    );
-    let params: Vec<&dyn rusqlite::ToSql> = bind_params.iter().map(|b| b.as_ref()).collect();
-    let mut stmt = conn.prepare(&sql)?;
-    let rows = stmt.query_map(params.as_slice(), |r| {
+    let ranges = commentary_ranges(conn, q, &source_ids, scope)?;
+    let map = |r: &rusqlite::Row| -> rusqlite::Result<SearchResult> {
         Ok(SearchResult {
             kind: "commentary".to_string(),
             entry_id: r.get(0)?,
@@ -613,10 +691,41 @@ pub fn search_commentary(
             snippet: escape_snippet(&r.get::<_, String>(5)?),
             source_id: Some(r.get(6)?),
         })
-    })?;
-    let results = rows.collect::<Result<Vec<_>, _>>()?;
+    };
+    if let (false, Some(ranges)) = (options.passage_order, &ranges) {
+        // As for verses: ranked by the index, then only the page's entries
+        // read for their snippets.
+        let ids = ranked_ids(conn, "commentary_fts", &q.fts, ranges, limit)?;
+        let sql = format!(
+            "SELECT ce.id, ce.book_id, ce.chapter, ce.verse_start, cs2.title,
+                    snippet(commentary_fts, 0, char(2), char(3), '…', 12), cs2.id
+             FROM commentary_fts
+             CROSS JOIN commentary_entries ce ON ce.id = commentary_fts.rowid
+             JOIN commentary_sections sec ON sec.id = ce.section_id
+             JOIN commentary_sources cs2 ON cs2.id = sec.commentary_source_id
+             WHERE commentary_fts MATCH ?1 AND commentary_fts.rowid IN ({})",
+            id_list(&ids)
+        );
+        let found = conn.prepare(&sql)?.query_map([&q.fts], map)?.collect::<Result<Vec<_>, _>>()?;
+        let results = in_order_of(&ids, found);
+        let total = if ids.len() as i64 >= limit { count_in(conn, "commentary_fts", &q.fts, ranges)? } else { ids.len() as i64 };
+        return Ok(SearchPage { results, total });
+    }
+    let sql = format!(
+        "SELECT ce.id, ce.book_id, ce.chapter, ce.verse_start, cs2.title,
+                snippet(commentary_fts, 0, char(2), char(3), '…', 12), cs2.id
+         {from}
+         ORDER BY {order}
+         LIMIT {limit}"
+    );
+    let params: Vec<&dyn rusqlite::ToSql> = bind_params.iter().map(|b| b.as_ref()).collect();
+    let mut stmt = conn.prepare(&sql)?;
+    let results = stmt.query_map(params.as_slice(), map)?.collect::<Result<Vec<_>, _>>()?;
     let total = if results.len() as i64 >= limit {
-        count_matches(conn, &format!("SELECT COUNT(*) {from}"), &params)?
+        match &ranges {
+            Some(ranges) => count_in(conn, "commentary_fts", &q.fts, ranges)?,
+            None => count_matches(conn, &format!("SELECT COUNT(*) {from}"), &params)?,
+        }
     } else {
         results.len() as i64
     };
@@ -628,6 +737,10 @@ pub fn commentary_facets(conn: &Connection, q: &ParsedQuery, source_ids: &[i64],
     let source_ids = resolve_commentaries(conn, q, source_ids)?;
     if q.fts.is_empty() || source_ids.is_empty() {
         return Ok(Facets::default());
+    }
+    if let Some(ranges) = commentary_ranges(conn, q, &source_ids, scope)? {
+        let (by_book, by_source) = id_ranges::tally(&ranges, hit_ids(conn, "commentary_fts", &q.fts, &ranges)?.into_iter());
+        return Ok(Facets { by_book, by_source });
     }
     let (from, bind_params) = commentary_query(q, &source_ids, scope);
     let params: Vec<&dyn rusqlite::ToSql> = bind_params.iter().map(|b| b.as_ref()).collect();
@@ -1019,5 +1132,163 @@ mod real_content {
         assert!(run(&conn, "λογος", &[sbl], o).total > 50);
         println!("did you mean 'shewbred': {:?}", did_you_mean(&conn, "shewbred", 3).unwrap());
         println!("suggest 'righ': {:?}", suggest_words(&conn, "righ", 5).unwrap());
+    }
+
+    type Answer = (Vec<(i64, Option<i64>, Option<i64>, Option<i64>, String, String, Option<i64>)>, i64, Vec<(i64, i64)>, Vec<(i64, i64)>);
+
+    fn answer(page: SearchPage, facets: Facets) -> Answer {
+        let rows = page
+            .results
+            .into_iter()
+            .map(|r| (r.entry_id, r.book_id, r.chapter, r.verse, r.snippet, r.source_label, r.source_id))
+            .collect();
+        (rows, page.total, facets.by_book, facets.by_source)
+    }
+
+    /// The id runs change what a search costs and nothing else: every
+    /// search here answers the same, page, total and facets, with the runs
+    /// and without them. On a copy of the real content.db, brought up to
+    /// CONTENT_MIGRATION_0034 and stamped:
+    /// `cargo test -p sojourner-core --release the_runs_change -- --ignored --nocapture`.
+    #[test]
+    #[ignore]
+    fn the_runs_change_nothing_but_the_cost() {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).ancestors().nth(3).unwrap();
+        let dir = std::env::temp_dir().join(format!("sojourner-real-ranges-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let content = dir.join("content.db");
+        std::fs::copy(root.join("content").join("content.db"), &content).unwrap();
+        let t = std::time::Instant::now();
+        let build = crate::db::open_content_db(&content).unwrap();
+        id_ranges::stamp(&build).unwrap();
+        drop(build);
+        println!("migrated and stamped in {:?}", t.elapsed());
+        let conn = crate::db::open(&dir, &content).unwrap();
+
+        let unranged: Vec<String> = conn
+            .prepare(
+                "SELECT code FROM translations t WHERE NOT EXISTS (SELECT 1 FROM verse_id_ranges r WHERE r.translation_id = t.id)
+                 UNION ALL SELECT code FROM commentary_sources s WHERE NOT EXISTS (SELECT 1 FROM commentary_id_ranges r WHERE r.source_id = s.id)",
+            )
+            .unwrap()
+            .query_map([], |r| r.get(0))
+            .unwrap()
+            .collect::<Result<_, _>>()
+            .unwrap();
+        assert!(unranged.is_empty(), "not one run per book: {unranged:?}");
+
+        let k = kjv(&conn);
+        let all: Vec<i64> =
+            conn.prepare("SELECT id FROM translations ORDER BY id").unwrap().query_map([], |r| r.get(0)).unwrap().collect::<Result<_, _>>().unwrap();
+        let sources: Vec<i64> = conn
+            .prepare("SELECT id FROM commentary_sources ORDER BY id")
+            .unwrap()
+            .query_map([], |r| r.get(0))
+            .unwrap()
+            .collect::<Result<_, _>>()
+            .unwrap();
+        let o = SearchOptions::default();
+        let whole = SearchOptions { whole_words: true, ..o };
+        let book = |b: i64| VerseSearchScope { book_id: Some(b), testament: None };
+        let testament = |t: &str| VerseSearchScope { book_id: None, testament: Some(t.to_string()) };
+        let anywhere = VerseSearchScope::default;
+        let verses: Vec<(&str, Vec<i64>, VerseSearchScope, SearchOptions)> = vec![
+            ("grace", vec![k], anywhere(), o),
+            ("love", all.clone(), anywhere(), o),
+            ("faith", vec![k], book(45), o),
+            ("in:psalms mercy", vec![k], anywhere(), o),
+            ("grace", all.clone(), testament("NT"), o),
+            ("light OR darkness", vec![k], anywhere(), o),
+            ("\"the Lord\"", vec![k], anywhere(), o),
+            ("love -world", vec![k], anywhere(), o),
+            ("beginning", vec![k], anywhere(), whole),
+            ("t:kjv,web grace", vec![], anywhere(), o),
+            ("in:rom,gal justified", all.clone(), testament("NT"), o),
+            ("zzzqqq", vec![k], anywhere(), o),
+        ];
+        let commentary: Vec<(&str, Vec<i64>, VerseSearchScope)> = vec![
+            ("grace", sources.clone(), anywhere()),
+            ("mercy", sources.clone(), book(45)),
+            ("in:romans justification", sources.clone(), anywhere()),
+            ("covenant", sources[..1].to_vec(), testament("OT")),
+        ];
+        let run_all = |conn: &Connection| -> Vec<Answer> {
+            let mut out = Vec::new();
+            for (q, ids, scope, opts) in &verses {
+                let t = std::time::Instant::now();
+                let parsed = opts.parse(q);
+                let page = search_verses(conn, &parsed, ids, scope, *opts, 100).unwrap();
+                let facets = verse_facets(conn, &parsed, ids, scope).unwrap();
+                println!("  verses {q:28} {:>6} hits  {:?}", page.total, t.elapsed());
+                out.push(answer(page, facets));
+            }
+            for (q, ids, scope) in &commentary {
+                let t = std::time::Instant::now();
+                let parsed = o.parse(q);
+                let page = search_commentary(conn, &parsed, ids, scope, o, 100).unwrap();
+                let facets = commentary_facets(conn, &parsed, ids, scope).unwrap();
+                println!("  commentary {q:24} {:>6} hits  {:?}", page.total, t.elapsed());
+                out.push(answer(page, facets));
+            }
+            out
+        };
+        println!("with the runs:");
+        let fast = run_all(&conn);
+        conn.execute_batch("DELETE FROM verse_id_ranges; DELETE FROM commentary_id_ranges;").unwrap();
+        println!("without:");
+        let slow = run_all(&conn);
+        let labels: Vec<&str> = verses.iter().map(|v| v.0).chain(commentary.iter().map(|c| c.0)).collect();
+        for ((f, s), label) in fast.iter().zip(&slow).zip(labels) {
+            assert_eq!(f.1, s.1, "{label}: total");
+            assert_eq!(f.0, s.0, "{label}: the page");
+            assert_eq!(f.2, s.2, "{label}: facets by book");
+            assert_eq!(f.3, s.3, "{label}: facets by source");
+        }
+        assert!(fast[0].1 > 100, "grace in the KJV");
+
+        // The other tabs rank first too: the same page as marking every hit
+        // and keeping the best.
+        for word in ["grace", "faith", "covenant", "λογος"] {
+            let m = build_match_expr(word);
+            let plain = |sql: &str| -> Vec<(i64, String)> {
+                conn.prepare(sql).unwrap().query_map([&m], |r| Ok((r.get(0)?, r.get(1)?))).unwrap().collect::<Result<_, _>>().unwrap()
+            };
+            let isbe: Vec<(i64, String)> =
+                super::super::reference::search_isbe_global(&conn, word, 30).unwrap().into_iter().map(|r| (r.id, r.snippet)).collect();
+            let isbe_plain: Vec<(i64, String)> = plain(
+                "SELECT e.id, snippet(isbe_fts, 1, char(2), char(3), '…', 14) FROM isbe_fts JOIN isbe_entries e ON e.id = isbe_fts.rowid
+                 WHERE isbe_fts MATCH ?1 ORDER BY bm25(isbe_fts), isbe_fts.rowid LIMIT 30",
+            )
+            .into_iter()
+            .map(|(id, s)| (id, escape_snippet(&s)))
+            .collect();
+            assert_eq!(isbe, isbe_plain, "encyclopedia: {word}");
+            let wsm: Vec<(i64, String)> =
+                super::super::westminster::search(&conn, word, 30).unwrap().into_iter().map(|r| (r.0, r.4)).collect();
+            let wsm_plain: Vec<(i64, String)> = plain(
+                "SELECT ws.id, snippet(westminster_fts, 2, char(2), char(3), '…', 12) FROM westminster_fts JOIN westminster_sections ws ON ws.id = westminster_fts.rowid
+                 WHERE westminster_fts MATCH ?1 ORDER BY bm25(westminster_fts), westminster_fts.rowid LIMIT 30",
+            )
+            .into_iter()
+            .map(|(id, s)| (id, escape_snippet(&s)))
+            .collect();
+            assert_eq!(wsm, wsm_plain, "Westminster: {word}");
+            let lex: Vec<(i64, String)> =
+                super::super::lexicons::search(&conn, word, &[], 30).unwrap().into_iter().map(|r| (r.id, r.snippet)).collect();
+            if !super::super::lexicons::is_original_script(word) {
+                let lex_plain: Vec<(i64, String)> = plain(
+                    "SELECT e.id, snippet(lexicon_fts, 2, char(2), char(3), '…', 14) FROM lexicon_fts CROSS JOIN lexicon_entries e ON e.id = lexicon_fts.rowid
+                     WHERE lexicon_fts MATCH ?1 ORDER BY bm25(lexicon_fts), lexicon_fts.rowid LIMIT 30",
+                )
+                .into_iter()
+                .map(|(id, s)| (id, escape_snippet(&s)))
+                .collect();
+                assert_eq!(lex, lex_plain, "lexicons: {word}");
+            }
+            println!("  {word}: {} encyclopedia, {} Westminster, {} lexicon hits on the page", isbe.len(), wsm.len(), lex.len());
+        }
+        drop(conn);
+        let _ = std::fs::remove_dir_all(&dir);
     }
 }

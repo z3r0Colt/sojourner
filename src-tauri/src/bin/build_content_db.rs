@@ -84,6 +84,22 @@ fn main() -> anyhow::Result<()> {
         anyhow::bail!("{failed} source file(s) failed to import -- see log above");
     }
 
+    // Each translation's and commentary's ids as runs per book, for search
+    // (see `id_ranges`). Every one that ships should have them: one that
+    // does not is searched the slow way, and on the web that is very slow.
+    db::queries::id_ranges::stamp(&conn)?;
+    let unranged: Vec<String> = conn
+        .prepare(
+            "SELECT code FROM translations t WHERE NOT EXISTS (SELECT 1 FROM verse_id_ranges r WHERE r.translation_id = t.id)
+             UNION ALL
+             SELECT code FROM commentary_sources s WHERE NOT EXISTS (SELECT 1 FROM commentary_id_ranges r WHERE r.source_id = s.id)",
+        )?
+        .query_map([], |r| r.get(0))?
+        .collect::<Result<_, _>>()?;
+    if !unranged.is_empty() {
+        println!("  warning: ids are not one run per book in {}", unranged.join(", "));
+    }
+
     // Shipped out of WAL mode. Even a read-only open of a WAL database must
     // create its -shm file beside it, and a Linux package installs this file
     // under /usr/lib, where the reader cannot write: the open fails and the

@@ -2,9 +2,9 @@ import { convertFileSrc as tauriConvertFileSrc, invoke as tauriInvoke } from "@t
 import { openUrl as tauriOpenUrl } from "@tauri-apps/plugin-opener";
 
 /**
- * Where the page is running: in Sojourner's own window, or in a browser on
+ * Where the page is running: in Sojourner's own window, in a browser on
  * another device, served by the desktop app (Settings → Other devices; see
- * src-tauri/src/remote.rs).
+ * src-tauri/src/remote.rs), or as Sojourner on the web (`onWeb`).
  *
  * The page talks to the backend only through this module, so the same
  * screens work in both. In a browser a command is a POST to `/api/<name>`
@@ -13,11 +13,18 @@ import { openUrl as tauriOpenUrl } from "@tauri-apps/plugin-opener";
  * the printer -- is hidden in a browser (`inBrowser`), and the server
  * refuses those commands besides.
  */
+/** Sojourner on the web (`vite --mode web`): the backend runs in the page
+ * itself, in a worker (src/web/), and there is no desktop to borrow from.
+ * Fixed at build time (vite.config.ts), so the desktop bundle carries none
+ * of the web code. */
+export const onWeb = import.meta.env.VITE_TARGET === "web";
+
 // Tests run in jsdom, which has no Tauri either; they stand Tauri in.
-export const inBrowser = import.meta.env.MODE !== "test" && typeof window !== "undefined" && !("__TAURI_INTERNALS__" in window);
+export const inBrowser =
+  !onWeb && import.meta.env.MODE !== "test" && typeof window !== "undefined" && !("__TAURI_INTERNALS__" in window);
 
 /** On the desktop: the window's own printer and file dialogs. */
-export const onDesktop = !inBrowser;
+export const onDesktop = !inBrowser && !onWeb;
 
 /** Sojourner's own window on Windows, where wording may name Windows
  * ("Match Windows", "Windows voices"). Elsewhere -- Linux, or a browser on
@@ -32,6 +39,7 @@ export const onLinux = onDesktop && typeof navigator !== "undefined" && /Linux/i
 export const systemName = onWindows ? "Windows" : "system";
 
 export async function invoke<T>(cmd: string, args?: Record<string, unknown>): Promise<T> {
+  if (onWeb) return (await import("../web/backend")).webInvoke<T>(cmd, args);
   if (!inBrowser) return tauriInvoke<T>(cmd, args);
   const response = await fetch(`/api/${encodeURIComponent(cmd)}`, {
     method: "POST",
@@ -79,6 +87,8 @@ function recentlySentBack(): boolean {
 /** A file on this computer (a library book, a recording) or a map tile, as
  * a URL the page can load. */
 export function convertFileSrc(filePath: string, protocol = "asset"): string {
+  // The web build has no files of its own to show yet.
+  if (onWeb) return filePath;
   if (!inBrowser) return tauriConvertFileSrc(filePath, protocol);
   if (protocol === "sjtiles") return `${window.location.origin}/sjtiles/${encodeURIComponent(filePath)}`;
   return `${window.location.origin}/files/${encodeURIComponent(filePath)}`;
@@ -99,6 +109,6 @@ export async function mediaFileSrc(filePath: string): Promise<string> {
 
 /** A web link, in the system browser or a new tab. */
 export async function openUrl(url: string): Promise<void> {
-  if (!inBrowser) return tauriOpenUrl(url);
+  if (onDesktop) return tauriOpenUrl(url);
   window.open(url, "_blank", "noopener,noreferrer");
 }

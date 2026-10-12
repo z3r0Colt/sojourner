@@ -329,9 +329,13 @@ pub fn search_isbe_global(conn: &Connection, query: &str, limit: i64) -> anyhow:
     }
     let match_expr = super::search::build_match_expr(query);
     let mut stmt = conn.prepare(
+        // Ranked by the index first, so only the page's articles are read
+        // for their snippets (see `search::search_verses`).
         "SELECT e.id, e.term, e.slug, snippet(isbe_fts, 1, char(2), char(3), '…', 14)
          FROM isbe_fts JOIN isbe_entries e ON e.id = isbe_fts.rowid
-         WHERE isbe_fts MATCH ?1 ORDER BY bm25(isbe_fts) LIMIT ?2",
+         WHERE isbe_fts MATCH ?1
+           AND isbe_fts.rowid IN (SELECT rowid FROM isbe_fts WHERE isbe_fts MATCH ?1 ORDER BY bm25(isbe_fts), rowid LIMIT ?2)
+         ORDER BY bm25(isbe_fts), isbe_fts.rowid",
     )?;
     let rows = stmt.query_map(params![match_expr, limit], |r| {
         Ok(IsbeSearchResult {

@@ -558,11 +558,24 @@ pub fn suggest_for_passage(conn: &Connection, book_id: i64, chapter: i64) -> any
     if wcf_chapters.is_empty() {
         return Ok(vec![]);
     }
-    let placeholders = wcf_chapters.iter().map(|_| "?").collect::<Vec<_>>().join(",");
-    let mut stmt = conn.prepare(&format!("SELECT name FROM doctrine_topics WHERE wcf_chapter IN ({placeholders})"))?;
+    // A Confession topic points at the first section of its chapter
+    // ("Of Justification" at "Chapter 11, 1"); the chapter is read from that
+    // heading. The headings come from their narrow index, as in
+    // `list_wcf_chapters_cited`.
+    let mut stmt = conn.prepare(
+        "SELECT dt.name, ws.heading FROM doctrine_topics dt
+         JOIN westminster_sections ws INDEXED BY idx_westminster_sections_heading ON ws.id = dt.westminster_section_id
+         JOIN westminster_documents wd ON wd.id = ws.document_id
+         WHERE wd.code = 'wcf'
+         ORDER BY dt.sort_order",
+    )?;
     let topic_names: Vec<String> = stmt
-        .query_map(rusqlite::params_from_iter(wcf_chapters.iter()), |r| r.get(0))?
-        .collect::<Result<_, _>>()?;
+        .query_map([], |r| Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?)))?
+        .collect::<Result<Vec<_>, _>>()?
+        .into_iter()
+        .filter(|(_, heading)| super::westminster::wcf_chapter(heading).is_some_and(|c| wcf_chapters.contains(&c)))
+        .map(|(name, _)| name)
+        .collect();
     if topic_names.is_empty() {
         return Ok(vec![]);
     }
@@ -618,6 +631,35 @@ mod tests {
 
     fn terms(words: &[&str]) -> Vec<String> {
         words.iter().map(|w| w.to_string()).collect()
+    }
+
+    /// Romans 3 is a proof text of Confession chapter 11, whose topic is
+    /// "Of Justification": a book tagged "justification by faith" is
+    /// suggested for it, and nothing is for a chapter the Confession does
+    /// not cite.
+    #[test]
+    fn a_book_is_suggested_by_the_confession_chapters_a_passage_proves() {
+        let (conn, dir) = open_test("suggest");
+        conn.execute_batch(
+            "INSERT INTO westminster_documents (id, code, title) VALUES (1, 'wcf', 'Confession');
+             INSERT INTO westminster_sections (id, document_id, sort_order, heading, body, body_with_proofs)
+             VALUES (10, 1, 1, 'Chapter 11, 1', 'x', 'x'), (11, 1, 2, 'Chapter 11, 2', 'x', 'x'), (20, 1, 3, 'Chapter 12, 1', 'x', 'x');
+             INSERT INTO westminster_proofs (section_id, marker, sort_order, book_id, chapter, verse_start, verse_end)
+             VALUES (11, 1, 1, 45, 3, 24, 24);
+             INSERT INTO doctrine_topics (name, category, sort_order, westminster_section_id)
+             VALUES ('Of Justification', 'Salvation', 1, 10), ('Of Adoption', 'Salvation', 2, 20);
+             INSERT INTO resources (id, kind, title, file_path, extracted_text, added_at)
+             VALUES (1, 'epub', 'Justified', 'a.epub', '', '2026-01-01'), (2, 'epub', 'Sons', 'b.epub', '', '2026-01-01');
+             INSERT INTO resource_tags (resource_id, tag) VALUES (1, 'justification by faith'), (2, 'adoption');",
+        )
+        .unwrap();
+        let titles = |chapter: i64| -> Vec<String> {
+            suggest_for_passage(&conn, 45, chapter).unwrap().into_iter().map(|r| r.title).collect()
+        };
+        assert_eq!(titles(3), vec!["Justified".to_string()]);
+        assert!(titles(4).is_empty());
+        drop(conn);
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]

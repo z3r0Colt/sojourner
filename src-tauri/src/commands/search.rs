@@ -31,45 +31,74 @@ pub async fn search(
     older_spellings: Option<bool>,
     limit: i64,
 ) -> AppResult<SearchResults> {
-    tauri::async_runtime::spawn_blocking(move || -> AppResult<SearchResults> {
-        let db = app.state::<DbState>();
-        let conn = db.conn();
-        // Clamped once, for all four: each of these goes into its own
-        // `LIMIT ?`, so an unbounded one here is four unbounded queries.
-        let limit = clamp_limit(limit);
-        let scope = VerseSearchScope { book_id, testament };
-        let options = SearchOptions {
-            whole_words: whole_words.unwrap_or(false),
-            passage_order: passage_order.unwrap_or(false),
-            older_spellings: older_spellings.unwrap_or(false),
-        };
-        let parsed = options.parse(&query);
-        // The other tabs take no older spellings: they are the reader's own
-        // modern prose and the commentators', not the translations'.
-        let plain = SearchOptions { older_spellings: false, ..options }.parse(&query);
-        // A search that fails on one tab (a bad regular expression) says so
-        // there, and every other tab still answers.
-        let (verses, verse_error) = match search_queries::search_verses(&conn, &parsed, &translation_ids, &scope, options, limit) {
-            Ok(page) => (page, None),
-            Err(e) => (search_queries::SearchPage { results: vec![], total: 0 }, Some(format!("{e:#}"))),
-        };
-        let commentary =
-            search_queries::search_commentary(&conn, &plain, &commentary_source_ids, &scope, options, limit)?;
-        let notes = search_queries::search_notes(&conn, &plain, limit)?;
-        let prayers = search_queries::search_prayer_entries(&conn, &plain, limit)?;
-        Ok(SearchResults {
-            verses: verses.results,
-            verse_total: verses.total,
-            verse_error,
-            commentary: commentary.results,
-            commentary_total: commentary.total,
-            notes,
-            prayers,
-            parsed: ParsedSummary { chips: parsed.chips, unknown: parsed.unknown, mark_words: parsed.mark_words },
-        })
+    tauri::async_runtime::spawn_blocking(move || {
+        search_blocking(
+            app.state::<DbState>(),
+            query,
+            translation_ids,
+            commentary_source_ids,
+            book_id,
+            testament,
+            whole_words,
+            passage_order,
+            older_spellings,
+            limit,
+        )
     })
     .await
     .map_err(|e| anyhow::anyhow!("the search did not finish: {e}"))?
+}
+
+/// `search`, on the calling thread. The web build's dispatcher calls this
+/// one (see `commands` in `sojourner-web`): its worker has no main thread to
+/// keep free.
+#[allow(clippy::too_many_arguments)]
+pub fn search_blocking(
+    db: State<DbState>,
+    query: String,
+    translation_ids: Vec<i64>,
+    commentary_source_ids: Vec<i64>,
+    book_id: Option<i64>,
+    testament: Option<String>,
+    whole_words: Option<bool>,
+    passage_order: Option<bool>,
+    older_spellings: Option<bool>,
+    limit: i64,
+) -> AppResult<SearchResults> {
+    let conn = db.conn();
+    // Clamped once, for all four: each of these goes into its own
+    // `LIMIT ?`, so an unbounded one here is four unbounded queries.
+    let limit = clamp_limit(limit);
+    let scope = VerseSearchScope { book_id, testament };
+    let options = SearchOptions {
+        whole_words: whole_words.unwrap_or(false),
+        passage_order: passage_order.unwrap_or(false),
+        older_spellings: older_spellings.unwrap_or(false),
+    };
+    let parsed = options.parse(&query);
+    // The other tabs take no older spellings: they are the reader's own
+    // modern prose and the commentators', not the translations'.
+    let plain = SearchOptions { older_spellings: false, ..options }.parse(&query);
+    // A search that fails on one tab (a bad regular expression) says so
+    // there, and every other tab still answers.
+    let (verses, verse_error) = match search_queries::search_verses(&conn, &parsed, &translation_ids, &scope, options, limit) {
+        Ok(page) => (page, None),
+        Err(e) => (search_queries::SearchPage { results: vec![], total: 0 }, Some(format!("{e:#}"))),
+    };
+    let commentary =
+        search_queries::search_commentary(&conn, &plain, &commentary_source_ids, &scope, options, limit)?;
+    let notes = search_queries::search_notes(&conn, &plain, limit)?;
+    let prayers = search_queries::search_prayer_entries(&conn, &plain, limit)?;
+    Ok(SearchResults {
+        verses: verses.results,
+        verse_total: verses.total,
+        verse_error,
+        commentary: commentary.results,
+        commentary_total: commentary.total,
+        notes,
+        prayers,
+        parsed: ParsedSummary { chips: parsed.chips, unknown: parsed.unknown, mark_words: parsed.mark_words },
+    })
 }
 
 /// Hits per book and per translation (Scripture) or commentary, for the
@@ -88,24 +117,49 @@ pub async fn search_facets(
     whole_words: Option<bool>,
     older_spellings: Option<bool>,
 ) -> AppResult<Facets> {
-    tauri::async_runtime::spawn_blocking(move || -> AppResult<Facets> {
-        let db = app.state::<DbState>();
-        let conn = db.conn();
-        let scope = VerseSearchScope { book_id, testament };
-        let options = SearchOptions {
-            whole_words: whole_words.unwrap_or(false),
-            passage_order: false,
-            older_spellings: older_spellings.unwrap_or(false) && kind == "verses",
-        };
-        let parsed = options.parse(&query);
-        Ok(if kind == "commentary" {
-            search_queries::commentary_facets(&conn, &parsed, &commentary_source_ids, &scope)?
-        } else {
-            search_queries::verse_facets(&conn, &parsed, &translation_ids, &scope).unwrap_or_default()
-        })
+    tauri::async_runtime::spawn_blocking(move || {
+        search_facets_blocking(
+            app.state::<DbState>(),
+            query,
+            kind,
+            translation_ids,
+            commentary_source_ids,
+            book_id,
+            testament,
+            whole_words,
+            older_spellings,
+        )
     })
     .await
     .map_err(|e| anyhow::anyhow!("the facets did not finish: {e}"))?
+}
+
+/// `search_facets`, on the calling thread (see `search_blocking`).
+#[allow(clippy::too_many_arguments)]
+pub fn search_facets_blocking(
+    db: State<DbState>,
+    query: String,
+    kind: String,
+    translation_ids: Vec<i64>,
+    commentary_source_ids: Vec<i64>,
+    book_id: Option<i64>,
+    testament: Option<String>,
+    whole_words: Option<bool>,
+    older_spellings: Option<bool>,
+) -> AppResult<Facets> {
+    let conn = db.conn();
+    let scope = VerseSearchScope { book_id, testament };
+    let options = SearchOptions {
+        whole_words: whole_words.unwrap_or(false),
+        passage_order: false,
+        older_spellings: older_spellings.unwrap_or(false) && kind == "verses",
+    };
+    let parsed = options.parse(&query);
+    Ok(if kind == "commentary" {
+        search_queries::commentary_facets(&conn, &parsed, &commentary_source_ids, &scope)?
+    } else {
+        search_queries::verse_facets(&conn, &parsed, &translation_ids, &scope).unwrap_or_default()
+    })
 }
 
 /// Words from the translations' own vocabulary that begin with `prefix`,

@@ -123,6 +123,12 @@ pub fn scan_files(conn: &mut Connection, paths: &[PathBuf]) -> Vec<ScannedFile> 
     if let Err(e) = backfill_license_status(conn) {
         eprintln!("[imports] could not mark licensed translations: {e:#}");
     }
+    // What lets search keep to a translation by the index alone. Without it
+    // a new translation is searched the slower way, so a failure is only
+    // reported.
+    if let Err(e) = crate::db::queries::id_ranges::stamp(conn) {
+        eprintln!("[imports] could not record verse id runs: {e:#}");
+    }
 
     results
 }

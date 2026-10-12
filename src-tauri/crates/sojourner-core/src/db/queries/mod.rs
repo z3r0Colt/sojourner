@@ -10,6 +10,7 @@ pub mod doctrine_topics;
 pub mod factbook;
 pub mod timeline;
 pub mod harmony;
+pub mod id_ranges;
 pub mod highlights;
 pub mod illustrations;
 pub mod lexicons;

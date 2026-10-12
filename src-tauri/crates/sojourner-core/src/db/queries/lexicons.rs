@@ -95,7 +95,7 @@ pub fn get_entry(conn: &Connection, id: i64) -> anyhow::Result<Option<LexiconEnt
     Ok(entry)
 }
 
-fn is_original_script(s: &str) -> bool {
+pub(crate) fn is_original_script(s: &str) -> bool {
     s.chars().any(|c| matches!(c as u32, 0x0370..=0x03FF | 0x1F00..=0x1FFF | 0x0590..=0x05FF))
 }
 
@@ -143,12 +143,20 @@ pub fn search(conn: &Connection, query: &str, sources: &[String], limit: i64) ->
     if match_expr.is_empty() {
         return Ok(vec![]);
     }
+    // Every lexicon: ranked by the index first, so only the page's entries
+    // are read for their snippets (see `search::search_verses`). Some of
+    // them: each hit's entry has to be read to know its lexicon.
+    let rank_first = if codes.is_empty() {
+        " AND lexicon_fts.rowid IN (SELECT rowid FROM lexicon_fts WHERE lexicon_fts MATCH ?1 ORDER BY bm25(lexicon_fts), rowid LIMIT ?2)"
+    } else {
+        ""
+    };
     let mut stmt = conn.prepare(&format!(
         "SELECT e.id, s.code, s.name, e.headword, e.strongs_id, snippet(lexicon_fts, 2, char(2), char(3), '…', 14)
          FROM lexicon_fts CROSS JOIN lexicon_entries e ON e.id = lexicon_fts.rowid
          JOIN lexicon_sources s ON s.id = e.source_id
-         WHERE lexicon_fts MATCH ?1{source_filter}
-         ORDER BY bm25(lexicon_fts) LIMIT ?2"
+         WHERE lexicon_fts MATCH ?1{source_filter}{rank_first}
+         ORDER BY bm25(lexicon_fts), lexicon_fts.rowid LIMIT ?2"
     ))?;
     let rows = stmt.query_map(params![match_expr, limit], map)?;
     Ok(rows.collect::<Result<Vec<_>, _>>()?)

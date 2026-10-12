@@ -302,7 +302,7 @@ mod real {
     #[ignore]
     fn every_chapter_gives_well_formed_spans() {
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).ancestors().nth(3).unwrap();
-        let dir = std::env::temp_dir().join(format!("sojourner-real-ct-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("sojourner-real-ct-spans-{}", std::process::id()));
         let conn = crate::db::open(&dir, &root.join("content").join("content.db")).unwrap();
         let lexicon = load_lexicon(&conn).unwrap();
         let mut chapters: Vec<(i64, i64)> = Vec::new();

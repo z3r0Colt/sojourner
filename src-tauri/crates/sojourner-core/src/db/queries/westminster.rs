@@ -114,18 +114,24 @@ pub fn get_confession_for_passage(conn: &Connection, book_id: i64, chapter: i64,
 /// the resource auto-suggestion feature. Parses each matching section's
 /// "Chapter N, M" heading (the format `westminster::import` writes) rather
 /// than storing a redundant chapter-number column.
+/// The chapter a Confession section belongs to, from its heading
+/// ("Chapter 11, 2" is chapter 11).
+pub(crate) fn wcf_chapter(heading: &str) -> Option<i64> {
+    heading.strip_prefix("Chapter ")?.split(',').next()?.trim().parse().ok()
+}
+
 pub fn list_wcf_chapters_cited(conn: &Connection, book_id: i64, chapter: i64) -> anyhow::Result<Vec<i64>> {
     let mut stmt = conn.prepare(
+        // The heading from the narrow index rather than the section's row,
+        // which holds its whole text: SQLite prefers the row on its own,
+        // and on the web each row is a request (CONTENT_MIGRATION_0034).
         "SELECT DISTINCT ws.heading FROM westminster_proofs wp
-         JOIN westminster_sections ws ON ws.id = wp.section_id
+         JOIN westminster_sections ws INDEXED BY idx_westminster_sections_heading ON ws.id = wp.section_id
          JOIN westminster_documents wd ON wd.id = ws.document_id
          WHERE wd.code = 'wcf' AND wp.book_id = ?1 AND wp.chapter = ?2",
     )?;
     let headings: Vec<String> = stmt.query_map(params![book_id, chapter], |r| r.get(0))?.collect::<Result<_, _>>()?;
-    let mut chapters: Vec<i64> = headings
-        .iter()
-        .filter_map(|h| h.strip_prefix("Chapter ")?.split(',').next()?.trim().parse().ok())
-        .collect();
+    let mut chapters: Vec<i64> = headings.iter().filter_map(|h| wcf_chapter(h)).collect();
     chapters.sort_unstable();
     chapters.dedup();
     Ok(chapters)
@@ -199,9 +205,14 @@ pub fn search(conn: &Connection, query: &str, limit: i64) -> anyhow::Result<Vec<
     }
     let match_expr = super::search::build_match_expr(query);
     let mut stmt = conn.prepare(
+        // Ranked by the index first, so only the page's sections are read
+        // for their snippets (see `search::search_verses`).
         "SELECT ws.id, ws.document_id, ws.heading, ws.prompt, snippet(westminster_fts, 2, char(2), char(3), '…', 12)
          FROM westminster_fts JOIN westminster_sections ws ON ws.id = westminster_fts.rowid
-         WHERE westminster_fts MATCH ?1 ORDER BY bm25(westminster_fts) LIMIT ?2",
+         WHERE westminster_fts MATCH ?1
+           AND westminster_fts.rowid IN
+               (SELECT rowid FROM westminster_fts WHERE westminster_fts MATCH ?1 ORDER BY bm25(westminster_fts), rowid LIMIT ?2)
+         ORDER BY bm25(westminster_fts), westminster_fts.rowid",
     )?;
     let rows = stmt.query_map(params![match_expr, limit], |r| {
         Ok((

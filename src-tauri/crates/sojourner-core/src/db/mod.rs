@@ -221,17 +221,23 @@ pub fn open(app_data_dir: &Path, content_db_path: &Path) -> anyhow::Result<Conne
 
     let mut conn = Connection::open(&user_db_path)?;
     conn.execute_batch(PERFORMANCE_PRAGMAS)?;
-    conn.pragma_update(None, "foreign_keys", "ON")?;
-    // Before the migrations: USER_MIGRATION_0016 builds the search indexes
-    // with `html_text()`, and every write to a note, a sermon, or an
-    // illustration goes through a trigger that calls it from then on.
-    register_functions(&conn)?;
-    run_migrations(&mut conn, "main", schema::USER_MIGRATIONS)?;
+    prepare_user_db(&mut conn)?;
 
     conn.execute(
         "ATTACH DATABASE ?1 AS content",
         [content_db_path.to_string_lossy().to_string()],
     )?;
+    // The installer always ships a content.db built with this code, so only
+    // a developer's can be behind it -- and its queries would then fail one
+    // at a time ("no such table: verse_id_ranges") rather than say why.
+    let content_version: i64 = conn.query_row("PRAGMA content.user_version", [], |r| r.get(0))?;
+    anyhow::ensure!(
+        content_version as usize >= schema::CONTENT_MIGRATIONS.len(),
+        "{} is from an older build (schema {content_version}, this build needs {}): \
+         run `npm run build:content` (or `-- --update` to bring it up to date in place)",
+        content_db_path.display(),
+        schema::CONTENT_MIGRATIONS.len()
+    );
     // Best-effort: content.db ships as a bundled resource, whose install
     // location may not always be writable (e.g. a per-machine install
     // outside the user's profile), in which case WAL/synchronous can't be
@@ -246,6 +252,19 @@ pub fn open(app_data_dir: &Path, content_db_path: &Path) -> anyhow::Result<Conne
     forget_missing_translations(&conn);
 
     Ok(conn)
+}
+
+/// What a connection to user.db needs before its first query, wherever the
+/// file lives: foreign keys on, `html_text()` registered, and the schema
+/// brought up to date. [`open`] calls it on the desktop; the web build opens
+/// user.db in the browser's own storage and calls it there.
+pub fn prepare_user_db(conn: &mut Connection) -> anyhow::Result<()> {
+    conn.pragma_update(None, "foreign_keys", "ON")?;
+    // Before the migrations: USER_MIGRATION_0016 builds the search indexes
+    // with `html_text()`, and every write to a note, a sermon, or an
+    // illustration goes through a trigger that calls it from then on.
+    register_functions(conn)?;
+    run_migrations(conn, "main", schema::USER_MIGRATIONS)
 }
 
 /// A translation can leave the app (Wycliffe and the Open English Bible did
@@ -319,11 +338,6 @@ pub fn register_functions(conn: &Connection) -> rusqlite::Result<()> {
 /// the original and rename the new one into its place, then recreate the
 /// children and refill them from their copies (see its comment).
 fn run_migrations(conn: &mut Connection, schema_name: &str, migrations: &[&str]) -> anyhow::Result<()> {
-    let db_name = if schema_name == "main" {
-        rusqlite::DatabaseName::Main
-    } else {
-        rusqlite::DatabaseName::Attached(schema_name)
-    };
     let current: i64 = conn.query_row(&format!("PRAGMA {schema_name}.user_version"), [], |r| r.get(0))?;
     let current = current as usize;
     // A database written by a newer build of the app. The loop below would
@@ -344,7 +358,7 @@ fn run_migrations(conn: &mut Connection, schema_name: &str, migrations: &[&str])
             continue;
         }
         tx.execute_batch(migration)?;
-        tx.pragma_update(Some(db_name), "user_version", (i + 1) as i64)?;
+        tx.pragma_update(Some(schema_name), "user_version", (i + 1) as i64)?;
     }
     tx.commit()?;
     Ok(())

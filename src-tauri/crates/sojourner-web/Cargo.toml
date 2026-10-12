@@ -1,0 +1,52 @@
+[package]
+name = "sojourner-web"
+version = "0.4.2"
+description = "Sojourner's backend for the browser: the desktop app's commands, compiled to WebAssembly and run in a Web Worker"
+authors = ["Colt McClish"]
+edition = "2021"
+publish = false
+
+[lib]
+# cdylib for wasm-bindgen; rlib so `cargo test --workspace` can run the
+# dispatcher natively, against a real database, without a browser.
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+sojourner-core = { path = "../sojourner-core" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+anyhow = "1"
+rusqlite = { version = "0.40", features = ["functions"] }
+# What the command files `use` besides the core crate.
+once_cell = "1"
+
+# Only in the browser: SQLite compiled to WebAssembly (what rusqlite links on
+# wasm32), the OPFS pool VFS user.db lives on, the toolkit the HTTP VFS is
+# written with, and the JavaScript bindings. Keep the three SQLite crates in
+# step with rusqlite: 0.40 pins sqlite-wasm-rs 0.5.
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+sqlite-wasm-rs = "0.5"
+sqlite-wasm-vfs = "0.2"
+rsqlite-vfs = "0.1"
+# Exactly the version of the `wasm-bindgen` CLI that `npm run build:wasm`
+# runs: the two must match to the patch release.
+wasm-bindgen = "=0.2.129"
+wasm-bindgen-futures = "0.4"
+js-sys = "0.3"
+web-sys = { version = "0.3", features = [
+  "XmlHttpRequest",
+  "XmlHttpRequestResponseType",
+  "WorkerGlobalScope",
+  "Performance",
+  "console",
+] }
+# chrono's clock on wasm32 reads JavaScript's Date; without `wasmbind`,
+# `Local::now()` (every timestamp a note or highlight is saved with) panics.
+chrono = { version = "0.4", default-features = false, features = ["clock", "std", "wasmbind"] }
+
+[build-dependencies]
+# build.rs reads the desktop app's command files and writes the dispatcher.
+syn = { version = "2", features = ["full", "visit", "visit-mut"] }
+quote = "1"
+proc-macro2 = "1"
+prettyplease = "0.2"

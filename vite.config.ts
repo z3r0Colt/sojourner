@@ -2,7 +2,9 @@ import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import process from "node:process";
-import { readFileSync } from "node:fs";
+import { createReadStream, readFileSync, statSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import type { Connect } from "vite";
 const host = process.env.TAURI_DEV_HOST;
 
 /**
@@ -42,46 +44,114 @@ function devContentSecurityPolicy() {
   };
 }
 
-// https://vite.dev/config/
-export default defineConfig(() => ({
-  plugins: [react(), tailwindcss(), devContentSecurityPolicy()],
-
-  // The Atlas's map engine runs in a worker, which src/features/atlas
-  // imports with `?worker&url` so Vite bundles it whole; ES output, because
-  // MapLibre starts it as a module worker.
-  worker: { format: "es" as const },
-
-  // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
-  //
-  // 1. prevent Vite from obscuring rust errors
-  clearScreen: false,
-  // 2. tauri expects a fixed port, fail if that port is not available
-  server: {
-    port: 1420,
-    strictPort: true,
-    host: host || false,
-    hmr: host
-      ? {
-          protocol: "ws",
-          host,
-          port: 1421,
-        }
-      : undefined,
-    watch: {
-      // 3. tell Vite to ignore watching `src-tauri`
-      ignored: ["**/src-tauri/**"],
+/**
+ * Sojourner on the web, in dev (`npm run dev:web`): content.db and its
+ * skeleton from content/web/ (`npm run build:content:web`; or
+ * $SOJOURNER_WEB_CONTENT) at
+ * /dev-content/, with the Range requests the backend's HTTP VFS reads them
+ * by. The built web app reads them from data.gentleking.org instead.
+ */
+function devWebContent() {
+  const dir = process.env.SOJOURNER_WEB_CONTENT ?? fileURLToPath(new URL("./content/web/", import.meta.url));
+  const serve: Connect.NextHandleFunction = (req, res, next) => {
+    const name = decodeURIComponent((req.url ?? "/").split("?")[0]).replace(/^\/+/, "");
+    if (!/^[\w.-]+$/.test(name)) return next();
+    const file = `${dir}/${name}`;
+    let size: number;
+    try {
+      size = statSync(file).size;
+    } catch {
+      res.statusCode = 404;
+      return res.end();
+    }
+    res.setHeader("Accept-Ranges", "bytes");
+    res.setHeader("Cache-Control", "no-store");
+    res.setHeader("Content-Type", name.endsWith(".json") ? "application/json" : "application/octet-stream");
+    const range = /^bytes=(\d+)-(\d*)$/.exec(req.headers.range ?? "");
+    if (!range) {
+      res.setHeader("Content-Length", size);
+      return createReadStream(file).pipe(res);
+    }
+    const start = Number(range[1]);
+    const end = Math.min(range[2] ? Number(range[2]) : size - 1, size - 1);
+    if (start > end) {
+      res.statusCode = 416;
+      res.setHeader("Content-Range", `bytes */${size}`);
+      return res.end();
+    }
+    res.statusCode = 206;
+    res.setHeader("Content-Range", `bytes ${start}-${end}/${size}`);
+    res.setHeader("Content-Length", end - start + 1);
+    createReadStream(file, { start, end }).pipe(res);
+  };
+  return {
+    name: "sojourner-dev-web-content",
+    apply: "serve" as const,
+    configureServer(server: { middlewares: Connect.Server }) {
+      server.middlewares.use("/dev-content", serve);
     },
-    // 4. Settings → Other devices in dev: a browser opening this server gets
-    // its commands, files and tiles from the app's own (src-tauri/src/remote.rs),
-    // as it does from the built page the app serves itself. The `sj_key`
-    // cookie is the app's to set: open the app's port with `?key=` once.
-    proxy: Object.fromEntries(["/api", "/files", "/sjtiles"].map((p) => [p, "http://127.0.0.1:8765"])),
-  },
+  };
+}
 
-  // The frontend's unit tests (`npm test`). jsdom, because what is tested
-  // here is DOM work -- parsing and walking markup the way the webview does.
-  test: {
-    environment: "jsdom",
-    include: ["src/**/*.test.ts"],
-  },
-}));
+// https://vite.dev/config/
+export default defineConfig(({ mode }) => {
+  // `--mode web`: Sojourner on the web (src/web/, `onWeb` in platform.ts).
+  const web = mode === "web";
+  return {
+    plugins: [react(), tailwindcss(), web ? devWebContent() : devContentSecurityPolicy()],
+
+    // Fixed at build time: the target, so `if (onWeb)` folds away and the
+    // desktop bundle carries none of the web code; and the version, for the
+    // web build's Settings → About (the desktop asks Tauri).
+    define: {
+      "import.meta.env.VITE_TARGET": JSON.stringify(web ? "web" : "desktop"),
+      "import.meta.env.VITE_APP_VERSION": JSON.stringify(JSON.parse(readFileSync("package.json", "utf8")).version),
+    },
+
+    // The backend's WebAssembly, built by `npm run build:wasm` (src/web/wasm.d.ts).
+    resolve: {
+      alias: { "@sojourner/wasm": fileURLToPath(new URL("./src/web/pkg/sojourner_web.js", import.meta.url)) },
+    },
+
+    build: { outDir: web ? "dist-web" : "dist" },
+
+    // The Atlas's map engine runs in a worker, which src/features/atlas
+    // imports with `?worker&url` so Vite bundles it whole; ES output, because
+    // MapLibre starts it as a module worker.
+    worker: { format: "es" as const },
+
+    // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
+    //
+    // 1. prevent Vite from obscuring rust errors
+    clearScreen: false,
+    // 2. tauri expects a fixed port, fail if that port is not available
+    server: {
+      port: 1420,
+      strictPort: true,
+      host: host || false,
+      hmr: host
+        ? {
+            protocol: "ws",
+            host,
+            port: 1421,
+          }
+        : undefined,
+      watch: {
+        // 3. tell Vite to ignore watching `src-tauri`
+        ignored: ["**/src-tauri/**"],
+      },
+      // 4. Settings → Other devices in dev: a browser opening this server gets
+      // its commands, files and tiles from the app's own (src-tauri/src/remote.rs),
+      // as it does from the built page the app serves itself. The `sj_key`
+      // cookie is the app's to set: open the app's port with `?key=` once.
+      proxy: web ? undefined : Object.fromEntries(["/api", "/files", "/sjtiles"].map((p) => [p, "http://127.0.0.1:8765"])),
+    },
+
+    // The frontend's unit tests (`npm test`). jsdom, because what is tested
+    // here is DOM work -- parsing and walking markup the way the webview does.
+    test: {
+      environment: "jsdom",
+      include: ["src/**/*.test.ts"],
+    },
+  };
+});

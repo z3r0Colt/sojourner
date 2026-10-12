@@ -153,6 +153,7 @@ mod tests {
     fn a_book_that_cites_nothing_is_scanned_once() {
         let dir = std::env::temp_dir().join(format!("sojourner-citescan-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
+        drop(crate::db::open_content_db(&dir.join("content.db")).unwrap());
         let conn = crate::db::open(&dir, &dir.join("content.db")).unwrap();
         let add = |title: &str, text: &str| -> i64 {
             conn.execute(
