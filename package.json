@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "dev:web": "vite --mode web",
+    "build:web": "tsc && vite build --mode web",
+    "preview:web": "vite preview --mode web --outDir dist-web --port 1420 --strictPort",
     "build": "tsc && vite build",
     "test": "vitest run",
     "preview": "vite preview",

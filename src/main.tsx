@@ -17,6 +17,11 @@ import "./styles.css";
 // The web app runs in one tab at a time (src/web/tabLock.ts).
 const TabGate = import.meta.env.VITE_TARGET === "web" ? lazy(() => import("./web/TabGate")) : null;
 
+// The installed app: its service worker, update prompt and install offer.
+if (import.meta.env.VITE_TARGET === "web") {
+  import("./web/pwa").then((m) => m.start());
+}
+
 installCrashLogging();
 
 // The bundle is here; what is left to wait on is the database. The splash

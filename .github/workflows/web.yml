@@ -1,0 +1,137 @@
+# Builds Sojourner on the web (docs/pwa-plan.md) and deploys it to Cloudflare
+# Pages: the page, its WebAssembly backend and its service worker. The books
+# are NOT built here: content.db's pieces live on R2 and src/web/content.json
+# pins the version this build reads (upload a new one by hand with
+# `npm run upload:content:web`, commit content.json). The content build is not
+# byte-reproducible across machines, so rebuilding it on every push would make
+# a new ~1 GB version each time.
+#
+# Pushes to `pwa` deploy a preview (https://pwa.sojourner.pages.dev); pushes to
+# `master` deploy production (app.gentleking.org, added to the Pages project
+# once, in the Cloudflare dashboard). Run it by hand from the Actions tab for
+# any other branch. It does not touch release.yml or the installers.
+#
+# Needs the repository secrets CLOUDFLARE_API_TOKEN (Pages: Edit) and
+# CLOUDFLARE_ACCOUNT_ID, and R2's CORS policy must name the origin the page is
+# served from (a preview's address too), or it cannot read the books.
+
+name: Web
+
+on:
+  push:
+    branches: [pwa, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One deploy per branch at a time; a newer push replaces one still building.
+concurrency:
+  group: web-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Build and deploy the web app
+    # Forks have no Cloudflare account to deploy to.
+    if: github.repository == 'z3r0Colt/sojourner'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      WRANGLER_VERSION: 4.149.0
+      # `cargo install wasm-bindgen-cli` must match the wasm-bindgen crate's
+      # `=` pin (src-tauri/crates/sojourner-web/Cargo.toml); the build script
+      # (tools/build-wasm.mjs) stops with a clear message if it does not.
+      WASM_BINDGEN_VERSION: 0.2.129
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Set up Rust (with the WebAssembly target)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Cache Rust builds
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "src-tauri -> target"
+          cache-bin: false
+          # Only master writes the cache; pwa pushes read it.
+          save-if: ${{ github.ref == 'refs/heads/master' }}
+
+      # SQLite's C is compiled for wasm32 by clang (sqlite-wasm-rs).
+      - name: Install clang and LLVM
+        run: sudo apt-get update && sudo apt-get install -y clang llvm
+
+      - name: Restore wasm-bindgen
+        id: wasm-bindgen
+        uses: actions/cache@v6
+        with:
+          path: ~/.cargo/bin/wasm-bindgen
+          key: wasm-bindgen-${{ env.WASM_BINDGEN_VERSION }}-ubuntu-24.04
+
+      - name: Install wasm-bindgen
+        if: steps.wasm-bindgen.outputs.cache-hit != 'true'
+        run: cargo install wasm-bindgen-cli --version "$WASM_BINDGEN_VERSION" --locked
+
+      - name: Install npm packages
+        run: npm ci
+
+      # The version this build will read must be on R2, or the app would open
+      # to an error. A manifest that answers is enough of a check here.
+      - name: Check the pinned content is on R2
+        run: |
+          base=$(node -p "require('./src/web/content.json').base")
+          version=$(node -p "require('./src/web/content.json').version")
+          echo "content version $version"
+          curl -fsS --retry 3 "$base$version/manifest.json" | node -e "
+            let s = ''; process.stdin.on('data', (d) => (s += d)).on('end', () => {
+              const m = JSON.parse(s);
+              console.log('schema', m.schema, 'size', m.size, 'pieces', m.chunks?.length ?? m.pieces?.length ?? '?');
+              if (m.version !== '$version') { console.error('manifest says version ' + m.version); process.exit(1); }
+            });"
+
+      - name: Build the backend (WebAssembly)
+        run: npm run build:wasm
+
+      - name: Build the web app
+        run: npm run build:web
+
+      # What the browser will be sent must be what the build wrote.
+      - name: Check the build
+        run: |
+          for f in index.html sw.js manifest.webmanifest _headers icons/icon-512.png; do
+            test -s "dist-web/$f" || { echo "::error::dist-web/$f is missing"; exit 1; }
+          done
+          ls dist-web/assets/*.wasm
+          du -sh dist-web
+
+      # Created by the first deploy if the project does not exist yet; the
+      # error from an existing one is ignored.
+      - name: Create the Pages project
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx --yes "wrangler@$WRANGLER_VERSION" pages project create sojourner --production-branch master || true
+
+      - name: Deploy to Cloudflare Pages
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          npx --yes "wrangler@$WRANGLER_VERSION" pages deploy dist-web \
+            --project-name sojourner \
+            --branch "$BRANCH" \
+            --commit-hash "$GITHUB_SHA" \
+            --commit-message "$(git log -1 --pretty=%s)" \
+            --commit-dirty=true

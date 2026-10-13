@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { onDesktop, onWeb, openUrl } from "../../../lib/platform";
 import { create } from "zustand";
@@ -14,6 +14,9 @@ import { licenceParagraphs } from "./licenceText";
 // The notice DataWar's licence asks to go with every copy of its data, as
 // the data folder keeps it, so the two cannot drift apart.
 import dataWarLicence from "../../../../reference/webster1828/LICENSE-DataWar.txt?raw";
+
+// The web app's install line (src/web/WebInstall).
+const WebInstall = import.meta.env.VITE_TARGET === "web" ? lazy(() => import("../../../web/WebInstall")) : null;
 
 /** An external link. `target="_blank"` inside a webview can navigate the app
  * window itself out of the app, so hand the URL to the system browser (the
@@ -70,6 +73,11 @@ function Updates({ version }: { version: string | null }) {
           <Button icon={RefreshCw} onClick={check} disabled={checking}>
             {checking ? "Checking…" : "Check for updates"}
           </Button>
+        )}
+        {WebInstall && (
+          <Suspense fallback={null}>
+            <WebInstall />
+          </Suspense>
         )}
       </div>
 
