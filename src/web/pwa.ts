@@ -105,8 +105,31 @@ function offerUpdate(registration: ServiceWorkerRegistration) {
   });
 }
 
+/** The phone's own bars (Android's status and navigation bars, an
+ * installed app's title bar) take the page's theme-color. The manifest's is
+ * fixed at install; this keeps it the colour of the app's top bar in the
+ * theme the reader chose, light or dark, and follows every change. */
+function followThemeColor() {
+  const root = document.documentElement;
+  let meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+  if (!meta) {
+    meta = document.createElement("meta");
+    meta.name = "theme-color";
+    document.head.appendChild(meta);
+  }
+  const apply = () => {
+    const color = getComputedStyle(root).getPropertyValue("--color-surface").trim();
+    if (color && meta.content !== color) meta.content = color;
+  };
+  apply();
+  // The theme is `data-theme` on <html>; an accent or a custom theme sets
+  // its colours through `style`.
+  new MutationObserver(apply).observe(root, { attributes: true, attributeFilter: ["data-theme", "style"] });
+}
+
 export function start() {
   countLaunch();
+  followThemeColor();
   window.addEventListener("beforeinstallprompt", (e) => {
     e.preventDefault();
     offer = e as InstallPrompt;
