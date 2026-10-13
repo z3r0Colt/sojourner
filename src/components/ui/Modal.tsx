@@ -90,7 +90,7 @@ export function Modal({
     <div
       // On a phone a dialog takes nearly the whole screen: the desktop's
       // margins would leave a search no room for its results.
-      className={cx("fixed inset-0 z-50 flex justify-center bg-black/40 p-6 max-md:p-2", align === "top" ? "items-start pt-[12vh] max-md:pt-2" : "items-center")}
+      className={cx("fixed inset-0 z-50 flex justify-center bg-black/40 p-6 max-md:p-2 max-md:pb-[calc(0.5rem+env(safe-area-inset-bottom))]", align === "top" ? "items-start pt-[12vh] max-md:pt-[calc(0.5rem+env(safe-area-inset-top))]" : "items-center max-md:pt-[calc(0.5rem+env(safe-area-inset-top))]")}
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) void requestClose();
       }}
@@ -100,7 +100,7 @@ export function Modal({
         role="dialog"
         aria-modal="true"
         tabIndex={-1}
-        className={cx("flex max-h-[85vh] w-full flex-col max-md:max-h-[calc(100dvh-1rem)] rounded-xl border border-line bg-surface shadow-2xl ", width)}
+        className={cx("flex max-h-[85vh] w-full flex-col max-md:max-h-full rounded-xl border border-line bg-surface shadow-2xl ", width)}
       >
         {title != null && (
           <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3">

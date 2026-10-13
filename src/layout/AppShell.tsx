@@ -240,7 +240,7 @@ export function AppShell() {
     // The visible height (dvh), not the screen's: on a phone 100vh runs on
     // under the browser's own toolbar, and took with it whatever sits at the
     // foot of a pane -- a book's Previous and Next, the read-aloud bar.
-    <div className="flex h-dvh overflow-hidden bg-bg text-ink">
+    <div className="safe-area flex h-dvh overflow-hidden bg-bg text-ink">
       {WebDataWatch && (
         <Suspense fallback={null}>
           <WebDataWatch />
@@ -253,9 +253,9 @@ export function AppShell() {
       )}
       {!distractionFreeMode && !compact && <Sidebar />}
       {compact && menuOpen && (
-        <div className="fixed inset-0 z-50 flex">
+        <div className="safe-area fixed inset-0 z-50 flex bg-black/40">
           <Sidebar drawer onNavigate={() => setMenuOpen(false)} />
-          <button type="button" aria-label="Close the menu" className="flex-1 bg-black/40" onClick={() => setMenuOpen(false)} />
+          <button type="button" aria-label="Close the menu" className="flex-1" onClick={() => setMenuOpen(false)} />
         </div>
       )}
 

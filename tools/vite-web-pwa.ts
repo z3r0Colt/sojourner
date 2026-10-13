@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { copyFileSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { join, relative, sep } from "node:path";
-import type { Plugin } from "vite";
+import type { HtmlTagDescriptor, Plugin } from "vite";
 
 /**
  * Makes `vite build --mode web` an installable app (docs/pwa-plan.md, phase 6):
@@ -82,10 +82,17 @@ export function webPwa(options: { contentBase: string }): Plugin {
 
     transformIndexHtml: {
       order: "post",
-      handler(_html, ctx) {
+      handler(html, ctx) {
         // The dev server serves the same page; only a build gets the worker.
         if (ctx.server) return [];
-        return [
+        // Under the phone's status and navigation bars too, so the app's own
+        // background fills them (Android colours the navigation bar of an
+        // installed app from the manifest otherwise: light, in a dark theme).
+        // The shell keeps clear of them with the `safe-area` padding.
+        const viewport = 'content="width=device-width, initial-scale=1.0"';
+        if (!html.includes(viewport)) throw new Error("index.html's viewport meta changed: update vite-web-pwa.ts");
+        html = html.replace(viewport, 'content="width=device-width, initial-scale=1.0, viewport-fit=cover"');
+        const tags: HtmlTagDescriptor[] = [
           { tag: "link", attrs: { rel: "manifest", href: "/manifest.webmanifest" }, injectTo: "head" },
           { tag: "link", attrs: { rel: "apple-touch-icon", href: "/icons/apple-touch-icon.png" }, injectTo: "head" },
           { tag: "meta", attrs: { name: "theme-color", content: THEME }, injectTo: "head" },
@@ -93,6 +100,7 @@ export function webPwa(options: { contentBase: string }): Plugin {
           { tag: "meta", attrs: { name: "apple-mobile-web-app-capable", content: "yes" }, injectTo: "head" },
           { tag: "meta", attrs: { name: "apple-mobile-web-app-title", content: "Sojourner" }, injectTo: "head" },
         ];
+        return { html, tags };
       },
     },
 

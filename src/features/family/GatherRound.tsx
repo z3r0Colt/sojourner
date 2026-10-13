@@ -11,7 +11,7 @@ export function GatherRound() {
   const show = useFamilySession((s) => s.active && s.large);
   if (!show) return null;
   return createPortal(
-    <div className="fixed inset-0 z-[60] flex flex-col bg-bg text-ink" role="dialog" aria-modal="true" aria-label="Family worship">
+    <div className="safe-area fixed inset-0 z-[60] flex flex-col bg-bg text-ink" role="dialog" aria-modal="true" aria-label="Family worship">
       <FamilySession large />
     </div>,
     document.body,

@@ -1302,3 +1302,11 @@ html[data-reading-font] .text-original .reading-font {
     }
   }
 }
+
+/* An installed web app on a phone draws under the system bars
+   (viewport-fit=cover, set by tools/vite-web-pwa.ts), so the app's own
+   background fills them; this keeps what is on screen clear of them. The
+   insets are 0 everywhere else, the desktop app included. */
+@utility safe-area {
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}

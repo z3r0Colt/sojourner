@@ -139,7 +139,7 @@ function PreachingOverlay() {
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[60] flex flex-col bg-bg text-ink"
+      className="safe-area fixed inset-0 z-[60] flex flex-col bg-bg text-ink"
       role="dialog"
       aria-modal="true"
       aria-label={`Preaching ${sermon.title}`}

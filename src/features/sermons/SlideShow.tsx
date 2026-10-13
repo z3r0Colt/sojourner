@@ -56,7 +56,7 @@ export function SlideShow({
 
   return createPortal(
     <div
-      className={cx("fixed inset-0 z-[65] flex flex-col", dark ? "bg-[#0b0d11] text-[#f2f3f5]" : "bg-bg text-ink")}
+      className={cx("safe-area fixed inset-0 z-[65] flex flex-col", dark ? "bg-[#0b0d11] text-[#f2f3f5]" : "bg-bg text-ink")}
       role="dialog"
       aria-modal="true"
       aria-label={`Slides: ${title}`}
