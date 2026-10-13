@@ -20,7 +20,11 @@ import type { HtmlTagDescriptor, Plugin } from "vite";
  */
 
 const THEME = "#274a70";
-const GROUND = "#f7fafd";
+/** The launch screen's background, and on Android the navigation bar of the
+ * installed app: Chrome paints that bar from the manifest and a page can't
+ * change it, so it can't follow the reader's theme. The brand navy looks
+ * meant under every theme (the user's choice, 2026-10-13). */
+const GROUND = THEME;
 
 /** Not kept for offline use at install: the Atlas's data (10 MB, read only
  * when the Atlas is opened; the worker keeps what is fetched) and files that
@@ -85,10 +89,11 @@ export function webPwa(options: { contentBase: string }): Plugin {
       handler(html, ctx) {
         // The dev server serves the same page; only a build gets the worker.
         if (ctx.server) return [];
-        // Under the phone's status and navigation bars too, so the app's own
-        // background fills them (Android colours the navigation bar of an
-        // installed app from the manifest otherwise: light, in a dark theme).
-        // The shell keeps clear of them with the `safe-area` padding.
+        // Under the phone's bars where the browser allows it (iOS's home
+        // indicator, Chrome's edge-to-edge), so the app's own background fills
+        // them; the shell keeps clear of them with the `safe-area` padding.
+        // Chrome for an installed app on Android doesn't, as of 2026-10: its
+        // navigation bar is GROUND.
         const viewport = 'content="width=device-width, initial-scale=1.0"';
         if (!html.includes(viewport)) throw new Error("index.html's viewport meta changed: update vite-web-pwa.ts");
         html = html.replace(viewport, 'content="width=device-width, initial-scale=1.0, viewport-fit=cover"');
