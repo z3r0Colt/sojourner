@@ -128,8 +128,8 @@ function LandingRow() {
 
 function Row({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-start gap-4 py-3">
-      <div className="w-40 shrink-0 pt-1">
+    <div className="flex flex-col gap-2 py-3 sm:flex-row sm:items-start sm:gap-4">
+      <div className="shrink-0 pt-1 sm:w-40">
         <div className="text-sm font-medium text-ink">{label}</div>
         {hint && <div className="text-xs text-ink-3">{hint}</div>}
       </div>

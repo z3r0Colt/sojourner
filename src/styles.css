@@ -1292,3 +1292,13 @@ html[data-reading-font] .text-original .reading-font {
     font-family: var(--font-original);
   }
 }
+
+/* A phone (see useCompact): a picker never runs past the edge of what holds
+   it, however long its longest choice ("KJV · King James Version"). */
+@layer base {
+  @media (max-width: 767px) {
+    select {
+      max-width: 100%;
+    }
+  }
+}

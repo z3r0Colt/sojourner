@@ -1494,7 +1494,7 @@ export function ReadingPane() {
           // highlight opens its card as well.
           onClickCapture={handleColorClick}
           onDoubleClick={handleDoubleClick}
-          className={cx("min-h-0 flex-1 overflow-y-auto px-8 py-6", colorTextMode && colorTextMarks && "ct-marks")}
+          className={cx("min-h-0 flex-1 overflow-y-auto px-4 py-4 md:px-8 md:py-6", colorTextMode && colorTextMarks && "ct-marks")}
           data-ct-scope={spotlightScope}
         >
           {spotlight && <style>{spotlightCss(spotlight, spotlightScope)}</style>}

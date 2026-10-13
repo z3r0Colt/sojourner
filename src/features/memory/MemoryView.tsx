@@ -222,7 +222,7 @@ export function MemoryView() {
             className={cx(inputClass, "w-full")}
           />
         </label>
-        <label>
+        <label className="max-w-full">
           <span className="mb-1 block text-xs font-medium text-ink-3">Translation</span>
           <select
             value={newTranslationId ?? ""}

@@ -127,7 +127,7 @@ export function VerseRow({
           aria-label={`Verse ${verse.verse} actions${hasBacklinks ? ", mentioned in your notes" : ""}`}
           data-tour="verse"
           className={cx(
-            "relative mr-1 mt-[0.15em] w-7 shrink-0 select-none rounded text-right font-sans text-xs font-semibold leading-none tabular-nums",
+            "relative mr-1 mt-[0.15em] w-7 shrink-0 max-md:w-5 max-md:self-start select-none rounded text-right font-sans text-xs font-semibold leading-none tabular-nums",
             isActive ? "text-accent" : "text-ink-4 group-hover:text-ink-3",
           )}
           style={{ fontSize: "0.65em", lineHeight: 1.9 }}

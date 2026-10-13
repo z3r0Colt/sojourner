@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ClipboardCopy, CornerDownLeft, HelpCircle, ListTree, PanelRight, Rows3, Star, X } from "lucide-react";
+import { ChevronDown, ClipboardCopy, CornerDownLeft, HelpCircle, ListTree, PanelRight, Rows3, Star, X } from "lucide-react";
 import { api } from "../../api/client";
 import {
   useTranslations,
@@ -24,6 +24,7 @@ import { Kbd } from "../../components/ui/Page";
 import { LoadingState } from "../../components/ui/EmptyState";
 import { toast } from "../../components/ui/toast";
 import { checkboxClass, cx, inputClass, selectSmClass } from "../../components/ui/classes";
+import { useCompact } from "../../hooks/useCompact";
 import { SidePanel } from "../../components/ui/SidePanel";
 import { htmlToText } from "../sermons/excerpt";
 import { sendToSermon } from "../sermons/sendToSermon";
@@ -97,6 +98,10 @@ export function SearchPanel({ query, onQueryChange, docked, onOpenVerse, onOpene
   const setQuery = onQueryChange;
   const [debounced, setDebounced] = useState(query);
   const [tab, setTab] = useState<SearchTab>("verses");
+  // On a phone the filters would take the screen the results need: they
+  // fold behind a button there.
+  const phone = useCompact();
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [selected, setSelected] = useState(0);
   const [limit, setLimit] = useState(PAGE_SIZES[0]);
   const [typing, setTyping] = useState(false);
@@ -656,9 +661,17 @@ export function SearchPanel({ query, onQueryChange, docked, onOpenVerse, onOpene
         )}
       </div>
       {/* Ten tabs will not fit one row of the box; they wrap onto a second
-          rather than scroll, so every tab is always in view. */}
+          rather than scroll, so every tab is always in view. On a phone they
+          would take most of the screen, so there they scroll in one row. */}
       <div className="flex items-start gap-2 border-b border-line px-3">
-        <Tabs size="sm" bare className="min-w-0 flex-1 flex-wrap" items={tabs} value={tab} onChange={setTab} />
+        <Tabs
+          size="sm"
+          bare
+          className="min-w-0 flex-1 flex-wrap max-md:flex-nowrap max-md:overflow-x-auto max-md:[&>*]:shrink-0 max-md:[&>*]:whitespace-nowrap"
+          items={tabs}
+          value={tab}
+          onChange={setTab}
+        />
         {anyFetching && <LoadingState className="shrink-0 py-1" label="Searching…" />}
       </div>
       {tab === "grammar" && <MorphSearch onOpenVerse={(b, c, v, n) => onOpenVerse(b, c, v, n)} />}
@@ -675,7 +688,18 @@ export function SearchPanel({ query, onQueryChange, docked, onOpenVerse, onOpene
           <span>Greek and Hebrew can be typed without accents or points.</span>
         </div>
       )}
-      {tab !== "grammar" && showsFilters && (
+      {tab !== "grammar" && showsFilters && phone && (
+        <button
+          type="button"
+          onClick={() => setFiltersOpen((o) => !o)}
+          aria-expanded={filtersOpen}
+          className="flex items-center gap-1 border-b border-line px-3 py-1.5 text-left text-xs font-medium text-ink-3"
+        >
+          <ChevronDown className={cx("h-3.5 w-3.5 transition-transform", !filtersOpen && "-rotate-90")} aria-hidden="true" />
+          Filters
+        </button>
+      )}
+      {tab !== "grammar" && showsFilters && (!phone || filtersOpen) && (
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 border-b border-line px-3 py-1.5 text-xs text-ink-3">
           {(tab === "verses" || tab === "all") && (
             <select
@@ -822,7 +846,7 @@ export function SearchPanel({ query, onQueryChange, docked, onOpenVerse, onOpene
           )}
         </div>
       )}
-      <div className={cx("flex min-h-0 flex-1", tab === "grammar" && "hidden")}>
+      <div className={cx("relative flex min-h-0 flex-1", tab === "grammar" && "hidden")}>
         {showFacets && facetRows && (tab === "verses" || tab === "commentary") && active && (
           <SidePanel id="search-counts" label="Counts by book" defaultWidth={160} minWidth={120} maxShare={0.4} collapseBelow={560} className="overflow-y-auto p-2 text-xs">
             {facetRows.sources.length > 1 && (
@@ -922,7 +946,7 @@ export function SearchPanel({ query, onQueryChange, docked, onOpenVerse, onOpene
           )}
         </div>
       </div>
-      <div className="flex items-center gap-2 border-t border-line px-3 py-1.5 text-xs text-ink-3">
+      <div className="flex items-center gap-2 border-t border-line px-3 py-1.5 text-xs text-ink-3 max-md:hidden">
         <Kbd>↑↓</Kbd> choose <Kbd>Enter</Kbd> open <Kbd>Ctrl</Kbd>+click new pane {!docked && <><Kbd>Esc</Kbd> close</>}
       </div>
     </div>

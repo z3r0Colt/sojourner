@@ -1,8 +1,10 @@
-import { useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { create } from "zustand";
 import { PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen } from "lucide-react";
 import { usePaneOptional } from "../../workspace/PaneContext";
 import { cx } from "./classes";
+import { useCompact } from "../../hooks/useCompact";
+import { useWorkspaceStore } from "../../state/workspaceStore";
 import { SIDE_PANEL_DEFAULTS, sidePanelCollapsed, sidePanelWidth, type SidePanelPrefs, type SidePanelRules } from "./sidePanelLayout";
 
 const STORAGE_KEY = "bsa-side-panels";
@@ -67,7 +69,8 @@ export function SidePanel({
   className?: string;
   children: ReactNode;
 }) {
-  const paneWidth = usePaneOptional()?.width ?? 0;
+  const pane = usePaneOptional();
+  const paneWidth = pane?.width ?? 0;
   const prefs = useSidePanelStore((s) => s.prefs[id]) ?? {};
   const setPrefs = useSidePanelStore((s) => s.set);
   const [override, setOverride] = useState<boolean | null>(null);
@@ -76,10 +79,22 @@ export function SidePanel({
   const drag = useRef<{ startX: number; startWidth: number } | null>(null);
 
   const rules: SidePanelRules = { defaultWidth, minWidth, maxShare, collapseBelow, autoCollapse };
-  const collapsed = sidePanelCollapsed(prefs, rules, paneWidth, override);
+  const left = side === "left";
+  const phone = useCompact();
+  // A phone has no room for two columns: an open panel covers the pane, so
+  // it starts folded unless it is all there is to show (a list with nothing
+  // chosen from it yet). One on the right, details beside the main view,
+  // always starts folded.
+  const collapsed = phone && override == null ? !left || autoCollapse : sidePanelCollapsed(prefs, rules, paneWidth, override);
   const width = sidePanelWidth({ ...prefs, width: dragWidth ?? prefs.width }, rules, paneWidth);
   const narrow = paneWidth > 0 && paneWidth < collapseBelow;
-  const left = side === "left";
+
+  // On a phone the panel covers what it opens, so once the reader has
+  // chosen something (the pane moves on) it gives way to it again.
+  const paneParams = useWorkspaceStore((s) => (pane ? s.panes.find((p) => p.id === pane.id)?.params : undefined));
+  useEffect(() => {
+    if (phone) setOverride(null);
+  }, [phone, paneParams]);
 
   function setCollapsed(next: boolean) {
     // In a narrow pane the choice holds for this pane only; in a wide one it
@@ -95,27 +110,50 @@ export function SidePanel({
     setPrefs(id, { width: sidePanelWidth({ width: next }, rules, paneWidth) });
   }
 
-  if (collapsed) {
-    const OpenIcon = left ? PanelLeftOpen : PanelRightOpen;
+  const OpenIcon = left ? PanelLeftOpen : PanelRightOpen;
+  const strip = (
+    <button
+      type="button"
+      onClick={() => setCollapsed(false)}
+      title={`Show ${label}`}
+      aria-label={`Show ${label}`}
+      aria-expanded={false}
+      className={cx(
+        "group flex w-8 shrink-0 flex-col items-center gap-3 bg-surface-2/60 py-2 text-ink-3 hover:bg-hover hover:text-ink",
+        left ? "border-r border-line" : "border-l border-line",
+      )}
+    >
+      <OpenIcon className="h-4 w-4" aria-hidden="true" />
+      <span className="text-xs font-medium [writing-mode:vertical-rl]">{label}</span>
+    </button>
+  );
+  const CloseIcon = left ? PanelLeftClose : PanelRightClose;
+
+  if (phone) {
+    // Folded, the panel's inside stays mounted (hidden): a list the view
+    // virtualizes was measured against it, and opening the panel only
+    // renders the panel, so a list mounted then would never be measured.
     return (
-      <button
-        type="button"
-        onClick={() => setCollapsed(false)}
-        title={`Show ${label}`}
-        aria-label={`Show ${label}`}
-        aria-expanded={false}
-        className={cx(
-          "group flex w-8 shrink-0 flex-col items-center gap-3 bg-surface-2/60 py-2 text-ink-3 hover:bg-hover hover:text-ink",
-          left ? "border-r border-line" : "border-l border-line",
-        )}
-      >
-        <OpenIcon className="h-4 w-4" aria-hidden="true" />
-        <span className="text-xs font-medium [writing-mode:vertical-rl]">{label}</span>
-      </button>
+      <>
+        {collapsed && strip}
+        <aside aria-label={label} className={cx("absolute inset-0 z-30 bg-surface", collapsed && "hidden")}>
+          <div className={cx("h-full w-full min-w-0", className)}>{children}</div>
+          <button
+            type="button"
+            onClick={() => setCollapsed(true)}
+            title={`Hide ${label}`}
+            aria-label={`Hide ${label}`}
+            aria-expanded={true}
+            className="absolute bottom-3 right-3 z-20 flex h-10 w-10 items-center justify-center rounded-full border border-line bg-surface text-ink-3 shadow-md"
+          >
+            <CloseIcon className="h-4 w-4" aria-hidden="true" />
+          </button>
+        </aside>
+      </>
     );
   }
+  if (collapsed) return strip;
 
-  const CloseIcon = left ? PanelLeftClose : PanelRightClose;
   return (
     <aside
       aria-label={label}

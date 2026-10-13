@@ -21,6 +21,7 @@ import { completePsalterParams } from "../features/psalter/psalterParams";
 import { PANE_KINDS } from "./paneKinds";
 import { DIVIDER_PX, PANE_MIN_PX, leafBox, leafOfPane, type Side } from "./layoutTree";
 import { toast } from "../components/ui/toast";
+import { isCompact } from "../hooks/useCompact";
 
 /**
  * The one way to jump anywhere.
@@ -277,6 +278,17 @@ export function openContent<K extends PaneKind>(kind: K, params: Partial<ParamsO
       if (focused && keepsItsPlace(focused, kind, params) && store.panes.length < MAX_PANES) {
         openContent(kind, params, { ...opts, target: "new", from: focused.id, asTab: true });
         return;
+      }
+      // A phone shows one pane at a time, so a jump away from the text
+      // would lose the reader's place in it: it goes to a pane of its kind
+      // already open, or a new one, and the text stays a tab away.
+      if (focused?.kind === "bible" && kind !== "bible" && isCompact()) {
+        const same = store.panes.find((p) => p.kind === kind);
+        if (same) paneId = same.id;
+        else if (store.panes.length < MAX_PANES) {
+          openContent(kind, params, { ...opts, target: "new", from: focused.id, asTab: true });
+          return;
+        }
       }
     }
   } else {

@@ -15,6 +15,11 @@ function subscribe(onChange: () => void): () => void {
   return () => m.removeEventListener("change", onChange);
 }
 
+/** The same, read once (outside React). */
+export function isCompact(): boolean {
+  return snapshot();
+}
+
 function snapshot(): boolean {
   return typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia(QUERY).matches;
 }
