@@ -300,9 +300,9 @@ export function AboutSection() {
           two harmonies of the Gospels, reading plans, and tools for prayer and Scripture memory.
         </p>
         <p>
-          The book library comes as separate downloads, one per shelf: Puritan and Reformed works, the Church Fathers,
+          The book library comes as separate {onWeb ? "shelves" : "downloads"}, one per shelf: Puritan and Reformed works, the Church Fathers,
           ancient literature around the Bible, and nineteenth-century histories.{" "}
-          {onWeb ? "They are not on the web version yet." : "Install them from Settings → Library packs."}
+          {onWeb ? "Add the ones you want from Settings → Library shelves; a shelf's books are read from data.gentleking.org as you open them." : "Install them from Settings → Library packs."}
         </p>
       </div>
 

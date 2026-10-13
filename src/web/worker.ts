@@ -10,7 +10,8 @@
  */
 import init, { call, check_user_db, export_user_db, fetch_plan, http_stats, import_user_db, prefetch_put, set_prefetch, start } from "@sojourner/wasm";
 import { offlineOp, openOffline, resumeOffline } from "./offlineCopy";
-import type { FromWorker, ToWorker } from "./protocol";
+import { attachSaved, shelfOp } from "./shelfWorker";
+import type { FromWorker, StartConfig, ToWorker } from "./protocol";
 
 const scope = self as unknown as {
   postMessage(message: FromWorker, transfer?: Transferable[]): void;
@@ -19,6 +20,8 @@ const scope = self as unknown as {
 const post = (m: FromWorker) => scope.postMessage(m);
 
 let crashed = false;
+/** What the page said at start about the shelves (see shelfWorker.ts). */
+let shelves: StartConfig["shelves"] = { base: "", list: [] };
 
 /** Dev builds report each command's HTTP traffic (see `trace` in
  * protocol.ts): over HTTP a query costs its round trips. */
@@ -42,6 +45,8 @@ scope.onmessage = async (e) => {
       const info = JSON.parse(await start(JSON.stringify(m.config)));
       if (tracing) http_stats(true);
       if (m.config.prefetch === false) set_prefetch(false);
+      shelves = m.config.shelves;
+      await attachSaved(shelves);
       post({ kind: "started", info });
       resumeOffline();
     } catch (err) {
@@ -51,6 +56,15 @@ scope.onmessage = async (e) => {
   }
   if (m.kind === "offline") {
     await offlineOp(m.op);
+    return;
+  }
+  if (m.kind === "shelf") {
+    try {
+      await shelfOp(shelves, m.op, m.shelf);
+      post({ kind: "shelf", id: m.id, ok: true });
+    } catch (err) {
+      post({ kind: "shelf", id: m.id, ok: false, error: typeof err === "string" ? err : err instanceof Error ? err.message : String(err) });
+    }
     return;
   }
   if (m.kind === "data") {

@@ -56,12 +56,7 @@ pub fn resources_needing_index(conn: &Connection) -> anyhow::Result<Vec<i64>> {
 }
 
 fn has_citations(conn: &Connection, schema: &str) -> bool {
-    conn.query_row(
-        &format!("SELECT 1 FROM {schema}.sqlite_master WHERE type = 'table' AND name = 'library_citations'"),
-        [],
-        |_| Ok(()),
-    )
-    .is_ok()
+    crate::db::schema_has_table(conn, schema, "library_citations")
 }
 
 /// Every book that cites a verse of this chapter (or, with `verse`, that
@@ -73,10 +68,11 @@ pub fn for_passage(conn: &Connection, book_id: i64, chapter: i64, verse: Option<
         if !has_citations(conn, schema) {
             continue;
         }
+        let names = crate::db::shelf_names_table(conn, schema);
         let sql = format!(
             "SELECT res.id, res.title, res.author, c.label, c.occurrence, c.context, c.chapter, c.verse_start, c.verse_end
              FROM {schema}.library_citations c
-             JOIN {schema}.library_resources lib ON lib.id = c.resource_id
+             JOIN {schema}.{names} lib ON lib.id = c.resource_id
              JOIN resources res ON res.library_key = lib.file_name
              WHERE c.book_id = ?1 AND c.chapter = ?2{verse_cond}
              ORDER BY res.title, c.char_offset LIMIT {limit}"

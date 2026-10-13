@@ -5,6 +5,7 @@
  */
 import pinnedContent from "./content.json";
 import { claimTab } from "./tabLock";
+import { shelfConfig } from "./shelves";
 import type { DataOp, FromWorker, OfflineOp, OfflineStatus, StartConfig, StartInfo, ToWorker } from "./protocol";
 
 /** Where content.db's pieces and manifest are: in dev, content/web/ as the
@@ -21,6 +22,7 @@ let worker: Worker | null = null;
 let started: Promise<StartInfo> | null = null;
 let nextId = 1;
 const pending = new Map<number, Pending>();
+const pendingShelf = new Map<number, Pending>();
 const pendingData = new Map<number, { resolve: (v: { bytes?: Uint8Array; json?: string }) => void; reject: (e: unknown) => void }>();
 
 /** The content version last started with: in dev the content's version
@@ -71,7 +73,7 @@ async function config(): Promise<StartConfig> {
   }
   // Dev: `?noprefetch` reads search results row by row, to compare.
   const prefetch = import.meta.env.DEV && new URLSearchParams(location.search).has("noprefetch") ? false : undefined;
-  return { contentBase: base, manifest, appVersion: import.meta.env.VITE_APP_VERSION, prefetch };
+  return { contentBase: base, manifest, appVersion: import.meta.env.VITE_APP_VERSION, prefetch, shelves: shelfConfig() };
 }
 
 let offlineStatus: OfflineStatus | null = null;
@@ -97,6 +99,8 @@ function failAll(error: unknown) {
   pending.clear();
   for (const p of pendingData.values()) p.reject(error);
   pendingData.clear();
+  for (const p of pendingShelf.values()) p.reject(error);
+  pendingShelf.clear();
 }
 
 /** Stops the worker, which lets go of the reader's files (another tab has
@@ -162,6 +166,13 @@ function boot(attempt = 0): Promise<StartInfo> {
           if (!p) break;
           if (m.ok) p.resolve({ bytes: m.bytes, json: m.json });
           else p.reject(m.error);
+          break;
+        }
+        case "shelf": {
+          const p = pendingShelf.get(m.id);
+          pendingShelf.delete(m.id);
+          if (m.ok) p?.resolve(undefined);
+          else p?.reject(m.error ?? "The shelf could not be changed.");
           break;
         }
         case "crashed":
@@ -238,4 +249,17 @@ export async function dataOp(op: DataOp, bytes?: Uint8Array): Promise<Uint8Array
     w.postMessage({ kind: "data", id, op, bytes } satisfies ToWorker);
   });
   if (op === "export") return done.bytes ?? new Uint8Array();
+}
+
+/** Adds a library shelf (attaches it and gives its books their rows) or
+ * removes it. Rejects with a sentence the reader can act on. */
+export async function shelfOp(op: "add" | "remove", shelf: string): Promise<void> {
+  await backendInfo();
+  const w = worker;
+  if (!w) throw "Sojourner's backend is not running";
+  await new Promise<unknown>((resolve, reject) => {
+    const id = nextId++;
+    pendingShelf.set(id, { resolve, reject });
+    w.postMessage({ kind: "shelf", id, op, shelf } satisfies ToWorker);
+  });
 }

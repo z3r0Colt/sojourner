@@ -1,0 +1,45 @@
+{
+  "base": "https://data.gentleking.org/shelves/",
+  "shelves": [
+    {
+      "id": "library",
+      "name": "Puritan and Reformed",
+      "version": "99fa9abc60e96a08",
+      "packVersion": "0.3.6",
+      "builtAt": "2026-10-04T00:23:32.405398900+00:00",
+      "bookCount": 265,
+      "bookBytes": 262486795,
+      "dbBytes": 487161856
+    },
+    {
+      "id": "ancient",
+      "name": "Ancient literature",
+      "version": "18471f09ded93276",
+      "packVersion": "0.3.6",
+      "builtAt": "2026-10-04T00:28:41.910006100+00:00",
+      "bookCount": 6,
+      "bookBytes": 6106174,
+      "dbBytes": 17104896
+    },
+    {
+      "id": "fathers",
+      "name": "Church Fathers",
+      "version": "2e73b686eeb9a043",
+      "packVersion": "0.3.6",
+      "builtAt": "2026-10-04T00:28:31.073992900+00:00",
+      "bookCount": 38,
+      "bookBytes": 95364942,
+      "dbBytes": 155090944
+    },
+    {
+      "id": "nineteenth",
+      "name": "Nineteenth century",
+      "version": "213121f90efc4fad",
+      "packVersion": "0.3.6",
+      "builtAt": "2026-10-04T00:28:38.684919800+00:00",
+      "bookCount": 14,
+      "bookBytes": 22208060,
+      "dbBytes": 45187072
+    }
+  ]
+}

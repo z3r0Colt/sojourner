@@ -8,6 +8,7 @@
  */
 import { invoke } from "../lib/platform";
 import type { Resource } from "../api/types";
+import { isShelfBook, shelfBookSrc } from "./shelves";
 
 const DB = "sojourner-files";
 const STORE = "files";
@@ -55,6 +56,8 @@ const urls = new Map<string, string>();
 
 /** A URL the readers can open the file from. */
 export async function blobUrl(path: string): Promise<string> {
+  // A book on a shelf: kept in the browser, or read from the shelf itself.
+  if (isShelfBook(path)) return shelfBookSrc(path);
   const known = urls.get(path);
   if (known) return known;
   const blob = await tx<Blob | undefined>("readonly", (s) => s.get(path));

@@ -91,15 +91,16 @@ pub fn dispatch(db: &DbState, cmd: &str, args: Value) -> Option<Reply> {
             let conn = db.conn();
             reply::result(quick_check_main(&conn).map_err(|e| e.to_string()))
         }
-        "list_backups" | "scan_library" | "pack_statuses" | "kokoro_voices" => Ok(json!([])),
+        "list_backups" | "scan_library" | "kokoro_voices" => Ok(json!([])),
+        // The shelves the reader has added (src/shelves.rs); the Atlas's
+        // map layers are the page's business, not the backend's.
+        "pack_statuses" => Ok(json!(crate::shelves::statuses())),
         "kokoro_available" | "kokoro_can_say" => Ok(json!(false)),
-        // `PackStatus::none()` on the desktop.
-        "pack_status" => Ok(json!({
+        // The Puritan and Reformed shelf's status, or `PackStatus::none()`.
+        "pack_status" => Ok(crate::shelves::statuses().into_iter().find(|s| s["id"] == "library").unwrap_or_else(|| json!({
             "id": null, "kind": null, "map": null, "installed": false, "name": null,
             "version": null, "built_at": null, "book_count": null, "bytes_on_disk": null,
-        })),
-        // The desktop names each shelf from its installed manifest; here a
-        // shelf is known only by its schema.
+        }))),
         "citations_for_passage" => {
             #[derive(Deserialize)]
             #[serde(rename_all = "camelCase")]
@@ -113,8 +114,7 @@ pub fn dispatch(db: &DbState, cmd: &str, args: Value) -> Option<Reply> {
                 Err(e) => return Some(Err(e)),
             };
             let conn = db.conn();
-            let shelves: Vec<(String, String)> =
-                crate::db::attached_library_schemas(&conn).into_iter().map(|s| (s.clone(), s)).collect();
+            let shelves = crate::shelves::names();
             reply::result(
                 crate::db::queries::citations::for_passage(&conn, a.book_id, a.chapter, a.verse, &shelves, 400)
                     .map_err(|e| format!("{e:#}")),

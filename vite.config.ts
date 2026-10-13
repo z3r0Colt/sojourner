@@ -47,18 +47,21 @@ function devContentSecurityPolicy() {
 }
 
 /**
- * Sojourner on the web, in dev (`npm run dev:web`): content.db and its
- * skeleton from content/web/ (`npm run build:content:web`; or
- * $SOJOURNER_WEB_CONTENT) at
- * /dev-content/, with the Range requests the backend's HTTP VFS reads them
- * by. The built web app reads them from data.gentleking.org instead.
+ * Sojourner on the web, in dev (`npm run dev:web`): the web build's data from
+ * the folders `npm run build:content:web`, `tools/build-web-maps.py` and
+ * `build_web_content --shelf` write, with the Range requests the backend's
+ * HTTP VFS and the Atlas's PMTiles read them by:
+ *   /dev-content/  content/web/         (or $SOJOURNER_WEB_CONTENT)
+ *   /dev-maps/     content/web-maps/
+ *   /dev-shelves/  content/web-shelves/
+ * The built web app reads the same layout from data.gentleking.org instead.
  */
 function devWebContent() {
-  const dir = process.env.SOJOURNER_WEB_CONTENT ?? fileURLToPath(new URL("./content/web/", import.meta.url));
-  const serve: Connect.NextHandleFunction = (req, res, next) => {
-    const name = decodeURIComponent((req.url ?? "/").split("?")[0]).replace(/^\/+/, "");
-    if (!/^[\w.-]+$/.test(name)) return next();
-    const file = `${dir}/${name}`;
+  const root = fileURLToPath(new URL("./content/", import.meta.url));
+  const serveFrom = (dir: string): Connect.NextHandleFunction => (req, res, next) => {
+    const parts = (req.url ?? "/").split("?")[0].split("/").filter(Boolean).map((p) => decodeURIComponent(p));
+    if (!parts.length || parts.some((p) => p === "." || p === ".." || /[\\/:]/.test(p))) return next();
+    const file = `${dir}/${parts.join("/")}`;
     let size: number;
     try {
       size = statSync(file).size;
@@ -68,7 +71,8 @@ function devWebContent() {
     }
     res.setHeader("Accept-Ranges", "bytes");
     res.setHeader("Cache-Control", "no-store");
-    res.setHeader("Content-Type", name.endsWith(".json") ? "application/json" : "application/octet-stream");
+    const name = parts[parts.length - 1];
+    res.setHeader("Content-Type", name.endsWith(".json") ? "application/json" : name.endsWith(".epub") ? "application/epub+zip" : "application/octet-stream");
     const range = /^bytes=(\d+)-(\d*)$/.exec(req.headers.range ?? "");
     if (!range) {
       res.setHeader("Content-Length", size);
@@ -90,7 +94,9 @@ function devWebContent() {
     name: "sojourner-dev-web-content",
     apply: "serve" as const,
     configureServer(server: { middlewares: Connect.Server }) {
-      server.middlewares.use("/dev-content", serve);
+      server.middlewares.use("/dev-content", serveFrom(process.env.SOJOURNER_WEB_CONTENT ?? `${root}web`));
+      server.middlewares.use("/dev-maps", serveFrom(`${root}web-maps`));
+      server.middlewares.use("/dev-shelves", serveFrom(`${root}web-shelves`));
     },
   };
 }

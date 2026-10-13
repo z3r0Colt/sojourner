@@ -227,6 +227,12 @@ pub fn open_file(name: &str, base: &str, manifest: &Manifest, disk: Option<PageC
     Ok(())
 }
 
+/// Forgets a database opened with [`open_file`] (once SQLite has detached
+/// it), closing its page cache's files.
+pub fn close_file(name: &str) {
+    FILES.with(|f| f.borrow_mut().remove(name));
+}
+
 #[derive(Default)]
 struct FileState {
     blocks: HashMap<u64, (Vec<u8>, u64)>,

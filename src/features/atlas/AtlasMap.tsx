@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  addProtocol,
   AttributionControl,
   Map as MapLibre,
   NavigationControl,
@@ -27,6 +28,13 @@ import { LayersPanel } from "./LayersPanel";
 // MapLibre looks for its worker beside its own file, which is not where a
 // bundler puts either of them; this is the worker Vite built for it.
 setWorkerUrl(mapWorkerUrl);
+
+// On the web the terrain and satellite tiles are PMTiles files on R2, which
+// the map reads with Range requests (src/web/mapTiles.ts).
+if (import.meta.env.VITE_TARGET === "web") {
+  const { mapTile } = await import("../../web/mapTiles");
+  addProtocol("sjmap", mapTile);
+}
 
 type Border = { name: string; outer: [number, number][]; core: [number, number][] };
 const BORDERS = bordersData as unknown as Record<string, Border>;

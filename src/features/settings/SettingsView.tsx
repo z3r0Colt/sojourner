@@ -14,6 +14,7 @@ import { usePaneParams } from "../../workspace/PaneContext";
 // The web app's own version of Data & backups (src/web); the desktop bundle
 // has no reference to it.
 const WebBackups = import.meta.env.VITE_TARGET === "web" ? lazy(() => import("../../web/WebBackups")) : null;
+const WebShelves = import.meta.env.VITE_TARGET === "web" ? lazy(() => import("../../web/WebShelves")) : null;
 
 type Section = "preferences" | "library" | "books" | "backups" | "devices" | "tutorial" | "about";
 
@@ -24,7 +25,7 @@ const SECTIONS: { key: Section; label: string; icon: LucideIcon; desktop?: boole
   [
     { key: "preferences", label: "Reading", icon: BookOpen },
     { key: "library", label: "Library", icon: Library, desktop: true },
-    { key: "books", label: "Library packs", icon: BookMarked, desktop: true },
+    { key: "books", label: onWeb ? "Library shelves" : "Library packs", icon: BookMarked, desktop: true, web: true },
     { key: "backups", label: "Data & backups", icon: Database, desktop: true, web: true },
     { key: "devices", label: "Other devices", icon: MonitorSmartphone, desktop: true },
     { key: "tutorial", label: "Tutorial", icon: GraduationCap },
@@ -69,7 +70,14 @@ export function SettingsView() {
         </nav>
         <div className="min-w-0 flex-1 pb-10">
           {section === "library" && <LibrarySection />}
-          {section === "books" && <PacksSection />}
+          {section === "books" &&
+            (WebShelves ? (
+              <Suspense fallback={null}>
+                <WebShelves />
+              </Suspense>
+            ) : (
+              <PacksSection />
+            ))}
           {section === "preferences" && <PreferencesSection />}
           {section === "backups" &&
             (WebBackups ? (

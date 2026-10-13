@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type RefObject } from "react";
+import { lazy, Suspense, useEffect, useRef, useState, type RefObject } from "react";
 import { ArrowLeft, ChevronDown, Info, Link2, ListTree, Paperclip } from "lucide-react";
 import { useResource, useResources, useBooks, useResourcePassageLinksForResource } from "../../api/queries";
 import { useQueryClient } from "@tanstack/react-query";
@@ -22,6 +22,9 @@ import { resourceRef } from "../sermons/sourceIdentity";
 import { cx, selectSmClass } from "../../components/ui/classes";
 import { SidePanel } from "../../components/ui/SidePanel";
 import type { Resource } from "../../api/types";
+
+// Written out so the desktop bundle carries none of it (see SettingsView).
+const KeepBook = import.meta.env.VITE_TARGET === "web" ? lazy(() => import("../../web/KeepBook")) : null;
 
 /** Below this pane width the reader's sidebar folds into a header menu. */
 const SIDEBAR_FOLD_WIDTH = 480;
@@ -290,6 +293,12 @@ function ReaderSidebar({
           </div>
         )}
       </div>
+
+      {KeepBook && resource.file_path.startsWith("web-shelf:") && (
+        <Suspense fallback={null}>
+          <KeepBook path={resource.file_path} />
+        </Suspense>
+      )}
 
       <div className="border-b border-line p-3">
         <Button variant="primary" size="sm" icon={Paperclip} disabled={!position} onClick={linkCurrentPassage} className="w-full" title={currentPassage ? `Attach to ${currentPassage}` : undefined}>

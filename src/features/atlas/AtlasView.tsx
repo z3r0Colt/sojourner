@@ -4,6 +4,7 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import { ArrowLeft, MapPin, Route, Search } from "lucide-react";
 import { api } from "../../api/client";
 import { convertFileSrc } from "../../lib/platform";
+import { webTileTemplate } from "../../web/mapPacks";
 import {
   useAtlasJourneys,
   useMapPacks,
@@ -65,7 +66,10 @@ export function AtlasView() {
   const mapPacks = useMapPacks();
   const packSource = (layer: string) => {
     const pack = mapPacks.find((p) => p.map?.layer === layer);
-    return pack?.id && pack.map ? { tiles: `${convertFileSrc(pack.id, "sjtiles")}/{z}/{x}/{y}`, ...pack.map } : null;
+    if (!pack?.id || !pack.map) return null;
+    // Written out here so the desktop build drops the web path (platform.ts).
+    const tiles = import.meta.env.VITE_TARGET === "web" ? webTileTemplate(pack.id) : `${convertFileSrc(pack.id, "sjtiles")}/{z}/{x}/{y}`;
+    return tiles ? { tiles, ...pack.map } : null;
   };
   const terrain = packSource("terrain");
   const imagery = packSource("imagery");

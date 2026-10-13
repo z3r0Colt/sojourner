@@ -12,6 +12,7 @@
 pub use sojourner_core::{citations, color_text, db, error, import, library, models, morph, paths, plain, refparse, text};
 
 pub mod reply;
+pub mod shelves;
 pub mod shim;
 pub mod stand_ins;
 

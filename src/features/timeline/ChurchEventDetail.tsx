@@ -129,17 +129,15 @@ function LibraryLink({ fileName, paneId }: { fileName: string; paneId: string })
       <BookOpen className="mt-0.5 h-3.5 w-3.5 shrink-0 text-ink-4" aria-hidden="true" />
       <span>
         <i>{libraryBookName(fileName)}</i> ships in the book library{shelf ? `, on the ${shelf} shelf` : ""}
-        {onWeb ? (
-          ", which isn't on the web version yet."
-        ) : (
+        {(
           <>
-            ; install it from{" "}
+            ; {onWeb ? "add it from" : "install it from"}{" "}
             <button
           type="button"
           className={linkClass}
           onClick={(e) => openFromTimeline(() => openContent("settings", { section: "books" }, { target: targetFor(e, "new"), from: paneId }))}
         >
-          Settings → Library packs
+          {onWeb ? "Settings → Library shelves" : "Settings → Library packs"}
         </button>
         .
           </>

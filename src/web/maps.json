@@ -1,0 +1,89 @@
+{
+  "base": "https://data.gentleking.org/maps/",
+  "packs": [
+    {
+      "id": "imagery",
+      "name": "Satellite imagery",
+      "version": "1.0.0",
+      "files": [
+        {
+          "file": "imagery.0.pmtiles",
+          "bytes": 253880889,
+          "minzoom": 0,
+          "maxzoom": 11
+        },
+        {
+          "file": "imagery.1.pmtiles",
+          "bytes": 187902703,
+          "minzoom": 12,
+          "maxzoom": 12,
+          "xmin": 2269,
+          "xmax": 2413
+        },
+        {
+          "file": "imagery.2.pmtiles",
+          "bytes": 187188669,
+          "minzoom": 12,
+          "maxzoom": 12,
+          "xmin": 2414,
+          "xmax": 2503
+        },
+        {
+          "file": "imagery.3.pmtiles",
+          "bytes": 105452822,
+          "minzoom": 13,
+          "maxzoom": 13
+        },
+        {
+          "file": "imagery.4.pmtiles",
+          "bytes": 176965469,
+          "minzoom": 14,
+          "maxzoom": 14,
+          "xmin": 9730,
+          "xmax": 9811
+        },
+        {
+          "file": "imagery.5.pmtiles",
+          "bytes": 171372980,
+          "minzoom": 14,
+          "maxzoom": 14,
+          "xmin": 9812,
+          "xmax": 9875
+        }
+      ],
+      "bytes": 1082763532,
+      "map": {
+        "layer": "imagery",
+        "format": "jpg",
+        "encoding": null,
+        "minzoom": 0,
+        "maxzoom": 14,
+        "attribution": "Imagery: NASA Blue Marble Next Generation (public domain); the Bible lands from Copernicus Sentinel-2 (contains modified Copernicus Sentinel data 2024).",
+        "tile_count": 103861
+      }
+    },
+    {
+      "id": "terrain",
+      "name": "Terrain",
+      "version": "1.0.0",
+      "files": [
+        {
+          "file": "terrain.pmtiles",
+          "bytes": 263019744,
+          "minzoom": 0,
+          "maxzoom": 11
+        }
+      ],
+      "bytes": 263019744,
+      "map": {
+        "layer": "terrain",
+        "format": "webp",
+        "encoding": "terrarium",
+        "minzoom": 0,
+        "maxzoom": 11,
+        "attribution": "Terrain: SRTM and GMTED2010 courtesy of the U.S. Geological Survey; ETOPO1, U.S. National Oceanic and Atmospheric Administration; EU-DEM produced using Copernicus data and information funded by the European Union. Terrain Tiles on AWS.",
+        "tile_count": 5026
+      }
+    }
+  ]
+}

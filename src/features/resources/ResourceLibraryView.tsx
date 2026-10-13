@@ -470,13 +470,13 @@ export function ResourceLibraryView() {
       {awaitingPack > 0 && (
         <div className="mb-4 rounded-lg border border-amber-500/40 bg-amber-500/5 p-3 text-sm">
           <p className="text-ink">
-            {awaitingPack} {awaitingPack === 1 ? "book needs" : "books need"} the book library, which isn't installed. Your notes on
+            {awaitingPack} {awaitingPack === 1 ? "book needs" : "books need"} {onWeb ? "a library shelf you haven't added" : "the book library, which isn't installed"}. Your notes on
             them are kept.
           </p>
           <p className="mt-1 text-ink-3">
-            The library is a separate download.{" "}
+            {onWeb ? "The library comes as shelves you add." : "The library is a separate download."}{" "}
             <PaneLink to="/settings?section=books" className="text-accent hover:underline">
-              Install it from Settings → Library packs
+              {onWeb ? "Add them from Settings → Library shelves" : "Install it from Settings → Library packs"}
             </PaneLink>
             .
           </p>
@@ -608,13 +608,13 @@ export function ResourceLibraryView() {
               <>
                 {onWeb ? "Add EPUB books or PDFs." : "Add EPUB, PDF, or MOBI books, or audio and video files."} Books are indexed so you can
                 search inside them, and any resource can be linked to the passage it speaks to.
-                {onWeb && " They stay in this browser, on this device only. The Puritan and Reformed library isn't on the web version yet."}
-                {!onWeb && !anyPackInstalled && (
+                {onWeb && " They stay in this browser, on this device only."}
+                {!anyPackInstalled && (
                   <>
                     {" "}
-                    Several hundred Puritan and Reformed works are available as a separate download —{" "}
+                    {onWeb ? "Several hundred Puritan and Reformed works are on the library shelves —" : "Several hundred Puritan and Reformed works are available as a separate download —"}{" "}
                     <PaneLink to="/settings?section=books" className="text-accent hover:underline">
-                      install the book library
+                      {onWeb ? "add a shelf" : "install the book library"}
                     </PaneLink>
                     .
                   </>
@@ -761,7 +761,7 @@ function ResourceRow({
             // reader attached to it is.
             <span
               className="shrink-0 rounded-full border border-amber-500/40 px-1.5 py-0.5 text-[0.65rem] uppercase tracking-wide text-amber-700 dark:text-amber-400"
-              title="This book is in the book library pack, which isn't installed. Your notes, tags and bookmarks on it are kept."
+              title={onWeb ? "This book is on a library shelf you haven't added. Your notes, tags and bookmarks on it are kept." : "This book is in the book library pack, which isn't installed. Your notes, tags and bookmarks on it are kept."}
             >
               Not installed
             </span>

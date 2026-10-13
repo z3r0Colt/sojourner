@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useQuery, useQueries, useQueryClient, useMutation } from "@tanstack/react-query";
 import { api } from "./client";
 import { onDesktop } from "../lib/platform";
+import { webMapPacks } from "../web/mapPacks";
 import type {
   Verse,
   Passage,
@@ -1381,6 +1382,8 @@ export function usePackStatuses() {
 /** The installed map packs (terrain, imagery), for the Atlas. */
 export function useMapPacks() {
   const { data } = usePackStatuses();
+  // On the web the layers are files on R2 the map reads from: always there.
+  if (import.meta.env.VITE_TARGET === "web") return webMapPacks();
   return (data ?? []).filter((p) => p.installed && p.kind === "map" && p.map);
 }
 

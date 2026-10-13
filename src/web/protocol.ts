@@ -26,6 +26,9 @@ export type StartConfig = {
   diskCacheMb?: number;
   /** False: commands read their rows one at a time (dev, `?noprefetch`). */
   prefetch?: boolean;
+  /** The library shelves this app knows (shelves.json), and where they are:
+   * the worker attaches those the reader has added. */
+  shelves: { base: string; list: { id: string; version: string }[] };
 };
 
 export type ToWorker =
@@ -38,7 +41,10 @@ export type ToWorker =
   /** The offline copy of content.db (offlineCopy.ts): start or resume the
    * download, pause it, or delete the copy. The worker answers with an
    * `offline` status, as it does whenever the status changes. */
-  | { kind: "offline"; op: OfflineOp };
+  | { kind: "offline"; op: OfflineOp }
+  /** Adds a library shelf (attaches it and gives its books rows) or removes
+   * it; answered by a `shelf` message with the same `id`. */
+  | { kind: "shelf"; id: number; op: "add" | "remove"; shelf: string };
 
 export type DataOp = "export" | "check" | "import";
 
@@ -78,6 +84,7 @@ export type FromWorker =
   /** `json`: the answer's JSON (`ok`), or the error's (not `ok`). */
   | { kind: "reply"; id: number; ok: boolean; json: string }
   | { kind: "data"; id: number; ok: boolean; bytes?: Uint8Array; json?: string; error?: string }
+  | { kind: "shelf"; id: number; ok: boolean; error?: string }
   /** The module stopped (a panic): every call in flight fails, and the
    * next one starts a new worker. */
   | { kind: "crashed"; id: number | null; error: string }

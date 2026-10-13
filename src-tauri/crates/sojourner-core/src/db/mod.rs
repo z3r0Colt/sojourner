@@ -133,6 +133,32 @@ pub fn pack_schema(id: &str) -> String {
     format!("lib_{safe}")
 }
 
+/// Whether `schema` has a table called `table`.
+pub fn schema_has_table(conn: &Connection, schema: &str, table: &str) -> bool {
+    conn.query_row(
+        &format!("SELECT 1 FROM {schema}.sqlite_master WHERE type = 'table' AND name = ?1"),
+        [table],
+        |_| Ok(()),
+    )
+    .is_ok()
+}
+
+/// The table to read a shelf's book names from: `library_index` where the
+/// shelf has one, else `library_resources`.
+///
+/// The web build of a shelf (`build_web_content --shelf`) adds `library_index`
+/// -- `(id, file_name, kind, title, author)`, a few kilobytes -- because
+/// `library_resources` keeps each book's whole text in the same b-tree, and
+/// reading a name from it over HTTP costs the page the text starts on. A
+/// pack as installed on the desktop has no such table, and reads the other.
+pub fn shelf_names_table(conn: &Connection, schema: &str) -> &'static str {
+    if schema_has_table(conn, schema, "library_index") {
+        "library_index"
+    } else {
+        "library_resources"
+    }
+}
+
 /// Every attached pack schema, the Puritan pack's first.
 pub fn attached_library_schemas(conn: &Connection) -> Vec<String> {
     let mut names: Vec<String> = conn

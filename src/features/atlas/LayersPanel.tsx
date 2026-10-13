@@ -1,4 +1,3 @@
-import { onWeb } from "../../lib/platform";
 import { X } from "lucide-react";
 import { cx, selectSmClass } from "../../components/ui/classes";
 import type { Units } from "./geo";
@@ -77,7 +76,7 @@ export function LayersPanel({
         </div>
         {terrainInstalled && <Check label="Raise the land in 3D" checked={s.relief3d} onChange={(v) => set({ relief3d: v })} />}
         {(!terrainInstalled || !imageryInstalled) && (
-          <p className="mt-1 text-xs text-ink-4">{onWeb ? "Terrain and satellite views are not on the web version yet." : "Terrain and satellite views come with optional map packs, installed from Settings, Packs."}</p>
+          <p className="mt-1 text-xs text-ink-4">Terrain and satellite views come with optional map packs, installed from Settings, Packs.</p>
         )}
       </Section>
 

@@ -128,7 +128,7 @@ export const TOUR_STEPS: Step[] = [
     title: "Settings and the tutorial",
     body: (
       <>
-        {onWeb ? "Appearance, your data and backups, and a full tutorial." : "Appearance, backups, the book library, and a full tutorial."} <Kbd>Ctrl</Kbd>+<Kbd>/</Kbd> lists the keyboard shortcuts.
+        {onWeb ? "Appearance, your data and backups, the library shelves, and a full tutorial." : "Appearance, backups, the book library, and a full tutorial."} <Kbd>Ctrl</Kbd>+<Kbd>/</Kbd> lists the keyboard shortcuts.
       </>
     ),
     missing: "Settings is at the bottom of the sidebar.",

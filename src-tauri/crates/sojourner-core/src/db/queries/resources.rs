@@ -122,6 +122,12 @@ pub fn delete(conn: &Connection, id: i64) -> anyhow::Result<()> {
 }
 
 /// Characters of the book shown either side of the word that was found.
+/// How many shelf books a search quotes from. Quoting reads a book's whole
+/// text to find the word in it, which on the desktop is free; the web build
+/// reads it over HTTP (a shelf book is a megabyte or two), and lowers this
+/// at start. The hits beyond it are listed by title alone.
+pub static MAX_SHELF_QUOTES: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(usize::MAX);
+
 const SNIPPET_RADIUS: i64 = 80;
 /// The slice asked of SQLite, before it is cut back to whole words.
 const SNIPPET_WINDOW: i64 = SNIPPET_RADIUS * 2 + 60;
@@ -306,10 +312,11 @@ pub fn search(conn: &Connection, query: &str, limit: i64) -> anyhow::Result<Vec<
         // name (its hidden column), and SQLite answers an alias there with
         // "no such column", which failed every search once a shelf was
         // installed. Unqualified is unambiguous: one library_fts per query.
+        let names = if schema.is_empty() { "library_resources" } else { crate::db::shelf_names_table(conn, schema) };
         let mut shipped = conn.prepare(&format!(
             "SELECT res.id, res.title, res.kind, bm25(library_fts), lib.id
              FROM {q}library_fts
-             JOIN {q}library_resources lib ON lib.id = library_fts.rowid
+             JOIN {q}{names} lib ON lib.id = library_fts.rowid
              JOIN resources res ON res.library_key = lib.file_name
              WHERE library_fts MATCH ?1 ORDER BY bm25(library_fts) LIMIT ?2"
         ))?;
@@ -354,7 +361,15 @@ pub fn search(conn: &Connection, query: &str, limit: i64) -> anyhow::Result<Vec<
     let mut quote_shipped: std::collections::HashMap<String, rusqlite::Statement> = std::collections::HashMap::new();
 
     let mut out = Vec::with_capacity(hits.len());
+    let mut shelf_quotes_left = MAX_SHELF_QUOTES.load(std::sync::atomic::Ordering::Relaxed);
     for hit in hits {
+        if hit.shipped {
+            if shelf_quotes_left == 0 {
+                out.push(ResourceSearchResult { resource_id: hit.resource_id, title: hit.title, kind: hit.kind, snippet: String::new() });
+                continue;
+            }
+            shelf_quotes_left -= 1;
+        }
         if hit.shipped && !quote_shipped.contains_key(&hit.schema) {
             let q = if hit.schema.is_empty() { String::new() } else { format!("{}.", hit.schema) };
             let stmt = conn.prepare(&format!(

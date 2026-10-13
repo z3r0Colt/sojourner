@@ -9,6 +9,7 @@
 use crate::db::{self, DbState};
 use crate::httpvfs;
 use crate::pagecache::PageCache;
+use crate::shelves;
 use rusqlite::{Connection, OpenFlags};
 use serde::Deserialize;
 use serde_json::{json, Value};
@@ -47,6 +48,9 @@ struct StartConfig {
     /// For `app_version`.
     app_version: Option<String>,
 }
+
+/// Shelf books a resource search quotes from (core's `MAX_SHELF_QUOTES`).
+const SHELF_QUOTES: usize = 3;
 
 fn default_disk_cache_mb() -> usize {
     512
@@ -127,6 +131,8 @@ pub async fn start(config: String) -> Result<String, String> {
             cfg.content_base, cfg.manifest.schema
         )));
     }
+    // A search quotes a shelf book by reading all of it: a few are enough.
+    db::queries::resources::MAX_SHELF_QUOTES.store(SHELF_QUOTES, std::sync::atomic::Ordering::Relaxed);
     httpvfs::configure(cfg.readahead_max, cfg.cache_mb << 20);
     httpvfs::register().map_err(error_json)?;
     httpvfs::stats_reset();
@@ -408,4 +414,87 @@ impl Hasher {
         use sha2::Digest;
         self.0.finalize().iter().map(|b| format!("{b:02x}")).collect()
     }
+}
+
+// ---- Library shelves (src/web/shelfWorker.ts) ------------------------------
+
+/// Attaches a library shelf: `base` is the folder it is in on R2 (ending in
+/// `/`), `manifest_json` the manifest.json found there (`build_web_content
+/// --shelf`). Its database is read over HTTP like content.db, with a page
+/// cache of its own (`cache_mb`; 0 for none). Does not touch user.db's
+/// rows: call [`shelves_sync`] once every shelf the reader has is attached.
+#[wasm_bindgen]
+pub async fn shelf_attach(id: String, base: String, manifest_json: String, cache_mb: usize) -> Result<String, String> {
+    let manifest: httpvfs::Manifest = serde_json::from_str(&manifest_json).map_err(error_json)?;
+    let meta: shelves::ShelfManifest = serde_json::from_str(&manifest_json).map_err(error_json)?;
+    if meta.shelf.id != id {
+        return Err(error_json(format!("{base}manifest.json is the {} shelf, not {id}", meta.shelf.id)));
+    }
+    let known = db::schema::LIBRARY_MIGRATIONS.len() as i64;
+    if manifest.schema > known {
+        return Err(error_json(format!(
+            "The {} shelf was made for a newer version of Sojourner (its books are schema {}; this one reads {known}).              Reload the page to update it.",
+            meta.shelf.name, manifest.schema
+        )));
+    }
+    if shelves::is_attached(&id) {
+        return Ok(json!({ "attached": true }).to_string());
+    }
+    let name = shelves::vfs_name(&id);
+    let (disk, cache_error) = if cache_mb == 0 {
+        (None, None)
+    } else {
+        match PageCache::open(&format!("shelf-{id}"), &manifest.version, manifest.page_size as usize, cache_mb << 20).await {
+            Ok(c) => (Some(c), None),
+            Err(e) => (None, Some(e)),
+        }
+    };
+    httpvfs::open_file(&name, &base, &manifest, disk).map_err(error_json)?;
+    let attached = httpvfs::preload(&name, &base, &manifest.skeleton).and_then(|()| {
+        DB.with(|d| {
+            let d = d.borrow();
+            let db = d.as_ref().ok_or("Sojourner has not started")?;
+            let schema = db::pack_schema(&id);
+            let done = db
+                .conn()
+                .execute(&format!("ATTACH DATABASE 'file:{name}?vfs=http&immutable=1' AS {schema}"), [])
+                .map(|_| ())
+                .map_err(|e| e.to_string());
+            done
+        })
+    });
+    if let Err(e) = attached {
+        httpvfs::close_file(&name);
+        return Err(error_json(e));
+    }
+    httpvfs::flush();
+    let books = meta.shelf.book_count;
+    shelves::record(meta);
+    Ok(json!({ "attached": true, "books": books, "pageCacheError": cache_error }).to_string())
+}
+
+/// Makes user.db's book rows agree with every attached shelf: a row for each
+/// book, repointed at `web-shelf:<id>/<file>`. Resolves with what changed.
+#[wasm_bindgen]
+pub fn shelves_sync() -> Result<String, String> {
+    DB.with(|d| {
+        let d = d.borrow();
+        let db = d.as_ref().ok_or_else(|| error_json("Sojourner has not started"))?;
+        let o = shelves::sync(&db.conn()).map_err(|e| error_json(format!("{e:#}")))?;
+        Ok(json!({ "added": o.added, "adopted": o.adopted, "repointed": o.repointed, "retired": o.retired, "dropped": o.dropped })
+            .to_string())
+    })
+}
+
+/// Detaches a shelf and retires its books' rows (what the reader wrote on
+/// them stays). Resolves with how many rows it retired.
+#[wasm_bindgen]
+pub fn shelf_remove(id: &str) -> Result<String, String> {
+    DB.with(|d| {
+        let d = d.borrow();
+        let db = d.as_ref().ok_or_else(|| error_json("Sojourner has not started"))?;
+        let retired = shelves::remove(&db.conn(), id).map_err(|e| error_json(format!("{e:#}")))?;
+        httpvfs::close_file(&shelves::vfs_name(id));
+        Ok(json!({ "retired": retired }).to_string())
+    })
 }

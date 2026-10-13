@@ -1358,7 +1358,6 @@ export function entryText(entry: TutorialEntry): string {
 const NOT_ON_THE_WEB = new Set([
   "translations",
   "settings-library",
-  "book-library",
   "resources-media",
   "sermon-print",
   "sermon-handout",
@@ -1376,11 +1375,26 @@ const ON_THE_WEB: Record<string, Partial<TutorialEntry>> = {
       "The books stay in this browser, on this device. Settings → Data & backups does not export them, so keep the originals.",
     ],
   },
+  "book-library": {
+    title: "The book library: shelves to add",
+    what: "The library comes as shelves: Puritan and Reformed works, the Church Fathers, ancient literature (Josephus, Philo, 1 Enoch, the Roman historians), and the nineteenth century (Schaff, Edersheim). Add any or all.",
+    steps: [
+      "Open Settings → Library shelves and press Add on each shelf you want. Nothing is downloaded up front: a shelf's catalogue and search index are read as you use them, and a book when you open it.",
+      "Each shelf is listed with its size and can be removed on its own. Removing one leaves everything you wrote about its books.",
+      "Shelf books show a Library badge in Resources: read, search, tag, and link them like any other, though they cannot be removed one at a time.",
+      "To keep a book for reading without the internet, open it and press Keep on this device.",
+      "If a shelf is removed, books you had notes or tags on show Not installed; everything you wrote about them is kept, and comes back if you add it again.",
+    ],
+    links: [
+      { label: "Settings → Library shelves", to: "/settings?section=books" },
+      { label: "Resources", to: "/resources" },
+    ],
+  },
   citations: {
-    what: "Every book of your own that cites the verse you are reading.",
+    what: "Every book on the shelves you have added, and every book of your own, that cites the verse you are reading.",
     steps: [
       "A small book icon and number after a verse shows how many times your library cites it. Click it to list them.",
-      "Or add the Cited in your library pane beside the text: it follows the passage, each with the words around the reference.",
+      "Or add the Cited in your library pane beside the text: it follows the passage, grouped by shelf, each with the words around the reference.",
       "Click a citation to open the book at that place, with the reference marked.",
       "Your own books are indexed once their text has been read, when you add them.",
     ],

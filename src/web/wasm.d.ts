@@ -31,6 +31,14 @@ declare module "@sojourner/wasm" {
   export function page_cache_clear(): void;
   /** What the persistent page cache holds, in bytes. */
   export function page_cache_bytes(): number;
+  /** Attaches a library shelf (its manifest.json text, at `base`); resolves
+   * with JSON. Call `shelves_sync` once every shelf is attached. */
+  export function shelf_attach(id: string, base: string, manifestJson: string, cacheMb: number): Promise<string>;
+  /** Makes the book rows agree with the attached shelves; resolves with JSON
+   * `{added, adopted, repointed, retired, dropped}`. */
+  export function shelves_sync(): string;
+  /** Detaches a shelf and retires its books' rows; JSON `{retired}`. */
+  export function shelf_remove(id: string): string;
   /** Incremental SHA-256; `finish` gives lowercase hex and frees it. */
   export class Hasher {
     constructor();

@@ -171,7 +171,8 @@ pub fn list(conn: &Connection) -> anyhow::Result<Vec<LibraryBook>> {
 
 /// The books in one attached pack's schema.
 pub fn list_in(conn: &Connection, schema: &str) -> anyhow::Result<Vec<LibraryBook>> {
-    let mut stmt = conn.prepare(&format!("SELECT file_name, kind, title, author FROM {schema}.library_resources ORDER BY title"))?;
+    let names = crate::db::shelf_names_table(conn, schema);
+    let mut stmt = conn.prepare(&format!("SELECT file_name, kind, title, author FROM {schema}.{names} ORDER BY title"))?;
     let rows = stmt.query_map([], |r| {
         Ok(LibraryBook { file_name: r.get(0)?, kind: r.get(1)?, title: r.get(2)?, author: r.get(3)? })
     })?;
@@ -494,6 +495,30 @@ mod tests {
         assert_eq!((again.added, again.adopted, again.repointed), (0, 0, 0));
         assert_eq!(conn.query_row::<i64, _, _>("SELECT COUNT(*) FROM resources", [], |r| r.get(0)).unwrap(), 2);
 
+        drop(conn);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// The web build of a shelf has `library_index`, the names without the
+    /// text; a pack as the desktop installs it does not. Both read the same.
+    #[test]
+    fn a_shelf_lists_its_books_from_library_index_when_it_has_one() {
+        let (dir, conn) = scratch("index");
+        assert_eq!(list_in(&conn, "library").unwrap().len(), 2, "from library_resources");
+        let path = dir.join("library.db");
+        conn.execute_batch("DETACH DATABASE library").unwrap();
+        {
+            let lib = rusqlite::Connection::open(&path).unwrap();
+            lib.execute_batch(
+                "CREATE TABLE library_index (id INTEGER PRIMARY KEY, file_name TEXT NOT NULL, kind TEXT NOT NULL, title TEXT NOT NULL, author TEXT) WITHOUT ROWID;
+                 INSERT INTO library_index SELECT id, file_name, kind, 'Indexed ' || title, author FROM library_resources;",
+            )
+            .unwrap();
+        }
+        db::attach_library(&conn, &path).unwrap();
+        assert_eq!(crate::db::shelf_names_table(&conn, "library"), "library_index");
+        let titles: Vec<String> = list_in(&conn, "library").unwrap().into_iter().map(|b| b.title).collect();
+        assert!(titles.iter().all(|t| t.starts_with("Indexed ")), "{titles:?}");
         drop(conn);
         let _ = std::fs::remove_dir_all(&dir);
     }
