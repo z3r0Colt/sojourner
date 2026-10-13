@@ -68,7 +68,11 @@ export async function uploadAll(files, { parallel = 4, label = (f) => f.key } = 
         continue;
       }
       const t = Date.now();
-      const ok = await put(f.key, f.path);
+      // Checked at its public address afterwards: wrangler took a `#` in a
+      // book's name for the start of a URL fragment and stored the book under
+      // the name cut short there, reporting success (Vindiciæ Evangelicæ,
+      // 2026-10-13). An upload is done only when the app can read it.
+      const ok = (await put(f.key, f.path)) && (await uploadedSize(f.key)) === size;
       done++;
       if (ok) console.log(`  [${done}/${files.length}] ${label(f)} ${(size / 1e6).toFixed(1)} MB in ${((Date.now() - t) / 1000).toFixed(0)} s`);
       else failed.push(f.key);
@@ -76,7 +80,8 @@ export async function uploadAll(files, { parallel = 4, label = (f) => f.key } = 
   }
   await Promise.all(Array.from({ length: parallel }, worker));
   if (failed.length) {
-    console.error(`${failed.length} upload(s) failed (${failed.slice(0, 3).join(", ")}...); run again to resume`);
+    console.error(`${failed.length} upload(s) failed or can't be read back (${failed.slice(0, 3).join(", ")}...); run again to resume`);
+    console.error("A name wrangler can't store (one with #) needs another way up: the R2 REST API with the key URL-encoded.");
     process.exit(1);
   }
 }

@@ -48,6 +48,8 @@ type Saved = {
    * so removing the copy leaves those. */
   booksAdded?: string[];
   booksDone?: boolean;
+  /** Books the shelf's server didn't have (404): skipped, not a failure. */
+  booksSkipped?: string[];
 };
 
 /** A worker's synchronous handle on an OPFS file (not in TypeScript's DOM
@@ -63,6 +65,15 @@ type SyncHandle = {
 
 /** A failure that trying again won't fix: the download stops. */
 class Stop extends Error {}
+
+/** A book the server doesn't have: the rest of the shelf still downloads. */
+class Missing extends Error {}
+
+function skippedNote(files: string[] | undefined): string | null {
+  if (!files?.length) return null;
+  const names = files.map((f) => f.replace(/\.epub$/i, "")).join("; ");
+  return `${files.length === 1 ? "One book" : `${files.length} books`} couldn't be downloaded, as the server doesn't have ${files.length === 1 ? "it" : "them"}: ${names}.`;
+}
 
 let post: (m: FromWorker) => void = () => {};
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -217,6 +228,7 @@ class OfflineCopy {
       if (s.booksDone) this.booksBytes = this.books.reduce((sum, b) => sum + b.bytes, 0);
       const whole = verified.length === m.chunks.length && (!this.books.length || !!s.booksDone);
       this.state = whole ? "complete" : this.saved.paused ? "paused" : "downloading";
+      if (whole) this.error = skippedNote(s.booksSkipped);
     } catch (e) {
       // Without OPFS (or with it held elsewhere) there is no offline copy.
       this.saved = null;
@@ -306,6 +318,7 @@ class OfflineCopy {
       await writeText(dir, MANIFEST, JSON.stringify(m));
       await this.saveState();
       const cache = this.books.length ? await caches.open(BOOKS) : null;
+      if (this.saved!.booksSkipped) this.saved!.booksSkipped = [];
       const missingBooks = cache ? await this.missingBooks(cache) : [];
       await this.makeRoom(m, missingBooks);
       this.setState("downloading");
@@ -322,7 +335,13 @@ class OfflineCopy {
       page_cache_clear(this.file);
       if (cache) {
         for (const book of missingBooks) {
-          await this.downloadBook(cache, book, controller.signal);
+          try {
+            await this.downloadBook(cache, book, controller.signal);
+          } catch (e) {
+            if (!(e instanceof Missing)) throw e;
+            (this.saved!.booksSkipped ??= []).push(book.file);
+            continue;
+          }
           this.retries = 0;
           (this.saved!.booksAdded ??= []).push(book.file);
           this.booksBytes += book.bytes;
@@ -332,7 +351,7 @@ class OfflineCopy {
         this.saved!.booksDone = true;
         await this.saveState();
       }
-      this.setState("complete");
+      this.setState("complete", skippedNote(this.saved!.booksSkipped));
     } catch (e) {
       this.partial = 0;
       if (controller.signal.aborted) return; // paused or removed: that op reports
@@ -382,6 +401,7 @@ class OfflineCopy {
     const url = this.bookUrl(book.file);
     const r = await fetch(url, { cache: "no-store", signal });
     if (r.status >= 500) throw new Error(`HTTP ${r.status}`);
+    if (r.status === 404) throw new Missing(book.file);
     if (!r.ok) throw new Stop(`${book.file}: HTTP ${r.status}. Reload the page; if that doesn't help, the shelf on the server has changed.`);
     const bytes = new Uint8Array(await r.arrayBuffer());
     const hasher = new Hasher();

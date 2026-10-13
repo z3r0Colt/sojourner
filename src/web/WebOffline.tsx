@@ -92,6 +92,7 @@ export function OfflineRow({ target, name, what, compact }: { target: string; na
           )}
         </div>
       </div>
+      {state === "complete" && status.error && <p className="mt-1 text-xs text-ink-3">{status.error}</p>}
       {state !== "none" && state !== "complete" && (
         <>
           <div
