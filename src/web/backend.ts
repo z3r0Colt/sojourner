@@ -69,7 +69,9 @@ async function config(): Promise<StartConfig> {
   } catch {
     /* as above */
   }
-  return { contentBase: base, manifest, appVersion: import.meta.env.VITE_APP_VERSION };
+  // Dev: `?noprefetch` reads search results row by row, to compare.
+  const prefetch = import.meta.env.DEV && new URLSearchParams(location.search).has("noprefetch") ? false : undefined;
+  return { contentBase: base, manifest, appVersion: import.meta.env.VITE_APP_VERSION, prefetch };
 }
 
 let offlineStatus: OfflineStatus | null = null;

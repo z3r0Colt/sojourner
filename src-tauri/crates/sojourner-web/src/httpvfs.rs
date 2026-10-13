@@ -585,6 +585,241 @@ pub fn disk_clear(name: &str) {
     });
 }
 
+// ---- Fetching many pages at once (the prefetch hook in wasm.rs) ----------
+
+fn be16(d: &[u8], at: usize) -> usize {
+    u16::from_be_bytes([d[at], d[at + 1]]) as usize
+}
+
+fn be32(d: &[u8], at: usize) -> u64 {
+    u32::from_be_bytes([d[at], d[at + 1], d[at + 2], d[at + 3]]) as u64
+}
+
+/// SQLite's varint: big-endian 7-bit groups, the ninth byte whole. The
+/// value, and how many bytes it took.
+fn varint_len(d: &[u8]) -> (i64, usize) {
+    let mut v: u64 = 0;
+    for (i, &b) in d.iter().take(9).enumerate() {
+        if i == 8 {
+            return (((v << 8) | b as u64) as i64, 9);
+        }
+        v = (v << 7) | (b & 0x7f) as u64;
+        if b & 0x80 == 0 {
+            return (v as i64, i + 1);
+        }
+    }
+    (v as i64, d.len().min(9))
+}
+
+fn varint(d: &[u8]) -> i64 {
+    varint_len(d).0
+}
+
+impl HttpFile {
+    /// Block `b`'s bytes if they can be had without the network.
+    fn peek(&self, b: u64) -> Option<Vec<u8>> {
+        if let Some((v, _)) = self.state.borrow().blocks.get(&b) {
+            return Some(v.clone());
+        }
+        if let Some(v) = self.pinned.borrow().get(&b) {
+            return Some(v.clone());
+        }
+        if self.offline {
+            let piece = (b / self.chunk_blocks) as usize;
+            let mut buf = vec![0u8; self.block as usize];
+            if let Some(Ok(())) = offline_read(piece, (b % self.chunk_blocks) * self.block, &mut buf) {
+                return Some(buf);
+            }
+        }
+        self.disk.borrow_mut().as_mut().and_then(|d| d.get(b))
+    }
+
+    /// The first overflow page of row `rowid` on the table leaf `data`
+    /// (page `page`), and how many pages its chain has, if its record spills
+    /// over (the file format's rules for how much of a payload stays on the
+    /// leaf).
+    fn overflow_of(&self, data: &[u8], page: u64, rowid: i64) -> Option<(u64, u64)> {
+        let h = if page == 1 { 100 } else { 0 };
+        if data.len() < h + 8 || data[h] != 0x0d {
+            return None;
+        }
+        let cells = be16(data, h + 3);
+        let cell = |i: usize| be16(data, h + 8 + 2 * i);
+        let key = |i: usize| {
+            let off = cell(i);
+            let (_, n) = varint_len(&data[off..]);
+            varint(&data[off + n..])
+        };
+        let (mut lo, mut hi) = (0, cells);
+        while lo < hi {
+            let mid = (lo + hi) / 2;
+            if key(mid) < rowid {
+                lo = mid + 1;
+            } else {
+                hi = mid;
+            }
+        }
+        if lo >= cells || key(lo) != rowid {
+            return None;
+        }
+        let off = cell(lo);
+        let (payload, n1) = varint_len(&data[off..]);
+        let (_, n2) = varint_len(&data[off + n1..]);
+        let (p, u) = (payload as u64, self.usable());
+        let x = u - 35;
+        if p <= x {
+            return None;
+        }
+        let m = ((u - 12) * 32 / 255) - 23;
+        let k = m + (p - m) % (u - 4);
+        let local = if k <= x { k } else { m } as usize;
+        let at = off + n1 + n2 + local;
+        let pages = (p - local as u64).div_ceil(u - 4);
+        (at + 4 <= data.len()).then(|| be32(data, at)).filter(|&n| n != 0).map(|n| (n, pages))
+    }
+
+    /// The page size less the bytes reserved at the end of each page (the
+    /// database header's byte 20).
+    fn usable(&self) -> u64 {
+        let reserved = self.pinned.borrow().get(&0).map_or(0, |p| p.get(20).copied().unwrap_or(0));
+        self.block - reserved as u64
+    }
+}
+
+/// The pages (as blocks, from 0) that reading `rowids` from the table
+/// b-tree whose root is page `root` needs, less those already at hand: each
+/// row's leaf, found from the pinned pages alone (the skeleton holds every
+/// interior page, so the walk costs no request, and the first page it
+/// reaches that isn't pinned is the leaf); and once the leaf is here, the
+/// next page of the row's overflow chain, if it has one.
+pub fn missing_pages(name: &str, root: u64, rowids: &[i64]) -> Vec<u64> {
+    let Some(file) = FILES.with(|m| m.borrow().get(name).cloned()) else {
+        return vec![];
+    };
+    let mut out: Vec<u64> = Vec::new();
+    for &rowid in rowids {
+        let mut page = root;
+        // A b-tree is never this deep; the bound only guards a bad page.
+        for _ in 0..16 {
+            if page == 0 {
+                break;
+            }
+            let b = page - 1;
+            let pinned = file.pinned.borrow();
+            let Some(data) = pinned.get(&b) else {
+                drop(pinned);
+                let local = file.local(&file.state.borrow(), b);
+                if !local {
+                    if !out.contains(&b) {
+                        out.push(b);
+                    }
+                } else if let Some((mut next, mut left)) = file.peek(b).and_then(|leaf| file.overflow_of(&leaf, page, rowid)) {
+                    // Along the chain to the first page not here; from there
+                    // the rest of it, on the guess that it runs on in order
+                    // (as a freshly built database lays it out). A wrong
+                    // guess shows on the next pass, which follows the links.
+                    while left > 0 {
+                        let ob = next - 1;
+                        if !file.local(&file.state.borrow(), ob) {
+                            let max_block = (file.size - 1) / file.block;
+                            for g in ob..(ob + left).min(max_block + 1) {
+                                if !out.contains(&g) && !file.local(&file.state.borrow(), g) {
+                                    out.push(g);
+                                }
+                            }
+                            break;
+                        }
+                        left -= 1;
+                        match file.peek(ob).map(|p| be32(&p, 0)) {
+                            Some(n) if n != 0 => next = n,
+                            _ => break,
+                        }
+                    }
+                }
+                break;
+            };
+            let h = if page == 1 { 100 } else { 0 };
+            // Not an interior table page: a small table whose root is its only leaf.
+            if data.len() < h + 12 || data[h] != 0x05 {
+                break;
+            }
+            let cells = be16(data, h + 3);
+            let child = |i: usize| be32(data, be16(data, h + 12 + 2 * i));
+            let key = |i: usize| varint(&data[be16(data, h + 12 + 2 * i) + 4..]);
+            // The first cell whose key is at least the rowid has it on its left.
+            let (mut lo, mut hi) = (0, cells);
+            while lo < hi {
+                let mid = (lo + hi) / 2;
+                if key(mid) < rowid {
+                    lo = mid + 1;
+                } else {
+                    hi = mid;
+                }
+            }
+            page = if lo < cells { child(lo) } else { be32(data, h + 8) };
+        }
+    }
+    out
+}
+
+/// The requests that bring `blocks` of `name`: runs of neighbouring blocks
+/// within a piece, as `(url, first byte, last byte, first block)`.
+pub fn ranges_for(name: &str, blocks: &[u64]) -> Vec<(String, u64, u64, u64)> {
+    let Some(file) = FILES.with(|m| m.borrow().get(name).cloned()) else {
+        return vec![];
+    };
+    let mut blocks = blocks.to_vec();
+    blocks.sort_unstable();
+    blocks.dedup();
+    let mut out = Vec::new();
+    let mut i = 0;
+    while i < blocks.len() {
+        let first = blocks[i];
+        let chunk = first / file.chunk_blocks;
+        let mut last = first;
+        while i + 1 < blocks.len() && blocks[i + 1] == last + 1 && blocks[i + 1] / file.chunk_blocks == chunk {
+            i += 1;
+            last = blocks[i];
+        }
+        let base = chunk * file.chunk_blocks * file.block;
+        let end = ((last + 1) * file.block).min(file.size) - 1;
+        out.push((file.urls[chunk as usize].clone(), first * file.block - base, end - base, first));
+        i += 1;
+    }
+    out
+}
+
+/// Pages fetched outside the VFS (by the worker, many at once), from block
+/// `first`: kept as if read here.
+pub fn put_pages(name: &str, first: u64, bytes: &[u8]) {
+    let Some(file) = FILES.with(|m| m.borrow().get(name).cloned()) else {
+        return;
+    };
+    let mut st = file.state.borrow_mut();
+    let pinned = file.pinned.borrow();
+    let mut disk = file.disk.borrow_mut();
+    let n = bytes.len() / file.block as usize;
+    for (i, page) in bytes.chunks_exact(file.block as usize).enumerate() {
+        let b = first + i as u64;
+        if let Some(d) = disk.as_mut().filter(|_| !pinned.contains_key(&b)) {
+            if let Err(e) = d.put(b, page) {
+                web_sys::console::warn_1(&format!("Sojourner's page cache is off: {e}").into());
+                *disk = None;
+            }
+        }
+        if !st.blocks.contains_key(&b) {
+            HttpFile::insert(&mut st, b, page.to_vec());
+        }
+    }
+    if n > 0 {
+        bump(|s| {
+            s.requests += 1;
+            s.bytes += bytes.len() as u64;
+        });
+        LOG.with(|l| l.borrow_mut().push((first + 1, first + n as u64, false)));
+    }
+}
+
 /// Makes the pages fetched so far durable: after every command.
 pub fn flush() {
     FILES.with(|m| {

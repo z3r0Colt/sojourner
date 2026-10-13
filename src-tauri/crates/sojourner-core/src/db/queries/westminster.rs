@@ -204,6 +204,7 @@ pub fn search(conn: &Connection, query: &str, limit: i64) -> anyhow::Result<Vec<
         return Ok(vec![]);
     }
     let match_expr = super::search::build_match_expr(query);
+    crate::db::prefetch::ranked(conn, "westminster_fts", "westminster_sections", &match_expr, limit)?;
     let mut stmt = conn.prepare(
         // Ranked by the index first, so only the page's sections are read
         // for their snippets (see `search::search_verses`).

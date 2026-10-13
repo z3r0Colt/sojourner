@@ -146,6 +146,9 @@ pub fn search(conn: &Connection, query: &str, sources: &[String], limit: i64) ->
     // Every lexicon: ranked by the index first, so only the page's entries
     // are read for their snippets (see `search::search_verses`). Some of
     // them: each hit's entry has to be read to know its lexicon.
+    if codes.is_empty() {
+        crate::db::prefetch::ranked(conn, "lexicon_fts", "lexicon_entries", &match_expr, limit)?;
+    }
     let rank_first = if codes.is_empty() {
         " AND lexicon_fts.rowid IN (SELECT rowid FROM lexicon_fts WHERE lexicon_fts MATCH ?1 ORDER BY bm25(lexicon_fts), rowid LIMIT ?2)"
     } else {

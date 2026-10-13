@@ -4,9 +4,11 @@
  * in the browser's private files and content.db read over HTTP. A worker,
  * because both of those need synchronous I/O, which a page may not do.
  *
- * Calls are answered one at a time, in order, as they arrive.
+ * Each call runs to its end before the next starts. One that stops to have
+ * its rows' pages fetched together (`fetch_plan` in wasm.rs) waits for them
+ * and runs again; others may be answered meanwhile.
  */
-import init, { call, check_user_db, export_user_db, http_stats, import_user_db, start } from "@sojourner/wasm";
+import init, { call, check_user_db, export_user_db, fetch_plan, http_stats, import_user_db, prefetch_put, set_prefetch, start } from "@sojourner/wasm";
 import { offlineOp, openOffline, resumeOffline } from "./offlineCopy";
 import type { FromWorker, ToWorker } from "./protocol";
 
@@ -39,6 +41,7 @@ scope.onmessage = async (e) => {
       await openOffline(m.config.manifest, m.config.contentBase, post);
       const info = JSON.parse(await start(JSON.stringify(m.config)));
       if (tracing) http_stats(true);
+      if (m.config.prefetch === false) set_prefetch(false);
       post({ kind: "started", info });
       resumeOffline();
     } catch (err) {
@@ -73,7 +76,7 @@ scope.onmessage = async (e) => {
   }
   const t0 = performance.now();
   try {
-    post({ kind: "reply", id: m.id, ok: true, json: call(m.cmd, m.args) });
+    post({ kind: "reply", id: m.id, ok: true, json: await callFetchingAhead(m.cmd, m.args) });
   } catch (err) {
     if (err instanceof WebAssembly.RuntimeError) {
       crashed = true;
@@ -87,6 +90,42 @@ scope.onmessage = async (e) => {
     post({ kind: "trace", cmd: m.cmd, ms: performance.now() - t0, requests: http.requests, bytes: http.bytes, log: http.log });
   }
 };
+
+/** What `call` throws when the command wants pages fetched first (wasm.rs). */
+const FETCH_FIRST = "\u0001fetch-first";
+/** Rounds of fetching before a command is left to read row by row. */
+const FETCH_ROUNDS = 4;
+
+/** `call`, but a search's page of results is fetched in parallel rather
+ * than one request per row in turn: the command says which pages it is
+ * about to read, they are fetched together, and it runs again. */
+async function callFetchingAhead(cmd: string, args: string): Promise<string> {
+  for (let round = 0; round < FETCH_ROUNDS; round++) {
+    try {
+      return call(cmd, args);
+    } catch (err) {
+      if (err !== FETCH_FIRST) throw err;
+    }
+    const plan = JSON.parse(fetch_plan()) as [string, number, number, number][];
+    await Promise.all(
+      plan.map(async ([url, first, last, block]) => {
+        try {
+          const r = await fetch(url, { headers: { Range: `bytes=${first}-${last}` } });
+          const bytes = new Uint8Array(await r.arrayBuffer());
+          if (r.status === 206 && bytes.length === last - first + 1) prefetch_put(block, bytes);
+        } catch {
+          // Read again one at a time below, which reports a failure properly.
+        }
+      }),
+    );
+  }
+  set_prefetch(false);
+  try {
+    return call(cmd, args);
+  } finally {
+    set_prefetch(true);
+  }
+}
 
 /** `start` rejects with the JSON of a string. */
 function parseError(err: unknown): unknown {

@@ -421,6 +421,7 @@ pub fn search_verses(
         // and marked. Marking every hit before keeping the best was what
         // made a common word read megabytes of verses.
         let ids = ranked_ids(conn, "verses_fts", &q.fts, ranges, limit)?;
+        crate::db::prefetch::rows(conn, "verses", &ids)?;
         let sql = format!(
             "SELECT v.id, v.book_id, v.chapter, v.verse, t.code, {text_col}, t.id, v.text
              FROM verses_fts CROSS JOIN verses v ON v.id = verses_fts.rowid
@@ -696,6 +697,12 @@ pub fn search_commentary(
         // As for verses: ranked by the index, then only the page's entries
         // read for their snippets.
         let ids = ranked_ids(conn, "commentary_fts", &q.fts, ranges, limit)?;
+        crate::db::prefetch::rows(conn, "commentary_entries", &ids)?;
+        crate::db::prefetch::rows_from(
+            conn,
+            "commentary_sections",
+            &format!("SELECT DISTINCT section_id FROM commentary_entries WHERE id IN ({})", id_list(&ids)),
+        )?;
         let sql = format!(
             "SELECT ce.id, ce.book_id, ce.chapter, ce.verse_start, cs2.title,
                     snippet(commentary_fts, 0, char(2), char(3), '…', 12), cs2.id

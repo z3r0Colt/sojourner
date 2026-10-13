@@ -24,6 +24,8 @@ export type StartConfig = {
    * files (0 turns that cache off). */
   cacheMb?: number;
   diskCacheMb?: number;
+  /** False: commands read their rows one at a time (dev, `?noprefetch`). */
+  prefetch?: boolean;
 };
 
 export type ToWorker =

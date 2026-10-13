@@ -1,3 +1,4 @@
+pub mod prefetch;
 pub mod queries;
 pub mod schema;
 

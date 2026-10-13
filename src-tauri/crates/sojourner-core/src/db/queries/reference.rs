@@ -328,6 +328,7 @@ pub fn search_isbe_global(conn: &Connection, query: &str, limit: i64) -> anyhow:
         return Ok(vec![]);
     }
     let match_expr = super::search::build_match_expr(query);
+    crate::db::prefetch::ranked(conn, "isbe_fts", "isbe_entries", &match_expr, limit)?;
     let mut stmt = conn.prepare(
         // Ranked by the index first, so only the page's articles are read
         // for their snippets (see `search::search_verses`).

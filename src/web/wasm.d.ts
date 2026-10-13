@@ -20,6 +20,13 @@ declare module "@sojourner/wasm" {
   export function offline_add(index: number, handle: unknown): void;
   /** Closes the offline copy's files: content.db is read over the network. */
   export function offline_clear(): void;
+  /** The pages the last command stopped for (it threw "\u0001fetch-first"),
+   * as JSON `[[url, firstByte, lastByte, firstBlock], ...]`. */
+  export function fetch_plan(): string;
+  /** Pages fetched for `fetch_plan`, from block `first`. */
+  export function prefetch_put(first: number, bytes: Uint8Array): void;
+  /** Off: commands read their rows one at a time. */
+  export function set_prefetch(on: boolean): void;
   /** Empties the persistent page cache (keeping the skeleton). */
   export function page_cache_clear(): void;
   /** What the persistent page cache holds, in bytes. */

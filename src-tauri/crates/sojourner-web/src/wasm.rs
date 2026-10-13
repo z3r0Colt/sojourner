@@ -18,6 +18,12 @@ use wasm_bindgen::prelude::*;
 
 thread_local! {
     static DB: RefCell<Option<DbState>> = const { RefCell::new(None) };
+    /// Blocks of content.db the last command wanted before it read them
+    /// (`prefetch_hook`), for the worker to fetch at once.
+    static WANTED: RefCell<Vec<u64>> = const { RefCell::new(Vec::new()) };
+    static PREFETCH: std::cell::Cell<bool> = const { std::cell::Cell::new(true) };
+    /// Each table's root page in content.db (None: not there).
+    static ROOTS: RefCell<std::collections::HashMap<String, Option<u64>>> = RefCell::new(std::collections::HashMap::new());
     /// Kept for the life of the worker: the pool's open file handles, and
     /// what will export and import user.db.
     static OPFS: RefCell<Option<sqlite_wasm_vfs::sahpool::OpfsSAHPoolUtil>> = const { RefCell::new(None) };
@@ -139,6 +145,7 @@ pub async fn start(config: String) -> Result<String, String> {
         .map_err(error_json)?;
     db::forget_missing_translations(&conn);
     httpvfs::flush();
+    db::prefetch::install(prefetch_hook);
     let content_ms = now_ms() - t_content;
     let content_http = httpvfs::stats();
 
@@ -168,14 +175,72 @@ pub fn call(cmd: &str, args: &str) -> Result<String, String> {
         let d = d.borrow();
         let db = d.as_ref().ok_or_else(|| error_json("Sojourner has not started"))?;
         let args: Value = if args.is_empty() { Value::Null } else { serde_json::from_str(args).map_err(error_json)? };
+        WANTED.with(|w| w.borrow_mut().clear());
         let reply = crate::dispatch(db, cmd, args);
         // The pages this command fetched, kept for next time.
         httpvfs::flush();
+        // It stopped (or would answer without them) to have pages fetched first.
+        if WANTED.with(|w| !w.borrow().is_empty()) {
+            return Err(FETCH_FIRST.to_string());
+        }
         match reply {
             Ok(v) => Ok(v.to_string()),
             Err(e) => Err(e.to_string()),
         }
     })
+}
+
+/// What [`call`] rejects with when the command wants pages fetched first:
+/// the worker fetches [`fetch_plan`]'s ranges at once, hands each to
+/// [`prefetch_put`], and calls again. Not JSON, so no error is mistaken for it.
+const FETCH_FIRST: &str = "\u{1}fetch-first";
+
+/// `db::prefetch`'s hook: the rows a read-only query is about to read, one
+/// page each. If any of their pages aren't here, stop the command, so they
+/// can be fetched together rather than one after another.
+fn prefetch_hook(conn: &Connection, table: &str, ids: &[i64]) -> anyhow::Result<()> {
+    if !PREFETCH.get() {
+        return Ok(());
+    }
+    let root = match ROOTS.with(|r| r.borrow().get(table).copied()) {
+        Some(root) => root,
+        None => {
+            let root: Option<i64> = conn
+                .query_row("SELECT rootpage FROM content.sqlite_schema WHERE type = 'table' AND name = ?1", [table], |r| r.get(0))
+                .ok();
+            let root = root.filter(|&r| r > 0).map(|r| r as u64);
+            ROOTS.with(|r| r.borrow_mut().insert(table.to_string(), root));
+            root
+        }
+    };
+    let Some(root) = root else { return Ok(()) };
+    let missing = httpvfs::missing_pages("content.db", root, ids);
+    if missing.is_empty() {
+        return Ok(());
+    }
+    WANTED.with(|w| w.borrow_mut().extend(missing));
+    anyhow::bail!("{FETCH_FIRST}")
+}
+
+/// The requests that bring the pages the last command wanted, as JSON
+/// `[[url, firstByte, lastByte, firstBlock], ...]`.
+#[wasm_bindgen]
+pub fn fetch_plan() -> String {
+    let wanted = WANTED.with(|w| std::mem::take(&mut *w.borrow_mut()));
+    json!(httpvfs::ranges_for("content.db", &wanted)).to_string()
+}
+
+/// Pages fetched by the worker for [`fetch_plan`], from block `first`.
+#[wasm_bindgen]
+pub fn prefetch_put(first: f64, bytes: &[u8]) {
+    httpvfs::put_pages("content.db", first as u64, bytes);
+}
+
+/// Off: commands read their rows one at a time, as before (the worker's
+/// last try, when fetching ahead didn't bring them).
+#[wasm_bindgen]
+pub fn set_prefetch(on: bool) {
+    PREFETCH.set(on);
 }
 
 /// The HTTP traffic since the last call with `reset` (requests, bytes, time
