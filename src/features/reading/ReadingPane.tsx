@@ -934,8 +934,9 @@ export function ReadingPane() {
     else openContent("interlinear", { bookId, chapter, verse: activeVerse }, { target: "new", from: paneId });
   }
 
-  /** A phone shows one pane at a time, so a linked commentary follows the
-   * verse out of sight: this brings it up (or opens one) at the verse. */
+  /** Brings up the commentary linked to this pane at the verse, or opens
+   * one beside it. (On a phone, which shows one pane at a time, a linked
+   * commentary otherwise follows the verse out of sight.) */
   function openCommentary(verse: number) {
     setActiveVerse(verse, "no");
     const s = useWorkspaceStore.getState();
@@ -1707,7 +1708,7 @@ export function ReadingPane() {
                 }
               : undefined
           }
-          onOpenCommentary={phone ? () => openCommentary(verseMenu.verseNum) : undefined}
+          onOpenCommentary={() => openCommentary(verseMenu.verseNum)}
           onSendToSermon={() =>
             sendToSermon(
               {

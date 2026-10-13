@@ -38,8 +38,7 @@ export function VerseContextMenu({
   onSendToSermon?: () => void;
   /** Reads the chapter aloud from this verse on. */
   onReadFromHere?: () => void;
-  /** On a phone, where the commentary is a tab away rather than beside the
-   * text: shows it at this verse. */
+  /** Shows the commentary at this verse: the linked one, or a new one. */
   onOpenCommentary?: () => void;
   onClose: () => void;
 }) {
