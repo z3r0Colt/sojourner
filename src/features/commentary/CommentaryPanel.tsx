@@ -42,7 +42,22 @@ export function CommentaryPanel({
   onJumpToRef: JumpToRef;
 }) {
   const { data: sources } = useCommentarySources();
-  const sourceId = requestedSourceId ?? sources?.[0]?.id ?? null;
+  // With none chosen, the first source that covers this book: the first
+  // installed one alone may be a New Testament set, open on Genesis.
+  const { data: firstCovering } = useQuery({
+    queryKey: ["firstCommentaryFor", book.id, sources?.map((s) => s.id)],
+    queryFn: async () => {
+      for (const s of sources ?? []) if (await api.bookHasCommentary(s.id, book.id)) return s.id;
+      return sources?.[0]?.id ?? null;
+    },
+    enabled: requestedSourceId == null && !!sources?.length,
+  });
+  const sourceId = requestedSourceId ?? firstCovering ?? null;
+  // Kept as the pane's choice, so its title names it and the next book does
+  // not switch sources under the reader.
+  useEffect(() => {
+    if (requestedSourceId == null && firstCovering != null) onSourceChange(firstCovering);
+  }, [requestedSourceId, firstCovering, onSourceChange]);
   const typography = useReadingTypography(0.85);
 
   const { data: hasCommentary } = useQuery({
@@ -173,7 +188,8 @@ export function CommentaryPanel({
         />
       </div>
       <div ref={listRef} className="min-h-0 flex-1 overflow-y-auto p-3">
-        {sourceId == null && <EmptyState compact icon={MessageSquareText} title="No commentary installed" description="Add one under Settings → Library." />}
+        {sourceId == null && !!sources?.length && <LoadingState />}
+        {sources?.length === 0 && <EmptyState compact icon={MessageSquareText} title="No commentary installed" description="Add one under Settings → Library." />}
         {sourceId != null && isLoading && <LoadingState />}
         {sourceId != null && hasCommentary === false && (
           <EmptyState

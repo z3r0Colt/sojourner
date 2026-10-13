@@ -934,6 +934,20 @@ export function ReadingPane() {
     else openContent("interlinear", { bookId, chapter, verse: activeVerse }, { target: "new", from: paneId });
   }
 
+  /** A phone shows one pane at a time, so a linked commentary follows the
+   * verse out of sight: this brings it up (or opens one) at the verse. */
+  function openCommentary(verse: number) {
+    setActiveVerse(verse, "no");
+    const s = useWorkspaceStore.getState();
+    // Now, not from this pane's effect: showing the commentary unmounts this
+    // pane before its effects run.
+    s.publishPassage(paneId, { bookId, chapter, verse });
+    const me = s.panes.find((p) => p.id === paneId);
+    const existing = s.panes.find((p) => p.kind === "commentary" && p.linkGroup != null && p.linkGroup === me?.linkGroup);
+    if (existing) s.focusPane(existing.id);
+    else openContent("commentary", { bookId, chapter, verse }, { target: "new", from: paneId });
+  }
+
   function enterFocusMode() {
     useWorkspaceStore.getState().setMaximized(paneId);
     useUiStore.getState().setDistractionFreeMode(true);
@@ -1693,6 +1707,7 @@ export function ReadingPane() {
                 }
               : undefined
           }
+          onOpenCommentary={phone ? () => openCommentary(verseMenu.verseNum) : undefined}
           onSendToSermon={() =>
             sendToSermon(
               {

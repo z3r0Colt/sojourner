@@ -118,7 +118,7 @@ export const PANE_KINDS: Registry = {
     label: "Commentary",
     icon: MessageSquareText,
     title: (p, ctx) => {
-      const source = ctx.commentarySources?.find((s) => s.id === p.sourceId) ?? ctx.commentarySources?.[0];
+      const source = ctx.commentarySources?.find((s) => s.id === p.sourceId);
       return passageTitle(source?.author ?? source?.title ?? "Commentary", p, ctx);
     },
     defaultWidth: 420,

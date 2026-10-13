@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Bookmark, BookmarkCheck, Brain, Columns2, Copy, Mic, StickyNote, Underline, Volume2 } from "lucide-react";
+import { Bookmark, BookmarkCheck, Brain, Columns2, Copy, MessageSquareText, Mic, StickyNote, Underline, Volume2 } from "lucide-react";
 import { useViewportClampedPosition } from "../../lib/useViewportClampedPosition";
 import { HIGHLIGHT_COLORS, UNDERLINE_COLOR, highlightColorLabel, useHighlightLabels } from "./highlightColors";
 import { PopoverItem } from "../../components/ui/Popover";
@@ -20,6 +20,7 @@ export function VerseContextMenu({
   onBookmark,
   onSendToSermon,
   onReadFromHere,
+  onOpenCommentary,
   onClose,
 }: {
   x: number;
@@ -37,6 +38,9 @@ export function VerseContextMenu({
   onSendToSermon?: () => void;
   /** Reads the chapter aloud from this verse on. */
   onReadFromHere?: () => void;
+  /** On a phone, where the commentary is a tab away rather than beside the
+   * text: shows it at this verse. */
+  onOpenCommentary?: () => void;
   onClose: () => void;
 }) {
   const { ref, style } = useViewportClampedPosition<HTMLDivElement>(x, y, { onDismiss: onClose });
@@ -107,6 +111,11 @@ export function VerseContextMenu({
             );
           })}
         </div>
+        {onOpenCommentary && (
+          <PopoverItem onClick={run(onOpenCommentary)}>
+            <MessageSquareText className="h-4 w-4 text-ink-3" aria-hidden="true" /> Commentary on this verse
+          </PopoverItem>
+        )}
         <PopoverItem onClick={run(() => onUnderline(UNDERLINE_COLOR))}>
           <Underline className="h-4 w-4 text-ink-3" aria-hidden="true" /> Underline verse
         </PopoverItem>
