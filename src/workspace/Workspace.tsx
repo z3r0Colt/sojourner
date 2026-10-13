@@ -368,7 +368,15 @@ export function Workspace() {
     return (
       <div className="flex h-full min-h-0 flex-col">
         {panes.length > 1 && <CompactPaneBar panes={panes} shownId={shown?.id} />}
-        <div className="flex min-h-0 min-w-0 flex-1">{shown && <Pane key={shown.id} pane={shown} showHeader={false} />}</div>
+        {/* Every pane stays mounted, the others hidden, so switching back
+            finds the text where it was left rather than at the top. */}
+        <div className="relative min-h-0 min-w-0 flex-1">
+          {panes.map((p) => (
+            <div key={p.id} className={cx("absolute inset-0 flex", p.id !== shown?.id && "invisible")}>
+              <Pane pane={p} showHeader={false} />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
