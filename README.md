@@ -27,7 +27,12 @@ From 0.3.4 on, the installer is built by GitHub Actions from the source in this 
 
 ## Sojourner on the web
 
-The same app also runs in a browser, on phones, tablets and computers, at **app.gentleking.org**. It is a progressive web app: nothing to install from a store, and *Add to Home Screen* (iPhone, iPad) or *Install* (Chrome, Edge) gives it its own icon and window.
+The same app also runs in a browser, on phones, tablets and computers, at **[app.gentleking.org](https://app.gentleking.org)**. It is a progressive web app: nothing to download from a store. Installing it gives it its own icon and window, and the app offers to after your first visit:
+
+- **iPhone and iPad**: in Safari (or Chrome), tap the Share button, then *Add to Home Screen*. Do this: Safari clears a website's data after a week or so unused, but keeps an app's on the home screen.
+- **Android**: tap *Install* when the app offers, or Chrome's ⋮ menu → *Install app*.
+- **Mac**: in Safari, File → *Add to Dock* (macOS Sonoma or later); in Chrome or Edge, the install icon in the address bar.
+- **Windows and Linux**: in Chrome or Edge, the install icon in the address bar. Firefox can't install web apps, but the app works as it is in a Firefox tab.
 
 - **Your data stays on your device.** Notes, highlights, prayers and sermons are kept in your browser's private storage, as the desktop app keeps them in a file. There are no accounts and no sync. Settings → Data & backups exports everything to a file (the same format as the desktop app's, so it goes either way) and imports it again. Safari can clear a site's data after a few weeks without a visit unless the app is on the home screen, so export now and then; the app reminds you.
 - **The books are read as you go.** The Bibles, commentaries, lexicons and reference works are fetched from `data.gentleking.org` in small pieces as you open them, and kept on the device once read. Settings → Data & backups → *Use without the internet* downloads all of it (about 900 MB) so the app works with no connection. Cloudflare, which hosts both addresses, logs requests the way any web host does; the app sends nothing about you.

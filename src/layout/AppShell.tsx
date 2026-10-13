@@ -30,6 +30,7 @@ import { onDesktop } from "../lib/platform";
 
 // The web app's data reminders (src/web); the desktop bundle has none of it.
 const WebDataWatch = import.meta.env.VITE_TARGET === "web" ? lazy(() => import("../web/WebDataWatch")) : null;
+const InstallBanner = import.meta.env.VITE_TARGET === "web" ? lazy(() => import("../web/InstallBanner")) : null;
 import { useCompact } from "../hooks/useCompact";
 import { useLiveSync } from "../lib/liveSync";
 import { installCloseHandshake } from "../lib/appClose";
@@ -243,6 +244,11 @@ export function AppShell() {
       {WebDataWatch && (
         <Suspense fallback={null}>
           <WebDataWatch />
+        </Suspense>
+      )}
+      {InstallBanner && (
+        <Suspense fallback={null}>
+          <InstallBanner />
         </Suspense>
       )}
       {!distractionFreeMode && !compact && <Sidebar />}

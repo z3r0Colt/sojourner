@@ -17,15 +17,61 @@ let installed = false;
 const listeners = new Set<() => void>();
 const changed = () => listeners.forEach((l) => l());
 
-export type InstallState = "installed" | "offered" | "ios" | "unavailable";
+export type InstallState = "installed" | "offered" | "ios" | "mac-safari" | "firefox-desktop" | "unavailable";
 
 export function installState(): InstallState {
   const standalone = window.matchMedia("(display-mode: standalone)").matches || (navigator as { standalone?: boolean }).standalone === true;
   if (installed || standalone) return "installed";
   if (offer) return "offered";
-  // iPhone and iPad: Safari installs from the share sheet, and only there.
-  const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-  return ios ? "ios" : "unavailable";
+  const ua = navigator.userAgent;
+  // iPhone and iPad (an iPad says it is a Mac, but has touch): every browser
+  // there installs from the share sheet, and only there.
+  if (/iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)) return "ios";
+  // Safari on a Mac has no offer either, only a menu item (macOS 14 on).
+  if (/Macintosh/.test(ua) && /Safari\//.test(ua) && !/Chrome|Chromium|Edg\/|OPR\/|Firefox/.test(ua)) return "mac-safari";
+  // Firefox on a computer cannot install a web app at all.
+  if (/Firefox\//.test(ua) && !/Android|Mobile/.test(ua)) return "firefox-desktop";
+  return "unavailable";
+}
+
+/** How to install, in words, where the browser has no button for it. */
+export function installHint(state: InstallState): string | null {
+  switch (state) {
+    case "ios":
+      return "Tap the Share button, then Add to Home Screen.";
+    case "mac-safari":
+      return "In Safari's File menu, choose Add to Dock.";
+    case "firefox-desktop":
+      return "Firefox can't install web apps; Sojourner works as it is in this tab, or install it from Chrome or Edge.";
+    case "unavailable":
+      return "Your browser's menu may have Install app or Add to Home Screen.";
+    default:
+      return null;
+  }
+}
+
+const VISITS_KEY = "sojourner-launches";
+let launches = 0;
+
+/** This device's count of launches, this one included (counted once, at
+ * start). Kept in localStorage: installing is per device, so it doesn't
+ * belong in the reader's data, which travels with an export. */
+export function launchCount(): number {
+  return launches;
+}
+
+/** Once per browsing session, not per page load: the service worker's first
+ * activation reloads the page, and so does taking a new version. */
+function countLaunch() {
+  try {
+    launches = Number(localStorage.getItem(VISITS_KEY)) || 0;
+    if (!sessionStorage.getItem(VISITS_KEY)) {
+      sessionStorage.setItem(VISITS_KEY, "1");
+      localStorage.setItem(VISITS_KEY, String(++launches));
+    }
+  } catch {
+    launches = 1;
+  }
 }
 
 export function subscribeInstall(listener: () => void): () => void {
@@ -60,6 +106,7 @@ function offerUpdate(registration: ServiceWorkerRegistration) {
 }
 
 export function start() {
+  countLaunch();
   window.addEventListener("beforeinstallprompt", (e) => {
     e.preventDefault();
     offer = e as InstallPrompt;

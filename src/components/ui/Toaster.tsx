@@ -16,12 +16,14 @@ function ToastRow({ item }: { item: ToastItem }) {
     <div
       role={item.kind === "error" ? "alert" : "status"}
       className={cx(
-        "toast-enter pointer-events-auto flex items-center gap-3 rounded-lg border bg-surface px-3 py-2 text-sm shadow-xl",
+        "toast-enter pointer-events-auto flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border bg-surface px-3 py-2 text-sm shadow-xl",
         item.kind === "error" ? "border-danger/40" : "border-line",
       )}
     >
       <Icon className={cx("h-4 w-4 shrink-0", item.kind === "error" ? "text-danger" : item.kind === "success" ? "text-accent" : "text-ink-3")} aria-hidden="true" />
-      <span className="min-w-0 flex-1 text-ink">{item.message}</span>
+      {/* On a phone the buttons go on a line of their own, under the message,
+          rather than squeezing it into a narrow column. */}
+      <span className={cx("min-w-0 flex-1 text-ink", item.action && "basis-[calc(100%-1.75rem)] sm:basis-0")}>{item.message}</span>
       {item.action && (
         <button
           type="button"
@@ -29,7 +31,7 @@ function ToastRow({ item }: { item: ToastItem }) {
             item.action?.onClick();
             dismiss(item.id);
           }}
-          className="shrink-0 rounded px-2 py-0.5 text-sm font-medium text-accent hover:bg-accent-soft"
+          className="ml-auto shrink-0 rounded px-2 py-0.5 text-sm font-medium text-accent hover:bg-accent-soft sm:ml-0"
         >
           {item.action.label}
         </button>
