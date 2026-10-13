@@ -2,6 +2,7 @@ import { Fragment, useEffect, useRef, useState } from "react";
 import { Columns3, StickyNote } from "lucide-react";
 import { useBooks, useHarmonies, useHarmony } from "../../api/queries";
 import { useUiStore } from "../../state/uiStore";
+import { useCompact } from "../../hooks/useCompact";
 import { openPassage, targetFor, type OpenTarget } from "../../workspace/openContent";
 import { bookName, readingPreviewRef } from "../../lib/passage";
 import { refAttrs } from "../../lib/refAttr";
@@ -56,9 +57,9 @@ function SectionRow({
   const hasMore = comparable || section.notes.length > 0;
 
   return (
-    <li className="px-4 py-3 text-sm">
-      <div className="flex items-baseline gap-3">
-        <span className="w-9 shrink-0 text-right text-xs tabular-nums text-ink-4">
+    <li className="px-3 py-3 text-sm sm:px-4">
+      <div className="flex items-baseline gap-2 sm:gap-3">
+        <span className="w-7 shrink-0 text-right text-xs tabular-nums text-ink-4 sm:w-9">
           {section.number ?? section.sort_order}.
         </span>
         <div className="min-w-0 flex-1">
@@ -74,8 +75,10 @@ function SectionRow({
                 icon={comparable ? Columns3 : StickyNote}
                 active={expanded}
                 onClick={onToggle}
+                aria-label={expanded ? "Hide" : comparable ? "Compare" : "Note"}
               >
-                {expanded ? "Hide" : comparable ? "Compare" : "Note"}
+                {/* On a phone the icon alone, so the title keeps the width. */}
+                <span className="hidden sm:inline">{expanded ? "Hide" : comparable ? "Compare" : "Note"}</span>
               </Button>
             )}
           </div>
@@ -137,6 +140,7 @@ export function HarmonyView() {
     setPendingEssay(n);
   };
 
+  const compact = useCompact();
   const harmony = detail?.harmony;
   const parts = new Map(detail?.parts.map((p) => [p.id, p]) ?? []);
 
@@ -166,7 +170,10 @@ export function HarmonyView() {
               <option key={h.code} value={h.code}>
                 {/* The two titles are nearly the same phrase; who made it and
                     how finely he divided it are what tell them apart. */}
-                {[h.author ?? h.title, h.year && `(${h.year})`, `— ${h.section_count} events`].filter(Boolean).join(" ")}
+                {compact
+                  ? // A phone's picker is too narrow for the full name: surname, year, events.
+                    [h.author?.split(" ").pop() ?? h.title, h.year, `· ${h.section_count} events`].filter(Boolean).join(" ")
+                  : [h.author ?? h.title, h.year && `(${h.year})`, `— ${h.section_count} events`].filter(Boolean).join(" ")}
               </option>
             ))}
           </select>

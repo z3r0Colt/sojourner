@@ -119,7 +119,8 @@ export function SermonsView() {
       wide
     >
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <div className="relative min-w-0 flex-1">
+        {/* At least 14rem, or the filters squeeze it to a letter on a phone. */}
+        <div className="relative min-w-0 flex-[1_1_14rem]">
           <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-4" aria-hidden="true" />
           <input
             value={query}
