@@ -56,13 +56,16 @@ self.addEventListener("fetch", (event) => {
     (async () => {
       const app = await caches.open(APP);
       // The app is a hash-routed single page: every navigation is "/".
-      const kept = await app.match(request.mode === "navigate" ? "/" : request, { ignoreSearch: request.mode === "navigate" });
+      // `ignoreVary`: a server that answers `Vary: Origin` (vite preview)
+      // would otherwise keep a module import, which sends an Origin, from
+      // matching the file kept without one. Every file here has its own name.
+      const kept = await app.match(request.mode === "navigate" ? "/" : request, { ignoreSearch: request.mode === "navigate", ignoreVary: true });
       if (kept) return kept;
 
       // The Atlas's data and other files fetched on demand: kept as read
       // (and refreshed in the background).
       const runtime = await caches.open(RUNTIME);
-      const seen = await runtime.match(request);
+      const seen = await runtime.match(request, { ignoreVary: true });
       const fetching = fetch(request).then((response) => {
         if (response.ok) runtime.put(request, response.clone());
         return response;

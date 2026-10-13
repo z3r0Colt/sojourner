@@ -82,32 +82,39 @@ thread_local! {
     /// The page runs fetched since the last reset, as SQLite numbers them,
     /// and whether each was a hot segment: for the harness.
     static LOG: RefCell<Vec<(u64, u64, bool)>> = const { RefCell::new(Vec::new()) };
-    /// content.db's downloaded pieces, by index: open for reading, each
-    /// checked against the manifest's SHA-256 before it got here.
-    static OFFLINE: RefCell<HashMap<usize, web_sys::FileSystemSyncAccessHandle>> = RefCell::new(HashMap::new());
+    /// Downloaded pieces, by file (content.db, a shelf's database) and
+    /// index: open for reading, each checked against the manifest's SHA-256
+    /// before it got here.
+    static OFFLINE: RefCell<HashMap<String, HashMap<usize, web_sys::FileSystemSyncAccessHandle>>> = RefCell::new(HashMap::new());
 }
 
-/// Reads content.db's piece `index` from the offline copy from now on.
-/// Takes the open handle (the download's own, or one opened at start).
-pub fn offline_add(index: usize, handle: web_sys::FileSystemSyncAccessHandle) {
-    if let Some(old) = OFFLINE.with(|o| o.borrow_mut().insert(index, handle)) {
+/// Reads `name`'s piece `index` from its offline copy from now on. Takes
+/// the open handle (the download's own, or one opened at start).
+pub fn offline_add(name: &str, index: usize, handle: web_sys::FileSystemSyncAccessHandle) {
+    if let Some(old) = OFFLINE.with(|o| o.borrow_mut().entry(name.to_string()).or_default().insert(index, handle)) {
         old.close();
     }
 }
 
-/// Lets go of the offline copy (closing its files, so they can be deleted).
-pub fn offline_clear() {
-    for (_, h) in OFFLINE.with(|o| std::mem::take(&mut *o.borrow_mut())) {
+/// Lets go of `name`'s offline copy (closing its files, so they can be
+/// deleted).
+pub fn offline_clear(name: &str) {
+    let gone = OFFLINE.with(|o| o.borrow_mut().remove(name)).unwrap_or_default();
+    for (_, h) in gone {
         h.close();
     }
 }
 
-/// Bytes `offset..offset + buf.len()` of the downloaded piece `index`, if
-/// it is there; an error if it reads short.
-fn offline_read(index: usize, offset: u64, buf: &mut [u8]) -> Option<Result<(), String>> {
+fn offline_has(name: &str, index: usize) -> bool {
+    OFFLINE.with(|o| o.borrow().get(name).is_some_and(|f| f.contains_key(&index)))
+}
+
+/// Bytes `offset..offset + buf.len()` of `name`'s downloaded piece
+/// `index`, if it is there; an error if it reads short.
+fn offline_read(name: &str, index: usize, offset: u64, buf: &mut [u8]) -> Option<Result<(), String>> {
     OFFLINE.with(|o| {
         let o = o.borrow();
-        let h = o.get(&index)?;
+        let h = o.get(name)?.get(&index)?;
         Some(match h.read_with_u8_array_and_options(buf, &crate::pagecache::at(offset as f64)) {
             Ok(n) if n as usize == buf.len() => Ok(()),
             Ok(n) => Err(format!("the offline copy of piece {index} is short: {n} bytes at {offset}")),
@@ -221,7 +228,7 @@ pub fn open_file(name: &str, base: &str, manifest: &Manifest, disk: Option<PageC
         state: RefCell::new(FileState::default()),
         pinned: RefCell::new(HashMap::new()),
         disk: RefCell::new(disk),
-        offline: name == "content.db",
+        name: name.to_string(),
     });
     FILES.with(|f| f.borrow_mut().insert(name.to_string(), file));
     Ok(())
@@ -256,8 +263,8 @@ pub struct HttpFile {
     /// Blocks loaded from the skeleton file; never evicted.
     pinned: RefCell<HashMap<u64, Vec<u8>>>,
     disk: RefCell<Option<PageCache>>,
-    /// Whether this is the file the offline copy is of (content.db).
-    offline: bool,
+    /// The name it was opened under, which its offline copy is kept by.
+    name: String,
 }
 
 impl HttpFile {
@@ -276,7 +283,7 @@ impl HttpFile {
         st.blocks.contains_key(&b)
             || self.pinned.borrow().contains_key(&b)
             || self.on_disk(b)
-            || (self.offline && OFFLINE.with(|o| o.borrow().contains_key(&((b / self.chunk_blocks) as usize))))
+            || offline_has(&self.name, (b / self.chunk_blocks) as usize)
     }
 
     fn insert(st: &mut FileState, b: u64, data: Vec<u8>) {
@@ -308,7 +315,7 @@ impl HttpFile {
             }
             // The offline copy: the run of blocks the read wants, up to the
             // end of the piece.
-            if self.offline {
+            {
                 let chunk = (b / self.chunk_blocks) as usize;
                 let chunk_last = (chunk as u64 + 1) * self.chunk_blocks - 1;
                 let mut e = b;
@@ -317,7 +324,7 @@ impl HttpFile {
                 }
                 let end = ((e + 1) * self.block).min(self.size);
                 let mut buf = vec![0u8; (end - b * self.block) as usize];
-                if let Some(read) = offline_read(chunk, (b % self.chunk_blocks) * self.block, &mut buf) {
+                if let Some(read) = offline_read(&self.name, chunk, (b % self.chunk_blocks) * self.block, &mut buf) {
                     read?;
                     bump(|s| s.offline_hits += 1);
                     for (i, page) in buf.chunks(self.block as usize).enumerate() {
@@ -542,7 +549,7 @@ pub fn preload(name: &str, base: &str, skeleton: &SkeletonInfo) -> Result<(), St
         return Ok(());
     }
     let stored = file.disk.borrow().as_ref().and_then(|d| d.skeleton(len));
-    let stored = stored.or_else(|| if file.offline { skeleton_offline(&file, &skeleton.pages) } else { None });
+    let stored = stored.or_else(|| skeleton_offline(&file, &skeleton.pages));
     let body = match stored.filter(|b| hex(&Sha256::digest(b)) == skeleton.sha256) {
         Some(b) => b,
         None => {
@@ -572,7 +579,7 @@ fn skeleton_offline(file: &HttpFile, pages: &[u64]) -> Option<Vec<u8>> {
     for (i, &p) in pages.iter().enumerate() {
         let b = p - 1;
         let piece = (b / file.chunk_blocks) as usize;
-        offline_read(piece, (b % file.chunk_blocks) * file.block, &mut body[i * ps..(i + 1) * ps])?.ok()?;
+        offline_read(&file.name, piece, (b % file.chunk_blocks) * file.block, &mut body[i * ps..(i + 1) * ps])?.ok()?;
     }
     Some(body)
 }
@@ -630,12 +637,10 @@ impl HttpFile {
         if let Some(v) = self.pinned.borrow().get(&b) {
             return Some(v.clone());
         }
-        if self.offline {
-            let piece = (b / self.chunk_blocks) as usize;
-            let mut buf = vec![0u8; self.block as usize];
-            if let Some(Ok(())) = offline_read(piece, (b % self.chunk_blocks) * self.block, &mut buf) {
-                return Some(buf);
-            }
+        let piece = (b / self.chunk_blocks) as usize;
+        let mut buf = vec![0u8; self.block as usize];
+        if let Some(Ok(())) = offline_read(&self.name, piece, (b % self.chunk_blocks) * self.block, &mut buf) {
+            return Some(buf);
         }
         self.disk.borrow_mut().as_mut().and_then(|d| d.get(b))
     }

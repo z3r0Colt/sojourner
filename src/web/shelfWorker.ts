@@ -7,6 +7,7 @@
  * with their data.
  */
 import { call, shelf_attach, shelf_remove, shelves_sync } from "@sojourner/wasm";
+import { dropShelfOffline, openShelfOffline } from "./offlineCopy";
 import type { StartConfig } from "./protocol";
 
 const SETTING = "web_shelves";
@@ -50,7 +51,10 @@ async function attach(shelves: StartConfig["shelves"], id: string): Promise<void
   const entry = shelves.list.find((s) => s.id === id);
   if (!entry) throw `This version of Sojourner doesn't know the ${id} shelf.`;
   const base = `${shelves.base}${id}/${entry.version}/`;
-  await shelf_attach(id, base, await manifestText(`${base}manifest.json`), CACHE_MB);
+  const manifest = await manifestText(`${base}manifest.json`);
+  // First, so the database's pages come from a copy kept on the device.
+  await openShelfOffline(id, JSON.parse(manifest), base);
+  await shelf_attach(id, base, manifest, CACHE_MB);
 }
 
 /** At start: attaches the shelves the reader added, then brings the book
@@ -81,6 +85,7 @@ export async function shelfOp(shelves: StartConfig["shelves"], op: "add" | "remo
   } else {
     shelf_remove(id);
     save(ids.filter((i) => i !== id));
+    await dropShelfOffline(id);
     // The pages it cached are no use to anything now.
     try {
       const root = await navigator.storage.getDirectory();

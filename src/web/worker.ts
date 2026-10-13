@@ -55,7 +55,7 @@ scope.onmessage = async (e) => {
     return;
   }
   if (m.kind === "offline") {
-    await offlineOp(m.op);
+    await offlineOp(m.op, m.target);
     return;
   }
   if (m.kind === "shelf") {

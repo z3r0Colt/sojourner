@@ -359,35 +359,38 @@ pub fn import_user_db(bytes: &[u8]) -> Result<(), String> {
     .map_err(error_json)
 }
 
-// ---- The offline copy of content.db (src/web/offline.ts) ------------------
+// ---- Offline copies (src/web/offlineCopy.ts) -------------------------------
+//
+// `file` is the name the database is opened under: content.db, or a shelf's
+// (`shelf-<id>.db`, shelves::vfs_name).
 
-/// From now on, reads content.db's piece `index` from `handle`: a file in
-/// the browser's private files the worker has downloaded and checked. Its
+/// From now on, reads `file`'s piece `index` from `handle`: a file in the
+/// browser's private files the worker has downloaded and checked. Its
 /// handle is the VFS's from here on, which closes it.
 #[wasm_bindgen]
-pub fn offline_add(index: usize, handle: web_sys::FileSystemSyncAccessHandle) {
-    httpvfs::offline_add(index, handle);
+pub fn offline_add(file: &str, index: usize, handle: web_sys::FileSystemSyncAccessHandle) {
+    httpvfs::offline_add(file, index, handle);
 }
 
-/// Closes every piece of the offline copy, so its files can be deleted;
-/// content.db is read over the network again.
+/// Closes every piece of `file`'s offline copy, so its files can be
+/// deleted; it is read over the network again.
 #[wasm_bindgen]
-pub fn offline_clear() {
-    httpvfs::offline_clear();
+pub fn offline_clear(file: &str) {
+    httpvfs::offline_clear(file);
 }
 
-/// Empties the persistent page cache: once the offline copy is whole, what
-/// it holds is kept twice.
+/// Empties `file`'s persistent page cache: once its offline copy is whole,
+/// what it holds is kept twice.
 #[wasm_bindgen]
-pub fn page_cache_clear() {
-    httpvfs::disk_clear("content.db");
+pub fn page_cache_clear(file: &str) {
+    httpvfs::disk_clear(file);
 }
 
-/// The bytes the persistent page cache holds (0 without one): what
+/// The bytes `file`'s persistent page cache holds (0 without one): what
 /// emptying it would give back.
 #[wasm_bindgen]
-pub fn page_cache_bytes() -> f64 {
-    httpvfs::disk_usage("content.db").map_or(0.0, |(_, bytes)| bytes as f64)
+pub fn page_cache_bytes(file: &str) -> f64 {
+    httpvfs::disk_usage(file).map_or(0.0, |(_, bytes)| bytes as f64)
 }
 
 /// SHA-256, fed a piece at a time as it downloads (Web Crypto has no

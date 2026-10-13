@@ -76,22 +76,25 @@ async function config(): Promise<StartConfig> {
   return { contentBase: base, manifest, appVersion: import.meta.env.VITE_APP_VERSION, prefetch, shelves: shelfConfig() };
 }
 
-let offlineStatus: OfflineStatus | null = null;
-const offlineListeners = new Set<(s: OfflineStatus) => void>();
+const offlineStatus = new Map<string, OfflineStatus>();
+const offlineListeners = new Set<{ target: string; listener: (s: OfflineStatus) => void }>();
 
-/** Calls `listener` with where "Make available offline" stands, now (if
- * known) and whenever it changes; returns the unsubscribe. */
-export function onOfflineStatus(listener: (s: OfflineStatus) => void): () => void {
-  offlineListeners.add(listener);
-  if (offlineStatus) listener(offlineStatus);
-  return () => offlineListeners.delete(listener);
+/** Calls `listener` with where an offline copy stands -- `target` "content"
+ * for the books, "shelf:<id>" for a library shelf -- now (if known) and
+ * whenever it changes; returns the unsubscribe. */
+export function onOfflineStatus(target: string, listener: (s: OfflineStatus) => void): () => void {
+  const entry = { target, listener };
+  offlineListeners.add(entry);
+  const now = offlineStatus.get(target);
+  if (now) listener(now);
+  return () => offlineListeners.delete(entry);
 }
 
-/** Starts or resumes the download of the books, pauses it, or deletes the
- * copy; the answer comes through `onOfflineStatus`. */
-export async function offlineOp(op: OfflineOp): Promise<void> {
+/** Starts or resumes a copy's download, pauses it, or deletes the copy;
+ * the answer comes through `onOfflineStatus`. */
+export async function offlineOp(op: OfflineOp, target = "content"): Promise<void> {
   await backendInfo();
-  worker?.postMessage({ kind: "offline", op } satisfies ToWorker);
+  worker?.postMessage({ kind: "offline", op, target } satisfies ToWorker);
 }
 
 function failAll(error: unknown) {
@@ -182,9 +185,9 @@ function boot(attempt = 0): Promise<StartInfo> {
           traceCall(m);
           break;
         case "offline":
-          offlineStatus = m.status;
-          if (import.meta.env.DEV) (window as { __sojournerOffline?: OfflineStatus }).__sojournerOffline = m.status;
-          for (const l of offlineListeners) l(m.status);
+          offlineStatus.set(m.target, m.status);
+          if (import.meta.env.DEV && m.target === "content") (window as { __sojournerOffline?: OfflineStatus }).__sojournerOffline = m.status;
+          for (const l of offlineListeners) if (l.target === m.target) l.listener(m.status);
           break;
       }
     };

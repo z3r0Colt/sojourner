@@ -15,11 +15,12 @@ declare module "@sojourner/wasm" {
   export function check_user_db(bytes: Uint8Array): string;
   /** Replaces user.db with the file and closes the connection. */
   export function import_user_db(bytes: Uint8Array): void;
-  /** Reads content.db's piece `index` from this downloaded, checked file
-   * from now on; the module owns (and closes) the handle. */
-  export function offline_add(index: number, handle: unknown): void;
-  /** Closes the offline copy's files: content.db is read over the network. */
-  export function offline_clear(): void;
+  /** Reads `file`'s piece `index` (content.db, or a shelf's `shelf-<id>.db`)
+   * from this downloaded, checked file from now on; the module owns (and
+   * closes) the handle. */
+  export function offline_add(file: string, index: number, handle: unknown): void;
+  /** Closes `file`'s offline copy: it is read over the network. */
+  export function offline_clear(file: string): void;
   /** The pages the last command stopped for (it threw "\u0001fetch-first"),
    * as JSON `[[url, firstByte, lastByte, firstBlock], ...]`. */
   export function fetch_plan(): string;
@@ -27,10 +28,10 @@ declare module "@sojourner/wasm" {
   export function prefetch_put(first: number, bytes: Uint8Array): void;
   /** Off: commands read their rows one at a time. */
   export function set_prefetch(on: boolean): void;
-  /** Empties the persistent page cache (keeping the skeleton). */
-  export function page_cache_clear(): void;
-  /** What the persistent page cache holds, in bytes. */
-  export function page_cache_bytes(): number;
+  /** Empties `file`'s persistent page cache (keeping the skeleton). */
+  export function page_cache_clear(file: string): void;
+  /** What `file`'s persistent page cache holds, in bytes. */
+  export function page_cache_bytes(file: string): number;
   /** Attaches a library shelf (its manifest.json text, at `base`); resolves
    * with JSON. Call `shelves_sync` once every shelf is attached. */
   export function shelf_attach(id: string, base: string, manifestJson: string, cacheMb: number): Promise<string>;

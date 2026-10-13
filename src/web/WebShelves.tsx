@@ -14,6 +14,7 @@ import { cardClass } from "../components/ui/classes";
 import { webMapPacks } from "./mapPacks";
 import { WEB_SHELVES } from "./shelves";
 import { shelfOp } from "./backend";
+import { OfflineRow } from "./WebOffline";
 
 /** Bytes as the reader would say them: "482 MB", "1.2 GB". */
 function formatBytes(bytes: number): string {
@@ -74,8 +75,8 @@ export default function WebShelves() {
     <div>
       <h2 className="mb-1 text-lg font-semibold text-ink">Library shelves</h2>
       <p className="mb-4 text-sm text-ink-3">
-        The book library comes as shelves you add. Nothing is downloaded when you add one: its catalogue and search index are read as you
-        use them, and a book when you open it. Open a book and press Keep on this device to read it without the internet.
+        The book library comes as shelves you add. Adding one downloads nothing: its books are read from the internet as you open them.
+        To read a whole shelf without the internet, press Download on it; for a single book, open it and press Keep on this device.
       </p>
 
       <ul className="space-y-2">
@@ -102,9 +103,12 @@ export default function WebShelves() {
                 )}
               </div>
               {has && (
-                <p className="mt-2 flex items-center gap-1.5 text-xs text-ink-3">
-                  <Check className="h-3.5 w-3.5" aria-hidden="true" /> Added
-                </p>
+                <div className="mt-2 border-t border-line pt-2">
+                  <p className="mb-1 flex items-center gap-1.5 text-xs text-ink-3">
+                    <Check className="h-3.5 w-3.5" aria-hidden="true" /> Added
+                  </p>
+                  <OfflineRow target={`shelf:${s.id}`} name={`${s.name} shelf`} what="its books" compact />
+                </div>
               )}
             </li>
           );
