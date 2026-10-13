@@ -64,3 +64,5 @@ dist-web
 
 # Python bytecode from the tools/ scripts
 __pycache__/
+
+.claude/settings.local.json
