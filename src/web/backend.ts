@@ -5,7 +5,7 @@
  */
 import pinnedContent from "./content.json";
 import { claimTab } from "./tabLock";
-import type { DataOp, FromWorker, StartConfig, StartInfo, ToWorker } from "./protocol";
+import type { DataOp, FromWorker, OfflineOp, OfflineStatus, StartConfig, StartInfo, ToWorker } from "./protocol";
 
 /** Where content.db's pieces and manifest are: in dev, content/web/ as the
  * dev server serves it (vite.config.ts); in a build, the content version
@@ -23,17 +23,71 @@ let nextId = 1;
 const pending = new Map<number, Pending>();
 const pendingData = new Map<number, { resolve: (v: { bytes?: Uint8Array; json?: string }) => void; reject: (e: unknown) => void }>();
 
+/** The content version last started with: in dev the content's version
+ * isn't in the URL, so this says which offline copy to look for. */
+const LAST_VERSION_KEY = "sojourner-content-version";
+
+/** The manifest an offline copy (offlineCopy.ts) keeps beside its pieces. */
+async function storedManifest(version: string | null): Promise<StartConfig["manifest"] | null> {
+  if (!version) return null;
+  try {
+    const top = await navigator.storage.getDirectory();
+    const dir = await (await top.getDirectoryHandle("sojourner-offline")).getDirectoryHandle(version);
+    const m = JSON.parse(await (await (await dir.getFileHandle("manifest.json")).getFile()).text());
+    return m?.version === version ? m : null;
+  } catch {
+    return null;
+  }
+}
+
 async function config(): Promise<StartConfig> {
   const base = new URL(CONTENT_BASE, window.location.href).href;
-  let manifest: StartConfig["manifest"];
+  const pinned = import.meta.env.DEV || import.meta.env.VITE_CONTENT_BASE ? null : pinnedContent.version;
+  let last: string | null = null;
   try {
-    const r = await fetch(new URL("manifest.json", base));
-    if (!r.ok) throw `HTTP ${r.status}`;
-    manifest = await r.json();
-  } catch (e) {
-    throw `Couldn't load the books from ${new URL(base).host} (${e instanceof Error ? e.message : String(e)}). Are you online?`;
+    last = localStorage.getItem(LAST_VERSION_KEY);
+  } catch {
+    /* no storage: no offline start in dev */
+  }
+  const stored = await storedManifest(pinned ?? last);
+  let manifest: StartConfig["manifest"];
+  if (stored && pinned) {
+    // A content version never changes, so the copy's manifest is the one on R2.
+    manifest = stored;
+  } else {
+    try {
+      const r = await fetch(new URL("manifest.json", base), stored ? { signal: AbortSignal.timeout(5000) } : {});
+      if (!r.ok) throw `HTTP ${r.status}`;
+      manifest = await r.json();
+    } catch (e) {
+      if (stored) manifest = stored;
+      else throw `Couldn't load the books from ${new URL(base).host} (${e instanceof Error ? e.message : String(e)}). Are you online?`;
+    }
+  }
+  try {
+    localStorage.setItem(LAST_VERSION_KEY, manifest.version);
+  } catch {
+    /* as above */
   }
   return { contentBase: base, manifest, appVersion: import.meta.env.VITE_APP_VERSION };
+}
+
+let offlineStatus: OfflineStatus | null = null;
+const offlineListeners = new Set<(s: OfflineStatus) => void>();
+
+/** Calls `listener` with where "Make available offline" stands, now (if
+ * known) and whenever it changes; returns the unsubscribe. */
+export function onOfflineStatus(listener: (s: OfflineStatus) => void): () => void {
+  offlineListeners.add(listener);
+  if (offlineStatus) listener(offlineStatus);
+  return () => offlineListeners.delete(listener);
+}
+
+/** Starts or resumes the download of the books, pauses it, or deletes the
+ * copy; the answer comes through `onOfflineStatus`. */
+export async function offlineOp(op: OfflineOp): Promise<void> {
+  await backendInfo();
+  worker?.postMessage({ kind: "offline", op } satisfies ToWorker);
 }
 
 function failAll(error: unknown) {
@@ -113,6 +167,11 @@ function boot(attempt = 0): Promise<StartInfo> {
           break;
         case "trace":
           traceCall(m);
+          break;
+        case "offline":
+          offlineStatus = m.status;
+          if (import.meta.env.DEV) (window as { __sojournerOffline?: OfflineStatus }).__sojournerOffline = m.status;
+          for (const l of offlineListeners) l(m.status);
           break;
       }
     };

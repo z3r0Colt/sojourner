@@ -287,3 +287,60 @@ pub fn import_user_db(bytes: &[u8]) -> Result<(), String> {
     })
     .map_err(error_json)
 }
+
+// ---- The offline copy of content.db (src/web/offline.ts) ------------------
+
+/// From now on, reads content.db's piece `index` from `handle`: a file in
+/// the browser's private files the worker has downloaded and checked. Its
+/// handle is the VFS's from here on, which closes it.
+#[wasm_bindgen]
+pub fn offline_add(index: usize, handle: web_sys::FileSystemSyncAccessHandle) {
+    httpvfs::offline_add(index, handle);
+}
+
+/// Closes every piece of the offline copy, so its files can be deleted;
+/// content.db is read over the network again.
+#[wasm_bindgen]
+pub fn offline_clear() {
+    httpvfs::offline_clear();
+}
+
+/// Empties the persistent page cache: once the offline copy is whole, what
+/// it holds is kept twice.
+#[wasm_bindgen]
+pub fn page_cache_clear() {
+    httpvfs::disk_clear("content.db");
+}
+
+/// The bytes the persistent page cache holds (0 without one): what
+/// emptying it would give back.
+#[wasm_bindgen]
+pub fn page_cache_bytes() -> f64 {
+    httpvfs::disk_usage("content.db").map_or(0.0, |(_, bytes)| bytes as f64)
+}
+
+/// SHA-256, fed a piece at a time as it downloads (Web Crypto has no
+/// incremental digest).
+#[wasm_bindgen]
+pub struct Hasher(sha2::Sha256);
+
+#[wasm_bindgen]
+impl Hasher {
+    #[wasm_bindgen(constructor)]
+    #[allow(clippy::new_without_default)]
+    pub fn new() -> Hasher {
+        use sha2::Digest;
+        Hasher(sha2::Sha256::new())
+    }
+
+    pub fn update(&mut self, bytes: &[u8]) {
+        use sha2::Digest;
+        self.0.update(bytes);
+    }
+
+    /// The digest in lowercase hex, as the manifest gives it.
+    pub fn finish(self) -> String {
+        use sha2::Digest;
+        self.0.finalize().iter().map(|b| format!("{b:02x}")).collect()
+    }
+}

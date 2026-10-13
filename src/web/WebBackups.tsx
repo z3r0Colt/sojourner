@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Download, ShieldCheck, Upload } from "lucide-react";
 import { api } from "../api/client";
 import { backendInfo } from "./backend";
+import WebOffline from "./WebOffline";
 import { Button } from "../components/ui/Button";
 import { confirmDialog } from "../components/ui/confirm";
 import { toast } from "../components/ui/toast";
@@ -138,6 +139,8 @@ export default function WebBackups() {
           </p>
         )}
       </div>
+
+      <WebOffline />
 
       <StatsSection />
       <TrashSection />

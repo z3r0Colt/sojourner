@@ -7,6 +7,7 @@
  * Calls are answered one at a time, in order, as they arrive.
  */
 import init, { call, check_user_db, export_user_db, http_stats, import_user_db, start } from "@sojourner/wasm";
+import { offlineOp, openOffline, resumeOffline } from "./offlineCopy";
 import type { FromWorker, ToWorker } from "./protocol";
 
 const scope = self as unknown as {
@@ -34,12 +35,19 @@ scope.onmessage = async (e) => {
   if (m.kind === "start") {
     try {
       await init();
+      // First, so the VFS reads what has been downloaded from the start.
+      await openOffline(m.config.manifest, m.config.contentBase, post);
       const info = JSON.parse(await start(JSON.stringify(m.config)));
       if (tracing) http_stats(true);
       post({ kind: "started", info });
+      resumeOffline();
     } catch (err) {
       post({ kind: "failed", error: parseError(err) });
     }
+    return;
+  }
+  if (m.kind === "offline") {
+    await offlineOp(m.op);
     return;
   }
   if (m.kind === "data") {

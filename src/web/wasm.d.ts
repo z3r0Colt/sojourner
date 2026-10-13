@@ -15,4 +15,20 @@ declare module "@sojourner/wasm" {
   export function check_user_db(bytes: Uint8Array): string;
   /** Replaces user.db with the file and closes the connection. */
   export function import_user_db(bytes: Uint8Array): void;
+  /** Reads content.db's piece `index` from this downloaded, checked file
+   * from now on; the module owns (and closes) the handle. */
+  export function offline_add(index: number, handle: unknown): void;
+  /** Closes the offline copy's files: content.db is read over the network. */
+  export function offline_clear(): void;
+  /** Empties the persistent page cache (keeping the skeleton). */
+  export function page_cache_clear(): void;
+  /** What the persistent page cache holds, in bytes. */
+  export function page_cache_bytes(): number;
+  /** Incremental SHA-256; `finish` gives lowercase hex and frees it. */
+  export class Hasher {
+    constructor();
+    update(bytes: Uint8Array): void;
+    finish(): string;
+    free(): void;
+  }
 }

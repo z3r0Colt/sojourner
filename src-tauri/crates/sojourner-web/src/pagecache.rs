@@ -43,15 +43,16 @@ pub struct PageCache {
     next: u32,
     index_len: f64,
     dirty: bool,
+    header: [u8; HEADER],
 }
 
-fn at(offset: f64) -> FileSystemReadWriteOptions {
+pub(crate) fn at(offset: f64) -> FileSystemReadWriteOptions {
     let o = FileSystemReadWriteOptions::new();
     o.set_at(offset);
     o
 }
 
-fn js_err(e: JsValue) -> String {
+pub(crate) fn js_err(e: JsValue) -> String {
     e.as_string()
         .or_else(|| e.dyn_ref::<js_sys::Error>().map(|e| String::from(e.message())))
         .unwrap_or_else(|| format!("{e:?}"))
@@ -109,6 +110,7 @@ impl PageCache {
             next: 0,
             index_len: 0.0,
             dirty: false,
+            header: Self::header(version, page_size),
         };
         cache.load(version)?;
         Ok(cache)
@@ -195,6 +197,20 @@ impl PageCache {
         self.index.flush().map_err(js_err)?;
         self.index_len = out.len() as f64;
         Ok(())
+    }
+
+    /// Drops every page, keeping the skeleton.
+    pub fn clear(&mut self) -> Result<(), String> {
+        self.slots.clear();
+        self.owner.clear();
+        self.next = 0;
+        self.dirty = false;
+        self.pages.truncate_with_f64(0.0).map_err(js_err)?;
+        self.index.truncate_with_f64(0.0).map_err(js_err)?;
+        self.index.write_with_u8_array_and_options(&self.header, &at(0.0)).map_err(js_err)?;
+        self.index_len = HEADER as f64;
+        self.pages.flush().map_err(js_err)?;
+        self.index.flush().map_err(js_err)
     }
 
     pub fn contains(&self, block: u64) -> bool {

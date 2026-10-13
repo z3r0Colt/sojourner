@@ -1393,6 +1393,7 @@ const ON_THE_WEB: Record<string, Partial<TutorialEntry>> = {
       "Keep exports somewhere safe, such as a cloud folder you trust: if the browser's data is cleared, the export is the only copy.",
       "A reminder appears when you have study data and have not exported in thirty days.",
       "Added to the home screen (or installed), the browser is far less likely to clear Sojourner's data than from a tab you open now and then.",
+      "To read without the internet, press Make available offline under Use without the internet: the books (about 870 MB) download once, with progress, and can be paused, resumed or removed. Until then, what you have read is kept, and the rest is read online.",
     ],
   },
 };

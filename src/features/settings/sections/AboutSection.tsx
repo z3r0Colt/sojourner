@@ -284,7 +284,8 @@ export function AboutSection() {
             <>
               Everything you write — notes, highlights, sermons, prayers — lives in this browser, on this device. There is no account and no sync
               service. The books are read from data.gentleking.org as you open them, which Cloudflare logs the way any web server does; nothing
-              about you is sent. Export your data any time from Settings → Data &amp; backups.
+              about you is sent. To read without the internet, download the books once from Settings → Data &amp; backups, where you can also
+              export your data any time.
             </>
           ) : (
             <>

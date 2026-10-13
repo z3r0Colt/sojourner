@@ -32,9 +32,28 @@ export type ToWorker =
   | { kind: "call"; id: number; cmd: string; args: string }
   /** The reader's own data as a file (user.db): `export` answers with its
    * bytes, `check` and `import` take the bytes of a file the reader chose. */
-  | { kind: "data"; id: number; op: DataOp; bytes?: Uint8Array };
+  | { kind: "data"; id: number; op: DataOp; bytes?: Uint8Array }
+  /** The offline copy of content.db (offlineCopy.ts): start or resume the
+   * download, pause it, or delete the copy. The worker answers with an
+   * `offline` status, as it does whenever the status changes. */
+  | { kind: "offline"; op: OfflineOp };
 
 export type DataOp = "export" | "check" | "import";
+
+export type OfflineOp = "download" | "pause" | "remove" | "status";
+
+/** Where "Make available offline" stands. `waiting`: the network failed
+ * and the download will try again by itself; `failed`: it won't (the
+ * reason is in `error`) until the reader asks again. */
+export type OfflineStatus = {
+  state: "none" | "downloading" | "paused" | "waiting" | "complete" | "failed";
+  /** Bytes of content.db downloaded and checked, or in a piece under way. */
+  done: number;
+  total: number;
+  pieces: number;
+  piecesDone: number;
+  error: string | null;
+};
 
 export type StartInfo = {
   /** False when the browser gave no private file storage: user.db is then
@@ -52,6 +71,7 @@ export type StartInfo = {
 
 export type FromWorker =
   | { kind: "started"; info: StartInfo }
+  | { kind: "offline"; status: OfflineStatus }
   | { kind: "failed"; error: unknown }
   /** `json`: the answer's JSON (`ok`), or the error's (not `ok`). */
   | { kind: "reply"; id: number; ok: boolean; json: string }

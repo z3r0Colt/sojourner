@@ -9,6 +9,11 @@
 //! On a miss, a page in one of the manifest's hot segments brings its whole
 //! segment (a small table read whole, a slice of an FTS docsize table);
 //! otherwise read-ahead doubles while SQLite reads forward.
+//!
+//! Ahead of all of these, the offline copy: pieces the reader downloaded
+//! with "Make available offline" (`src/web/offline.ts`), each SHA-256
+//! checked before it is handed over ([`offline_add`]), are read from the
+//! browser's files and never fetched or cached again.
 
 use crate::pagecache::PageCache;
 use rsqlite_vfs::ffi::*;
@@ -67,6 +72,7 @@ struct Stats {
     reads: u64,
     hits: u64,
     disk_hits: u64,
+    offline_hits: u64,
 }
 
 thread_local! {
@@ -76,6 +82,38 @@ thread_local! {
     /// The page runs fetched since the last reset, as SQLite numbers them,
     /// and whether each was a hot segment: for the harness.
     static LOG: RefCell<Vec<(u64, u64, bool)>> = const { RefCell::new(Vec::new()) };
+    /// content.db's downloaded pieces, by index: open for reading, each
+    /// checked against the manifest's SHA-256 before it got here.
+    static OFFLINE: RefCell<HashMap<usize, web_sys::FileSystemSyncAccessHandle>> = RefCell::new(HashMap::new());
+}
+
+/// Reads content.db's piece `index` from the offline copy from now on.
+/// Takes the open handle (the download's own, or one opened at start).
+pub fn offline_add(index: usize, handle: web_sys::FileSystemSyncAccessHandle) {
+    if let Some(old) = OFFLINE.with(|o| o.borrow_mut().insert(index, handle)) {
+        old.close();
+    }
+}
+
+/// Lets go of the offline copy (closing its files, so they can be deleted).
+pub fn offline_clear() {
+    for (_, h) in OFFLINE.with(|o| std::mem::take(&mut *o.borrow_mut())) {
+        h.close();
+    }
+}
+
+/// Bytes `offset..offset + buf.len()` of the downloaded piece `index`, if
+/// it is there; an error if it reads short.
+fn offline_read(index: usize, offset: u64, buf: &mut [u8]) -> Option<Result<(), String>> {
+    OFFLINE.with(|o| {
+        let o = o.borrow();
+        let h = o.get(&index)?;
+        Some(match h.read_with_u8_array_and_options(buf, &crate::pagecache::at(offset as f64)) {
+            Ok(n) if n as usize == buf.len() => Ok(()),
+            Ok(n) => Err(format!("the offline copy of piece {index} is short: {n} bytes at {offset}")),
+            Err(e) => Err(crate::pagecache::js_err(e)),
+        })
+    })
 }
 
 pub fn configure(readahead_max: usize, cache_bytes: usize) {
@@ -89,12 +127,13 @@ pub fn stats_reset() {
 
 /// The traffic since the last [`stats_reset`]: what the request-counting
 /// harness reports per command. `diskHits`: pages read from the
-/// persistent cache instead of the network.
+/// persistent cache instead of the network; `offlineHits`: reads served by
+/// the offline copy.
 pub fn stats() -> Value {
     let s = STATS.with(|s| s.get());
     json!({
         "requests": s.requests, "bytes": s.bytes, "xhr_ms": s.xhr_ms,
-        "reads": s.reads, "hits": s.hits, "diskHits": s.disk_hits,
+        "reads": s.reads, "hits": s.hits, "diskHits": s.disk_hits, "offlineHits": s.offline_hits,
         "log": LOG.with(|l| l.borrow().iter().take(500).map(|&(a, b, hot)| json!([a, b, hot])).collect::<Vec<_>>()),
     })
 }
@@ -182,6 +221,7 @@ pub fn open_file(name: &str, base: &str, manifest: &Manifest, disk: Option<PageC
         state: RefCell::new(FileState::default()),
         pinned: RefCell::new(HashMap::new()),
         disk: RefCell::new(disk),
+        offline: name == "content.db",
     });
     FILES.with(|f| f.borrow_mut().insert(name.to_string(), file));
     Ok(())
@@ -210,6 +250,8 @@ pub struct HttpFile {
     /// Blocks loaded from the skeleton file; never evicted.
     pinned: RefCell<HashMap<u64, Vec<u8>>>,
     disk: RefCell<Option<PageCache>>,
+    /// Whether this is the file the offline copy is of (content.db).
+    offline: bool,
 }
 
 impl HttpFile {
@@ -225,7 +267,10 @@ impl HttpFile {
 
     /// Whether block `b` can be had without the network.
     fn local(&self, st: &FileState, b: u64) -> bool {
-        st.blocks.contains_key(&b) || self.pinned.borrow().contains_key(&b) || self.on_disk(b)
+        st.blocks.contains_key(&b)
+            || self.pinned.borrow().contains_key(&b)
+            || self.on_disk(b)
+            || (self.offline && OFFLINE.with(|o| o.borrow().contains_key(&((b / self.chunk_blocks) as usize))))
     }
 
     fn insert(st: &mut FileState, b: u64, data: Vec<u8>) {
@@ -254,6 +299,27 @@ impl HttpFile {
                 Self::insert(&mut st, b, v.clone());
                 b += 1;
                 continue;
+            }
+            // The offline copy: the run of blocks the read wants, up to the
+            // end of the piece.
+            if self.offline {
+                let chunk = (b / self.chunk_blocks) as usize;
+                let chunk_last = (chunk as u64 + 1) * self.chunk_blocks - 1;
+                let mut e = b;
+                while e < last && e < chunk_last && !st.blocks.contains_key(&(e + 1)) {
+                    e += 1;
+                }
+                let end = ((e + 1) * self.block).min(self.size);
+                let mut buf = vec![0u8; (end - b * self.block) as usize];
+                if let Some(read) = offline_read(chunk, (b % self.chunk_blocks) * self.block, &mut buf) {
+                    read?;
+                    bump(|s| s.offline_hits += 1);
+                    for (i, page) in buf.chunks(self.block as usize).enumerate() {
+                        Self::insert(&mut st, b + i as u64, page.to_vec());
+                    }
+                    b = e + 1;
+                    continue;
+                }
             }
             let from_disk = self.disk.borrow_mut().as_mut().and_then(|d| d.get(b));
             if let Some(v) = from_disk {
@@ -470,6 +536,7 @@ pub fn preload(name: &str, base: &str, skeleton: &SkeletonInfo) -> Result<(), St
         return Ok(());
     }
     let stored = file.disk.borrow().as_ref().and_then(|d| d.skeleton(len));
+    let stored = stored.or_else(|| if file.offline { skeleton_offline(&file, &skeleton.pages) } else { None });
     let body = match stored.filter(|b| hex(&Sha256::digest(b)) == skeleton.sha256) {
         Some(b) => b,
         None => {
@@ -490,6 +557,32 @@ pub fn preload(name: &str, base: &str, skeleton: &SkeletonInfo) -> Result<(), St
         pinned.insert(skeleton.pages[i] - 1, chunk.to_vec());
     }
     Ok(())
+}
+
+/// The skeleton assembled from the offline copy, if it holds every page.
+fn skeleton_offline(file: &HttpFile, pages: &[u64]) -> Option<Vec<u8>> {
+    let ps = file.block as usize;
+    let mut body = vec![0u8; pages.len() * ps];
+    for (i, &p) in pages.iter().enumerate() {
+        let b = p - 1;
+        let piece = (b / file.chunk_blocks) as usize;
+        offline_read(piece, (b % file.chunk_blocks) * file.block, &mut body[i * ps..(i + 1) * ps])?.ok()?;
+    }
+    Some(body)
+}
+
+/// Empties `name`'s persistent page cache, keeping its skeleton: once the
+/// offline copy is whole, the pages it holds are kept twice.
+pub fn disk_clear(name: &str) {
+    FILES.with(|m| {
+        if let Some(f) = m.borrow().get(name) {
+            let mut disk = f.disk.borrow_mut();
+            if let Some(Err(e)) = disk.as_mut().map(|d| d.clear()) {
+                web_sys::console::warn_1(&format!("Sojourner's page cache is off: {e}").into());
+                *disk = None;
+            }
+        }
+    });
 }
 
 /// Makes the pages fetched so far durable: after every command.
