@@ -19,11 +19,14 @@ export function Page({
   return (
     <div className={cx("mx-auto w-full px-6 py-6", wide ? "max-w-5xl" : "max-w-3xl")}>
       <div className="mb-5 flex flex-wrap items-center gap-3">
-        <div className="min-w-0 flex-1">
+        {/* The title keeps at least 16rem; where the actions don't fit beside
+            that (a phone, a narrow pane) they go to the next line rather than
+            squeezing the title into a column of single words. */}
+        <div className="min-w-0 flex-[1_1_16rem]">
           <h1 className="text-xl font-semibold text-ink">{title}</h1>
           {lead && <p className="mt-0.5 text-sm text-ink-3">{lead}</p>}
         </div>
-        {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
+        {actions && <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2 [&>select]:min-w-0 [&>select]:max-w-full">{actions}</div>}
       </div>
       {children}
     </div>
