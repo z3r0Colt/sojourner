@@ -25,6 +25,18 @@ The installer is not yet code-signed, so Windows SmartScreen warns on first run:
 
 From 0.3.4 on, the installer is built by GitHub Actions from the source in this repository (`.github/workflows/release.yml`), not on anyone's own computer. The library packs are built separately and attached to the release by hand.
 
+## Sojourner on the web
+
+The same app also runs in a browser, on phones, tablets and computers, at **app.gentleking.org**. It is a progressive web app: nothing to install from a store, and *Add to Home Screen* (iPhone, iPad) or *Install* (Chrome, Edge) gives it its own icon and window.
+
+- **Your data stays on your device.** Notes, highlights, prayers and sermons are kept in your browser's private storage, as the desktop app keeps them in a file. There are no accounts and no sync. Settings → Data & backups exports everything to a file (the same format as the desktop app's, so it goes either way) and imports it again. Safari can clear a site's data after a few weeks without a visit unless the app is on the home screen, so export now and then; the app reminds you.
+- **The books are read as you go.** The Bibles, commentaries, lexicons and reference works are fetched from `data.gentleking.org` in small pieces as you open them, and kept on the device once read. Settings → Data & backups → *Use without the internet* downloads all of it (about 900 MB) so the app works with no connection. Cloudflare, which hosts both addresses, logs requests the way any web host does; the app sends nothing about you.
+- **Library shelves** (Puritans, Church Fathers and the rest) are added from Settings and read online; *Keep on this device* stores a single book. The Atlas has its terrain and satellite maps built in.
+- **One tab at a time**: the app's storage allows only one open copy, and a second tab says so and offers to take over.
+- **Left out**: Other devices, the offline neural voice (the browser's own voices read aloud instead), backups to a folder, and your own audio, video and MOBI files. Adding your own EPUB and PDF books works; they stay in the browser and are not part of an export.
+
+The Windows and Linux installers are unchanged and remain the way to have everything on your own computer.
+
 ## What is included
 
 - **Thirteen English Bible translations**: King James (1769), American Standard (1901), Young's Literal, Darby, Webster's, Geneva (1599), Douay-Rheims, Tyndale, the World English Bible, and four modern ones free to share: the Berean Standard Bible, the Literal Standard Version, and unfoldingWord's Literal and Simplified Texts. Translations you own can be added from Zefania XML.
@@ -178,6 +190,19 @@ Before a release, the checks against real data: the operator search on the KJV, 
 ```
 cargo test --release --lib --manifest-path src-tauri/Cargo.toml -- --ignored
 ```
+
+### The web version
+
+Needs the desktop prerequisites plus the `wasm32-unknown-unknown` Rust target, LLVM's `clang` and `llvm-ar`, and `wasm-bindgen-cli` at the version pinned in `src-tauri/crates/sojourner-web/Cargo.toml`.
+
+```
+npm run build:wasm            # the Rust backend as WebAssembly
+npm run build:content:web     # content/web/: content.db in pieces, manifest.json (uploaded to R2 by hand: npm run upload:content:web)
+npm run dev:web               # port 1420; reads the books from src/web/content.json's address, or VITE_CONTENT_BASE
+npm run build:web             # dist-web/, with the service worker and headers
+```
+
+`.github/workflows/web.yml` builds the app and deploys it to Cloudflare Pages on pushes to `pwa` and `master`; it does not rebuild the content, which is uploaded separately and pinned in `src/web/content.json` (shelves and maps in `shelves.json` and `maps.json`).
 
 ## Build
 
