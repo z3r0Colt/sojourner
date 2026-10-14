@@ -5,7 +5,7 @@ members = ["crates/sojourner-core", "crates/sojourner-web"]
 
 [package]
 name = "tauri-app"
-version = "0.4.2"
+version = "0.4.3"
 description = "Offline Bible study and sermon preparation"
 authors = ["Colt McClish"]
 edition = "2021"
