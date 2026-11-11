@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { onDesktop, onWeb, openUrl } from "../../../lib/platform";
+import analytics from "../../../web/analytics.json";
 import { create } from "zustand";
 import { Check, Download, Globe, Mail, RefreshCw } from "lucide-react";
 import { api } from "../../../api/client";
@@ -21,6 +22,11 @@ const WebInstall = import.meta.env.VITE_TARGET === "web" ? lazy(() => import("..
 /** An external link. `target="_blank"` inside a webview can navigate the app
  * window itself out of the app, so hand the URL to the system browser (the
  * same route NoteBody takes for links in a note). */
+/** The web build counts visits with Cloudflare Web Analytics when
+ * src/web/analytics.json holds a site token (tools/vite-web-pwa.ts,
+ * VISIT_PAGE). About says so exactly when it is so. */
+const countsVisits = analytics.token !== "";
+
 function ExternalLink({ href, children }: { href: string; children: React.ReactNode }) {
   return (
     <a
@@ -283,9 +289,9 @@ export function AboutSection() {
           {onWeb ? (
             <>
               Everything you write — notes, highlights, sermons, prayers — lives in this browser, on this device. There is no account and no sync
-              service. The books are read from data.gentleking.org as you open them, which Cloudflare logs the way any web server does; nothing
-              about you is sent. To read without the internet, download the books once from Settings → Data &amp; backups, where you can also
-              export your data any time.
+              service. The books are read from data.gentleking.org as you open them, which Cloudflare logs the way any web server does
+              {countsVisits ? "." : "; nothing about you is sent."} To read without the internet, download the books once from Settings → Data
+              &amp; backups, where you can also export your data any time.
             </>
           ) : (
             <>
@@ -294,6 +300,13 @@ export function AboutSection() {
             </>
           )}
         </p>
+        {onWeb && countsVisits && (
+          <p>
+            The web app uses Cloudflare Web Analytics to count visits and see which devices and browsers people use, so we know what to fix
+            first. It sets no cookies and does not track you across sites, and it is not told what you read, search for or write. The Windows
+            and Linux apps have no analytics at all.
+          </p>
+        )}
         <p>
           Included are multiple Bible translations, a timeline of the biblical events, classic commentaries (Matthew Henry, Jamieson-Fausset-Brown, Spurgeon's Treasury of David, and others),
           the Westminster Standards, Strong's lexicon with interlinear Hebrew and Greek, a Bible dictionary and encyclopedia, Webster's 1828 dictionary of the English language, an atlas of the biblical world,
