@@ -54,21 +54,23 @@ says otherwise.
 
 | # | Decision | Recommended |
 |---|---|---|
-| D1 | What the analytics may see | Visits only, with page tracking off |
+| D1 | What the analytics may see | Visits only, from a page of its own |
 | D2 | Cloudflare's bot-detection script | Turn it off in the dashboard |
 | D3 | The question at the door (Phase 2) | Yes, with a "show me everything" answer |
 | D4 | Fold Lexicon, Dictionary, Encyclopedia and Factbook under one "Look up" | Yes, as a group that opens, not a merged page |
 
-**D1 in full.** Cloudflare's beacon, left to itself, reports every address the
-app visits, and the app's address mirrors what is on screen. A search rides in
-it (`/search?q=justified+by+faith`), as do lexicon entries, encyclopedia
-articles and Factbook pages (`routeFor` in `src/workspace/paneKinds.ts`). That
-is more than "count visits and see which devices and browsers people use". The
-recommended course is to place the beacon ourselves with `"spa": false`, so it
-reports one page load and nothing after. This needs Colt to copy the site token
-from the Cloudflare dashboard (Web Analytics, the site, "manual setup") and to
-switch off automatic injection there. The token is public by nature and safe to
-commit.
+**D1 in full.** (Corrected after testing the beacon itself.) The first draft
+of this plan said a search would ride out in the address. It would not: the web
+app is a hash router, and the beacon drops what follows a `#` or a `?`, so in
+the app's own page it would report only "/". But that rests on a habit of
+Cloudflare's script. Given real paths it reports each one, the last of them
+even with `"spa": false`. So Phase 1 runs the beacon in a blank page of its own
+(`/visit.html`) held in a hidden frame, where it has nothing to report but the
+visit, the browser and the device. The cost is that Cloudflare shows no
+page-speed figures for the app. This needs Colt to copy the site token from the
+Cloudflare dashboard (Web Analytics, the site, "manual setup") into
+`src/web/analytics.json`, and to switch off automatic injection there so
+visits are not counted twice. The token is public by nature and safe to commit.
 
 **D2 in full.** The live page also carries an inline script from Cloudflare's
 JavaScript Detections (the `__CF$cv$params` block, part of Bot Fight Mode). It
@@ -88,9 +90,12 @@ Small, low risk, no change to how the app is used.
   wider. Both are already compatible with the page's cross-origin isolation
   (the script is served `Cross-Origin-Resource-Policy: cross-origin`, and the
   report endpoint answers CORS for the app's origin).
-- Per D1, add the beacon tag in the web build only (the `tags` list in
-  `transformIndexHtml`), with `"spa": false`. The desktop page gains nothing.
-- The service worker already leaves other origins alone (`web-public/sw.js:53`).
+- Per D1, the web build writes `visit.html` (the beacon, `"spa": false`) and a
+  hidden frame for it in `index.html`, only when `src/web/analytics.json` has a
+  token. The policy opens to Cloudflare only then. The desktop page gains
+  nothing.
+- `web-public/sw.js` answers every navigation with the app, a frame included,
+  so it leaves `/visit.html` to the network.
 - Add a test beside the plugin that the policy names exactly these two hosts
   and that the desktop build's `index.html` carries no beacon.
 
