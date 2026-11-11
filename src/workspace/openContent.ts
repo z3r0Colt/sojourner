@@ -244,6 +244,51 @@ export function keepsItsPlace(pane: Pane, kind: PaneKind, params: Partial<Params
   return !(kind === "sermon" && (params as { id?: number }).id === pane.params.id);
 }
 
+/** A pane this narrow or narrower cannot hold a page: Settings beside its
+ * list of sections, a dictionary beside its headwords. A study column
+ * opened from the strip is about 350 to 450. */
+export const PAGE_MIN_PX = 640;
+
+/** A page in its own right (Settings, the Encyclopedia, Guided study), as
+ * against a column that sits beside the text (a commentary, cross
+ * references, the timeline for a passage: weights of 520 and under). */
+export function isPageKind(kind: PaneKind): boolean {
+  return PANE_KINDS[kind].defaultWidth > 520;
+}
+
+function measuredWidth(paneId: string): number {
+  if (typeof document === "undefined") return 0;
+  return document.querySelector<HTMLElement>(`[data-pane-id="${paneId}"]`)?.getBoundingClientRect().width ?? 0;
+}
+
+/**
+ * Where a page asked for from outside the panes (the sidebar, Go to, the
+ * address) should land when the focused pane is too narrow to hold it: the
+ * widest pane on screen, if that is wider. `null` to leave it in the
+ * focused pane, which is where every jump went before, and still goes when
+ * that pane has the room.
+ *
+ * It was a trap for a newcomer: with a commentary open beside the text and
+ * last clicked, Settings, Resources and Guided study each opened squeezed
+ * into the commentary's column.
+ *
+ * A sermon being written is never the pane chosen (see `keepsItsPlace`),
+ * and a tab that is not showing has no width, so it is not chosen either.
+ */
+export function paneForPage(panes: readonly Pane[], focusedId: string, kind: PaneKind, widthOf: (paneId: string) => number = measuredWidth): string | null {
+  if (!isPageKind(kind)) return null;
+  const focusedWidth = widthOf(focusedId);
+  // Not on screen to be measured (a test, a pane not yet laid out): no opinion.
+  if (focusedWidth <= 0 || focusedWidth >= PAGE_MIN_PX) return null;
+  let best: { id: string; width: number } | null = null;
+  for (const p of panes) {
+    if (p.id === focusedId || p.kind === "sermon") continue;
+    const width = widthOf(p.id);
+    if (width > focusedWidth && (!best || width > best.width)) best = { id: p.id, width };
+  }
+  return best?.id ?? null;
+}
+
 export function openContent<K extends PaneKind>(kind: K, params: Partial<ParamsOf<K>>, opts: OpenOptions = {}): void {
   const target = opts.target ?? "focused";
   const store = useWorkspaceStore.getState();
@@ -278,6 +323,11 @@ export function openContent<K extends PaneKind>(kind: K, params: Partial<ParamsO
       if (focused && keepsItsPlace(focused, kind, params) && store.panes.length < MAX_PANES) {
         openContent(kind, params, { ...opts, target: "new", from: focused.id, asTab: true });
         return;
+      }
+      // A page lands where there is room for it, not in a study column.
+      if (focused && !isCompact()) {
+        const roomier = paneForPage(store.panes, focused.id, kind);
+        if (roomier) paneId = roomier;
       }
       // A phone shows one pane at a time, so a jump away from the text
       // would lose the reader's place in it: it goes to a pane of its kind
