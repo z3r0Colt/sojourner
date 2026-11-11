@@ -23,8 +23,20 @@
 (function () {
   "use strict";
 
-  /** The splash shows for at least this long. */
-  var MIN_MS = 3000;
+  /** The splash shows for at least this long: on the first launch, long
+   * enough to read its verse; on every launch after, about a second, since
+   * a pause repeated at every opening of the app is one the reader pays for
+   * each time. `sj-launched` is set below, once the first splash has left. */
+  var FIRST_MS = 3000;
+  var LATER_MS = 1200;
+  var launchedBefore = (function () {
+    try {
+      return localStorage.getItem("sj-launched") === "1";
+    } catch (e) {
+      return false;
+    }
+  })();
+  var MIN_MS = launchedBefore ? LATER_MS : FIRST_MS;
   /** ...and never for longer than this, ready or not. */
   var MAX_MS = 60000;
   /** How long the fade out runs; must match the transition in index.html. */
@@ -157,6 +169,11 @@
   function dismiss() {
     if (leaving) return;
     leaving = true;
+    try {
+      localStorage.setItem("sj-launched", "1");
+    } catch (e) {
+      /* private browsing: the full pause every time is the worst of it */
+    }
     if (!splash) return;
     splash.setAttribute("aria-busy", "false");
 
