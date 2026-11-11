@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ALL_ROUTES, NAV_GROUPS } from "../../layout/nav";
+import { ALL_ROUTES } from "../../layout/nav";
 import { parseRoute } from "../../workspace/paneKinds";
 import { PRESET_WORKSPACES } from "../../workspace/presets";
 import { ALWAYS_SHOWN, PURPOSES, landingFor, pagesFor, shouldAsk, shownPages, workspaceFor, type Purpose } from "./purpose";
@@ -10,11 +10,6 @@ describe("the sidebar's pages", () => {
   it("are each a page the app can open, and none is listed twice", () => {
     expect(new Set(ALL_ROUTES).size).toBe(ALL_ROUTES.length);
     for (const route of ALL_ROUTES) expect(parseRoute(route), route).not.toBeNull();
-  });
-
-  it("keep the three groups the tour points at", () => {
-    const groups = NAV_GROUPS.map((g) => g.id);
-    for (const id of ["library", "notebook", "devotion"]) expect(groups).toContain(id);
   });
 });
 

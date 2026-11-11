@@ -110,17 +110,22 @@ export function VerseContextMenu({
             );
           })}
         </div>
+        {/* `data-tour`: the first-run tour points at these two (TourOverlay). */}
         {onOpenCommentary && (
-          <PopoverItem onClick={run(onOpenCommentary)}>
-            <MessageSquareText className="h-4 w-4 text-ink-3" aria-hidden="true" /> Commentary on this verse
-          </PopoverItem>
+          <div data-tour="verse-commentary">
+            <PopoverItem onClick={run(onOpenCommentary)}>
+              <MessageSquareText className="h-4 w-4 text-ink-3" aria-hidden="true" /> Commentary on this verse
+            </PopoverItem>
+          </div>
         )}
         <PopoverItem onClick={run(() => onUnderline(UNDERLINE_COLOR))}>
           <Underline className="h-4 w-4 text-ink-3" aria-hidden="true" /> Underline verse
         </PopoverItem>
-        <PopoverItem onClick={run(onNote)}>
-          <StickyNote className="h-4 w-4 text-ink-3" aria-hidden="true" /> Add a note
-        </PopoverItem>
+        <div data-tour="verse-note">
+          <PopoverItem onClick={run(onNote)}>
+            <StickyNote className="h-4 w-4 text-ink-3" aria-hidden="true" /> Add a note
+          </PopoverItem>
+        </div>
         <PopoverItem onClick={run(onCopy)}>
           <Copy className="h-4 w-4 text-ink-3" aria-hidden="true" /> Copy verse
         </PopoverItem>

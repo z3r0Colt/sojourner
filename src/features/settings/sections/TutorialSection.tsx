@@ -1,5 +1,5 @@
 import { useMemo, useState, type ReactNode } from "react";
-import { ChevronDown, ExternalLink, Footprints } from "lucide-react";
+import { ChevronDown, ExternalLink, Footprints, Keyboard } from "lucide-react";
 import { Button } from "../../../components/ui/Button";
 import { Kbd } from "../../../components/ui/Page";
 import { cx, inputClass } from "../../../components/ui/classes";
@@ -7,6 +7,7 @@ import { openContent, openPassage } from "../../../workspace/openContent";
 import { usePane } from "../../../workspace/PaneContext";
 import { parseRoute } from "../../../workspace/paneKinds";
 import { startTour } from "../../onboarding/tourStore";
+import { ShortcutsModal } from "../../../layout/ShortcutsModal";
 import { TUTORIAL, entryText, type TutorialEntry, type TutorialLink } from "./tutorialContent";
 
 /** `[Ctrl]+[K]` in the content renders as key caps. */
@@ -95,6 +96,7 @@ function Entry({ entry }: { entry: TutorialEntry }) {
 
 export function TutorialSection() {
   const [query, setQuery] = useState("");
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const q = query.trim().toLowerCase();
   const shown = useMemo(() => {
     if (!q) return TUTORIAL;
@@ -105,27 +107,43 @@ export function TutorialSection() {
 
   return (
     <div>
-      <h2 className="mb-1 text-lg font-semibold text-ink">Tutorial</h2>
+      <h2 className="mb-1 text-lg font-semibold text-ink">Help</h2>
       <p className="mb-4 text-sm text-ink-3">
         Everything this app can do, by area: what each thing is, the steps to do it, and where it lives. Links open beside this page so you can follow the steps while you read; <Kbd>Ctrl</Kbd>+click a link to open it here instead.
       </p>
-      <div className="mb-5 flex flex-wrap items-center gap-3 rounded-lg border border-line bg-surface px-3 py-2.5">
-        <div className="min-w-0 flex-1 text-sm">
-          <div className="font-medium text-ink">The nine-step tour</div>
-          <div className="text-xs text-ink-3">Opens the Bible and points out the Go to button, a verse, the Add pane strip, a pane header, the layout button, the sidebar groups, and Settings.</div>
+      {/* The three ways to learn the app, in one place: the tour, the
+          shortcuts, and the tutorial below them. */}
+      <div className="mb-5 grid gap-2 @lg:grid-cols-2">
+        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-line bg-surface px-3 py-2.5">
+          <div className="min-w-0 flex-1 text-sm">
+            <div className="font-medium text-ink">The tour</div>
+            <div className="text-xs text-ink-3">Three things to do in the Bible itself: pick a verse, open a commentary on it, and write a note.</div>
+          </div>
+          <Button
+            icon={Footprints}
+            onClick={() => {
+              // The tour happens in the Bible, so this pane shows it first
+              // (Back returns to Help).
+              openContent("bible", {}, { target: "focused" });
+              window.setTimeout(startTour, 350);
+            }}
+          >
+            Show the tour again
+          </Button>
         </div>
-        <Button
-          icon={Footprints}
-          onClick={() => {
-            // The tour spotlights the Bible page, so this pane shows it
-            // first (Back returns to Settings).
-            openContent("bible", {}, { target: "focused" });
-            window.setTimeout(startTour, 350);
-          }}
-        >
-          Show the tour again
-        </Button>
+        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-line bg-surface px-3 py-2.5">
+          <div className="min-w-0 flex-1 text-sm">
+            <div className="font-medium text-ink">Keyboard shortcuts</div>
+            <div className="text-xs text-ink-3">
+              Every key the app answers to, on one sheet. <Kbd>Ctrl</Kbd>+<Kbd>/</Kbd> opens it from anywhere.
+            </div>
+          </div>
+          <Button icon={Keyboard} onClick={() => setShortcutsOpen(true)}>
+            Show the shortcuts
+          </Button>
+        </div>
       </div>
+      {shortcutsOpen && <ShortcutsModal onClose={() => setShortcutsOpen(false)} />}
       <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search the tutorial…" aria-label="Search the tutorial" className={cx(inputClass, "mb-4 w-full")} />
       {q && (
         <p className="mb-3 text-xs text-ink-3">

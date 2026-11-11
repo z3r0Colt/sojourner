@@ -337,8 +337,7 @@ export function AppShell() {
       <RefPreviewHost />
       {/* A new install, on any screen: what it came for, before the tour. */}
       {askPurpose && <Welcome />}
-      {/* The tour points at the desktop layout's sidebar and header. */}
-      {!compact && <TourOverlay onFinish={() => setTourDone(true)} />}
+      <TourOverlay onFinish={() => setTourDone(true)} />
     </div>
   );
 }

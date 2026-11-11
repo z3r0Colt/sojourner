@@ -1340,8 +1340,8 @@ const DESKTOP_TUTORIAL: TutorialCategory[] = [
       {
         id: "tour",
         title: "Take the tour again",
-        what: "The first launch walks through nine things in place: the Go to button, a verse, the Add pane strip, a pane header, the layout button, the Library, Notebook and Devotion groups of the sidebar, and Settings. The app opens on Today, so the tour opens a Bible beside it when it comes to the verse.",
-        steps: ["Click Show the tour again at the top of this page.", "Inside the tour, [→] and [←] step and [Esc] skips."],
+        what: "The first launch asks for three things, done in the Bible itself: pick a verse by its number, open a commentary on it, and write a note. It waits for each and never takes over the keyboard, so nothing you do is in its way. The app opens on Today, so the tour opens the Bible in that pane first.",
+        steps: ["Click Show the tour again at the top of this page (Help, at the foot of the sidebar).", "Do each thing it asks, or click Skip this step. Skip tour ends it."],
         links: [{ label: "Start the tour", tour: true }],
       },
     ],

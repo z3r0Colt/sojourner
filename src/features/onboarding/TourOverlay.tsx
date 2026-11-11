@@ -1,141 +1,86 @@
-import { onWeb } from "../../lib/platform";
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Button } from "../../components/ui/Button";
-import { Kbd } from "../../components/ui/Page";
+import { useCompact } from "../../hooks/useCompact";
 import { openContent } from "../../workspace/openContent";
 import { useWorkspaceStore } from "../../state/workspaceStore";
 import { useTourStore } from "./tourStore";
+import { advance, beginTour, skipStage, stageNumber, type TourProgress, type TourSight, type TourStage } from "./tourStages";
 
 /**
- * Nine spotlight steps drawn over the live app (F3.7). Each target is an
- * element marked `data-tour="<name>"`; the overlay measures it, dims
- * everything else with an SVG mask cutout, and floats a card beside it.
- * Fully keyboard-driven: Tab stays inside the card, Right/Left step,
- * Escape skips. A step whose target is not on screen (say, the Bible is
- * not open) shows its card centered instead of spotlighting nothing.
+ * The first-run tour: three things to do, not ten things to be told. The
+ * old tour spotlit ten parts of the window in turn and the reader pressed
+ * Next ten times; what stays with a person is what their own hand did. So
+ * this one asks for the three acts the whole app turns on -- pick a verse,
+ * see what is said about it, write what you see -- and waits for each
+ * (tourStages.ts decides what has been done).
+ *
+ * It is a coach beside the app, not a dialog over it: the dimming is paint
+ * only, every click and key goes to the app, and the card says what to do
+ * next and where. While a note is being written it stands aside altogether.
+ * Each element it points at is marked `data-tour="<name>"`. It runs on a
+ * phone as on a desk; the wording changes ("tap"), the acts do not.
  */
 
-interface Step {
-  target: string;
+interface Card {
   title: string;
   body: ReactNode;
-  /** Shown when the target cannot be found on screen. */
-  missing: string;
-  /** This step points at a pane header, so a second pane must be open. */
-  needsSecondPane?: boolean;
-  /** This step points into the Bible, so one must be open. */
-  needsBible?: boolean;
+  /** The `data-tour` mark to point at. */
+  target: string;
+  /** Shown instead when the target is not on screen. */
+  lost?: ReactNode;
 }
 
-export const TOUR_STEPS: Step[] = [
-  {
-    target: "goto",
-    title: "Jump anywhere",
-    body: (
-      <>
-        Click <b>Go to</b> (or press <Kbd>Ctrl</Kbd>+<Kbd>K</Kbd>) and type a reference like “John 3:16”, a Strong's number, or a word. Type <Kbd>&gt;</Kbd> first to list every command the app has.
-      </>
-    ),
-    missing: "The Go to button sits in the top bar.",
-  },
-  {
-    target: "verse",
-    title: "Click a verse; linked panes follow it",
-    body: (
-      <>
-        Click a verse to select it; linked panes move with it. Click the verse number for highlight, note, copy and more.
-      </>
-    ),
-    missing: "Open the Bible to see this in place.",
-    needsBible: true,
-  },
-  {
-    target: "color-text",
-    title: "Color text",
-    body: (
-      <>
-        Every person, place, time and number in its own color: <b>Who? What? Where? When? How many?</b> Click a colored word for more, and open the
-        menu beside the button for <b>Who's speaking</b>, which sets God's own words in small capitals.
-      </>
-    ),
-    missing: "Open the Bible: Color text sits in its toolbar, beside Interlinear.",
-    needsBible: true,
-  },
-  {
-    target: "add-pane",
-    title: "Study beside the text",
-    body: (
-      <>
-        Open a commentary, cross references, the Confessions, or your own notes beside the text. <Kbd>Ctrl</Kbd>+click anything to open it in a new pane.
-      </>
-    ),
-    missing: "The Add pane strip sits on the right edge of the Bible page.",
-    needsBible: true,
-  },
-  {
-    target: "pane-header",
-    title: "Every pane has a header",
-    body: (
-      <>
-        The letter is the pane's link group: panes with the same letter follow each other. Drag the grip to move the pane; the ⋯ menu does the rest.
-      </>
-    ),
-    missing: "Headers appear once a second pane is open.",
-    needsSecondPane: true,
-  },
-  {
-    target: "layout",
-    title: "Arrange the panes",
-    body: (
-      <>
-        Pick a starting layout, then resize freely. Workspaces saves a layout by name.
-      </>
-    ),
-    missing: "The layout button sits in the top bar, beside Workspaces.",
-  },
-  {
-    target: "sidebar-library",
-    title: "The library",
-    body: (
-      <>
-        Confessions, lexicons, dictionaries, the atlas, the timeline, and your own books under Resources.
-      </>
-    ),
-    missing: "The Library group is in the sidebar on the left.",
-  },
-  {
-    target: "sidebar-notebook",
-    title: "Your notebook",
-    body: (
-      <>
-        Everything you write: notes, highlights, sermons, and illustrations.
-      </>
-    ),
-    missing: "The Notebook group is in the sidebar on the left.",
-  },
-  {
-    target: "sidebar-devotion",
-    title: "Daily practice",
-    body: (
-      <>
-        Reading plans, prayer, memory work, the Psalter, and family worship. Today gathers what is due.
-      </>
-    ),
-    missing: "The Devotion group is in the sidebar on the left.",
-  },
-  {
-    target: "settings",
-    title: "Settings and the tutorial",
-    body: (
-      <>
-        {onWeb ? "Appearance, your data and backups, the library shelves, and a full tutorial." : "Appearance, backups, the book library, and a full tutorial."} <Kbd>Ctrl</Kbd>+<Kbd>/</Kbd> lists the keyboard shortcuts.
-      </>
-    ),
-    missing: "Settings is at the bottom of the sidebar.",
-  },
-];
-
-const STEPS = TOUR_STEPS;
+function cardFor(stage: Exclude<TourStage, "writing">, compact: boolean, menuOpen: boolean): Card {
+  const tap = compact ? "Tap" : "Click";
+  switch (stage) {
+    case "verse":
+      return {
+        title: "Pick a verse",
+        body: <>{tap} the small number beside any verse. Everything you can do with a verse is in the menu that opens.</>,
+        target: "verse",
+        lost: "Open the Bible to begin.",
+      };
+    case "commentary":
+      return {
+        title: "See what is said about it",
+        body: (
+          <>
+            Choose <b>Commentary on this verse</b>. {compact ? "It opens as a tab of its own, at that verse." : "It opens beside the text, and follows the verse you pick from then on."}
+          </>
+        ),
+        target: "verse-commentary",
+      };
+    case "followed":
+      return {
+        title: "See what is said about it",
+        body: <>The commentary beside the text has turned to your verse. It follows whichever verse you pick.</>,
+        target: "commentary-pane",
+      };
+    case "note":
+      return menuOpen
+        ? { title: "Write what you see", body: <>Choose <b>Add a note</b>, and write a line or two.</>, target: "verse-note" }
+        : {
+            title: "Write what you see",
+            body: <>Now {tap.toLowerCase()} a verse's number again, and choose <b>Add a note</b>.</>,
+            target: "verse",
+            lost: (
+              <>
+                Go back to the Bible{compact ? " (its tab is at the top)" : ""}, then {tap.toLowerCase()} a verse's number and choose <b>Add a note</b>.
+              </>
+            ),
+          };
+    case "done":
+      return {
+        title: "That is the heart of it",
+        body: (
+          <>
+            A verse, what is said about it, and what you make of it. Your notes are kept under <b>Notes</b>. <b>Help</b>, in the sidebar, has the whole tutorial and every keyboard shortcut.
+          </>
+        ),
+        target: "help",
+      };
+  }
+}
 
 const PAD = 6;
 const CARD_W = 340;
@@ -152,22 +97,28 @@ function inViewport(r: DOMRect): boolean {
   return r.width > 0 && r.height > 0 && r.bottom > 0 && r.top < window.innerHeight && r.right > 0 && r.left < window.innerWidth;
 }
 
+/** On screen to be pointed at. A phone keeps every pane laid out and shows
+ * one (the others are `invisible`), so a place in the window is not enough. */
+function showing(el: HTMLElement): boolean {
+  return inViewport(el.getBoundingClientRect()) && getComputedStyle(el).visibility !== "hidden";
+}
+
 /** The element to spotlight for a step: the first marked element that is
  * on screen. Verse numbers are many; one just inside the pane's top is
  * scrolled into view when none is visible yet. */
-function findTarget(name: string): HTMLElement | null {
+function findTarget(name: string, scroll = true): HTMLElement | null {
   const all = Array.from(document.querySelectorAll<HTMLElement>(`[data-tour="${name}"]`));
-  const visible = all.find((el) => inViewport(el.getBoundingClientRect()));
+  const visible = all.find(showing);
   if (visible) return visible;
-  const first = all[0];
-  if (first) first.scrollIntoView({ block: "center" });
+  const first = all.find((el) => getComputedStyle(el).visibility !== "hidden");
+  if (first && scroll) first.scrollIntoView({ block: "center" });
   return first ?? null;
 }
 
 function measure(el: HTMLElement | null): Rect | null {
   if (!el) return null;
   const r = el.getBoundingClientRect();
-  if (!inViewport(r)) return null;
+  if (!showing(el)) return null;
   return { x: r.left - PAD, y: r.top - PAD, w: r.width + PAD * 2, h: r.height + PAD * 2 };
 }
 
@@ -189,58 +140,71 @@ function cardPosition(rect: Rect | null, cardH: number): { left: number; top: nu
   return { left, top };
 }
 
+
+/** What the tour can see of the app just now (tourStages.ts). */
+function look(): TourSight {
+  const commentaries = useWorkspaceStore
+    .getState()
+    .panes.filter((p) => p.kind === "commentary")
+    .map((p) => (p.kind === "commentary" ? `${p.id}:${p.params.bookId}:${p.params.chapter}:${p.params.verse ?? ""}` : ""))
+    .join("|");
+  return {
+    menuOpen: !!document.querySelector('[role="menu"][aria-label$=" actions"]'),
+    commentaries,
+    noteOpen: !!document.querySelector('[data-tour="note-editor"]'),
+  };
+}
+
 export function TourOverlay({ onFinish }: { onFinish: () => void }) {
   const active = useTourStore((s) => s.active);
-  const step = useTourStore((s) => s.step);
-  const next = useTourStore((s) => s.next);
-  const back = useTourStore((s) => s.back);
   const stop = useTourStore((s) => s.stop);
+  const compact = useCompact();
+  const [progress, setProgress] = useState<TourProgress | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [rect, setRect] = useState<Rect | null>(null);
+  const [anchor, setAnchor] = useState<Rect | null>(null);
   const [cardH, setCardH] = useState(160);
   const cardRef = useRef<HTMLDivElement>(null);
-  const primaryRef = useRef<HTMLButtonElement>(null);
-  const current = STEPS[step];
-  const last = step === STEPS.length - 1;
+  const stage = progress?.stage ?? null;
+  const card = stage && stage !== "writing" ? cardFor(stage, compact, menuOpen) : null;
+  const target = card?.target ?? null;
 
   function finish() {
-    // A pane the tour opened for its header step goes away with the tour.
-    const opened = useTourStore.getState().openedPaneId;
-    if (opened) {
-      useWorkspaceStore.getState().closePane(opened);
-      useTourStore.getState().setOpenedPane(null);
-    }
     stop();
     onFinish();
   }
 
-  // A new install opens on Today, so the steps inside the Bible open one
-  // beside it -- at Genesis 1, and left open when the tour ends.
+  // Begin: with the text on screen. A new install opens on Today (or the
+  // family worship page), so the Bible takes that pane; Back returns to it.
   useEffect(() => {
-    if (!active || !current?.needsBible) return;
-    if (useWorkspaceStore.getState().panes.some((p) => p.kind === "bible")) return;
-    openContent("bible", { bookId: 1, chapter: 1 }, { target: "new" });
-  }, [active, current]);
+    if (!active) {
+      setProgress(null);
+      return;
+    }
+    const s = useWorkspaceStore.getState();
+    const focused = s.panes.find((p) => p.id === s.focusedPaneId);
+    if (focused?.kind !== "bible") openContent("bible", {}, { target: "focused" });
+    setProgress(beginTour(look()));
+  }, [active]);
 
-  // The header step has nothing to point at on a fresh install's single
-  // pane, so the tour opens a commentary pane beside the Bible for it.
-  useEffect(() => {
-    if (!active || !current?.needsSecondPane) return;
-    const ws = useWorkspaceStore.getState();
-    if (ws.panes.length > 1) return;
-    const before = new Set(ws.panes.map((p) => p.id));
-    openContent("commentary", {}, { target: "new" });
-    const added = useWorkspaceStore.getState().panes.find((p) => !before.has(p.id));
-    if (added) useTourStore.getState().setOpenedPane(added.id);
-  }, [active, current]);
-
-  // Keep the cutout on its target while the app moves under it: the pane
-  // may scroll, the window may resize, a query may reflow the toolbar.
+  // Watch what the reader does, and keep the cutout on its target while the
+  // app moves under it: the pane may scroll, a menu may open.
   useLayoutEffect(() => {
-    if (!active || !current) return;
-    let el = findTarget(current.target);
+    if (!active) return;
+    let el: HTMLElement | null = null;
     const update = () => {
-      if (!el || !el.isConnected) el = findTarget(current.target);
+      const sight = look();
+      setMenuOpen(sight.menuOpen);
+      setProgress((p) => (p ? advance(p, sight) : p));
+      if (!target) return;
+      if (!el || !el.isConnected || el.dataset.tour !== target) el = findTarget(target);
+      // Gone from view (scrolled off, or its pane is no longer the one
+      // showing): another of the same on screen, without moving the page.
+      else if (!showing(el)) el = findTarget(target, false) ?? el;
       setRect(measure(el));
+      // Beside the whole menu, not over the rest of it.
+      const menu = el?.closest<HTMLElement>('[role="menu"]') ?? null;
+      setAnchor(menu ? measure(menu) : null);
       if (cardRef.current) setCardH(cardRef.current.offsetHeight);
     };
     update();
@@ -252,68 +216,18 @@ export function TourOverlay({ onFinish }: { onFinish: () => void }) {
       window.removeEventListener("resize", update);
       window.removeEventListener("scroll", update, true);
     };
-  }, [active, step, current]);
+  }, [active, target]);
 
-  // Focus lands on the primary button of each step and stays in the card.
-  useEffect(() => {
-    if (!active) return;
-    const opener = document.activeElement as HTMLElement | null;
-    primaryRef.current?.focus();
-    return () => opener?.focus?.();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active]);
-  useEffect(() => {
-    if (active) primaryRef.current?.focus();
-  }, [active, step]);
+  // Standing aside while a note is written.
+  if (!active || !progress || !card || stage == null || stage === "writing") return null;
 
-  useEffect(() => {
-    if (!active) return;
-    function onKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        e.stopPropagation();
-        finish();
-      } else if (e.key === "ArrowRight") {
-        e.preventDefault();
-        e.stopPropagation();
-        if (last) finish();
-        else next();
-      } else if (e.key === "ArrowLeft") {
-        e.preventDefault();
-        e.stopPropagation();
-        back();
-      } else if (e.key === "Tab" && cardRef.current) {
-        const nodes = Array.from(cardRef.current.querySelectorAll<HTMLElement>("button:not([disabled]), a[href]"));
-        if (nodes.length === 0) return;
-        const first = nodes[0];
-        const end = nodes[nodes.length - 1];
-        if (e.shiftKey && document.activeElement === first) {
-          e.preventDefault();
-          end.focus();
-        } else if (!e.shiftKey && document.activeElement === end) {
-          e.preventDefault();
-          first.focus();
-        } else if (!cardRef.current.contains(document.activeElement)) {
-          e.preventDefault();
-          first.focus();
-        }
-      }
-    }
-    // Capture phase, so the page's own shortcuts (verse keys, Ctrl+K) never
-    // act underneath the tour.
-    window.addEventListener("keydown", onKeyDown, true);
-    return () => window.removeEventListener("keydown", onKeyDown, true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active, step, last]);
-
-  if (!active || !current) return null;
-
-  const pos = cardPosition(rect, cardH);
+  const pos = cardPosition(anchor ?? rect, cardH);
   const vw = window.innerWidth;
   const vh = window.innerHeight;
+  const done = stage === "done";
 
   return (
-    <div className="fixed inset-0 z-[70]" data-tour-overlay="">
+    <div className="pointer-events-none fixed inset-0 z-[70]" data-tour-overlay="">
       <svg className="absolute inset-0 h-full w-full" width={vw} height={vh} aria-hidden="true">
         <defs>
           <mask id="tour-mask">
@@ -321,32 +235,38 @@ export function TourOverlay({ onFinish }: { onFinish: () => void }) {
             {rect && <rect x={rect.x} y={rect.y} width={rect.w} height={rect.h} rx="8" fill="black" />}
           </mask>
         </defs>
-        <rect x="0" y="0" width={vw} height={vh} fill="rgba(0,0,0,0.55)" mask="url(#tour-mask)" />
+        <rect x="0" y="0" width={vw} height={vh} fill="rgba(0,0,0,0.35)" mask="url(#tour-mask)" />
         {rect && <rect x={rect.x} y={rect.y} width={rect.w} height={rect.h} rx="8" fill="none" stroke="var(--color-accent)" strokeWidth="2" />}
       </svg>
       <div
         ref={cardRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="tour-title"
-        aria-describedby="tour-body"
-        className="absolute flex flex-col gap-3 rounded-xl border border-line bg-surface p-4 text-sm shadow-2xl"
-        style={{ left: pos.left, top: pos.top, width: CARD_W }}
+        role="region"
+        aria-label="Tour"
+        aria-live="polite"
+        onKeyDown={(e) => {
+          if (e.key === "Escape") {
+            e.stopPropagation();
+            finish();
+          }
+        }}
+        className="pointer-events-auto absolute flex flex-col gap-3 rounded-xl border border-line bg-surface p-4 text-sm shadow-2xl"
+        style={{ left: pos.left, top: pos.top, width: Math.min(CARD_W, vw - 16) }}
       >
         <div className="flex items-baseline justify-between gap-3">
           <h2 id="tour-title" className="text-base font-semibold text-ink">
-            {current.title}
+            {card.title}
           </h2>
-          <span className="shrink-0 text-xs text-ink-3">
-            {step + 1} of {STEPS.length}
-          </span>
+          {!done && (
+            <span className="shrink-0 text-xs text-ink-3">
+              {stageNumber(stage)} of 3
+            </span>
+          )}
         </div>
         <p id="tour-body" className="text-ink-2">
-          {current.body}
-          {!rect && <span className="mt-1 block text-xs text-ink-3">{current.missing}</span>}
+          {!rect && card.lost ? card.lost : card.body}
         </p>
         <div className="flex items-center gap-2">
-          {last ? (
+          {done ? (
             <Button
               size="sm"
               variant="ghost"
@@ -363,18 +283,20 @@ export function TourOverlay({ onFinish }: { onFinish: () => void }) {
             </Button>
           )}
           <div className="flex-1" />
-          {step > 0 && (
-            <Button size="sm" variant="ghost" onClick={back}>
-              Back
+          {done ? (
+            <Button size="sm" variant="primary" onClick={finish}>
+              Done
+            </Button>
+          ) : stage === "followed" ? (
+            <Button size="sm" variant="primary" onClick={() => setProgress((p) => (p ? skipStage(p) : p))}>
+              Next
+            </Button>
+          ) : (
+            <Button size="sm" variant="ghost" onClick={() => setProgress((p) => (p ? skipStage(p) : p))}>
+              Skip this step
             </Button>
           )}
-          <Button ref={primaryRef} size="sm" variant="primary" onClick={last ? finish : next}>
-            {last ? "Done" : "Next"}
-          </Button>
         </div>
-        <p className="text-xs text-ink-4" aria-hidden="true">
-          <Kbd>→</Kbd> next · <Kbd>←</Kbd> back · <Kbd>Esc</Kbd> skip
-        </p>
       </div>
     </div>
   );

@@ -53,6 +53,8 @@ export function NoteEditorModal({
         </>
       }
     >
+      {/* The first-run tour watches for a note being written (TourOverlay). */}
+      <span data-tour="note-editor" hidden />
       <RichTextEditor content={body} onChange={setBody} autoFocus placeholder="Write your note…" />
       <p className="mt-2 text-xs text-ink-3">
         A reference like "John 3:16" becomes a link automatically, and the verse it names will list this note under "Mentioned in". Use the link button to point at a resource or web page.

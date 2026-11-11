@@ -1,4 +1,4 @@
-import { BookMarked, BookOpen, Database, GraduationCap, Info, Library, MonitorSmartphone, type LucideIcon } from "lucide-react";
+import { BookMarked, BookOpen, Database, CircleHelp, Info, Library, MonitorSmartphone, type LucideIcon } from "lucide-react";
 import { LibrarySection } from "./sections/LibrarySection";
 import { PacksSection } from "./sections/PacksSection";
 import { PreferencesSection } from "./sections/PreferencesSection";
@@ -28,7 +28,7 @@ const SECTIONS: { key: Section; label: string; icon: LucideIcon; desktop?: boole
     { key: "books", label: onWeb ? "Library shelves" : "Library packs", icon: BookMarked, desktop: true, web: true },
     { key: "backups", label: "Data & backups", icon: Database, desktop: true, web: true },
     { key: "devices", label: "Other devices", icon: MonitorSmartphone, desktop: true },
-    { key: "tutorial", label: "Tutorial", icon: GraduationCap },
+    { key: "tutorial", label: "Help", icon: CircleHelp },
     { key: "about", label: "About", icon: Info },
   ] as { key: Section; label: string; icon: LucideIcon; desktop?: boolean; web?: boolean }[]
 ).filter((s) => onDesktop || !s.desktop || (onWeb && s.web));

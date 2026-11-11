@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { useState } from "react";
-import { ChevronDown, ChevronRight, Ellipsis, PanelLeftClose, PanelLeftOpen, Settings } from "lucide-react";
+import { ChevronDown, ChevronRight, CircleHelp, Ellipsis, PanelLeftClose, PanelLeftOpen, Settings } from "lucide-react";
 import { useDueCatechismMemory, useDueMemoryVerses } from "../api/queries";
 import { useUiStore } from "../state/uiStore";
 import { cx } from "../components/ui/classes";
@@ -19,9 +19,11 @@ function openInNewPane(e: React.MouseEvent, to: string) {
   openContent(parsed.kind, parsed.params as never, { target: "new" });
 }
 
-function NavLink({ item, collapsed, onNavigate }: { item: NavItem; collapsed: boolean; onNavigate?: () => void }) {
+/** `on`: whether this is the page showing, where the route alone cannot say
+ * (Help and Settings share one). */
+function NavLink({ item, collapsed, onNavigate, on }: { item: NavItem; collapsed: boolean; onNavigate?: () => void; on?: boolean }) {
   const { pathname } = useLocation();
-  const active = item.end
+  const active = on !== undefined ? on : item.end
     ? pathname === item.to || ["/commentary", "/study", "/interlinear"].some((p) => pathname.startsWith(p))
     : pathname.startsWith(item.to);
   const Icon = item.icon;
@@ -85,7 +87,8 @@ export function Sidebar({ drawer, onNavigate }: { drawer?: boolean; onNavigate?:
   const memoryBadge = useMemoryDueBadge();
   const badges: Record<string, NavItem["badge"]> = { "/memory": memoryBadge };
   const shown = useShownPages();
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
+  const onHelp = pathname.startsWith("/settings") && new URLSearchParams(search).get("section") === "tutorial";
   const [moreOpen, setMoreOpen] = useState(false);
 
   const withBadge = (item: NavItem) => (badges[item.to] ? { ...item, badge: badges[item.to] } : item);
@@ -93,9 +96,6 @@ export function Sidebar({ drawer, onNavigate }: { drawer?: boolean; onNavigate?:
   const more = NAV_GROUPS.flatMap((g) => g.items).filter((i) => !shown.has(i.to));
   // The page being read is never hidden: More opens itself around it.
   const moreShown = moreOpen || more.some((i) => isOn(i, pathname));
-  // The tour points at three groups by name; one with nothing shown is
-  // found under More, so More answers for it.
-  const absent = NAV_GROUPS.find((g) => !groups.some((shownGroup) => shownGroup.id === g.id));
   const MoreIcon = collapsed ? Ellipsis : moreShown ? ChevronDown : ChevronRight;
 
   return (
@@ -142,7 +142,7 @@ export function Sidebar({ drawer, onNavigate }: { drawer?: boolean; onNavigate?:
           </div>
         ))}
         {more.length > 0 && (
-          <div className={cx("flex flex-col gap-0.5", collapsed && "items-center")} data-tour={absent ? `sidebar-${absent.id}` : undefined}>
+          <div className={cx("flex flex-col gap-0.5", collapsed && "items-center")}>
             {collapsed && <div className="mb-1 h-px w-6 bg-line" aria-hidden="true" />}
             <button
               type="button"
@@ -179,8 +179,13 @@ export function Sidebar({ drawer, onNavigate }: { drawer?: boolean; onNavigate?:
       </div>
 
       <div className={cx("flex flex-col gap-0.5 border-t border-line py-2", collapsed && "items-center")}>
+        {/* The one door to learning the app: the tour, the shortcuts and the
+            tutorial are all on the page behind it (Settings → Help). */}
+        <div data-tour="help" className={cx("flex flex-col", collapsed && "items-center")}>
+          <NavLink item={{ to: "/settings?section=tutorial", label: "Help", icon: CircleHelp }} collapsed={collapsed} onNavigate={onNavigate} on={onHelp} />
+        </div>
         <div data-tour="settings" className={cx("flex flex-col", collapsed && "items-center")}>
-          <NavLink item={{ to: "/settings", label: "Settings", icon: Settings }} collapsed={collapsed} onNavigate={onNavigate} />
+          <NavLink item={{ to: "/settings", label: "Settings", icon: Settings }} collapsed={collapsed} onNavigate={onNavigate} on={pathname.startsWith("/settings") && !onHelp} />
         </div>
         {!drawer && (
           <button
