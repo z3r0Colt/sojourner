@@ -171,6 +171,25 @@ present-user path.
 **Done when.** A first run as "Reading" shows eight sidebar rows and no
 unlabelled icon, and an upgrade from 0.4.3 looks as it did.
 
+**As built (2026-11-11).** Four things differ from the table above, each on
+purpose:
+
+- *Studying* starts with the Bible and Matthew Henry beside it, not the Word
+  study preset. Three panes of Greek and Hebrew is a hard first sight; a verse
+  and what is said about it is the heart of the app.
+- *Look up* is a heading over the four pages, not a row that opens. A row
+  that opens would have hidden four pages from present users.
+- A page goes to the widest pane only when the focused pane is narrower than
+  640 pixels, measured, so a commentary someone has widened still takes it.
+- The Bible toolbar has room for names only from a pane 1,400 pixels wide,
+  which in practice means a single pane on a large monitor. Below that the
+  icons stay bare. The study strip is named at every desktop width.
+
+Present users see two changes: the Look up heading (Confessions now sits
+below Factbook), and a small button at the foot of the study strip that shows
+the names. An upgrade over real data from the version before was tried: not
+asked, all 21 pages, panes kept.
+
 ## Phase 3. Reveal by degrees
 
 Ordered by what the newcomers stumbled on. The likely list:

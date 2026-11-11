@@ -45,9 +45,10 @@ const DESKTOP_TUTORIAL: TutorialCategory[] = [
       {
         id: "sidebar",
         title: "The sidebar",
-        what: "The sidebar on the left lists every page in four groups: Scripture, Library (works others wrote), Notebook (what you write), and Devotion (reading plans, prayer, memory, the Psalter, and family worship), with Today above them and Settings below.",
+        what: "The sidebar on the left lists the app's pages in five groups: Scripture, Look up (the lexicon, dictionary, encyclopedia and Factbook), Library (works others wrote), Notebook (what you write), and Devotion (reading plans, prayer, memory, the Psalter, and family worship), with Today above them and Settings below. A new install is asked what it came for and shows the pages for that; the rest wait under More.",
         steps: [
-          "Click a page to open it in the pane you are working in.",
+          "Click a page to open it in the pane you are working in. A page too wide for a narrow study pane opens in the widest pane instead.",
+          "Click More, below the groups, for the pages not shown. Settings → Reading → Sidebar pages chooses which pages show, and “I use Sojourner for” changes them all at once.",
           "[Ctrl]+click (or middle-click) a page to open it in a new pane beside what you have.",
           "Click Collapse at the bottom to shrink the sidebar to icons; click the same button to bring the labels back.",
         ],
@@ -356,7 +357,7 @@ const DESKTOP_TUTORIAL: TutorialCategory[] = [
         title: "Open a study pane",
         what: "A study pane sits beside the text and follows the verse you select.",
         steps: [
-          "Click one of the icons on the right edge of the window: Commentary, Cross references, Encyclopedia for passage, People and places, Cited in your library, Timeline for passage, Confessions on this passage, Atlas, My study, and in the Psalms the Metrical Psalter for passage. Press [Ctrl]+[B] to add a Commentary pane or focus the study pane that is open.",
+          "Click one of the study panes on the right edge of the window (Collapse at its foot folds the names away to icons, and the same button brings them back): Commentary, Cross references, Encyclopedia for passage, People and places, Cited in your library, Timeline for passage, Confessions on this passage, Atlas, My study, and in the Psalms the Metrical Psalter for passage. Press [Ctrl]+[B] to add a Commentary pane or focus the study pane that is open.",
           "The new pane opens to the right of the one you are in, or below it when that pane is narrow.",
           "The pane's ⋯ menu offers Show instead, which changes what it shows to any page.",
         ],
