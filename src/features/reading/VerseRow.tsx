@@ -127,7 +127,10 @@ export function VerseRow({
           aria-label={`Verse ${verse.verse} actions${hasBacklinks ? ", mentioned in your notes" : ""}`}
           data-tour="verse"
           className={cx(
-            "relative mr-1 mt-[0.15em] w-7 shrink-0 max-md:w-5 max-md:self-start select-none rounded text-right font-sans text-xs font-semibold leading-none tabular-nums",
+            // As tall as its verse, so the whole margin beside a long verse opens
+            // the menu, with the number held at the first line (and the
+            // backlink dot, which is placed from the top, beside it).
+            "relative mr-1 mt-[0.15em] flex w-7 shrink-0 items-start justify-end max-md:w-5 max-md:self-start select-none rounded font-sans text-xs font-semibold leading-none tabular-nums",
             isActive ? "text-accent" : "text-ink-4 group-hover:text-ink-3",
           )}
           style={{ fontSize: "0.65em", lineHeight: 1.9 }}
