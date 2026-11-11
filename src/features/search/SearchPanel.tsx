@@ -1,4 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { shownSearchTabs } from "./searchTabs";
+import { usePurpose } from "../onboarding/usePurpose";
+import { useSermonTools } from "../sermons/useSermonTools";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, ClipboardCopy, CornerDownLeft, HelpCircle, ListTree, PanelRight, Rows3, Star, X } from "lucide-react";
 import { api } from "../../api/client";
@@ -98,6 +101,8 @@ export function SearchPanel({ query, onQueryChange, docked, onOpenVerse, onOpene
   const setQuery = onQueryChange;
   const [debounced, setDebounced] = useState(query);
   const [tab, setTab] = useState<SearchTab>("verses");
+  const [purpose] = usePurpose();
+  const sermonTools = useSermonTools();
   // On a phone the filters would take the screen the results need: they
   // fold behind a button there.
   const phone = useCompact();
@@ -448,7 +453,7 @@ export function SearchPanel({ query, onQueryChange, docked, onOpenVerse, onOpene
   const canShowMore = total != null && total > rows.length && nextPageSize != null;
   const showsFilters = tab === "verses" || tab === "commentary" || tab === "notes" || tab === "prayer" || tab === "all";
   const showsScope = tab === "verses" || tab === "commentary" || tab === "all";
-  const tabs = [
+  const allTabs = [
     { key: "all" as const, label: "All" },
     { key: "verses" as const, label: "Scripture", count: count(results?.verse_total) },
     { key: "commentary" as const, label: "Commentary", count: count(results?.commentary_total) },
@@ -463,6 +468,8 @@ export function SearchPanel({ query, onQueryChange, docked, onOpenVerse, onOpene
     { key: "factbook" as const, label: "People and places", count: count(factbookResults?.length) },
     { key: "grammar" as const, label: "Grammar" },
   ];
+  // The ones that suit this reader, have something found, or are in use.
+  const tabs = shownSearchTabs(allTabs, tab, purpose, sermonTools);
 
   // The scope dropdowns read and write `in:` in the box.
   const inToken = getToken(query, "in");
