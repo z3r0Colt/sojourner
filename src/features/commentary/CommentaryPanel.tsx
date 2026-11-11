@@ -157,7 +157,7 @@ export function CommentaryPanel({
   }, [ttsCurrentSegmentId, readingIndex, autoScroll]);
 
   return (
-    <div className="flex h-full w-full flex-col">
+    <div className="flex h-full w-full flex-col" data-tour="commentary-pane">
       <div className="flex items-center gap-1.5 border-b border-line px-2 py-1.5">
         <select aria-label="Commentary source" className={cx(selectSmClass, "min-w-0 flex-1")} value={sourceId ?? ""} onChange={(e) => onSourceChange(Number(e.target.value))}>
           <CommentarySourceOptions sources={sources} />
@@ -221,7 +221,7 @@ export function CommentaryPanel({
                   data-index={item.index}
                   data-entry-index={item.index}
                   style={{ position: "absolute", top: 0, left: 0, right: 0, transform: `translateY(${item.start}px)` }}
-                  className={cx("mb-3 rounded-md p-2 -mx-1", isCurrent && "bg-amber-50 ring-1 ring-amber-200 dark:bg-amber-950/30 dark:ring-amber-900")}
+                  className={cx("group/entry mb-3 rounded-md p-2 -mx-1", isCurrent && "bg-amber-50 ring-1 ring-amber-200 dark:bg-amber-950/30 dark:ring-amber-900")}
                 >
                   <div className="mb-1 flex items-start gap-1">
                     {showVerseLabel && (
@@ -233,7 +233,18 @@ export function CommentaryPanel({
                         {e.verse_start === e.verse_end ? `Verse ${e.verse_start}` : `Verses ${e.verse_start}-${e.verse_end}`}
                       </button>
                     )}
-                    <span className="ml-auto flex shrink-0 items-center">
+                    {/* An entry's tools wait until the pointer or the keyboard
+                        is on it: on every entry at once they were a column of
+                        icons down the page. Where nothing hovers (a phone)
+                        they stay, and so do those of the entry being read
+                        aloud or turned to. */}
+                    <span
+                      className={cx(
+                        "ml-auto flex shrink-0 items-center transition-opacity",
+                        !(isCurrent || readingEntryId === e.id) &&
+                          "[@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover/entry:opacity-100 [@media(hover:hover)]:focus-within:opacity-100",
+                      )}
+                    >
                       {firstPiece != null && <ReadFromHereButton title={ttsTitle} segments={reading.segments} index={firstPiece} />}
                       <StudyActions
                         what={`${sourceTitle} on ${book.name} ${chapter}${e.verse_start != null ? `:${e.verse_start}` : ""}`}

@@ -1,4 +1,5 @@
 import { onDesktop } from "../../lib/platform";
+import { useSermonTools } from "../sermons/useSermonTools";
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -164,6 +165,8 @@ export function ReadingPane() {
   const compact = paneWidth > 0 && paneWidth < TOOLBAR_COMPACT_BELOW_PX;
   const narrow = paneWidth > 0 && paneWidth < TOOLBAR_NARROW_BELOW_PX;
   const named = paneWidth >= TOOLBAR_NAMED_FROM_PX;
+  // A preacher's tools, for a preacher (useSermonTools).
+  const sermonTools = useSermonTools();
   const [params, setParams] = usePaneParams("bible");
   const { translationId, bookId, chapter, verse: scrollTarget, activeVerse, paragraphMode, redLetterMode, colorTextMode, colorHidden, voiceMode, findQuery } = params;
   const paneNavigate = usePaneNavigate();
@@ -1673,7 +1676,7 @@ export function ReadingPane() {
             window.getSelection()?.removeAllRanges();
             setPending(null);
           }}
-          onSendToSermon={() => {
+          onSendToSermon={!sermonTools ? undefined : () => {
             sendToSermon(
               {
                 kind: "passage",
@@ -1687,7 +1690,7 @@ export function ReadingPane() {
             window.getSelection()?.removeAllRanges();
             setPending(null);
           }}
-          onSaveAsIllustration={() => {
+          onSaveAsIllustration={!sermonTools ? undefined : () => {
             const text =
               pending.charStart != null && pending.charEnd != null
                 ? verseText(pending.verseStart).slice(pending.charStart, pending.charEnd)
@@ -1752,7 +1755,7 @@ export function ReadingPane() {
               : undefined
           }
           onOpenCommentary={() => openCommentary(verseMenu.verseNum)}
-          onSendToSermon={() =>
+          onSendToSermon={!sermonTools ? undefined : () =>
             sendToSermon(
               {
                 kind: "passage",

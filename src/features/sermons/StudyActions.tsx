@@ -1,4 +1,5 @@
 import { Lightbulb, Mic } from "lucide-react";
+import { useSermonTools } from "./useSermonTools";
 import { IconButton } from "../../components/ui/Button";
 import { PopoverItem } from "../../components/ui/Popover";
 import { usePaneOptional } from "../../workspace/PaneContext";
@@ -25,6 +26,8 @@ export function SendToSermonButton({
   size?: "sm" | "md";
 }) {
   const pane = usePaneOptional();
+  const shown = useSermonTools();
+  if (!shown) return null;
   return (
     <IconButton
       icon={Mic}
@@ -54,6 +57,8 @@ export function SaveAsIllustrationButton({
   className?: string;
   size?: "sm" | "md";
 }) {
+  const shown = useSermonTools();
+  if (!shown) return null;
   return (
     <IconButton
       icon={Lightbulb}
@@ -100,6 +105,8 @@ function excerptToHtml(excerpt: string | null): string {
 
 export function SendToSermonMenuItem({ item, onDone }: { item: () => SermonItem | null; onDone?: () => void }) {
   const pane = usePaneOptional();
+  const shown = useSermonTools();
+  if (!shown) return null;
   return (
     <PopoverItem
       onClick={() => {
