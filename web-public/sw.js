@@ -7,6 +7,7 @@
 //  - serves them from there first;
 //  - waits for the reader before replacing itself ("A new version is ready"),
 //    because a page and a backend of different versions must not mix;
+//  - leaves the visit counter's page to the network (see the fetch handler);
 //  - never touches another origin. The books are read from
 //    data.gentleking.org by the backend's own cache (src/web/), and a
 //    service worker in between would only get in the way of its Range reads.
@@ -51,6 +52,11 @@ self.addEventListener("fetch", (event) => {
   if (request.method !== "GET" || request.headers.has("range")) return;
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
+  // The visit counter's page (tools/vite-web-pwa.ts, VISIT_PAGE; Cloudflare
+  // Pages also serves it as /visit). It loads in a frame, which is a
+  // navigation, and every navigation below is answered with the app: left to
+  // that, the app would open inside itself. From the network or not at all.
+  if (url.pathname === "/visit.html" || url.pathname === "/visit") return;
 
   event.respondWith(
     (async () => {
