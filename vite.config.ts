@@ -7,7 +7,6 @@ import { fileURLToPath } from "node:url";
 import type { Connect } from "vite";
 import { webPwa } from "./tools/vite-web-pwa.ts";
 import pinnedContent from "./src/web/content.json" with { type: "json" };
-import analytics from "./src/web/analytics.json" with { type: "json" };
 const host = process.env.TAURI_DEV_HOST;
 
 /**
@@ -107,7 +106,7 @@ export default defineConfig(({ mode }) => {
   // `--mode web`: Sojourner on the web (src/web/, `onWeb` in platform.ts).
   const web = mode === "web";
   return {
-    plugins: [react(), tailwindcss(), web ? devWebContent() : devContentSecurityPolicy(), webPwa({ contentBase: process.env.VITE_CONTENT_BASE ?? pinnedContent.base, analyticsToken: analytics.token })],
+    plugins: [react(), tailwindcss(), web ? devWebContent() : devContentSecurityPolicy(), webPwa({ contentBase: process.env.VITE_CONTENT_BASE ?? pinnedContent.base })],
 
     // Fixed at build time: the target, so `if (onWeb)` folds away and the
     // desktop bundle carries none of the web code; and the version, for the

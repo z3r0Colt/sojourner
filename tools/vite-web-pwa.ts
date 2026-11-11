@@ -13,9 +13,7 @@ import type { HtmlTagDescriptor, Plugin } from "vite";
  *   use written in, each with its content hash, so a changed file is a new
  *   service worker and an unchanged one is not;
  *   _headers, for Cloudflare Pages (the same headers `vite preview` sends, so
- *   a local preview is checked against what is deployed);
- *   visit.html and the hidden frame that holds it, when src/web/analytics.json
- *   has a token: the visit counter (see VISIT_PAGE).
+ *   a local preview is checked against what is deployed).
  *
  * Written by hand rather than with vite-plugin-pwa: the worker is ~100 lines
  * and nothing here has to follow a plugin's release schedule.
@@ -31,86 +29,33 @@ const GROUND = THEME;
 /** Not kept for offline use at install: the Atlas's data (10 MB, read only
  * when the Atlas is opened; the worker keeps what is fetched) and files that
  * are the deploy's own. */
-const NOT_PRECACHED = [/^atlas\//, /^sw\.js$/, /^_headers$/, /\.map$/, /^visit\.html$/];
+const NOT_PRECACHED = [/^atlas\//, /^sw\.js$/, /^_headers$/, /\.map$/];
 
-/** Cloudflare Web Analytics: the script, and where it reports to. */
-const BEACON_SCRIPT = "https://static.cloudflareinsights.com/beacon.min.js";
-const BEACON_SCRIPT_ORIGIN = "https://static.cloudflareinsights.com";
-const BEACON_REPORT_ORIGIN = "https://cloudflareinsights.com";
-
-/**
- * The visit counter (src/web/analytics.json holds the site token; empty
- * means none of this is built).
- *
- * Cloudflare's beacon reports the address of the page it runs in, and this
- * app's address says what is on screen (#/lexicon/G26, #/search?q=...). Run
- * in the app's own page the beacon would send "/" and no more, because it
- * drops what follows a # or a ? -- but that is its habit, not our doing: with
- * real paths it sends each one, the last of them in its closing report even
- * under `spa: false` (both tried against the script itself, 2026-11-11). The
- * promise in Settings -> About should not rest on a habit of someone else's
- * script, nor on this app's router staying a hash router. So the beacon runs
- * in a page of its own, VISIT_PAGE, that the app holds in a hidden frame:
- * what Cloudflare hears is that /visit.html was opened, from which browser
- * and device, whatever the script chooses to report. `no-referrer` on the
- * frame keeps the app's address out of the one other place it could look.
- *
- * The cost: no page-speed figures for the app itself, since the page being
- * timed is the blank one.
- *
- * web-public/sw.js lets this page's requests through to the network, so a
- * launch with no connection is simply not counted.
- */
-export const VISIT_PAGE = "/visit.html";
-
-export function analyticsToken(token: string): string | null {
-  if (token === "") return null;
-  if (!/^[0-9a-f]{32}$/.test(token)) throw new Error("src/web/analytics.json: the token is 32 hex digits, from Cloudflare's Web Analytics page for the site");
-  return token;
-}
-
-export function visitFrame(): HtmlTagDescriptor {
-  return {
-    tag: "iframe",
-    attrs: { src: VISIT_PAGE, hidden: true, referrerpolicy: "no-referrer", title: "", tabindex: "-1", "aria-hidden": "true" },
-    injectTo: "body",
-  };
-}
-
-export function visitPage(token: string): string {
-  const config = JSON.stringify({ token, spa: false });
-  return `<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="robots" content="noindex" />
-    <title>Sojourner</title>
-  </head>
-  <body>
-    <script defer src="${BEACON_SCRIPT}" data-cf-beacon='${config}'></script>
-  </body>
-</html>
-`;
-}
+/** Cloudflare Web Analytics, which Cloudflare adds to the page itself as it
+ * serves it (the dashboard's automatic setup; nothing in this repository
+ * holds the tag or a token): where its script comes from, and where it
+ * reports to. Settings → About and the README tell the reader it is there.
+ * Both hosts answer in the way cross-origin isolation asks (the script is
+ * served `Cross-Origin-Resource-Policy: cross-origin`, the report is CORS). */
+const ANALYTICS_SCRIPT = "https://static.cloudflareinsights.com";
+const ANALYTICS_REPORT = "https://cloudflareinsights.com";
 
 /** The policy the web app runs under. `connect-src` names the content host;
- * `'wasm-unsafe-eval'` is for the backend's WebAssembly. Cross-origin
+ * `'wasm-unsafe-eval'` is for the backend's WebAssembly; the two analytics
+ * hosts are named exactly, and nothing wider. Cross-origin
  * isolation (COOP + COEP) is for the parallel page fetch of phase 7
  * (SharedArrayBuffer); everything the page loads from another origin has to
- * be CORS-enabled, which R2 is (data.gentleking.org).
- *
- * `analytics`: the two Cloudflare hosts the visit counter needs, and only
- * when it is built. */
-export function headers(contentOrigin: string, analytics = false): Record<string, string> {
+ * be CORS-enabled, which R2 is (data.gentleking.org). */
+export function headers(contentOrigin: string): Record<string, string> {
   return {
     "Content-Security-Policy": [
       "default-src 'self'",
-      `script-src 'self' 'wasm-unsafe-eval'${analytics ? ` ${BEACON_SCRIPT_ORIGIN}` : ""}`,
+      `script-src 'self' 'wasm-unsafe-eval' ${ANALYTICS_SCRIPT}`,
       "style-src 'self' 'unsafe-inline' blob:",
       "img-src 'self' data: blob:",
       "media-src 'self' blob:",
       "font-src 'self' data:",
-      `connect-src 'self' ${contentOrigin}${analytics ? ` ${BEACON_REPORT_ORIGIN}` : ""} blob: data:`,
+      `connect-src 'self' ${contentOrigin} ${ANALYTICS_REPORT} blob: data:`,
       "worker-src 'self' blob:",
       "frame-src 'self' blob:",
       "object-src 'none'",
@@ -131,9 +76,8 @@ function walk(dir: string): string[] {
   });
 }
 
-export function webPwa(options: { contentBase: string; analyticsToken?: string }): Plugin {
+export function webPwa(options: { contentBase: string }): Plugin {
   const contentOrigin = new URL(options.contentBase).origin;
-  const token = analyticsToken(options.analyticsToken ?? "");
   let outDir = "dist-web";
   let root = process.cwd();
   return {
@@ -142,7 +86,7 @@ export function webPwa(options: { contentBase: string; analyticsToken?: string }
 
     config() {
       // `vite preview` sends what _headers will say in production.
-      return { preview: { headers: headers(contentOrigin, token != null) } };
+      return { preview: { headers: headers(contentOrigin) } };
     },
 
     configResolved(config) {
@@ -171,7 +115,6 @@ export function webPwa(options: { contentBase: string; analyticsToken?: string }
           { tag: "meta", attrs: { name: "apple-mobile-web-app-capable", content: "yes" }, injectTo: "head" },
           { tag: "meta", attrs: { name: "apple-mobile-web-app-title", content: "Sojourner" }, injectTo: "head" },
         ];
-        if (token) tags.push(visitFrame());
         return { html, tags };
       },
     },
@@ -209,8 +152,6 @@ export function webPwa(options: { contentBase: string; analyticsToken?: string }
         ),
       );
 
-      if (token) writeFileSync(join(out, "visit.html"), visitPage(token));
-
       // Every file, with its hash. index.html is kept under "/" too, which is
       // what a navigation asks for.
       const files = walk(out)
@@ -227,7 +168,7 @@ export function webPwa(options: { contentBase: string; analyticsToken?: string }
         `// Generated by tools/vite-web-pwa.ts from web-public/sw.js.\nself.__VERSION__ = ${JSON.stringify(version)};\nself.__PRECACHE__ = ${JSON.stringify(precache)};\n${readFileSync(join(src, "sw.js"), "utf8")}`,
       );
 
-      const h = headers(contentOrigin, token != null);
+      const h = headers(contentOrigin);
       const lines = [
         "/*",
         ...Object.entries(h).map(([k, v]) => `  ${k}: ${v}`),

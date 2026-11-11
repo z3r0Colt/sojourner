@@ -36,7 +36,7 @@ The same app also runs in a browser, on phones, tablets and computers, at **[app
 
 - **Your data stays on your device.** Notes, highlights, prayers and sermons are kept in your browser's private storage, as the desktop app keeps them in a file. There are no accounts and no sync. Settings → Data & backups exports everything to a file (the same format as the desktop app's, so it goes either way) and imports it again. Safari can clear a site's data after a few weeks without a visit unless the app is on the home screen, so export now and then; the app reminds you.
 - **The books are read as you go.** The Bibles, commentaries, lexicons and reference works are fetched from `data.gentleking.org` in small pieces as you open them, and kept on the device once read. Settings → Data & backups → *Use without the internet* downloads all of it (about 900 MB) so the app works with no connection. Cloudflare, which hosts both addresses, logs requests the way any web host does.
-- **Visits are counted, and that is all.** The web app uses Cloudflare Web Analytics to count visits and see which devices and browsers people use, so we know what to fix first. It sets no cookies and does not track you across sites, and it is not told what you read, search for or write: the counter runs in a blank page of its own, apart from the app. The Windows and Linux apps have no analytics at all.
+- **The web app has analytics.** It uses Cloudflare Web Analytics to count visits and see which devices and browsers people use, so we know what to fix first. It sets no cookies and does not track you across sites. The Windows and Linux apps have no analytics at all.
 - **Library shelves** (Puritans, Church Fathers and the rest) are added from Settings and read online; *Keep on this device* stores a single book. The Atlas has its terrain and satellite maps built in.
 - **One tab at a time**: the app's storage allows only one open copy, and a second tab says so and offers to take over.
 - **Left out**: Other devices, the offline neural voice (the browser's own voices read aloud instead), backups to a folder, and your own audio, video and MOBI files. Adding your own EPUB and PDF books works; they stay in the browser and are not part of an export.
@@ -208,7 +208,7 @@ npm run dev:web               # port 1420; reads the books from src/web/content.
 npm run build:web             # dist-web/, with the service worker and headers
 ```
 
-The visit counter (Cloudflare Web Analytics) is built only when `src/web/analytics.json` holds the site's token. It runs in `visit.html`, a blank page the app keeps in a hidden frame, so it can report a visit and nothing of what is read; `tools/vite-web-pwa.ts` says why, and its test holds the build to it. Automatic injection must stay off in the Cloudflare dashboard, or visits are counted twice.
+Cloudflare Web Analytics is added to the web app's page by Cloudflare as it serves it (the automatic setup in the dashboard), so no tag or token is in this repository. The app's security policy names the two hosts it needs (`tools/vite-web-pwa.ts`), and Settings → About tells the reader. The desktop app has none.
 
 `.github/workflows/web.yml` builds the app and deploys it to Cloudflare Pages on pushes to `pwa` and `master`; it does not rebuild the content, which is uploaded separately and pinned in `src/web/content.json` (shelves and maps in `shelves.json` and `maps.json`).
 
