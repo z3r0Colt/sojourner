@@ -220,6 +220,42 @@ Ordered by what the newcomers stumbled on. The likely list:
 
 **Done when.** The five-task test passes with fresh newcomers on both devices.
 
+**As built (2026-11-11).** Done without newcomer notes, so in the plan's own
+order. When Colt has watched someone use it, their stumbles outrank this.
+
+- *The tour* asks for three things and waits for each: pick a verse by its
+  number, open a commentary on it, write a note. It is a coach beside the
+  app, not a dialog over it, and it runs on a phone. A student, whose
+  commentary is already open, is shown it turning to the verse instead.
+- *Help* is a row at the foot of the sidebar. Behind it are the tour, the
+  shortcuts sheet and the tutorial, on one page (it was Settings → Tutorial).
+- *Sermon tools* (Send to sermon, Save as illustration) show for a preacher,
+  for "everything", for anyone never asked, and for anyone with a sermon
+  open. A commentary entry's remaining tools wait for the pointer.
+- *Search tabs* are five for a reader. A tab with something found in it
+  always shows.
+- *The splash* holds three seconds on a first launch and about one after.
+
+Not done, and why:
+
+- *Translation menu.* It was already grouped by language with each full name
+  on hover. Nothing to add without widening a menu the code keeps narrow on
+  purpose.
+- *Guided study's course list.* There is one course. A list of one teaches
+  nothing; build it with the second course.
+- *The Bible toolbar on a laptop.* Its seven tools are still bare icons below
+  1,400 pixels. Naming some and not others looked worse than naming none.
+
+**A decision for Colt: the word "Library".** The audit found the names are
+steadier than first thought. "The book library" comes as "shelves"; a "pack"
+is the file that installs a shelf on the desktop. The real knot is one word
+used three ways: the sidebar heading *Library* (Confessions, Timeline, Atlas,
+Resources), the page *Resources* (which the tutorial and About call "your
+library"), and Settings → *Library* on the desktop. The recommendation is to
+rename the page **Resources** to **Books**, which is what it holds and what
+its search tab is already called, and leave the rest. That changes a name
+present users know, so it waits for his word.
+
 ## Phase 4. Keep it so
 
 No change the reader can see.
