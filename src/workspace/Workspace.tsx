@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type RefObject } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { LayoutGrid, Minimize2, X } from "lucide-react";
+import { LayoutGrid, Minimize2, PanelRightClose, PanelRightOpen, X } from "lucide-react";
 import { api } from "../api/client";
 import { useBooks } from "../api/queries";
 import { useUiStore } from "../state/uiStore";
@@ -178,12 +178,35 @@ function Divider({ orientation, onDelta, label }: { orientation: "vertical" | "h
   );
 }
 
+/** The strip's name for each study pane: short enough for a narrow column,
+ * and without the "for passage" the menus need to tell a pane that follows
+ * the text from the page of the same name. Here they all follow it. */
+const STRIP_NAMES: Partial<Record<PaneKind, string>> = {
+  commentary: "Commentary",
+  crossrefs: "Cross references",
+  "encyclopedia-for-passage": "Encyclopedia",
+  "factbook-for-passage": "People and places",
+  citations: "In your library",
+  "timeline-for-passage": "Timeline",
+  "confession-for-passage": "Confessions",
+  atlas: "Atlas",
+  metrical: "Metrical psalm",
+  mine: "My study",
+};
+
 /** The right-edge strip that opens a study pane beside the text. Kinds
- * that already have a pane are focused rather than opened twice. */
+ * that already have a pane are focused rather than opened twice.
+ *
+ * Open, each icon has its name beside it, under "Study this passage": ten
+ * bare icons told a newcomer nothing. A new install starts with it open
+ * (Welcome.tsx); it folds to the icons alone from the button at its foot,
+ * and on a window too narrow to spare the room. */
 function AddPaneStrip() {
   const panes = useWorkspaceStore((s) => s.panes);
   const focusPane = useWorkspaceStore((s) => s.focusPane);
   const inPsalms = useWorkspaceStore((s) => currentPassage(s)?.bookId === 19);
+  const named = useUiStore((s) => s.studyStripLabels);
+  const setNamed = useUiStore((s) => s.setStudyStripLabels);
   const full = panes.length >= MAX_PANES;
 
   function open(kind: PaneKind) {
@@ -192,22 +215,54 @@ function AddPaneStrip() {
     else openContent(kind, {}, { target: "new" });
   }
 
+  const FoldIcon = named ? PanelRightClose : PanelRightOpen;
   return (
-    <div className="flex w-11 shrink-0 flex-col items-center gap-1 border-l border-line bg-surface-2/60 py-2" role="toolbar" aria-label="Add pane" data-tour="add-pane">
+    <div
+      className={cx("flex shrink-0 flex-col gap-1 border-l border-line bg-surface-2/60 py-2", named ? "w-11 items-center min-[1100px]:w-48 min-[1100px]:items-stretch min-[1100px]:px-2" : "w-11 items-center")}
+      role="toolbar"
+      aria-label="Add pane"
+      data-tour="add-pane"
+    >
+      {named && <div className="mb-1 hidden whitespace-nowrap px-2 text-xs font-semibold uppercase tracking-wide text-ink-4 min-[1100px]:block">Study this passage</div>}
       {STUDY_STRIP_KINDS.filter((k) => k !== "metrical" || inPsalms).map((kind) => {
         const meta = PANE_KINDS[kind];
         const exists = panes.some((p) => p.kind === kind);
+        const label = exists ? `Focus the ${meta.label} pane` : `Open ${meta.label} in a new pane`;
+        if (!named) return <IconButton key={kind} icon={meta.icon} label={label} active={exists} disabled={!exists && full} onClick={() => open(kind)} />;
+        const Icon = meta.icon;
         return (
-          <IconButton
+          <button
             key={kind}
-            icon={meta.icon}
-            label={exists ? `Focus the ${meta.label} pane` : `Open ${meta.label} in a new pane`}
-            active={exists}
+            type="button"
+            title={label}
+            aria-label={label}
             disabled={!exists && full}
             onClick={() => open(kind)}
-          />
+            className={cx(
+              "flex h-8 w-8 shrink-0 items-center justify-center gap-2.5 rounded-md text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-40 min-[1100px]:w-auto min-[1100px]:justify-start min-[1100px]:px-2",
+              exists ? "bg-accent-soft font-medium text-accent" : "text-ink-2 hover:bg-hover hover:text-ink",
+            )}
+          >
+            <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+            <span className="hidden min-w-0 truncate min-[1100px]:inline">{STRIP_NAMES[kind] ?? meta.label}</span>
+          </button>
         );
       })}
+      <div className="min-h-0 flex-1" />
+      <button
+        type="button"
+        onClick={() => setNamed(!named)}
+        title={named ? "Show the icons only" : "Show the names of these study panes"}
+        aria-label={named ? "Show the icons only" : "Show the names of these study panes"}
+        aria-expanded={named}
+        className={cx(
+          "hidden h-8 shrink-0 items-center gap-2.5 rounded-md text-sm text-ink-3 hover:bg-hover hover:text-ink min-[1100px]:flex",
+          named ? "px-2" : "w-8 justify-center",
+        )}
+      >
+        <FoldIcon className="h-4 w-4 shrink-0" aria-hidden="true" />
+        {named && <span>Collapse</span>}
+      </button>
     </div>
   );
 }

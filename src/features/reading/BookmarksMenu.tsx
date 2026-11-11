@@ -2,7 +2,7 @@ import { Bookmark, BookmarkCheck, BookmarkPlus, Trash2 } from "lucide-react";
 import { useBookmarks, useBooks, useCreateBookmark, useDeleteBookmark } from "../../api/queries";
 import { usePane } from "../../workspace/PaneContext";
 import { openPassage, targetFor } from "../../workspace/openContent";
-import { IconButton } from "../../components/ui/Button";
+import { Button, IconButton } from "../../components/ui/Button";
 import { Popover, PopoverItem, PopoverLabel } from "../../components/ui/Popover";
 import { toast } from "../../components/ui/toast";
 import { cx } from "../../components/ui/classes";
@@ -10,7 +10,9 @@ import { cx } from "../../components/ui/classes";
 /** Toolbar bookmark button: the icon fills when the current chapter (or
  * selected verse) is bookmarked; the menu adds/removes and lists every
  * bookmark for jumping back. */
-export function BookmarksMenu({ bookId, chapter, activeVerse }: { bookId: number; chapter: number; activeVerse: number | null }) {
+/** `named`: the button says "Bookmarks" beside its icon, where the toolbar
+ * has the room. */
+export function BookmarksMenu({ bookId, chapter, activeVerse, named }: { bookId: number; chapter: number; activeVerse: number | null; named?: boolean }) {
   const { data: bookmarks } = useBookmarks();
   const { data: books } = useBooks();
   const createBookmark = useCreateBookmark();
@@ -42,9 +44,15 @@ export function BookmarksMenu({ bookId, chapter, activeVerse }: { bookId: number
   return (
     <Popover
       width="w-72"
-      trigger={({ toggle: open, open: isOpen }) => (
-        <IconButton icon={hereMarked ? BookmarkCheck : Bookmark} label="Bookmarks (Ctrl+D bookmarks this spot)" active={isOpen || hereMarked} onClick={open} />
-      )}
+      trigger={({ toggle: open, open: isOpen }) =>
+        named ? (
+          <Button size="sm" variant="ghost" icon={hereMarked ? BookmarkCheck : Bookmark} active={isOpen || hereMarked} onClick={open} title="Bookmarks (Ctrl+D bookmarks this spot)">
+            Bookmarks
+          </Button>
+        ) : (
+          <IconButton icon={hereMarked ? BookmarkCheck : Bookmark} label="Bookmarks (Ctrl+D bookmarks this spot)" active={isOpen || hereMarked} onClick={open} />
+        )
+      }
     >
       {(close) => (
         <>

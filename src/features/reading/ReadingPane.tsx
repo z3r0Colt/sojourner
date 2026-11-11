@@ -148,6 +148,10 @@ interface NoteTarget {
  * wide cut off its last four or five tools. */
 const TOOLBAR_COMPACT_BELOW_PX = 750;
 const TOOLBAR_NARROW_BELOW_PX = 950;
+/** From this width the tools on the right have room for their names
+ * ("Find", "Notes", "Read aloud"…) beside their icons: seven bare icons
+ * told a newcomer nothing. Below it they are the icons alone, as before. */
+const TOOLBAR_NAMED_FROM_PX = 1400;
 
 /** The Bible chapter view, living in a pane. Everything about *what* is
  * shown (translation, chapter, selected verse, paragraph and red-letter
@@ -159,6 +163,7 @@ export function ReadingPane() {
   // The toolbar's widths: see `toolbar` below.
   const compact = paneWidth > 0 && paneWidth < TOOLBAR_COMPACT_BELOW_PX;
   const narrow = paneWidth > 0 && paneWidth < TOOLBAR_NARROW_BELOW_PX;
+  const named = paneWidth >= TOOLBAR_NAMED_FROM_PX;
   const [params, setParams] = usePaneParams("bible");
   const { translationId, bookId, chapter, verse: scrollTarget, activeVerse, paragraphMode, redLetterMode, colorTextMode, colorHidden, voiceMode, findQuery } = params;
   const paneNavigate = usePaneNavigate();
@@ -1365,24 +1370,62 @@ export function ReadingPane() {
           )}
           {colorTextControl}
           <div className="min-w-0 flex-1" />
-          <IconButton icon={TextSearch} label="Find in this chapter (Ctrl+G)" active={findOpen} onClick={openFind} />
-          <div className="relative">
-            <IconButton icon={StickyNote} label={chapterNoteCount > 0 ? `Chapter notes (${chapterNoteCount})` : "Chapter notes"} onClick={() => setChapterNoteOpen(true)} />
-            {chapterNoteCount > 0 && (
-              <span className="pointer-events-none absolute -right-0.5 -top-0.5 min-w-4 rounded-full bg-accent px-1 text-center text-[10px] font-semibold leading-4 text-on-accent">
-                {chapterNoteCount}
-              </span>
-            )}
-          </div>
-          <ReadAloudButton title={`${book.name} ${chapter}`} sourceKind="scripture" iconOnly size="md" segments={readAloudSegments} />
-          <BookmarksMenu bookId={book.id} chapter={chapter} activeVerse={activeVerse} />
-          <Popover width="w-72" trigger={({ toggle, open }) => <IconButton icon={Type} label="Text size, spacing, font, and theme" active={open} onClick={toggle} />}>
-            {textSettings}
-          </Popover>
-          <Popover width="w-64" trigger={({ toggle, open }) => <IconButton icon={SlidersHorizontal} label="View options" active={open} onClick={toggle} />}>
-            {viewOptions}
-          </Popover>
-          <IconButton icon={Maximize2} label="Focus mode: just the text (F11)" onClick={enterFocusMode} />
+          {named ? (
+            <>
+              <Button size="sm" variant="ghost" icon={TextSearch} active={findOpen} onClick={openFind} title="Find in this chapter (Ctrl+G)">
+                Find
+              </Button>
+              <Button size="sm" variant="ghost" icon={StickyNote} onClick={() => setChapterNoteOpen(true)} title="Chapter notes">
+                Notes{chapterNoteCount > 0 ? ` (${chapterNoteCount})` : ""}
+              </Button>
+              <ReadAloudButton title={`${book.name} ${chapter}`} sourceKind="scripture" size="sm" segments={readAloudSegments} />
+              <BookmarksMenu bookId={book.id} chapter={chapter} activeVerse={activeVerse} named />
+              <Popover
+                width="w-72"
+                trigger={({ toggle, open }) => (
+                  <Button size="sm" variant="ghost" icon={Type} active={open} onClick={toggle} title="Text size, spacing, font, and theme">
+                    Text
+                  </Button>
+                )}
+              >
+                {textSettings}
+              </Popover>
+              <Popover
+                width="w-64"
+                trigger={({ toggle, open }) => (
+                  <Button size="sm" variant="ghost" icon={SlidersHorizontal} active={open} onClick={toggle} title="View options">
+                    View
+                  </Button>
+                )}
+              >
+                {viewOptions}
+              </Popover>
+              <Button size="sm" variant="ghost" icon={Maximize2} onClick={enterFocusMode} title="Focus mode: just the text (F11)">
+                Focus
+              </Button>
+            </>
+          ) : (
+            <>
+              <IconButton icon={TextSearch} label="Find in this chapter (Ctrl+G)" active={findOpen} onClick={openFind} />
+              <div className="relative">
+                <IconButton icon={StickyNote} label={chapterNoteCount > 0 ? `Chapter notes (${chapterNoteCount})` : "Chapter notes"} onClick={() => setChapterNoteOpen(true)} />
+                {chapterNoteCount > 0 && (
+                  <span className="pointer-events-none absolute -right-0.5 -top-0.5 min-w-4 rounded-full bg-accent px-1 text-center text-[10px] font-semibold leading-4 text-on-accent">
+                    {chapterNoteCount}
+                  </span>
+                )}
+              </div>
+              <ReadAloudButton title={`${book.name} ${chapter}`} sourceKind="scripture" iconOnly size="md" segments={readAloudSegments} />
+              <BookmarksMenu bookId={book.id} chapter={chapter} activeVerse={activeVerse} />
+              <Popover width="w-72" trigger={({ toggle, open }) => <IconButton icon={Type} label="Text size, spacing, font, and theme" active={open} onClick={toggle} />}>
+                {textSettings}
+              </Popover>
+              <Popover width="w-64" trigger={({ toggle, open }) => <IconButton icon={SlidersHorizontal} label="View options" active={open} onClick={toggle} />}>
+                {viewOptions}
+              </Popover>
+              <IconButton icon={Maximize2} label="Focus mode: just the text (F11)" onClick={enterFocusMode} />
+            </>
+          )}
         </>
       )}
     </div>
