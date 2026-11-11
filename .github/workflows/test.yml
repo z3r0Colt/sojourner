@@ -1,0 +1,87 @@
+name: Tests
+
+# The frontend's and the backend's unit tests, on every push and pull request.
+# release.yml and web.yml build and ship; neither runs a test, so until this
+# existed a failing one could reach readers.
+#
+# The checks against real data (`cargo test -- --ignored`, README: Development)
+# need content.db and the packs, and stay a step before a release.
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+# A newer push to the same branch replaces a run still going.
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    name: Frontend (types and vitest)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install the frontend's dependencies
+        run: npm ci
+
+      - name: Check the types
+        run: |
+          npx tsc --noEmit
+          npx tsc -p tsconfig.node.json --noEmit
+
+      - name: Run the tests
+        run: npm test
+
+  backend:
+    name: Backend (cargo test)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      # What Tauri needs to compile against WebKitGTK (release.yml's list,
+      # without the AppImage's GStreamer plugins and FUSE).
+      - name: Install the system libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential pkg-config file libwebkit2gtk-4.1-dev libssl-dev libxdo-dev \
+            libayatana-appindicator3-dev librsvg2-dev
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust builds
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "src-tauri -> target"
+          key: test
+
+      # tauri-build checks that every bundled resource exists. build.rs seeds
+      # an empty content.db; the voice model's folder (models/, ~170 MB, not
+      # in git) is stood in for here, since no unit test reads it.
+      - name: Stand in for the voice model
+        run: mkdir -p models/kokoro && touch models/kokoro/.placeholder
+
+      # The app's own crate, and the core it shares with the web build, where
+      # most of the tests are.
+      - name: Run the tests
+        run: cargo test --lib --manifest-path src-tauri/Cargo.toml -p tauri-app -p sojourner-core
