@@ -1,10 +1,13 @@
 import { Link, useLocation } from "react-router-dom";
-import { BookA, BookMarked, BookOpen, Brain, CalendarCheck, CalendarRange, Columns3, GraduationCap, HeartHandshake, Highlighter, HouseHeart, Languages, Library, Lightbulb, ListMusic, MapPin, Mic, NotebookPen, PanelLeftClose, PanelLeftOpen, ScrollText, Settings, Sunrise, Users, type LucideIcon } from "lucide-react";
+import { useState } from "react";
+import { ChevronDown, ChevronRight, Ellipsis, PanelLeftClose, PanelLeftOpen, Settings } from "lucide-react";
 import { useDueCatechismMemory, useDueMemoryVerses } from "../api/queries";
 import { useUiStore } from "../state/uiStore";
 import { cx } from "../components/ui/classes";
 import { parseRoute } from "../workspace/paneKinds";
 import { openContent } from "../workspace/openContent";
+import { useShownPages } from "../features/onboarding/usePurpose";
+import { NAV_GROUPS, TODAY, type NavItem } from "./nav";
 
 /** Ctrl+click or middle-click on a sidebar item opens it in a new pane;
  * a plain click goes through the router and lands in the focused pane. */
@@ -15,67 +18,6 @@ function openInNewPane(e: React.MouseEvent, to: string) {
   e.preventDefault();
   openContent(parsed.kind, parsed.params as never, { target: "new" });
 }
-
-interface NavItem {
-  to: string;
-  label: string;
-  icon: LucideIcon;
-  end?: boolean;
-  /** A small count after the label (a dot when the sidebar is collapsed);
-   * hidden at zero. Memory shows what is due today (F2.7); the Today page
-   * and prayer nudges can reuse it. */
-  badge?: { count: number; title: string };
-}
-
-/** The home screen, pinned above the groups: it is a dashboard over all of
- * them rather than a peer of any one. */
-const TODAY: NavItem = { to: "/today", label: "Today", icon: Sunrise };
-
-/** Four groups, each answering "why is this here?" rather than "whose is it?":
- * the text itself, works someone else wrote, work you wrote, and the practices
- * you keep daily. */
-const GROUPS: { label: string; items: NavItem[] }[] = [
-  {
-    label: "Scripture",
-    items: [
-      { to: "/", label: "Bible", icon: BookOpen, end: true },
-      { to: "/harmony", label: "Harmony", icon: Columns3 },
-    ],
-  },
-  {
-    label: "Library",
-    items: [
-      { to: "/westminster", label: "Confessions", icon: ScrollText },
-      { to: "/lexicon", label: "Lexicon", icon: Languages },
-      { to: "/dictionary", label: "Dictionary", icon: BookA },
-      { to: "/encyclopedia", label: "Encyclopedia", icon: BookMarked },
-      { to: "/factbook", label: "Factbook", icon: Users },
-      { to: "/timeline", label: "Timeline", icon: CalendarRange },
-      { to: "/atlas", label: "Atlas", icon: MapPin },
-      { to: "/resources", label: "Resources", icon: Library },
-    ],
-  },
-  {
-    label: "Notebook",
-    items: [
-      { to: "/notes", label: "Notes", icon: NotebookPen },
-      { to: "/highlights", label: "Highlights", icon: Highlighter },
-      { to: "/sermons", label: "Sermons", icon: Mic },
-      { to: "/illustrations", label: "Illustrations", icon: Lightbulb },
-    ],
-  },
-  {
-    label: "Devotion",
-    items: [
-      { to: "/guide", label: "Guided study", icon: GraduationCap },
-      { to: "/plans", label: "Reading plans", icon: CalendarCheck },
-      { to: "/prayer", label: "Prayer", icon: HeartHandshake },
-      { to: "/memory", label: "Memory", icon: Brain },
-      { to: "/psalter", label: "Psalter", icon: ListMusic },
-      { to: "/family", label: "Family worship", icon: HouseHeart },
-    ],
-  },
-];
 
 function NavLink({ item, collapsed, onNavigate }: { item: NavItem; collapsed: boolean; onNavigate?: () => void }) {
   const { pathname } = useLocation();
@@ -124,8 +66,17 @@ function useMemoryDueBadge(): NavItem["badge"] {
   return { count, title: `${count} due for review today` };
 }
 
+/** Whether `pathname` is one of this item's pages. */
+function isOn(item: NavItem, pathname: string): boolean {
+  return item.end ? pathname === item.to : pathname.startsWith(item.to);
+}
+
 /** `drawer`: on a phone, the sidebar slides over the page from a menu button
- * (see AppShell); it is always shown whole, and choosing a page closes it. */
+ * (see AppShell); it is always shown whole, and choosing a page closes it.
+ *
+ * The pages shown are the reader's (features/onboarding/purpose.ts): the
+ * ones their purpose chose, or their own pick. The rest are under More, in
+ * the same order, so nothing is ever out of reach. */
 export function Sidebar({ drawer, onNavigate }: { drawer?: boolean; onNavigate?: () => void } = {}) {
   const storedCollapsed = useUiStore((s) => s.sidebarCollapsed);
   const collapsed = !drawer && storedCollapsed;
@@ -133,6 +84,19 @@ export function Sidebar({ drawer, onNavigate }: { drawer?: boolean; onNavigate?:
   const ToggleIcon = collapsed ? PanelLeftOpen : PanelLeftClose;
   const memoryBadge = useMemoryDueBadge();
   const badges: Record<string, NavItem["badge"]> = { "/memory": memoryBadge };
+  const shown = useShownPages();
+  const { pathname } = useLocation();
+  const [moreOpen, setMoreOpen] = useState(false);
+
+  const withBadge = (item: NavItem) => (badges[item.to] ? { ...item, badge: badges[item.to] } : item);
+  const groups = NAV_GROUPS.map((g) => ({ ...g, items: g.items.filter((i) => shown.has(i.to)) })).filter((g) => g.items.length > 0);
+  const more = NAV_GROUPS.flatMap((g) => g.items).filter((i) => !shown.has(i.to));
+  // The page being read is never hidden: More opens itself around it.
+  const moreShown = moreOpen || more.some((i) => isOn(i, pathname));
+  // The tour points at three groups by name; one with nothing shown is
+  // found under More, so More answers for it.
+  const absent = NAV_GROUPS.find((g) => !groups.some((shownGroup) => shownGroup.id === g.id));
+  const MoreIcon = collapsed ? Ellipsis : moreShown ? ChevronDown : ChevronRight;
 
   return (
     <nav
@@ -165,18 +129,53 @@ export function Sidebar({ drawer, onNavigate }: { drawer?: boolean; onNavigate?:
         <div className={cx("flex flex-col", collapsed && "items-center")}>
           <NavLink item={TODAY} collapsed={collapsed} onNavigate={onNavigate} />
         </div>
-        {GROUPS.map((g) => (
-          <div key={g.label} className={cx("flex flex-col gap-0.5", collapsed && "items-center")} data-tour={`sidebar-${g.label.toLowerCase()}`}>
+        {groups.map((g) => (
+          <div key={g.id} className={cx("flex flex-col gap-0.5", collapsed && "items-center")} data-tour={`sidebar-${g.id}`}>
             {!collapsed ? (
               <div className="mb-1 px-2.5 text-xs font-semibold uppercase tracking-wide text-ink-4">{g.label}</div>
             ) : (
               <div className="mb-1 h-px w-6 bg-line" aria-hidden="true" />
             )}
             {g.items.map((item) => (
-              <NavLink key={item.to} item={badges[item.to] ? { ...item, badge: badges[item.to] } : item} collapsed={collapsed} onNavigate={onNavigate} />
+              <NavLink key={item.to} item={withBadge(item)} collapsed={collapsed} onNavigate={onNavigate} />
             ))}
           </div>
         ))}
+        {more.length > 0 && (
+          <div className={cx("flex flex-col gap-0.5", collapsed && "items-center")} data-tour={absent ? `sidebar-${absent.id}` : undefined}>
+            {collapsed && <div className="mb-1 h-px w-6 bg-line" aria-hidden="true" />}
+            <button
+              type="button"
+              onClick={() => setMoreOpen(!moreShown)}
+              aria-expanded={moreShown}
+              title={moreShown ? "Hide the other pages" : `${more.length} more pages: ${more.map((i) => i.label).join(", ")}`}
+              aria-label={collapsed ? (moreShown ? "Hide the other pages" : "Show the other pages") : undefined}
+              className={cx(
+                "flex items-center gap-2.5 rounded-md text-sm text-ink-3 transition-colors hover:bg-hover hover:text-ink",
+                collapsed ? "h-9 w-9 justify-center" : "h-8 px-2.5",
+              )}
+            >
+              <MoreIcon className="h-[18px] w-[18px] shrink-0" aria-hidden="true" />
+              {!collapsed && <span className="min-w-0 flex-1 truncate text-left">More</span>}
+            </button>
+            {moreShown && (
+              <>
+                {more.map((item) => (
+                  <NavLink key={item.to} item={withBadge(item)} collapsed={collapsed} onNavigate={onNavigate} />
+                ))}
+                {!collapsed && (
+                  <Link
+                    to="/settings?section=preferences"
+                    onClick={onNavigate}
+                    className="mt-0.5 rounded-md px-2.5 py-1.5 text-xs text-ink-3 hover:bg-hover hover:text-ink"
+                  >
+                    Choose what shows here…
+                  </Link>
+                )}
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       <div className={cx("flex flex-col gap-0.5 border-t border-line py-2", collapsed && "items-center")}>
