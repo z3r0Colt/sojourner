@@ -10,6 +10,9 @@ import { NoteTemplatesEditor } from "../../notes/NoteTemplatesEditor";
 import { SermonTemplatesEditor } from "../../sermons/SermonTemplatesEditor";
 import { SpeakingRateSetting } from "../../sermons/SpeakingRateSetting";
 import { useLandingPage, type LandingPage } from "../../today/landing";
+import { ALWAYS_SHOWN, PURPOSES, type Purpose } from "../../onboarding/purpose";
+import { usePurpose, useShownPages, useSidebarPages } from "../../onboarding/usePurpose";
+import { ALL_ROUTES, NAV_GROUPS, TODAY, type NavItem } from "../../../layout/nav";
 import { onWindows, systemName } from "../../../lib/platform";
 import { api } from "../../../api/client";
 
@@ -126,6 +129,73 @@ function LandingRow() {
   );
 }
 
+/** "I use Sojourner for": the answer to the question a new install is asked
+ * (features/onboarding/purpose.ts). Changing it gives the sidebar that
+ * purpose's pages, in place of any the reader had picked one by one. */
+function PurposeRow() {
+  const [purpose, setPurpose] = usePurpose();
+  const [, setOwnPages] = useSidebarPages();
+  return (
+    <select
+      value={purpose ?? "everything"}
+      onChange={(e) => {
+        const next = e.target.value as Purpose;
+        setPurpose(next);
+        setOwnPages(null);
+        toast.success(next === "everything" ? "The sidebar shows every page" : "The sidebar shows the pages for that; the rest are under More");
+      }}
+      className={selectClass}
+      aria-label="I use Sojourner for"
+    >
+      {PURPOSES.map((p) => (
+        <option key={p.id} value={p.id}>
+          {p.id === "everything" ? "Everything" : p.label}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+/** The sidebar's pages, one by one. A page turned off moves under More. */
+function SidebarPagesRow() {
+  const [purpose] = usePurpose();
+  const [own, setOwn] = useSidebarPages();
+  const shown = useShownPages();
+  function toggle(route: string) {
+    const next = new Set(shown);
+    if (next.has(route)) next.delete(route);
+    else next.add(route);
+    setOwn(ALL_ROUTES.filter((r) => next.has(r)));
+  }
+  const page = (item: NavItem) => {
+    const fixed = ALWAYS_SHOWN.includes(item.to);
+    return (
+      <label key={item.to} className={cx("flex items-center gap-2 py-1 text-sm", fixed ? "text-ink-3" : "cursor-pointer text-ink-2")}>
+        <input type="checkbox" className={cx(checkboxClass, "shrink-0")} checked={shown.has(item.to)} disabled={fixed} onChange={() => toggle(item.to)} />
+        <span className="min-w-0">{item.label}</span>
+      </label>
+    );
+  };
+  return (
+    <div>
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(9.5rem,1fr))] gap-x-4 gap-y-3">
+        {NAV_GROUPS.map((g, i) => (
+          <div key={g.id}>
+            <div className="mb-0.5 text-xs font-semibold uppercase tracking-wide text-ink-4">{g.label}</div>
+            {i === 0 && page(TODAY)}
+            {g.items.map(page)}
+          </div>
+        ))}
+      </div>
+      {own != null && (
+        <Button size="sm" variant="ghost" className="mt-2" onClick={() => setOwn(null)}>
+          Reset to {purpose == null || purpose === "everything" ? "every page" : "the pages for my purpose"}
+        </Button>
+      )}
+    </div>
+  );
+}
+
 function Row({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-2 py-3 sm:flex-row sm:items-start sm:gap-4">
@@ -203,6 +273,12 @@ export function PreferencesSection() {
       <p className="mb-4 text-sm text-ink-3">These apply to the Bible, commentary, confessions, and dictionary text alike. The same controls sit behind the Aa button while reading.</p>
 
       <div className="divide-y divide-line">
+        <Row label="I use Sojourner for" hint="Chooses the pages the sidebar shows first. The rest stay under More, and Go to and Search reach every page.">
+          <PurposeRow />
+        </Row>
+        <Row label="Sidebar pages" hint="A page turned off moves under More.">
+          <SidebarPagesRow />
+        </Row>
         <Row label="Open on" hint="What the app shows when it starts. Today gathers where you left off, today's plan, and what is due.">
           <LandingRow />
         </Row>

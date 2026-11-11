@@ -113,6 +113,10 @@ interface UiState {
   /** F11: chrome hidden, the focused pane maximized (see workspaceStore). */
   distractionFreeMode: boolean;
   sidebarCollapsed: boolean;
+  /** The strip of study panes beside the text (Workspace.tsx) with each
+   * pane's name beside its icon. On for a new install; someone here before
+   * the names were offered keeps the icons until they open it. */
+  studyStripLabels: boolean;
   /** A sermon pane publishes the passage under the cursor to its link group
    * (SB1.1), so the Bible and commentary beside it turn to the text being
    * written about. Off for a writer who wants the study panes to stay put. */
@@ -194,6 +198,7 @@ interface UiState {
   toggleDistractionFreeMode: () => void;
   setDistractionFreeMode: (on: boolean) => void;
   toggleSidebar: () => void;
+  setStudyStripLabels: (on: boolean) => void;
   setSermonFollowsCursor: (on: boolean) => void;
   setPulpitFontSize: (px: number) => void;
   setFamilyFontSize: (px: number) => void;
@@ -243,6 +248,7 @@ export const useUiStore = create<UiState>((set) => ({
   accentSource: stored.accentSource ?? "app",
   distractionFreeMode: false,
   sidebarCollapsed: stored.sidebarCollapsed ?? false,
+  studyStripLabels: stored.studyStripLabels ?? false,
   sermonFollowsCursor: stored.sermonFollowsCursor ?? true,
   pulpitFontSize: stored.pulpitFontSize ?? 28,
   familyFontSize: stored.familyFontSize ?? 30,
@@ -429,6 +435,10 @@ export const useUiStore = create<UiState>((set) => ({
       persist({ sidebarCollapsed: !s.sidebarCollapsed });
       return { sidebarCollapsed: !s.sidebarCollapsed };
     }),
+  setStudyStripLabels: (studyStripLabels) => {
+    persist({ studyStripLabels });
+    set({ studyStripLabels });
+  },
 }));
 
 /** Exported because an EPUB is typeset inside its own frame, where the

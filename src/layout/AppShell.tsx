@@ -40,7 +40,8 @@ import { useLandingPageOnLaunch } from "../features/today/landing";
 import { useBackupReminder } from "../features/settings/backupReminder";
 import { useAutomaticBackup } from "../features/settings/automaticBackup";
 import { TourOverlay } from "../features/onboarding/TourOverlay";
-import { useFirstRunTour, useTourDone } from "../features/onboarding/firstRun";
+import { useAskPurpose, useFirstRunTour, useTourDone } from "../features/onboarding/firstRun";
+import { Welcome } from "../features/onboarding/Welcome";
 
 export function AppShell() {
   const distractionFreeMode = useUiStore((s) => s.distractionFreeMode);
@@ -75,6 +76,7 @@ export function AppShell() {
   // In step with other devices on the network (Settings → Other devices).
   useLiveSync();
   useFirstRunTour();
+  const askPurpose = useAskPurpose();
   const [, setTourDone] = useTourDone();
 
   const [paletteOpen, setPaletteOpen] = useState(false);
@@ -333,6 +335,8 @@ export function AppShell() {
       <GatherRound />
       <RunLogHost />
       <RefPreviewHost />
+      {/* A new install, on any screen: what it came for, before the tour. */}
+      {askPurpose && <Welcome />}
       {/* The tour points at the desktop layout's sidebar and header. */}
       {!compact && <TourOverlay onFinish={() => setTourDone(true)} />}
     </div>

@@ -109,6 +109,20 @@ export const PRESET_WORKSPACES: readonly SavedWorkspace[] = [
   },
 ];
 
+/** Where a new install that came to study begins (features/onboarding/
+ * purpose.ts): the text, and one commentary following it. Not a preset in
+ * the Workspaces menu -- it is the first thing anyone builds for themselves
+ * -- so the menu is as it was. */
+export const STUDY_START: SavedWorkspace = {
+  name: "Study",
+  description: "The Bible, and Matthew Henry beside it.",
+  tree: indexTree("two", [1000, 420]),
+  panes: [
+    { kind: "bible", params: {}, linkGroup: A },
+    { kind: "commentary", params: {}, linkGroup: A, sourceCode: "mhc" },
+  ],
+};
+
 export function isPresetName(name: string): boolean {
   return PRESET_WORKSPACES.some((p) => p.name === name);
 }
