@@ -106,6 +106,8 @@ It stays up for at least three seconds (`MIN_MS` in `splash.js`), longer if the 
 
 Needs Node, a Rust toolchain (`cargo` on PATH), and on Windows the NSIS bundler that `tauri build` installs on first use.
 
+**Use Rust 1.99.1 for now, not 1.100.** Rust 1.100 (12 November 2026) changed the layout of its build directory, and the voice's ONNX runtime (`ort-sys` 2.0.0-rc.13, through `kokoro-en`) fails in its build script on it. `rustup override set 1.99.1` in this folder does it. The workflows are pinned the same way; unpin both once `ort` has a release that builds on the newer Rust. The web build has no voice and is not affected.
+
 ```
 npm install
 npm run build:content       # bibles/, commentaries/, reference/ -> content/content.db (a few minutes)

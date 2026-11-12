@@ -69,8 +69,19 @@ jobs:
             build-essential pkg-config file libwebkit2gtk-4.1-dev libssl-dev libxdo-dev \
             libayatana-appindicator3-dev librsvg2-dev
 
+      # Pinned, not `stable`. Rust 1.100 (2026-11-12) lays out its build
+      # directory differently, and ort-sys 2.0.0-rc.13 (the voice's ONNX
+      # runtime, through kokoro-en) places its libraries by counting up from
+      # the old layout: every build of the app fails in its build script. The
+      # same code built on 1.99.1 that morning. Go back to `stable` once ort
+      # is updated to a release that builds on it.
+      # Pinned for the same reason as the Windows job's.
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.99.1
+        with:
+          toolchain: 1.99.1
 
       - name: Cache Rust builds
         uses: Swatinem/rust-cache@v2
