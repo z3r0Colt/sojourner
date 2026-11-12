@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+  COURSES,
   EMPTY_GUIDE,
   UNITS,
+  courseProgress,
+  newProgress,
   lessonById,
   markDone,
   nextLesson,
@@ -38,6 +41,23 @@ describe("the lessons", () => {
     expect(new Set(LESSONS.map((l) => l.id)).size).toBe(LESSONS.length);
     for (const l of LESSONS) expect(new Set(l.steps.map((s) => s.id)).size).toBe(l.steps.length);
     expect(UNITS.flatMap((u) => u.lessons).map((l) => l.id)).toEqual(LESSONS.map((l) => l.id));
+  });
+
+  it("each belong to one course", () => {
+    expect(new Set(COURSES.map((c) => c.id)).size).toBe(COURSES.length);
+    expect(COURSES.flatMap((c) => c.lessons).map((l) => l.id).sort()).toEqual(LESSONS.map((l) => l.id).sort());
+    for (const c of COURSES) {
+      expect(c.units.flatMap((u) => u.lessons).map((l) => l.id)).toEqual(c.lessons.map((l) => l.id));
+    }
+  });
+
+  it("count toward their course when finished", () => {
+    const course = COURSES[0];
+    expect(courseProgress(course, { lessons: {} })).toEqual({ finished: 0, of: course.lessons.length });
+    const first = course.lessons[0].id;
+    const second = course.lessons[1].id;
+    const state = { lessons: { [first]: { ...newProgress("2026-01-01"), completedAt: "2026-01-02" }, [second]: newProgress("2026-01-03") } };
+    expect(courseProgress(course, state).finished).toBe(1);
   });
 
   it("are numbered in course order", () => {

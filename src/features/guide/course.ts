@@ -191,6 +191,35 @@ export const UNITS: Unit[] = [
   },
 ];
 
+/** A course of Guided study: its units, and the lessons in them. */
+export interface Course {
+  id: string;
+  title: string;
+  /** One or two sentences, under the title. */
+  summary: string;
+  units: Unit[];
+  lessons: Lesson[];
+}
+
+/** Every course, in the order the Guided study page lists them. There is
+ * one, and the page opens straight on it; the list is here so that the
+ * second is a matter of adding it, and so that the page can say plainly
+ * that the Catechism is a course and not the whole of Guided study. */
+export const COURSES: Course[] = [
+  {
+    id: "wsc",
+    title: "The Westminster Shorter Catechism",
+    summary: "A course through the Catechism, one question per lesson, using the Scripture behind each answer. Go at your own pace.",
+    units: UNITS,
+    lessons: LESSONS,
+  },
+];
+
+/** How many of a course's lessons are finished. */
+export function courseProgress(course: Course, state: GuideState): { finished: number; of: number } {
+  return { finished: course.lessons.filter((l) => state.lessons[l.id]?.completedAt).length, of: course.lessons.length };
+}
+
 export function unitOf(lesson: Lesson): Unit | undefined {
   return UNITS.find((u) => u.lessons.some((l) => l.id === lesson.id));
 }

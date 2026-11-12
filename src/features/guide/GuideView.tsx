@@ -21,9 +21,11 @@ import { useAddToMemory } from "../memory/useAddToMemory";
 import { localDate } from "../family/familyWorship";
 import { onDesktop } from "../../lib/platform";
 import {
+  COURSES,
+  UNITS,
+  courseProgress,
   questionsLabel,
   unitOf,
-  UNITS,
   lessonById,
   lessonTag,
   markDone,
@@ -74,14 +76,34 @@ function CourseView() {
   const next = nextLesson(state);
   const nextStarted = next ? state.lessons[next.id] : undefined;
   const begun = Object.keys(state.lessons).length > 0;
+  const course = COURSES[0];
 
   return (
     <div className={pageClass}>
       <p className={sectionLabelClass}>Guided study</p>
-      <h1 className="reading-font mb-2 text-2xl font-semibold text-ink">The Westminster Shorter Catechism</h1>
-      <p className="mb-6 text-sm text-ink-2">
-        A course through the Catechism, one question per lesson, using the Scripture behind each answer. Go at your own pace.
-      </p>
+      {/* The courses. With one, it is the page; the row says that it is a
+          course among courses to come, and how far through it the student
+          is. With a second, the row is where one is chosen. */}
+      <div className="mb-5 mt-1 grid gap-2 sm:grid-cols-2">
+        {COURSES.map((c) => {
+          const { finished, of } = courseProgress(c, state);
+          return (
+            <div key={c.id} aria-current={c.id === course.id ? "true" : undefined} className={cx(cardClass, c.id === course.id && "border-accent/50 bg-accent-soft")}>
+              <p className="text-xs font-semibold uppercase tracking-wide text-accent">Course</p>
+              <p className="text-sm font-medium text-ink">{c.title}</p>
+              <p className="text-xs text-ink-3">
+                {finished === 0 ? `${of} lessons` : finished === of ? `All ${of} lessons finished` : `${finished} of ${of} lessons finished`}
+              </p>
+            </div>
+          );
+        })}
+        <div className={cx(cardClass, "border-dashed")}>
+          <p className="text-xs font-semibold uppercase tracking-wide text-ink-4">More to come</p>
+          <p className="text-sm text-ink-3">Other courses are being written. They will be listed here.</p>
+        </div>
+      </div>
+      <h1 className="reading-font mb-2 text-2xl font-semibold text-ink">{course.title}</h1>
+      <p className="mb-6 text-sm text-ink-2">{course.summary}</p>
 
       {next && (
         <div className={cx(cardClass, "mb-8 flex flex-wrap items-center gap-3")}>
@@ -127,7 +149,7 @@ function CourseView() {
       )}
       {printing && <NotebookSheet state={state} onDone={() => setPrinting(false)} />}
 
-      {UNITS.map((unit, i) => (
+      {course.units.map((unit, i) => (
         <section key={unit.title} className="mb-6">
           <h2 className="mb-0.5 text-base font-semibold text-ink">
             Unit {i + 1}. {unit.title}
