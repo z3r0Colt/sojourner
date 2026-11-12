@@ -7,6 +7,12 @@ commit history; each release's installers and their checksums are on the
 
 ## Unreleased
 
+Nothing yet.
+
+## 0.5.0 (2026-11-12)
+
+The release for someone opening Sojourner for the first time.
+
 **For someone new**
 
 - A new install is asked one question, "What brings you here?" (reading,
