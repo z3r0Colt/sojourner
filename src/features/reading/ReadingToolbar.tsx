@@ -12,6 +12,7 @@ import { checkboxClass, cx, selectSmClass } from "../../components/ui/classes";
 import { openContent, openPassage } from "../../workspace/openContent";
 import { PANE_KINDS, STUDY_STRIP_KINDS } from "../../workspace/paneKinds";
 import { groupTranslations, translationOptionLabel, translationSelectFloor } from "./translationGroups";
+import { TranslationPicker } from "./TranslationPicker";
 import type { Book, Translation } from "../../api/types";
 import type { BibleParams } from "../../state/workspaceStore";
 import type { TtsSegment } from "../../state/ttsStore";
@@ -282,23 +283,26 @@ export function ReadingToolbar(props: ReadingToolbarProps) {
         <ChapterNav books={books} position={{ bookId, chapter }} translationId={translationId} onNavigate={(p) => openPassage(p, { target: paneId })} />
       </div>
       <span className="mx-1 h-5 w-px shrink-0 bg-line" aria-hidden="true" />
-      {translations && (
-        <select
-          aria-label="Translation"
-          className={cx(selectSmClass, "min-w-0 max-w-fit grow shrink")}
-          style={translationSelectFloor(currentTranslation)}
-          value={translationId ?? ""} onChange={(e) => setParams({ translationId: Number(e.target.value) })}>
-          {groupTranslations(translations).map((g) => (
-            <optgroup key={g.label} label={g.label}>
-              {g.translations.map((t) => (
-                <option key={t.id} value={t.id} title={t.scope ? `${t.name} (${t.scope})` : t.name}>
-                  {translationOptionLabel(t)}
-                </option>
-              ))}
-            </optgroup>
-          ))}
-        </select>
-      )}
+      {translations &&
+        (phone ? (
+          <select
+            aria-label="Translation"
+            className={cx(selectSmClass, "min-w-0 max-w-fit grow shrink")}
+            style={translationSelectFloor(currentTranslation)}
+            value={translationId ?? ""} onChange={(e) => setParams({ translationId: Number(e.target.value) })}>
+            {groupTranslations(translations).map((g) => (
+              <optgroup key={g.label} label={g.label}>
+                {g.translations.map((t) => (
+                  <option key={t.id} value={t.id} title={t.scope ? `${t.name} (${t.scope})` : t.name}>
+                    {translationOptionLabel(t)}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
+        ) : (
+          <TranslationPicker translations={translations} value={translationId} onChange={(id) => setParams({ translationId: id })} />
+        ))}
       {compact ? (
         <>
           <div className="min-w-0 flex-1" />
