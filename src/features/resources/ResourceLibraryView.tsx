@@ -391,13 +391,13 @@ export function ResourceLibraryView() {
 
   return (
     <Page
-      title="Resources"
+      title="Books"
       lead={hasAny ? `${counts.books} ${counts.books === 1 ? "book" : "books"}, ${counts.audio} audio, ${counts.video} video` : undefined}
       actions={
         <>
           <Popover
             width="w-80"
-            trigger={({ toggle, open: isOpen }) => <IconButton icon={HelpCircle} label="About resources" active={isOpen} onClick={toggle} />}
+            trigger={({ toggle, open: isOpen }) => <IconButton icon={HelpCircle} label="About this page" active={isOpen} onClick={toggle} />}
           >
             <div className="space-y-2 p-1 text-sm text-ink-2">
               {onWeb ? (

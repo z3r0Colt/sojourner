@@ -324,7 +324,7 @@ const DESKTOP_TUTORIAL: TutorialCategory[] = [
         ],
         links: [
           { label: "Bible", to: "/" },
-          { label: "Resources", to: "/resources" },
+          { label: "Books", to: "/resources" },
         ],
       },
       {
@@ -746,19 +746,19 @@ const DESKTOP_TUTORIAL: TutorialCategory[] = [
     ],
   },
   {
-    title: "Resources (books, audio, and video)",
+    title: "Books (and audio and video)",
     entries: [
       {
         id: "resources-add",
         title: "Add a book or a recording",
-        what: "Resources holds your own EPUB, PDF, and MOBI books and your audio and video files.",
+        what: "Books holds your own EPUB, PDF, and MOBI books and your audio and video files, beside the books on your shelves.",
         steps: [
-          "Open Resources in the sidebar and click Add resource for one file, or Import folder for every recognized file under a folder.",
+          "Open Books in the sidebar and click Add resource for one file, or Import folder for every recognized file under a folder.",
           "The title and author are read from the file when it is added: an EPUB's metadata, a PDF's document properties, a recording's tags. The file name is the fallback.",
           "For a folder import, the author is the file's parent folder, so an Author/Book.epub layout works well.",
           "Books are indexed as they are added, so search can look inside them.",
         ],
-        links: [{ label: "Resources", to: "/resources" }],
+        links: [{ label: "Books", to: "/resources" }],
       },
       {
         id: "resources-organize",
@@ -772,7 +772,7 @@ const DESKTOP_TUTORIAL: TutorialCategory[] = [
           "Every shipped book comes with a subject, so Topic and the Topics row above the list work from the start. Click a topic to show only what carries it; add your own tags to any item in its row.",
           "A recording shows its length and file type; click the play button to open it.",
         ],
-        links: [{ label: "Resources", to: "/resources" }],
+        links: [{ label: "Books", to: "/resources" }],
       },
       {
         id: "resources-edit",
@@ -784,7 +784,7 @@ const DESKTOP_TUTORIAL: TutorialCategory[] = [
           "Items with no author are grouped under No author yet. Click Set author for all… on that heading to give every item in the group one author at once.",
           "An edit to a shipped book is kept across upgrades.",
         ],
-        links: [{ label: "Resources", to: "/resources" }],
+        links: [{ label: "Books", to: "/resources" }],
       },
       {
         id: "resources-book",
@@ -798,7 +798,7 @@ const DESKTOP_TUTORIAL: TutorialCategory[] = [
           "The bar underneath shows how far through the book you are and can be dragged to anywhere in it. Contents in the sidebar lists the chapters (the list icon when the pane is narrow).",
           "Read aloud, in the sidebar or as the speaker above the page, reads from the page you are on and turns the pages as it goes; click a paragraph to move the voice there. See Read aloud under Reading the Bible.",
         ],
-        links: [{ label: "Resources", to: "/resources" }],
+        links: [{ label: "Books", to: "/resources" }],
       },
       {
         id: "resources-pdf",
@@ -847,12 +847,12 @@ const DESKTOP_TUTORIAL: TutorialCategory[] = [
           "Download the packs you want from the Sojourner releases page (or copy them from a USB stick). Nothing is fetched from inside the app.",
           "Open Settings → Library packs and click Install from file…, once for each pack. It takes a minute or two; you can keep reading meanwhile.",
           "Each shelf is listed with its size and can be removed on its own. Installing a newer pack for a shelf you have replaces it; the other shelves are not touched.",
-          "Installed books show a Library badge in Resources: read, search, tag, and link them like any other, though they cannot be removed one at a time.",
+          "Installed books show a Library badge in Books: read, search, tag, and link them like any other, though they cannot be removed one at a time.",
           "If a shelf is removed, books you had notes or tags on show Not installed; everything you wrote about them is kept, and comes back if you install it again.",
         ],
         links: [
           { label: "Settings → Library packs", to: "/settings?section=books" },
-          { label: "Resources", to: "/resources" },
+          { label: "Books", to: "/resources" },
         ],
       },
       {
@@ -1368,9 +1368,9 @@ const NOT_ON_THE_WEB = new Set([
 const ON_THE_WEB: Record<string, Partial<TutorialEntry>> = {
   "resources-add": {
     title: "Add a book",
-    what: "Resources holds your own EPUB books and PDFs.",
+    what: "Books holds your own EPUB books and PDFs, beside the books on your shelves.",
     steps: [
-      "Open Resources in the sidebar and click Add a book, then choose one or more EPUB or PDF files.",
+      "Open Books in the sidebar and click Add a book, then choose one or more EPUB or PDF files.",
       "The title and author are read from the file when it is added: an EPUB's metadata or a PDF's document properties. The file name is the fallback.",
       "Books are indexed as they are added, so search can look inside them.",
       "The books stay in this browser, on this device. Settings → Data & backups does not export them, so keep the originals.",
@@ -1382,13 +1382,13 @@ const ON_THE_WEB: Record<string, Partial<TutorialEntry>> = {
     steps: [
       "Open Settings → Library shelves and press Add on each shelf you want. Nothing is downloaded up front: a shelf's catalogue and search index are read as you use them, and a book when you open it.",
       "Each shelf is listed with its size and can be removed on its own. Removing one leaves everything you wrote about its books.",
-      "Shelf books show a Library badge in Resources: read, search, tag, and link them like any other, though they cannot be removed one at a time.",
+      "Shelf books show a Library badge in Books: read, search, tag, and link them like any other, though they cannot be removed one at a time.",
       "To keep a book for reading without the internet, open it and press Keep on this device.",
       "If a shelf is removed, books you had notes or tags on show Not installed; everything you wrote about them is kept, and comes back if you add it again.",
     ],
     links: [
       { label: "Settings → Library shelves", to: "/settings?section=books" },
-      { label: "Resources", to: "/resources" },
+      { label: "Books", to: "/resources" },
     ],
   },
   citations: {

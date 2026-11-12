@@ -253,8 +253,10 @@ used three ways: the sidebar heading *Library* (Confessions, Timeline, Atlas,
 Resources), the page *Resources* (which the tutorial and About call "your
 library"), and Settings → *Library* on the desktop. The recommendation is to
 rename the page **Resources** to **Books**, which is what it holds and what
-its search tab is already called, and leave the rest. That changes a name
-present users know, so it waits for his word.
+its search tab is already called, and leave the rest. Colt agreed, and it is done: the
+page is Books in the sidebar, its heading, the tutorial and every message
+that names it. Its address (`/resources`) is unchanged, so saved workspaces
+and links still open.
 
 ## Phase 4. Keep it so
 

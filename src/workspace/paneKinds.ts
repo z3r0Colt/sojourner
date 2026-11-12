@@ -251,9 +251,9 @@ export const PANE_KINDS: Registry = {
   },
   resources: {
     kind: "resources",
-    label: "Resources",
+    label: "Books",
     icon: Library,
-    title: () => "Resources",
+    title: () => "Books",
     defaultWidth: 900,
     acceptsPassage: false,
     listed: true,

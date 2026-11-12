@@ -41,7 +41,7 @@ export default function WebShelves() {
     try {
       await shelfOp("add", id);
       invalidate();
-      toast.success(`${name} added. Its books are in Resources, and search and Cited in your library read them.`);
+      toast.success(`${name} added. Its books are in Books, and search and Cited in your library read them.`);
     } catch (e) {
       toast.error(`Couldn't add ${name}: ${e instanceof Error ? e.message : String(e)}`);
     } finally {

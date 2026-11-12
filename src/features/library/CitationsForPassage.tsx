@@ -75,7 +75,7 @@ export function CitationsForPassage({ book, chapter, activeVerse }: { book: Book
         compact
         icon={Library}
         title={`Nothing in your library cites ${where}`}
-        description={onWeb ? "Add more shelves from Settings → Library shelves, or add your own books under Resources." : "Install more shelves from Settings → Library packs."}
+        description={onWeb ? "Add more shelves from Settings → Library shelves, or add your own under Books." : "Install more shelves from Settings → Library packs."}
       />
     );
   }

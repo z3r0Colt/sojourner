@@ -72,7 +72,7 @@ export const SHORTCUT_GROUPS: ShortcutGroup[] = [
   {
     title: "Books",
     rows: [
-      { keys: ["Ctrl", "scroll"], label: "Over a book in Resources: zoom the page (Ctrl+= and Ctrl+- do the same while the book has focus, and Ctrl+0 resets it)" },
+      { keys: ["Ctrl", "scroll"], label: "Over a book in Books: zoom the page (Ctrl+= and Ctrl+- do the same while the book has focus, and Ctrl+0 resets it)" },
       { keys: ["Space"], label: "Page down through a book, running on into the next chapter at the end (PageUp goes back; ← and → jump a chapter)" },
     ],
   },

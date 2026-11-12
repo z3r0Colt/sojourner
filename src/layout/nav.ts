@@ -59,7 +59,7 @@ export const NAV_GROUPS: readonly NavGroup[] = [
       { to: "/westminster", label: "Confessions", icon: ScrollText },
       { to: "/timeline", label: "Timeline", icon: CalendarRange },
       { to: "/atlas", label: "Atlas", icon: MapPin },
-      { to: "/resources", label: "Resources", icon: Library },
+      { to: "/resources", label: "Books", icon: Library },
     ],
   },
   {

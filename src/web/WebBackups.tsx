@@ -78,7 +78,7 @@ export default function WebBackups() {
       <p className="mb-4 text-sm text-ink-3">
         Everything you write is kept in this browser, on this device, and nowhere else. It is not encrypted, and it is not backed up:
         if the browser's data is cleared, it is gone. Export it to a file now and then, and keep that file somewhere safe. The export does not hold the books and PDFs you added under
-        Resources, only your notes and the entries about them; keep the original files, and add them again on a new device.
+        Books, only your notes and the entries about them; keep the original files, and add them again on a new device.
       </p>
 
       {stored === false && (
