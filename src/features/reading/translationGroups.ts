@@ -34,3 +34,21 @@ export function groupTranslations(translations: Translation[]): TranslationGroup
     { label: "User provided", translations: groups.user },
   ].filter((g) => g.translations.length > 0);
 }
+
+/** A translation as the toolbar's dropdown names it: its code, and which
+ * Testament it covers when it lacks the other. */
+export function translationOptionLabel(t: Pick<Translation, "code" | "scope">): string {
+  const scope = t.scope === "Old Testament" ? " (OT)" : t.scope === "New Testament" ? " (NT)" : t.scope ? " (partial)" : "";
+  return `${t.code}${scope}`;
+}
+
+/** The narrowest the translation dropdown may be: the name of the
+ * translation chosen, in `ch` with one to spare for capitals wider than a
+ * digit, and room for the padding and the arrow. The toolbar starts the
+ * dropdown there and lets it grow into what the book leaves (see the
+ * toolbar). */
+export function translationSelectFloor(t: Pick<Translation, "code" | "scope"> | undefined): React.CSSProperties | undefined {
+  if (!t) return undefined;
+  const width = `calc(${translationOptionLabel(t).length + 1}ch + 1.75rem)`;
+  return { minWidth: width, flexBasis: width };
+}
