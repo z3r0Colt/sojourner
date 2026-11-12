@@ -4,7 +4,7 @@ name: Tests
 # release.yml and web.yml build and ship; neither runs a test, so until this
 # existed a failing one could reach readers.
 #
-# The checks against real data (`cargo test -- --ignored`, README: Development)
+# The checks against real data (`cargo test -- --ignored`, docs/DEVELOPING.md: Development)
 # need content.db and the packs, and stay a step before a release.
 
 on:

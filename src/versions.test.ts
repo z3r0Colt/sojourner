@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import pkg from "../package.json";
 import conf from "../src-tauri/tauri.conf.json";
 
-// The version is declared in three places (README: Build), and a release
+// The version is declared in three places (docs/DEVELOPING.md: Build), and a release
 // build stops if they disagree -- after its runner has spent some minutes
 // getting that far. This says so in a second, on every push.
 describe("the app's version", () => {
