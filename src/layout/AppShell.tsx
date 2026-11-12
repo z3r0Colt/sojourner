@@ -9,6 +9,7 @@ import { TtsPlayerBar } from "../features/tts/TtsPlayerBar";
 import { Sidebar } from "./Sidebar";
 import { ShortcutsModal } from "./ShortcutsModal";
 import { RefPreviewHost } from "../components/RefPreview";
+import { TooltipHost } from "../components/ui/Tooltip";
 import { SendToSermonHost } from "../features/sermons/SendToSermonHost";
 import { IllustrationCaptureHost } from "../features/sermons/IllustrationCaptureHost";
 import { IdeaCaptureHost } from "../features/sermons/IdeaCaptureHost";
@@ -335,6 +336,7 @@ export function AppShell() {
       <GatherRound />
       <RunLogHost />
       <RefPreviewHost />
+      <TooltipHost />
       {/* A new install, on any screen: what it came for, before the tour. */}
       {askPurpose && <Welcome />}
       <TourOverlay onFinish={() => setTourDone(true)} />

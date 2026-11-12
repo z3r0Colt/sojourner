@@ -61,7 +61,9 @@ interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 /** Square icon-only button. `label` becomes both the tooltip and the
- * accessible name. */
+ * accessible name. The tooltip is the app's own (`data-tip`, Tooltip.tsx):
+ * quick under the pointer, and shown under keyboard focus, which the
+ * browser's `title` never was. */
 export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(function IconButton(
   { icon: Icon, label, size = "md", active, variant = "ghost", className, type = "button", ...rest },
   ref,
@@ -70,7 +72,7 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(functio
     <button
       ref={ref}
       type={type}
-      title={label}
+      data-tip={label}
       aria-label={label}
       className={cx(
         "inline-flex shrink-0 items-center justify-center rounded-md transition-colors disabled:cursor-not-allowed disabled:opacity-40",
