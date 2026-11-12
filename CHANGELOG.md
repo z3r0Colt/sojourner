@@ -39,6 +39,13 @@ commit history; each release's installers and their checksums are on the
   tab with something found in it.
 - On a wide screen a verse's number sits at its first line, and on a large
   monitor the Bible toolbar names its tools.
+- Every icon is named the moment the pointer rests on it, and at once on
+  the next one along, so a toolbar can be read by drawing the pointer across
+  it. The name also shows under keyboard focus, which it never did.
+- The translation menu gives each translation's full name beside its code
+  ("DBY  Darby Bible"). A phone keeps its own wheel.
+- Guided study shows its courses. There is one, the Shorter Catechism, with
+  how far through it you are, and room for those being written.
 - The opening screen stays three seconds the first time and about one after.
 
 **The web app**
@@ -57,7 +64,8 @@ commit history; each release's installers and their checksums are on the
 
 **Behind the scenes**
 
-- Tests, type checks and a linter now run on every push.
+- Tests, type checks and a linter now run on every push. One of the tests
+  now mounts the whole Bible pane, which nothing did before.
 
 ## 0.4.3 (2026-10-14)
 

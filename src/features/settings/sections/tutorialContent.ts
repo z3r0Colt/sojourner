@@ -206,7 +206,7 @@ const DESKTOP_TUTORIAL: TutorialCategory[] = [
         title: "Change translation, and add your own",
         what: "Historic and modern English translations, the Hebrew and Greek texts, the Septuagint and the Vulgate ship with the app; a copyrighted translation can be added from your own file.",
         steps: [
-          "Pick a translation from the dropdown in the reading toolbar. Each Bible pane keeps its own choice. The list is grouped: Historic English, Modern English, and Greek, Hebrew and Latin.",
+          "Click the translation's code in the reading toolbar (KJV, to begin with) and pick another from the menu, which gives each one's code and full name. Each Bible pane keeps its own choice. The list is grouped: Historic English, Modern English, and Greek, Hebrew and Latin.",
           "The Hebrew Old Testament (WLC) reads right to left. The Greek New Testament comes in five editions: the Textus Receptus behind the KJV, the Byzantine text, the SBL Greek New Testament, Westcott–Hort and Tregelles. All of them follow English chapter and verse numbering, so they line up with the English beside them.",
           "Double-click a Greek or Hebrew word for its Strong's entry. Search finds Greek and Hebrew typed without accents or vowel points.",
           "To add a translation you own (NASB, NKJV, NLT, and the like are not bundled: they are in copyright), go to Settings → Library and click Add file. Zefania XML is detected automatically.",

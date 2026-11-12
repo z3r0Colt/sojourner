@@ -236,15 +236,21 @@ order. When Colt has watched someone use it, their stumbles outrank this.
   always shows.
 - *The splash* holds three seconds on a first launch and about one after.
 
-Not done, and why:
+Left undone at first, and done since (2026-11-12), at Colt's word:
 
-- *Translation menu.* It was already grouped by language with each full name
-  on hover. Nothing to add without widening a menu the code keeps narrow on
-  purpose.
-- *Guided study's course list.* There is one course. A list of one teaches
-  nothing; build it with the second course.
-- *The Bible toolbar on a laptop.* Its seven tools are still bare icons below
-  1,400 pixels. Naming some and not others looked worse than naming none.
+- *Translation menu.* On a desk it is now a menu giving each translation's
+  code and full name, under its heading. The button stays as narrow as a
+  code, which is what the old dropdown's width rule was protecting. A phone
+  keeps the native wheel.
+- *Guided study's courses.* The page shows its courses as cards: the one
+  there is, with progress, and a place for those being written. It still
+  opens straight on the course, so nobody gains a click. `COURSES` in
+  `course.ts` is where the second goes.
+- *The Bible toolbar on a laptop.* There is no room for seven names beside
+  the icons below 1,400 pixels: sidebar, text and study strip leave about
+  230. So the names come to the pointer instead. Every icon in the app is
+  named a third of a second after the pointer rests on it, at once on the
+  next, and under keyboard focus (`Tooltip.tsx`).
 
 **A decision for Colt: the word "Library".** The audit found the names are
 steadier than first thought. "The book library" comes as "shelves"; a "pack"
@@ -311,9 +317,16 @@ and lint and tests run on every push.
 | `EpubReader.tsx` | ~1,080 | The same: one component around epub.js's rendition, with no test that opens a book. |
 | `FamilyWorshipView.tsx`, `SearchPanel.tsx`, `workspaceStore.ts`, `commands.ts`, `ttsStore.ts` | 850 to 1,040 | Not touched. Each is one subject, and none stood in the way of this work. |
 
-The next step, when there is appetite for it, is a test that mounts the Bible
-pane with a chapter and exercises selecting, highlighting and noting. With
-that in place the pane can be taken apart safely.
+That test now exists (`ReadingPane.test.ts`): it mounts the whole pane with a
+chapter and checks the toolbar, the translation menu, the verse menu, a
+highlight, a note, find, and paragraph mode. It was shown to fail when the
+pane is broken. Colt has since said the files may stay over 800 lines, so no
+further cutting is planned; the test is there for whoever next works in the
+pane.
+
+Also found and fixed while finishing: on a phone, *Commentary on this verse*
+opened several entries past the verse chosen (Genesis 1:3 on verse 9). It was
+in 0.4.3. The cause and the fix are in `landOnRow.ts`.
 
 ---
 

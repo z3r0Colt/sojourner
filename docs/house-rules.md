@@ -66,7 +66,10 @@ saved workspaces and links go on working.
 ## Icons and their names
 
 - Every icon-only button has a `label` (`IconButton` requires it): it is the
-  tooltip and the accessible name.
+  accessible name, and the app's own tooltip (`data-tip`, `Tooltip.tsx`),
+  which shows quickly under the pointer and under keyboard focus. Do not
+  give an icon a `title` as well: the browser would show its slow tooltip
+  over the quick one.
 - A row of more than three icons that a newcomer must choose between gets
   names, or a way to show them. The study strip does; the sidebar does.
 - Tools on a repeated row (every commentary entry, every verse) appear on
