@@ -277,6 +277,44 @@ No change the reader can see.
 **Done when.** No source file exceeds about 800 lines without a stated reason,
 and lint and tests run on every push.
 
+**As built (2026-11-12).**
+
+- *Lint.* ESLint's and typescript-eslint's recommended rules and the two
+  rules of hooks, on every push. It found 25 things in the whole frontend.
+  One was a real fault: the backup reminder could be skipped for a session
+  when the automatic-backup setting loaded last. The rest were three lists
+  made stable, eight places that now say why they are as they are, and three
+  stale directives.
+- *Changelog and versions.* `CHANGELOG.md` back to 0.2.7 from the commit
+  history, and a test that the three version numbers agree and the current
+  one has an entry.
+- *README.* The README is for someone who wants the app; building and
+  packaging moved to `docs/DEVELOPING.md` unchanged. The code signing policy
+  stays on the README, where the certificate's terms want it.
+- *House rules.* `docs/house-rules.md`.
+- *Splits.* Moved, not rewritten, and each checked in the running app:
+  - `api/queries.ts` (1,765 lines, 198 hooks) is eleven files by feature
+    under `api/queries/`, behind one index. No import elsewhere changed.
+  - `ReadingPane.tsx` went from 2,061 lines to about 1,490. The toolbar and
+    its menus are `ReadingToolbar.tsx`; the chapter note box and two color
+    text helpers have files of their own.
+  - `EpubReader.tsx` went from 1,352 to about 1,080. What it asks of a book
+    apart from drawing it is `epubBook.ts`.
+
+**The 800-line mark was not met, and here is why.** These remain over it:
+
+| File | Lines | Why it is left |
+|---|---|---|
+| `api/types.ts` | 1,548 | Type declarations only; one file is easier to search than ten. |
+| `tutorialContent.ts` | 1,421 | The tutorial's text, as data. |
+| `ReadingPane.tsx` | ~1,490 | One component holding the reading state: selection, highlights, find, word lookup, keys, read aloud. Its parts share that state, and nothing tests the component whole. Cutting further means turning those parts into hooks, which should follow tests of the pane, not precede them. |
+| `EpubReader.tsx` | ~1,080 | The same: one component around epub.js's rendition, with no test that opens a book. |
+| `FamilyWorshipView.tsx`, `SearchPanel.tsx`, `workspaceStore.ts`, `commands.ts`, `ttsStore.ts` | 850 to 1,040 | Not touched. Each is one subject, and none stood in the way of this work. |
+
+The next step, when there is appetite for it, is a test that mounts the Bible
+pane with a chapter and exercises selecting, highlighting and noting. With
+that in place the pane can be taken apart safely.
+
 ---
 
 ## Rules for every phase
