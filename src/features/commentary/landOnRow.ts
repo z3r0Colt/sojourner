@@ -12,8 +12,11 @@
  *
  * So after the jump this watches the row itself, on the page, frame by frame,
  * and brings its top back to the top of the list whenever it has moved. It
- * stops once the row has stood still for a few frames, after a second at
- * most, or at once when the reader takes the list over (a wheel, a touch, a
+ * stops once the row has stood still for a third of a second (twenty
+ * frames: four was enough on a desk, but on a phone the rows above are far
+ * taller than guessed and are measured a tenth of a second after the row
+ * first comes to rest, and Genesis 1:3 opened on verse 9), after two and a
+ * half seconds at most, or at once when the reader takes the list over (a wheel, a touch, a
  * key, a press on the scroll bar) -- it never fights a reader's own scroll.
  * Returns a function that stops it early.
  */
@@ -25,8 +28,8 @@ export function landOnRow(
     raf = (cb: FrameRequestCallback) => requestAnimationFrame(cb),
     cancelRaf = (id: number) => cancelAnimationFrame(id),
     now = () => performance.now(),
-    maxMs = 1000,
-    stableFrames = 4,
+    maxMs = 2500,
+    stableFrames = 20,
   }: {
     raf?: (cb: FrameRequestCallback) => number;
     cancelRaf?: (id: number) => void;

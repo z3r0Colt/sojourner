@@ -52,8 +52,28 @@ describe("landOnRow", () => {
     real = 1180;
     clock.tick();
     expect(f.scrollTop).toBe(1180);
-    for (let i = 0; i < 5; i++) clock.tick();
+    // It lets go only after the row has stood still for a third of a second.
+    for (let i = 0; i < 12; i++) clock.tick();
+    expect(clock.pending).toBe(1);
+    for (let i = 0; i < 12; i++) clock.tick();
     expect(clock.pending).toBe(0);
+  });
+
+  it("is still holding the row when taller rows above it are measured late", () => {
+    // A phone: the rows above are far taller than guessed, and are measured
+    // a good tenth of a second after the row first comes to rest. Let go of
+    // by then, the list was left eight entries on (Genesis 1:3 opened on
+    // verse 9).
+    let real = 1500;
+    const f = fakeList(68, (s) => real - s);
+    f.scrollTop = 1500;
+    const clock = frames();
+    landOnRow(f.list, 68, vi.fn(), clock);
+    for (let i = 0; i < 8; i++) clock.tick();
+    expect(f.scrollTop).toBe(1500);
+    real = 4300;
+    clock.tick();
+    expect(f.scrollTop).toBe(4300);
   });
 
   it("aims again while the row is not drawn", () => {
@@ -71,7 +91,7 @@ describe("landOnRow", () => {
     const f = fakeList(40, (s) => 900 - s, 700);
     const clock = frames();
     landOnRow(f.list, 40, vi.fn(), clock);
-    for (let i = 0; i < 8; i++) clock.tick();
+    for (let i = 0; i < 24; i++) clock.tick();
     expect(f.scrollTop).toBe(700);
     expect(clock.pending).toBe(0);
   });

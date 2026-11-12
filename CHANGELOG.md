@@ -51,6 +51,9 @@ commit history; each release's installers and their checksums are on the
 
 - The backup reminder could be skipped for a whole session when the
   automatic-backup setting was the last thing to load.
+- On a phone, **Commentary on this verse** could open several entries past
+  the verse chosen (Genesis 1:3 opened on verse 9). It now lands on the
+  verse.
 
 **Behind the scenes**
 
