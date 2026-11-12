@@ -140,7 +140,7 @@ export function ResourceReaderView() {
     return (
       <div className="flex h-full flex-col">
         <div key="header" className="flex h-9 shrink-0 items-center gap-1 border-b border-line bg-surface-2/60 pl-1 pr-1">
-          <IconButton icon={ArrowLeft} label="All resources" size="sm" onClick={(e) => navigate("/resources", e)} />
+          <IconButton icon={ArrowLeft} label="All books" size="sm" onClick={(e) => navigate("/resources", e)} />
           <span className="min-w-0 flex-1 truncate text-xs font-medium text-ink" title={resource.title}>
             {resource.title}
           </span>
@@ -269,7 +269,7 @@ function ReaderSidebar({
       <div className="border-b border-line p-3">
         {!folded && (
           <Button size="sm" variant="ghost" icon={ArrowLeft} onClick={(e) => navigate("/resources", e)} className="-ml-2 mb-2">
-            All resources
+            All books
           </Button>
         )}
         <div className="flex items-start gap-1">

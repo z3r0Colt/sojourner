@@ -208,6 +208,7 @@ function AddPaneStrip() {
   const named = useUiStore((s) => s.studyStripLabels);
   const setNamed = useUiStore((s) => s.setStudyStripLabels);
   const full = panes.length >= MAX_PANES;
+  const textShowing = panes.some((p) => p.kind === "bible" || p.kind === "interlinear");
 
   function open(kind: PaneKind) {
     const existing = panes.find((p) => p.kind === kind);
@@ -223,7 +224,14 @@ function AddPaneStrip() {
       aria-label="Add pane"
       data-tour="add-pane"
     >
-      {named && <div className="mb-1 hidden whitespace-nowrap px-2 text-xs font-semibold uppercase tracking-wide text-ink-4 min-[1100px]:block">Study this passage</div>}
+      {/* "This passage" only where one is on screen: beside the Books page
+          or Settings the strip still opens its panes, at the passage last
+          read, but there is no "this" to point at. */}
+      {named && (
+        <div className="mb-1 hidden whitespace-nowrap px-2 text-xs font-semibold uppercase tracking-wide text-ink-4 min-[1100px]:block">
+          {textShowing ? "Study this passage" : "Study panes"}
+        </div>
+      )}
       {STUDY_STRIP_KINDS.filter((k) => k !== "metrical" || inPsalms).map((kind) => {
         const meta = PANE_KINDS[kind];
         const exists = panes.some((p) => p.kind === kind);
