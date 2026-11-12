@@ -21,7 +21,7 @@ concurrency:
 
 jobs:
   frontend:
-    name: Frontend (types and vitest)
+    name: Frontend (types, lint and vitest)
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -43,6 +43,9 @@ jobs:
         run: |
           npx tsc --noEmit
           npx tsc -p tsconfig.node.json --noEmit
+
+      - name: Lint
+        run: npm run lint
 
       - name: Run the tests
         run: npm test

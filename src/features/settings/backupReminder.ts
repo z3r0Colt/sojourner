@@ -123,5 +123,5 @@ export function useBackupReminder() {
         },
       },
     });
-  }, [backups, stats, isLoaded, snoozeUntil, setSnoozeUntil, qc]);
+  }, [backups, stats, isLoaded, snoozeUntil, setSnoozeUntil, qc, autoBackup, autoMeta.isLoaded]);
 }

@@ -231,7 +231,7 @@ function StepHeading({ icon: Icon, kicker, title, sub }: { icon: typeof BookOpen
 function ReadStep({ tonight, large }: { tonight: Tonight; large: boolean }) {
   const { data: books } = useBooks();
   const typography = useReadingTypography(1);
-  const readings = tonight.day?.readings ?? [];
+  const readings = useMemo(() => tonight.day?.readings ?? [], [tonight.day?.readings]);
   const refs = useMemo(() => readings.flatMap(readingRefs), [readings]);
   const { byKey, isLoading } = usePassages(refs);
   const label = readings.map((r) => r.label).join("; ");

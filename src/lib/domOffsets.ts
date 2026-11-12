@@ -1,7 +1,6 @@
 /** Character offset of (targetNode, targetOffset) relative to root's full text content. */
 export function textOffsetWithin(root: Node, targetNode: Node, targetOffset: number): number {
   let total = 0;
-  let found = false;
   function walk(node: Node): boolean {
     if (node === targetNode) {
       total += targetOffset;
@@ -16,8 +15,9 @@ export function textOffsetWithin(root: Node, targetNode: Node, targetOffset: num
     }
     return false;
   }
-  found = walk(root);
-  return found ? total : total;
+  // Found or not, what was counted on the way is the answer.
+  walk(root);
+  return total;
 }
 
 export function closestWithAttr(node: Node | null, attr: string): HTMLElement | null {

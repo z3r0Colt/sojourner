@@ -247,6 +247,7 @@ export function InterlinearView({
     popupOpener.current = null;
     setPopup(null);
     hideHoverCard();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only when the chapter changes; hideHoverCard is made anew each render
   }, [book.id, chapter]);
 
   // Go to the verse, as the other study panes linked to a Bible pane do. A

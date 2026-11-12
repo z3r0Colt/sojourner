@@ -89,6 +89,7 @@ export function SermonPane() {
   const setStage = useSetSermonStage();
   const evidence = useMemo(
     () => (sermon && draft ? evidenceFor(sermon, draft.body, rate.wpm) : null),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- of `draft`, only its body is read
     [sermon, draft?.body, rate.wpm],
   );
   const evidenceStage = evidence ? stageFromEvidence(evidence) : null;

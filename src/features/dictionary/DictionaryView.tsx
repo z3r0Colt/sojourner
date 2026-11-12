@@ -156,7 +156,7 @@ function BibleDictionaries({ slug, switcher }: { slug: string | undefined; switc
   const letterEntries = useMemo(() => (index ?? []).filter((e) => e.term.toUpperCase().startsWith(activeLetter)), [index, activeLetter]);
 
   const showingSearch = debounced.trim().length > 1;
-  const unfiltered = showingSearch ? searchResults ?? [] : letterEntries;
+  const unfiltered = useMemo(() => (showingSearch ? searchResults ?? [] : letterEntries), [showingSearch, searchResults, letterEntries]);
   // Choosing one dictionary hides the headwords the other one alone carries
   // -- about two thousand each way, so the list really is a different book.
   const list = useMemo(

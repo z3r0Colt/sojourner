@@ -52,9 +52,8 @@ export function correctForContrast(accent: Rgb, ground: Rgb, min = MIN_CONTRAST)
   if (contrastRatio(accent, ground) >= min) return accent;
   const darkGround = luminance(ground) < 0.5;
   const toward: Rgb = darkGround ? { r: 255, g: 255, b: 255 } : { r: 0, g: 0, b: 0 };
-  let out = accent;
   for (let i = 1; i <= 40; i++) {
-    out = mix(accent, toward, i / 40);
+    const out = mix(accent, toward, i / 40);
     if (contrastRatio(out, ground) >= min) return out;
   }
   return toward;

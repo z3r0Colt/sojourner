@@ -102,7 +102,7 @@ export function HighlightsView() {
   const [colorFilter, setColorFilter] = useState<"all" | GroupKey>("all");
   const [bookFilter, setBookFilter] = useState<"all" | number>("all");
 
-  const all = highlights ?? [];
+  const all = useMemo(() => highlights ?? [], [highlights]);
 
   // Books that have highlights, in Bible order, for the filter.
   const bookIds = useMemo(() => {

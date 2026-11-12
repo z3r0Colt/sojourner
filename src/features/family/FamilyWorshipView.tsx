@@ -415,6 +415,7 @@ function FamilySettings({ fw }: { fw: FW }) {
   // puts back only what it undoes.
   const update = useCallback(
     (change: (s: FamilyWorship) => FamilyWorship) => fw.setState((prev) => (prev ? change(prev) : prev)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `fw` is a new object every render; only its setter is used, and that is stable
     [fw.setState],
   );
   const { data: plans } = useReadingPlans();

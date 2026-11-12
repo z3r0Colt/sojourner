@@ -170,6 +170,7 @@ export function MetricalPsalmPanel({
     if (!version || !tunes?.length) return;
     const prefs = readTunePreference();
     setTuneId(defaultTuneId(psalm, version.metre, tunes, { psalm: prefs[`psalm:${psalm}`], metre: prefs[version.metre] }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- of `version`, only its metre is read
   }, [psalm, version?.metre, tunes]);
 
   const beat = tempo ?? tune?.tempo ?? 92;

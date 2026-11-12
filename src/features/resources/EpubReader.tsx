@@ -1043,6 +1043,7 @@ export function EpubReader({
       // A reading this reader was loading (or had claimed) is let go of: the
       // reader that replaces this one takes it over if it is the same book
       // in the same pane, and otherwise it goes on with what it has.
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- the refs are read as they stand when the reader closes, which is the point
       if (readGenRef.current > 0 || takingOver) letGoOfLoading(readingRef.current.title, readingRef.current.paneId);
     };
   }, [filePath, src]);

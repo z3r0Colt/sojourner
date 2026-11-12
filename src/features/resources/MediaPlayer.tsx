@@ -46,7 +46,6 @@ export const MediaPlayer = forwardRef<HTMLVideoElement | HTMLAudioElement, { fil
       return (
         <div className="flex h-full flex-col">
           <div className="flex min-h-0 flex-1 items-center justify-center bg-black">
-            {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
             <video ref={(el) => void (inner.current = el)} src={src} controls className="max-h-full max-w-full" />
           </div>
           <div className="flex shrink-0 items-center justify-center border-t border-line bg-surface px-2 py-1.5">{speeds}</div>
@@ -55,7 +54,6 @@ export const MediaPlayer = forwardRef<HTMLVideoElement | HTMLAudioElement, { fil
     }
     return (
       <div className="flex h-full flex-col items-center justify-center gap-4 p-6">
-        {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
         <audio ref={(el) => void (inner.current = el)} src={src} controls className="w-full max-w-lg" />
         {speeds}
         <p className="max-w-lg text-center text-xs text-ink-4">"Link to current passage" in the sidebar stamps the link with the time you are at, so a passage opens the recording where it is discussed.</p>

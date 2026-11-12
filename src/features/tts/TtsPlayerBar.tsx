@@ -275,6 +275,7 @@ function FittedName({ name, refit }: { name: string; refit?: unknown }) {
 
   useLayoutEffect(() => setFitted(null), [name, refit, lineWidth]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- measured after every render on purpose; `fitted != null` ends the chain
   useLayoutEffect(() => {
     const span = ref.current;
     if (fitted != null || !span || span.scrollWidth <= span.clientWidth) return;

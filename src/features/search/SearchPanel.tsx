@@ -412,7 +412,8 @@ export function SearchPanel({ query, onQueryChange, docked, onOpenVerse, onOpene
     : null;
   const allRows = goTo ? [goTo, ...rows] : rows;
 
-  useEffect(() => setSelected(0), [tab, effective, !!reference]);
+  const hasReference = !!reference;
+  useEffect(() => setSelected(0), [tab, effective, hasReference]);
 
   function onKeyDown(e: React.KeyboardEvent) {
     if (e.key === "ArrowDown") {

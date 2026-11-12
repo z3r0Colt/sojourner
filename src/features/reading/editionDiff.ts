@@ -13,6 +13,7 @@
 export function bareGreek(word: string): string {
   return word
     .normalize("NFD")
+    // eslint-disable-next-line no-misleading-character-class -- ranges of combining marks, which is what is being removed
     .replace(/[̀-ͯ᾽-῿֑-ׇ]/g, "")
     .toLowerCase()
     .replace(/ς/g, "σ")
